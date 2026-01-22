@@ -251,5 +251,5 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param dto
      * @return TotalCountDTO
      */
-    LogisticsBillCostDTO.TotalCountDTO listTotalCount(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+    LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 }

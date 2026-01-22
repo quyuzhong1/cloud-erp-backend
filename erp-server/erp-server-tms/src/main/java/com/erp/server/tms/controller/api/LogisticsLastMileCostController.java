@@ -392,4 +392,25 @@ public class LogisticsLastMileCostController extends BaseController {
      	}
      	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
      }
+
+
+
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:17
+     * @param dto
+     * @return ApiResult<TotalCountDTO>
+     */
+    @PostMapping("/listTotalCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:logisticsLastMileCost:paging",
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
+    public ApiResult<LogisticsBillCostDTO.TotalCountDTO> listTotalCount(@RequestBody @Validated LogisticsBillCostDTO.PagingParamDTO dto){
+        return success(logisticsBillCostService.listTotalCount(dto));
+    }
 }

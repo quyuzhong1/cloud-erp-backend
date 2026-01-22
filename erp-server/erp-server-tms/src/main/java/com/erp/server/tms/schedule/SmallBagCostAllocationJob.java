@@ -111,7 +111,7 @@ public class SmallBagCostAllocationJob {
                         .withSecond(0)
                         .withNano(0);
             } else {
-                XxlJobHelper.log("[生成小包费用分摊] autoGenerateSmallBagCostAllocation 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+                XxlJobHelper.log("====自动生成小包费用分摊类型选择错误====");
                 return ReturnT.SUCCESS;
             }
             List<LogisticsBillCostEntity> list = logisticsBillCostService.lambdaQuery()

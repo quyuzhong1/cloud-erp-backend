@@ -1623,4 +1623,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData( List<String> platformCodeList, List<String> soCodeList, List<String> soDeliveryCodeList, List<String> trackNoList) {
         return baseMapper.listLogisticsBillVoByData(platformCodeList,soCodeList,soDeliveryCodeList,trackNoList);
     }
+
+    @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillByUniqueKey(Map<String, List<Object>> paramMap) {
+        if (CollUtil.isEmpty(paramMap)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listLogisticsBillByUniqueKey(paramMap);
+    }
 }

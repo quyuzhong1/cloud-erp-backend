@@ -460,6 +460,10 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private Boolean isAllocateRequired;
         /**
+         * 是否分摊名称
+         */
+        private String isAllocateRequiredName;
+        /**
          * 不分摊原因
          */
         private String notAllocateRemark;

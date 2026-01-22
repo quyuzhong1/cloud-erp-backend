@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * <p>
- * 物流授权表 服务类
+ * 导入历史记录表 服务类
  * </p>
  *
  * @author will
@@ -68,7 +68,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param importDTO
      * @return BatchResultDTO
      */
-    BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,String businessType,String costType,String processingType);
+    BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,ImportHistoryRecordDTO.ImportDTO dto);
     /**
      * 导入数据处理
      * @author will
@@ -77,8 +77,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param errorList2
      * @param headList
      * @param headMap
-     * @param importType
      * @return void
      */
-    void handleImportSuccessList(String processingType,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap, String importType);
+    void handleImportSuccessList(ImportHistoryRecordDTO.ImportDTO dto,BaseDTO.ImportDTO importDTO,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
 }

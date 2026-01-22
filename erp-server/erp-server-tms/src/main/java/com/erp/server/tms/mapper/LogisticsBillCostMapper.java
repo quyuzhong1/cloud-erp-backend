@@ -104,5 +104,5 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @param params
      * @return ListDTO
      */
-    List<LogisticsBillCostDTO.ListDTO> listTotalCount(@Param("params") PagingDTO<LogisticsBillCostDTO.PagingParamDTO> params);
+    List<LogisticsBillCostDTO.ListDTO> listTotalCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
 }

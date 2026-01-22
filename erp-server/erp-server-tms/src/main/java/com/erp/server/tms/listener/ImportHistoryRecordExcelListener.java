@@ -7,6 +7,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -35,9 +36,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     private static final int BATCH_COUNT = 1000;
     private final String taskId;
-    private final String importType;
     private final Integer importCount;
-    private final String processingType;
+    private final BaseDTO.ImportDTO importDTO;
+    private final ImportHistoryRecordDTO.ImportDTO dto;
     private final CfgLogisticsCostImportEntity costImportEntity;
     private final List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList;
     @Getter
@@ -65,13 +66,13 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
-    public ImportHistoryRecordExcelListener(CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,String processingType, String taskId, String importType, Integer importCount) {
+    public ImportHistoryRecordExcelListener(CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, ImportHistoryRecordDTO.ImportDTO dto, BaseDTO.ImportDTO importDTO) {
         this.costImportEntity = costImportEntity;
         this.cfgImportDetailList = cfgImportDetailList;
-        this.processingType = processingType;
-        this.taskId = taskId;
-        this.importType = importType;
-        this.importCount = importCount;
+        this.dto = dto;
+        this.importDTO = importDTO;
+        this.taskId = importDTO.getTaskId();
+        this.importCount = importDTO.getImportCount();
     }
 
     /**
@@ -104,7 +105,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(processingType,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap,importType);
+                importHistoryRecordService.handleImportSuccessList(dto,importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
@@ -133,7 +134,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (!successList.isEmpty()) {
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(processingType,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap, importType);
+                importHistoryRecordService.handleImportSuccessList(dto,importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
