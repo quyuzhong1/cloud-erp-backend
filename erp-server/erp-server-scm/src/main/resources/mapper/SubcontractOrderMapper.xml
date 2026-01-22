@@ -278,6 +278,7 @@
             sod.variant_property as variantProperty,
             so.purchase_org_id as purchaseOrgId,
             so.purchase_org_name as purchaseOrgName,
+            so.type as type,
             sod.warehouse_id as warehouseId,
             sod.warehouse_name as warehouseName,
             sod.qty,

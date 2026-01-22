@@ -1,24 +1,13 @@
 package com.erp.server.scm.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.utils.IdGeneratorUtil;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.constant.DmpOutputConstant;
@@ -29,9 +18,15 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.dto.SubcontractBOMDTO;
 import com.erp.model.scm.entity.ScmPushMsgEntity;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractBOMService;
 import com.erp.server.scm.service.ScmPushMsgService;
+import com.erp.server.scm.service.SubcontractOrderDetailService;
+import com.erp.server.scm.service.SubcontractOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,10 +46,19 @@ import java.util.*;
 public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontractBOMService {
 
     @Resource
-    private DmpMqFeign dmpMqFeign;
+    private ScmPushMsgService scmPushMsgService;
 
     @Resource
-    private ScmPushMsgService scmPushMsgService;
+    private SubcontractOrderService subcontractOrderService;
+
+    @Resource
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     /**
      * 组装数据发送到金蝶
@@ -112,7 +116,6 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
     @Override
     public Map<String, Object> newSyncDataToKingdee(SubcontractBOMDTO.KingdeeSubcontractBOMDTO dto, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
         //业务id
         resultMap.put("id",dto.getId());
         //操作（枚举SyncKingdeeOperateEnum）
@@ -121,11 +124,36 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             return resultMap;
         }
+        //委外用料清单号
+        resultMap.put("FBillNo", dto.getCode());
 
-        resultMap.put("FBillNo", "SUBBOM00002303");
-        //resultMap.put("syncKingdeeId", dto.getSourceCode());
-        resultMap.put("syncKingdeeId","103825");
+        resultMap.put("syncKingdeeId", dto.getSyncKingdeeId());
+
         resultMap.put("TargetBillTypeId", "SUB_OutSrcBOMChange");
+
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(dto.getSourceId());
+        SysAccountingCompanyEntity accountCompany = sysUserFeign.getCompanyById(subcontractOrderEntity.getSubcontractOrgId());
+        if (Objects.nonNull(accountCompany)) {
+            //委外组织
+            resultMap.put("FSubOrgId", accountCompany.getCode());
+        }
+        //委外订单编号
+        resultMap.put("FSubReqBillNO", subcontractOrderEntity.getCode());
+
+        //委外订单类型
+        resultMap.put("FSubReqType", "WWYLQDBGD01_SYS");
+
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(dto.getSourceId());
+
+        List<JSONObject> list = new ArrayList<>();
+        for (SubcontractOrderDetailEntity subcontractOrderDetailEntity : subcontractOrderDetailList) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.set("detailId",subcontractOrderDetailEntity.getId());
+            //产品编码
+            jsonObject.set("FMaterialID", subcontractOrderDetailEntity.getSkuNo());
+            list.add(jsonObject);
+        }
+        resultMap.put("list",list);
         return resultMap;
     }
 }

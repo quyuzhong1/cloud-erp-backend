@@ -657,7 +657,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             String sourceId = syncParamDetailDTO.getSourceId();
             SubcontractBOMDTO.KingdeeSubcontractBOMDTO kingdeeSubcontractBOMDTO = new SubcontractBOMDTO.KingdeeSubcontractBOMDTO();
             kingdeeSubcontractBOMDTO.setId(sourceId);
-            kingdeeSubcontractBOMDTO.setSourceCode(list.get(0).getSyncKingdeeId());
+            kingdeeSubcontractBOMDTO.setSourceId(list.get(0).getId());
+            kingdeeSubcontractBOMDTO.setSourceCode(list.get(0).getCode());
+            kingdeeSubcontractBOMDTO.setSyncKingdeeId(list.get(0).getSyncKingdeeId());
             if (ObjectUtils.isEmpty(kingdeeSubcontractBOMDTO)) {
                 continue;
             }

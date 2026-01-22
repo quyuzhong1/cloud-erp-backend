@@ -260,4 +260,6 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPrice(List<SubcontractOrderDTO.ListPriceParamDTO> dto);
 
     List<SubcontractOrderDTO.ListRateDTO> listRateBySupplier(List<SubcontractOrderDTO.ListRateParamDTO> dto);
+
+    SubcontractOrderEntity listSubcontractOrderByKingdeeId(String kingdeeId);
 }
