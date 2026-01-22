@@ -121,7 +121,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             //同步订阅飞书定义接口
             subscribeFeiShuDefinition(thirdProcessDefinitionEntity);
             //取消订阅旧的飞书定义接口
-            unSubscribeFeiShuDefinition(old);
+            //unSubscribeFeiShuDefinition(old);
         }
 
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
@@ -176,7 +176,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         super.removeById(id);
 
         //同步取消订阅飞书定义接口
-        unSubscribeFeiShuDefinition(entity);
+        //unSubscribeFeiShuDefinition(entity);
 
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
         dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,entity.getApprovalCode(),OperationTypeEnum.DELETE.getStatus()));
