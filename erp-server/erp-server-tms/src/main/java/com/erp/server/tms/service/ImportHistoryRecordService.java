@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * <p>
- * 物流授权表 服务类
+ * 导入历史记录表 服务类
  * </p>
  *
  * @author will

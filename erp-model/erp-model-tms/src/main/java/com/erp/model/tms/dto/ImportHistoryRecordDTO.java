@@ -19,7 +19,7 @@ import java.util.Map;
 
 /**
  * <p>
- * 物流授权表请求响应实体
+ * 导入历史记录表请求响应实体
  * </p>
  *
  * @author will

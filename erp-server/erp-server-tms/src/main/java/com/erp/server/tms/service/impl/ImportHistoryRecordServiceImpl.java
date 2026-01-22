@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 物流授权表 服务实现类
+ * 导入历史记录表 服务实现类
  * </p>
  *
  * @author will
@@ -226,7 +226,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
 
         //查询配置的唯一键字段
-        List<CfgLogisticsCostImportDetailEntity> collect = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailEntity> cfgDetailList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
 
 
         ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();
