@@ -128,7 +128,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         }
         addDTO.setCountryName(listDTO.getNameCn());
 
-        KolPartnerInfoEntity one = lambdaQuery().eq(KolPartnerInfoEntity::getNickname, addDTO.getNickname()).one();
+        KolPartnerInfoEntity one = lambdaQuery().eq(KolPartnerInfoEntity::getNickname, addDTO.getNickname()).eq(KolPartnerInfoEntity::getIsDeleted, false).one();
         if(Objects.nonNull(one)){
             throw new ServiceException("达人昵称已存在");
         }
@@ -526,10 +526,21 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
             Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
 
-            List<String> nicknameList = successList.stream().map(KolPartnerInfoImportExcelDTO::getNickname).distinct().collect(Collectors.toList());
+            List<String> nicknameList = successList.stream()
+                    .map(KolPartnerInfoImportExcelDTO::getNickname)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
             //企业达人库旧数据
-            List<KolPartnerInfoEntity> oldList = lambdaQuery().in(KolPartnerInfoEntity::getNickname, nicknameList).eq(KolPartnerInfoEntity::getIsDeleted, false).list();
-            Map<String, String> oldMap = oldList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
+            Map<String, String> oldMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(nicknameList)) {
+                List<KolPartnerInfoEntity> oldList = lambdaQuery()
+                        .in(KolPartnerInfoEntity::getNickname, nicknameList)
+                        .eq(KolPartnerInfoEntity::getIsDeleted, false)
+                        .list();
+                oldMap = oldList.stream()
+                        .collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
+            }
 
             //按昵称分组
             Map<String, List<KolPartnerInfoImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(KolPartnerInfoImportExcelDTO::getNickname));
