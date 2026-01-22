@@ -1144,5 +1144,9 @@ public class FbaShipmentDTO implements Serializable {
          * 字典下拉接口 http://172.16.100.11:3002/project/92/interface/api/13147  type=fbaPageType FBA标签类型,awdPageType AWD标签类型
          */
         private String pageType;
+        /**
+         * 打印条数
+         */
+        private Integer pageSize;
     }
 }
