@@ -191,6 +191,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_ABNO
 @Service
 public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity> implements SoB2cService {
 
+    public static final String BAD_GATEWAY = "The server sent HTTP status code 502: Bad Gateway";
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -413,7 +414,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private PackagePlanService packagePlanService;
     private static final int MAX_RETRY_COUNT = 3;
-    private static final long RETRY_DELAY_SECONDS = 30000;
+    private static final long RETRY_DELAY_SECONDS = 60000;
 
     @Resource
     private SyncThirdWarehouseService syncThirdWarehouseService;
@@ -3545,6 +3546,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
             log.warn("调用三方仓出库单结果:{}", JSONUtil.toJsonStr(apiResult));
             if (!apiResult.isSuccess()) {
+                if (BAD_GATEWAY.equals(apiResult.getMsg())){
+                    throw new ServiceException("调用三方仓出库单异常，状态码502");
+                }
                 String message = "创建出库单异常" + apiResult.getMsg();
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
