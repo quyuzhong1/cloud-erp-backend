@@ -654,22 +654,27 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                                 msgList.add("地址信息--国家名称未找到");
                             }
 
-                            //省
-                            String provinceId = provinceMap.getOrDefault(item.getProvince(), "");
-                            if(StringUtils.isNotBlank(provinceId)){
-                                kolAddressInfoDTO.setProvinceId(provinceId);
-                            }else {
-                                msgList.add("地址信息--省未找到");
-                            }
-                            //市
-                            String cityId = cityMap.getOrDefault(item.getCity(), "");
-                            if(StringUtils.isNotBlank(cityId)){
-                                kolAddressInfoDTO.setCityId(cityId);
-                            }else {
-                                msgList.add("地址信息--市未找到");
-                            }
-                            //区域
-                            if(addressCountryId.equals(DictValueEnum.CN.getCode())){
+                            // 判断是否为中国大陆或中国，只有在这种情况下才需要校验省、城市、区域
+                            boolean isChina = StringUtils.isNotBlank(addressCountryId) && 
+                                    (addressCountryId.equals(DictValueEnum.CN.getCode()) ||
+                                            DictValueEnum.CN.getName().equals(item.getAddressCountryName()));
+
+                            if(isChina){
+                                //省
+                                String provinceId = provinceMap.getOrDefault(item.getProvince(), "");
+                                if(StringUtils.isNotBlank(provinceId)){
+                                    kolAddressInfoDTO.setProvinceId(provinceId);
+                                }else {
+                                    msgList.add("地址信息--省未找到");
+                                }
+                                //市
+                                String cityId = cityMap.getOrDefault(item.getCity(), "");
+                                if(StringUtils.isNotBlank(cityId)){
+                                    kolAddressInfoDTO.setCityId(cityId);
+                                }else {
+                                    msgList.add("地址信息--市未找到");
+                                }
+                                //区域
                                 if(StringUtils.isBlank(item.getDistrict())) {
                                     msgList.add("国家为中国大陆则区域不能为空");
                                 }else{
@@ -681,9 +686,24 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                                     }
                                 }
                             }else {
-                                String districtId = districtMap.getOrDefault(item.getDistrict(), "");
-                                if(StringUtils.isNotBlank(districtId)){
-                                    kolAddressInfoDTO.setDistrictId(districtId);
+                                // 非中国大陆或中国，不校验省、城市、区域，但可以设置值
+                                if(StringUtils.isNotBlank(item.getProvince())){
+                                    String provinceId = provinceMap.getOrDefault(item.getProvince(), "");
+                                    if(StringUtils.isNotBlank(provinceId)){
+                                        kolAddressInfoDTO.setProvinceId(provinceId);
+                                    }
+                                }
+                                if(StringUtils.isNotBlank(item.getCity())){
+                                    String cityId = cityMap.getOrDefault(item.getCity(), "");
+                                    if(StringUtils.isNotBlank(cityId)){
+                                        kolAddressInfoDTO.setCityId(cityId);
+                                    }
+                                }
+                                if(StringUtils.isNotBlank(item.getDistrict())){
+                                    String districtId = districtMap.getOrDefault(item.getDistrict(), "");
+                                    if(StringUtils.isNotBlank(districtId)){
+                                        kolAddressInfoDTO.setDistrictId(districtId);
+                                    }
                                 }
                             }
 
