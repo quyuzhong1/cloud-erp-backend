@@ -115,7 +115,7 @@ public class ServiceException extends RuntimeException {
     /**
      * 国际化消息解析（带回退机制）
      */
-    public static String resolveMessage(ApiError apiError, Object... args) {
+    private static String resolveMessage(ApiError apiError, Object... args) {
         if (apiError == null) {
             return ApiError.HTTP_UNKNOWN.getMsg();
         }

@@ -633,6 +633,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         .map(detail -> {
                             SampleRecipientDTO.ProductDTO dto = new SampleRecipientDTO.ProductDTO();
                             dto.setSkuId(detail.getSkuId());
+                            dto.setSkuNo(detail.getSkuNo());
                             dto.setQuantity(detail.getRecipientQty());
                             return dto;
                         })
