@@ -177,10 +177,19 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //下载文件
         byte[] bytes = fileFeign.downloadFile(importDTO.getFileUrl());
 
+        //获取批次号，同一个文件同一次导入用同一个批次号
+        String batchNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
+        dto.setCode(batchNo);
+
         for (CfgLogisticsCostImportEntity costImportEntity : cfgLogisticsCostImportList) {
             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList = impotyDetailMap.get(costImportEntity.getId());
             if (CollUtil.isEmpty(cfgImportDetailList)) {
                 throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+            }
+            //查询配置的唯一识别号
+            List<CfgLogisticsCostImportDetailEntity> cfgDetailList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(cfgDetailList)) {
+                throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND,importDTO.getFileName());
             }
 
             ImportHistoryRecordExcelListener excelListenerUtil = new ImportHistoryRecordExcelListener(costImportEntity,cfgImportDetailList,dto,importDTO);
@@ -224,9 +233,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-
         //查询配置的唯一键字段
         List<CfgLogisticsCostImportDetailEntity> cfgDetailList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
+
+        //根据唯一字段进行数据查询
+
+
 
 
         ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();

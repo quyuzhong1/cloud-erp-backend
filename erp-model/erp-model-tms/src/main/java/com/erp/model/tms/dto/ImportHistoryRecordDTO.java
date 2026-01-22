@@ -361,6 +361,11 @@ public class ImportHistoryRecordDTO implements Serializable {
         private List<BaseDTO.ImportDTO> list;
 
         /**
+         * 批次号
+         */
+        private String code;
+
+        /**
          * 类型
          */
         private String type;
