@@ -56,7 +56,7 @@ public interface AuthUserWarehouseService extends SuperService<AuthUserWarehouse
      * @param warehouseIdList
      * @param warehouseAuthType
      */
-    void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType);
+    void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType, boolean ifAdd);
 
     /**
      * 根据用户获取店铺列表

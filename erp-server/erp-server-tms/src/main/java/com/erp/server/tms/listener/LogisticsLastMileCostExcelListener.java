@@ -28,6 +28,8 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     private final String taskId;
     private final String importType;
     private final Integer importCount;
+    private final Map<String,Object> extMap;
+
     @Getter
     private Integer count = 0;
     /**
@@ -53,10 +55,11 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
 
     private final LogisticsLastMileCostService logisticsLastMileCostService = SpringUtil.getBean(LogisticsLastMileCostService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
-    public LogisticsLastMileCostExcelListener(String taskId, String importType, Integer importCount) {
+    public LogisticsLastMileCostExcelListener(String taskId, String importType, Integer importCount,Map<String,Object> extMap) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
+        this.extMap = extMap;
     }
 
    /**
@@ -88,7 +91,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap,importType);
+                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap,importType,extMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
@@ -117,7 +120,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         if (!successList.isEmpty()) {
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap, importType);
+                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap, importType,extMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
