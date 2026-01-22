@@ -334,7 +334,7 @@ public class TfApiClient {
             headers.forEach((key, value) -> {
                 // 敏感信息脱敏处理（token、sign等）
                 String displayValue = value;
-                if (key != null && (key.toLowerCase().contains("token") || key.toLowerCase().contains("sign"))) {
+                if (key != null && (key.toLowerCase().contains("token") )) {
                     if (value != null && value.length() > 10) {
                         displayValue = value.substring(0, 6) + "****" + value.substring(value.length() - 4);
                     }
