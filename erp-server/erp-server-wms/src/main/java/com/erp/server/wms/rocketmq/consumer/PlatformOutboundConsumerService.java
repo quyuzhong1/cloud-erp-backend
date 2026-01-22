@@ -338,11 +338,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         List<SoB2cEntity> listByReferenceNo = new ArrayList<>();
         if(StringUtils.isNotBlank(swOrderNumber)) {
             // 查询已有订单
-            listBySwOrderNumber = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getPlatformCode, swOrderNumber).ne(SoB2cEntity::getSourceType, SoB2cSourcePlatformEnum.ENUM_SELF_ADD.getCode()).list();
+            listBySwOrderNumber = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getPlatformCode, swOrderNumber).list();
         }
         if(StringUtils.isNotBlank(referenceNo)){
             // 查询已有订单
-            listByReferenceNo = FeignQuery.create(SoB2cEntity.class).eq (SoB2cEntity::getPlatformCode, referenceNo).ne(SoB2cEntity::getSourceType, SoB2cSourcePlatformEnum.ENUM_SELF_ADD.getCode()).list();
+            listByReferenceNo = FeignQuery.create(SoB2cEntity.class).eq (SoB2cEntity::getPlatformCode, referenceNo).list();
         }
 
         if (CollUtil.isEmpty(listBySwOrderNumber) && CollUtil.isEmpty(listByReferenceNo)) {
