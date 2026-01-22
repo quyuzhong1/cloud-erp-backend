@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
- * 物流授权表 Mapper 接口
+ * 导入历史记录表 Mapper 接口
  * </p>
  *
  * @author will

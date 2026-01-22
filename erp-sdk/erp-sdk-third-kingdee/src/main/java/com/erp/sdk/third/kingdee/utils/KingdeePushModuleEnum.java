@@ -51,7 +51,7 @@ public enum KingdeePushModuleEnum {
     AP_PAYABLE("AP_Payable","应付单"),
     BD_RATE("BD_Rate","汇率"),
     SUBCONTRACT_BOM("SUB_PPBOM","委外用料清单"),
-
+    SUBCONTRACT_BOM_CHANGE("SUB_PPBOMChange","委外用料清单变更单"),
 
     ;
     private String code;

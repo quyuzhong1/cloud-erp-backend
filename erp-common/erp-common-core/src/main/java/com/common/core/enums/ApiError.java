@@ -51,7 +51,7 @@ public enum ApiError implements Serializable {
     HTTP_PAYLOAD_TOO_LARGE(413, "请求数据过大"),
     HTTP_UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型"),
     HTTP_TOO_MANY_REQUESTS(429, "访问频率过高，请稍后再试"),
-    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查："),
+    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查 "),
     HTTP_NOT_IMPLEMENTED(501, "接口未实现"),
     HTTP_BAD_GATEWAY(502, "网关错误"),
     HTTP_SERVICE_UNAVAILABLE(503, "服务不可用，服务器暂时过载或维护"),
@@ -291,7 +291,7 @@ public enum ApiError implements Serializable {
      */
     BILL_SAVE_FAILED(3000, "数据保存失败"),
     BILL_UPDATE_FAILED(3001, "数据修改失败"),
-    BILL_DATA_DUPLICATE(3002, "数据【{0}】重复，请修改后再提交"),
+    BILL_DATA_DUPLICATE(3002, "数据重复，请修改后再提交"),
     BILL_UPDATE_STATUS_NOT_ALLOWED(3003, "只有待提交和审核不通过数据支持修改"),
     BILL_SOURCE_NOT_FOUND(3004, "未找到来源单据"),
     BILL_SOURCE_DETAIL_NOT_FOUND(3005, "未找到来源单据明细"),
@@ -1006,7 +1006,7 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_NOT_FOUND(9662,"采购对账明细不存在"),
     PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(9663,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
     PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(9664,"采购框架合同类型附件不能为空"),
-    PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行变更"),
+    PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行下推"),
     PO_RETURN_DETAIL_NOT_EXISTS(9666,"未找到采购退货单明细"),
     PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
 
@@ -1657,6 +1657,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_SUPPLIER_NOT_EXIST(13616,"头程费用分摊物流商不存在"),
     LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND(13617,"导入文件名称不能为空"),
     LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND(13618,"导入的物流配置明细不能为空"),
+    LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND(13619,"文件【{0}】导入的物流配置明细唯一键未找到"),
 
     /**
      * 财务管理 错误 信息 14000-14500

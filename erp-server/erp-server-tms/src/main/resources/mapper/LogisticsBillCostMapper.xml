@@ -189,7 +189,12 @@
             lbc.third_length thirdLength,
             lbc.third_width thirdWidth,
             lbc.third_height thirdHeight,
-            lbc.third_actual_weight thirdActualWeight
+            lbc.third_actual_weight thirdActualWeight,
+            lbc.region_id as regionId,
+            lbc.dept_id as deptId,
+            lbc.partition_id as partitionId,
+            lb.is_allocate_required as isAllocateRequired,
+            lb.not_allocate_remark as notAllocateRemark
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join (

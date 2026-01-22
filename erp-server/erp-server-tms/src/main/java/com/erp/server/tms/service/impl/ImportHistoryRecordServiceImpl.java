@@ -17,6 +17,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -56,7 +58,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 物流授权表 服务实现类
+ * 导入历史记录表 服务实现类
  * </p>
  *
  * @author will
@@ -155,12 +157,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     @Override
-    public BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,String businessType,String costType,String processingType) {
+    public BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,ImportHistoryRecordDTO.ImportDTO dto) {
         if (CharSequenceUtil.isNotBlank(importDTO.getFileName())) {
             throw new ServiceException(ApiError.LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND);
         }
         //查询配置主表信息
-        List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList = cfgLogisticsCostImportService.listByImport(importDTO.getFileName(), businessType, costType);
+        List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList = cfgLogisticsCostImportService.listByImport(importDTO.getFileName(), dto.getBusinessType(), dto.getCostType());
         if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
             return new BatchResultDTO(importDTO.getTaskId(),importDTO.getFileName(),"未找到配置信息",Boolean.TRUE);
         }
@@ -175,13 +177,22 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //下载文件
         byte[] bytes = fileFeign.downloadFile(importDTO.getFileUrl());
 
+        //获取批次号，同一个文件同一次导入用同一个批次号
+        String batchNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
+        dto.setCode(batchNo);
+
         for (CfgLogisticsCostImportEntity costImportEntity : cfgLogisticsCostImportList) {
             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList = impotyDetailMap.get(costImportEntity.getId());
             if (CollUtil.isEmpty(cfgImportDetailList)) {
                 throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
             }
+            //查询配置的唯一识别号
+            List<CfgLogisticsCostImportDetailEntity> cfgDetailList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(cfgDetailList)) {
+                throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND,importDTO.getFileName());
+            }
 
-            ImportHistoryRecordExcelListener excelListenerUtil = new ImportHistoryRecordExcelListener(costImportEntity,cfgImportDetailList,processingType,importDTO.getTaskId(),importDTO.getImportType(), importDTO.getImportCount());
+            ImportHistoryRecordExcelListener excelListenerUtil = new ImportHistoryRecordExcelListener(costImportEntity,cfgImportDetailList,dto,importDTO);
             try {
                 EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil)
                         .headRowNumber(costImportEntity.getHeaderRow())
@@ -214,17 +225,31 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
-    public void handleImportSuccessList(String processingType,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
-                                        List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap, String importType) {
+    public void handleImportSuccessList(ImportHistoryRecordDTO.ImportDTO dto,BaseDTO.ImportDTO importDTO,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
+                                        List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap) {
         if (headList.size() != headList.stream().distinct().count()) {
             throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_HEAD_EXIST);
         }
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        //查询配置的唯一键字段
+        List<CfgLogisticsCostImportDetailEntity> cfgDetailList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
+
+        //根据唯一字段进行数据查询
 
 
 
+
+        ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();
+        addDTO.setReconciliationMonth(dto.getReconciliationMonth());
+        addDTO.setBusinessType(costImportEntity.getBusinessType());
+        addDTO.setFileUrl(importDTO.getFileUrl());
+        addDTO.setFileName(importDTO.getFileName());
+        addDTO.setStatus(ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
+        addDTO.setType(dto.getType());
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        addDTO.setOperationUserId(userInfo.getUid());
     }
 
     private void fillOne(ImportHistoryRecordDTO.ViewDTO data) {

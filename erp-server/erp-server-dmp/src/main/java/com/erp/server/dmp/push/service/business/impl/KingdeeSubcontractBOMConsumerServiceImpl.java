@@ -13,21 +13,22 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSubcontractBOMConsumerService;
-import com.erp.server.dmp.push.service.business.KingdeeSubcontractOrderConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.kingdee.bos.webapi.entity.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,7 +64,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM.getCode());
+        KingdeeApiUtils bomApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM.getCode());
+        KingdeeApiUtils bomChangeApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM_CHANGE.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
@@ -79,8 +82,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
          * 下推
          */
         if (SyncOperateEnum.OPERATE_PUSH.getCode().equals(operate)) {
-
-            operatePush(apiUtils,platformEntity, map,json,type);
+            operatePush(bomApiUtils,bomChangeApiUtils,apiUtils,platformEntity, map,json,type);
         }
 
     }
@@ -88,43 +90,86 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     /**
      * 下推
      */
-    public void operatePush(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,Integer type) {
-
+    public void operatePush(KingdeeApiUtils bomApiUtils,KingdeeApiUtils bomChangeApiUtils,KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,Integer type) {
         //判断金蝶系统是否已存在该数据
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
-        JSONObject model;
-        try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
-        } catch (Exception e) {
-            //新增或编辑
-            saveOrUpdate(apiUtils,platformEntity,map,type,json,param);
-            return;
-        }
+        LinkedList<String> queryFilters = new LinkedList<>();
+        String syncKingdeeId = map.get("syncKingdeeId").toString();
+        queryFilters.add(String.format("FSubReqId = '%s'", syncKingdeeId));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FId,FBillNo";
+        List<Map<String, Object>> queryList = bomApiUtils.queryList(filterStr, fieldKeys, 1, 1, 1);
+        if (!queryList.isEmpty()) {
+            KingdeeUtils.makeFieldJson(json,"Ids",".", queryList.get(0).get("FId"));
+            //下推
+            RepoResult result = bomApiUtils.push(json);
+            //数据id
+            String id = result.getResponseStatus().getSuccessEntitys().get(0).getId();
+            Map<String, Object> bomChangeViewMap = new HashMap<>();
+            bomChangeViewMap.put("syncKingdeeId",id);
+            JSONObject view = kingdeeCommonService.view(bomChangeApiUtils, platformEntity.getId(), bomChangeViewMap);
+            JSONObject convertData = convertData(view,syncKingdeeId);
 
-        //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
-        String id = String.valueOf(model.get("Id")) ;
-        Boolean flag = Boolean.FALSE;
-        //创建状态则直接修改、删除
-        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //给修改json对象赋值ID
-            KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            StringBuffer allKey = FastJsonUtil.getAllKey(json);
-            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
-            param.setNeedUpDateFields(apiFieldList);
-            //更新数据
-            Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
-            if (isAdd) {
-                //给明细id赋值
-                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
-                //更新明细id
-                updateKingdeeDetailId(jsonArray);
+            KingdeeParamDTO.SaveParamDTO saveParam = new KingdeeParamDTO.SaveParamDTO(convertData);
+            RepoResult save = apiUtils.saveKingDee(saveParam);
+            if (!save.getResponseStatus().isIsSuccess()) {
+                throw new ServiceException(ApiError.DMP_KINGDEE_ADD_FAILED);
             }
         }
-
     }
 
+    public JSONObject convertData(JSONObject view,String syncKingdeeId){
+        // 处理现有的PPBomEntry,添加FDeleteEntry=true
+        view.put("PPBomEntry", new JSONArray());
+        JSONArray ppBomEntries = view.getJSONArray("PPBomEntry");
+//        for (int i = 0; i < ppBomEntries.size(); i++) {
+//            JSONObject entry = ppBomEntries.getJSONObject(i);
+//            entry.put("FDeleteEntry", true);
+//        }
 
+        //添加新行
+        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
+        if (Objects.nonNull(subcontractOrder)) {
+            String mainId = subcontractOrder.getId();
+            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
+            if (!subcontractOrderDetails.isEmpty()) {
+                String subReqBillNO = view.get("SubReqBillNO").toString();
+                for (SubcontractOrderDetailEntity subcontractOrderDetail : subcontractOrderDetails) {
+                    createNewPpBomEntry(view,ppBomEntries,subcontractOrderDetail,subReqBillNO);
+                }
+            }
+        }
+        return view;
+    }
+
+    private void createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity detail, String subReqBillNO) {
+        Map<String, Object> entry = new HashMap<>();
+
+        //物料编码
+        entry.put("FMaterialId", detail.getSkuNo());
+        //单位
+        entry.put("FUnitID", "Pcs");
+        //BOM版本
+        entry.put("FBomId", "1");
+        //BOM版本
+        entry.put("FQty", detail.getRepairQty() == 0 ? detail.getQty() : detail.getRepairQty());
+        //委外用料清单编号
+        entry.put("FSUBPPBOMNo", subReqBillNO);
+        //用料类型
+        entry.put("FDosageType", "");
+        //子项类型
+        entry.put("FMaterialType", "");
+        //超发控制方式
+        entry.put("FOverControlMode", "");
+        //发料组织
+        entry.put("FSupplyOrg", "");
+        //发料方式
+        entry.put("FIssueType", "");
+        //需求日期
+        entry.put("FNeedDate2",detail.getPlanDeliveryDate().toString());
+        ppBomEntries.put(entry);
+        view.put("PPBomEntry", ppBomEntries);
+    }
 
     /**
      * @description: 给明细id赋值

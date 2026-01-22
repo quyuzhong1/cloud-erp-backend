@@ -22,14 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 物流授权表
+ * 导入历史记录表
  *
  * @author will
  * @since 2026-01-19
  */
 @Slf4j
 @RestController
-@LogSystemModule("物流授权表")
+@LogSystemModule("导入历史记录表")
 @RequestMapping("/importHistoryRecord")
 public class ImportHistoryRecordController extends BaseController {
 
@@ -75,7 +75,7 @@ public class ImportHistoryRecordController extends BaseController {
 
 
     /**
-     * 预处理导入的Excel数据
+     * 导入的Excel数据（预处理、导入、导入确认）
      * @author will
      * @date 2026/1/20 18:43
      * @param dto
@@ -87,7 +87,7 @@ public class ImportHistoryRecordController extends BaseController {
         for (BaseDTO.ImportDTO importDTO : dto.getList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = importHistoryRecordService.preprocessingImportExcel(importDTO,dto.getBusinessType(),dto.getCostType(),dto.getProcessingType());
+                resultDTO = importHistoryRecordService.preprocessingImportExcel(importDTO,dto);
             }catch (Exception e){
                 resultDTO = BatchResultDTO.fail(importDTO.getTaskId(), importDTO.getFileUrl(), e.getMessage());
             }

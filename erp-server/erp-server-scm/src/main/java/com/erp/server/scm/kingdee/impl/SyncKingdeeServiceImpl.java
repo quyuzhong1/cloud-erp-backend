@@ -70,7 +70,6 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         String syncKingdeeId = (String)params.get("kingdeeId");
         //明细数据
         Object details = params.get("details");
-        log.info("details : {}",details.toString());
         //采购订单
         if (ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString().equals(code)) {
             if (ObjectUtils.isNotEmpty(details)) {
