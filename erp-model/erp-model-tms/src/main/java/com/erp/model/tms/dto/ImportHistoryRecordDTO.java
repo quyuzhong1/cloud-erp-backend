@@ -321,14 +321,14 @@ public class ImportHistoryRecordDTO implements Serializable {
         private Integer matchCount;
 
         /**
-        * 处理状态
+        * 处理状态,ImportHistoryRecordStatusEnum
         */
         @NotBlank(message = "处理状态不能为空")
         @Size(max = 32,message = "处理状态最大长度不能超过32位")
         private String status;
 
         /**
-        * 类型
+        * 类型,
         */
         @NotBlank(message = "类型不能为空")
         @Size(max = 32,message = "类型最大长度不能超过32位")
@@ -361,19 +361,31 @@ public class ImportHistoryRecordDTO implements Serializable {
         private List<BaseDTO.ImportDTO> list;
 
         /**
+         * 类型
+         */
+        private String type;
+
+        /**
          * 类型, 自发货费用/尾程费用
          */
+        @NotBlank(message = "业务类型不能为空")
         private String businessType;
 
         /**
-         * 费用类型，api/manual
+         * 费用类型，api/excel
          */
-        private String costType;
+        private String costType = "excel";
 
         /**
          * 处理类型，预处理（preprocessing）/正式导入（import）/导入确认（confirmImport）
          */
+        @NotBlank(message = "处理类型不能为空")
         private String processingType;
+        /**
+         * 对账月份，YYYY-MM
+         */
+        @NotBlank(message = "对账月份不能为空")
+        private String reconciliationMonth;
     }
 
 }
