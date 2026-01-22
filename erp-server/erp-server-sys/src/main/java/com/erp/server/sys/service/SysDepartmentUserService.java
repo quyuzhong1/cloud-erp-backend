@@ -100,4 +100,6 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return List<SysDepartmentUserNumberDTO> 
      */
     List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(List<String> deptIdList);
+
+    void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd);
 }

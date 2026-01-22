@@ -198,7 +198,8 @@ public enum ApiError implements Serializable {
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
     COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
     COMMON_FILE_EMPTY(1111, "文件为空{0}"),
-
+    COMMON_FS_USER_NOT_BIND(98130,"飞书【{0}】事件,用户【{1}】未绑定飞书账号"),
+    COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -1434,6 +1435,9 @@ public enum ApiError implements Serializable {
     FIRST_MILE_SHIPMENT_DELIVERY_GENERATE_FAIL(11528,"下推头程发货单失败"),
     FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST(11529,"AWD出库货件不存在"),
     FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE(11530,"出库货件【{0}】没有发货时间，不支持生成头程发货单"),
+    LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH(11528,"物流费用导入对账月份不能为空"),
+    LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL(11529,"平台订单号、发货单号、销售单号、物流跟踪单号必须至少填一个"),
+
     /**
      * 样品管理 错误 信息 12000-12500
      */
@@ -1511,6 +1515,7 @@ public enum ApiError implements Serializable {
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
     VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
+    VM_VIRTUAL_WAREHOUSE_NOT_FOUND(12524,"虚拟仓【{0}】未找到"),
 
     /**
      * 客户管理 错误 信息 13000-13500

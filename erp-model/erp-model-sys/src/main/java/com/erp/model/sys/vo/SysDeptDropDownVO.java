@@ -25,4 +25,9 @@ public class SysDeptDropDownVO {
      */
     private String deptName;
 
+    /**
+     * 是否禁用 ： true 禁用  false 启用
+     */
+    private Boolean disabled;
+
 }

@@ -155,4 +155,15 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      * @return
      */
     List<TabListDTO> countTotalWeight(@Param("orderType") String orderType, @Param("permissionSql") String permissionSql);
+    /**
+     * 查询物流信息
+     * @author will
+     * @date 2026/1/9 15:31
+     * @param platformCodeList
+     * @param soCodeList
+     * @param soDeliveryCodeList
+     * @param trackNoList
+     * @return List<LogisticsBillVo>
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData(@Param("platformCodeList") List<String> platformCodeList,@Param("soCodeList") List<String> soCodeList,@Param("soDeliveryCodeList") List<String> soDeliveryCodeList,@Param("trackNoList") List<String> trackNoList);
 }

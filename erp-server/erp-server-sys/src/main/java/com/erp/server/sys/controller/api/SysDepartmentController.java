@@ -7,6 +7,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.mrp.dto.CfgNoticeDTO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -14,6 +15,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.erp.server.sys.service.SysDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,9 +43,9 @@ public class SysDepartmentController extends BaseController {
     /**
      * 分页列表
      */
-    @RequestMapping("/tree")
-    public ApiResult tree() {
-        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree();
+    @PostMapping("/tree")
+    public ApiResult tree(@RequestBody @Validated SysDepartmentDTO.TreeParamsDTO dto) {
+        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree(dto);
         return success(treeVO);
     }
 
@@ -115,7 +117,7 @@ public class SysDepartmentController extends BaseController {
         List<SysDepartmentEntity> entities = sysDepartmentService.listDept();
         List<SysDeptDropDownVO> resultList = entities.stream()
                 .map(x ->
-                        new SysDeptDropDownVO(x.getId(), x.getName())
+                        new SysDeptDropDownVO(x.getId(), x.getName(),x.getDisabled())
                 )
                 .collect(Collectors.toList());
         return success(resultList);
@@ -131,6 +133,21 @@ public class SysDepartmentController extends BaseController {
     public ApiResult<Void> importDepatKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
         sysDepartmentService.importDeptKingdee(file);
         return success();
+    }
+
+
+
+    /**
+     * 更新启禁用
+     * @Auther jack
+     * @Date 2026-01-07
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateDisabled")
+    public ApiResult<?> updateDisabled(@RequestBody @Validated SysDepartmentDTO.UpdateDisabledDTO dto) {
+        sysDepartmentService.updateDisabled(dto);
+        return  success();
     }
 
 }

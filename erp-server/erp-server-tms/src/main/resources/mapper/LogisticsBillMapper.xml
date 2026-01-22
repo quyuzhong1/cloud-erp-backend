@@ -709,4 +709,55 @@
         </if>
         GROUP BY tabFlag
     </select>
+
+    <!-- 查询物流信息 -->
+    <select id="listLogisticsBillVoByData" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
+        SELECT
+            lb.id,
+            lb.shop_id,
+            lb.shop_name,
+            lb.source_type,
+            lb.source_id,
+            lb.source_code,
+            lb.outstock_id,
+            lb.outstock_code,
+            lb.transport_no,
+            lb.channel_id,
+            lb.order_time,
+            lb.so_delivery_id,
+            lb.so_delivery_code,
+            lb.platform_code,
+            lbd.id as detailId,
+            lbd.track_status,
+            lbd.track_no
+        FROM logistics_bill lb
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted = FALSE
+        WHERE lb.is_deleted = FALSE
+        <trim prefix="AND (" suffix=")" prefixOverrides="OR">
+            <if test="platformCodeList != null and platformCodeList.size > 0">
+                or lb.platform_code IN
+                <foreach collection="platformCodeList" item="platformCode" open="(" close=")" separator=",">
+                    #{platformCode}
+                </foreach>
+            </if>
+            <if test="soCodeList != null and soCodeList.size > 0">
+                or lb.source_code IN
+                <foreach collection="soCodeList" item="soCode" open="(" close=")" separator=",">
+                    #{soCode}
+                </foreach>
+            </if>
+            <if test="soDeliveryCodeList != null and soDeliveryCodeList.size > 0">
+                or lb.so_delivery_code IN
+                <foreach collection="soDeliveryCodeList" item="soDeliveryCode" open="(" close=")" separator=",">
+                    #{soDeliveryCode}
+                </foreach>
+            </if>
+            <if test="trackNoList != null and trackNoList.size > 0">
+                or lbd.track_no IN
+                <foreach collection="trackNoList" item="trackNo" open="(" close=")" separator=",">
+                    #{trackNo}
+                </foreach>
+            </if>
+        </trim>
+    </select>
 </mapper>

@@ -24,6 +24,9 @@ public class SysUserInfoQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if ("tab".equals(field)) {
+            return getTabSql(value);
+        }
         if ("shopId".equals(field)) {
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             List<String> shopIdList;
@@ -55,5 +58,13 @@ public class SysUserInfoQueryHandler extends AbstractQueryHandler {
             return " sui.user_state " + compareCodeSplicingValueSql;
         }
         return null;
+    }
+
+    private String getTabSql(Object value) {
+        if ("all".equals(value)|| "".equals(value)){
+            return getQueryAllSql();
+        }
+        super.buildDefaultDTO("sui.user_state", value);
+        return super.getSplicingSQL();
     }
 }
