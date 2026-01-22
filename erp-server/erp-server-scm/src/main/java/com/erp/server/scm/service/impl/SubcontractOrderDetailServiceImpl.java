@@ -179,12 +179,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
+    public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, SubcontractOrderEntity subcontractOrderEntity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
         List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
-
+        String mainId = subcontractOrderEntity.getId();
         //原明细数据
         List<SubcontractOrderDetailEntity> oldList = this.listByMainId(mainId);
         //将子级SKU添加入集合判断是否删除
@@ -203,8 +203,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         checkSourceDetailQty(list,mainId);
 
-        //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
+        List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
+        if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+            resultList.addAll(generateRepairResultDetail(list, mainId,Boolean.TRUE));
+        } else {
+            //处理父子级数据
+            resultList.addAll(generateResultDetail(list, mainId,Boolean.TRUE));
+        }
 
         this.saveOrUpdateBatch(resultList);
         //标记SKU
@@ -221,8 +226,15 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
 
         checkSourceDetailQty(list,mainId);
-        //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
+
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(mainId);
+        List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
+        if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+            resultList.addAll(generateRepairResultDetail(list, mainId,Boolean.TRUE));
+        } else {
+            //处理父子级数据
+            resultList.addAll(generateResultDetail(list, mainId,Boolean.TRUE));
+        }
         //变更不更新bom版本
         resultList.forEach(obj -> {
             obj.setBomVersion(null);
@@ -676,7 +688,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 //已下推数量
                 Integer pushdownQty = purchaseQty + subcontractQty;
 
-                if (detailEntity.getQty() > returnQty - pushdownQty) {
+                if (detailEntity.getRepairQty() > returnQty - pushdownQty) {
                     errorMessages.add(StrUtil.format("SKU【{}】可下推数量为【{}】，请检查", skuVO.getSkuNo(), returnQty - pushdownQty));
                     continue;
                 }

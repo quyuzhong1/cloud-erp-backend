@@ -541,4 +541,10 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/subcontractOrder/pushDownSubcontractOrder")
     Boolean pushDownSubcontractOrder(SubcontractOrderDTO.AddDTO dto);
+
+    /**
+     * 根据金蝶id查询委外订单
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractOrderByKingdeeId")
+    SubcontractOrderEntity listSubcontractOrderByKingdeeId(@RequestBody String kingdeeId);
 }

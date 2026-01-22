@@ -51,7 +51,7 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @param detailList
      * @param mainId
      */
-    void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId);
+    void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, SubcontractOrderEntity subcontractOrderEntity);
 
     /**
      * @description: 根据变更更新
