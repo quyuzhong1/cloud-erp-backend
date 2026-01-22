@@ -23,7 +23,7 @@ public class SysUserInfoEntity implements Serializable {
 	/**
 	 * 用户ID
 	 */
-   @TableId(value = "uid",type = IdType.ASSIGN_ID)
+   	@TableId(value = "uid",type = IdType.ASSIGN_ID)
 	private String uid;
 	/**
 	 * 用户名
@@ -148,5 +148,10 @@ public class SysUserInfoEntity implements Serializable {
 	@TableField("sync_kingdee_id")
 	private String syncKingdeeId;
 
-	
+	/**
+	 * 第三方授权类型  SysUserInfoThirdAuthTypeEnum
+	 */
+	@TableField("third_auth_type")
+	private String thirdAuthType;
+
 }

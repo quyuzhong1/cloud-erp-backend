@@ -21,4 +21,6 @@ import java.util.List;
 public interface SysRoleUserMapper extends BaseMapper<SysRoleUserEntity> {
 
     List<SysUserDTO> findRoleUser(@Param("params") BaseSearchDTO dto);
+
+    List<SysUserDTO.RoleDTO> listRoleByUserIds(@Param("userIds")  List<String> userIds);
 }

@@ -17,6 +17,7 @@ import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.UserTypeEnum;
@@ -35,7 +36,7 @@ import com.common.message.service.MailService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.SysRoleUserEntity;
+import com.erp.model.sys.entity.SysRoleEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.password.PassEntity;
@@ -43,12 +44,14 @@ import com.erp.model.sys.entity.password.PassHandler;
 import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.sys.enums.SysUserInfoThirdAuthTypeEnum;
 import com.erp.model.sys.enums.ThirdPlatformEnums;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -77,14 +80,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_USER_INFO;
 
 @Slf4j
 @Service
@@ -143,8 +147,31 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private SysRefererConfigService sysRefererConfigService;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysRoleService sysRoleService;
+
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
+
+    @Override
+    public List<SysUserInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
+        SysUserInfoDTO.PagingParamDTO searchParam = new SysUserInfoDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<SysUserInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        // 获取状态列表
+        List<SysUserInfoDTO.TabListDTO> result = new ArrayList<>();
+        result.add(new SysUserInfoDTO.TabListDTO("all","全部", 0));
+        SysUserInfoDTO.TabListDTO fTab = list.stream().filter(e -> e.getTabFlag().equals("1")).findFirst().orElse(new SysUserInfoDTO.TabListDTO("1", "启用", 0));
+        fTab.setTabFlagName("启用");
+        result.add(fTab);
+        SysUserInfoDTO.TabListDTO tTab = list.stream().filter(e -> e.getTabFlag().equals("0")).findFirst().orElse(new SysUserInfoDTO.TabListDTO("0", "禁用", 0));
+        tTab.setTabFlagName("禁用");
+        result.add(tTab);
+        return result;
+    }
+
 
 
     @Override
@@ -190,7 +217,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             entity.setIsSuper(false);
         }
         boolean saveResult = this.save(entity);
-        if (needChangePwd){
+        if (needChangePwd && StringUtils.isNotBlank(entity.getEmail())){
             sendPwdEmail(entity,randomString);
         }
         //保存成功 就去更新角色表
@@ -200,9 +227,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
             //店铺授权
-            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType(),true);
             //仓库权限
-            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType(),true);
+            //部门授权
+            sysDepartmentUserService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getDepartmentIdList(),true);
+
             //同步金蝶员工数据
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
@@ -293,9 +323,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
             //店铺授权
-            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType(),false);
             //仓库权限
-            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType(),false);
+            //部门授权
+            sysDepartmentUserService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getDepartmentIdList(),false);
             //同步金蝶员工数据
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
@@ -452,25 +484,36 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     /**
      * 分页获取用户信息
      *
-     * @param dto
+     * @param pagingParamDTO
      * @return com.cloud.erp.common.common.vo.PagingVO
      * @author yl
      * @date 2022-07-12 18:30
      */
 
     @Override
-    public PagingVO<UserManageDTO> paging(PagingDTO<SysUserPagingSearchDTO> dto) {
-        Page<UserManageDTO> query = new Page<UserManageDTO>(dto.getCurrPage(), dto.getPageSize());
-        SysUserPagingSearchDTO params = dto.getParams();
-        IPage<UserManageDTO> pageData = baseMapper.paging(query, params, params.getRoleIds());
-        List<UserManageDTO> list = pageData.getRecords();
+    public PagingVO<UserManageDTO> paging(PagingDTO<SysUserInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<UserManageDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<UserManageDTO> list) {
         List<String> userIds = list.stream().map(UserManageDTO::getUid).collect(Collectors.toList());
         //角色
-        List<SysRoleUserEntity> roleUserList = sysRoleUserService.findRoleIdsByUidList(userIds);
-        Map<String, List<String>> roleMap = new HashMap<>();
+        List<SysUserDTO.RoleDTO> roleUserList = sysRoleUserService.listRoleByUserIds(userIds);
+        Map<String, List<String>> roleIdMap = new HashMap<>();
+        Map<String, String> roleMap = new HashMap<>();
         if (CollUtil.isNotEmpty(roleUserList)){
-            roleMap = roleUserList.stream().collect(Collectors.groupingBy(SysRoleUserEntity::getUserId, Collectors.mapping(SysRoleUserEntity::getRoleId, Collectors.toList())));
+            roleMap = roleUserList.stream().collect(Collectors.groupingBy(SysUserDTO.RoleDTO::getUserId, Collectors.mapping(SysUserDTO.RoleDTO::getRoleName,Collectors.joining(";"))));
+            roleIdMap = roleUserList.stream().collect(Collectors.groupingBy(SysUserDTO.RoleDTO::getUserId, Collectors.mapping(SysUserDTO.RoleDTO::getRoleId, Collectors.toList())));
         }
+
         //店铺
         List<SysUserDTO.ShopDTO> shopDTOList = authUserShopService.listShopIdByUserIds(userIds);
         Map<String, List<String>> shopMap = new HashMap<>();
@@ -487,16 +530,43 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             warehouseMap = warehouseDTOList.stream().collect(Collectors.groupingBy(SysUserDTO.WarehouseDTO::getUserId, Collectors.mapping(SysUserDTO.WarehouseDTO::getWarehouseId, Collectors.toList())));
             warehouseAuthTypeMap = warehouseDTOList.stream().collect(Collectors.toMap(SysUserDTO.WarehouseDTO::getUserId, SysUserDTO.WarehouseDTO::getAuthType,(existing,replacement) -> existing));
         }
-        for (UserManageDTO vo : list) {
-            vo.setRoleIdList(roleMap.getOrDefault(vo.getUid(), Collections.emptyList()));
-            vo.setShopAuthType(shopAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(),Collections.emptyList()));
-            vo.setWarehouseAuthType(warehouseAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(),Collections.emptyList()));
-        }
-        return new PagingVO<>(pageData);
-    }
+        //部门
+        List<SysDepartmentUserNumberDTO> departmentList = sysDepartmentUserService.listDeptUserByUserIdList(userIds);
+        Map<String, String> departmentMap = new HashMap<>();
+        Map<String, List<String>> departmentIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(departmentList)){
+            departmentMap = departmentList.stream().collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId, Collectors.mapping(SysDepartmentUserNumberDTO::getDepartmentName,Collectors.joining(";"))));
 
+            departmentIdMap = departmentList.stream().collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId, Collectors.mapping(SysDepartmentUserNumberDTO::getDepartmentId, Collectors.toList())));
+        }
+
+        for (UserManageDTO vo : list) {
+            vo.setRoleIdList(roleIdMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setRoleNames(roleMap.getOrDefault(vo.getUid(), ""));
+            vo.setShopAuthType(shopAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
+            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setWarehouseAuthType(warehouseAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
+            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setDepartmentIdList(departmentIdMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setDepartmentNames(departmentMap.getOrDefault(vo.getUid(), ""));
+
+            if (vo.getUserState() == 1) {
+                vo.setUserStateName("启用");
+            } else if (vo.getUserState() == 0) {
+                vo.setUserStateName("禁用");
+            }
+
+            String thirdAuthType = vo.getThirdAuthType();
+            if (StringUtils.isNotBlank(thirdAuthType)) {
+                List<String> thirdAuthTypeList = Arrays.asList(thirdAuthType.split(";"));
+                String thirdAuthTypeName = thirdAuthTypeList.stream()
+                        .map(s -> SysUserInfoThirdAuthTypeEnum.getName(s))
+                        .filter(name -> StringUtils.isNotBlank(name))
+                        .collect(Collectors.joining(","));
+                vo.setThirdAuthTypeName(StrUtil.format("【{}】已授权", thirdAuthTypeName));
+            }
+        }
+    }
 
     /**
      * 账号绑定第三方平台
@@ -542,8 +612,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 throw new ServiceException(ApiError.AUTH_ACCOUNT_ALREADY_BOUND);
             }
             sysUserThirdService.bindingThirdParty(uid, flagId,thirdOpenId,thirdUserId, bindingPlatform);
-        }
 
+            SysUserInfoEntity sysUserInfoEntity = getById(uid);
+            if(Objects.nonNull(sysUserInfoEntity)){
+                sysUserInfoEntity.setThirdAuthType(bindingPlatform);
+                updateById(sysUserInfoEntity);
+            }
+        }
     }
 
     /**
@@ -1916,6 +1991,54 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         } catch (Exception e) {
             log.error("通过App-Id获取飞书用户UnionId异常，appId: {}", appId, e);
             throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "获取飞书用户UnionId失败：" + e.getMessage());
+        }
+    }
+    @Override
+    public void exportList(SysUserInfoDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("用户管理导出", EXPORT_SYS_USER_INFO.getCode(), param);
+    }
+
+    @Override
+    public void batchRefUserIdByType(SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        String uid = refParamseDTO.getUid();
+        String type = refParamseDTO.getType();
+        String authType = refParamseDTO.getAuthType();
+        String refType = refParamseDTO.getRefType();
+        List<String> refIdList = refParamseDTO.getRefIdList();
+
+        if(Objects.equals(refType, "role")){
+            if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(authType)){
+                refIdList = sysRoleService.list().stream().map(SysRoleEntity::getId).distinct().collect(Collectors.toList());
+            }
+
+            if(type.equals("reapportion")){
+                sysRoleUserService.batchInsertRef(uid, refIdList, false);
+            }else if(type.equals("add")){
+                sysRoleUserService.batchInsertRef(uid, refIdList, true);
+            }
+        }else if(Objects.equals(refType, "shop")){
+            //店铺授权
+            if(type.equals("reapportion")){
+                authUserShopService.batchSaveOrUpdate(uid,refIdList,authType,false);
+            }else if(type.equals("add")){
+                authUserShopService.batchSaveOrUpdate(uid,refIdList,authType,true);
+            }
+
+        }else if(Objects.equals(refType, "warehouse")){
+            //仓库权限
+            if(type.equals("reapportion")){
+                authUserWarehouseService.batchSaveOrUpdate(uid,refIdList,authType,false);
+            }else if(type.equals("add")){
+                authUserWarehouseService.batchSaveOrUpdate(uid,refIdList,authType,true);
+            }
+
+        }else if(Objects.equals(refType, "department")){
+            //部门授权
+            if(type.equals("reapportion")){
+                sysDepartmentUserService.batchSaveOrUpdate(uid,refIdList,false);
+            }else if(type.equals("add")){
+                sysDepartmentUserService.batchSaveOrUpdate(uid,refIdList,true);
+            }
         }
     }
 }

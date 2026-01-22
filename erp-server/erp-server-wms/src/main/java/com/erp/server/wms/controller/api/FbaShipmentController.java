@@ -24,7 +24,6 @@ import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -246,7 +245,7 @@ public class FbaShipmentController extends BaseController {
     @PostMapping("/generateDeliverSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存：id = {id}")
     public ApiResult generateDeliverSave(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
-        Boolean flag = fbaShipmentService.generateDeliverSave(list);
+        Boolean flag = fbaShipmentService.generateDeliverSave(list, ShipmentSourceTypeEnum.FBA.getCode());
         return flag ? success() : failure();
     }
 
@@ -273,7 +272,7 @@ public class FbaShipmentController extends BaseController {
     @PostMapping("/generateDeliverSaveAndSubmit")
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "下推发货单保存并提交：id = {id}")
     public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
-        Boolean flag = fbaShipmentService.generateDeliverSaveAndSubmit(list);
+        Boolean flag = fbaShipmentService.generateDeliverSaveAndSubmit(list, ShipmentSourceTypeEnum.FBA.getCode());
         return flag ? success() : failure();
     }
 
