@@ -234,7 +234,7 @@ public class LogisticsSupplierController extends BaseController {
      * 物流商渠道树形结构
      * @return
      */
-    @PostMapping("/tree")
+    @PostMapping("/listSupplierTree")
     public ApiResult<List<LogisticsSupplierDTO.ListChildTreeDTO>> listSupplierTree(@RequestBody LogisticsSupplierDTO.SelectDTO dto){
         return success(logisticsSupplierService.listSupplierTree(dto));
     }
