@@ -54,8 +54,9 @@
             ao.bill_date as billDate
         FROM
             awd_outstock ao
-            LEFT JOIN awd_outstock_detail aod ON aod.main_id = ao.ID
+            LEFT JOIN awd_outstock_detail aod ON aod.main_id = ao.ID and aod.is_deleted = false
         WHERE 1 = 1
+            and ao.is_deleted = false
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}
         </if>
