@@ -546,15 +546,26 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             Map<String, List<KolPartnerInfoImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(KolPartnerInfoImportExcelDTO::getNickname));
 
             List<KolPartnerInfoDTO.AddDTO> addList = new ArrayList<>();
+            // 用于记录当前批次中已处理的昵称，避免同一批次内重复
+            Set<String> processedNicknameSet = new HashSet<>();
 
             for (Map.Entry<String, List<KolPartnerInfoImportExcelDTO>> entry : collect.entrySet()) {
                 List<String> errorMsgList = new ArrayList<>();
 
                 String nickname = entry.getKey();
+                // 如果昵称为空，跳过处理
+                if(StringUtils.isBlank(nickname)){
+                    continue;
+                }
+                // 检查数据库中是否已存在
                 if(oldMap.containsKey(nickname)){
                     errorMsgList.add("达人昵称已存在");
-                }else {
-                    oldMap.put(nickname, "1");
+                } else if(processedNicknameSet.contains(nickname)){
+                    // 检查当前批次内是否重复（理论上不会发生，因为已经分组）
+                    errorMsgList.add("达人昵称已存在");
+                } else {
+                    // 记录当前批次中已处理的昵称
+                    processedNicknameSet.add(nickname);
                 }
 
 
@@ -744,22 +755,25 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
                     if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
                         isAdd = Boolean.FALSE;
-                        List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
+                        List<String> itemErrorList = Stream.concat(errorMsgList.stream(), msgList.stream()).distinct().collect(Collectors.toList());
                         item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
                         errorList.add(item);
                     }
-                    if(isAdd){
-                        addDTO.setKolAddressInfoDTOList(kolAddressInfoDTOList);
-                        addDTO.setKolCooperationPlatformDTOList(kolCooperationPlatformDTOList);
-                        addList.add(addDTO);
-                    }
                 }
 
-                if(CollUtil.isNotEmpty(addList)){
-                    KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
-                    for (KolPartnerInfoDTO.AddDTO dto : addList) {
-                        kolPartnerInfoService.add(dto);
-                    }
+                // 内层循环结束后，仅当本批次无错误时再 set 并加入 addList，避免同一 addDTO 被重复添加
+                if (isAdd) {
+                    addDTO.setKolAddressInfoDTOList(kolAddressInfoDTOList);
+                    addDTO.setKolCooperationPlatformDTOList(kolCooperationPlatformDTOList);
+                    addList.add(addDTO);
+                }
+            }
+
+            // 所有 entry 处理完毕后，再统一落库，避免在循环内重复插入
+            if (CollUtil.isNotEmpty(addList)) {
+                KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
+                for (KolPartnerInfoDTO.AddDTO dto : addList) {
+                    kolPartnerInfoService.add(dto);
                 }
             }
         }
