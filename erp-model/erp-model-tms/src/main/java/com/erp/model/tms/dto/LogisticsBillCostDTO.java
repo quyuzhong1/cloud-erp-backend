@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -459,6 +458,10 @@ public class LogisticsBillCostDTO implements Serializable {
          * 是否分摊
          */
         private Boolean isAllocateRequired;
+        /**
+         * 是否分摊名称
+         */
+        private String isAllocateRequiredName;
         /**
          * 不分摊原因
          */

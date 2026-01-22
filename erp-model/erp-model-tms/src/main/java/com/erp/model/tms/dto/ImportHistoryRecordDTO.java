@@ -363,6 +363,7 @@ public class ImportHistoryRecordDTO implements Serializable {
         /**
          * 批次号
          */
+
         private String code;
 
         /**

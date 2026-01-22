@@ -722,7 +722,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             listDTO.setDeptName(deptNameMap.getOrDefault(listDTO.getDeptId(), ""));
             //军区名称
             listDTO.setPartitionName(militaryAreaNameMap.getOrDefault(listDTO.getPartitionId(),""));
-            
+            //是否分摊
+            listDTO.setIsAllocateRequiredName(listDTO.getIsAllocateRequired() ? "是" : "否");
             //预估运费
             BigDecimal exchangeEstimatedShippingCost = BigDecimal.ZERO;
             List<CostViewDTO> costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.SHIPPING_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -2255,7 +2256,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public LogisticsBillCostDTO.TotalCountDTO listTotalCount(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+    public LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto) {
         List<LogisticsBillCostDTO.ListDTO> list = baseMapper.listTotalCount(dto);
         if (CollUtil.isEmpty(list)) {
             return new LogisticsBillCostDTO.TotalCountDTO();

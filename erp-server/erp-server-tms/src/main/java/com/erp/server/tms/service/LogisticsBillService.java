@@ -307,4 +307,12 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillVo>
      */
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData( List<String> platformCodeList, List<String> soCodeList, List<String> soDeliveryCodeList, List<String> trackNoList);
+    /**
+     * 根据唯一键查询物流单信息
+     * @author will
+     * @date 2026/1/22 15:03
+     * @param paramMap
+     * @return List<LogisticsBillVo>
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillByUniqueKey(Map<String, List<Object>> paramMap);
 }

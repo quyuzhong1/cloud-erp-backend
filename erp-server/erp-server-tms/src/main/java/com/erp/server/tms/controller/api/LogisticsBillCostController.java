@@ -430,7 +430,7 @@ public class LogisticsBillCostController extends BaseController {
             tableAlias = "lbc"
     )
     @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
-    public ApiResult<LogisticsBillCostDTO.TotalCountDTO> listTotalCount(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto){
+    public ApiResult<LogisticsBillCostDTO.TotalCountDTO> listTotalCount(@RequestBody @Validated LogisticsBillCostDTO.PagingParamDTO dto){
         return success(logisticsBillCostService.listTotalCount(dto));
     }
 }
