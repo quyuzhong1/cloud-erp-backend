@@ -103,4 +103,6 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(@Param("dto")  LogisticsChannelDTO.PlatformWarehouseDTO dto);
 
     LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(@Param("channelCode") String channelCode, @Param("logisticsPlatform") String logisticsPlatform);
+
+    List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel(@Param("params") LogisticsSupplierDTO.SelectDTO params);
 }

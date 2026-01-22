@@ -427,20 +427,42 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     @Override
     public List<LogisticsSupplierDTO.ListChildTreeDTO> tree() {
-        List<LogisticsSupplierEntity> dbList = list();
-        List<LogisticsSupplierDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
-        List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
+        List<LogisticsSupplierDTO.ListChildTreeDTO> list = baseMapper.listSupplier(new LogisticsSupplierDTO.SelectDTO());
+        List<LogisticsSupplierDTO.ListChildTreeDTO> allChannelList = logisticsChannelService.listChannel(new LogisticsSupplierDTO.SelectDTO());
         for (LogisticsSupplierDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
-            List<LogisticsChannelEntity> channelList = allChannelList.stream().
-                    filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsChannelEntity::getDisabled)).
+            List<LogisticsSupplierDTO.ListChildTreeDTO> channelList = allChannelList.stream().
+                    filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsSupplierDTO.ListChildTreeDTO::getDisabled)).
                     collect(Collectors.toList());
-            List<LogisticsSupplierDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
-            item.setChildren(childrenList);
+            item.setChildren(channelList);
         }
         return list;
     }
-
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listSupplierTree(LogisticsSupplierDTO.SelectDTO dto) {
+        List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel;
+        List<LogisticsSupplierDTO.ListChildTreeDTO> listSupplier;
+        if (Objects.nonNull(dto) && CharSequenceUtil.isNotBlank(dto.getSearchKeyword())){
+            listChannel = logisticsChannelService.listChannel(dto);
+            List<String> supplierIds = CollUtil.isNotEmpty(listChannel) ? listChannel.stream().map(LogisticsSupplierDTO.ListChildTreeDTO::getMainId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()) : new ArrayList<>();
+            dto.setSupplierIds(supplierIds);
+            listSupplier = CollUtil.isNotEmpty(supplierIds) ? baseMapper.listSupplier(dto) : new ArrayList<>();
+        }else {
+            listSupplier = baseMapper.listSupplier(dto);
+            listChannel = logisticsChannelService.listChannel(dto);
+        }
+        if (CollectionUtils.isEmpty(listSupplier)){
+            return Collections.emptyList();
+        }
+        for (LogisticsSupplierDTO.ListChildTreeDTO item : listSupplier) {
+            String id = item.getId();
+            List<LogisticsSupplierDTO.ListChildTreeDTO> channelList = listChannel.stream().
+                    filter(c -> c.getMainId().equals(id)).
+                    collect(Collectors.toList());
+            item.setChildren(channelList);
+        }
+        return listSupplier;
+    }
     @Override
     public List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList) {
         List<LogisticsSupplierDTO.LogisticsSupplierListDTO> resultList = new ArrayList<>();
