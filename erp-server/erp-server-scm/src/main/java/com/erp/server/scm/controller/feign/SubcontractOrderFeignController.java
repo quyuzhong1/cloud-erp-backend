@@ -129,4 +129,9 @@ public class SubcontractOrderFeignController {
         SubcontractOrderEntity add = subcontractOrderService.add(dto);
         return Boolean.TRUE;
     }
+
+    @PostMapping("/listSubcontractOrderByKingdeeId")
+    SubcontractOrderEntity listSubcontractOrderByKingdeeId(@RequestBody String kingdeeId){
+        return subcontractOrderService.listSubcontractOrderByKingdeeId(kingdeeId);
+    }
 }

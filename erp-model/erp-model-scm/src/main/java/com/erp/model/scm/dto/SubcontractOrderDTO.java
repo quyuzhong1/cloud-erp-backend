@@ -504,6 +504,11 @@ public class SubcontractOrderDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
          * 来源明细id
          */
         private String sourceDetailId;
