@@ -528,7 +528,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
             List<String> nicknameList = successList.stream().map(KolPartnerInfoImportExcelDTO::getNickname).distinct().collect(Collectors.toList());
             //企业达人库旧数据
-            List<KolPartnerInfoEntity> oldList = lambdaQuery().in(KolPartnerInfoEntity::getNickname, nicknameList).list();
+            List<KolPartnerInfoEntity> oldList = lambdaQuery().in(KolPartnerInfoEntity::getNickname, nicknameList).eq(KolPartnerInfoEntity::getIsDeleted, false).list();
             Map<String, String> oldMap = oldList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
 
             //按昵称分组
