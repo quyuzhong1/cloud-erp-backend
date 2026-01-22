@@ -163,6 +163,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private PickingDetailService pickingDetailService;
 
+    @Lazy
     @Resource
     private FbaShipmentService fbaShipmentService;
 
@@ -1915,6 +1916,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             addDTO.setDetailList(detailAddList);
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
+            //异步生成FBA面单获取
+            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) && CharSequenceUtil.isNotBlank(view.getFbaShipmentCode())){
+                fbaShipmentService.asyncPrintLabel(addDTO.getSourceCode(),view.getFbaShipmentCode());
+            }
             //回写要货申请的头程发货单生成状态
             writeBackRequisitionDeliveryPushDownStatus(addDTO.getSourceId());
             if (Boolean.TRUE.equals(isSubmit)) {
