@@ -422,7 +422,7 @@ public class LogisticsBillCostController extends BaseController {
      * @param dto 
      * @return ApiResult<TotalCountDTO>
      */
-    @GetMapping("/listTotalCount")
+    @PostMapping("/listTotalCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             shopTableField = "lb.shop_id",
