@@ -2306,27 +2306,27 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Async("wmsErpExecutor")
     public void asyncPrintLabel(String sourceCode, String shipmentCode) {
-        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
-        if (CollectionUtil.isEmpty(packingTaskEntityList)){
-            log.warn("未找到关联的打包任务：sourceCode={}", sourceCode);
-            return;
-        }
-        PackingTaskEntity packingTaskEntity = packingTaskEntityList.get(0);
-        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(shipmentCode));
-        if (CollectionUtil.isEmpty(fbaShipmentPackingEntityList)){
-            log.warn("未找到关联的货件记录：shipmentCode={}", shipmentCode);
-            return;
-        }
-        List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).distinct().collect(Collectors.toList());
-        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packingTaskEntity.getId()));
-        if (CollectionUtil.isEmpty(wmsCartonEntityList)){
-            log.warn("未找到关联的箱子记录：packingTaskId={}", packingTaskEntity.getId());
-            return;
-        }
-        Integer count = Math.toIntExact(wmsCartonEntityList.stream().filter(e -> cartonIds.contains(e.getId())).count());
+//        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
+//        if (CollectionUtil.isEmpty(packingTaskEntityList)){
+//            log.warn("未找到关联的打包任务：sourceCode={}", sourceCode);
+//            return;
+//        }
+//        PackingTaskEntity packingTaskEntity = packingTaskEntityList.get(0);
+//        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(shipmentCode));
+//        if (CollectionUtil.isEmpty(fbaShipmentPackingEntityList)){
+//            log.warn("未找到关联的货件记录：shipmentCode={}", shipmentCode);
+//            return;
+//        }
+//        List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).distinct().collect(Collectors.toList());
+//        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packingTaskEntity.getId()));
+//        if (CollectionUtil.isEmpty(wmsCartonEntityList)){
+//            log.warn("未找到关联的箱子记录：packingTaskId={}", packingTaskEntity.getId());
+//            return;
+//        }
+//        Integer count = Math.toIntExact(wmsCartonEntityList.stream().filter(e -> cartonIds.contains(e.getId())).count());
         FbaShipmentDTO.PrintLabelDTO dto = new FbaShipmentDTO.PrintLabelDTO();
         dto.setFbaShipmentCode(shipmentCode);
-        dto.setPageSize(count);
+//        dto.setPageSize(count);
         dto.setPageType(FbaPageTypeEnum.FBA_PLAIN_PAPER.getCode());
         printLabel(dto);
     }
