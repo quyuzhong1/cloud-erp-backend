@@ -74,7 +74,7 @@ public interface AuthUserShopService extends SuperService<AuthUserShopEntity> {
      * @param shopIdList
      * @param shopAuthType
      */
-    void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType);
+    void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType, boolean ifAdd);
 
     void addUserShopAuth(AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO);
     /**

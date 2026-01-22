@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseSearchDTO;
@@ -12,10 +13,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -38,17 +37,26 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
             deleteUidRoleRef(uid);
         }
         if (CollectionUtils.isNotEmpty(roleIds)) {
-            List<SysRoleUserEntity> saveList = new LinkedList<>();
-            for (String roleId : roleIds) {
-                SysRoleUserEntity entity = new SysRoleUserEntity();
-                entity.setRoleId(roleId);
-                entity.setUserId(uid);
-                saveList.add(entity);
+            //排除已存在的关联数据
+            List<SysRoleUserEntity> oldRoleIds = lambdaQuery().in(SysRoleUserEntity::getRoleId, roleIds).eq(SysRoleUserEntity::getUserId,uid).list();
+            if(CollUtil.isNotEmpty(oldRoleIds)){
+                Set<String> existingIds = oldRoleIds.stream()
+                        .map(SysRoleUserEntity::getRoleId)
+                        .collect(Collectors.toSet());
+                //把oldList从roleIds中删除
+                roleIds.removeIf(existingIds::contains);
             }
-            this.saveBatch(saveList);
+            if(CollectionUtils.isNotEmpty(roleIds)){
+                List<SysRoleUserEntity> saveList = new LinkedList<>();
+                for (String roleId : roleIds) {
+                    SysRoleUserEntity entity = new SysRoleUserEntity();
+                    entity.setRoleId(roleId);
+                    entity.setUserId(uid);
+                    saveList.add(entity);
+                }
+                this.saveBatch(saveList);
+            }
         }
-
-
     }
 
     /**
@@ -165,6 +173,14 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         queryWrapper.eq(SysRoleUserEntity::getRoleId,roleId);
         return baseMapper.selectList(queryWrapper);
 
+    }
+
+    @Override
+    public List<SysUserDTO.RoleDTO> listRoleByUserIds(List<String> userIds) {
+        if(CollUtil.isEmpty(userIds)){
+            return  Collections.emptyList();
+        }
+        return baseMapper.listRoleByUserIds(userIds);
     }
 
 
