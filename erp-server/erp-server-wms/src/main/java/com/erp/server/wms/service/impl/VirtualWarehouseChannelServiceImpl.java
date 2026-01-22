@@ -12,6 +12,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.Md5Util;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -609,7 +610,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 matchesOrWildcard(e1.getRelationId(), e2.getRelationId()) &&
                 matchesOrWildcard(e1.getPartitionId(), e2.getPartitionId()));
         if (isSame){
-            String format = ServiceException.resolveMessage(ApiError.VM_CHANNEL_RELATION_ERROR,  dictPlatformName,CharSequenceUtil.isBlank(shopName) ? "全部" : shopName, CharSequenceUtil.isBlank(partitionName) ? "全部" : partitionName, virtualWarehouseName);
+            String format = MessageUtils.getMessage(ApiError.VM_CHANNEL_RELATION_ERROR,  dictPlatformName,CharSequenceUtil.isBlank(shopName) ? "全部" : shopName, CharSequenceUtil.isBlank(partitionName) ? "全部" : partitionName, virtualWarehouseName);
             if (!msg.toString().contains(format)){
                 msg.append(format);
             }
