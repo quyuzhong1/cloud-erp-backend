@@ -632,7 +632,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                     List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
                     mainInfo.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
                     errorList.add(mainInfo);
-                    break;
+                    continue;
                 }
 
                 List<KolAddressInfoDTO.AddDTO> kolAddressInfoDTOList = new ArrayList<>();
