@@ -2230,11 +2230,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (CollUtil.isNotEmpty(fbaShipmentPackingEntityList)){
                 pageSize = fbaShipmentPackingEntityList.size();
             }
-        }else if (ShipmentSourceTypeEnum.AWD.getCode().equals(entity.getSourceType())){
-            pageSize = 0;
-        }
-        if (Objects.isNull(pageSize)){
-            throw new ServiceException("分页大小不能为空");
         }
         List<WmsAttachmentDTO.UpdateDTO> updateDTOList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), pageType + pageSize);
         //已存在相同类型的标签URL，直接返回
@@ -2245,6 +2240,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getShopId());
         if (ShipmentSourceTypeEnum.FBA.getCode().equals(entity.getSourceType())){
+            if (Objects.isNull(pageSize) || pageSize <= 0){
+                throw new ServiceException("先绑定头程发货单后再操作打印");
+            }
             try {
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
                 GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, pageSize, 0);
