@@ -38,7 +38,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     * @param dto
     * @return
     */
-    Boolean add(LogisticsBillDTO.AddDTO dto);
+    LogisticsBillEntity add(LogisticsBillDTO.AddDTO dto);
 
     /**
     * 修改

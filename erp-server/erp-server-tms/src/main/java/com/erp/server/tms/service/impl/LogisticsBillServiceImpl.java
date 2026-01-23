@@ -167,11 +167,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
+    public LogisticsBillEntity add(LogisticsBillDTO.AddDTO addDTO) {
         //发货单+物流单是否已存在 存在则不再新增
-        List<LogisticsBillEntity> list = this.lambdaQuery().eq(CharSequenceUtil.isNotBlank(addDTO.getOutstockId()),LogisticsBillEntity::getOutstockId, addDTO.getOutstockId()).eq(LogisticsBillEntity::getTransportNo, addDTO.getTransportNo()).list();
+        List<LogisticsBillEntity> list = this.lambdaQuery().eq(CharSequenceUtil.isNotBlank(addDTO.getOutstockId()),LogisticsBillEntity::getOutstockId, addDTO.getOutstockId())
+                .eq(LogisticsBillEntity::getTransportNo, addDTO.getTransportNo()).list();
         if (CollUtil.isNotEmpty(list)){
-            return Boolean.TRUE;
+            return new LogisticsBillEntity();
         }
         LogisticsBillEntity logisticsBillEntity = new LogisticsBillEntity();
         BeanMapperUtils.copy(addDTO, logisticsBillEntity);
@@ -186,7 +187,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         //同步速递云运单
         pushSdyFieldHandler(logisticsBillEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
-        return save;
+        return logisticsBillEntity;
     }
 
 

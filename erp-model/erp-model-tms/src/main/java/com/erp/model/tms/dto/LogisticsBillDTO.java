@@ -488,6 +488,14 @@ public class LogisticsBillDTO implements Serializable {
          * 电话
          */
         private String telNumber;
+        /**
+         * 发货单号id
+         */
+        private String soDeliveryId;
+        /**
+         * 发货单号
+         */
+        private String soDeliveryCode;
     }
 
     /**
