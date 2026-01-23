@@ -93,7 +93,8 @@ public class UserServiceImpl implements UserService {
                 throw new ServiceException(ApiError.SUPPLIER_USER_NOT_REL);
             }
         }else {
-            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+            // 用户未登录，返回 401 未认证错误
+            throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
         }
     }
 

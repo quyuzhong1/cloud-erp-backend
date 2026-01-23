@@ -69,8 +69,10 @@ public class RedisKeyConstant {
     public static final String SO_B2C_DELIVERY_INTERCEPT_KEY = "SO_B2C_DELIVERY_INTERCEPT_KEY";
     public static final String WMS_VIRTUAL_DETAIL_MSG_KEY = "WMS_VIRTUAL_DETAIL_MSG_KEY";
     public static final String PURCHASE_SUGGEST_MERGE = "PURCHASE_SUGGEST_MERGE";
+    public static final String INVOICE_INFO_KEY = "INVOICE_INFO_KEY";
     // 工作流接口分布式锁KEY
     public static final String WORKFLOW_LOCK_KEY = "WORKFLOW_LOCK_KEY";
+    public static final String FIRST_MILE_WEIGHT_ALLOCATION_KEY = "FIRST_MILE_WEIGHT_ALLOCATION_KEY";
 
 
     /**

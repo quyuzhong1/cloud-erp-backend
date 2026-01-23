@@ -198,13 +198,13 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST);
             }
             // 非手动单
-            if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
-                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseIdWithNotDisabled(mainEntity.getToWarehouseId());
-                if(Objects.nonNull(overseasProviderWarehouseEntity)){
-                    String msg = CharSequenceUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
-                    throw new ServiceException(msg);
-                }
-            }
+//            if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
+//                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseIdWithNotDisabled(mainEntity.getToWarehouseId());
+//                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+//                    String msg = CharSequenceUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
+//                    throw new ServiceException(msg);
+//                }
+//            }
             if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
                 throw new ServiceException("当前签收数量大于剩余签收数量");
             }

@@ -66,7 +66,7 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
     * 是否主任务：true(主任务) false(非主任务)
     */
     @TableField("is_main_task")
-    private String isMainTask;
+    private Boolean isMainTask;
     /**
      * 业务类型：BusinessTypeEnum业务类型
      * 子任务为空

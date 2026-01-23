@@ -2,7 +2,6 @@ package com.erp.server.wms.service;
 
 
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -296,4 +295,6 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param warehouseEntity
      */
     boolean checkOpenCloseTime(WarehouseEntity warehouseEntity);
+
+    List<WarehouseDTO.UpdateDTO> listWarehouseNameByIds(List<String> warehouseIds);
 }

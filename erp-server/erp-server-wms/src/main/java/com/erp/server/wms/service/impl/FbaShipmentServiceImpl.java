@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -85,6 +86,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -173,6 +175,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private FbaShipmentExtendService fbaShipmentExtendService;
     @Resource
     private WmsAttachmentService wmsAttachmentService;
+    @Resource
+    @Lazy
+    private PackingTaskService packingTaskService;
+    @Lazy
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
+    @Lazy
+    @Resource
+    private WmsCartonService wmsCartonService;
+
+
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -247,18 +260,20 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             AwdOutstockEntity awdOutstockEntity = awdOutstockService.lambdaQuery()
                     .eq(AwdOutstockEntity::getFbaShipmentId,fbaShipmentEntity.getId())
                     .one();
-            List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
-                    .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
-                    .list();
-            for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
-                if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
-                    awdOutstockDetailService.lambdaUpdate()
-                            .set(AwdOutstockDetailEntity::getSkuId,skuVO.getSkuId())
-                            .set(AwdOutstockDetailEntity::getSkuNo,skuVO.getSkuNo())
-                            .set(AwdOutstockDetailEntity::getProductName,skuVO.getSkuName())
-                            .set(AwdOutstockDetailEntity::getAsin,mappingSkuViewDTO.getPlatformSpuNo())
-                            .eq(AwdOutstockDetailEntity::getId,awdOutstockDetailEntity.getId())
-                            .update();
+            if (Objects.nonNull(awdOutstockEntity)) {
+                List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
+                        .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
+                        .list();
+                for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
+                    if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
+                        awdOutstockDetailService.lambdaUpdate()
+                                .set(AwdOutstockDetailEntity::getSkuId,skuVO.getSkuId())
+                                .set(AwdOutstockDetailEntity::getSkuNo,skuVO.getSkuNo())
+                                .set(AwdOutstockDetailEntity::getProductName,skuVO.getSkuName())
+                                .set(AwdOutstockDetailEntity::getAsin,mappingSkuViewDTO.getPlatformSpuNo())
+                                .eq(AwdOutstockDetailEntity::getId,awdOutstockDetailEntity.getId())
+                                .update();
+                    }
                 }
             }
 
@@ -320,19 +335,21 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 AwdOutstockEntity awdOutstockEntity = awdOutstockService.lambdaQuery()
                         .eq(AwdOutstockEntity::getFbaShipmentId,fbaShipmentEntity.getId())
                         .one();
-                List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
-                        .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
-                        .list();
-                for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
-                    if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
-                        awdOutstockDetailService.lambdaUpdate()
-                                .set(AwdOutstockDetailEntity::getSkuId,skuDTO.getProductSkuId())
-                                .set(AwdOutstockDetailEntity::getSkuNo,skuDTO.getProductSkuNo())
-                                .set(AwdOutstockDetailEntity::getAsin,skuDTO.getPlatformSpuNo())
-                                .set(AwdOutstockDetailEntity::getProductName,skuDTO.getProductName())
-                                .eq(AwdOutstockDetailEntity::getMsku,detailEntity.getMsku())
-                                .eq(AwdOutstockDetailEntity::getMainId,awdOutstockEntity.getId())
-                                .update();
+                if (Objects.nonNull(awdOutstockEntity)) {
+                    List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
+                            .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
+                            .list();
+                    for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
+                        if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
+                            awdOutstockDetailService.lambdaUpdate()
+                                    .set(AwdOutstockDetailEntity::getSkuId,skuDTO.getProductSkuId())
+                                    .set(AwdOutstockDetailEntity::getSkuNo,skuDTO.getProductSkuNo())
+                                    .set(AwdOutstockDetailEntity::getAsin,skuDTO.getPlatformSpuNo())
+                                    .set(AwdOutstockDetailEntity::getProductName,skuDTO.getProductName())
+                                    .eq(AwdOutstockDetailEntity::getMsku,detailEntity.getMsku())
+                                    .eq(AwdOutstockDetailEntity::getMainId,awdOutstockEntity.getId())
+                                    .update();
+                        }
                     }
                 }
 
@@ -706,27 +723,28 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list) {
-        Boolean flag = this.generateDeliver(list, Boolean.FALSE);
+    public Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list, String sourceType) {
+        Boolean flag = this.generateDeliver(list, Boolean.FALSE, sourceType);
         return flag;
     }
 
     @Override
-    public Boolean generateDeliverSaveAndSubmit(List<FbaShipmentDTO.GenerateDeliverView> list) {
-        Boolean flag = this.generateDeliver(list, Boolean.TRUE);
+    public Boolean generateDeliverSaveAndSubmit(List<FbaShipmentDTO.GenerateDeliverView> list, String sourceType) {
+        Boolean flag = this.generateDeliver(list, Boolean.TRUE, sourceType);
         return flag;
     }
 
     /**
      * 下推发货单
      *
-     * @param list     下推列表数据
-     * @param isSubmit 是否需要提交
+     * @param list       下推列表数据
+     * @param isSubmit   是否需要提交
+     * @param sourceType
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/11/6 14:41
      **/
-    private Boolean generateDeliver(List<FbaShipmentDTO.GenerateDeliverView> list, Boolean isSubmit) {
+    private Boolean generateDeliver(List<FbaShipmentDTO.GenerateDeliverView> list, Boolean isSubmit, String sourceType) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
@@ -753,8 +771,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //映射字段
             FirstMileDeliveryDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryAdd(shipmentList.get(0));
 
-            addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
-            addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            if (ShipmentSourceTypeEnum.AWD.getCode().equals(sourceType)) {
+                addDTO.setSourceType(SourceTypeEnum.AWD_SHIPMENT.getCode());
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
+            }else {
+                addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }
             //设置仓库名称
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(addDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
             addDTO.setInventoryOrgId(warehouseEntity.getOrgId());
@@ -2191,7 +2214,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (Objects.isNull(entity)){
             throw new ServiceException("货件不存在");
         }
-        String type = FbaOrderTypeEnum.FBA.getCode().equals(entity.getSourceType()) ? FbaPageTypeEnum.FBA_A4_2.getType() : FbaPageTypeEnum.AWD_LETTER_6.getType();
+        String type = ShipmentSourceTypeEnum.FBA.getCode().equals(entity.getSourceType()) ? FbaPageTypeEnum.FBA_A4_2.getType() : FbaPageTypeEnum.AWD_LETTER_6.getType();
         String pageType = dto.getPageType();
         // 校验打印类型
         FbaPageTypeEnum.validate(pageType, type);
@@ -2201,7 +2224,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CharSequenceUtil.isBlank(entity.getFbaShipmentId())){
             throw new ServiceException("货件ID不能为空");
         }
-        List<WmsAttachmentDTO.UpdateDTO> updateDTOList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), pageType);
+        Integer pageSize = dto.getPageSize();
+        if (ShipmentSourceTypeEnum.FBA.getCode().equals(entity.getSourceType()) && Objects.isNull(pageSize)){
+            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(entity.getCode()));
+            if (CollUtil.isNotEmpty(fbaShipmentPackingEntityList)){
+                pageSize = fbaShipmentPackingEntityList.size();
+            }
+        }
+        List<WmsAttachmentDTO.UpdateDTO> updateDTOList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), pageType + pageSize);
         //已存在相同类型的标签URL，直接返回
         if (CollUtil.isNotEmpty(updateDTOList)){
             return updateDTOList.get(0);
@@ -2209,10 +2239,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         String labelUrl = null;
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getShopId());
-        if (FbaOrderTypeEnum.FBA.getCode().equals(entity.getSourceType())){
+        if (ShipmentSourceTypeEnum.FBA.getCode().equals(entity.getSourceType())){
+            if (Objects.isNull(pageSize) || pageSize <= 0){
+                throw new ServiceException("先绑定头程发货单后再操作打印");
+            }
             try {
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-                GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, 100, 0);
+                GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, pageSize, 0);
                 if (CharSequenceUtil.isNotBlank(response.getPayload().getDownloadURL())){
                     String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(response.getPayload().getDownloadURL(), true);
                     FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
@@ -2258,16 +2291,44 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 保存标签URL
         if (CharSequenceUtil.isNotBlank(labelUrl)){
-            wmsAttachmentService.batchSave(Collections.singletonList(labelUrl),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType, entity.getId());
+            wmsAttachmentService.batchSave(Collections.singletonList(labelUrl),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType + pageSize, entity.getId());
             WmsAttachmentDTO.UpdateDTO updateDTO = new WmsAttachmentDTO.UpdateDTO();
             updateDTO.setAttachUrl(labelUrl);
             updateDTO.setAttachName(entity.getFbaShipmentId() + ".pdf");
-            updateDTO.setType(pageType);
+            updateDTO.setType(pageType + pageSize);
             updateDTO.setBusinessId(entity.getId());
             return updateDTO;
         }else {
             throw new ServiceException("货件【{}】打印标签失败：未获取到标签下载URL", entity.getFbaShipmentId());
         }
+    }
+
+    @Override
+    @Async("wmsErpExecutor")
+    public void asyncPrintLabel(String sourceCode, String shipmentCode) {
+//        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
+//        if (CollectionUtil.isEmpty(packingTaskEntityList)){
+//            log.warn("未找到关联的打包任务：sourceCode={}", sourceCode);
+//            return;
+//        }
+//        PackingTaskEntity packingTaskEntity = packingTaskEntityList.get(0);
+//        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(shipmentCode));
+//        if (CollectionUtil.isEmpty(fbaShipmentPackingEntityList)){
+//            log.warn("未找到关联的货件记录：shipmentCode={}", shipmentCode);
+//            return;
+//        }
+//        List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).distinct().collect(Collectors.toList());
+//        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packingTaskEntity.getId()));
+//        if (CollectionUtil.isEmpty(wmsCartonEntityList)){
+//            log.warn("未找到关联的箱子记录：packingTaskId={}", packingTaskEntity.getId());
+//            return;
+//        }
+//        Integer count = Math.toIntExact(wmsCartonEntityList.stream().filter(e -> cartonIds.contains(e.getId())).count());
+        FbaShipmentDTO.PrintLabelDTO dto = new FbaShipmentDTO.PrintLabelDTO();
+        dto.setFbaShipmentCode(shipmentCode);
+//        dto.setPageSize(count);
+        dto.setPageType(FbaPageTypeEnum.FBA_PLAIN_PAPER.getCode());
+        printLabel(dto);
     }
 
     @Override

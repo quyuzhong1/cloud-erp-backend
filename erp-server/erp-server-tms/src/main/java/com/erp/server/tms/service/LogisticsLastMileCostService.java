@@ -1,10 +1,7 @@
 package com.erp.server.tms.service;
 
 import cn.hutool.json.JSONObject;
-import com.common.business.dto.base.BaseDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 
@@ -44,7 +41,7 @@ public interface LogisticsLastMileCostService {
      * @param dto
      * @param isImport
      */
-    Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
+    BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto, Boolean isImport);
     /**
      * @description: 查询详情
      * @author Will
@@ -70,7 +67,7 @@ public interface LogisticsLastMileCostService {
      */
     Boolean downloadTemplate(HttpServletResponse response);
 
-    void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList, List<String> headList, Map<Integer, String> headMap, String importType);
+    void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList, List<String> headList, Map<Integer, String> headMap, String importType,Map<String,Object> extMap);
 
     /**
      * @param dto

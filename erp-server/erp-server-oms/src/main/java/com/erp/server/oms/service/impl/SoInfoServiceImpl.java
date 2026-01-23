@@ -4228,7 +4228,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewDTO.setCustomerName(Objects.nonNull(customerInfo) ? customerInfo.getName() : "");
         }
         if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(viewDTO.getReceiveAddress())){
-            CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+            CustomerAddressDTO.ViewDTO customerAddressEntity = customerAddressService.getCustomerAddressById(soInfoEntity.getReceiveAddressId());
             viewDTO.setReceiveAddress(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress() : "");
             viewDTO.setAddress2(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress2() : "");
             viewDTO.setAddress3(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress3() : "");

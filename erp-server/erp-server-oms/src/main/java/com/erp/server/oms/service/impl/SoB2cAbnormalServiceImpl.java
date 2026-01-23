@@ -149,19 +149,22 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
                 BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogistics, false);
                 if(resultDTO1.getSuccess()){
-                    autoSubmitDelivery = getLogisticsRuleResult(id);
-                    if(autoSubmitDelivery){
-                        try {
-                            //提交发货
-                            soB2cService.submitDelivery(id, "");
-                        }catch (Exception e){
-                            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                            addError.setParamJson("");
-                            addError.setReturnJson("");
-                            addError.setMainId(id);
-                            addError.setMessage(e.getMessage());
-                            soB2cErrorService.add(addError);
+                    //配货中才自动提交
+                    if(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())){
+                        autoSubmitDelivery = getLogisticsRuleResult(id);
+                        if(autoSubmitDelivery){
+                            try {
+                                //提交发货
+                                soB2cService.submitDelivery(id, "");
+                            }catch (Exception e){
+                                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                                addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                                addError.setParamJson("");
+                                addError.setReturnJson("");
+                                addError.setMainId(id);
+                                addError.setMessage(e.getMessage());
+                                soB2cErrorService.add(addError);
+                            }
                         }
                     }
                 }
