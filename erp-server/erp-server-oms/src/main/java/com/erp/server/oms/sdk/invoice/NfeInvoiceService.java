@@ -486,7 +486,7 @@ public class NfeInvoiceService {
         dto.setModel("55");
         dto.setIssuanceType("1");
         dto.setAmbiente(getAmbiente());
-        dto.setTotalDiscountAmount(BigDecimal.ZERO);
+        // total_discount_amount：根据API规范不传，故不设置
         dto.setCliente(buildClienteDTO(soB2cEntity, invoiceSettingDetail));
         dto.setProducts(buildProductDTOList(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio));
         dto.setTransportation(buildTransportationDTO(soB2cEntity, invoiceSettingDetail));
