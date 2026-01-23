@@ -19,7 +19,6 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.*;
-import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -2139,7 +2138,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		soOutstockDetailEntityList.sort((s1 , s2) -> s1.getActualQty().compareTo(s2.getActualQty()));
 		int i = 0;
 		
-		Map<String, String> orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
+		Map<String, String> orgIdNameMaps = sysUserFeign.listAccountingCompany().stream().collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName));
 		
 		String feeRule = entity.getFeeRule();
 		if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
