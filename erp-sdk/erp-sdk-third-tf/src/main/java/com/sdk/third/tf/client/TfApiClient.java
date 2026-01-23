@@ -1,11 +1,10 @@
 package com.sdk.third.tf.client;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.sdk.third.tf.constant.TfApiConstants;
+import com.sdk.third.tf.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -73,7 +72,7 @@ public class TfApiClient {
             String responseBody = executePost(url, requestBody, headers);
             log.info("POST响应: {}", responseBody);
             
-            return JSON.parseObject(responseBody, typeReference);
+            return JsonUtil.parseObject(responseBody, typeReference);
         } catch (Exception e) {
             // 输出完整的异常信息，包括原因链
             StringBuilder errorMsg = new StringBuilder();
@@ -145,7 +144,7 @@ public class TfApiClient {
             String responseBody = executeGet(url, headers);
             log.info("GET响应: {}", responseBody);
             
-            return JSON.parseObject(responseBody, typeReference);
+            return JsonUtil.parseObject(responseBody, typeReference);
         } catch (Exception e) {
             // 输出完整的异常信息，包括原因链
             StringBuilder errorMsg = new StringBuilder();

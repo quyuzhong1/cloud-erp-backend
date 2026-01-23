@@ -1,5 +1,6 @@
 package com.sdk.third.tf.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -58,24 +59,28 @@ public class InvoiceDetailResponseDTO {
          * 总价
          */
         @JsonProperty("total_price")
+        @JsonAlias({"total_price", "totalPrice"})
         private java.math.BigDecimal totalPrice;
 
         /**
          * XML文件链接
          */
         @JsonProperty("xml")
+        @JsonAlias({"xml", "Xml"})
         private String xml;
 
         /**
          * 创建时间
          */
         @JsonProperty("create")
+        @JsonAlias({"create", "Create"})
         private String create;
 
         /**
          * 开票时间
          */
         @JsonProperty("issue_time")
+        @JsonAlias({"issue_time", "issueTime"})
         private String issueTime;
     }
 }

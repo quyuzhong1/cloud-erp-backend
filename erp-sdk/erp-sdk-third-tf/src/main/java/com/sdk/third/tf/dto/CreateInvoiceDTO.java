@@ -1,5 +1,6 @@
 package com.sdk.third.tf.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -32,6 +33,7 @@ public class CreateInvoiceDTO implements Serializable {
      * 是否重开发票
      */
     @JsonProperty("is_reopen")
+    @JsonAlias({"is_reopen", "isReopen"})
     private Boolean isReopen;
 
     /**
@@ -39,6 +41,7 @@ public class CreateInvoiceDTO implements Serializable {
      */
     @NotBlank(message = "业务性质不能为空")
     @JsonProperty("nature_of_operation")
+    @JsonAlias({"nature_of_operation", "natureOfOperation"})
     private String natureOfOperation;
 
     /**
@@ -46,6 +49,7 @@ public class CreateInvoiceDTO implements Serializable {
      */
     @NotBlank(message = "交易类型不能为空")
     @JsonProperty("transaction_type")
+    @JsonAlias({"transaction_type", "transactionType"})
     private String transactionType;
 
     /**
@@ -60,6 +64,7 @@ public class CreateInvoiceDTO implements Serializable {
      */
     @NotBlank(message = "发票类型不能为空")
     @JsonProperty("issuance_type")
+    @JsonAlias({"issuance_type", "issuanceType"})
     private String issuanceType;
 
     /**
@@ -67,12 +72,14 @@ public class CreateInvoiceDTO implements Serializable {
      */
     @NotBlank(message = "运行环境不能为空")
     @JsonProperty("ambiente")
+    @JsonAlias({"ambiente", "Ambiente"})
     private String ambiente;
 
     /**
      * 总折扣金额（包含在发票总金额中）
      */
     @JsonProperty("total_discount_amount")
+    @JsonAlias({"total_discount_amount", "totalDiscountAmount"})
     private BigDecimal totalDiscountAmount;
 
     /**
@@ -103,12 +110,14 @@ public class CreateInvoiceDTO implements Serializable {
      * 发货地址（可选）
      */
     @JsonProperty("shipping_address")
+    @JsonAlias({"shipping_address", "shippingAddress"})
     private AddressDTO shippingAddress;
 
     /**
      * 收货地址（可选）
      */
     @JsonProperty("delivery_address")
+    @JsonAlias({"delivery_address", "deliveryAddress"})
     private AddressDTO deliveryAddress;
 
     /**
@@ -250,6 +259,7 @@ public class CreateInvoiceDTO implements Serializable {
          * 计税GTIN
          */
         @JsonProperty("gtin_tributavel")
+        @JsonAlias({"gtin_tributavel", "gtinTributavel"})
         private String gtinTributavel;
 
         /**
@@ -257,6 +267,7 @@ public class CreateInvoiceDTO implements Serializable {
          */
         @NotNull(message = "单价不能为空")
         @JsonProperty("unit_price")
+        @JsonAlias({"unit_price", "unitPrice"})
         private BigDecimal unitPrice;
 
         /**
@@ -264,24 +275,28 @@ public class CreateInvoiceDTO implements Serializable {
          */
         @NotNull(message = "总价不能为空")
         @JsonProperty("total_price")
+        @JsonAlias({"total_price", "totalPrice"})
         private BigDecimal totalPrice;
 
         /**
          * 折扣价格
          */
         @JsonProperty("discount_price")
+        @JsonAlias({"discount_price", "discountPrice"})
         private BigDecimal discountPrice;
 
         /**
          * 税种ID（当存在值时impostos字段不进行传参）
          */
         @JsonProperty("category_id")
+        @JsonAlias({"category_id", "categoryId"})
         private String categoryId;
 
         /**
          * 税配置信息（当category_id值为不传时必填）
          */
         @JsonProperty("tax_info")
+        @JsonAlias({"tax_info", "taxInfo"})
         private TaxInfoDTO taxInfo;
 
         /**
@@ -296,12 +311,14 @@ public class CreateInvoiceDTO implements Serializable {
          */
         @NotBlank(message = "是否包含在发票总额中不能为空")
         @JsonProperty("indicador_total")
+        @JsonAlias({"indicador_total", "indicadorTotal"})
         private String indicadorTotal;
 
         /**
          * 进口报关单（当transaction_type为2时必填）
          */
         @JsonProperty("import_declaration")
+        @JsonAlias({"import_declaration", "importDeclaration"})
         private ImportDeclarationDTO importDeclaration;
     }
 
@@ -344,18 +361,21 @@ public class CreateInvoiceDTO implements Serializable {
          * 人员类型（fisica-自然人, juridica-法人）
          */
         @JsonProperty("tipo_pessoa")
+        @JsonAlias({"tipo_pessoa", "tipoPessoa"})
         private String tipoPessoa;
 
         /**
          * CFOP编码（Código Fiscal de Operações e Prestações）
          */
         @JsonProperty("codigo_cfop")
+        @JsonAlias({"codigo_cfop", "codigoCfop"})
         private String codigoCfop;
 
         /**
          * 税务情形代码（CST或CSOSN）
          */
         @JsonProperty("situacao_tributaria")
+        @JsonAlias({"situacao_tributaria", "situacaoTributaria"})
         private String situacaoTributaria;
 
         /**
@@ -374,18 +394,21 @@ public class CreateInvoiceDTO implements Serializable {
          * 人员类型（fisica-自然人, juridica-法人）
          */
         @JsonProperty("tipo_pessoa")
+        @JsonAlias({"tipo_pessoa", "tipoPessoa"})
         private String tipoPessoa;
 
         /**
          * IPI税务情形代码
          */
         @JsonProperty("situacao_tributaria")
+        @JsonAlias({"situacao_tributaria", "situacaoTributaria"})
         private String situacaoTributaria;
 
         /**
          * 归类代码（Código de enquadramento，默认999）
          */
         @JsonProperty("codigo_enquadramento")
+        @JsonAlias({"codigo_enquadramento", "codigoEnquadramento"})
         private String codigoEnquadramento;
 
         /**
@@ -404,12 +427,14 @@ public class CreateInvoiceDTO implements Serializable {
          * 人员类型（fisica-自然人, juridica-法人）
          */
         @JsonProperty("tipo_pessoa")
+        @JsonAlias({"tipo_pessoa", "tipoPessoa"})
         private String tipoPessoa;
 
         /**
          * PIS税务情形代码
          */
         @JsonProperty("situacao_tributaria")
+        @JsonAlias({"situacao_tributaria", "situacaoTributaria"})
         private String situacaoTributaria;
 
         /**
@@ -428,12 +453,14 @@ public class CreateInvoiceDTO implements Serializable {
          * 人员类型（fisica-自然人, juridica-法人）
          */
         @JsonProperty("tipo_pessoa")
+        @JsonAlias({"tipo_pessoa", "tipoPessoa"})
         private String tipoPessoa;
 
         /**
          * COFINS税务情形代码
          */
         @JsonProperty("situacao_tributaria")
+        @JsonAlias({"situacao_tributaria", "situacaoTributaria"})
         private String situacaoTributaria;
 
         /**
@@ -461,30 +488,35 @@ public class CreateInvoiceDTO implements Serializable {
          */
         @NotBlank(message = "运输方式不能为空")
         @JsonProperty("transport_mode")
+        @JsonAlias({"transport_mode", "transportMode"})
         private String transportMode;
 
         /**
          * 运费金额（可为0）
          */
         @JsonProperty("freight_amount")
+        @JsonAlias({"freight_amount", "freightAmount"})
         private BigDecimal freightAmount;
 
         /**
          * 运输公司信息（可选）
          */
         @JsonProperty("carrier_info")
+        @JsonAlias({"carrier_info", "carrierInfo"})
         private CarrierInfoDTO carrierInfo;
 
         /**
          * 车辆信息（可选）
          */
         @JsonProperty("vehicle_info")
+        @JsonAlias({"vehicle_info", "vehicleInfo"})
         private VehicleInfoDTO vehicleInfo;
 
         /**
          * 拖车信息（可选）
          */
         @JsonProperty("trailer_info")
+        @JsonAlias({"trailer_info", "trailerInfo"})
         private TrailerInfoDTO trailerInfo;
 
         /**
@@ -497,6 +529,7 @@ public class CreateInvoiceDTO implements Serializable {
          * 运输服务预扣ICMS信息（可选）
          */
         @JsonProperty("transport_tax_retention_info")
+        @JsonAlias({"transport_tax_retention_info", "transportTaxRetentionInfo"})
         private TransportTaxRetentionInfoDTO transportTaxRetentionInfo;
     }
 

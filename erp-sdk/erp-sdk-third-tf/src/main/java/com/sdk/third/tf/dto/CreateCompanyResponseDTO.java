@@ -1,5 +1,6 @@
 package com.sdk.third.tf.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -22,6 +23,7 @@ public class CreateCompanyResponseDTO {
          * 公司ID
          */
         @JsonProperty("company_id")
+        @JsonAlias({"company_id", "companyId"})
         private String companyId;
 
         /**
