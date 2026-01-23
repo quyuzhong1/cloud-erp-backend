@@ -1,6 +1,7 @@
 package com.sdk.third.tf.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -280,6 +281,7 @@ public class CreateInvoiceDTO implements Serializable {
 
         /**
          * 折扣价格
+         * 注意：根据API规范，当值为0或null时，该字段不传
          */
         @JsonProperty("discount_price")
         @JsonAlias({"discount_price", "discountPrice"})
