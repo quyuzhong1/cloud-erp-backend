@@ -60,6 +60,14 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
     SysDepartmentUserNumberDTO getDeptByUserId(String userId);
 
     /**
+     * 根据用户id查询部门信息（过滤已禁用部门，取最近绑定的部门）
+     * 自动带出用户绑定部门，如用户绑定多个部门，则取最近绑定的部门；若部门已禁用，则不带出
+     * @param userId 用户id
+     * @return 部门信息
+     */
+    SysDepartmentUserNumberDTO getDeptByUserIdWithDisabledFilter(String userId);
+
+    /**
      * 根据人员id查询所有上级
      *
      * @param userId 人员id

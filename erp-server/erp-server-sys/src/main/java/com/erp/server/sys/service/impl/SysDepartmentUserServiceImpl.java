@@ -181,6 +181,15 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     }
 
     @Override
+    public SysDepartmentUserNumberDTO getDeptByUserIdWithDisabledFilter(String userId) {
+        SysDepartmentUserNumberDTO deptByUserId = baseMapper.getDeptByUserIdWithDisabledFilter(userId);
+        if (ObjectUtils.isEmpty(deptByUserId)) {
+            return new SysDepartmentUserNumberDTO();
+        }
+        return deptByUserId;
+    }
+
+    @Override
     public List<UserSuperiorDTO> listSuperiorByUserId(String userId) {
         List<UserSuperiorDTO> resultList = baseMapper.listSuperiorByUserId(userId);
         if (CollUtil.isEmpty(resultList)) {
