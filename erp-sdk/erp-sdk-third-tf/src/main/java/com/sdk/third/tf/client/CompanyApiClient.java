@@ -1,7 +1,7 @@
 package com.sdk.third.tf.client;
 
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.TypeReference;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.sdk.third.tf.util.JsonUtil;
 import com.sdk.third.tf.constant.TfApiConstants;
 import com.sdk.third.tf.dto.ApiResponseDTO;
 import com.sdk.third.tf.dto.CompanyDetailResponseDTO;
@@ -83,7 +83,7 @@ public class CompanyApiClient {
     public CreateCompanyResponseDTO.CreateCompanyDataDTO createCompany(CreateCompanyDTO createCompanyDTO, String b2bToken, String appKey) {
         // 构建请求体（新接口不再在请求体中传递token_plataforma）
         Map<String, Object> requestBodyMap = buildRequestBody(createCompanyDTO);
-        String requestBody = JSONUtil.toJsonStr(requestBodyMap);
+        String requestBody = JsonUtil.toJsonString(requestBodyMap);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -119,7 +119,7 @@ public class CompanyApiClient {
     public void editCompany(EditCompanyDTO editCompanyDTO, String companyToken, String appKey) {
         // 构建请求体
         Map<String, Object> requestBodyMap = buildEditRequestBody(editCompanyDTO);
-        String requestBody = JSONUtil.toJsonStr(requestBodyMap);
+        String requestBody = JsonUtil.toJsonString(requestBodyMap);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -403,7 +403,7 @@ public class CompanyApiClient {
             log.info("总数: {}", result.getTotal());
             log.info("总页数: {}", result.getTotalPages());
             log.info("当前页: {}", result.getPage());
-            log.info("公司列表: {}", JSONUtil.toJsonStr(result.getCompanys()));
+            log.info("公司列表: {}", JsonUtil.toJsonString(result.getCompanys()));
             
             System.out.println("=================== 获取公司列表结果 ===================");
             System.out.println("总数: " + result.getTotal());

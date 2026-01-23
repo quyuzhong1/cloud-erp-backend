@@ -1,7 +1,7 @@
 package com.sdk.third.tf.client;
 
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.TypeReference;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.sdk.third.tf.util.JsonUtil;
 import com.sdk.third.tf.constant.TfApiConstants;
 import com.sdk.third.tf.dto.ApiResponseDTO;
 import com.sdk.third.tf.dto.TaxCategoryDTO;
@@ -59,7 +59,7 @@ public class TaxCategoryApiClient {
      */
     public TaxCategoryDTO.CreateCategoryResponseDTO createCategory(
             TaxCategoryDTO.CreateCategoryDTO createDTO, String companyToken, String appKey) {
-        String requestBody = JSONUtil.toJsonStr(createDTO);
+        String requestBody = JsonUtil.toJsonString(createDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -174,7 +174,7 @@ public class TaxCategoryApiClient {
      */
     public TaxCategoryDTO.EditCategoryResponseDTO editCategory(
             TaxCategoryDTO.EditCategoryDTO editDTO, String companyToken, String appKey) {
-        String requestBody = JSONUtil.toJsonStr(editDTO);
+        String requestBody = JsonUtil.toJsonString(editDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -211,7 +211,7 @@ public class TaxCategoryApiClient {
         }
         
         TaxCategoryDTO.DeleteCategoryDTO deleteDTO = new TaxCategoryDTO.DeleteCategoryDTO(categoryId);
-        String requestBody = JSONUtil.toJsonStr(deleteDTO);
+        String requestBody = JsonUtil.toJsonString(deleteDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();

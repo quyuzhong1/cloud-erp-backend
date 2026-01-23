@@ -1,6 +1,7 @@
 package com.sdk.third.tf.dto;
 
-import cn.hutool.core.annotation.Alias;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,13 +26,16 @@ public class ApiResponseDTO<T> implements Serializable {
      * Boolean: true表示成功，false表示失败
      * Integer: 0表示成功，非0表示失败
      */
-    @Alias("success")
+    @JsonProperty("success")
+    @JsonAlias({"success", "Success"})
     private Object success;
     
-    @Alias("message")
+    @JsonProperty("message")
+    @JsonAlias({"message", "Message"})
     private String message;
     
-    @Alias("data")
+    @JsonProperty("data")
+    @JsonAlias({"data", "Data"})
     private T data;
     
     /**

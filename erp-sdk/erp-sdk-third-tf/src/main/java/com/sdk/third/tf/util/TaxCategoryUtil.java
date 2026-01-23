@@ -2,7 +2,7 @@ package com.sdk.third.tf.util;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
-import cn.hutool.json.JSONUtil;
+import com.sdk.third.tf.util.JsonUtil;
 import com.sdk.third.tf.dto.TaxCategoryDTO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +30,7 @@ public class TaxCategoryUtil {
         
         try {
             // 将税种详情序列化为JSON字符串
-            String jsonStr = JSONUtil.toJsonStr(detail);
+            String jsonStr = JsonUtil.toJsonString(detail);
             
             // 计算MD5值
             String md5 = DigestUtil.md5Hex(jsonStr);

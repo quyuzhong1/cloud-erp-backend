@@ -1,5 +1,6 @@
 package com.sdk.third.tf.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -28,6 +29,7 @@ public class GetDanfeResponseDTO {
          * Danfe简化版URL链接（PDF文件）
          */
         @JsonProperty("danfe_simples")
+        @JsonAlias({"danfe_simples", "danfeSimples"})
         private String danfeSimples;
     }
 }

@@ -1,7 +1,7 @@
 package com.sdk.third.tf.client;
 
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.TypeReference;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.sdk.third.tf.util.JsonUtil;
 import com.sdk.third.tf.constant.TfApiConstants;
 import com.sdk.third.tf.dto.ApiResponseDTO;
 import com.sdk.third.tf.dto.CancelInvoiceDTO;
@@ -68,7 +68,7 @@ public class InvoiceApiClient {
     public CreateInvoiceResponseDTO.CreateInvoiceDataDTO createInvoice(
             CreateInvoiceDTO createInvoiceDTO, String companyToken, String appKey) {
         // 构建请求体
-        String requestBody = JSONUtil.toJsonStr(createInvoiceDTO);
+        String requestBody = JsonUtil.toJsonString(createInvoiceDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -176,7 +176,7 @@ public class InvoiceApiClient {
     public CancelInvoiceResponseDTO.CancelInvoiceDataDTO cancelInvoice(
             CancelInvoiceDTO cancelInvoiceDTO, String companyToken, String appKey) {
         // 构建请求体
-        String requestBody = JSONUtil.toJsonStr(cancelInvoiceDTO);
+        String requestBody = JsonUtil.toJsonString(cancelInvoiceDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -227,7 +227,7 @@ public class InvoiceApiClient {
     public ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO returnInvoice(
             ReturnInvoiceDTO returnInvoiceDTO, String companyToken, String appKey) {
         // 构建请求体
-        String requestBody = JSONUtil.toJsonStr(returnInvoiceDTO);
+        String requestBody = JsonUtil.toJsonString(returnInvoiceDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -279,7 +279,7 @@ public class InvoiceApiClient {
     public InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO invalidInvoice(
             InvalidInvoiceDTO invalidInvoiceDTO, String companyToken, String appKey) {
         // 构建请求体
-        String requestBody = JSONUtil.toJsonStr(invalidInvoiceDTO);
+        String requestBody = JsonUtil.toJsonString(invalidInvoiceDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();
@@ -345,7 +345,7 @@ public class InvoiceApiClient {
     public GetDanfeResponseDTO.GetDanfeDataDTO getDanfe(
             GetDanfeDTO getDanfeDTO, String companyToken, String appKey) {
         // 构建请求体
-        String requestBody = JSONUtil.toJsonStr(getDanfeDTO);
+        String requestBody = JsonUtil.toJsonString(getDanfeDTO);
         
         // 生成时间戳
         String timestamp = SignUtil.generateTimestamp();

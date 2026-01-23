@@ -1,5 +1,6 @@
 package com.sdk.third.tf.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -41,6 +42,7 @@ public class CompanyListResponseDTO {
          * 总页数
          */
         @JsonProperty("total_pages")
+        @JsonAlias({"total_pages", "totalPages"})
         private Integer totalPages;
     }
 
@@ -53,12 +55,14 @@ public class CompanyListResponseDTO {
          * 公司ID
          */
         @JsonProperty("company_id")
+        @JsonAlias({"company_id", "companyId"})
         private Integer companyId;
 
         /**
          * 税收类型（税务类型）
          */
         @JsonProperty("invoice_type")
+        @JsonAlias({"invoice_type", "invoiceType"})
         private String invoiceType;
 
         /**
@@ -113,6 +117,7 @@ public class CompanyListResponseDTO {
          * 门牌号
          */
         @JsonProperty("house_number")
+        @JsonAlias({"house_number", "houseNumber"})
         private String houseNumber;
 
         /**
@@ -137,12 +142,14 @@ public class CompanyListResponseDTO {
          * A1证书文件地址
          */
         @JsonProperty("cert_file")
+        @JsonAlias({"cert_file", "certFile"})
         private String certFile;
 
         /**
          * A1证书密码
          */
         @JsonProperty("cert_pwd")
+        @JsonAlias({"cert_pwd", "certPwd"})
         private String certPwd;
 
         /**
