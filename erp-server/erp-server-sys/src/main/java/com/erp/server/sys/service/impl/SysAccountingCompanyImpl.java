@@ -192,7 +192,19 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     /**
      * 获取核算组织
      *
-     * @param
+     * @return java.util.List<com.erp.model.sys.dto.SysAccountingCompanyDTO.ListDTO>
+     * @author yl
+     * @date 2023-03-21 17:44
+     */
+    @Override
+    public List<SysAccountingCompanyDTO.ListDTO> getList() {
+        return getList(null);
+    }
+
+    /**
+     * 获取核算组织
+     *
+     * @param name 公司名称（模糊查询，非必填）
      * @return java.util.List<com.erp.model.sys.dto.SysAccountingCompanyDTO.ListDTO>
      * @author yl
      * @date 2023-03-21 17:44
