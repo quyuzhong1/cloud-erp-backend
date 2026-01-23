@@ -3161,29 +3161,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (Objects.nonNull(entity)) {
             BeanMapper.copy(entity,dto);
         }
-        
-        // 如果历史记录不存在，或者部门信息为空，则查询用户的部门信息
-        if (Objects.isNull(entity) || StringUtils.isBlank(dto.getDeptId())) {
-            try {
-                FindUserDTO userInfo = sysUserFeign.getUserByUserId(dto.getUserId());
-                if (Objects.nonNull(userInfo)) {
-                    // 填充用户名称
-                    if (StringUtils.isBlank(dto.getUserName()) && StringUtils.isNotBlank(userInfo.getUserName())) {
-                        dto.setUserName(userInfo.getUserName());
-                    }
-                    // 填充部门信息
-                    if (StringUtils.isBlank(dto.getDeptId()) && StringUtils.isNotBlank(userInfo.getDepartmentId())) {
-                        dto.setDeptId(userInfo.getDepartmentId());
-                    }
-                    if (StringUtils.isBlank(dto.getDeptName()) && StringUtils.isNotBlank(userInfo.getDepartmentName())) {
-                        dto.setDeptName(userInfo.getDepartmentName());
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("查询用户部门信息失败，用户ID：{}，错误：{}", dto.getUserId(), e.getMessage());
-            }
-        }
-        
         return dto;
     }
 
