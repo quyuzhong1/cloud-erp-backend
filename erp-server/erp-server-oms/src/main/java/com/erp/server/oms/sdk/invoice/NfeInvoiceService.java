@@ -583,7 +583,7 @@ public class NfeInvoiceService {
             productDTO.setOrigem("0");
             // indicador_total: 若SKU为赠品传"1"，若SKU不为赠品传"0"
             Boolean isGift = detailEntity.getIsGift();
-            productDTO.setIndicadorTotal(Boolean.TRUE.equals(isGift) ? "1" : "0");
+            productDTO.setIndicadorTotal(Boolean.TRUE.equals(isGift) ? "0" : "1");
             products.add(productDTO);
         }
         return products;
