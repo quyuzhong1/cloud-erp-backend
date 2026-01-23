@@ -409,7 +409,7 @@ public class CompanyApiClient {
             System.out.println("总数: " + result.getTotal());
             System.out.println("总页数: " + result.getTotalPages());
             System.out.println("当前页: " + result.getPage());
-            System.out.println("公司列表: " + JSONUtil.toJsonPrettyStr(result.getCompanys()));
+            System.out.println("公司列表: " + JsonUtil.toJsonString(result.getCompanys()));
             System.out.println("=======================================================");
             
         } catch (Exception e) {
