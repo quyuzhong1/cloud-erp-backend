@@ -3198,8 +3198,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             //供应商信息
             SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(poReturnEntity.getSupplierId());
             if (Objects.nonNull(supplierEntity)) {
-                pushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnDetailEntity.getMainSupplierId());
-                pushDownSubcontractOrderDetailViewDTO.setSupplierName(supplierEntity.getName());
+                pushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
+                pushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
                 pushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
                 pushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
             }
@@ -3234,8 +3234,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             childPushDownSubcontractOrderDetailViewDTO.setSkuNo(poReturnDetailEntity.getSkuNo());
             childPushDownSubcontractOrderDetailViewDTO.setProductName(productName);
             if (Objects.nonNull(supplierEntity)) {
-                childPushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnDetailEntity.getMainSupplierId());
-                childPushDownSubcontractOrderDetailViewDTO.setSupplierName(supplierEntity.getName());
+                childPushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
+                childPushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
                 childPushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
                 childPushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
             }
