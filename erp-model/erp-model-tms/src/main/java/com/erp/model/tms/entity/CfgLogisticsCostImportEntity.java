@@ -45,6 +45,8 @@ public class CfgLogisticsCostImportEntity extends BaseEntity<CfgLogisticsCostImp
     */
     @TableField("dict_platform")
     private String dictPlatform;
+    @TableField(exist = false)
+    private String dictPlatformName;
     /**
     * 识别名称
     */

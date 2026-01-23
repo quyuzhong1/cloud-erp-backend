@@ -164,6 +164,43 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             throw new ServiceException("费用项配置保存失败");
         }
 
+        String oldDictPlatform = old.getDictPlatform();
+        String newDictPlatform = cfgLogisticsCostImportEntity.getDictPlatform();
+        if(!Objects.equals(oldDictPlatform,newDictPlatform)){
+            String oldDictPlatformName ="";
+            String newDictPlatformName ="";
+            //物流商
+            List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAll(false);
+            if(Objects.equals(CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),old.getCfgType())){
+                BaseDropDownDTO.DisabledDTO disabledDTO = logisticsSupplierList.stream().filter(e -> e.getCode().equals(oldDictPlatform)).findFirst().orElse(new BaseDropDownDTO.DisabledDTO());
+                oldDictPlatformName = disabledDTO.getValue();
+            }else {
+                //销售平台
+                List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
+                        .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                        .in(DictBasicEntity::getValue,oldDictPlatform)
+                        .list();
+                if(CollUtil.isNotEmpty(salesPlatformList)){
+                    oldDictPlatformName = salesPlatformList.get(0).getName();
+                }
+            }
+
+            if(Objects.equals(CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),cfgLogisticsCostImportEntity.getCfgType())){
+                BaseDropDownDTO.DisabledDTO disabledDTO = logisticsSupplierList.stream().filter(e -> e.getCode().equals(newDictPlatform)).findFirst().orElse(new BaseDropDownDTO.DisabledDTO());
+                newDictPlatformName = disabledDTO.getValue();
+            }else {
+                //销售平台
+                List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
+                        .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                        .in(DictBasicEntity::getValue,newDictPlatform)
+                        .list();
+                if(CollUtil.isNotEmpty(salesPlatformList)){
+                    newDictPlatformName = salesPlatformList.get(0).getName();
+                }
+            }
+            old.setDictPlatformName(oldDictPlatformName);
+            cfgLogisticsCostImportEntity.setDictPlatformName(newDictPlatformName);
+        }
         // 记录主单操作日志
         log.info("编辑 开始记录费用项配置日志数据，单号：【{}】", cfgLogisticsCostImportEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgLogisticsCostImportEntity.getCode(), "费用项配置");
@@ -330,7 +367,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             }
             data.setDictPlatformName(dictPlatformName);
 
-            data.setDisabledName(data.getDisabled() ? "停用" : "启用");
+            data.setDisabledName(data.getDisabled() ? "体用" : "启用");
         }
    }
 
