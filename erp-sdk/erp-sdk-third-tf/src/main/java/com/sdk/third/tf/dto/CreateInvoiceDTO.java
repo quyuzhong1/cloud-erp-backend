@@ -78,6 +78,7 @@ public class CreateInvoiceDTO implements Serializable {
 
     /**
      * 总折扣金额（包含在发票总金额中）
+     * 注意：根据API规范，该字段不传
      */
     @JsonProperty("total_discount_amount")
     @JsonAlias({"total_discount_amount", "totalDiscountAmount"})
