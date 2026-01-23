@@ -183,7 +183,15 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
 
         String importTypeName = excelDTO.getImportTypeName();
         if(StringUtils.isNotBlank(importTypeName)){
-            excelDTO.setImportType(Arrays.stream(importType.split(","))
+            String[] split = importType.split(",");
+            List<String> importTypeList = Arrays.asList(split);
+            for (String s : importTypeList) {
+                String code = CfgLogisticsCostImportImportTypeEnum.getCode(s);
+                if(StringUtils.isBlank(code)){
+                    errorMsgList.add("【"+s+"】不存在");
+                }
+            }
+            excelDTO.setImportType(Arrays.stream(split)
                     .map(CfgLogisticsCostImportImportTypeEnum::getCode)
                     .collect(Collectors.joining(",")));
         }

@@ -7,6 +7,7 @@ import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
 import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -85,4 +86,6 @@ public interface CfgLogisticsCostImportService extends SuperService<CfgLogistics
     void importCfgLogisticsCost(BaseDTO.ImportDTO dto);
 
     void handleImportSuccessList(List<CfgLogisticsCostExcelDTO> successList, List<String> errorNoList, List<CfgLogisticsCostExcelDTO> errorList2, String importType);
+
+    void exportList(CfgLogisticsCostImportDTO.PagingParamDTO dto, HttpServletResponse response);
 }

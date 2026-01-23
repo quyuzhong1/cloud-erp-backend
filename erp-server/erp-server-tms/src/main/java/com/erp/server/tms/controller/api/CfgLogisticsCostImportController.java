@@ -3,11 +3,8 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.oms.entity.KolB2cApplicationEntity;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.server.tms.query.CfgLogisticsCostImportQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +19,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -237,6 +233,26 @@ public class CfgLogisticsCostImportController extends BaseController {
         String standardPath = "classpath:excel/cfgLogisticsCostTemplate.xlsx";
         String standardExcelName = "cfgLogisticsCostTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-20
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:cfgLogisticsCostImport:export",
+            tableAlias = "clci"
+    )
+    @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
+    public  ApiResult<Object> exportList(@RequestBody @Validated CfgLogisticsCostImportDTO.PagingParamDTO dto, HttpServletResponse response) {
+        cfgLogisticsCostImportService.exportList(dto, response);
         return success();
     }
 
