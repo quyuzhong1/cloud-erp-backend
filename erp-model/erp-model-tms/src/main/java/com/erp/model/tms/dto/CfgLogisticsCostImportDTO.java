@@ -412,11 +412,11 @@ public class CfgLogisticsCostImportDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public class UpdateDisabledDTO {
+    public static class UpdateDisabledDTO {
         /**
          * 主键id
          */
-        @NotBlank(message = "主键id不能为空")
+        @NotEmpty(message = "主键id不能为空")
         private List<String> ids;
 
         /**
