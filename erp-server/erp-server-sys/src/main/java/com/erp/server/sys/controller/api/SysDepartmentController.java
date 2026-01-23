@@ -54,7 +54,9 @@ public class SysDepartmentController extends BaseController {
      */
     @RequestMapping("/tree")
     public ApiResult tree() {
-        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree(null);
+        SysDepartmentDTO.TreeParamsDTO dto = new SysDepartmentDTO.TreeParamsDTO();
+        dto.setDisabled(null);
+        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree(dto);
         return success(treeVO);
     }
 
