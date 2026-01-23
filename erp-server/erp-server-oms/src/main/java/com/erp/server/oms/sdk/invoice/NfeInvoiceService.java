@@ -577,7 +577,8 @@ public class NfeInvoiceService {
             BigDecimal unitPrice = getUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio);
             productDTO.setUnitPrice(unitPrice);
             productDTO.setTotalPrice(MathUtil.multiplyWithTwo(unitPrice, detailEntity.getQty()));
-            productDTO.setDiscountPrice(BigDecimal.ZERO);
+            // discount_price字段：根据API规范，当值为0或null时不传，所以不设置该字段
+            // productDTO.setDiscountPrice(BigDecimal.ZERO); // 已移除：不传discount_price字段
             if (CharSequenceUtil.isNotBlank(taxCategoryId)) productDTO.setCategoryId(taxCategoryId);
             productDTO.setOrigem("0");
             // indicador_total: 若SKU为赠品传"1"，若SKU不为赠品传"0"
