@@ -230,10 +230,10 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
 
 
     /**
-     * 区域id
+     * 区域编码
      */
-    @TableField(value = "region_Id")
-    private String regionId;
+    @TableField(value = "region_code")
+    private String regionCode;
 
     /**
      * 部门id

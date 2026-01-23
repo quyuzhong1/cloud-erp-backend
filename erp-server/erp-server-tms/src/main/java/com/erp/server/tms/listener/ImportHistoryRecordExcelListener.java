@@ -1,5 +1,6 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
@@ -7,9 +8,13 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
+import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.ImportHistoryRecordService;
 import lombok.Data;
@@ -143,6 +148,22 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
                 errorList.addAll(successList);
             }
         }
+        //添加导入历史记录表数据
+        ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();
+        addDTO.setReconciliationMonth(dto.getReconciliationMonth());
+        addDTO.setBusinessType(costImportEntity.getBusinessType());
+        addDTO.setFileUrl(importDTO.getFileUrl());
+        addDTO.setFileName(importDTO.getFileName());
+        if (CharSequenceUtil.equals(dto.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
+            addDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
+        } else {
+            addDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
+        }
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        addDTO.setOperationUserId(userInfo.getUid());
+        addDTO.setImportCount(count);
+        addDTO.setMatchCount(count - errorList.size());
+        importHistoryRecordService.add(addDTO);
     }
 
     @Override

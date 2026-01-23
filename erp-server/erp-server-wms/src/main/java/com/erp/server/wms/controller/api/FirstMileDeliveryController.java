@@ -32,6 +32,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -719,4 +720,20 @@ public class FirstMileDeliveryController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 取消发货列表
+     * @author will
+     * @date 2026/1/23 15:18
+     * @param dto
+     * @return ApiResult<PagingVO<CancelDeliveryListDTO>>
+     */
+    @PostMapping("/cancelDeliveryPaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO>> cancelDeliveryPaging(@RequestBody @Valid PagingDTO<FirstMileDeliveryDTO.CancelDeliveryParamDTO> dto) {
+        PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO> pagingVO = firstMileDeliveryService.cancelDeliveryPaging(dto);
+        return success(pagingVO);
+    }
+
 }

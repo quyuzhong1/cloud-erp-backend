@@ -8,9 +8,11 @@ import com.common.core.anno.StateEnumValue;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -1379,5 +1381,90 @@ public class FirstMileDeliveryDTO implements Serializable {
          * FBA货件编码
          */
         private String fbaShipmentCode;
+    }
+
+
+    /**
+     * 取消分货分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CancelDeliveryParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 物流单id
+         */
+        @NotEmpty(message = "id集合不能为空")
+        private List<String> ids;
+    }
+
+    /**
+     * 取消分货列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CancelDeliveryListDTO {
+        /**
+         * 物流单id
+         */
+        private String id;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * 装箱sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packageQty;
+
+        /**
+         * 装箱重量
+         */
+        @NotNull(message = "装箱重量不能为空")
+        private BigDecimal packageWeight;
+        /**
+         * 单位
+         */
+        @NotBlank(message = "单位不能为空")
+        private String weightUnit;
+
+        /**
+         * 装箱尺寸(长)
+         */
+        private String boxLength;
+
+        /**
+         * 装箱尺寸(宽)
+         */
+        private String boxWidth;
+
+        /**
+         * 装箱尺寸(高)
+         */
+        private String boxHeight;
+        /**
+         * 是否取消
+         */
+        private Boolean isCancelRequired;
     }
 }

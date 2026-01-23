@@ -432,9 +432,9 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private BigDecimal thirdActualWeight;
         /**
-         * 区域id
+         * 区域编码
          */
-        private String regionId;
+        private String regionCode;
         /**
          * 区域名称
          */
