@@ -953,6 +953,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 if (CharSequenceUtil.isBlank(billCostExcelDTO.getTrackNo())) {
                     errorMsgList.add("物流单号不能为空");
                 }
+                if (CharSequenceUtil.isBlank(billCostExcelDTO.getLogisticsSupplierName())) {
+                    errorMsgList.add("物流商不能为空");
+                }
             } else {
                 if (CollUtil.isEmpty(logisticsBillVoList)) {
                     errorMsgList.add("未找到对应物流单");
@@ -1095,6 +1098,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private LogisticsBillEntity addImportLogisticBill (LogisticsBillCostExcelDTO excelDTO) {
         //新增物流单，格式化物流费用
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
+
+        List<LogisticsSupplierEntity> logisticsSupplierList = logisticsSupplierService.listByName(Collections.singletonList(excelDTO.getLogisticsSupplierName()));
+        if (CollUtil.isEmpty(logisticsSupplierList)) {
+            throw new ServiceException(ApiError.LOGISTICS_SUPPLIER_NAME_NOT_FOUND,excelDTO.getLogisticsSupplierName());
+        }
+        addDTO.setLogisticsSupplierId(logisticsSupplierList.get(0).getId());
         //发货单信息
         if (CharSequenceUtil.isNotBlank(excelDTO.getSoDeliveryCode())) {
             if (excelDTO.getSoDeliveryCode().startsWith("FHTZ")) {

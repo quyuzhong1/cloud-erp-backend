@@ -91,7 +91,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private TmsCfgCostService tmsCfgCostService;
     @Resource
     private TmsCostDetailService tmsCostDetailService;
-
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -450,6 +451,13 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private LogisticsBillEntity addImportLogisticBill (LogisticsLastMileCostExcelDTO excelDTO) {
         //新增物流单，格式化物流费用
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
+
+        List<LogisticsSupplierEntity> logisticsSupplierList = logisticsSupplierService.listByName(Collections.singletonList(excelDTO.getLogisticsSupplierName()));
+        if (CollUtil.isEmpty(logisticsSupplierList)) {
+            throw new ServiceException(ApiError.LOGISTICS_SUPPLIER_NAME_NOT_FOUND,excelDTO.getLogisticsSupplierName());
+        }
+        addDTO.setLogisticsSupplierId(logisticsSupplierList.get(0).getId());
+
         //发货单信息
         if (CharSequenceUtil.isNotBlank(excelDTO.getSoDeliveryCode())) {
             if (excelDTO.getSoDeliveryCode().startsWith("FHTZ")) {

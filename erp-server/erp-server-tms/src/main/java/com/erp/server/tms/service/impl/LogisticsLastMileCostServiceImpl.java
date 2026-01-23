@@ -28,13 +28,13 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.excel.LogisticsLastMileCostExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
-import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -89,6 +89,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     private TmsCostDetailService tmsCostDetailService;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -310,6 +312,9 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 if (CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
                     errorMsgList.add("物流单号不能为空");
                 }
+                if (CharSequenceUtil.isBlank(excelDTO.getLogisticsSupplierName())) {
+                    errorMsgList.add("物流商不能为空");
+                }
             } else {
                 if (CollUtil.isEmpty(logisticsBillVoList)) {
                     errorMsgList.add("未找到对应物流单");
@@ -397,6 +402,13 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     private LogisticsBillEntity addImportLogisticBill (LogisticsLastMileCostExcelDTO excelDTO) {
         //新增物流单，格式化物流费用
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
+
+        List<LogisticsSupplierEntity> logisticsSupplierList = logisticsSupplierService.listByName(Collections.singletonList(excelDTO.getLogisticsSupplierName()));
+        if (CollUtil.isEmpty(logisticsSupplierList)) {
+            throw new ServiceException(ApiError.LOGISTICS_SUPPLIER_NAME_NOT_FOUND,excelDTO.getLogisticsSupplierName());
+        }
+        addDTO.setLogisticsSupplierId(logisticsSupplierList.get(0).getId());
+
         //发货单信息
         if (CharSequenceUtil.isNotBlank(excelDTO.getSoDeliveryCode())) {
             if (excelDTO.getSoDeliveryCode().startsWith("FHTZ")) {

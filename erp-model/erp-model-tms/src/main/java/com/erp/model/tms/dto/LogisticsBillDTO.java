@@ -349,6 +349,11 @@ public class LogisticsBillDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
         /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
          * 物流明细信息
          */
         private List<LogisticsBillDetailDTO.AddDTO> detailList;
