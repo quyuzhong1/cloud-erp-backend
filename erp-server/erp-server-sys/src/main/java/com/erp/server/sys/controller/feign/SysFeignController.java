@@ -48,7 +48,7 @@ public class SysFeignController extends BaseController {
      */
     @GetMapping("/company/list")
     public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyList() {
-        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList();
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList(null);
         return success(list);
     }
 
