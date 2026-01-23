@@ -639,4 +639,50 @@
               #{item}
           </foreach>
     </select>
+
+    <!-- 取消分货分页查询 -->
+    <select id="cancelDeliveryPaging" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$CancelDeliveryListDTO">
+        with wcd as (
+        SELECT main_id,
+        sum(wcd.pack_qty) as packageQty,
+        max (wcd.sku_no) as skuNo
+        from wms_carton_detail wcd where is_deleted = false group by main_id
+        )
+        select
+            flb.business_code as businessCode,
+            wcd.skuNo,
+            wcd.packageQty,
+            pt.id as packingTaskId,
+            wcs.package_weight,
+            wcs.box_length as length,
+            wcs.box_width as width,
+            wcs.box_height as height,
+            wcs.weight_unit as weightUnit
+        from foreign_logistics_bill flb
+        inner join first_mile_delivery fmd on flb.outstock_id = fmd.id and fmd.is_deleted = false
+        inner join packing_task pt on fmd.id = pt.source_id and pt.is_deleted = false
+        inner join wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
+        inner join wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
+        inner JOIN wcd ON WCD.main_id = wc.id
+        where
+        ${params.sqlMap.default}
+        and fmd.is_deleted = FALSE AND flb.order_type = 'firstMile' and flb.business_code != ''
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pt.ID DESC
+    </select>
 </mapper>

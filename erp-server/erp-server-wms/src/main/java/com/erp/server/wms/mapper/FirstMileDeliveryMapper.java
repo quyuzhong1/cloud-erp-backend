@@ -1,16 +1,15 @@
 package com.erp.server.wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
-
-import com.common.business.dto.base.ApproveStatusQtyDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -129,4 +128,13 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(@Param("approveStatus") String approveStatus, @Param("sourceType") String sourceType, @Param("reportMonth") LocalDate reportMonth, @Param("shipmentCode") String shipmentCode, @Param("asin") String asin, @Param("msku") String msku);
 
     List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(@Param("deliveryIds") List<String> deliveryIds);
+    /**
+     * 取消分货分页查询
+     * @author will
+     * @date 2026/1/23 17:03
+     * @param query
+     * @param params
+     * @return IPage<CancelDeliveryListDTO>
+     */
+    IPage<FirstMileDeliveryDTO.CancelDeliveryListDTO> cancelDeliveryPaging(Page<FirstMileDeliveryDTO.CancelDeliveryListDTO> query,@Param("params") FirstMileDeliveryDTO.CancelDeliveryParamDTO params);
 }

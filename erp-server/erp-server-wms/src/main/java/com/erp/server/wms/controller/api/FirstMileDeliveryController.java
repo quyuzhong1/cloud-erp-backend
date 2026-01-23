@@ -731,6 +731,11 @@ public class FirstMileDeliveryController extends BaseController {
      */
     @PostMapping("/cancelDeliveryPaging")
     @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fmd.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging"
+    )
     public ApiResult<PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO>> cancelDeliveryPaging(@RequestBody @Valid PagingDTO<FirstMileDeliveryDTO.CancelDeliveryParamDTO> dto) {
         PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO> pagingVO = firstMileDeliveryService.cancelDeliveryPaging(dto);
         return success(pagingVO);
