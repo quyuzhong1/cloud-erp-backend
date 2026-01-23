@@ -44,6 +44,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -350,7 +351,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String code = purchasePrice.getCode();
         purchasePrice.setCode(code);
         purchasePrice.setApproveStatus(status);
-
+        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(dto.getPurchaseOrgId());
+        purchasePrice.setPurchaseOrgId(dto.getPurchaseOrgId());
+        if (Objects.isNull(company)) {
+            throw new ServiceException(ApiError.PO_PURCHASE_ORG_NOT_FOUND);
+        }
+        purchasePrice.setPurchaseOrgName(company.getCompanyName());
         String pricingUserId = dto.getPricingUserId();
         if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
