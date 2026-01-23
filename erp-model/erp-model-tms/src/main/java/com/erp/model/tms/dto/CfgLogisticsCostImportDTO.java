@@ -71,6 +71,11 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
+
      }
 
 
@@ -140,6 +145,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         * 启用状态
         */
         private Boolean disabled;
+        private String disabledName;
 
         /**
         * 备注
@@ -209,19 +215,6 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         private String targetFieldType;
 
 
-    }
-
-
-    /**
-    * 导出Excel
-    */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
     }
 
     /**

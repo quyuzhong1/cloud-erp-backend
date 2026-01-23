@@ -37,13 +37,6 @@ public interface CfgLogisticsCostImportMapper extends BaseMapper<CfgLogisticsCos
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") CfgLogisticsCostImportDTO.PagingParamDTO params);
 
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<CfgLogisticsCostImportDTO.ListDTO> listExport(@Param("params") CfgLogisticsCostImportDTO.ExportDTO params);
-
 
     /**
     * 获取状态统计

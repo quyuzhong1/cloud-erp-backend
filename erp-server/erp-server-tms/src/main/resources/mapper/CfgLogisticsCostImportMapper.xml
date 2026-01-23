@@ -83,9 +83,7 @@ clci.remark AS remark
         select approve_status, count(id) from cfg_logistics_cost_import where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportDTO$ListDTO">
 
-    </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportDTO$TabListDTO">
         SELECT
         disabled AS tabFlag,

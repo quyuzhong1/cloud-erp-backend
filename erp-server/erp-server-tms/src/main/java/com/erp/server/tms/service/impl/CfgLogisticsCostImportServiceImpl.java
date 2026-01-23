@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -16,6 +15,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -53,16 +53,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_BORROW_INFO;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -328,6 +329,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 dictPlatformName = salesPlatformMap.get(data.getDictPlatform());
             }
             data.setDictPlatformName(dictPlatformName);
+
+            data.setDisabledName(data.getDisabled() ? "停用" : "启用");
         }
    }
 
@@ -363,7 +366,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("导入费用配置", IMPORT_WMS_SAMPLE_BORROW_INFO.getCode(), dto);
+        downloadTaskFeign.saveImportTask("导入费用配置", IMPORT_TMS_CFG_LOGISTICS_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -436,9 +439,39 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         downloadTaskFeign.updateTask(importResultDTO);
     }
 
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Override
     public void handleImportSuccessList(List<CfgLogisticsCostExcelDTO> successList, List<String> errorNoList, List<CfgLogisticsCostExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
 
+        if(CollUtil.isNotEmpty(errorNoList)){
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+
+            //全部返回到错误列表
+            List<CfgLogisticsCostExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getNo()) || errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        CfgLogisticsCostImportServiceImpl bean = ApplicationContextUtils.getBean(CfgLogisticsCostImportServiceImpl.class);
+        //按序号分组
+        Map<String, List<CfgLogisticsCostExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(CfgLogisticsCostExcelDTO::getNo));
+        for (Map.Entry<String, List<CfgLogisticsCostExcelDTO>> entry : collect.entrySet()) {
+            List<CfgLogisticsCostExcelDTO> value = entry.getValue();
+            CfgLogisticsCostExcelDTO importMainDTO = value.get(0);
+            CfgLogisticsCostImportDTO.AddDTO addDTO = new CfgLogisticsCostImportDTO.AddDTO();
+            BeanMapper.copy(importMainDTO,addDTO);
+            List<CfgLogisticsCostImportDetailDTO.AddDTO> addDTOS = BeanMapper.copyList(value, CfgLogisticsCostImportDetailDTO.AddDTO.class);
+            addDTO.setDetailList(addDTOS);
+            //新增
+            bean.add(addDTO);
+        }
+    }
+
+    @Override
+    public void exportList(CfgLogisticsCostImportDTO.PagingParamDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("费用项配置导出", EXPORT_TMS_CFG_LOGISTICS_COST.getCode(), dto);
     }
 
     @Override
