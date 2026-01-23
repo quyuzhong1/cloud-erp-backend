@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BatchResultDTO;
@@ -13,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
@@ -125,8 +127,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
      * @return
      */
     @Override
-    public List<DepartmentDTO> findDepartmentTree() {
-        List<SysDepartmentEntity> allList = this.list();
+    public List<DepartmentDTO> findDepartmentTree(SysDepartmentDTO.TreeParamsDTO dto) {
+        // 优化后的写法
+        List<SysDepartmentEntity> allList = lambdaQuery()
+                .eq(Objects.nonNull(dto) && Objects.nonNull(dto.getDisabled()), SysDepartmentEntity::getDisabled, dto.getDisabled())
+                .list();
         //获取所有部门人员
         List<SysDepartmentUserNumberDTO> userNumberList = sysDepartmentUserService.findUserNumber();
         List<DepartmentDTO> departList = BeanMapperUtils.copyList(DepartmentDTO.class, allList);
@@ -624,6 +629,38 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             }
         }
         return departments;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDisabled(SysDepartmentDTO.UpdateDisabledDTO dto) {
+        String id = dto.getId();
+        SysDepartmentEntity old = super.getById(id);
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "部门"));
+
+        List<SysDepartmentTreeDTO> flagList = baseMapper.findTree();
+        List<String> resultList = new LinkedList<>();
+        if (CollectionUtils.isNotEmpty(flagList)) {
+            for (SysDepartmentTreeDTO vo : flagList) {
+                //如果路径包含了 就说有
+                if (vo.getPath().contains(id)) {
+                    resultList.add(vo.getId());
+                }
+            }
+        }
+        if(CollUtil.isNotEmpty(resultList)){
+            //校验是否存在用户
+            List<SysDepartmentUserEntity> sysDepartmentUserEntities = sysDepartmentUserService.listByDepartmentIds(resultList);
+            if(CollUtil.isNotEmpty(sysDepartmentUserEntities)){
+                throw new ServiceException(ApiError.COMMON_DEPARTMENT_HAVE_USER, old.getName());
+            }
+
+            List<SysDepartmentEntity> sysDepartmentEntities = this.listByIdList(resultList);
+            for (SysDepartmentEntity sysDepartmentEntity : sysDepartmentEntities) {
+                sysDepartmentEntity.setDisabled(dto.getDisabled());
+            }
+            this.saveOrUpdateBatch(sysDepartmentEntities);
+        }
     }
 
 

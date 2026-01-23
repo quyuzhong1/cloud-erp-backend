@@ -612,4 +612,140 @@ public class SampleOpenApi {
         return sysDictFeign.saveOrUpdateSampleUseUser(userList);
     }
 
+    // ==================== 样品调整单相关接口 ====================
+
+    @OpenApi("sampleAdjustmentInfoAdd")
+    public ApiResult<BaseResultDTO.AddDTO> sampleAdjustmentInfoAdd(@Valid SampleAdjustmentInfoDTO.AddDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoAdd(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoUpdate")
+    public ApiResult<?> sampleAdjustmentInfoUpdate(@Valid SampleAdjustmentInfoDTO.UpdateDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoUpdate(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoTabList")
+    public ApiResult<List<SampleAdjustmentInfoDTO.TabListDTO>> sampleAdjustmentInfoTabList(PermissionsDTO param) {
+        return sampleFeign.sampleAdjustmentInfoTabList(param);
+    }
+
+    @OpenApi("sampleAdjustmentInfoPaging")
+    public ApiResult<PagingVO<SampleAdjustmentInfoDTO.ListDTO>> sampleAdjustmentInfoPaging(@Valid PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto) {
+        return sampleFeign.sampleAdjustmentInfoPaging(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoAddAndSubmit")
+    public ApiResult<BaseResultDTO.AddDTO> sampleAdjustmentInfoAddAndSubmit(@Valid SampleAdjustmentInfoDTO.AddDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoAddAndSubmit(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoUpdateAndSubmit")
+    public ApiResult<Void> sampleAdjustmentInfoUpdateAndSubmit(@Valid SampleAdjustmentInfoDTO.UpdateDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoUpdateAndSubmit(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoSubmit")
+    public ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoSubmit(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoSubmit(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoApprove")
+    public ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoApprove(@Valid BaseApproveParamDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoApprove(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoDisApprove")
+    public ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoDisApprove(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoDisApprove(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoDelete")
+    public ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoDelete(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoDelete(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoInvalid")
+    public ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoInvalid(@Valid BaseIdsDTO.RemarkDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoInvalid(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoCancelProcess")
+    public ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoCancelProcess(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleAdjustmentInfoCancelProcess(dto);
+    }
+
+    @OpenApi("sampleAdjustmentInfoView")
+    public ApiResult<SampleAdjustmentInfoDTO.ViewDTO> sampleAdjustmentInfoView(String id) {
+        return sampleFeign.sampleAdjustmentInfoView(id);
+    }
+
+
+    // ==================== 样品转移单相关接口 ====================
+
+    @OpenApi("sampleTransferInfoAdd")
+    public ApiResult<BaseResultDTO.AddDTO> sampleTransferInfoAdd(@Valid SampleTransferInfoDTO.AddDTO dto) {
+        return sampleFeign.sampleTransferInfoAdd(dto);
+    }
+
+    @OpenApi("sampleTransferInfoUpdate")
+    public ApiResult<?> sampleTransferInfoUpdate(@Valid SampleTransferInfoDTO.UpdateDTO dto) {
+        return sampleFeign.sampleTransferInfoUpdate(dto);
+    }
+
+    @OpenApi("sampleTransferInfoTabList")
+    public ApiResult<List<SampleTransferInfoDTO.TabListDTO>> sampleTransferInfoTabList(PermissionsDTO param) {
+        return sampleFeign.sampleTransferInfoTabList(param);
+    }
+
+    @OpenApi("sampleTransferInfoPaging")
+    public ApiResult<PagingVO<SampleTransferInfoDTO.ListDTO>> sampleTransferInfoPaging(@Valid PagingDTO<SampleTransferInfoDTO.PagingParamDTO> dto) {
+        return sampleFeign.sampleTransferInfoPaging(dto);
+    }
+
+    @OpenApi("sampleTransferInfoAddAndSubmit")
+    public ApiResult<BaseResultDTO.AddDTO> sampleTransferInfoAddAndSubmit(@Valid SampleTransferInfoDTO.AddDTO dto) {
+        return sampleFeign.sampleTransferInfoAddAndSubmit(dto);
+    }
+
+    @OpenApi("sampleTransferInfoUpdateAndSubmit")
+    public ApiResult<Void> sampleTransferInfoUpdateAndSubmit(@Valid SampleTransferInfoDTO.UpdateDTO dto) {
+        return sampleFeign.sampleTransferInfoUpdateAndSubmit(dto);
+    }
+
+    @OpenApi("sampleTransferInfoSubmit")
+    public ApiResult<List<BatchResultDTO>> sampleTransferInfoSubmit(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleTransferInfoSubmit(dto);
+    }
+
+    @OpenApi("sampleTransferInfoApprove")
+    public ApiResult<List<BatchResultDTO>> sampleTransferInfoApprove(@Valid BaseApproveParamDTO dto) {
+        return sampleFeign.sampleTransferInfoApprove(dto);
+    }
+
+    @OpenApi("sampleTransferInfoDisApprove")
+    public ApiResult<List<BatchResultDTO>> sampleTransferInfoDisApprove(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleTransferInfoDisApprove(dto);
+    }
+
+    @OpenApi("sampleTransferInfoDelete")
+    public ApiResult<List<BatchResultDTO>> sampleTransferInfoDelete(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleTransferInfoDelete(dto);
+    }
+
+    @OpenApi("sampleTransferInfoInvalid")
+    public ApiResult<List<BatchResultDTO>> sampleTransferInfoInvalid(@Valid BaseIdsDTO.RemarkDTO dto) {
+        return sampleFeign.sampleTransferInfoInvalid(dto);
+    }
+
+    @OpenApi("sampleTransferInfoCancelProcess")
+    public ApiResult<List<BatchResultDTO>> sampleTransferInfoCancelProcess(@Valid BaseIdsDTO.IdsDTO dto) {
+        return sampleFeign.sampleTransferInfoCancelProcess(dto);
+    }
+
+    @OpenApi("sampleTransferInfoView")
+    public ApiResult<SampleTransferInfoDTO.ViewDTO> sampleTransferInfoView(String id) {
+        return sampleFeign.sampleTransferInfoView(id);
+    }
+
+
 }

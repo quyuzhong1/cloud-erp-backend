@@ -232,7 +232,7 @@ public class AwdShipmentController extends BaseController {
     @PostMapping("/generateDeliverSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存：id = {id}")
     public ApiResult generateDeliverSave(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
-        Boolean flag = fbaShipmentService.generateDeliverSave(list);
+        Boolean flag = fbaShipmentService.generateDeliverSave(list,ShipmentSourceTypeEnum.AWD.getCode());
         return flag ? success() : failure();
     }
 
@@ -259,7 +259,7 @@ public class AwdShipmentController extends BaseController {
     @PostMapping("/generateDeliverSaveAndSubmit")
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "下推发货单保存并提交：id = {id}")
     public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
-        Boolean flag = fbaShipmentService.generateDeliverSaveAndSubmit(list);
+        Boolean flag = fbaShipmentService.generateDeliverSaveAndSubmit(list,ShipmentSourceTypeEnum.AWD.getCode());
         return flag ? success() : failure();
     }
 

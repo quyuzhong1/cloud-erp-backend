@@ -104,21 +104,24 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
 
     /**
      * 下推发货单保存
+     *
+     * @param list
+     * @param sourceType
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/10/31 14:35
-     * @param list
-     * @return java.lang.Boolean
      **/
-    Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list);
+    Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list, String sourceType);
 
     /**
      * 下推发货单保存并提交
      * @Author Luo_WG
      * @Date 2023/11/6 14:35
      * @param list
+     * @param sourceType
      * @return java.lang.Boolean
      **/
-    Boolean generateDeliverSaveAndSubmit(List<FbaShipmentDTO.GenerateDeliverView> list);
+    Boolean generateDeliverSaveAndSubmit(List<FbaShipmentDTO.GenerateDeliverView> list, String sourceType);
 
     /**
      * sku映射
@@ -295,6 +298,14 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return
      */
     WmsAttachmentDTO.UpdateDTO printLabel(FbaShipmentDTO.PrintLabelDTO dto);
+
+    /**
+     * 异步打印标签
+     * @param sourceCode 要货申请编码
+     * @param shipmentCode FBA货件编码
+     * @return
+     */
+    void asyncPrintLabel(String sourceCode, String shipmentCode);
 
     /**
      * 校验并创建

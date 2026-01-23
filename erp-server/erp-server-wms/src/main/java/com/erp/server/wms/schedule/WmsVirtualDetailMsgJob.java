@@ -88,6 +88,29 @@ public class WmsVirtualDetailMsgJob {
     }
 
     /**
+     * 历史虚拟仓明细保存任务
+     * @author will
+     * @date 2024/12/9 19:21
+     * @return ReturnT<String>
+     */
+    @XxlJob("hisVirtualInventoryDetailJob")
+    public ReturnT<String> hisVirtualInventoryDetailJob() {
+        XxlJobHelper.log("=====自动执行生成虚拟仓流水明细结余 开始任务=====");
+        long start = System.currentTimeMillis();
+        String jobParam = XxlJobHelper.getJobParam();
+        LocalDateTime date = LocalDateTime.now();
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
+            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
+            date = jsonParam.getLocalDateTime("date",LocalDateTime.now());
+        }
+        virtualInventoryDetailHisService.hisVirtualInventoryDetailJob(date.toLocalDate());
+        long end = System.currentTimeMillis();
+        XxlJobHelper.log("主线程花费时间：{}", (end - start));
+        XxlJobHelper.log("=====自动执行生成虚拟仓流水明细结余 结束任务=====");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
      * 生成虚拟仓分析数据
      * @author will
      * @date 2025/8/19 16:22

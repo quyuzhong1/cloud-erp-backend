@@ -11,12 +11,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.OperateLogDTO;
-import com.erp.model.wms.dto.StocktakingTaskDTO;
-import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
-import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.model.wms.entity.StocktakingTaskUserEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -379,5 +380,32 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
         }
         return new PagingVO<>(exportList, exportList.size(), dto.getPageSize(), dto.getCurrPage());
+    }
+    @Override
+    public List<StocktakingTaskDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(warehouseIds)){
+            throw new ServiceException("仓库IDS 不能为空");
+        }
+        if (CollectionUtils.isEmpty(orgIds)){
+            throw new ServiceException("组织IDS 不能为空");
+        }
+        if (CollectionUtils.isEmpty(skuIds)){
+            throw new ServiceException("SKU IDS不能为空");
+        }
+        return baseMapper.maxDateByParams(warehouseIds, orgIds, skuIds);
+    }
+
+    @Override
+    public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
+        // 最新盘盈盘亏单有效单据日期列表
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
+        if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
+            // 已有日期之前对应仓位已审核的盘盈盘亏单
+            return lastStocktakingProfitLossList.stream()
+                    .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
+                            (billDate.isBefore(e.getBillDate()))
+                    );
+        }
+        return false;
     }
 }

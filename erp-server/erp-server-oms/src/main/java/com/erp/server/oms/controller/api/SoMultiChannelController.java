@@ -27,6 +27,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
+import com.erp.model.oms.enums.RuleOrderHandleEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -458,6 +459,13 @@ public class SoMultiChannelController extends BaseController {
             ShopInfoEntity shopInfoEntity1 = shopInfoService.getById(soB2cEntity.getShopId());
             if (Objects.nonNull(shopInfoEntity1)) {
                 soB2cEntity.setShopName(shopInfoEntity1.getName());
+            }
+            // 检查发货限制
+            String restrictionMsg = soB2cService.checkDeliveryRestriction(id, RuleOrderHandleEnum.DeliveryRestrictionEnum.MULTI_CHANNEL_DELIVERY.getCode());
+            if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+                submit = BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), restrictionMsg);
+                resultDTOS.add(submit);
+                continue;
             }
             try {
                 SoB2cDTO.SaveSoB2cDistributionDTO saveSoB2cDistributionDTO = soMultiChannelService.buildDistributionDTO(dto);

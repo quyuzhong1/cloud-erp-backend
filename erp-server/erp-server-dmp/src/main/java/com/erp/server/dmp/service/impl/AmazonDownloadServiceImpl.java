@@ -619,7 +619,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             }
             if (e.hasMultiChannel()) {
                 // 多渠道订单
-                parseMultiChannel(e, timeList, curMap, centerEntity);
+                 parseMultiChannel(e, timeList, curMap, centerEntity);
             } else {
                 // B2C订单
                 parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
@@ -669,6 +669,17 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
      * 补充信息(多渠道销售订单)
      */
     private static void parseMultiChannel(ReportFulfilledShipmentsMongoDTO e, List<CfgTimezoneEntity> timeList, Map<String, ShopInfoEntity> curMap, CfgAmzFulfillmentCenterEntity centerEntity) {
+        // 优先店铺地区解析
+        if (!curMap.isEmpty()) {
+            // 相同账号的店铺时区一致
+            ShopInfoEntity shopInfoEntity = curMap.values().stream().findFirst().orElse(null);
+            if (StringUtils.isNotBlank(shopInfoEntity.getTimeZone())) {
+                // 设置所有本地时区
+                e.checkAndSetAllDateLocale(shopInfoEntity.getTimeZone());
+                return;
+            }
+        }
+
         // 解析后的时区(按仓储中心)
         if (null == centerEntity){
             return;

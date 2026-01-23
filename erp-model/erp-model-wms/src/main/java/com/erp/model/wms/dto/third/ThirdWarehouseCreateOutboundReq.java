@@ -4,6 +4,7 @@ import com.common.business.dto.ReceiverDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -240,6 +241,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 入库单明细
      */
     private List<Item> items;
+
+    /**
+     * 已过滤的明细，不会推送海外仓，用来生成发货单
+     */
+    private List<Item> filterItemList = new ArrayList<>();
 
     @Data
     @AllArgsConstructor

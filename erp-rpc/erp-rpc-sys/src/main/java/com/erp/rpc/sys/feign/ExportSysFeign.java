@@ -27,4 +27,6 @@ public interface ExportSysFeign {
     PagingVO<TemplateManagementDTO.ListDTO> exportTemplateManagement(@RequestBody PagingDTO<TemplateManagementDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportDictBasicAll")
     PagingVO<DictBasicAllDTO.ViewDTO> exportDictBasicAll(@RequestBody PagingDTO<DictBasicAllDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportUserInfo")
+    PagingVO<UserManageDTO> exportUserInfo(@RequestBody PagingDTO<SysUserInfoDTO.PagingParamDTO> dto);
 }

@@ -49,7 +49,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
+    BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
     
     List<EditViewDTO> editView(String id);
     
@@ -134,6 +134,15 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     List<LogisticsBillCostEntity> listByLogisticsBillIdList(List<String> mainIdList);
 
     /**
+     * 跟进物流单id和对账月份查询
+     * @author will
+     * @date 2026/1/9 16:43
+     * @param logisticsBillIdList
+     * @param reconciliationMonth
+     * @return List<LogisticsBillCostEntity>
+     */
+    List<LogisticsBillCostEntity> listByLogisticsBillIdList (List<String> logisticsBillIdList,String reconciliationMonth);
+    /**
      * @description: 根据物流单明细id集合查询
      * @author Will
      * @date: 2024/5/11 14:13
@@ -164,7 +173,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @author Will
      * @date: 2024/5/9 20:16
      */
-    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList, String dictCostAttribution, String importType);
+    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList, String dictCostAttribution, String importType,Map<String,Object> extMap);
     /**
      * @description: 更新店铺
      * @author Will

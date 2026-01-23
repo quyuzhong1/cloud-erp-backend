@@ -230,7 +230,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private InventoryClosedRecordService inventoryClosedRecordService;
 
     @Resource
-    private StocktakingProfitLossService stocktakingProfitLossService;
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
@@ -3202,7 +3202,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> warehourseLocationList = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).distinct().collect(Collectors.toList());
             // SKU信息
             List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-            boolean closed = stocktakingProfitLossService.checkClosed(
+            boolean closed = stocktakingTaskDetailService.checkClosed(
                     Collections.singletonList(dto.getWarehouseId()),
                     warehourseLocationList,
                     Collections.singletonList(dto.getWarehouseOrgId()),
@@ -3211,7 +3211,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (closed){
                 // 已有盘盈盘亏单不提交
                 // 记录明细(事务分开)
-                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘盈盘亏单据时间停止提交",false);
+                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘点任务单据时间停止提交",false);
                 return true;
             }
         }
@@ -3349,11 +3349,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     if(Objects.isNull(deliveryTime)){
                        throw new ServiceException("发货日期不能为空");
                     }
-                    // 速卖通GMT时区转北京时区
-                    LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
-                            ZoneId.of("America/Los_Angeles"),
-                            ZoneId.of("Asia/Shanghai"));
-                    billDate = targetDeliveryTime.toLocalDate();
+                    if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(dto.getDictPlatform())){
+                        // 速卖通GMT时区转北京时区
+                        LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
+                                ZoneId.of("America/Los_Angeles"),
+                                ZoneId.of("Asia/Shanghai"));
+                        billDate = targetDeliveryTime.toLocalDate();
+                    } else {
+                        billDate = deliveryTime.toLocalDate();
+                    }
                 }
             }
         }

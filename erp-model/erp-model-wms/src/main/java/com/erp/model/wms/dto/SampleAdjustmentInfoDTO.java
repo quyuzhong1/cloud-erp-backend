@@ -200,6 +200,10 @@ public class SampleAdjustmentInfoDTO implements Serializable {
         */
         private LocalDateTime createTime;
 
+        /**
+         * 商品种类
+         */
+        private String skuCount;
 
         /**
          * 明细ID
@@ -266,6 +270,21 @@ public class SampleAdjustmentInfoDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+        * 创建人ID
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
 
         /**
         * 单据编号

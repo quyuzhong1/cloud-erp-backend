@@ -132,13 +132,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 String token = headers.getFirst(TokenConstants.AUTHENTICATION);
                 if (StringUtils.isBlank(token)) {
                     // 响应中放入返回的状态吗, 没有权限访问
-                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
+                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                     return mono;
                 }
                 //解析token
                 LoginUser loginUser = tokenService.getLoginUser(token);
                 if (Objects.isNull(loginUser)) {
-                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                 }
 
                 // 检查JWT Token是否包含pathList权限

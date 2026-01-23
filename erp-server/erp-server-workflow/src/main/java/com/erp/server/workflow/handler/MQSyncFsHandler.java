@@ -81,50 +81,147 @@ public class MQSyncFsHandler {
             return Boolean.FALSE;
         }
 
-        //构建三方审批同步实例请求体
-        //审批状态 默认审批中
-        String approveType = dto.getApproveType();
-        dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.PENDING);
-        //转换审核装填
-        handlerApproveStatus(dto, approveType, processManagementEntity, syncRecordEntity);
-
-        //任务 (根据cur_approve_id, cur_activity_id做唯一，取id最小的一条记录)
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(dto.getInstanceId());
-        //抄送任务
-        List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
-        List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
-//        //任务列表人员和抄送列表人员飞书信息
-//        List<String> allUserIds = new ArrayList<>();
-        //申请人
-        String createUserId = processManagementEntity.getCreateUserId();
-        dto.setCreateUserId(createUserId);
-        //审核人
-        List<String> approveIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
-        //抄送人
-        List<String> ccIds = processTaskCcEntities.stream().map(ProcessTaskCcEntity::getCcUserId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
-//        //关注人
-//        List<CfgApproveNoticeEntity> cfgApproveNoticeEntities = cfgApproveNoticeService.lambdaQuery().eq(CfgApproveNoticeEntity::getMainId, cfgApproveSyncEntity.getId()).list();
-//        if(CollUtil.isNotEmpty(cfgApproveNoticeEntities)){
-//            for (CfgApproveNoticeEntity cfgApproveNoticeEntity : cfgApproveNoticeEntities) {
-//                String specificPerson = cfgApproveNoticeEntity.getSpecificPerson();
-//                if(StringUtils.isNotBlank(specificPerson)){
-//                    allUserIds.addAll(Arrays.asList(specificPerson.split(",")));
-//                }
-//            }
-//        }
-//        // 合并成一个集合（包含去重后的用户ID）
-//        allUserIds.add(createUserId);
-//        allUserIds.addAll(approveIds);
-//        allUserIds.addAll(ccIds);
-//        allUserIds = allUserIds.stream().distinct().collect(Collectors.toList());
-        Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(new ArrayList<>());
-
         //参数map
         CfgQueryOptionDTO.VariablesParamsDTO variablesParamsDTO = new CfgQueryOptionDTO.VariablesParamsDTO();
         variablesParamsDTO.setBusinessKey(dto.getBusinessKey());
         variablesParamsDTO.setVariablesMap(dto.getVariablesMap());
         Map<String, Object> variablesMap = cfgQueryOptionService.getVariablesMapByBusinessKey(variablesParamsDTO);
         dto.setVariablesMap(variablesMap);
+
+        //构建三方审批同步实例请求体
+        //审批状态 默认审批中
+        String approveType = dto.getApproveType();
+        dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.PENDING);
+        //转换审核装填
+        handlerApproveStatus(dto, approveType, processManagementEntity, syncRecordEntity);
+        // =======================
+        // 1. 任务 & 抄送任务
+        // =======================
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(dto.getInstanceId());
+        //抄送任务
+        List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
+        List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
+        // =======================
+        // 2. 使用 Set 全程去重
+        // =======================
+        Set<String> approveIdSet = new HashSet<>();
+        Set<String> ccIdSet = new HashSet<>();
+        Set<String> specificPersonIdSet = new HashSet<>();
+        Set<String> formInternalContactIdSet = new HashSet<>();
+        // =======================
+        // 3. 申请人
+        // =======================
+        String createUserId = processManagementEntity.getCreateUserId();
+        dto.setCreateUserId(createUserId);
+        if (StringUtils.isNotBlank(createUserId)) {
+            dto.setCreateUserId(createUserId);
+        }
+        // =======================
+        // 4. 审核人
+        // =======================
+        for (ProcessTaskManagementEntity task : processTaskManagementEntities) {
+            String approveId = task.getCurApproveId();
+            if (StringUtils.isNotBlank(approveId)) {
+                approveIdSet.add(approveId);
+            }
+        }
+        // =======================
+        // 5. 抄送人
+        // =======================
+        for (ProcessTaskCcEntity cc : processTaskCcEntities) {
+            String ccUserId = cc.getCcUserId();
+            if (StringUtils.isNotBlank(ccUserId)) {
+                ccIdSet.add(ccUserId);
+            }
+        }
+        // =======================
+        // 6. 只查询一次 fieldBelongsTypes（关键优化点）
+        // =======================
+        List<String> fieldBelongsTypes = cfgQueryOptionService.lambdaQuery()
+                .eq(CfgQueryOptionEntity::getBussinessKey, cfgApproveSyncEntity.getBusinessType())
+                .notIn(
+                        CfgQueryOptionEntity::getFieldBelongsType,
+                        Arrays.asList(
+                                CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode(),
+                                CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode()
+                        )
+                )
+                .select(CfgQueryOptionEntity::getFieldBelongsType)
+                .groupBy(CfgQueryOptionEntity::getFieldBelongsType)
+                .list()
+                .stream()
+                .map(CfgQueryOptionEntity::getFieldBelongsType)
+                .collect(Collectors.toList());
+
+        // =======================
+        // 7. 通知配置解析
+        // =======================
+        List<CfgApproveNoticeEntity> noticeList =
+                cfgApproveNoticeService.lambdaQuery()
+                        .eq(CfgApproveNoticeEntity::getMainId, cfgApproveSyncEntity.getId())
+                        .list();
+
+        for (CfgApproveNoticeEntity notice : noticeList) {
+
+            // 7.1 指定人员
+            String specificPerson = notice.getSpecificPerson();
+            if (StringUtils.isNotBlank(specificPerson)) {
+                for (String uid : specificPerson.split(",")) {
+                    if (StringUtils.isNotBlank(uid)) {
+                        specificPersonIdSet.add(uid);
+                    }
+                }
+            }
+
+            // 7.2 表单内联系人
+            String roleType = notice.getRoleType();
+            if (StringUtils.isBlank(roleType)) {
+                continue;
+            }
+
+            for (String role : roleType.split(",")) {
+
+                if (CfgApproveNoticeRoleTypeEnum.containsCode(role)) {
+                    continue;
+                }
+
+                // 主表
+                Object userObj = variablesMap.get(role);
+                if (userObj instanceof String && StringUtils.isNotBlank((String) userObj)) {
+                    formInternalContactIdSet.add((String) userObj);
+                    continue;
+                }
+
+                // 明细表
+                for (String fieldBelongsType : fieldBelongsTypes) {
+                    Object detailObj = variablesMap.get(fieldBelongsType);
+                    if (!(detailObj instanceof Map)) {
+                        continue;
+                    }
+                    Map<String, Object> detailMap = (Map<String, Object>) detailObj;
+                    Object detailUser = detailMap.get(role);
+                    if (detailUser instanceof String && StringUtils.isNotBlank((String) detailUser)) {
+                        formInternalContactIdSet.add((String) detailUser);
+                    }
+                }
+            }
+        }
+
+        // =======================
+        // 8. 输出结果
+        // =======================
+        Map<String, List<String>> userIdGroupByType = new HashMap<>();
+        userIdGroupByType.put("createUserId", Collections.singletonList(createUserId));
+        userIdGroupByType.put("approveIds", new ArrayList<>(approveIdSet));
+        userIdGroupByType.put("ccIds", new ArrayList<>(ccIdSet));
+        userIdGroupByType.put("specificPersonIds", new ArrayList<>(specificPersonIdSet));
+        userIdGroupByType.put("formInternalContactIds", new ArrayList<>(formInternalContactIdSet));
+
+        //userIdGroupByType转 List<String>allUserIds
+        List<String> allUserIds = userIdGroupByType.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+
+        Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
+
         //推送消息 (快捷审批)
         List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
                 .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
@@ -214,7 +311,7 @@ public class MQSyncFsHandler {
 
             if(dto.getIsSend()){
                 //消息推送
-                cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, createUserId,dto.getOperator(), approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
+                cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, userIdGroupByType,dto.getOperator(), thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
             }
 
 //            //校验三方审批实例
