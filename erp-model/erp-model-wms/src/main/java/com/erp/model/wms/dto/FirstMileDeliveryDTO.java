@@ -1415,9 +1415,9 @@ public class FirstMileDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class CancelDeliveryListDTO {
         /**
-         * 物流单id
+         * 装箱任务id
          */
-        private String id;
+        private String packingTaskId;
         /**
          * 业务单号
          */
