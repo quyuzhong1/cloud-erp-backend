@@ -103,8 +103,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),"");
 
+        dto.setImportType(String.join(",", dto.getImportTypeList()));
         CfgLogisticsCostImportEntity cfgLogisticsCostImportEntity = new CfgLogisticsCostImportEntity();
-        cfgLogisticsCostImportEntity.setImportType(String.join(",", dto.getImportTypeList()));
         BeanMapperUtils.copy(dto, cfgLogisticsCostImportEntity);
         log.info("开始新增费用项配置");
         // 生成单号
@@ -243,7 +243,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     }
 
     private void fillOne(CfgLogisticsCostImportDTO.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
+        if (Objects.nonNull(data)) {
             //费用配置-配置单据
             List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
             DictBasicDTO.ViewDTO viewDTO = dictBasicEntities.stream().filter(e -> e.getCode().equals(data.getBusinessType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
