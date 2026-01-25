@@ -23,6 +23,7 @@ import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
+import com.erp.model.tms.enums.FirstMileAllocationProcessEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -270,40 +271,48 @@ public class FirstMileCostAllocationController extends BaseController {
             resultDTOS.add(BatchResultDTO.fail(dto.getReportPeriodId(),"","核算区间不存在"));
             return failure(resultDTOS);
         }
-        for (String sourceId : sourceIds) {
-            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
-            if(Objects.isNull(firstMileDeliveryEntity)){
-                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单记录不存在"));
-                continue;
-            }
-            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
-                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单明细记录不存在"));
-                continue;
-            }
-            //已生成的费用分摊记录
-            if (!CollectionUtils.isEmpty(entityList)){
-                FirstMileCostAllocationEntity entity = entityList.stream().filter(e -> Objects.nonNull(e)
-                        && ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus()) && Objects.equals(e.getSourceId(), sourceId))
-                        .max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
-                if (Objects.nonNull(entity) && !reportPeriodMonth.getMonth().isAfter(entity.getReportPeriodMonth())){
-                    resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId, CharSequenceUtil.format("已存在核算区间【{}】不能下推发货单【{}】的核算区间【{}】", entity.getReportPeriodMonth(),entity.getSourceCode(),reportPeriodMonth.getMonth())));
-                    continue;
-                }
-            }
-            FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
-                    .setSourceId(firstMileDeliveryEntity.getId()).setSourceCode(firstMileDeliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth.getMonth()).setReportPeriodId(dto.getReportPeriodId());
-//            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId) && dto.getReportPeriodId().equals(v.getReportPeriodId())).findFirst().orElse(new FirstMileCostAllocationEntity());
-//            entity.setSourceId(sourceId);
-//            entity.setReportPeriodId(dto.getReportPeriodId());
-            try {
-                resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
-            }catch (Exception e){
-                log.error(ERROR_MSG,e);
-                resultDTOS.add(BatchResultDTO.fail(sourceId, sourceId, e.getMessage()));
-            }
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
+        List<String> ids = entityList.stream().map(FirstMileCostAllocationEntity::getId).collect(Collectors.toList());
+        firstMileCostAllocationService.lambdaUpdate()
+                .set(FirstMileCostAllocationEntity::getCostAllocationProgress, FirstMileAllocationProcessEnum.PROCESSING.getCode())
+                .in(FirstMileCostAllocationEntity::getId,ids)
+                .update();
+        firstMileCostAllocationService.asyncResetAllocatedCost(entityList,firstMileDeliveryEntityList, deliveryDetailEntityList);
+        return success();
+//        for (String sourceId : sourceIds) {
+//            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
+//            if(Objects.isNull(firstMileDeliveryEntity)){
+//                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单记录不存在"));
+//                continue;
+//            }
+//            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
+//            if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
+//                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单明细记录不存在"));
+//                continue;
+//            }
+//            //已生成的费用分摊记录
+//            if (!CollectionUtils.isEmpty(entityList)){
+//                FirstMileCostAllocationEntity entity = entityList.stream().filter(e -> Objects.nonNull(e)
+//                        && ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus()) && Objects.equals(e.getSourceId(), sourceId))
+//                        .max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
+//                if (Objects.nonNull(entity) && !reportPeriodMonth.getMonth().isAfter(entity.getReportPeriodMonth())){
+//                    resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId, CharSequenceUtil.format("已存在核算区间【{}】不能下推发货单【{}】的核算区间【{}】", entity.getReportPeriodMonth(),entity.getSourceCode(),reportPeriodMonth.getMonth())));
+//                    continue;
+//                }
+//            }
+//            FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
+//                    .setSourceId(firstMileDeliveryEntity.getId()).setSourceCode(firstMileDeliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth.getMonth()).setReportPeriodId(dto.getReportPeriodId());
+////            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId) && dto.getReportPeriodId().equals(v.getReportPeriodId())).findFirst().orElse(new FirstMileCostAllocationEntity());
+////            entity.setSourceId(sourceId);
+////            entity.setReportPeriodId(dto.getReportPeriodId());
+//            try {
+//                resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
+//            }catch (Exception e){
+//                log.error(ERROR_MSG,e);
+//                resultDTOS.add(BatchResultDTO.fail(sourceId, sourceId, e.getMessage()));
+//            }
+//        }
+//        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

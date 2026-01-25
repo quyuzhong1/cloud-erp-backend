@@ -2098,21 +2098,36 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     public void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList) {
         for (FirstMileCostAllocationEntity entity : entityList) {
             if (com.erp.model.srm.enums.ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
+                entity.setCostAllocationProgress(FirstMileAllocationProcessEnum.SUCCESS.getCode());
+                updateById(entity);
                 continue;
             }
             String sourceId = entity.getSourceId();
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
             if(Objects.isNull(firstMileDeliveryEntity)){
+                entity.setCostAllocationProgress(FirstMileAllocationProcessEnum.SUCCESS.getCode());
+                updateById(entity);
                 continue;
             }
             List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
+                entity.setCostAllocationProgress(FirstMileAllocationProcessEnum.SUCCESS.getCode());
+                updateById(entity);
                 continue;
             }
             try {
-                this.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
+                BatchResultDTO result = this.calcAllocatedCost(entity, firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
+                if(result.getSuccess()){
+                    entity.setCostAllocationProgress(FirstMileAllocationProcessEnum.SUCCESS.getCode());
+                    updateById(entity);
+                }else {
+                    entity.setCostAllocationProgress(FirstMileAllocationProcessEnum.FAILED.getCode());
+                    updateById(entity);
+                }
             }catch (Exception e){
                 log.error("费用分摊异常：",e);
+                entity.setCostAllocationProgress(FirstMileAllocationProcessEnum.FAILED.getCode());
+                updateById(entity);
             }
         }
     }

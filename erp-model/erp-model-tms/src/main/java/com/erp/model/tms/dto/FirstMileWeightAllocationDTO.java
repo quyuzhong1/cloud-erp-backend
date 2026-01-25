@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
@@ -283,6 +284,12 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 物流单ID
          */
         private String logisticsBillId;
+
+        /**
+         * 费用分摊异步进度 待执行=pending,执行中=processing,成功=success,failed=失败 FirstMileWeightAllocationProcessEnum
+         */
+        private String costAllocationProgress;
+        private String costAllocationProgressName;
     }
 
     /**
