@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -426,7 +427,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 表 ids
          */
-        @NotEmpty(message = "ids不能为空")
+//        @NotEmpty(message = "ids不能为空")
         private List<String> ids;
 
     }
@@ -918,6 +919,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 最新核算状态
          */
         private String status;
+        /**
+         * 费用分摊异步进度 待执行=pending,执行中=processing,成功=success,failed=失败 FirstMileWeightAllocationProcessEnum
+         */
+        private String costAllocationProgress;
     }
 
     @EqualsAndHashCode(callSuper = true)
