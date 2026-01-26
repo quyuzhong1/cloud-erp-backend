@@ -622,6 +622,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(packingTaskEntity == null){
             return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "没有找到装箱任务");
         }
+        if (packingTaskEntity.getIsCancelRequired()) {
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "装箱任务设置的取消发货，不支持分摊");
+        }
         //装箱内容物详情
         List<String> fbaShipmentCodes = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 

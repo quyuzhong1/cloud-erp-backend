@@ -431,6 +431,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //校验物流单对账单状态
         checkLogisticsBillStatus(old);
         LogisticsBillEntity updateFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,updateDTO);
+
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, updateFirstMileLogisticEntity, ModuleTypeEnum.LOGISTICS_BILL.getCode(), old.getId(), "", "");
+
         BeanUtil.copyProperties(updateFirstMileLogisticEntity,old, CopyOptions.create().setIgnoreNullValue(true));
         boolean save = super.updateById(old);
         if(!save) {
@@ -1235,6 +1239,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         if(CollectionUtils.isNotEmpty(updateList)){
             this.updateBatchById(updateList);
+            List<Pair<String, String>> addPairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), obj.getId())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(CharSequenceUtil.format("更新【{}】",logisticsChannelEntity.getName()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addPairList, "更新渠道");
         }
         if(CollectionUtils.isNotEmpty(updateCostList)){
             logisticsBillCostService.updateBatchById(updateCostList);
@@ -1555,6 +1561,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 //        // 更新已成功对账单
 //        List<String> billIds = Collections.singletonList(id);
 //        this.updateReconciliation(billIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), reconciliationEntity.getId());
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("下推对账单单号【{}】",reconciliationEntity.getCode()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), id, "更新渠道");
 
         return BatchResultDTO.success(id, curListDTO.getTransportNo(), OperationTypeEnum.ADD);
     }
@@ -2053,7 +2060,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(list.isEmpty()){
             return BatchResultDTO.fail(entity.getId(), entity.getOutstockCode(), "只有下单后的物流单才能推送重量分摊");
         }
-        return firstMileWeightAllocationService.add(entity.getId());
+        BatchResultDTO add = firstMileWeightAllocationService.add(entity.getId());
+
+        //操作日志
+        operateLogService.addModuleOperateLog("下推重量分摊", ModuleTypeEnum.LOGISTICS_BILL.getCode(), entity.getId(), "更新渠道");
+        return add;
     }
 
     @Override
