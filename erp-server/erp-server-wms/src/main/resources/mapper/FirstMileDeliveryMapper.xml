@@ -189,11 +189,11 @@
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         with wcd as (
         SELECT main_id,
-        string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',') as boxDesc,
-        string_agg(wcd.sku_no, ',') as sku,
-        string_agg(wcd.sku_id, ',') as skuIds ,
-        string_agg(concat(wcd.sku_no,':',wcd.sku_id), ',')   as skuMapping
-        from wms_carton_detail wcd where is_deleted = false group by main_id
+        concat(wcd.sku_no,'*',wcd.pack_qty) as boxDesc,
+        wcd.sku_no as sku,
+        wcd.sku_id as skuIds ,
+        concat(wcd.sku_no,':',wcd.sku_id)   as skuMapping
+        from wms_carton_detail wcd where is_deleted = false
         )
         SELECT
         pt.source_id as id,
