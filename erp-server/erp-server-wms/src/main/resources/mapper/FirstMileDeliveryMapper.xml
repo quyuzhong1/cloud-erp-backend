@@ -649,6 +649,7 @@
         from wms_carton_detail wcd where is_deleted = false group by main_id
         )
         select
+            flb.id as logisticsBillId,
             flb.business_code as businessCode,
             wcd.skuNo,
             wcd.packageQty,

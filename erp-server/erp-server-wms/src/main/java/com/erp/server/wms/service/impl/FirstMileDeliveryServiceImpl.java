@@ -55,6 +55,7 @@ import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -2969,6 +2970,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO) {
+
+        //查询数据是否已进行重量分摊
+        List<FirstMileWeightAllocationEntity> list = FeignQuery.create(FirstMileWeightAllocationEntity.class).eq(FirstMileWeightAllocationEntity::getLogisticsBillId, cancelDeliveryDTO.getLogisticsBillId()).list();
+        if (CollUtil.isNotEmpty(list)) {
+            return BatchResultDTO.fail(cancelDeliveryDTO.getLogisticsBillId(), cancelDeliveryDTO.getBusinessCode(), "该发货单已进行重量分摊，不能取消发货");
+        }
+
         //查询装箱任务
         PackingTaskEntity packingTaskEntity = packingTaskService.getById(cancelDeliveryDTO.getPackingTaskId());
         if (ObjectUtil.isEmpty(packingTaskEntity)) {

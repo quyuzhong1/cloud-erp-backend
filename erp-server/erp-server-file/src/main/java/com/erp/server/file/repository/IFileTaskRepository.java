@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseDTO;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.server.file.dto.FileTaskParamsDTO;
 import com.erp.server.file.entity.FileTask;
 import com.common.business.enums.FileTaskStatusEnum;
@@ -18,4 +19,12 @@ public interface IFileTaskRepository extends IService<FileTask> {
     IPage<FileTaskVO> getFileTasks(Page<FileTaskVO> page, FileTaskParamsDTO dto);
 
     void updateTask(BaseDTO.ImportResultDTO importResultDTO);
+    /**
+     * 查询最新的文件任务信息
+     * @author will
+     * @date 2026/1/26 11:31
+     * @param fileUrlList
+     * @return List<FileTaskDTO>
+     */
+    List<FileDTO.FileTaskDTO> listLatestFileTask(List<String> fileUrlList);
 }

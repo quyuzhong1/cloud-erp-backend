@@ -1039,6 +1039,10 @@ public class LogisticsBillCostDTO implements Serializable {
     	 */
     	@NotBlank(message = "核算日期不能为空")
     	private String reportDate;
+    	/**
+    	 *物流标签类型
+    	 */
+    	private String type;
     	
     }
     @Data
