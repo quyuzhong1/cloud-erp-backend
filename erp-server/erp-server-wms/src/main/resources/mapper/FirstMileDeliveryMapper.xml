@@ -651,6 +651,7 @@
         select
             flb.id as logisticsBillId,
             flb.business_code as businessCode,
+            wc.box_no as boxNo,
             wcd.skuNo,
             wcd.packageQty,
             pt.id as packingTaskId,
