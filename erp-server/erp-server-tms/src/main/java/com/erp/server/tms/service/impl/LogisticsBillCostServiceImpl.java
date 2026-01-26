@@ -23,7 +23,6 @@ import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -184,7 +183,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         tmsCostDetailService.batchAdd(addDTO.getCostDetailList(),logisticsBillCostEntity.getId(), DictCostAttributionEnum.SELF_DELIVER);
 
         // 操作日志
-        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "自发货费用" , logisticsBillCostEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流费用" , logisticsBillCostEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
     }
@@ -414,8 +413,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 .update();
         // 状态变更日志
         log.info("状态变更日志数据，id集合：【{}】", id);
-        String msg = CharSequenceUtil.format("用户【{}】自发货费用【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getTransportNo(), "自发货费用", ReconciliationStatusEnum.getName(reconciliationStatus));
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "启用/停用");
+        String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
     }
 
@@ -1818,6 +1817,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollUtil.isNotEmpty(ids)) {
             logisticsLargeService.updatePayStatusBySourceId(ids, payStatus, payTime);
         }
+        //添加日志
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("修改支付状态【{}】",TmsB2cDeclareReconciliationPayStatusEnum.getName(payStatus)), ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), id, "修改支付状态");
 
 		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
 	}
