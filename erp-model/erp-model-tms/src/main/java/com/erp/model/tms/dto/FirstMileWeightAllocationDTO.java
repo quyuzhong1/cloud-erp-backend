@@ -285,11 +285,6 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          */
         private String logisticsBillId;
 
-        /**
-         * 费用分摊异步进度 待执行=pending,执行中=processing,成功=success,failed=失败 FirstMileWeightAllocationProcessEnum
-         */
-        private String costAllocationProgress;
-        private String costAllocationProgressName;
     }
 
     /**

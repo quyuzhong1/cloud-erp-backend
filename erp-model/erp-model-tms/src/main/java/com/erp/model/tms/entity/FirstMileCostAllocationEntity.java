@@ -159,13 +159,6 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     @TableField(exist = false)
     private LocalDate deliveryDate;
 
-    /**
-     * 费用分摊异步进度 待执行=pending,执行中=processing,成功=success,failed=失败 FirstMileWeightAllocationProcessEnum
-     */
-    @TableField("cost_allocation_progress")
-    private String costAllocationProgress;
-
-
     public static final String FIELD_REMARK = "remark";
 
     public static final String RECONCILIATION_ID = "reconciliation_id";
