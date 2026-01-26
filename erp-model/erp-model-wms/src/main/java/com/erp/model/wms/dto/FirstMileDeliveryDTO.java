@@ -1415,6 +1415,10 @@ public class FirstMileDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class CancelDeliveryListDTO {
         /**
+         * 物流单id
+         */
+        private String logisticsBillId;
+        /**
          * 装箱任务id
          */
         private String packingTaskId;
@@ -1475,6 +1479,16 @@ public class FirstMileDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CancelDeliveryDTO {
+
+        /**
+         * 物流单id
+         */
+        @NotBlank(message = "物流单id不能为空")
+        private String logisticsBillId;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
         /**
          * 装箱任务id
          */

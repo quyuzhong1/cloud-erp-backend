@@ -31,6 +31,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.dto.*;
@@ -694,8 +695,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        // 属性赋值
+       List<String> fileUrlList = list.stream().map(ImportHistoryRecordDTO.ListDTO::getFileUrl).distinct().collect(Collectors.toList());
+       List<FileDTO.FileTaskDTO> fileTaskDTOList = fileFeign.listLatestFileTask(fileUrlList);
+
+       // 属性赋值
         for(ImportHistoryRecordDTO.ListDTO data : list) {
+            //下载结果
+            FileDTO.FileTaskDTO fileTaskDTO = fileTaskDTOList.stream().filter(obj -> CharSequenceUtil.equals(obj.getFileUrl(), data.getFileUrl())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(fileTaskDTO)) {
+                data.setErrorUrl(fileTaskDTO.getErrorUrl());
+            }
             //对账月份
             if (CharSequenceUtil.isNotBlank(data.getReconciliationMonth())) {
                 data.setReconciliationMonthStr(LocalDateUtil.parseStrToLocalDate(data.getReconciliationMonth()).format(DateTimeFormatter.ofPattern("yyyy年MM月")));
