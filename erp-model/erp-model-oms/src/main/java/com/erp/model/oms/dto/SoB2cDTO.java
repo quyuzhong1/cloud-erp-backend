@@ -308,6 +308,11 @@ public class SoB2cDTO implements Serializable {
          * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
          */
         private Integer onlyQueryId;
+        
+        /**
+         * 需要二次查询pg库
+         */
+        private Boolean secondQuery;
     }
 
     @Data

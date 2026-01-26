@@ -425,6 +425,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         PagingParamDTO params = pagingParamDTO.getParams();
+        Boolean secondQuery = params.getSecondQuery();
+        if(secondQuery == null) {
+        	secondQuery = true;
+        }
 		params.setPermissionSql(getPermissionSql());
 		DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         String dynamicDataSource = "";
@@ -447,7 +451,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (params.getIsFullyManaged()){
                 pageData = this.baseMapper.fullyManagedPaging(query, params, null);
             }else {
-            	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource)) {
+            	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource) && secondQuery) {
             		int queryCount = 0;
             		String defaultSql = params.getSqlMap().get("default");
                     //转成 pgsql的条件
