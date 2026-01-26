@@ -26,6 +26,7 @@ import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
+import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +50,8 @@ public class LogisticsBillCostController extends BaseController {
 
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
 
 
     /**
@@ -349,24 +352,27 @@ public class LogisticsBillCostController extends BaseController {
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
-    	 List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-         for (String id : dto.getIds()) {
-             BatchResultDTO submit;
-             try {
-                 submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
-             }catch (Exception e){
-                 log.error("自发货费用 状态变更",e);
-                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
-                 if (ObjectUtil.isEmpty(entity)) {
-                     submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 下推分摊");
-                     resultDTOS.add(submit);
-                     continue;
-                 }
-                 submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
-             }
-             resultDTOS.add(submit);
-         }
-         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+         logisticsBillCostService.batchAsyncPushAllocation(dto);
+         return success();
+
+//         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+//         for (String id : dto.getIds()) {
+//             BatchResultDTO submit;
+//             try {
+//                 submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
+//             }catch (Exception e){
+//                 log.error("自发货费用 状态变更",e);
+//                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+//                 if (ObjectUtil.isEmpty(entity)) {
+//                     submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 下推分摊");
+//                     resultDTOS.add(submit);
+//                     continue;
+//                 }
+//                 submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+//             }
+//             resultDTOS.add(submit);
+//         }
+//         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
      }
      
      /**
