@@ -352,6 +352,7 @@ public class LogisticsBillCostController extends BaseController {
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
+         dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
          logisticsBillCostService.batchAsyncPushAllocation(dto);
          return success();
 

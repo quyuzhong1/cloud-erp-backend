@@ -1996,7 +1996,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //所有 类型=自发货。状态是账单确认和暂估确认的物流单费用
         List<LogisticsBillCostEntity> list = lambdaQuery()
                 .in(LogisticsBillCostEntity::getReconciliationStatus, Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()))
-                .eq(LogisticsBillCostEntity::getType, DictCostAttributionEnum.SELF_DELIVER.getCode())
+                .eq(LogisticsBillCostEntity::getType, dto.getType())
                 .list();
 
         //查询所有小包费用
