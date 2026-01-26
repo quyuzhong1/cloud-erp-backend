@@ -1021,8 +1021,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //是否赠品
             generatePoDTO.setIsGift( ObjectUtils.isEmpty(generatePoDTO.getIsGift()) ? detailEntity.getIsGift() : generatePoDTO.getIsGift());
             generatePoDTO.setSupplierId(StringUtils.isBlank(generatePoDTO.getSupplierId()) ? detailEntity.getSupplierId() : generatePoDTO.getSupplierId());
-            generatePoDTO.setPurchaseApplicationId(mainEntity.getSourceId());
-            generatePoDTO.setPurchaseApplicationDetailId(detailEntity.getSourceDetailId());
+            if (Objects.equals(mainEntity.getSourceType(), SourceTypeEnum.PURCHASE_APPLICATION.getCode())) {
+                generatePoDTO.setPurchaseApplicationId(mainEntity.getSourceId());
+                generatePoDTO.setPurchaseApplicationDetailId(detailEntity.getSourceDetailId());
+            }
         }
     }
 
