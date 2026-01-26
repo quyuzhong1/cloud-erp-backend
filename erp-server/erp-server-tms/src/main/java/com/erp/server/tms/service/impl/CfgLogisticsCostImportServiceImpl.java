@@ -513,10 +513,10 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
 
     @Override
     public List<CfgLogisticsCostImportEntity> listByImport(String fileName, String businessType, String costType) {
-        return lambdaQuery().eq(CfgLogisticsCostImportEntity::getName,fileName)
-                .eq(CfgLogisticsCostImportEntity::getBusinessType,businessType)
-                .eq(CfgLogisticsCostImportEntity::getCostType,costType)
-                .eq(CfgLogisticsCostImportEntity::getDisabled,Boolean.FALSE)
-                .list();
+        return lambdaQuery()
+                .eq(CfgLogisticsCostImportEntity::getBusinessType, businessType)
+                .eq(CfgLogisticsCostImportEntity::getCostType, costType)
+                .eq(CfgLogisticsCostImportEntity::getDisabled, Boolean.FALSE)
+                .list().stream().filter(e -> fileName.contains(e.getName())).collect(Collectors.toList());
     }
 }

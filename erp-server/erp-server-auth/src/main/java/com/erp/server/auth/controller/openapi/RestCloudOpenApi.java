@@ -57,7 +57,7 @@ public class RestCloudOpenApi {
      * @return ApiResult<Object>
      */
     @OpenApi("/preprocessingImportExcel")
-    public ApiResult<List<BatchResultDTO>>  preprocessingImportExcel(@RequestBody @Validated ImportHistoryRecordDTO.ImportDTO dto) {
+    public ApiResult<List<BatchResultDTO>>  preprocessingImportExcel(@Valid ImportHistoryRecordDTO.ImportDTO dto) {
         return ApiResult.success(improtHistoryRecordFeign.preprocessingImportExcel(dto));
     }
 
