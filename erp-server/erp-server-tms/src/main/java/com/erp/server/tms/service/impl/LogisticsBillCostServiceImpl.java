@@ -2827,22 +2827,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         LogisticsBillCostDTO.TotalCountDTO resultDTO = new LogisticsBillCostDTO.TotalCountDTO();
         //实际计费重
-        BigDecimal totalBillingWeightLogistics = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeightLogistics).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalBillingWeightLogistics = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeightLogistics).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalBillingWeightLogistics(totalBillingWeightLogistics);
         //实际运费(总)
-        BigDecimal totalActualShippingCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualShippingCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualShippingCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualShippingCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualShippingCost(totalActualShippingCost);
         resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //实际关税费用(总)
-        BigDecimal totalActualDeclareCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeclareCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualDeclareCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeclareCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualDeclareCost(totalActualDeclareCost);
         resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //实际可抵扣税金[总]
-        BigDecimal totalActualDeductibleTax = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeductibleTax).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualDeductibleTax = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeductibleTax).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualDeductibleTax(totalActualDeductibleTax);
         resultDTO.setActualDeductibleTaxCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //实际其他费用(总)
-        BigDecimal totalActualOtherCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualOtherCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualOtherCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualOtherCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualOtherCost(totalActualOtherCost);
         resultDTO.setActualOtherCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         return resultDTO;
