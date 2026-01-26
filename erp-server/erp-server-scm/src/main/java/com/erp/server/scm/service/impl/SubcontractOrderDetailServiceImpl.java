@@ -757,7 +757,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     childEntity.setSupplierName(supplierName);
                 }
-                handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
+                handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getPurchaseOrgId(), priceList);
             }
 
             //如果子件有错误，跳过本条父级SKU
