@@ -2275,4 +2275,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "新增操作");
         return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"更新成功");
     }
+
+    @Override
+    public void addFirstMileLogisticLog(TmsFirstMileLogisticDTO.AddLogDTO addLogDTO) {
+        operateLogService.addModuleOperateLog(addLogDTO.getContent(), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addLogDTO.getId(), addLogDTO.getOperation());
+    }
 }

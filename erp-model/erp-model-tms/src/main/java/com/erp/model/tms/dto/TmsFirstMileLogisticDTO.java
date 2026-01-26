@@ -1721,4 +1721,22 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         @NotBlank(message = "对账类型不能为空")
         private String supplierType;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddLogDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 操作
+         */
+        private String operation;
+        /**
+         *  内容
+         */
+        private String content;
+    }
 }
