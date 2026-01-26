@@ -651,14 +651,15 @@
         select
             flb.id as logisticsBillId,
             flb.business_code as businessCode,
+            wc.box_no as boxNo,
             wcd.skuNo,
             wcd.packageQty,
             pt.id as packingTaskId,
             wcs.id as cartonSpecId,
             wcs.package_weight,
-            wcs.box_length as length,
-            wcs.box_width as width,
-            wcs.box_height as height,
+            wcs.box_length as boxLength,
+            wcs.box_width as boxWidth,
+            wcs.box_height as boxHeight,
             wcs.weight_unit as weightUnit
         from foreign_logistics_bill flb
         inner join first_mile_delivery fmd on flb.outstock_id = fmd.id and fmd.is_deleted = false
