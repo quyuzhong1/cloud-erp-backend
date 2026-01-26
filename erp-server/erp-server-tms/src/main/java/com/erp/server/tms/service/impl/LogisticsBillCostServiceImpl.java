@@ -2032,14 +2032,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //汇率
         Map<String, BigDecimal> rateMap = new HashMap<>();
 
-        LogisticsBillCostServiceImpl bean = ApplicationContextUtils.getBean(LogisticsBillCostServiceImpl.class);
-
         for (LogisticsBillCostEntity logisticsBillCostEntity : list) {
             List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList = smallBagCostAllocationGroupByCostId.getOrDefault(logisticsBillCostEntity.getId(), new ArrayList<>());
 
             LogisticsBillEntity logisticsBillEntity = logisticsBillMap.getOrDefault(logisticsBillCostEntity.getLogisticsBillId(), new LogisticsBillEntity());
 
-            bean.asyncPushAllocation(logisticsBillEntity.getId(),dto.getReportDate(),logisticsBillCostEntity,smallBagCostAllocationList,logisticsBillEntity,allocationSettingDTO,feeTypeSettingMaps,rateMap);
+            asyncPushAllocation(logisticsBillEntity.getId(),dto.getReportDate(),logisticsBillCostEntity,smallBagCostAllocationList,logisticsBillEntity,allocationSettingDTO,feeTypeSettingMaps,rateMap);
         }
     }
 
