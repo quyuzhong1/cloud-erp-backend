@@ -433,7 +433,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 区域编码
          */
-        private String regionCode;
+        private String subregionCode;
         /**
          * 区域名称
          */
