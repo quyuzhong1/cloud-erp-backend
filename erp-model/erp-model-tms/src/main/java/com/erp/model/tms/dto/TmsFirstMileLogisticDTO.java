@@ -1378,6 +1378,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 体积重
          */
         private BigDecimal volumeWeight;
+        /**
+         * 是否取消
+         */
+        private Boolean isCancelRequired;
     }
 
     /**
