@@ -653,6 +653,7 @@
             wcd.skuNo,
             wcd.packageQty,
             pt.id as packingTaskId,
+            wcs.id as cartonSpecId,
             wcs.package_weight,
             wcs.box_length as length,
             wcs.box_width as width,

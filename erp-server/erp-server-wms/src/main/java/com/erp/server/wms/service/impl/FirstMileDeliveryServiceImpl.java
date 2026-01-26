@@ -2966,5 +2966,29 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         return new PagingVO<>(pageData);
     }
+
+    @Override
+    public BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO) {
+        //查询装箱任务
+        PackingTaskEntity packingTaskEntity = packingTaskService.getById(cancelDeliveryDTO.getPackingTaskId());
+        if (ObjectUtil.isEmpty(packingTaskEntity)) {
+            return BatchResultDTO.fail(cancelDeliveryDTO.getPackingTaskId(), cancelDeliveryDTO.getPackingTaskId(), "装箱任务不存在");
+        }
+        //查询箱子
+        WmsCartonSpecEntity cartonSpecEntity = wmsCartonSpecService.getById(cancelDeliveryDTO.getCartonSpecId());
+        if (ObjectUtil.isEmpty(cartonSpecEntity)) {
+            return BatchResultDTO.fail(cancelDeliveryDTO.getCartonSpecId(), cancelDeliveryDTO.getCartonSpecId(), "箱子不存在");
+        }
+        packingTaskEntity.setIsCancelRequired(cancelDeliveryDTO.getIsCancelRequired());
+        packingTaskService.updateById(packingTaskEntity);
+
+        cartonSpecEntity.setBoxHeight(cancelDeliveryDTO.getBoxHeight());
+        cartonSpecEntity.setBoxWidth(cancelDeliveryDTO.getBoxWidth());
+        cartonSpecEntity.setBoxLength(cancelDeliveryDTO.getBoxLength());
+        cartonSpecEntity.setPackageWeight(cancelDeliveryDTO.getPackageWeight());
+        cartonSpecEntity.setWeightUnit(cancelDeliveryDTO.getWeightUnit());
+        wmsCartonSpecService.updateById(cartonSpecEntity);
+        return BatchResultDTO.success(packingTaskEntity.getId(), packingTaskEntity.getCode(), "操作成功");
+    }
 }
 

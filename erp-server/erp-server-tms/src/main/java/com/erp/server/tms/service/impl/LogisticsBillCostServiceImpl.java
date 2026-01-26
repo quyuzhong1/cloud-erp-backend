@@ -684,7 +684,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.LOGISTIC_TRACK_STATUS.getType());
 
         //区域信息
-        Map<String, String> regionNameMap = FeignQuery.list(DictGlobalAreaEntity.class).stream().collect(Collectors.toMap(DictGlobalAreaEntity::getRegionCode, DictGlobalAreaEntity::getRegionName));
+        Map<String, List<DictGlobalAreaEntity>> regionNameMap = FeignQuery.list(DictGlobalAreaEntity.class).stream().collect(Collectors.groupingBy(DictGlobalAreaEntity::getRegionCode));
 
         //部门信息
         Map<String, String> deptNameMap = sysUserFeign.getDeptList().stream().collect(Collectors.toMap(SysDepartmentDTO::getId, SysDepartmentDTO::getName));
@@ -743,7 +743,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	deliveryTime = LocalDateTime.now();
             }
             //区域名称
-            listDTO.setRegionName(regionNameMap.getOrDefault(listDTO.getRegionCode(), ""));
+            List<DictGlobalAreaEntity> dictGlobalAreaList = regionNameMap.get(listDTO.getRegionCode());
+            if (CollUtil.isNotEmpty(dictGlobalAreaList)) {
+                listDTO.setRegionName(dictGlobalAreaList.get(0).getRegionName());
+            }
             //部门名称
             listDTO.setDeptName(deptNameMap.getOrDefault(listDTO.getDeptId(), ""));
             //军区名称

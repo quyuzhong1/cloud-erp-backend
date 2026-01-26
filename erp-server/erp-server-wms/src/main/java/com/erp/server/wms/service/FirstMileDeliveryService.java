@@ -401,4 +401,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return PagingVO<CancelDeliveryListDTO>
      */
     PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO> cancelDeliveryPaging(PagingDTO<FirstMileDeliveryDTO.CancelDeliveryParamDTO> dto);
+    /**
+     * 取消发货
+     * @author will
+     * @date 2026/1/23 18:49
+     * @param cancelDeliveryDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO);
 }
