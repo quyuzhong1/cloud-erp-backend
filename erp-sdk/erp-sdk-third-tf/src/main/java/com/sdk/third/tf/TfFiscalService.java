@@ -430,12 +430,12 @@ public class TfFiscalService {
             ReturnInvoiceDTO returnInvoiceDTO, String companyToken) {
         // 签名的appKey就是header的token，所以这里appKey = companyToken
         
-        log.info("退货发票（新接口）, uuid/chave: {}, 使用公司token", returnInvoiceDTO.getUuidOrChave());
+        log.info("退货发票（新接口）, uuid/chave: {}, 使用公司token", org.apache.commons.lang3.StringUtils.isNotBlank(returnInvoiceDTO.getUuid())?returnInvoiceDTO.getUuid():returnInvoiceDTO.getChave());
         
         ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO response = 
             invoiceApiClient.returnInvoice(returnInvoiceDTO, companyToken, companyToken);
         
-        log.info("退货发票成功, uuid: {}, status: {}", returnInvoiceDTO.getUuidOrChave(), response.getStatus());
+        log.info("退货发票成功, uuid: {}, status: {}", org.apache.commons.lang3.StringUtils.isNotBlank(returnInvoiceDTO.getUuid())?returnInvoiceDTO.getUuid():returnInvoiceDTO.getChave(), response.getStatus());
         return response;
     }
 
