@@ -1273,12 +1273,13 @@ public class NfeInvoiceService {
         }
         
         // 获取发票UUID或chave（优先使用chave，如果没有则使用uuid）
-        String uuidOrChave = CharSequenceUtil.isNotBlank(invoiceInfoEntity.getQueryKey()) 
-            ? invoiceInfoEntity.getQueryKey() 
-            : invoiceInfoEntity.getQueryId();
-        if (CharSequenceUtil.isBlank(uuidOrChave)) {
+        String chave = invoiceInfoEntity.getQueryKey();
+        String uuid = invoiceInfoEntity.getQueryId();
+        if (CharSequenceUtil.isBlank(chave) && CharSequenceUtil.isBlank(uuid)) {
             throw new ServiceException("发票UUID/chave不存在，无法进行退货操作");
         }
+        // 用于日志和查询的标识
+        String uuidOrChave = CharSequenceUtil.isNotBlank(chave) ? chave : uuid;
         
         //税务信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
@@ -1290,33 +1291,14 @@ public class NfeInvoiceService {
         if (CharSequenceUtil.isBlank(companyToken)) {
             throw new ServiceException("公司token不能为空");
         }
-        
-        // 查询原发票详情，获取税务发票ID
-        String originalInvoiceId = null;
-        try {
-            // 优先使用uuid查询，如果没有uuid则使用chave
-            String queryUuid = CharSequenceUtil.isNotBlank(invoiceInfoEntity.getQueryId()) 
-                ? invoiceInfoEntity.getQueryId() 
-                : uuidOrChave;
-            InvoiceDetailResponseDTO.InvoiceDetailDataDTO invoiceDetail = 
-                tfFiscalService.getInvoiceDetailV2(queryUuid, companyToken);
-            if (invoiceDetail != null && CharSequenceUtil.isNotBlank(invoiceDetail.getId())) {
-                originalInvoiceId = invoiceDetail.getId();
-                log.info("查询原发票详情成功, uuid/chave: {}, 税务发票ID: {}", uuidOrChave, originalInvoiceId);
-            } else {
-                log.warn("查询原发票详情未返回ID, uuid/chave: {}", uuidOrChave);
-            }
-        } catch (Exception e) {
-            log.warn("查询原发票详情失败, uuid/chave: {}, 错误: {}, 将继续尝试退货", uuidOrChave, e.getMessage());
-            // 查询失败不影响退货流程，继续执行
-        }
-        
         // 构建退货发票DTO
         ReturnInvoiceDTO returnInvoiceDTO = new ReturnInvoiceDTO();
-        if (CharSequenceUtil.isNotBlank(originalInvoiceId)) {
-            returnInvoiceDTO.setId(originalInvoiceId);
+        // 根据实际情况设置uuid或chave（二选一）
+        if (CharSequenceUtil.isNotBlank(chave)) {
+            returnInvoiceDTO.setChave(chave);
+        } else if (CharSequenceUtil.isNotBlank(uuid)) {
+            returnInvoiceDTO.setUuid(uuid);
         }
-        returnInvoiceDTO.setUuidOrChave(uuidOrChave);
         returnInvoiceDTO.setCfop(returnTaxCode);
         returnInvoiceDTO.setNaturezaOperacao(returnReason);
         

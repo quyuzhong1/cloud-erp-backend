@@ -1,5 +1,6 @@
 package com.sdk.third.tf.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -18,20 +19,22 @@ import java.io.Serializable;
 @Data
 public class ReturnInvoiceDTO implements Serializable {
 
-    /**
-     * 原发票的税务发票ID（通过查询发票详情接口获取）
-     * 注意：这是原发票的ID，不是新发票的ID
-     */
-    @JsonProperty("id")
-    private String id;
 
     /**
-     * 发票id/chave（第三方生成的发票，开具请传chave）
-     * 注意：JSON字段名为"uuid/chave"，但Java属性名不能包含斜杠，所以使用uuidOrChave
+     * 发票UUID（如果传uuid，则设置此字段）
+     * 注意：uuid和chave二选一，不能同时设置
      */
-    @NotBlank(message = "发票uuid/chave不能为空")
-    @JsonProperty("uuid/chave")
-    private String uuidOrChave;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("uuid")
+    private String uuid;
+
+    /**
+     * 发票chave（如果传chave，则设置此字段）
+     * 注意：uuid和chave二选一，不能同时设置。第三方生成的发票，开具请传chave
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("chave")
+    private String chave;
 
     /**
      * 退货CFOP（4位数字）
