@@ -668,13 +668,13 @@
         inner JOIN wcd ON WCD.main_id = wc.id
         where
         ${params.sqlMap.default}
-        and fmd.is_deleted = FALSE AND flb.order_type = 'firstMile' and flb.business_code != ''
+        and flb.is_deleted = FALSE AND flb.order_type = 'firstMile' and flb.business_code != ''
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
         <if test="params.ids != null and params.ids.size > 0">
-            AND fmd.id IN
+            AND flb.id IN
             <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>

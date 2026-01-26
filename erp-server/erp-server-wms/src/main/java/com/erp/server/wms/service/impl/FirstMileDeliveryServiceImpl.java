@@ -55,6 +55,7 @@ import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
@@ -2969,6 +2970,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO) {
 
         //查询数据是否已进行重量分摊
@@ -2983,19 +2986,33 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return BatchResultDTO.fail(cancelDeliveryDTO.getPackingTaskId(), cancelDeliveryDTO.getPackingTaskId(), "装箱任务不存在");
         }
         //查询箱子
-        WmsCartonSpecEntity cartonSpecEntity = wmsCartonSpecService.getById(cancelDeliveryDTO.getCartonSpecId());
-        if (ObjectUtil.isEmpty(cartonSpecEntity)) {
+        WmsCartonSpecEntity old = wmsCartonSpecService.getById(cancelDeliveryDTO.getCartonSpecId());
+        if (ObjectUtil.isEmpty(old)) {
             return BatchResultDTO.fail(cancelDeliveryDTO.getCartonSpecId(), cancelDeliveryDTO.getCartonSpecId(), "箱子不存在");
         }
         packingTaskEntity.setIsCancelRequired(cancelDeliveryDTO.getIsCancelRequired());
         packingTaskService.updateById(packingTaskEntity);
 
+        WmsCartonSpecEntity cartonSpecEntity = new WmsCartonSpecEntity();
+        BeanUtil.copyProperties(old, cartonSpecEntity);
         cartonSpecEntity.setBoxHeight(cancelDeliveryDTO.getBoxHeight());
         cartonSpecEntity.setBoxWidth(cancelDeliveryDTO.getBoxWidth());
         cartonSpecEntity.setBoxLength(cancelDeliveryDTO.getBoxLength());
         cartonSpecEntity.setPackageWeight(cancelDeliveryDTO.getPackageWeight());
         cartonSpecEntity.setWeightUnit(cancelDeliveryDTO.getWeightUnit());
         wmsCartonSpecService.updateById(cartonSpecEntity);
+
+        //添加头程物流单操作日志
+        String formatContent = CharSequenceUtil.format("SKU【{}】【{}】取消分摊，更新[装箱重量/装箱尺寸]由[{}/{}]编辑为[{}/{}]",
+                cancelDeliveryDTO.getSkuNo(),
+                cancelDeliveryDTO.getIsCancelRequired() ? "是" : "否",
+                old.getPackageWeight(),
+                CharSequenceUtil.format("{}*{}*{}", old.getBoxLength(), old.getBoxWidth(), old.getBoxHeight()),
+                cartonSpecEntity.getPackageWeight(),
+                CharSequenceUtil.format("{}*{}*{}", cartonSpecEntity.getBoxLength(), cartonSpecEntity.getBoxWidth(), cartonSpecEntity.getBoxHeight())
+        );
+        tmsFirstMileLogisticFeign.addFirstMileLogisticLog(new TmsFirstMileLogisticDTO.AddLogDTO(cancelDeliveryDTO.getLogisticsBillId(), "取消发货", formatContent));
+
         return BatchResultDTO.success(packingTaskEntity.getId(), packingTaskEntity.getCode(), "操作成功");
     }
 }
