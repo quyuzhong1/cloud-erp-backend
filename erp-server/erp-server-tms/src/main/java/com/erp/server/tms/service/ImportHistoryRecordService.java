@@ -80,4 +80,12 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @return void
      */
     void handleImportSuccessList(ImportHistoryRecordDTO.ImportDTO dto,BaseDTO.ImportDTO importDTO,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
+    /**
+     * 重新生成
+     * @author will
+     * @date 2026/1/26 16:33
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO regenerateImportExcel(String id);
 }

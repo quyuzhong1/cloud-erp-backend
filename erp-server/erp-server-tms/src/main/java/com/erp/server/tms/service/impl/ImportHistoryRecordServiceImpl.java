@@ -442,6 +442,23 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO regenerateImportExcel(String id) {
+        ImportHistoryRecordEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "导入记录");
+        }
+        BaseDTO.ImportDTO importDTO = new BaseDTO.ImportDTO();
+        importDTO.setFileName(entity.getFileName());
+        importDTO.setFileUrl(entity.getFileUrl());
+        ImportHistoryRecordDTO.ImportDTO dto = new ImportHistoryRecordDTO.ImportDTO();
+        dto.setBusinessType(entity.getBusinessType());
+        dto.setProcessingType(ImportHistoryRecordProcessingTypeEnum.IMPORT.getCode());
+        dto.setReconciliationMonth(entity.getReconciliationMonth());
+        return preprocessingImportExcel(importDTO,dto);
+    }
+
     /**
      * 新增物流单
      * @author will
