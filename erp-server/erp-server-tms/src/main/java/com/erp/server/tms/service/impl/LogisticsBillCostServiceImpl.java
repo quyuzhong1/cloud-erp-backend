@@ -64,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.scheduling.annotation.Async;
@@ -109,6 +110,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private DictBasicService dictBasicService;
 
     @Resource
+    @Lazy
     private LogisticsBillService logisticsBillService;
 
     @Resource
@@ -123,6 +125,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private TmsCfgCostService tmsCfgCostService;
 
     @Resource
+    @Lazy
     private LogisticsBillDetailService logisticsBillDetailService;
 
     @Resource
@@ -147,6 +150,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Resource
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
     @Resource
+    @Lazy
     private SmallBagCostAllocationService smallBagCostAllocationService;
     @Resource
     private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
@@ -155,6 +159,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Resource
     private InventorySkuCostDetailService inventorySkuCostDetailService;
     @Resource
+    @Lazy
     private LogisticsLargeService logisticsLargeService;
     @Resource
     private FileFeign fileFeign;
