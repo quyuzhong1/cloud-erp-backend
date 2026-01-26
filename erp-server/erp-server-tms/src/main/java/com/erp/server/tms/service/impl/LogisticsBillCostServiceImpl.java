@@ -2790,7 +2790,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //实际关税费用(总)
             List<CostViewDTO> declareCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DECLARE_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
             if (CollUtil.isNotEmpty(declareCostList)) {
-                String currency = StrUtil.blankToDefault(shippingCostList.get(0).getCurrency(), "CNY");
+                String currency = StrUtil.blankToDefault(declareCostList.get(0).getCurrency(), "CNY");
                 BigDecimal rate = dmpTaskFeign.getRate(listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
                 if (ObjectUtil.isEmpty(rate)) {
                     log.error("币别【{}】,汇率为空，请维护汇率后再提交", currency);
@@ -2802,7 +2802,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //实际可抵扣税金[总]
             List<CostViewDTO> deductibleTaxList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
             if (CollUtil.isNotEmpty(deductibleTaxList)) {
-                String currency = StrUtil.blankToDefault(shippingCostList.get(0).getCurrency(), "CNY");
+                String currency = StrUtil.blankToDefault(deductibleTaxList.get(0).getCurrency(), "CNY");
                 BigDecimal rate = dmpTaskFeign.getRate(listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
                 if (ObjectUtil.isEmpty(rate)) {
                     log.error("币别【{}】,汇率为空，请维护汇率后再提交", currency);
@@ -2815,7 +2815,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //实际其他费用(总)
             List<CostViewDTO> otherCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.OTHER_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
             if (CollUtil.isNotEmpty(otherCostList)) {
-                String currency = StrUtil.blankToDefault(shippingCostList.get(0).getCurrency(), "CNY");
+                String currency = StrUtil.blankToDefault(otherCostList.get(0).getCurrency(), "CNY");
                 BigDecimal rate = dmpTaskFeign.getRate(listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
                 if (ObjectUtil.isEmpty(rate)) {
                     log.error("币别【{}】,汇率为空，请维护汇率后再提交", currency);
