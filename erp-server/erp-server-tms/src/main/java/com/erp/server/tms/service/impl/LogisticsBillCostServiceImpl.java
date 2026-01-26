@@ -2020,9 +2020,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
         Map<String, String> feeTypeSettingMaps = new HashMap<>();
         AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
-        String weightPackageAllocation = allocationSettingDTO.getWeightPackageAllocation();
-        String packageOrgId = allocationSettingDTO.getPackageOrgId();
-        String packageWarehouseId = allocationSettingDTO.getPackageWarehouseId();
         AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
         for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
             if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
@@ -2050,6 +2047,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Async("tmsExecutor")
     @DataIdempotent(keyIdName = "id")
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void asyncPushAllocation(String id, String reportDate,LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap) {
         String reconciliationStatus = entity.getReconciliationStatus();
         LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
