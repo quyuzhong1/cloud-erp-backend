@@ -574,7 +574,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 if (CharSequenceUtil.isNotBlank(soInfoEntity.getCountryId())) {
                     // 查询国家区域
                     DictCountryEntity dictCountryEntity = FeignQuery.getById(DictCountryEntity.class, soInfoEntity.getCountryId());
-                    entity.setRegionCode(ObjectUtil.isEmpty(dictCountryEntity) ? "" : dictCountryEntity.getRegionCode());
+                    entity.setSubregionCode(ObjectUtil.isEmpty(dictCountryEntity) ? "" : dictCountryEntity.getRegionCode());
                 }
                 entity.setDeptId(soInfoEntity.getSalesDeptId());
                 entity.setPartitionId(soInfoEntity.getPartitionId());
@@ -586,7 +586,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                if (CharSequenceUtil.isNotBlank(receiverEntity.getCountry())) {
                    // 查询国家区域
                    DictCountryEntity dictCountryEntity = FeignQuery.getById(DictCountryEntity.class, receiverEntity.getCountry());
-                   entity.setRegionCode(ObjectUtil.isEmpty(dictCountryEntity) ? "" : dictCountryEntity.getRegionCode());
+                   entity.setSubregionCode(ObjectUtil.isEmpty(dictCountryEntity) ? "" : dictCountryEntity.getRegionCode());
                }
                entity.setPartitionId(receiverEntity.getPartitionId());
            }
@@ -691,7 +691,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.LOGISTIC_TRACK_STATUS.getType());
 
         //区域信息
-        Map<String, List<DictGlobalAreaEntity>> regionNameMap = FeignQuery.list(DictGlobalAreaEntity.class).stream().collect(Collectors.groupingBy(DictGlobalAreaEntity::getRegionCode));
+        Map<String, String> regionNameMap = FeignQuery.list(DictGlobalAreaEntity.class).stream().collect(Collectors.toMap(DictGlobalAreaEntity::getId, DictGlobalAreaEntity::getRegionName));
 
         //部门信息
         Map<String, String> deptNameMap = sysUserFeign.getDeptList().stream().collect(Collectors.toMap(SysDepartmentDTO::getId, SysDepartmentDTO::getName));
@@ -750,10 +750,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	deliveryTime = LocalDateTime.now();
             }
             //区域名称
-            List<DictGlobalAreaEntity> dictGlobalAreaList = regionNameMap.get(listDTO.getRegionCode());
-            if (CollUtil.isNotEmpty(dictGlobalAreaList)) {
-                listDTO.setRegionName(dictGlobalAreaList.get(0).getRegionName());
-            }
+            listDTO.setRegionName(regionNameMap.get(listDTO.getSubregionCode()));
             //部门名称
             listDTO.setDeptName(deptNameMap.getOrDefault(listDTO.getDeptId(), ""));
             //军区名称
@@ -2830,22 +2827,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         LogisticsBillCostDTO.TotalCountDTO resultDTO = new LogisticsBillCostDTO.TotalCountDTO();
         //实际计费重
-        BigDecimal totalBillingWeightLogistics = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeightLogistics).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalBillingWeightLogistics = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeightLogistics).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalBillingWeightLogistics(totalBillingWeightLogistics);
         //实际运费(总)
-        BigDecimal totalActualShippingCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualShippingCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualShippingCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualShippingCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualShippingCost(totalActualShippingCost);
         resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //实际关税费用(总)
-        BigDecimal totalActualDeclareCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeclareCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualDeclareCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeclareCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualDeclareCost(totalActualDeclareCost);
         resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //实际可抵扣税金[总]
-        BigDecimal totalActualDeductibleTax = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeductibleTax).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualDeductibleTax = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeductibleTax).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualDeductibleTax(totalActualDeductibleTax);
         resultDTO.setActualDeductibleTaxCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //实际其他费用(总)
-        BigDecimal totalActualOtherCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualOtherCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalActualOtherCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualOtherCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualOtherCost(totalActualOtherCost);
         resultDTO.setActualOtherCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         return resultDTO;
