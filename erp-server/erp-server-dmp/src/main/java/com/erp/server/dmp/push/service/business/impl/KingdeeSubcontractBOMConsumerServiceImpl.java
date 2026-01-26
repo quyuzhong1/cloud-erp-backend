@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
@@ -14,8 +15,10 @@ import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -47,6 +50,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -99,18 +105,29 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         String fieldKeys = "FId,FBillNo";
         List<Map<String, Object>> queryList = bomApiUtils.queryList(filterStr, fieldKeys, 1, 1, 1);
         if (!queryList.isEmpty()) {
-            KingdeeUtils.makeFieldJson(json,"Ids",".", queryList.get(0).get("FId"));
+            Map<String, Object> bomMap = queryList.get(0);
+            KingdeeUtils.makeFieldJson(json,"Ids",".", bomMap.get("FId"));
             //下推
-            RepoResult result = bomApiUtils.push(json);
+            //RepoResult result = bomApiUtils.push(json);
             //数据id
-            String id = result.getResponseStatus().getSuccessEntitys().get(0).getId();
+//            String id = result.getResponseStatus().getSuccessEntitys().get(0).getId();
             Map<String, Object> bomChangeViewMap = new HashMap<>();
-            bomChangeViewMap.put("syncKingdeeId",id);
-            JSONObject view = kingdeeCommonService.view(bomChangeApiUtils, platformEntity.getId(), bomChangeViewMap);
+            bomChangeViewMap.put("syncKingdeeId",bomMap.get("FId"));
+            JSONObject view = kingdeeCommonService.view(bomApiUtils, platformEntity.getId(), bomChangeViewMap);
+
             JSONObject convertData = convertData(view,syncKingdeeId,queryList.get(0).get("FBillNo").toString());
 
             KingdeeParamDTO.SaveParamDTO saveParam = new KingdeeParamDTO.SaveParamDTO(convertData);
-            kingdeeCommonService.save(platformEntity,bomChangeViewMap,bomChangeApiUtils,json,saveParam,null);
+            saveParam.setIsVerifyBaseDataField(Boolean.FALSE);
+            StringBuffer allKey = FastJsonUtil.getAllKey(convertData);
+            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
+            saveParam.setNeedUpDateFields(apiFieldList);
+            //新增
+            RepoResult save = bomChangeApiUtils.saveKingDee(saveParam);
+            //提交
+            kingdeeCommonService.submit(null,bomChangeApiUtils,save.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
+            //审核
+            kingdeeCommonService.audit(null,bomChangeApiUtils,save.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
         }
     }
 
@@ -118,22 +135,14 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONArray ppBomEntries = view.getJSONArray("PPBomEntry");
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
-        //单据日期
-        entries.put("FDate", LocalDate.now().toString());
-        //单据状态
-        entries.put("FDocumentStatus", "");
-        //委外组织
-        JSONObject subOrgJson = new JSONObject();
-        subOrgJson.put("FNumber", "100");
-        entries.put("FSubOrgId", subOrgJson);
 
-        //删除标记
+        //原数据行
         for (int i = 0; i < ppBomEntries.size(); i++) {
             JSONObject srcEntry = ppBomEntries.getJSONObject(i);
-            JSONObject newEntry = new JSONObject();
-            newEntry.put("Id",srcEntry.get("Id"));
-            newEntry.put("FDeleteEntry", true);
-            FEntities.put(newEntry);
+            JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(srcEntry, bomBillNo);
+            FEntities.put(changeBeforPpBom);
+            JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(srcEntry, bomBillNo);
+            FEntities.put(changeAfterPpBom);
         }
 
         view.put("FEntity", FEntities);
@@ -143,26 +152,50 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (Objects.nonNull(subcontractOrder)) {
             String mainId = subcontractOrder.getId();
             List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
-            if (!subcontractOrderDetails.isEmpty()) {
-                for (SubcontractOrderDetailEntity subcontractOrderDetail : subcontractOrderDetails) {
+            List<SubcontractOrderDetailEntity> details = subcontractOrderDetails.stream()
+                    .filter(item -> StringUtils.isNotBlank(item.getParentId()))
+                    .collect(Collectors.toList());
+            if (!details.isEmpty()) {
+                for (SubcontractOrderDetailEntity subcontractOrderDetail : details) {
                     entries = createNewPpBomEntry(view, FEntities, subcontractOrderDetail, bomBillNo);
                 }
             }
         }
+        //单号
+//        JSONObject codeJson = new JSONObject();
+//        codeJson.put("FNumber", view.get("BillNo"));
+//        entries.put("FBillNo", codeJson);
+        //单据类型
+        JSONObject typeJson = new JSONObject();
+        typeJson.put("FNumber", "WWYLQDBGD01_SYS");
+        entries.put("FBillType", typeJson);
+        //单据日期
+        entries.put("FDate", LocalDate.now().toString());
+        //单据状态
+        entries.put("FDocumentStatus", "1");
+        //委外组织
+        JSONObject subOrgJson = new JSONObject();
+        subOrgJson.put("FNumber", "100");
+        entries.put("FSubOrgId", subOrgJson);
+
         return entries;
     }
 
-    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity detail, String bomBillNo) {
-        JSONObject entries = new JSONObject();
-        entries.set("Id",view.get("Id"));
-        Map<String, Object> entry = new HashMap<>();
-
+    private JSONObject createChangeBeforePpBomEntry(JSONObject srcEntry, String bomBillNo) {
+        JSONObject entry = new JSONObject();
+        //entry.put("Id",srcEntry.get("Id"));
         //物料编码
         JSONObject skuJson = new JSONObject();
-        //skuJson.put("FNumber", detail.getSkuNo());
-        skuJson.put("FNumber", detail.getSkuNo());
-        entry.put("FMaterialID", skuJson);
-        entry.put("FMaterialID2\n", skuJson);
+        Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
+        if (Objects.nonNull(kingdeeSkuId)) {
+            ProductDetailEntity productDetail = plmTaskFeign.getSkuBySyncKingdeeId(kingdeeSkuId.toString());
+            if (Objects.nonNull(productDetail)) {
+                skuJson.put("FNumber", productDetail.getSkuNo());
+                entry.put("FMaterialID", skuJson);
+                entry.put("FMaterialID2", skuJson);
+            }
+        }
+
         //单位
         JSONObject unitJson = new JSONObject();
         unitJson.put("FNumber", "Pcs");
@@ -170,28 +203,128 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FUnitID2", unitJson);
         //BOM版本
         JSONObject bomVersonJson = new JSONObject();
-        bomVersonJson.put("FNumber", "1");
+        bomVersonJson.put("FNumber", "");
         entry.put("FBomId", bomVersonJson);
-        //数量
-        //entry.put("FMustQty", detail.getRepairQty() == 0 ? detail.getQty() : detail.getRepairQty());
         //委外用料清单编号
         entry.put("FSUBPPBOMNo", bomBillNo);
         //用料类型
-        entry.put("FDosageType", "");
+        entry.put("FDosageType", "1");
         //子项类型
-        entry.put("FMaterialType", "");
+        entry.put("FMaterialType", "1");
         //超发控制方式
-        entry.put("FOverControlMode", "");
+        entry.put("FOverControlMode", "1");
         //发料组织
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", "100");
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
-        entry.put("FIssueType", "");
+        //entry.put("FIssueType", "2");
+        //变更前
+        entry.put("FChangeType","2");
+        //分子
+        entry.put("FNumerator",srcEntry.get("Numerator"));
+        //应发数量
+        entry.put("FMustQty",srcEntry.get("MustQty"));
+        //生产数量
+        entry.put("FProduceQty",srcEntry.get("ProduceQty"));
+        //未领数量
+        entry.put("FNoPickedQty",srcEntry.get("NoPickedQty"));
+        return entry;
+    }
+
+    private JSONObject createChangeAfterPpBomEntry(JSONObject srcEntry, String bomBillNo) {
+        JSONObject entry = new JSONObject();
+        //entry.put("Id",srcEntry.get("Id"));
+        //物料编码
+        JSONObject skuJson = new JSONObject();
+        Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
+        if (Objects.nonNull(kingdeeSkuId)) {
+            ProductDetailEntity productDetail = plmTaskFeign.getSkuBySyncKingdeeId(kingdeeSkuId.toString());
+            if (Objects.nonNull(productDetail)) {
+                skuJson.put("FNumber", productDetail.getSkuNo());
+                entry.put("FMaterialID", skuJson);
+                entry.put("FMaterialID2", skuJson);
+            }
+        }
+
+        //单位
+        JSONObject unitJson = new JSONObject();
+        unitJson.put("FNumber", "Pcs");
+        entry.put("FUnitID", unitJson);
+        entry.put("FUnitID2", unitJson);
+        //BOM版本
+        JSONObject bomVersonJson = new JSONObject();
+        bomVersonJson.put("FNumber", "");
+        entry.put("FBomId", bomVersonJson);
+        //委外用料清单编号
+        entry.put("FSUBPPBOMNo", bomBillNo);
+        //用料类型
+        entry.put("FDosageType", "1");
+        //子项类型
+        entry.put("FMaterialType", "1");
+        //超发控制方式
+        entry.put("FOverControlMode", "1");
+        //发料组织
+        JSONObject supplyOrgJson = new JSONObject();
+        supplyOrgJson.put("FNumber", "100");
+        entry.put("FSupplyOrg", supplyOrgJson);
+        //发料方式
+        //entry.put("FIssueType", "2");
+        //变更后
+        entry.put("FChangeType","3");
+        //分子
+        entry.put("FNumerator","0");
+        //应发数量
+        entry.put("FMustQty","0");
+        //生产数量
+        entry.put("FProduceQty","0");
+        //未领数量
+        entry.put("FNoPickedQty","0");
+        return entry;
+    }
+
+    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity detail, String bomBillNo) {
+        JSONObject entries = new JSONObject();
+        //entries.set("Id",view.get("Id"));
+        Map<String, Object> entry = new HashMap<>();
+
+        //物料编码
+        JSONObject skuJson = new JSONObject();
+        skuJson.put("FNumber", detail.getSkuNo());
+        entry.put("FMaterialID", skuJson);
+        entry.put("FMaterialID2", skuJson);
+
+        //单位
+        JSONObject unitJson = new JSONObject();
+        unitJson.put("FNumber", "Pcs");
+        entry.put("FUnitID", unitJson);
+        entry.put("FUnitID2", unitJson);
+        //BOM版本
+        JSONObject bomVersonJson = new JSONObject();
+        bomVersonJson.put("FNumber", "");
+        entry.put("FBomId", bomVersonJson);
+        //委外用料清单编号
+        entry.put("FSUBPPBOMNo", bomBillNo);
+        //用料类型
+        entry.put("FDosageType", "1");
+        //子项类型
+        entry.put("FMaterialType", "1");
+        //超发控制方式
+        entry.put("FOverControlMode", "1");
+        //发料组织
+        JSONObject supplyOrgJson = new JSONObject();
+        supplyOrgJson.put("FNumber", "100");
+        entry.put("FSupplyOrg", supplyOrgJson);
+        //发料方式
+        //entry.put("FIssueType", "2");
         //需求日期
         entry.put("FNeedDate2",detail.getPlanDeliveryDate().toString());
-        entry.put("FChangeType","New");
-
+        //新增
+        entry.put("FChangeType","1");
+        //应发数量
+        entry.put("FMustQty",detail.getQty());
+        //生产数量
+        entry.put("FProduceQty",detail.getQty());
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
         return entries;

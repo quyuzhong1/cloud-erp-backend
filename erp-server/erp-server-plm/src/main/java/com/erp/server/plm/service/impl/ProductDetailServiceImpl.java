@@ -7609,4 +7609,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         dynamicExcelDTO.setSheetName("产品sku明细表");
         return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
     }
+
+    @Override
+    public ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId) {
+        return this.lambdaQuery()
+                .eq(ProductDetailEntity::getSyncKingdeeId, syncKingdeeId)
+                .one();
+    }
 }
