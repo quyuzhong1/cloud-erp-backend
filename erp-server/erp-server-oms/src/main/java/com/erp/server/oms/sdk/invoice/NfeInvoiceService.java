@@ -581,7 +581,7 @@ public class NfeInvoiceService {
             // productDTO.setDiscountPrice(BigDecimal.ZERO); // 已移除：不传discount_price字段
             if (CharSequenceUtil.isNotBlank(taxCategoryId)) productDTO.setCategoryId(taxCategoryId);
             productDTO.setOrigem("0");
-            // indicador_total: 若SKU为赠品传"1"，若SKU不为赠品传"0"
+            // indicador_total: 若SKU为赠品传"0"，若SKU不为赠品传"1"，默认是"1"
             Boolean isGift = detailEntity.getIsGift();
             productDTO.setIndicadorTotal(Boolean.TRUE.equals(isGift) ? "0" : "1");
             products.add(productDTO);
@@ -1291,8 +1291,31 @@ public class NfeInvoiceService {
             throw new ServiceException("公司token不能为空");
         }
         
+        // 查询原发票详情，获取税务发票ID
+        String originalInvoiceId = null;
+        try {
+            // 优先使用uuid查询，如果没有uuid则使用chave
+            String queryUuid = CharSequenceUtil.isNotBlank(invoiceInfoEntity.getQueryId()) 
+                ? invoiceInfoEntity.getQueryId() 
+                : uuidOrChave;
+            InvoiceDetailResponseDTO.InvoiceDetailDataDTO invoiceDetail = 
+                tfFiscalService.getInvoiceDetailV2(queryUuid, companyToken);
+            if (invoiceDetail != null && CharSequenceUtil.isNotBlank(invoiceDetail.getId())) {
+                originalInvoiceId = invoiceDetail.getId();
+                log.info("查询原发票详情成功, uuid/chave: {}, 税务发票ID: {}", uuidOrChave, originalInvoiceId);
+            } else {
+                log.warn("查询原发票详情未返回ID, uuid/chave: {}", uuidOrChave);
+            }
+        } catch (Exception e) {
+            log.warn("查询原发票详情失败, uuid/chave: {}, 错误: {}, 将继续尝试退货", uuidOrChave, e.getMessage());
+            // 查询失败不影响退货流程，继续执行
+        }
+        
         // 构建退货发票DTO
         ReturnInvoiceDTO returnInvoiceDTO = new ReturnInvoiceDTO();
+        if (CharSequenceUtil.isNotBlank(originalInvoiceId)) {
+            returnInvoiceDTO.setId(originalInvoiceId);
+        }
         returnInvoiceDTO.setUuidOrChave(uuidOrChave);
         returnInvoiceDTO.setCfop(returnTaxCode);
         returnInvoiceDTO.setNaturezaOperacao(returnReason);

@@ -19,6 +19,13 @@ import java.io.Serializable;
 public class ReturnInvoiceDTO implements Serializable {
 
     /**
+     * 原发票的税务发票ID（通过查询发票详情接口获取）
+     * 注意：这是原发票的ID，不是新发票的ID
+     */
+    @JsonProperty("id")
+    private String id;
+
+    /**
      * 发票id/chave（第三方生成的发票，开具请传chave）
      * 注意：JSON字段名为"uuid/chave"，但Java属性名不能包含斜杠，所以使用uuidOrChave
      */
