@@ -171,7 +171,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     @Override
     public BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,ImportHistoryRecordDTO.ImportDTO dto) {
-        if (CharSequenceUtil.isNotBlank(importDTO.getFileName())) {
+        if (CharSequenceUtil.isBlank(importDTO.getFileName())) {
             throw new ServiceException(ApiError.LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND);
         }
         //查询配置主表信息
