@@ -1303,7 +1303,7 @@ public class NfeInvoiceService {
         
         // 构建return_detail（第三方生成的发票需填写）
         ReturnInvoiceDTO.ReturnDetailDTO returnDetailDTO = buildReturnDetailDTO(soB2cEntity, invoiceSettingDetail, invoiceSetting);
-        returnInvoiceDTO.setReturnDetail(returnDetailDTO);
+//        returnInvoiceDTO.setReturnDetail(returnDetailDTO);
         
         // 调用新接口
         ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO responseData;
