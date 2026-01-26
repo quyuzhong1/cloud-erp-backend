@@ -148,7 +148,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         //费用分摊
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> lastedAllocationMonthList =  costAllocationService.listLastedAllocationMonth(logisticsBillIds);
-        Map<String, String> map = lastedAllocationMonthList.stream().collect(Collectors.toMap(FirstMileCostAllocationDTO.LastedAllocMonthDTO::getLogisticsBillId, FirstMileCostAllocationDTO.LastedAllocMonthDTO::getCostAllocationProgress, (o1, o2) -> o1));
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
             if(StringUtils.isBlank(item.getCostAllocationStatus())){
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
@@ -169,13 +168,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             item.setChargedWeightStr(decimalFormat.format(item.getChargedWeight()));
             item.setProductWeightStr(decimalFormat.format(item.getProductWeight()));
             item.setAllocationWeightStr(decimalFormat.format(item.getAllocationWeight()));
-
-            String costAllocationProgress = map.getOrDefault(item.getLogisticsBillId(),"");
-            if(StringUtils.isNotBlank(costAllocationProgress)){
-                item.setCostAllocationProgress(costAllocationProgress);
-                item.setCostAllocationProgressName(FirstMileAllocationProcessEnum.getName(costAllocationProgress));
-            }
-
         }
     }
 

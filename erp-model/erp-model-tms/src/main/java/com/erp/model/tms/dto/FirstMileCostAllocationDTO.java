@@ -919,10 +919,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 最新核算状态
          */
         private String status;
-        /**
-         * 费用分摊异步进度 待执行=pending,执行中=processing,成功=success,failed=失败 FirstMileWeightAllocationProcessEnum
-         */
-        private String costAllocationProgress;
     }
 
     @EqualsAndHashCode(callSuper = true)

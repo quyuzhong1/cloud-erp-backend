@@ -34,6 +34,7 @@ import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import com.erp.server.tms.service.ReportPeriodMonthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -271,12 +272,6 @@ public class FirstMileCostAllocationController extends BaseController {
             resultDTOS.add(BatchResultDTO.fail(dto.getReportPeriodId(),"","核算区间不存在"));
             return failure(resultDTOS);
         }
-
-        List<String> ids = entityList.stream().map(FirstMileCostAllocationEntity::getId).collect(Collectors.toList());
-        firstMileCostAllocationService.lambdaUpdate()
-                .set(FirstMileCostAllocationEntity::getCostAllocationProgress, FirstMileAllocationProcessEnum.PROCESSING.getCode())
-                .in(FirstMileCostAllocationEntity::getId,ids)
-                .update();
         firstMileCostAllocationService.asyncResetAllocatedCost(entityList,firstMileDeliveryEntityList, deliveryDetailEntityList);
         return success();
 //        for (String sourceId : sourceIds) {

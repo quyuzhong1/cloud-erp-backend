@@ -182,7 +182,6 @@
         select wa.logistics_bill_id logisticsBillId,
                ca.status,
                ca.report_period_id reportPeriodId,
-               ca.cost_allocation_progress costAllocationProgress,
                sca.bill_source_type billSourceType,
                scad.end_period_transit_cost endPeriodTransitCost,
                max(rpm.month) latestMonth
@@ -198,7 +197,7 @@
                 #{id}
             </foreach>
         </where>
-        group by wa.logistics_bill_id, ca.status, ca.report_period_id,ca.cost_allocation_progress,sca.bill_source_type, scad.end_period_transit_cost
+        group by wa.logistics_bill_id, ca.status, ca.report_period_id,sca.bill_source_type, scad.end_period_transit_cost
     </select>
     <select id="listBySourceIdsAndReportPeriodId"
             resultType="com.erp.model.tms.entity.FirstMileCostAllocationEntity">
