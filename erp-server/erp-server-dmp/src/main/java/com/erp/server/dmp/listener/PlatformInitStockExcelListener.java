@@ -75,12 +75,16 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
         if(CollectionUtils.isEmpty(dataList)){
             return;
         }
+        List<String> sourceSystemNameList = dataList.stream().map(PlatformInitStockExcelDTO::getSourceSystemName).distinct().collect(Collectors.toList());
+        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class).in(OverseasProviderEntity::getName, sourceSystemNameList).list();
+		Map<String, List<OverseasProviderEntity>> sourceSystemNameMap = overseasProviderEntityList.stream().collect(Collectors.groupingBy(OverseasProviderEntity::getName));
+		
         List<String> warehouseNameList = dataList.stream().map(PlatformInitStockExcelDTO::getPlatformWarehouseName).distinct().collect(Collectors.toList());
-        List<String> checkMonthList = dataList.stream().map(PlatformInitStockExcelDTO::getCheckMonth).distinct().collect(Collectors.toList());
         List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList = FeignQuery.create(OverseasProviderWarehouseEntity.class).in(OverseasProviderWarehouseEntity::getPlatformWarehouseName, warehouseNameList).list();
-        Map<String, String> idAccountMap = FeignQuery.list(OverseasProviderEntity.class).stream().collect(Collectors.toMap(OverseasProviderEntity::getId, OverseasProviderEntity::getPlatformAccount));
-        Map<String, List<OverseasProviderWarehouseEntity>> nameGroupMap = overseasProviderWarehouseEntityList.stream().filter(c -> idAccountMap.containsKey(c.getMainId()))
-        		.collect(Collectors.groupingBy(OverseasProviderWarehouseEntity::getPlatformWarehouseName));
+        Map<String, List<OverseasProviderWarehouseEntity>> nameGroupMap = overseasProviderWarehouseEntityList.stream().collect(Collectors.groupingBy(OverseasProviderWarehouseEntity::getPlatformWarehouseName));
+        
+        List<String> checkMonthList = dataList.stream().map(PlatformInitStockExcelDTO::getCheckMonth).distinct().collect(Collectors.toList());
+        
         LoginUser defaultLoginUser = UserContext.getNonLoginUser();
         IdentifierGenerator identifierGenerator = ApplicationContextUtils.getBean(IdentifierGenerator.class);
         AdsErpInventoryDiffFlowMapper adsErpInventoryDiffFlowMapper = ApplicationContextUtils.getBean(AdsErpInventoryDiffFlowMapper.class);
@@ -91,6 +95,15 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
         }
         List<PlatformInitStockExcelDTO> insertDbList = new ArrayList<>();
         for (PlatformInitStockExcelDTO excelDTO : dataList) {
+        	String sourceSystemName = excelDTO.getSourceSystemName();
+        	List<OverseasProviderEntity> mainList = sourceSystemNameMap.get(sourceSystemName);
+        	if(CollUtil.isEmpty(mainList)) {
+        		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】核对仓库在系统不存在", sourceSystemName));
+                errorList.add(excelDTO);
+                continue;
+        	}
+        	Map<String, String> idPlatformAccountMap = mainList.stream().collect(Collectors.toMap(OverseasProviderEntity::getId, OverseasProviderEntity::getPlatformAccount));
+        	
         	String platformWarehouseName = excelDTO.getPlatformWarehouseName();
 			List<OverseasProviderWarehouseEntity> list = nameGroupMap.get(platformWarehouseName);
         	if(CollUtil.isEmpty(list)) {
@@ -98,11 +111,20 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
                 errorList.add(excelDTO);
                 continue;
         	}
-        	if(list.size() > 1) {
-        		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库名称在系统存在多个，请联系实施处理", platformWarehouseName));
+        	
+        	list = list.stream().filter(l -> idPlatformAccountMap.containsKey(l.getMainId())).collect(Collectors.toList());
+        	if(CollUtil.isEmpty(list)) {
+        		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库名称在{}下不存在", platformWarehouseName , sourceSystemName));
                 errorList.add(excelDTO);
                 continue;
         	}
+        	
+        	if(list.size() > 1) {
+        		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库名称在{}下存在多个，请联系实施处理", platformWarehouseName , sourceSystemName));
+                errorList.add(excelDTO);
+                continue;
+        	}
+        	
         	OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = list.get(0);
         	PlatformInitStockExcelDTO dbExcelDTO = checkMonthAndWarehouseMap.get(excelDTO.getCheckMonth() + "_" + excelDTO.getPlatformWarehouseName() + "_" + excelDTO.getStockSku());
         	if(dbExcelDTO != null) {
@@ -116,7 +138,7 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
             	excelDTO.setCreateUserName(defaultLoginUser.getUserName());
             	excelDTO.setCreateTime(LocalDateTime.now());
         	}
-        	excelDTO.setAccountCode(idAccountMap.get(overseasProviderWarehouseEntity.getMainId()));
+        	excelDTO.setAccountCode(idPlatformAccountMap.get(overseasProviderWarehouseEntity.getMainId()));
         	excelDTO.setPlatformWarehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode());
         	excelDTO.setUpdateUserId(defaultLoginUser.getUid());
         	excelDTO.setUpdateUserName(defaultLoginUser.getUserName());
