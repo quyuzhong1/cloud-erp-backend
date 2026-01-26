@@ -1419,6 +1419,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private String packingTaskId;
         /**
+         * 箱子规格id
+         */
+        private String cartonSpecId;
+        /**
          * 业务单号
          */
         private String businessCode;
@@ -1440,6 +1444,52 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 装箱重量
          */
+        private BigDecimal packageWeight;
+        /**
+         * 单位
+         */
+        private String weightUnit;
+
+        /**
+         * 装箱尺寸(长)
+         */
+        private BigDecimal boxLength;
+
+        /**
+         * 装箱尺寸(宽)
+         */
+        private BigDecimal boxWidth;
+
+        /**
+         * 装箱尺寸(高)
+         */
+        private BigDecimal boxHeight;
+        /**
+         * 是否取消
+         */
+        private Boolean isCancelRequired;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CancelDeliveryDTO {
+        /**
+         * 装箱任务id
+         */
+        @NotBlank(message = "装箱任务id不能为空")
+        private String packingTaskId;
+
+        /**
+         * 箱子规格id
+         */
+        @NotBlank(message = "箱子规格id不能为空")
+        private String cartonSpecId;
+
+        /**
+         * 装箱重量
+         */
         @NotNull(message = "装箱重量不能为空")
         private BigDecimal packageWeight;
         /**
@@ -1451,17 +1501,17 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 装箱尺寸(长)
          */
-        private String boxLength;
+        private BigDecimal boxLength;
 
         /**
          * 装箱尺寸(宽)
          */
-        private String boxWidth;
+        private BigDecimal boxWidth;
 
         /**
          * 装箱尺寸(高)
          */
-        private String boxHeight;
+        private BigDecimal boxHeight;
         /**
          * 是否取消
          */

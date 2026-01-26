@@ -7,6 +7,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -739,6 +740,28 @@ public class FirstMileDeliveryController extends BaseController {
     public ApiResult<PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO>> cancelDeliveryPaging(@RequestBody @Valid PagingDTO<FirstMileDeliveryDTO.CancelDeliveryParamDTO> dto) {
         PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO> pagingVO = firstMileDeliveryService.cancelDeliveryPaging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 批量取消发货
+     * @author will
+     * @date 2026/1/23 18:49
+     * @param list
+     * @return ApiResult<Object>
+     */
+    @PostMapping("/batchCancelDelivery")
+    public ApiResult<Object> batchCancelDelivery(@RequestBody @Valid ValidList<FirstMileDeliveryDTO.CancelDeliveryDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO :list) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = firstMileDeliveryService.cancelDelivery(cancelDeliveryDTO);
+            }catch (Exception e){
+                resultDTO = BatchResultDTO.fail(cancelDeliveryDTO.getPackingTaskId(), cancelDeliveryDTO.getPackingTaskId(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }
