@@ -44,11 +44,11 @@ public class ReturnInvoiceDTO implements Serializable {
     private String cfop;
 
     /**
-     * 退货原因（natureza_operacao）
+     * 退货原因（nature_of_operation）
      */
     @NotBlank(message = "退货原因不能为空")
-    @JsonProperty("natureza_operacao")
-    private String naturezaOperacao;
+    @JsonProperty("nature_of_operation")
+    private String natureOfOperation;
 
     /**
      * 退货详情（第三方生成的发票需填写）
