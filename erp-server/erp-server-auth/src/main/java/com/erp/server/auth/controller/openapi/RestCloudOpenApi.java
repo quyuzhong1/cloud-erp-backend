@@ -1,6 +1,5 @@
 package com.erp.server.auth.controller.openapi;
 
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CustomerCreditApplyDTO;
@@ -11,12 +10,9 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.ImprotHistoryRecordFeign;
 import com.erp.server.auth.config.OpenApi;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
