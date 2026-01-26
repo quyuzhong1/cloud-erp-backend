@@ -2,7 +2,6 @@ package com.erp.server.oms.sdk.invoice;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -1300,7 +1299,7 @@ public class NfeInvoiceService {
             returnInvoiceDTO.setUuid(uuid);
         }
         returnInvoiceDTO.setCfop(returnTaxCode);
-        returnInvoiceDTO.setNaturezaOperacao(returnReason);
+        returnInvoiceDTO.setNatureOfOperation(returnReason);
         
         // 构建return_detail（第三方生成的发票需填写）
         ReturnInvoiceDTO.ReturnDetailDTO returnDetailDTO = buildReturnDetailDTO(soB2cEntity, invoiceSettingDetail, invoiceSetting);
