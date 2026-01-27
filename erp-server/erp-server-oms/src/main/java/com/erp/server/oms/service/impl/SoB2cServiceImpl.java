@@ -425,6 +425,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         PagingParamDTO params = pagingParamDTO.getParams();
+        Boolean secondQuery = params.getSecondQuery();
+        if(secondQuery == null) {
+        	secondQuery = true;
+        }
 		params.setPermissionSql(getPermissionSql());
 		DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         String dynamicDataSource = "";
@@ -447,7 +451,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (params.getIsFullyManaged()){
                 pageData = this.baseMapper.fullyManagedPaging(query, params, null);
             }else {
-            	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource)) {
+            	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource) && secondQuery) {
             		int queryCount = 0;
             		String defaultSql = params.getSqlMap().get("default");
                     //转成 pgsql的条件
@@ -2230,6 +2234,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String iossTaxNo = resultDTO.getIossTaxNo();
             String declareOrgId = resultDTO.getDeclareOrgId();
             soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo,iossTaxNo,declareOrgId,pushPlatformCode);
+
+            //KOL-B2C订单需要回写跟踪单号
+            if(Objects.equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(),entity.getSourceType())){
+                KolSubB2cApplicationEntity kolSubB2cApplicationEntity = kolSubB2cApplicationService.getById(entity.getSourceId());
+                if (StringUtils.isNotBlank(trackNo)) {
+                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
+                }else {
+                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
+                }
+                kolSubB2cApplicationEntity.setTrackNo(trackNo);
+                kolSubB2cApplicationService.updateById(kolSubB2cApplicationEntity);
+            }
 
             //操作日志
             String msg = "获取物流单号成功，单号【{}/{}】，ioss税号【{}】，申报组织id【{}】，推送平台单号【{}】";
