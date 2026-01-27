@@ -22,6 +22,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 
+import java.util.Map;
+
 /**
  * 发票设置
  * @author hcg
@@ -143,6 +145,38 @@ public class CfgInvoiceSettingController extends BaseController {
     public ApiResult<?> updateSerialNo(@RequestBody @Validated CfgInvoiceSettingDTO.UpdateSerialDTO dto) {
         cfgInvoiceSettingService.updateSerialNo(dto);
         return success();
+    }
+
+    /**
+     * 初始化公司列表
+     * 从第三方系统获取公司列表并初始化到cfg_invoice_setting表
+     *
+     * @author: system
+     * @date: 2025/01/XX
+     * @return: 初始化结果信息
+     **/
+    @PostMapping("/initCompanyList")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "初始化公司列表")
+    public ApiResult<Map<String, Object>> initCompanyList() {
+        Map<String, Object> result = cfgInvoiceSettingService.initCompanyList();
+        return success(result);
+    }
+
+    /**
+     * 绑定税种ID
+     * 将税种ID绑定到发票设置
+     *
+     * @author: system
+     * @date: 2025/01/XX
+     * @param id 发票设置ID
+     * @param taxCategoryId 税种ID（cfg_tax_category.category_id）
+     * @return: 是否成功
+     **/
+    @GetMapping("/bindTaxCategory")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "绑定税种")
+    public ApiResult<Boolean> bindTaxCategory(@RequestParam String id, @RequestParam(required = false) String taxCategoryId) {
+        Boolean result = cfgInvoiceSettingService.bindTaxCategory(id, taxCategoryId);
+        return success(result);
     }
 
 }
