@@ -166,6 +166,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
+    @Resource
+    @Lazy
+    private LogisticsBillCostServiceImpl service;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -2046,7 +2050,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             LogisticsBillEntity logisticsBillEntity = logisticsBillMap.getOrDefault(logisticsBillCostEntity.getLogisticsBillId(), new LogisticsBillEntity());
 
-            asyncPushAllocation(logisticsBillEntity.getId(),dto.getReportDate(),logisticsBillCostEntity,smallBagCostAllocationList,logisticsBillEntity,allocationSettingDTO,feeTypeSettingMaps,rateMap);
+            service.asyncPushAllocation(logisticsBillEntity.getId(),dto.getReportDate(),logisticsBillCostEntity,smallBagCostAllocationList,logisticsBillEntity,allocationSettingDTO,feeTypeSettingMaps,rateMap);
         }
     }
 
