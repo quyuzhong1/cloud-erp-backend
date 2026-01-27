@@ -71,7 +71,16 @@
         FROM invoice_info i
         left join invoice_detail id on i.id = id.main_id and id.is_deleted = false
         left join shop_info si on i.shop_id = si.id and si.disabled = false
-        left join attachment att on i.id = att.business_id and att.is_deleted = false and att.type = 'invoice_info_pdf'
+        left join (
+            select att.*
+            from (
+                select *,
+                    ROW_NUMBER() OVER (PARTITION BY business_id ORDER BY id DESC) as rn
+                from attachment
+                where is_deleted = false and type = 'invoice_info_pdf'
+            ) att
+            where att.rn = 1
+        ) att on i.id = att.business_id
         WHERE
         ${params.sqlMap.default}
         and i.is_deleted=FALSE
