@@ -1046,7 +1046,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                                 && CharSequenceUtil.equals(obj.getReconciliationStatus(),ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
                                 && CharSequenceUtil.equals(obj.getPayType(),billCostExcelDTO.getPayType()))
                         .findFirst().orElse(null);
-                if (ImportTypeEnum.ADD.getCode().equals(importType) && Objects.isNull(logisticsBillCostEntity)){
+                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(importType) && Objects.isNull(logisticsBillCostEntity)){
                     logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                                     && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillVo.getDetailId()))
                             .findFirst().orElse(null);
@@ -1117,12 +1117,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSoDeliveryCode(list.get(0).getId());
                     addDTO.setSourceCode(list.get(0).getSourceCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+                    addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
                 }
             } else if (excelDTO.getSoDeliveryCode().startsWith("FHDC")) {
                 List<SoB2cDeliveryEntity> list = FeignQuery.create(SoB2cDeliveryEntity.class).eq(SoB2cDeliveryEntity::getCode, excelDTO.getSoDeliveryCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSoDeliveryCode(list.get(0).getId());
                     addDTO.setSourceCode(list.get(0).getSourceCode());
+                    addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
             }
         }
@@ -1135,14 +1139,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getCode, excelDTO.getSoCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSourceId(list.get(0).getId());
+                    addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+                    addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
                 }
             } else if (excelDTO.getSoCode().startsWith("XSDS")) {
                 List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getCode, excelDTO.getSoCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSourceId(list.get(0).getId());
+                    addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
             }
         }
+        addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
         addDTO.setSourceCode(excelDTO.getSoCode());
         addDTO.setPlatformCode(excelDTO.getPlatformCode());
         addDTO.setSoDeliveryCode(excelDTO.getSoDeliveryCode());

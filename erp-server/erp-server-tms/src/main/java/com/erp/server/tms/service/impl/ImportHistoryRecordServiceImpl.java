@@ -19,6 +19,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -483,12 +484,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSoDeliveryCode(list.get(0).getId());
                     addDTO.setSourceCode(list.get(0).getSourceCode());
+                    addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
                 }
             } else if (excelDTO.getSoDeliveryCode().startsWith("FHDC")) {
                 List<SoB2cDeliveryEntity> list = FeignQuery.create(SoB2cDeliveryEntity.class).eq(SoB2cDeliveryEntity::getCode, excelDTO.getSoDeliveryCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSoDeliveryCode(list.get(0).getId());
                     addDTO.setSourceCode(list.get(0).getSourceCode());
+                    addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
             }
         }
@@ -501,11 +506,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getCode, excelDTO.getSoCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSourceId(list.get(0).getId());
+                    addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
                 }
             } else if (excelDTO.getSoCode().startsWith("XSDS")) {
                 List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getCode, excelDTO.getSoCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSourceId(list.get(0).getId());
+                    addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
             }
         }
