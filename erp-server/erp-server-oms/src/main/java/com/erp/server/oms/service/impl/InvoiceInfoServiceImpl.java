@@ -82,6 +82,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INFO;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_XML;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_PDF;
 
 /**
  * <p>
@@ -127,6 +129,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    
+    @Resource
+    private com.erp.rpc.file.feign.FileFeign fileFeign;
 
     @Resource
     private InvoiceTaxService invoiceTaxService;
@@ -1121,35 +1126,19 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     public InvoiceInfoDTO.ExportResultDTO exportXml(InvoiceInfoDTO.PagingParamDTO dto) {
+        // 创建异步导出任务
+        String taskId = downloadTaskFeign.saveDownloadTask("导出发票XML", EXPORT_INVOICE_XML.getCode(), dto);
         InvoiceInfoDTO.ExportResultDTO resultDTO = new InvoiceInfoDTO.ExportResultDTO();
-        // 1. 查询附件URL列表
-        List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto,AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
-
-        if (CollUtil.isEmpty(exportResultList)) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        // 动态生成文件名
-        String fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
-        resultDTO.setFileName(fileName);
-        resultDTO.setResponseBody(streamingResponseBody);
+        resultDTO.setTaskId(taskId);
         return resultDTO;
     }
 
     @Override
     public InvoiceInfoDTO.ExportResultDTO exportPdf(InvoiceInfoDTO.PagingParamDTO dto) {
+        // 创建异步导出任务
+        String taskId = downloadTaskFeign.saveDownloadTask("导出发票PDF", EXPORT_INVOICE_PDF.getCode(), dto);
         InvoiceInfoDTO.ExportResultDTO resultDTO = new InvoiceInfoDTO.ExportResultDTO();
-        // 1. 查询附件URL列表
-        List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto,AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
-
-        if (CollUtil.isEmpty(exportResultList)) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        // 动态生成文件名
-        String fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
-        resultDTO.setFileName(fileName);
-        resultDTO.setResponseBody(streamingResponseBody);
+        resultDTO.setTaskId(taskId);
         return resultDTO;
     }
 
@@ -1484,6 +1473,68 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 throw new ServiceException("压缩包生成失败: " + e.getMessage(), e);
             }
         };
+    }
+
+    @Override
+    public List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(InvoiceInfoDTO.PagingParamDTO dto, String type) {
+        return baseMapper.listExportUrl(dto, type);
+    }
+
+    @Override
+    public String buildInvoiceAttachZip(InvoiceInfoDTO.PagingParamDTO dto, String type) {
+        log.info("开始构建发票附件ZIP文件，type={}", type);
+        
+        // 1. 查询附件URL列表
+        List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto, type);
+        
+        if (CollUtil.isEmpty(exportResultList)) {
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
+        }
+        
+        // 2. 构建文件URL列表和文件名映射
+        Map<String, List<String>> folderStructure = new HashMap<>();
+        Map<String, String> fileUrlToNameMap = new HashMap<>();
+        List<String> fileUrlList = new ArrayList<>();
+        
+        for (InvoiceInfoDTO.ExportAttachDTO attachDTO : exportResultList) {
+            String fileUrl = attachDTO.getAttachUrl();
+            String fileName = attachDTO.getAttachName();
+            
+            if (StrUtil.isBlank(fileUrl)) {
+                continue;
+            }
+            
+            // 如果附件名称为空，从URL提取文件名
+            if (StrUtil.isBlank(fileName)) {
+                String[] split = fileUrl.split("/");
+                fileName = split[split.length - 1];
+            }
+            
+            fileUrlList.add(fileUrl);
+            fileUrlToNameMap.put(fileUrl, fileName);
+        }
+        
+        if (fileUrlList.isEmpty()) {
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
+        }
+        
+        // 所有文件放在根目录
+        folderStructure.put("", fileUrlList);
+        
+        // 3. 构建CreateZipDTO并调用文件中心创建ZIP
+        com.erp.model.file.dto.FileDTO.CreateZipDTO createZipDTO = com.erp.model.file.dto.FileDTO.CreateZipDTO.builder()
+                .folderStructure(folderStructure)
+                .fileUrlToNameMap(fileUrlToNameMap)
+                .build();
+        
+        String zipUrl = fileFeign.createZipFromFolderStructure(createZipDTO);
+        
+        if (StrUtil.isBlank(zipUrl)) {
+            throw new ServiceException(ApiError.FILE_ZIP_CREATE_FAILED, "");
+        }
+        
+        log.info("构建发票附件ZIP文件完成，type={}, zipUrl={}, count={}", type, zipUrl, exportResultList.size());
+        return zipUrl;
     }
 
     /**
