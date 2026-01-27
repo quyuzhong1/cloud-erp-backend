@@ -1378,15 +1378,23 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public StreamingResponseBody downloadZip(List<InvoiceInfoDTO.ExportAttachDTO> exportAttachList) {
         return outputStream -> {
             try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                // 用于记录每个文件名出现的次数，避免重复文件名
+                Map<String, Integer> fileNameCountMap = new HashMap<>();
+                
                 // 使用并发下载所有文件内容
                 List<CompletableFuture<Pair<String, byte[]>>> downloadFutures = exportAttachList.stream()
                         .map(attachDTO -> CompletableFuture.supplyAsync(() -> {
-                            String[] split = attachDTO.getAttachUrl().split("/");
-                            String fileName = split[split.length - 1];
+                            String fileName = attachDTO.getAttachName();
+                            // 如果附件名称为空，从URL提取文件名
+                            if (CharSequenceUtil.isBlank(fileName)) {
+                                String[] split = attachDTO.getAttachUrl().split("/");
+                                fileName = split[split.length - 1];
+                            }
                             try {
                                 byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
-                                return Pair.of(fileName, content); // 使用合适的Pair或自定义对象
+                                return Pair.of(fileName, content);
                             } catch (Exception e) {
+                                log.error("文件下载失败: {}", attachDTO.getAttachUrl(), e);
                                 throw new ServiceException("文件处理失败: " + attachDTO.getAttachName(), e);
                             }
                         }, executorPool))
@@ -1397,15 +1405,66 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
                 // 单线程按顺序写入ZIP
                 for (CompletableFuture<Pair<String, byte[]>> future : downloadFutures) {
-                    Pair<String, byte[]> fileData = future.get(); // 获取下载结果
-                    zipOut.putNextEntry(new ZipEntry(fileData.getKey()));
-                    zipOut.write(fileData.getValue());
-                    zipOut.closeEntry();
+                    try {
+                        Pair<String, byte[]> fileData = future.get(); // 获取下载结果
+                        String fileName = fileData.getKey();
+                        byte[] content = fileData.getValue();
+                        
+                        if (content == null || content.length == 0) {
+                            log.warn("文件内容为空，跳过: {}", fileName);
+                            continue;
+                        }
+                        
+                        // 处理重复文件名
+                        String uniqueFileName = generateUniqueFileName(fileName, fileNameCountMap);
+                        
+                        zipOut.putNextEntry(new ZipEntry(uniqueFileName));
+                        zipOut.write(content);
+                        zipOut.closeEntry();
+                    } catch (Exception e) {
+                        log.error("写入ZIP文件失败", e);
+                        // 继续处理下一个文件，不中断整个流程
+                    }
                 }
+                
+                // 显式调用 finish() 确保 ZIP 文件结构完整（写入中央目录结束标记）
+                zipOut.finish();
+                zipOut.flush();
             } catch (Exception e) {
-                throw new ServiceException("压缩包生成失败", e);
+                log.error("压缩包生成失败", e);
+                throw new ServiceException("压缩包生成失败: " + e.getMessage(), e);
             }
         };
+    }
+
+    /**
+     * 生成唯一的文件名，避免重复
+     *
+     * @param baseFileName 原始文件名
+     * @param fileNameCountMap 记录已出现的文件名及其次数
+     * @return 唯一文件名
+     */
+    private String generateUniqueFileName(String baseFileName, Map<String, Integer> fileNameCountMap) {
+        int count = fileNameCountMap.getOrDefault(baseFileName, 0);
+        fileNameCountMap.put(baseFileName, count + 1);
+
+        if (count == 0) {
+            return baseFileName;
+        }
+
+        // 插入递增序号防止重复
+        String nameWithoutExt = "";
+        String ext = "";
+
+        int dotIndex = baseFileName.lastIndexOf(".");
+        if (dotIndex > 0) {
+            nameWithoutExt = baseFileName.substring(0, dotIndex);
+            ext = baseFileName.substring(dotIndex);
+        } else {
+            nameWithoutExt = baseFileName;
+        }
+
+        return nameWithoutExt + "_" + count + ext;
     }
 
 
