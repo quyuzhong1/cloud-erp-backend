@@ -19,11 +19,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
-import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
-import com.erp.model.tms.enums.FirstMileAllocationProcessEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -34,13 +32,13 @@ import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import com.erp.server.tms.service.ReportPeriodMonthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -261,53 +259,26 @@ public class FirstMileCostAllocationController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
-        List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
-        List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(sourceIds.size());
-        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
-        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
-        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
         ReportPeriodMonthEntity reportPeriodMonth = reportPeriodMonthService.getById(dto.getReportPeriodId());
         if (Objects.isNull(reportPeriodMonth)){
             resultDTOS.add(BatchResultDTO.fail(dto.getReportPeriodId(),"","核算区间不存在"));
             return failure(resultDTOS);
         }
-        firstMileCostAllocationService.asyncResetAllocatedCost(entityList,firstMileDeliveryEntityList, deliveryDetailEntityList);
+        String reportPeriodStr = reportPeriodMonth.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        List<FirstMileCostAllocationEntity> entityList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(dto.getIds())){
+            List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+            entityList = firstMileCostAllocationService.listByIds(ids);
+        }else if (CharSequenceUtil.isNotBlank(reportPeriodStr)){
+            entityList = firstMileCostAllocationService.listByReportPeriodStr(reportPeriodStr, ConfirmStatusEnum.WAIT_CONFIRM.getCode());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            resultDTOS.add(BatchResultDTO.fail("","", MSG));
+            return failure(resultDTOS);
+        }
+        firstMileCostAllocationService.asyncBatchPushAllocatedCost(entityList,reportPeriodMonth);
         return success();
-//        for (String sourceId : sourceIds) {
-//            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
-//            if(Objects.isNull(firstMileDeliveryEntity)){
-//                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单记录不存在"));
-//                continue;
-//            }
-//            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
-//            if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
-//                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单明细记录不存在"));
-//                continue;
-//            }
-//            //已生成的费用分摊记录
-//            if (!CollectionUtils.isEmpty(entityList)){
-//                FirstMileCostAllocationEntity entity = entityList.stream().filter(e -> Objects.nonNull(e)
-//                        && ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus()) && Objects.equals(e.getSourceId(), sourceId))
-//                        .max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
-//                if (Objects.nonNull(entity) && !reportPeriodMonth.getMonth().isAfter(entity.getReportPeriodMonth())){
-//                    resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId, CharSequenceUtil.format("已存在核算区间【{}】不能下推发货单【{}】的核算区间【{}】", entity.getReportPeriodMonth(),entity.getSourceCode(),reportPeriodMonth.getMonth())));
-//                    continue;
-//                }
-//            }
-//            FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
-//                    .setSourceId(firstMileDeliveryEntity.getId()).setSourceCode(firstMileDeliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth.getMonth()).setReportPeriodId(dto.getReportPeriodId());
-////            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId) && dto.getReportPeriodId().equals(v.getReportPeriodId())).findFirst().orElse(new FirstMileCostAllocationEntity());
-////            entity.setSourceId(sourceId);
-////            entity.setReportPeriodId(dto.getReportPeriodId());
-//            try {
-//                resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
-//            }catch (Exception e){
-//                log.error(ERROR_MSG,e);
-//                resultDTOS.add(BatchResultDTO.fail(sourceId, sourceId, e.getMessage()));
-//            }
-//        }
-//        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
