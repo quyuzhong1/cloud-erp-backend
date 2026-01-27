@@ -529,7 +529,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     hasChildError = true;
                     break;
                 }
-                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+//                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+//                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+//                    hasChildError = true;
+//                    break;
+//                }
+                //空仓位允许通过校验
+                if (Objects.isNull(childEntity.getWarehouseLocation())) {
                     errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
                     hasChildError = true;
                     break;
@@ -734,7 +740,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     hasChildError = true;
                     break;
                 }
-                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+//                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+//                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+//                    hasChildError = true;
+//                    break;
+//                }
+                //空仓位允许通过校验
+                if (Objects.isNull(childEntity.getWarehouseLocation())) {
                     errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
                     hasChildError = true;
                     break;
