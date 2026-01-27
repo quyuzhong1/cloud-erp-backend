@@ -1411,6 +1411,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
 
         private Boolean isAuto = false;
 
+
     }
 
     /**
@@ -1540,6 +1541,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 开船时间
          */
         private LocalDateTime shipTime;
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
     }
 
     /**
