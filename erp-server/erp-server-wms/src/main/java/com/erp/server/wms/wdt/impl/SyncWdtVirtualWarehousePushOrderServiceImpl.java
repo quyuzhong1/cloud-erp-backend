@@ -2,7 +2,6 @@ package com.erp.server.wms.wdt.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -14,11 +13,8 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -141,7 +137,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     }
 
     @Override
-    public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
+    public void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
                                                 String vwAllocationCode, String operateCode, String sourceType) {
 
     	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
@@ -150,7 +146,10 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
-    	List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
+        if (CollUtil.isEmpty(cfgSettingEntityList)) {
+            throw new ServiceException(ApiError.DMP_PUSH_CFG_NOT_FOUND,"分货单同步旺店通");
+        }
+
     	List<WmsPushMsgEntity> wmsPushMsgEntityList = new ArrayList<>();
         List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> checkDataList = new ArrayList<>();
 
@@ -213,29 +212,15 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             //查询旺店通可用库存是否足够
             checkWdtUseInventoryQty(request,detailList);
 
-            if(CollUtil.isEmpty(cfgSettingEntityList)) {
-            	//添加推送任务
-                dmpSyncTaskDTO.setSourceId(handleDetail.getId());
-                dmpSyncTaskDTO.setSourceCode(vwAllocationCode);
-                dmpSyncTaskDTO.setSourceType(sourceType);
-                dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-                dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG.getName());
-                dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
-                dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-                dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-                dmpSyncTaskDTO.setSyncOperate(operateCode);
-
-                dmpPushTaskEntityList.add(dmpSyncTaskDTO);
-            }else {
-            	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-                wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
-                wmsPushMsgEntity.setSourceType(sourceType);
-                wmsPushMsgEntity.setSourceId(handleDetail.getId());
-                wmsPushMsgEntity.setSourceCode(vwAllocationCode);
-                wmsPushMsgEntity.setSyncOperate(operateCode);
-                wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
-                wmsPushMsgEntityList.add(wmsPushMsgEntity);
-            }
+            //添加本地任务
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+            wmsPushMsgEntity.setSourceType(sourceType);
+            wmsPushMsgEntity.setSourceId(handleDetail.getId());
+            wmsPushMsgEntity.setSourceCode(vwAllocationCode);
+            wmsPushMsgEntity.setSyncOperate(operateCode);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
+            wmsPushMsgEntityList.add(wmsPushMsgEntity);
         });
         if (CollUtil.isNotEmpty(checkDataList)) {
             //校验之前是否存在未同步成功的分货单调出
@@ -244,8 +229,6 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         if(CollUtil.isNotEmpty(wmsPushMsgEntityList)) {
         	wmsPushMsgService.saveBatch(wmsPushMsgEntityList);
         }
-        
-        return dmpMqFeign.saveTaskList(dmpPushTaskEntityList);
     }
 
 

@@ -1,28 +1,37 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.threadlocal.UserContext;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
-import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
-import com.erp.server.wms.mapper.VirtualWarehousePushHandleMapper;
-import com.erp.server.wms.service.VirtualWarehousePushHandleDetailService;
-import com.erp.server.wms.service.VirtualWarehousePushHandleService;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleDTO;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
+import com.erp.server.wms.mapper.VirtualWarehousePushHandleMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleDetailService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleRelationService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleService;
+import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehousePushHandleDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -39,6 +48,14 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
     private OperateLogService operateLogService;
     @Resource
     private VirtualWarehousePushHandleDetailService vmAllocationHandleDetailService;
+
+    @Resource
+    private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
+
+    @Resource
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -94,23 +111,89 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
         return Boolean.TRUE;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public void handleData(VirtualWarehouseAllocationEntity allocationEntity) {
-        //保存合单主表
-        VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(allocationEntity.getId(),
-                allocationEntity.getCode(),SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),allocationEntity.getStatus(),allocationEntity.getDirection());
-        this.save(pushHandleEntity);
-        //保存拆单明细表
-        vmAllocationHandleDetailService.handleDetail(allocationEntity,pushHandleEntity);
-    }
 
     @Override
     public void forceDeleteById(String id) {
         baseMapper.forceDeleteById(id);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public List<VirtualWarehousePushHandleDetailEntity> addAllocationPush(VirtualWarehouseAllocationEntity allocationEntity) {
+        //查询是否存在分货单拆单主表
+        VirtualWarehousePushHandleEntity pushHandleEntity = getByAllocation(allocationEntity);
+        List<VirtualWarehousePushHandleDetailEntity> pushDetailList = vmAllocationHandleDetailService.addAllocationDetailPush(allocationEntity, pushHandleEntity);
+        if (CollUtil.isEmpty(pushDetailList)) {
+            return pushDetailList;
+        }
+        //推送中台任务:保存任务+发送mq
+        syncWdtVirtualWarehousePushOrderService.saveTaskList(pushDetailList,
+                allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
+
+        return pushDetailList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public List<VirtualWarehousePushHandleDetailEntity> cancelAllocationPush(VirtualWarehouseAllocationEntity allocationEntity) {
+        //查询是否存在分货单拆单主表
+        VirtualWarehousePushHandleEntity pushHandleEntity = getByAllocation(allocationEntity);
+        List<VirtualWarehousePushHandleDetailEntity> pushDetailList = vmAllocationHandleDetailService.cancelAllocationDetailPush(allocationEntity, pushHandleEntity);
+        if (CollUtil.isEmpty(pushDetailList)) {
+            return pushDetailList;
+        }
+        //推送中台任务:保存任务+发送mq
+         syncWdtVirtualWarehousePushOrderService.saveTaskList(pushDetailList,
+                allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
+        return pushDetailList;
+    }
+
+    @Override
+    public void deleteVirtualWarehousePushHandle(String allocationId) {
+        //根据分货主表id查询关联表
+        List<VirtualWarehousePushHandleRelationEntity> relationList = virtualWarehousePushHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, allocationId));
+        if (CollUtil.isNotEmpty(relationList)) {
+            return;
+        }
+        VirtualWarehousePushHandleEntity pushHandleEntity = getBySourceId(allocationId);
+        if (ObjUtil.isEmpty(pushHandleEntity)) {
+            return;
+        }
+        this.forceDeleteById(pushHandleEntity.getId());
+    }
+
+
+    /**
+     * 查询分货单拆单主表
+     * @author will
+     * @date 2026/1/27 15:19
+     * @param allocationEntity
+     * @return VirtualWarehousePushHandleEntity
+     */
+    public VirtualWarehousePushHandleEntity getByAllocation(VirtualWarehouseAllocationEntity allocationEntity) {
+        VirtualWarehousePushHandleEntity oldPushHandleEntity = getBySourceId(allocationEntity.getId());
+        if (ObjUtil.isEmpty(oldPushHandleEntity)) {
+            return oldPushHandleEntity;
+        }
+        VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(allocationEntity.getId(),
+                allocationEntity.getCode(),SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),allocationEntity.getStatus(),allocationEntity.getDirection());
+        super.save(pushHandleEntity);
+        return  pushHandleEntity;
+    }
+
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2026/1/27 15:17
+     * @param sourceId
+     * @return VirtualWarehousePushHandleEntity
+     */
+    private VirtualWarehousePushHandleEntity getBySourceId(String sourceId) {
+        return lambdaQuery().eq(VirtualWarehousePushHandleEntity::getSourceId,sourceId).last("limit 1").one();
+    }
 
     /**
     * 新增修改处理数据

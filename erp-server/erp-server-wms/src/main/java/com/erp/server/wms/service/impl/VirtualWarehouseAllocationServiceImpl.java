@@ -370,25 +370,64 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setStatus(code);
         allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
-
-        //生成自动借调直接调拨单
-        generateAutoTransferInfo(allocationEntity,transferWarehouseList);
-
-        //校验总库存
-        submitCheckQty(detailEntityList,allocationEntity);
-
-        //调拨分货生成直接调拨单
-        generateDirectTransferInfo(allocationEntity,detailEntityList,warehouseMap);
+        //处理分货推送
+        this.submitHandlePush(allocationEntity,detailEntityList,transferWarehouseList,warehouseMap);
 
         // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
         String msg = CharSequenceUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
-        //进行合单并创建中台任务数据进行同步
-        virtualWarehousePushHandleService.handleData(allocationEntity);
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+
+    /**
+     * 处理分货推送
+     * @author will
+     * @date 2026/1/27 16:44
+     * @param allocationEntity
+     * @param detailEntityList
+     * @param transferWarehouseList
+     * @param warehouseMap
+     * @return void
+     */
+    private void submitHandlePush (VirtualWarehouseAllocationEntity allocationEntity,List<VirtualWarehouseAllocationDetailEntity> detailEntityList,
+                                   List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList,Map<String, String> warehouseMap) {
+        //分货处理
+        if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
+
+            //生成自动借调直接调拨单
+            generateAutoTransferInfo(allocationEntity,transferWarehouseList);
+
+            //校验总库存
+            submitCheckQty(detailEntityList,allocationEntity);
+
+            //生成平台新增分货同步单
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity);
+
+        } else if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(allocationEntity.getType())) {
+            //调拨分货
+            submitCheckQty(detailEntityList,allocationEntity);
+
+            //生成平台取消分货同步单
+            List<VirtualWarehousePushHandleDetailEntity> cancelList = virtualWarehousePushHandleService.cancelAllocationPush(allocationEntity);
+
+            //调拨分货生成直接调拨单
+            generateDirectTransferInfo(allocationEntity,detailEntityList,warehouseMap);
+
+            //生成平台新增分货同步单
+            List<VirtualWarehousePushHandleDetailEntity> addList = virtualWarehousePushHandleService.addAllocationPush(allocationEntity);
+        } else {
+            //取消分货
+            submitCheckQty(detailEntityList,allocationEntity);
+
+            //生成平台取消分货同步单
+            virtualWarehousePushHandleService.cancelAllocationPush(allocationEntity);
+        }
+
+        // 更新明细推送状态
+        virtualWarehousePushHandleService.deleteVirtualWarehousePushHandle(allocationEntity.getId());
+    }
 
     /**
      * 提交时校验库存并扣减
@@ -799,6 +838,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 detailAddDTO.setIsUserSystem(Boolean.TRUE);
                 detailAddDTO.setInWarehouseLocation("");
                 detailAddDTO.setOutWarehouseLocation("");
+                detailAddDTO.setSourceDetailId(transferWarehouseDTO.getSourceDetailId());
                 //查询拣货策略
                 List<LocationInventoryResultDTO> inventoryResultDTOList = ruleOrderMatchResult.getFirst().stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detailAddDTO.getOutWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), detailAddDTO.getSkuId())).collect(Collectors.toList());
                 if (CollUtil.isEmpty(inventoryResultDTOList)) {
