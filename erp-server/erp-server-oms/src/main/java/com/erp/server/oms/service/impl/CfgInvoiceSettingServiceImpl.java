@@ -29,7 +29,6 @@ import com.sdk.third.tf.dto.CreateCompanyDTO;
 import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
 import com.sdk.third.tf.dto.CompanyListResponseDTO;
 import com.sdk.third.tf.dto.EditCompanyDTO;
-import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -347,10 +346,19 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         this.lambdaUpdate().eq(CfgInvoiceSettingEntity::getId, dto.getId())
                 .set(CfgInvoiceSettingEntity::getNo, dto.getNo())
                 .set(CfgInvoiceSettingEntity::getStartCode, dto.getStartCode()).update();
-        //调用TF
-        UpdateCompanyDTO updateCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToUpdateCompanyDTOTo(old);
-        updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
-        tfFiscalService.updateCompany(updateCompanyDTO);
+        //调用TF新接口（编辑公司时使用公司token）
+        EditCompanyDTO editCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToEditCompanyDTO(old);
+        // 格式化数据
+        formatEditCompanyDTO(editCompanyDTO);
+        String companyToken = old.getToken();
+        if (CharSequenceUtil.isBlank(companyToken)) {
+            throw new ServiceException("公司token不能为空，请先创建公司");
+        }
+        // 验证公司ID是否存在
+        if (CharSequenceUtil.isBlank(editCompanyDTO.getCompanyId())) {
+            throw new ServiceException("公司ID不能为空，请先创建公司");
+        }
+        tfFiscalService.editCompanyV2(editCompanyDTO, companyToken);
         //保存日志
         log.info("序列号修改 开始记录发票设置日志数据，id：【{}】", old.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的发票设置单据,新序列号由【{}】改为【{}】，起始编号由【{}】改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), oldNo,dto.getNo(),oldStartCode,dto.getStartCode());
