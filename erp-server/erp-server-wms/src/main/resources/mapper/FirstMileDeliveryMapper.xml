@@ -664,7 +664,7 @@
             wcs.weight_unit as weightUnit
         from foreign_logistics_bill flb
         inner join first_mile_delivery fmd on flb.outstock_id = fmd.id and fmd.is_deleted = false
-        inner join packing_task pt on fmd.id = pt.source_id and pt.is_deleted = false
+        inner join packing_task pt on (fmd.id = pt.source_id or fmd.source_id = pt.source_id) and pt.is_deleted = false
         inner join wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
         inner join wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
         inner JOIN wcd ON WCD.main_id = wc.id
