@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -53,6 +54,7 @@ public class ImportHistoryRecordController extends BaseController {
             menuCode = "tms:importHistoryRecord:paging",
             tableAlias = "ihr"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ImportHistoryRecordDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ImportHistoryRecordDTO.PagingParamDTO> dto) {
         return success(importHistoryRecordService.paging(dto));
     }
