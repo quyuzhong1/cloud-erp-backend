@@ -143,7 +143,7 @@ public class CfgLogisticsCostImportController extends BaseController {
             menuCode = "tms:cfgLogisticsCostImport:delete",
             serviceClass = CfgLogisticsCostImportService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "B2C寄样申请单删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "费用项配置删除")
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());

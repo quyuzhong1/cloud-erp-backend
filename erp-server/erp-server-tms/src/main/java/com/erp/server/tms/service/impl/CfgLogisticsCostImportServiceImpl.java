@@ -376,8 +376,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     public BatchResultDTO delete(String id) {
         CfgLogisticsCostImportEntity entity = super.getById(id);
         entity = Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置"));
-        entity.setIsDeleted(Boolean.TRUE);
-        updateById(entity);
+        this.removeById(id);
         // 操作日志
         String msg = StrUtil.format("用户【{}】删除【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(),"费用项配置" , entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(), entity.getId(), OperationTypeEnum.DELETE.getName());
