@@ -178,7 +178,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //查询配置主表信息
         List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList = cfgLogisticsCostImportService.listByImport(importDTO.getFileName(), dto.getBusinessType(), dto.getCostType());
         if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
-            return new BatchResultDTO(importDTO.getTaskId(),importDTO.getFileName(),"未找到配置信息",Boolean.TRUE);
+            return BatchResultDTO.fail(importDTO.getTaskId(),importDTO.getFileName(),"未找到配置信息");
         }
         //查询配置明细信息
         List<String> mainIdList = cfgLogisticsCostImportList.stream().map(CfgLogisticsCostImportEntity::getId).distinct().collect(Collectors.toList());
@@ -234,7 +234,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
             downloadTaskFeign.updateTask(importResultDTO);
         }
-        return new BatchResultDTO(importDTO.getTaskId(),importDTO.getFileName(),"成功",Boolean.TRUE);
+        return  BatchResultDTO.success(importDTO.getTaskId(),importDTO.getFileName(),"导入成功");
     }
 
     @Override
