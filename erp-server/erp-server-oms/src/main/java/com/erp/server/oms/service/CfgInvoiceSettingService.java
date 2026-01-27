@@ -41,4 +41,22 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
     void updateSerialNo(CfgInvoiceSettingDTO.UpdateSerialDTO dto);
 
     void updateSerialNoById(String id, Integer no, Integer startCode);
+
+    /**
+     * 初始化公司列表
+     * 从第三方系统获取公司列表并初始化到cfg_invoice_setting表
+     * 
+     * @return 初始化结果信息
+     */
+    Map<String, Object> initCompanyList();
+
+    /**
+     * 绑定税种ID
+     * 将税种ID绑定到发票设置
+     * 
+     * @param id 发票设置ID
+     * @param taxCategoryId 税种ID（cfg_tax_category.category_id）
+     * @return 是否成功
+     */
+    Boolean bindTaxCategory(String id, String taxCategoryId);
 }

@@ -267,7 +267,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         RoleMenuDTO roleMenuVO = new RoleMenuDTO();
         List<String> menuIds = getMenuIdByRoleId(roleId);
 
-        List<SysMenuEntity> allList = sysMenuService.list(new LambdaQueryWrapper<SysMenuEntity>().orderByDesc(SysMenuEntity::getType));
+        List<SysMenuEntity> allList = sysMenuService.list(new LambdaQueryWrapper<SysMenuEntity>().eq(SysMenuEntity::getDisabled, Boolean.FALSE).orderByDesc(SysMenuEntity::getType));
 
         LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(SysRoleMenuEntity::getRoleId, roleId);
