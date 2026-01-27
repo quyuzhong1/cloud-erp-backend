@@ -4,12 +4,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.WdtVirtualInventoryService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -17,12 +13,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -35,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -201,6 +193,11 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
         }
 
         return handleDetailList;
+    }
+
+    @Override
+    public List<VirtualWarehousePushHandleDetailEntity> listBySourceId(String sourceId) {
+        return lambdaQuery().eq(VirtualWarehousePushHandleDetailEntity::getSourceId,sourceId).list();
     }
 
     @Override

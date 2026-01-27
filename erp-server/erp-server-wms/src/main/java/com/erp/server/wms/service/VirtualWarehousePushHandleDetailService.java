@@ -90,4 +90,12 @@ public interface VirtualWarehousePushHandleDetailService extends SuperService<Vi
      * @return List<VirtualWarehousePushHandleDetailEntity>
      */
     List<VirtualWarehousePushHandleDetailEntity> cancelAllocationDetailPush(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2026/1/27 18:28
+     * @param sourceId
+     * @return List<VirtualWarehousePushHandleDetailEntity>
+     */
+    List<VirtualWarehousePushHandleDetailEntity> listBySourceId(String sourceId);
 }
