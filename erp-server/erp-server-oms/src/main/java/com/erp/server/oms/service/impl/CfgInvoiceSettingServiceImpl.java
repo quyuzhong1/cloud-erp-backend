@@ -16,6 +16,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -24,8 +25,10 @@ import com.erp.server.oms.mapper.CfgInvoiceSettingMapper;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.sdk.third.tf.TfFiscalService;
-import com.sdk.third.tf.entity.AddCompanyDTO;
-import com.sdk.third.tf.entity.UpdateCompanyDTO;
+import com.sdk.third.tf.dto.CreateCompanyDTO;
+import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
+import com.sdk.third.tf.dto.CompanyListResponseDTO;
+import com.sdk.third.tf.dto.EditCompanyDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +66,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     private TfFiscalService tfFiscalService;
     @Resource
     private CfgInvoiceSettingService cfgInvoiceSettingService;
+    @Resource
+    private TaxCategoryService taxCategoryService;
 
     @Override
     public PagingVO<CfgInvoiceSettingDTO.PagingViewDTO> paging(PagingDTO<CfgInvoiceSettingDTO.PagingParamDTO> dto) {
@@ -71,7 +76,45 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         Page<CfgInvoiceSettingDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         // 直接通过一个SQL查询获取所有数据
         IPage<CfgInvoiceSettingDTO.PagingViewDTO> pageData = baseMapper.pagingWithShops(query, params);
+        
+        // 填充税种描述（名称）
+        fillList(pageData.getRecords());
+        
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 
+     * @param records 分页查询结果列表
+     */
+    private void fillList(List<CfgInvoiceSettingDTO.PagingViewDTO> records) {
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
+        
+        // 获取所有税种ID集合（去重，过滤空值）
+        List<String> taxCategoryIdList = records.stream()
+                .map(CfgInvoiceSettingDTO.PagingViewDTO::getTaxCategoryId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(taxCategoryIdList)) {
+            return;
+        }
+        
+        // 为每条记录设置税种描述（需要同时匹配categoryId和companyId）
+        records.forEach(record -> {
+            String categoryId = record.getTaxCategoryId();
+            String companyId = record.getCompanyId();
+            if (StrUtil.isNotBlank(categoryId)) {
+                // 使用categoryId和companyId一起查询，避免多条记录的问题
+                TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(categoryId, companyId);
+                if (taxCategory != null) {
+                    record.setTaxCategoryName(taxCategory.getDescricao());
+                }
+            }
+        });
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -80,16 +123,18 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     public BaseResultDTO.AddDTO add(CfgInvoiceSettingDTO.AddDTO dto) {
         //校验CNPJ、邮编格式
         checkCode(dto.getLeiCode(), dto.getPostCode());
-        //校验CNPJ是否唯一
-        if (StrUtil.isNotBlank(dto.getLeiCode())) {
-            LambdaQueryWrapper<CfgInvoiceSettingEntity> queryWrapper = new LambdaQueryWrapper<CfgInvoiceSettingEntity>().eq(CfgInvoiceSettingEntity::getLeiCode, dto.getLeiCode());
+        //校验CNPJ是否唯一（使用格式化后的CNPJ进行查询）
+        String formattedCnpj = formatCnpjToDatabase(dto.getLeiCode());
+        if (StrUtil.isNotBlank(formattedCnpj)) {
+            LambdaQueryWrapper<CfgInvoiceSettingEntity> queryWrapper = new LambdaQueryWrapper<CfgInvoiceSettingEntity>().eq(CfgInvoiceSettingEntity::getLeiCode, formattedCnpj);
             if (super.count(queryWrapper) > 0) {
                 throw new ServiceException("CNPJ 已存在，不能重复");
             }
         }
-        //保存
+        //保存（CNPJ保存到数据库前格式化，只保留数字）
         CfgInvoiceSettingEntity entity = new CfgInvoiceSettingEntity();
         BeanMapperUtils.copy(dto, entity);
+        entity.setLeiCode(formattedCnpj);  // 保存格式化后的CNPJ
         entity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
         boolean save = super.save(entity);
         if (!save) {
@@ -100,17 +145,20 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
         omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
-        //CfgInvoiceSettingEntity -> AddCompanyDTO
-        AddCompanyDTO addCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToAddCompanyDTOTo(entity);
-        //username
-        addCompanyDTO.setUsername(addCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
-        //调用TF
-        String token = tfFiscalService.createCompany(addCompanyDTO);
-        //更新token
+        //CfgInvoiceSettingEntity -> CreateCompanyDTO（新接口）
+        CreateCompanyDTO createCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToCreateCompanyDTO(entity);
+        // 格式化数据
+        formatCreateCompanyDTO(createCompanyDTO);
+        //调用TF新接口（创建公司时使用经销商token，不需要已有token）
+        CreateCompanyResponseDTO.CreateCompanyDataDTO response = tfFiscalService.createCompanyV2(createCompanyDTO);
+        String token = response.getToken();
+        String companyId = response.getCompanyId();
+        //更新token和company_id
         this.update(
                 new LambdaUpdateWrapper<CfgInvoiceSettingEntity>()
                         .eq(CfgInvoiceSettingEntity::getId, entity.getId())
                         .set(CfgInvoiceSettingEntity::getToken, token)
+                        .set(CfgInvoiceSettingEntity::getCompanyId, companyId)
         );
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置", entity.getId());
@@ -127,21 +175,23 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException("此发票设置不存在");
         }
-        //校验CNPJ、是否被修改
-        if (!StrUtil.equals(old.getLeiCode(), dto.getLeiCode())) {
+        //校验CNPJ、是否被修改（使用格式化后的CNPJ进行比较）
+        String formattedCnpj = formatCnpjToDatabase(dto.getLeiCode());
+        if (!StrUtil.equals(old.getLeiCode(), formattedCnpj)) {
             throw new ServiceException("CNPJ 不允许修改");
         }
         //校验邮编格式
-        checkCode(dto.getLeiCode(), dto.getPostCode());
+        checkCode(formattedCnpj, dto.getPostCode());
         //转换格式
         CfgInvoiceSettingEntity cfgInvoiceSettingEntity = BeanMapperUtils.map(CfgInvoiceSettingEntity.class, dto);
-        //禁止更新以下字段
+        //禁止更新以下字段（CNPJ使用旧的格式化后的值）
         cfgInvoiceSettingEntity.setStartCode(old.getStartCode());
-        cfgInvoiceSettingEntity.setLeiCode(old.getLeiCode());
+        cfgInvoiceSettingEntity.setLeiCode(old.getLeiCode());  // 保持旧的格式化后的CNPJ
         cfgInvoiceSettingEntity.setStateTaxNo(old.getStateTaxNo());
         cfgInvoiceSettingEntity.setNo(old.getNo());
         cfgInvoiceSettingEntity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
         cfgInvoiceSettingEntity.setToken(old.getToken());
+        cfgInvoiceSettingEntity.setCompanyId(old.getCompanyId());  // 保留公司ID，编辑公司接口需要
         log.info("编辑 开始修改发票设置数据，id：【{}】", old.getId());
         //修改
         boolean update = super.updateById(cfgInvoiceSettingEntity);
@@ -157,10 +207,19 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             String type = tableName.value();
             omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
         }
-        //调用TF
-        UpdateCompanyDTO updateCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);
-        updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
-        tfFiscalService.updateCompany(updateCompanyDTO);
+        //调用TF新接口（编辑公司时使用公司token）
+        EditCompanyDTO editCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToEditCompanyDTO(cfgInvoiceSettingEntity);
+        // 格式化数据
+        formatEditCompanyDTO(editCompanyDTO);
+        String companyToken = cfgInvoiceSettingEntity.getToken();
+        if (CharSequenceUtil.isBlank(companyToken)) {
+            throw new ServiceException("公司token不能为空，请先创建公司");
+        }
+        // 验证公司ID是否存在
+        if (CharSequenceUtil.isBlank(editCompanyDTO.getCompanyId())) {
+            throw new ServiceException("公司ID不能为空，请先创建公司");
+        }
+        tfFiscalService.editCompanyV2(editCompanyDTO, companyToken);
         //保存日志
         log.info("编辑 开始记录发票设置日志数据，id：【{}】", cfgInvoiceSettingEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgInvoiceSettingEntity.getId(), "发票设置");
@@ -195,11 +254,25 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     @Override
     public CfgInvoiceSettingDTO.ViewDTO view(String id) {
         CfgInvoiceSettingEntity old = super.getById(id);
-        CfgInvoiceSettingDTO.ViewDTO dto = new CfgInvoiceSettingDTO.ViewDTO();
-        BeanUtil.copyProperties(old, dto);
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException("此发票设置不存在");
         }
+        CfgInvoiceSettingDTO.ViewDTO dto = new CfgInvoiceSettingDTO.ViewDTO();
+        BeanUtil.copyProperties(old, dto);
+        
+        // 设置新增字段
+        dto.setCompanyId(old.getCompanyId());
+        dto.setTaxCategoryId(old.getTaxCategoryId());
+        
+        // 如果绑定了税种，查询税种描述
+        if (StrUtil.isNotBlank(old.getTaxCategoryId())) {
+            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(old.getTaxCategoryId(), old.getCompanyId());
+            if (taxCategory != null) {
+                dto.setTaxCategoryName(taxCategory.getDescricao());
+            }
+        }
+        
+        // 设置附件信息
         List<OmsAttachmentDTO.UpdateDTO> attchmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attchmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
         List<String> attachmentNameList = attchmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
@@ -273,10 +346,19 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         this.lambdaUpdate().eq(CfgInvoiceSettingEntity::getId, dto.getId())
                 .set(CfgInvoiceSettingEntity::getNo, dto.getNo())
                 .set(CfgInvoiceSettingEntity::getStartCode, dto.getStartCode()).update();
-        //调用TF
-        UpdateCompanyDTO updateCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToUpdateCompanyDTOTo(old);
-        updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
-        tfFiscalService.updateCompany(updateCompanyDTO);
+        //调用TF新接口（编辑公司时使用公司token）
+        EditCompanyDTO editCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToEditCompanyDTO(old);
+        // 格式化数据
+        formatEditCompanyDTO(editCompanyDTO);
+        String companyToken = old.getToken();
+        if (CharSequenceUtil.isBlank(companyToken)) {
+            throw new ServiceException("公司token不能为空，请先创建公司");
+        }
+        // 验证公司ID是否存在
+        if (CharSequenceUtil.isBlank(editCompanyDTO.getCompanyId())) {
+            throw new ServiceException("公司ID不能为空，请先创建公司");
+        }
+        tfFiscalService.editCompanyV2(editCompanyDTO, companyToken);
         //保存日志
         log.info("序列号修改 开始记录发票设置日志数据，id：【{}】", old.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的发票设置单据,新序列号由【{}】改为【{}】，起始编号由【{}】改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), oldNo,dto.getNo(),oldStartCode,dto.getStartCode());
@@ -302,19 +384,354 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
      * @date: 2025/4/17 13:05
      **/
     private void checkCode(String leiCode, String postCode) {
-        if (StrUtil.isNotBlank(leiCode)) {
-            // 示例格式：XX XXX XXX/XXX，例如：12 345 678/901
-            String regex = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$";
-            if (!leiCode.matches(regex)) {
-                throw new ServiceException("CNPJ 格式不正确，格式应为：XX XXX XXX/XXXX-XX");
-            }
-        }
+//        if (StrUtil.isNotBlank(leiCode)) {
+//            // 示例格式：XX XXX XXX/XXX，例如：12 345 678/901
+//            String regex = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$";
+//            if (!leiCode.matches(regex)) {
+//                throw new ServiceException("CNPJ 格式不正确，格式应为：XX XXX XXX/XXXX-XX");
+//            }
+//        }
         if (StrUtil.isNotBlank(postCode)) {
             // 示例格式：XXXXX-XXX
             String regex = "^\\d{5}-\\d{3}$";
             if (!postCode.matches(regex)) {
                 throw new ServiceException("邮编格式不正确，格式应为：XXXXX-XXX");
             }
+        }
+    }
+
+    /**
+     * 初始化公司列表
+     * 从第三方系统获取公司列表并初始化到cfg_invoice_setting表
+     * 
+     * @return 初始化结果信息
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> initCompanyList() {
+        Map<String, Object> result = new HashMap<>();
+        int totalCount = 0;
+        int successCount = 0;
+        int updateCount = 0;
+        int insertCount = 0;
+        int errorCount = 0;
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            log.info("=====开始初始化公司列表=====");
+            
+            // 第一步：获取第一页，确定总页数
+            int pageSize = 20; // 最大20
+            int currentPage = 1;
+            int totalPages = 1;
+            
+            CompanyListResponseDTO.CompanyListDataDTO firstPageResponse = 
+                tfFiscalService.getCompanyListV2(currentPage, pageSize);
+            
+            if (firstPageResponse == null || CollUtil.isEmpty(firstPageResponse.getCompanys())) {
+                log.warn("公司列表为空，初始化任务结束");
+                result.put("totalCount", 0);
+                result.put("successCount", 0);
+                result.put("updateCount", 0);
+                result.put("insertCount", 0);
+                result.put("errorCount", 0);
+                result.put("message", "公司列表为空");
+                return result;
+            }
+            
+            totalPages = firstPageResponse.getTotalPages() != null ? firstPageResponse.getTotalPages() : 1;
+            totalCount = firstPageResponse.getTotal() != null ? firstPageResponse.getTotal() : 0;
+            log.info("公司总数：{}，总页数：{}", totalCount, totalPages);
+            
+            // 处理第一页数据
+            int[] firstPageResult = processCompanyList(firstPageResponse.getCompanys(), successCount, updateCount, insertCount, errorCount);
+            successCount = firstPageResult[0];
+            updateCount = firstPageResult[1];
+            insertCount = firstPageResult[2];
+            errorCount = firstPageResult[3];
+            
+            // 循环获取剩余页数据
+            for (currentPage = 2; currentPage <= totalPages; currentPage++) {
+                log.info("获取公司列表，第{}页/共{}页", currentPage, totalPages);
+                CompanyListResponseDTO.CompanyListDataDTO pageResponse = 
+                    tfFiscalService.getCompanyListV2(currentPage, pageSize);
+                
+                if (pageResponse == null || CollUtil.isEmpty(pageResponse.getCompanys())) {
+                    log.warn("第{}页数据为空，跳过", currentPage);
+                    continue;
+                }
+                
+                int[] pageResult = processCompanyList(pageResponse.getCompanys(), successCount, updateCount, insertCount, errorCount);
+                successCount = pageResult[0];
+                updateCount = pageResult[1];
+                insertCount = pageResult[2];
+                errorCount = pageResult[3];
+            }
+            
+            long endTime = System.currentTimeMillis();
+            log.info("=====公司列表初始化完成=====");
+            log.info("总耗时：{}ms，总数={}，成功={}，更新={}，新增={}，失败={}", 
+                (endTime - startTime), totalCount, successCount, updateCount, insertCount, errorCount);
+            
+            result.put("totalCount", totalCount);
+            result.put("successCount", successCount);
+            result.put("updateCount", updateCount);
+            result.put("insertCount", insertCount);
+            result.put("errorCount", errorCount);
+            result.put("message", "初始化完成");
+            result.put("duration", endTime - startTime);
+            
+        } catch (Exception e) {
+            log.error("初始化公司列表失败", e);
+            result.put("totalCount", totalCount);
+            result.put("successCount", successCount);
+            result.put("updateCount", updateCount);
+            result.put("insertCount", insertCount);
+            result.put("errorCount", errorCount);
+            result.put("message", "初始化失败：" + e.getMessage());
+            throw new ServiceException("初始化公司列表失败：" + e.getMessage(), e);
+        }
+        
+        return result;
+    }
+
+    /**
+     * 处理公司列表
+     * 
+     * @param companyList 公司列表
+     * @param successCount 成功计数
+     * @param updateCount 更新计数
+     * @param insertCount 新增计数
+     * @param errorCount 错误计数
+     * @return [成功数, 更新数, 新增数, 错误数]
+     */
+    private int[] processCompanyList(List<CompanyListResponseDTO.CompanyInfoDTO> companyList, 
+                                     int successCount, int updateCount, int insertCount, int errorCount) {
+        for (CompanyListResponseDTO.CompanyInfoDTO companyInfo : companyList) {
+            try {
+                String companyId = companyInfo.getCompanyId() != null ? String.valueOf(companyInfo.getCompanyId()) : null;
+                String cnpj = companyInfo.getCnpj();
+                String token = companyInfo.getToken();
+                
+                if (StrUtil.isBlank(companyId) || StrUtil.isBlank(cnpj)) {
+                    log.warn("公司ID或CNPJ为空，跳过：companyId={}, cnpj={}", companyId, cnpj);
+                    errorCount++;
+                    continue;
+                }
+                
+                // 格式化CNPJ（保存到数据库前格式化）
+                String formattedCnpj = formatCnpjToDatabase(cnpj);
+                // 查询本地是否存在（根据company_id或cnpj）
+                CfgInvoiceSettingEntity localEntity = this.getOne(
+                    new LambdaQueryWrapper<CfgInvoiceSettingEntity>()
+                        .eq(CfgInvoiceSettingEntity::getCompanyId, companyId)
+                        .or()
+                        .eq(CfgInvoiceSettingEntity::getLeiCode, formattedCnpj)
+                        .eq(CfgInvoiceSettingEntity::getIsDeleted, false)
+                        .last("LIMIT 1")
+                );
+                
+                if (localEntity == null) {
+                    // 新增
+                    localEntity = new CfgInvoiceSettingEntity();
+                    localEntity.setCompanyId(companyId);
+                    localEntity.setLeiCode(formattedCnpj);  // 保存格式化后的CNPJ
+                    localEntity.setCompanyName(companyInfo.getName());
+                    localEntity.setStateTaxNo(companyInfo.getIe());
+                    localEntity.setTaxType(companyInfo.getInvoiceType());
+                    localEntity.setDictCompanyType(companyInfo.getUnit());
+                    localEntity.setEmail(companyInfo.getEmail());
+                    localEntity.setPostCode(companyInfo.getCep());
+                    localEntity.setAddress(companyInfo.getAddress());
+                    localEntity.setDoorplateNo(companyInfo.getHouseNumber());
+                    localEntity.setDistrict(companyInfo.getTown());
+                    localEntity.setCity(companyInfo.getCity());
+                    localEntity.setState(companyInfo.getState());
+                    localEntity.setCertificateUrl(companyInfo.getCertFile());
+                    localEntity.setCertificatePassword(companyInfo.getCertPwd());
+                    localEntity.setNo(companyInfo.getSerie());
+                    localEntity.setStartCode(companyInfo.getNumber() != null ? String.valueOf(companyInfo.getNumber()) : null);
+                    localEntity.setToken(token);
+                    localEntity.setType("cnpj"); // 默认类型
+                    localEntity.setDisabled(false);
+                    
+                    this.save(localEntity);
+                    log.info("新增公司成功：companyId={}, cnpj={}, name={}", companyId, cnpj, companyInfo.getName());
+                    successCount++;
+                    insertCount++;
+                } else {
+                    // 更新（更新token、company_id等信息）
+                    boolean needUpdate = false;
+                    if (StrUtil.isBlank(localEntity.getCompanyId()) || !localEntity.getCompanyId().equals(companyId)) {
+                        localEntity.setCompanyId(companyId);
+                        needUpdate = true;
+                    }
+                    if (StrUtil.isBlank(localEntity.getToken()) || !localEntity.getToken().equals(token)) {
+                        localEntity.setToken(token);
+                        needUpdate = true;
+                    }
+                    // 可以更新其他字段，但这里只更新关键字段
+                    
+                    if (needUpdate) {
+                        this.updateById(localEntity);
+                        log.info("更新公司成功：companyId={}, cnpj={}", companyId, cnpj);
+                        successCount++;
+                        updateCount++;
+                    } else {
+                        log.info("公司数据未变化，跳过：companyId={}, cnpj={}", companyId, cnpj);
+                    }
+                }
+                
+            } catch (Exception e) {
+                log.error("处理公司失败：companyId={}, cnpj={}", 
+                    companyInfo.getCompanyId(), companyInfo.getCnpj(), e);
+                errorCount++;
+            }
+        }
+        
+        return new int[]{successCount, updateCount, insertCount, errorCount};
+    }
+
+    /**
+     * 绑定税种ID
+     * 将税种ID绑定到发票设置
+     * 
+     * @param id 发票设置ID
+     * @param taxCategoryId 税种ID（cfg_tax_category.category_id）
+     * @return 是否成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean bindTaxCategory(String id, String taxCategoryId) {
+        // 查询发票设置是否存在
+        CfgInvoiceSettingEntity entity = super.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("发票设置不存在");
+        }
+        
+        // 如果提供了taxCategoryId，验证税种是否存在
+        if (StrUtil.isNotBlank(taxCategoryId)) {
+            // 使用companyId查询，避免多条记录问题
+            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(taxCategoryId, entity.getCompanyId());
+            if (ObjectUtil.isEmpty(taxCategory)) {
+                throw new ServiceException("税种不存在或已删除，税种ID：" + taxCategoryId);
+            }
+            // 验证税种是否已禁用
+            if (Boolean.TRUE.equals(taxCategory.getDisabled())) {
+                throw new ServiceException("税种已禁用，无法绑定，税种ID：" + taxCategoryId);
+            }
+            log.info("税种验证通过：taxCategoryId={}, companyId={}, descricao={}", taxCategoryId, entity.getCompanyId(), taxCategory.getDescricao());
+        }
+        
+        // 更新taxCategoryId
+        boolean update = this.lambdaUpdate()
+                .eq(CfgInvoiceSettingEntity::getId, id)
+                .set(CfgInvoiceSettingEntity::getTaxCategoryId, taxCategoryId)
+                .update();
+        
+        if (update) {
+            log.info("绑定税种成功：invoiceSettingId={}, taxCategoryId={}", id, taxCategoryId);
+            // 记录操作日志
+            String msg = StrUtil.format("用户【{}】绑定税种，发票设置ID：{}，税种ID：{}", 
+                UserContext.getDefaultLoginUser().getUserName(), id, taxCategoryId);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), id, "绑定税种");
+        }
+        
+        return update;
+    }
+
+    /**
+     * 格式化创建公司DTO数据
+     * 包括CNPJ格式化和证书文件URL处理
+     * 
+     * @param createCompanyDTO 创建公司DTO
+     */
+    private void formatCreateCompanyDTO(CreateCompanyDTO createCompanyDTO) {
+        // CNPJ格式化：去除所有非数字字符，只保留14位数字
+        formatCnpj(createCompanyDTO::getCnpj, createCompanyDTO::setCnpj);
+        // 证书文件URL处理：拼接publicUrl并验证格式
+        formatCertFileUrl(createCompanyDTO::getCertFile, createCompanyDTO::setCertFile);
+    }
+
+    /**
+     * 格式化编辑公司DTO数据
+     * 包括CNPJ格式化和证书文件URL处理
+     * 
+     * @param editCompanyDTO 编辑公司DTO
+     */
+    private void formatEditCompanyDTO(EditCompanyDTO editCompanyDTO) {
+        // CNPJ格式化：去除所有非数字字符，只保留14位数字
+        formatCnpj(editCompanyDTO::getCnpj, editCompanyDTO::setCnpj);
+        // 证书文件URL处理：拼接publicUrl并验证格式
+        formatCertFileUrl(editCompanyDTO::getCertFile, editCompanyDTO::setCertFile);
+    }
+
+    /**
+     * 格式化CNPJ：去除所有非数字字符，只保留14位数字
+     * 用于保存到数据库前格式化
+     * 
+     * @param cnpj 原始CNPJ（可能包含格式字符如 12.345.678/0001-90）
+     * @return 格式化后的CNPJ（只包含数字，如 12345678000190）
+     */
+    private String formatCnpjToDatabase(String cnpj) {
+        if (CharSequenceUtil.isBlank(cnpj)) {
+            return cnpj;
+        }
+        String formattedCnpj = cnpj.replaceAll("[^0-9]", "");
+        log.debug("CNPJ格式化（保存到数据库）: {} -> {}", cnpj, formattedCnpj);
+        return formattedCnpj;
+    }
+
+    /**
+     * 格式化CNPJ：去除所有非数字字符，只保留14位数字
+     * 用于DTO格式化（通过函数式接口）
+     * 
+     * @param getter CNPJ获取函数
+     * @param setter CNPJ设置函数
+     */
+    private void formatCnpj(java.util.function.Supplier<String> getter, java.util.function.Consumer<String> setter) {
+        String cnpj = getter.get();
+        if (CharSequenceUtil.isNotBlank(cnpj)) {
+            String formattedCnpj = formatCnpjToDatabase(cnpj);
+            setter.accept(formattedCnpj);
+            log.debug("CNPJ格式化（DTO）: {} -> {}", cnpj, formattedCnpj);
+        }
+    }
+
+    /**
+     * 格式化证书文件URL：拼接publicUrl并验证格式
+     * 
+     * @param getter 证书文件URL获取函数
+     * @param setter 证书文件URL设置函数
+     */
+    private void formatCertFileUrl(java.util.function.Supplier<String> getter, java.util.function.Consumer<String> setter) {
+        String certFile = getter.get();
+        if (CharSequenceUtil.isBlank(certFile)) {
+            return;
+        }
+
+        // 如果URL不是以http://或https://开头，需要拼接FastDFS的publicUrl
+        if (!certFile.startsWith("http://") && !certFile.startsWith("https://")) {
+            if (CharSequenceUtil.isNotBlank(FastDFSClientUtil.publicUrl)) {
+                // 拼接publicUrl，确保publicUrl和certFile之间没有重复的斜杠
+                String publicUrl = FastDFSClientUtil.publicUrl.endsWith("/") 
+                    ? FastDFSClientUtil.publicUrl.substring(0, FastDFSClientUtil.publicUrl.length() - 1)
+                    : FastDFSClientUtil.publicUrl;
+                String filePath = certFile.startsWith("/") ? certFile : "/" + certFile;
+                certFile = publicUrl + filePath;
+                setter.accept(certFile);
+                log.info("证书文件URL已拼接publicUrl: {}", certFile);
+            } else {
+                log.warn("FastDFS publicUrl未配置，证书文件URL可能无法访问: {}", certFile);
+            }
+        }
+
+        // 验证URL格式是否有效
+        try {
+            new java.net.URL(certFile);
+        } catch (Exception e) {
+            log.error("证书文件URL格式错误: {}, 错误: {}", certFile, e.getMessage());
+            throw new ServiceException(CharSequenceUtil.format("证书文件URL格式错误: {}", certFile));
         }
     }
 }
