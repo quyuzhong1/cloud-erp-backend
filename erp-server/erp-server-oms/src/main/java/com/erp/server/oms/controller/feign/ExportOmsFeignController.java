@@ -15,9 +15,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -467,5 +469,27 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
     public PagingVO<KolB2cApplicationDTO.ListDTO> exportOmsKolB2cApplication(@RequestBody PagingDTO<KolB2cApplicationDTO.PagingParamDTO> dto) {
         return kolB2cApplicationService.paging(dto);
+    }
+
+    /**
+     * 查询发票附件URL列表（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return 附件URL列表
+     */
+    @PostMapping("/listExportUrl")
+    public List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(@RequestBody InvoiceInfoDTO.PagingParamDTO dto, @RequestParam("type") String type) {
+        return invoiceInfoService.listExportUrl(dto, type);
+    }
+
+    /**
+     * 构建发票附件ZIP文件（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return ZIP文件URL
+     */
+    @PostMapping("/buildInvoiceAttachZip")
+    public String buildInvoiceAttachZip(@RequestBody InvoiceInfoDTO.PagingParamDTO dto, @RequestParam("type") String type) {
+        return invoiceInfoService.buildInvoiceAttachZip(dto, type);
     }
 }
