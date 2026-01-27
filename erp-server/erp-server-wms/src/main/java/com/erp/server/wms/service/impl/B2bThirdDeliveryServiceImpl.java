@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -365,7 +366,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 viewDTO.setProvince(soInfoEntity.getProvince());
                 viewDTO.setCity(soInfoEntity.getCity());
                 viewDTO.setPostCode(soInfoEntity.getPostCode());
-                viewDTO.setReceiveAddress(soInfoEntity.getReceiveAddress());
+                if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(soInfoEntity.getReceiveAddress())) {
+                    List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
+                    viewDTO.setReceiveAddress(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress() : "");
+                    viewDTO.setAddress2(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress2() : "");
+                    viewDTO.setAddress3(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress3() : "");
+                    viewDTO.setCountryId(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryId() : "");
+                    viewDTO.setCountryName(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryName() : "");
+                }
                 if (!soInfoEntity.getCustomerId().equals(viewDTO.getCustomerId())) {
                     viewDTO.setCustomerName(CharSequenceUtil.EMPTY);
                 }
@@ -876,6 +884,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getCustomerId()) && CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getCustomerName())) {
             List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Collections.singletonList(b2bThirdDeliveryEntity.getCustomerId()));
             b2bThirdDeliveryEntity.setCustomerName(CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.get(0).getName() : "");
+        }
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(b2bThirdDeliveryEntity.getSoId());
+        if (Objects.nonNull(soInfoEntity) && CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(soInfoEntity.getReceiveAddress())) {
+            List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
+            b2bThirdDeliveryEntity.setReceiveAddress(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress() : "");
+            b2bThirdDeliveryEntity.setAddress2(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress2() : "");
+            b2bThirdDeliveryEntity.setAddress3(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress3() : "");
+            b2bThirdDeliveryEntity.setCountryId(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryId() : "");
+            b2bThirdDeliveryEntity.setCountryName(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryName() : "");
         }
     }
 }
