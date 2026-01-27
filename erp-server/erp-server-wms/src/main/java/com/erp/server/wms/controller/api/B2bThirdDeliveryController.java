@@ -275,6 +275,7 @@ public class B2bThirdDeliveryController extends BaseController {
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
 
             }
+            resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
