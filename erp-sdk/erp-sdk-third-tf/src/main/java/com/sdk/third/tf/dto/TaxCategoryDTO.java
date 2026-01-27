@@ -1,6 +1,6 @@
 package com.sdk.third.tf.dto;
 
-import cn.hutool.core.annotation.Alias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,19 +21,19 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class CreateCategoryDTO implements Serializable {
-        @Alias("descricao")
+        @JsonProperty("descricao")
         private String descricao;
         
-        @Alias("icms")
+        @JsonProperty("icms")
         private List<IcmsDetailDTO> icms;
         
-        @Alias("ipi")
+        @JsonProperty("ipi")
         private List<IpiDetailDTO> ipi;
         
-        @Alias("pis")
+        @JsonProperty("pis")
         private List<PisDetailDTO> pis;
         
-        @Alias("cofins")
+        @JsonProperty("cofins")
         private List<CofinsDetailDTO> cofins;
     }
 
@@ -43,22 +43,22 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class EditCategoryDTO implements Serializable {
-        @Alias("category_id")
+        @JsonProperty("category_id")
         private String categoryId;
         
-        @Alias("descricao")
+        @JsonProperty("descricao")
         private String descricao;
         
-        @Alias("icms")
+        @JsonProperty("icms")
         private List<IcmsDetailDTO> icms;
         
-        @Alias("ipi")
+        @JsonProperty("ipi")
         private List<IpiDetailDTO> ipi;
         
-        @Alias("pis")
+        @JsonProperty("pis")
         private List<PisDetailDTO> pis;
         
-        @Alias("cofins")
+        @JsonProperty("cofins")
         private List<CofinsDetailDTO> cofins;
     }
 
@@ -69,7 +69,7 @@ public class TaxCategoryDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DeleteCategoryDTO implements Serializable {
-        @Alias("category_id")
+        @JsonProperty("category_id")
         private String categoryId;
     }
 
@@ -79,28 +79,28 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class IcmsDetailDTO implements Serializable {
-        @Alias("tipo_tributacao")
+        @JsonProperty("tipo_tributacao")
         private String tipoTributacao;
         
-        @Alias("cenario")
+        @JsonProperty("cenario")
         private String cenario;
         
-        @Alias("tipo_pessoa")
+        @JsonProperty("tipo_pessoa")
         private String tipoPessoa;
         
-        @Alias("nao_contribuinte")
+        @JsonProperty("nao_contribuinte")
         private Boolean naoContribuinte;
         
-        @Alias("codigo_cfop")
+        @JsonProperty("codigo_cfop")
         private String codigoCfop;
         
-        @Alias("situacao_tributaria")
+        @JsonProperty("situacao_tributaria")
         private String situacaoTributaria;
         
-        @Alias("aliquota_importacao")
+        @JsonProperty("aliquota_importacao")
         private String aliquotaImportacao;
         
-        @Alias("aliquota_credito")
+        @JsonProperty("aliquota_credito")
         private String aliquotaCredito;
     }
 
@@ -110,19 +110,19 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class IpiDetailDTO implements Serializable {
-        @Alias("cenario")
+        @JsonProperty("cenario")
         private String cenario;
         
-        @Alias("tipo_pessoa")
+        @JsonProperty("tipo_pessoa")
         private String tipoPessoa;
         
-        @Alias("situacao_tributaria")
+        @JsonProperty("situacao_tributaria")
         private String situacaoTributaria;
         
-        @Alias("codigo_enquadramento")
+        @JsonProperty("codigo_enquadramento")
         private String codigoEnquadramento;
         
-        @Alias("aliquota")
+        @JsonProperty("aliquota")
         private String aliquota;
     }
 
@@ -132,16 +132,16 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class PisDetailDTO implements Serializable {
-        @Alias("cenario")
+        @JsonProperty("cenario")
         private String cenario;
         
-        @Alias("tipo_pessoa")
+        @JsonProperty("tipo_pessoa")
         private String tipoPessoa;
         
-        @Alias("situacao_tributaria")
+        @JsonProperty("situacao_tributaria")
         private String situacaoTributaria;
         
-        @Alias("aliquota")
+        @JsonProperty("aliquota")
         private String aliquota;
     }
 
@@ -151,16 +151,16 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class CofinsDetailDTO implements Serializable {
-        @Alias("cenario")
+        @JsonProperty("cenario")
         private String cenario;
         
-        @Alias("tipo_pessoa")
+        @JsonProperty("tipo_pessoa")
         private String tipoPessoa;
         
-        @Alias("situacao_tributaria")
+        @JsonProperty("situacao_tributaria")
         private String situacaoTributaria;
         
-        @Alias("aliquota")
+        @JsonProperty("aliquota")
         private String aliquota;
     }
 
@@ -170,10 +170,10 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class CategoryListItemDTO implements Serializable {
-        @Alias("category_id")
+        @JsonProperty("category_id")
         private String categoryId;
         
-        @Alias("descricao")
+        @JsonProperty("descricao")
         private String descricao;
     }
 
@@ -183,22 +183,22 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class CategoryDetailDTO implements Serializable {
-        @Alias("category_id")
+        @JsonProperty("category_id")
         private String categoryId;
         
-        @Alias("descricao")
+        @JsonProperty("descricao")
         private String descricao;
         
-        @Alias("icms")
+        @JsonProperty("icms")
         private List<IcmsDetailDTO> icms;
         
-        @Alias("ipi")
+        @JsonProperty("ipi")
         private List<IpiDetailDTO> ipi;
         
-        @Alias("pis")
+        @JsonProperty("pis")
         private List<PisDetailDTO> pis;
         
-        @Alias("cofins")
+        @JsonProperty("cofins")
         private List<CofinsDetailDTO> cofins;
     }
 
@@ -208,16 +208,16 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class CategoryListResponseDTO implements Serializable {
-        @Alias("list")
+        @JsonProperty("list")
         private List<CategoryListItemDTO> list;
         
-        @Alias("page")
+        @JsonProperty("page")
         private Integer page;
         
-        @Alias("total")
+        @JsonProperty("total")
         private Integer total;
         
-        @Alias("total_pages")
+        @JsonProperty("total_pages")
         private Integer totalPages;
     }
 
@@ -227,7 +227,7 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class CreateCategoryResponseDTO implements Serializable {
-        @Alias("category_id")
+        @JsonProperty("category_id")
         private String categoryId;
     }
 
@@ -237,7 +237,7 @@ public class TaxCategoryDTO {
     @Data
     @NoArgsConstructor
     public static class EditCategoryResponseDTO implements Serializable {
-        @Alias("category_id")
+        @JsonProperty("category_id")
         private String categoryId;
     }
 
