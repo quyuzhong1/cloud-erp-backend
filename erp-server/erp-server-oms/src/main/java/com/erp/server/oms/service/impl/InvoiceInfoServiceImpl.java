@@ -1377,11 +1377,31 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public StreamingResponseBody downloadZip(List<InvoiceInfoDTO.ExportAttachDTO> exportAttachList) {
         return outputStream -> {
-            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+            // 创建一个不关闭底层流的 ZipOutputStream 包装类
+            ZipOutputStream zipOut = new ZipOutputStream(outputStream) {
+                private boolean finished = false;
+                
+                @Override
+                public void finish() throws java.io.IOException {
+                    if (!finished) {
+                        super.finish();
+                        finished = true;
+                    }
+                }
+                
+                @Override
+                public void close() throws java.io.IOException {
+                    // 只调用 finish()，不关闭底层流，让 Spring 自己管理 outputStream
+                    finish();
+                    // 不调用 super.close()，避免关闭底层流
+                }
+            };
+            
+            try {
                 // 用于记录每个文件名出现的次数，避免重复文件名
                 Map<String, Integer> fileNameCountMap = new HashMap<>();
                 
-                // 使用并发下载所有文件内容
+                // 使用并发下载所有文件内容，单个文件失败不影响其他文件
                 List<CompletableFuture<Pair<String, byte[]>>> downloadFutures = exportAttachList.stream()
                         .map(attachDTO -> CompletableFuture.supplyAsync(() -> {
                             String fileName = attachDTO.getAttachName();
@@ -1395,23 +1415,35 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                                 return Pair.of(fileName, content);
                             } catch (Exception e) {
                                 log.error("文件下载失败: {}", attachDTO.getAttachUrl(), e);
-                                throw new ServiceException("文件处理失败: " + attachDTO.getAttachName(), e);
+                                // 返回 null 标记失败，而不是抛出异常，避免影响其他文件
+                                return null;
                             }
                         }, executorPool))
                         .collect(Collectors.toList());
 
-                // 等待所有下载任务完成
+                // 等待所有下载任务完成（不抛出异常，允许部分失败）
                 CompletableFuture.allOf(downloadFutures.toArray(new CompletableFuture[0])).join();
 
+                int successCount = 0;
+                int failCount = 0;
+                
                 // 单线程按顺序写入ZIP
                 for (CompletableFuture<Pair<String, byte[]>> future : downloadFutures) {
                     try {
                         Pair<String, byte[]> fileData = future.get(); // 获取下载结果
+                        
+                        // 跳过下载失败的文件（返回null）
+                        if (fileData == null) {
+                            failCount++;
+                            continue;
+                        }
+                        
                         String fileName = fileData.getKey();
                         byte[] content = fileData.getValue();
                         
                         if (content == null || content.length == 0) {
                             log.warn("文件内容为空，跳过: {}", fileName);
+                            failCount++;
                             continue;
                         }
                         
@@ -1421,10 +1453,21 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                         zipOut.putNextEntry(new ZipEntry(uniqueFileName));
                         zipOut.write(content);
                         zipOut.closeEntry();
+                        successCount++;
                     } catch (Exception e) {
-                        log.error("写入ZIP文件失败", e);
+                        log.error("写入ZIP文件失败: {}", e.getMessage(), e);
+                        failCount++;
                         // 继续处理下一个文件，不中断整个流程
                     }
+                }
+                
+                // 如果所有文件都失败了，抛出异常
+                if (successCount == 0) {
+                    throw new ServiceException("所有文件下载或写入失败，无法生成ZIP文件");
+                }
+                
+                if (failCount > 0) {
+                    log.warn("ZIP文件生成完成，成功: {} 个，失败: {} 个", successCount, failCount);
                 }
                 
                 // 显式调用 finish() 确保 ZIP 文件结构完整（写入中央目录结束标记）
@@ -1432,6 +1475,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 zipOut.flush();
             } catch (Exception e) {
                 log.error("压缩包生成失败", e);
+                // 确保在异常情况下也完成ZIP文件
+                try {
+                    zipOut.finish();
+                } catch (Exception ex) {
+                    log.error("异常情况下完成ZIP文件失败", ex);
+                }
                 throw new ServiceException("压缩包生成失败: " + e.getMessage(), e);
             }
         };
