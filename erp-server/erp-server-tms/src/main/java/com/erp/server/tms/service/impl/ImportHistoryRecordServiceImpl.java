@@ -344,6 +344,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoCode()) || obj.getSourceCode().equals(excelDTO.getSoCode()))
                     .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || obj.getTrackNo().equals(excelDTO.getTrackNo()))
                     .collect(Collectors.toList());
+            //未查询到物流单则需要按新增分货（按新单）逻辑处理
+            if (CollUtil.isEmpty(logisticsBillVoList)) {
+                boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode());
+                if (!contains) {
+                    errorMsgList.add("未查到物流单，配置的导入处理类型不包含导入新增（按新单），请核查单号");
+                }
+                costImportEntity.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode());
+            }
+
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(costImportEntity.getImportType())) {
                 if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                     errorMsgList.add("单号已存在无法新增，请核查单号");
@@ -378,7 +387,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(0);
                 logisticsBillVo.setReconciliationMonth(dto.getReconciliationMonth());
                 //物流费用数据验证
-                List<String> importMsgList = checkCostImportData(excelDTO,logisticsBillCostList,logisticsBillVo,DictCostAttributionEnum.LAST_MILE.getCode(), costImportEntity.getImportType());
+                List<String> importMsgList = checkCostImportData(excelDTO,logisticsBillCostList,logisticsBillVo,DictCostAttributionEnum.LAST_MILE.getCode(), costImportEntity);
                 if (CollectionUtils.isNotEmpty(importMsgList)) {
                     errorMsgList.addAll(importMsgList);
                 }
@@ -639,14 +648,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param logisticsBillCostList
      * @param logisticsBillVo
      * @param dictCostAttribution
-     * @param importType
+     * @param costImportEntity
      * @return List<String>
      * @description: 导入数据处理
      * @author Will
      * @date: 2024/5/11 14:24
      */
     private List<String> checkCostImportData (LogisticsLastMileCostExcelDTO excelDTO
-            , List<LogisticsBillCostEntity> logisticsBillCostList, LogisticsBillDTO.LogisticsBillVo logisticsBillVo , String dictCostAttribution, String importType) {
+            , List<LogisticsBillCostEntity> logisticsBillCostList, LogisticsBillDTO.LogisticsBillVo logisticsBillVo , String dictCostAttribution,CfgLogisticsCostImportEntity costImportEntity) {
         List<String> errorMsgList = new ArrayList<>();
         if (CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) && CharSequenceUtil.isBlank(excelDTO.getSoCode())
                 && CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) && CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
@@ -660,16 +669,29 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
                 .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                         && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
+                        && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
+
+        //未查询到物流费用单则需要按新增分货（按原单）逻辑处理
+        if (CollUtil.isEmpty(logisticsBillCostList)) {
+            boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+            if (!contains) {
+                errorMsgList.add("未查到物流费用单，配置的导入处理类型不包含导入新增（按原单），请核查单号");
+            }
+            costImportEntity.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        } else {
+            costImportEntity.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode());
+        }
+
         LogisticsBillCostEntity logisticsBillCostEntity = null;
         if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
-            if(!CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(importType)){
+            if(!CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(costImportEntity.getImportType())){
                 errorMsgList.add("未找到对应对账类型的物流费用单");
             }
         } else {
             if(logisticsBillCostEntityList.size() > 1) {
-                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)) {
+                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType())) {
                     long count = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
                     if (count > 1) {
                         errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
@@ -690,7 +712,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
                     errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
                 }
-                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType) ) {
+                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType()) ) {
                     if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
                         errorMsgList.add("物流费用单已确认不支持更新");
                     }
