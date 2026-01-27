@@ -782,7 +782,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                  purchaseQty = purchaseOrderList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId()))
                          .map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            dto.setApplyQty(dto.getQty() - purchaseQty);
+            if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),dto.getType()) && StringUtils.isBlank(dto.getParentId())) {
+                dto.setApplyQty(dto.getRepairQty() - purchaseQty);
+            } else {
+                dto.setApplyQty(dto.getQty() - purchaseQty);
+            }
+
             dto.setQty(dto.getApplyQty());
             //待下推数量为0则无需显示
             if (MathUtil.compareTo(dto.getApplyQty(),MathUtil.ZERO) == MathUtil.ZERO) {

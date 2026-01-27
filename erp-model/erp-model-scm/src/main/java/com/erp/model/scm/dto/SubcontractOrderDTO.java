@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -577,6 +578,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 采购数量
          */
         private Integer qty;
+
+        /**
+         * 返修数量
+         */
+        private Integer repairQty;
 
         /**
          * 单价
