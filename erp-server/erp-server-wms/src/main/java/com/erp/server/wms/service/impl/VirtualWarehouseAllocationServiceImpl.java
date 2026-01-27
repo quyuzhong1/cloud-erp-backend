@@ -397,26 +397,26 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
 
             //生成自动借调直接调拨单
-            generateAutoTransferInfo(allocationEntity,transferWarehouseList);
+            List<String> transferIdList = generateAutoTransferInfo(allocationEntity, transferWarehouseList);
 
             //校验总库存
             submitCheckQty(detailEntityList,allocationEntity);
 
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity);
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,transferIdList);
 
         } else if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(allocationEntity.getType())) {
             //调拨分货
             submitCheckQty(detailEntityList,allocationEntity);
 
             //生成平台取消分货同步单
-            List<VirtualWarehousePushHandleDetailEntity> cancelList = virtualWarehousePushHandleService.cancelAllocationPush(allocationEntity);
+            virtualWarehousePushHandleService.cancelAllocationPush(allocationEntity);
 
             //调拨分货生成直接调拨单
-            generateDirectTransferInfo(allocationEntity,detailEntityList,warehouseMap);
+            List<String> transferIdList = generateDirectTransferInfo(allocationEntity, detailEntityList, warehouseMap);
 
             //生成平台新增分货同步单
-            List<VirtualWarehousePushHandleDetailEntity> addList = virtualWarehousePushHandleService.addAllocationPush(allocationEntity);
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, transferIdList);
         } else {
             //取消分货
             submitCheckQty(detailEntityList,allocationEntity);
@@ -798,9 +798,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @param transferWarehouseList
      * @return void
      */
-    private void generateAutoTransferInfo(VirtualWarehouseAllocationEntity allocationEntity,List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList) {
+    private List<String> generateAutoTransferInfo(VirtualWarehouseAllocationEntity allocationEntity,List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList) {
         if (CollUtil.isEmpty(transferWarehouseList)) {
-            return;
+            return Collections.emptyList();
         }
         //查询拣货策略
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
@@ -812,6 +812,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> pickPair = cfgRulePickingService.matchRuleActionList(executionData, "gt");
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, pickPair);
 
+        List<String> resultList = new ArrayList<>();
         Map<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> map = transferWarehouseList.stream().collect(groupingBy(obj -> obj.getFromOrgId() + splitStr + obj.getToOrgId()));
         for (Map.Entry<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> entry : map.entrySet()) {
             List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> value = entry.getValue();
@@ -855,9 +856,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             }
             addDTO.setDetailList(detailDTOList);
             //新增并审核调拨单
-            transferInfoService.addAndApprove(addDTO);
+            String transferId = transferInfoService.addAndApprove(addDTO);
+            resultList.add(transferId);
         }
-
+        return resultList;
     }
 
     /**
@@ -869,10 +871,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @param warehouseMap
      * @return void
      */
-    private void generateDirectTransferInfo (VirtualWarehouseAllocationEntity allocationEntity,List<VirtualWarehouseAllocationDetailEntity> detailEntityList,Map<String, String> warehouseMap) {
+    private List<String> generateDirectTransferInfo (VirtualWarehouseAllocationEntity allocationEntity,List<VirtualWarehouseAllocationDetailEntity> detailEntityList,Map<String, String> warehouseMap) {
         //非调拨类型无需再添加调拨单
         if (!CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
-            return;
+            return Collections.emptyList();
         }
         List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList = new ArrayList<>();
         for (VirtualWarehouseAllocationDetailEntity detailEntity : detailEntityList) {
@@ -890,10 +892,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             transferWarehouseList.add(transferWarehouseDTO);
         }
         if (CollUtil.isEmpty(transferWarehouseList)) {
-            return;
+            return Collections.emptyList();
         }
         //生成调拨单
-        generateAutoTransferInfo(allocationEntity,transferWarehouseList);
+       return generateAutoTransferInfo(allocationEntity,transferWarehouseList);
     }
 
     /**

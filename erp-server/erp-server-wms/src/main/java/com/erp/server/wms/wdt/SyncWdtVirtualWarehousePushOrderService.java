@@ -21,6 +21,6 @@ public interface SyncWdtVirtualWarehousePushOrderService {
      * @param operateCode      操作代码: 审核/反审核
      * @return void
      */
-    void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
+    void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,List<String> transferIdList,
                                          String sourceCode, String operateCode, String sourceType);
 }

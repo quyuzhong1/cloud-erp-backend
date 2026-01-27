@@ -1,10 +1,11 @@
 package com.erp.server.wms.service;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.VirtualWarehousePushHandleDTO;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ public interface VirtualWarehousePushHandleService extends SuperService<VirtualW
      * @param allocationEntity
      * @return void
      */
-    List<VirtualWarehousePushHandleDetailEntity> addAllocationPush(VirtualWarehouseAllocationEntity allocationEntity);
+    List<VirtualWarehousePushHandleDetailEntity> addAllocationPush(VirtualWarehouseAllocationEntity allocationEntity, List<String> transferIdList);
     /**
      * 生成平台取消分货同步单
      * @author will

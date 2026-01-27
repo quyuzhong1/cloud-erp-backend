@@ -137,7 +137,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     }
 
     @Override
-    public void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
+    public void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,List<String> transferIdList,
                                                 String vwAllocationCode, String operateCode, String sourceType) {
 
     	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
@@ -220,6 +220,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             wmsPushMsgEntity.setSourceCode(vwAllocationCode);
             wmsPushMsgEntity.setSyncOperate(operateCode);
             wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
+            wmsPushMsgEntity.setParentId(CollUtil.isNotEmpty(transferIdList) ? String.join(",", transferIdList) : "");
             wmsPushMsgEntityList.add(wmsPushMsgEntity);
         });
         if (CollUtil.isNotEmpty(checkDataList)) {
