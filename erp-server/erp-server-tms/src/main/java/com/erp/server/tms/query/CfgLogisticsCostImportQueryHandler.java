@@ -48,10 +48,11 @@ public class CfgLogisticsCostImportQueryHandler extends AbstractQueryHandler {
         }
         if ("f".equals(value)){
             super.buildDefaultDTO("clci.disabled", Boolean.FALSE);
+            return " clci.disabled = false ";
         }else if("t".equals(value)){
-            super.buildDefaultDTO("clci.disabled", Boolean.TRUE);
+            return " clci.disabled = true ";
         }
-        return super.getSplicingSQL();
+        return null;
     }
 }
 
