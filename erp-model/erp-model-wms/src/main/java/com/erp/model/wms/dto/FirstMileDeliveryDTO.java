@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -641,6 +642,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         */
         private String inventoryOrgName;
         /**
+         * 发货时间
+         */
+        private LocalDate deliveryDate;
+        /**
          * 中转仓库集合
          */
         private List<String> transferWarehouseIdList;
@@ -809,7 +814,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         * 库存组织id
         */
         private String inventoryOrgId;
-
+        /**
+         * 发货日期
+         */
+        private LocalDate deliveryDate;
     }
 
     /**
