@@ -37,10 +37,7 @@ import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
-import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
-import com.erp.model.tms.enums.CfgLogisticsCostImportCostTypeEnum;
-import com.erp.model.tms.enums.CfgLogisticsCostImportImportTypeEnum;
-import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -202,8 +199,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             cfgLogisticsCostImportEntity.setDictPlatformName(newDictPlatformName);
         }
         // 记录主单操作日志
-        log.info("编辑 开始记录费用项配置日志数据，单号：【{}】", cfgLogisticsCostImportEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgLogisticsCostImportEntity.getCode(), "费用项配置");
+        log.info("编辑 开始记录费用项配置日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "费用项配置");
         operateLogService.addModuleOperateLogByObj(old, cfgLogisticsCostImportEntity, ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(), cfgLogisticsCostImportEntity.getId(), msg);
 
         String id = dto.getId();
@@ -256,12 +253,12 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         // 获取状态列表
         List<CfgLogisticsCostImportDTO.TabListDTO> result = new ArrayList<>();
         result.add(new CfgLogisticsCostImportDTO.TabListDTO("all","全部",0));
-        CfgLogisticsCostImportDTO.TabListDTO tTabListDTO = list.stream().filter(e -> e.getTabFlag().equals("t")).findFirst().orElse(new CfgLogisticsCostImportDTO.TabListDTO("t", "", 0));
-        tTabListDTO.setTabFlagName("启用");
         CfgLogisticsCostImportDTO.TabListDTO fTabListDTO = list.stream().filter(e -> e.getTabFlag().equals("f")).findFirst().orElse(new CfgLogisticsCostImportDTO.TabListDTO("f", "", 0));
-        fTabListDTO.setTabFlagName("停用");
-        result.add(tTabListDTO);
+        fTabListDTO.setTabFlagName("启用");
+        CfgLogisticsCostImportDTO.TabListDTO tTabListDTO = list.stream().filter(e -> e.getTabFlag().equals("t")).findFirst().orElse(new CfgLogisticsCostImportDTO.TabListDTO("t", "", 0));
+        tTabListDTO.setTabFlagName("停用");
         result.add(fTabListDTO);
+        result.add(tTabListDTO);
         return result;
     }
 
@@ -274,6 +271,9 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         fillOne(data);
         //明细
         List<CfgLogisticsCostImportDetailEntity> detailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
+        detailList.forEach(e -> {
+            e.setTargetFieldTypeName(CfgLogisticsCostImportFieldFieldTypeEnum.getName(e.getTargetFieldType()));
+        });
         //detailList根据Integer index字段排序
         detailList.sort(Comparator.comparingInt(CfgLogisticsCostImportDetailEntity::getIndex));
         data.setDetailList(detailList);
