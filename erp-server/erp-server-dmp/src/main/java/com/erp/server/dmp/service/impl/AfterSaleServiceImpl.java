@@ -1020,6 +1020,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        ApiResult<List<BaseDropDownDTO.CommonDTO>> listApiResult = omsDropDownFeign.listInternalSalesPlatform(DictBasicTypeEnum.MINI_PROGRAM_SALES_PLATFORM_INTERNAL.getType());
 
         // 属性赋值
         for (AfterSaleDTO.ListDTO data : list) {
@@ -1027,6 +1028,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             //单据状态
             data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
+
+            if (StringUtils.isNotBlank(data.getDictPlatform())) {
+                BaseDropDownDTO.CommonDTO commonDTO = listApiResult.getData().stream().filter(e -> e.getCode().equals(data.getDictPlatform())).findFirst().orElse(null);
+                if (Objects.nonNull(commonDTO)) {
+                    data.setDictPlatformName(commonDTO.getValue());
+                }
+            }
         }
     }
 
