@@ -886,7 +886,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             b2bThirdDeliveryEntity.setCustomerName(CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.get(0).getName() : "");
         }
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(b2bThirdDeliveryEntity.getSoId());
-        if (Objects.nonNull(soInfoEntity) && CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(soInfoEntity.getReceiveAddress())) {
+        if (Objects.nonNull(soInfoEntity) && CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getReceiveAddress())) {
             List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
             b2bThirdDeliveryEntity.setReceiveAddress(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress() : "");
             b2bThirdDeliveryEntity.setAddress2(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getAddress2() : "");
