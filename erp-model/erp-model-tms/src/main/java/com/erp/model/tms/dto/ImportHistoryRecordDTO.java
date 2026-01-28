@@ -412,6 +412,11 @@ public class ImportHistoryRecordDTO implements Serializable {
         private String costType = "excel";
 
         /**
+         * 类型，self/auto
+         */
+        private String type = "self";
+
+        /**
          * 处理类型，预处理（preprocessing）/正式导入（import）/导入确认（confirmImport）
          */
         @NotBlank(message = "处理类型不能为空")
