@@ -255,23 +255,6 @@ public class FirstMileCostAllocationController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
-//        List<BatchResultDTO> resultDTOS = new ArrayList<>();
-//        String reportPeriodStr = dto.getReportDate();
-//        List<FirstMileCostAllocationEntity> entityList = new ArrayList<>();
-//        if (CollUtil.isNotEmpty(dto.getIds())){
-//            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
-//            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-//            entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
-//        }else if (CharSequenceUtil.isNotBlank(reportPeriodStr)){
-//            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.lambdaQuery().eq(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.NOT.getCode()).list();
-//            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-//            entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
-//        }
-//        if (CollectionUtils.isEmpty(entityList)){
-//            resultDTOS.add(BatchResultDTO.fail("","", MSG));
-//            return failure(resultDTOS);
-//        }
-//        firstMileCostAllocationService.asyncBatchPushAllocatedCost(entityList,dto);
         firstMileCostAllocationService.asyncBatchPushAllocatedCost(dto);
         return success();
     }
