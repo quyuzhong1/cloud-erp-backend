@@ -162,6 +162,6 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     void asyncBatchPushAllocatedCost(FirstMileCostAllocationDTO.IdsDTO idsDTO);
 
-    void asyncPushAllocatedCost(String id, String taskDetailId, FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList);
+    void asyncPushAllocatedCost(String id, String taskId,String taskDetailId, FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList);
 
 }
