@@ -5159,6 +5159,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
 
+        // 获取国家列表并缓存
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String, DictCountryDTO.ListDTO> countryMap = countryList.stream()
+                .collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, country -> country, (o1, o2) -> o1));
+
         //消息推送
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
 
@@ -5209,13 +5214,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
                 if (StringUtils.isNotBlank(dto.getSaleCountry())) {
                     String[] saleCountryList = dto.getSaleCountry().split(",");
-                    for (String saleCountry : saleCountryList) {
-                        DictCountryEntity countryEntity = sysUserFeign.getCountryById(saleCountry);
-                        if (ObjectUtils.isEmpty(countryEntity)) {
-                            errorMsgList.add("销售国家在系统中未找到");
+                    for (String saleCountryName : saleCountryList) {
+                        saleCountryName = saleCountryName.trim();
+                        DictCountryDTO.ListDTO countryDTO = countryMap.get(saleCountryName);
+                        if (ObjectUtils.isEmpty(countryDTO)) {
+                            errorMsgList.add("销售国家【" + saleCountryName + "】在系统中未找到");
                             break;
                         }
-                        saleCountryStr = saleCountryStr + countryEntity.getId() + ",";
+                        saleCountryStr = saleCountryStr + countryDTO.getId() + ",";
                     }
                 }
 
@@ -5241,9 +5247,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 //BU线
                 if(StringUtils.isNotBlank(dto.getBuName())){
-                    BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(dto.getRdtTeamName());
+                    String buName = dto.getBuName().trim();
+                    BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(buName);
                     if (ObjectUtils.isEmpty(basicProductBuEntity)) {
-                        errorMsgList.add("BU线在系统中未找到");
+                        errorMsgList.add("BU线【" + buName + "】在系统中未找到");
                     }else {
                         productInfoDTO.setBuId(basicProductBuEntity.getId());
                         productInfoDTO.setBuName(basicProductBuEntity.getName());
@@ -6071,6 +6078,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
 
+        // 获取国家列表并缓存
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String, DictCountryDTO.ListDTO> countryMap = countryList.stream()
+                .collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, country -> country, (o1, o2) -> o1));
+
         ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
 
         for (ProductDetailExcelDTO dto : successList) {
@@ -6096,13 +6108,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             String saleCountryStr = "";
             if (StringUtils.isNotBlank(dto.getSaleCountry())) {
                 String[] saleCountryList = dto.getSaleCountry().split(",");
-                for (String saleCountry : saleCountryList) {
-                    DictCountryEntity countryEntity = sysUserFeign.getCountryById(saleCountry);
-                    if (ObjectUtils.isEmpty(countryEntity)) {
-                        errorMsgList.add("销售国家在系统中未找到");
+                for (String saleCountryName : saleCountryList) {
+                    saleCountryName = saleCountryName.trim();
+                    DictCountryDTO.ListDTO countryDTO = countryMap.get(saleCountryName);
+                    if (ObjectUtils.isEmpty(countryDTO)) {
+                        errorMsgList.add("销售国家【" + saleCountryName + "】在系统中未找到");
                         break;
                     }
-                    saleCountryStr = saleCountryStr + countryEntity.getId() + ",";
+                    saleCountryStr = saleCountryStr + countryDTO.getId() + ",";
                 }
             }
 
@@ -6144,9 +6157,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             //BU线
             if(StringUtils.isNotBlank(dto.getBuName())){
-                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(dto.getRdtTeamName());
+                String buName = dto.getBuName().trim();
+                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(buName);
                 if (ObjectUtils.isEmpty(basicProductBuEntity)) {
-                    errorMsgList.add("BU线在系统中未找到");
+                    errorMsgList.add("BU线【" + buName + "】在系统中未找到");
                 }else {
                     productInfoDTO.setBuId(basicProductBuEntity.getId());
                     productInfoDTO.setBuName(basicProductBuEntity.getName());
@@ -6398,9 +6412,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             //BU线
             if(StringUtils.isNotBlank(dto.getBuName())){
-                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(dto.getRdtTeamName());
+                String buName = dto.getBuName().trim();
+                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(buName);
                 if (ObjectUtils.isEmpty(basicProductBuEntity)) {
-                    errorMsgList.add("BU线在系统中未找到");
+                    errorMsgList.add("BU线【" + buName + "】在系统中未找到");
                 }else {
                     productInfoDTO.setBuId(basicProductBuEntity.getId());
                     productInfoDTO.setBuName(basicProductBuEntity.getName());
@@ -7294,7 +7309,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
         List<ProductDetailEntity> productDetailEntityList = this.list();
-        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList, productBrandService, productRDTTeamService);
+        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList, productBrandService, productRDTTeamService, basicProductBuService);
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
