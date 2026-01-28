@@ -73,6 +73,21 @@ public class CfgLogisticsCostImportDetailEntity extends BaseEntity<CfgLogisticsC
     private String targetFieldType;
     @TableField(exist = false)
     private String targetFieldTypeName;
+    /**
+     * 费用项id
+     */
+    @TableField("target_detail_field_id")
+    private String targetDetailFieldId;
+    /**
+     * 费用项
+     */
+    @TableField("target_detail_field")
+    private String targetDetailField;
+    /**
+     * 费用项名称
+     */
+    @TableField("target_detail_field_name")
+    private String targetDetailFieldName;
 
     @TableField("index")
     private Integer index;
