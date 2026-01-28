@@ -45,7 +45,8 @@ public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecord
                 .set(AsyncTaskRecordEntity::getStatus, status)
                 .set(AsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
                 .set(AsyncTaskRecordEntity::getErrorData, errorMsg)
-                .eq(AsyncTaskRecordEntity::getId, taskId);
+                .eq(AsyncTaskRecordEntity::getId, taskId)
+                .update();
     }
 
     @Override

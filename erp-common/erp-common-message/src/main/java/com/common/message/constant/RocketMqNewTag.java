@@ -284,6 +284,6 @@ public class RocketMqNewTag {
     /**
      * tms 费用分摊异步任务
      */
-    public static final String TMS_PUSH_ALLOCATION_COST_TAG = "${spring.cloud.nacos.discovery.namespace}-tms_push_allocation_cost_tag";
+    public static final String TMS_PUSH_ALLOCATION_COST_TAG = "tms_push_allocation_cost_tag";
 
 }
