@@ -64,11 +64,6 @@ public class FirstMileCostAllocationJob {
             return ReturnT.SUCCESS;
         }
         CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
-        if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getFirstMileAllocationType())) {
-            XxlJobHelper.log("[生成头程费用分摊] autoGenerateFirstMileCostAllocation 任务结束：生成类型【{}】不支持", dto.getFirstMileAllocationType());
-            return ReturnT.SUCCESS;
-        }
-
         if (null == reportPeriodMonth) {
             //自然月生成
             if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getFirstMileAllocationType())) {
@@ -79,7 +74,7 @@ public class FirstMileCostAllocationJob {
                 }
                 reportPeriodMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);
             }else if(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getFirstMileAllocationType())){
-                XxlJobHelper.log("[生成头程费用分摊] autoGenerateFirstMileCostAllocation 任务结束: 按周期生成：生成类型【{}】不支持", dto.getFirstMileAllocationType());
+                XxlJobHelper.log("[生成头程费用分摊] autoGenerateFirstMileCostAllocation 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
                 return ReturnT.SUCCESS;
             }else {
                 XxlJobHelper.log("[生成头程费用分摊] autoGenerateFirstMileCostAllocation 任务结束：生成类型【{}】不支持", dto.getFirstMileAllocationType());
