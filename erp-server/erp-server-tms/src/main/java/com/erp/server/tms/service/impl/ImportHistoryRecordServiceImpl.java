@@ -58,6 +58,7 @@ import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -780,7 +781,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
             //对账月份
             if (CharSequenceUtil.isNotBlank(data.getReconciliationMonth())) {
-                data.setReconciliationMonthStr(LocalDateUtil.parseStrToLocalDate(data.getReconciliationMonth()).format(DateTimeFormatter.ofPattern("yyyy年MM月")));
+                String reconciliationMonthStr = LocalDate.parse(data.getReconciliationMonth() + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                        .format(DateTimeFormatter.ofPattern("yyyy年MM月"));
+                data.setReconciliationMonthStr(reconciliationMonthStr);
             }
             //处理状态名称
             data.setStatusName(ImportHistoryRecordStatusEnum.getName(data.getStatus()));

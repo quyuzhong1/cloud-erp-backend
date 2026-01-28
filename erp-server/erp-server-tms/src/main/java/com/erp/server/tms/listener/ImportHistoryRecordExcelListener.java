@@ -158,6 +158,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             addDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        addDTO.setType(importDTO.getType());
         addDTO.setOperationUserId(userInfo.getUid());
         addDTO.setImportCount(count);
         addDTO.setMatchCount(count - errorList.size());
