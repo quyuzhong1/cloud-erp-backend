@@ -162,7 +162,7 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
 
-    void asyncBatchPushAllocatedCost(List<FirstMileCostAllocationEntity> entityList, ReportPeriodMonthEntity reportPeriodMonth);
+    void asyncBatchPushAllocatedCost(List<FirstMileCostAllocationEntity> entityList, String reportPeriodStr);
 
-    void asyncPushAllocatedCost(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) ;
+    void asyncPushAllocatedCost(String id,FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) ;
 }

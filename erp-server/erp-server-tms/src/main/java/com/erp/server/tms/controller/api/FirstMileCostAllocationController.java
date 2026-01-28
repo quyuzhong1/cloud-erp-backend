@@ -22,6 +22,7 @@ import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
+import com.erp.model.tms.enums.CostAllocationStatusEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -260,24 +261,22 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        ReportPeriodMonthEntity reportPeriodMonth = reportPeriodMonthService.getById(dto.getReportPeriodId());
-        if (Objects.isNull(reportPeriodMonth)){
-            resultDTOS.add(BatchResultDTO.fail(dto.getReportPeriodId(),"","核算区间不存在"));
-            return failure(resultDTOS);
-        }
-        String reportPeriodStr = reportPeriodMonth.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        String reportPeriodStr = dto.getReportDate();
         List<FirstMileCostAllocationEntity> entityList = new ArrayList<>();
         if (CollUtil.isNotEmpty(dto.getIds())){
-            List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-            entityList = firstMileCostAllocationService.listByIds(ids);
+            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
+            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+            entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
         }else if (CharSequenceUtil.isNotBlank(reportPeriodStr)){
-            entityList = firstMileCostAllocationService.listByReportPeriodStr(reportPeriodStr, ConfirmStatusEnum.WAIT_CONFIRM.getCode());
+            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.lambdaQuery().eq(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.NOT.getCode()).list();
+            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+            entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
         }
         if (CollectionUtils.isEmpty(entityList)){
             resultDTOS.add(BatchResultDTO.fail("","", MSG));
             return failure(resultDTOS);
         }
-        firstMileCostAllocationService.asyncBatchPushAllocatedCost(entityList,reportPeriodMonth);
+        firstMileCostAllocationService.asyncBatchPushAllocatedCost(entityList,reportPeriodStr);
         return success();
     }
 
