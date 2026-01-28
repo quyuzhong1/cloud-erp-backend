@@ -158,8 +158,10 @@ public class BasicProductBuServiceImpl extends SuperServiceImpl<BasicProductBuMa
         if(StrUtil.isEmpty(rdtTeamName)) {
             return null;
         }
+        // 去除前后空格
+        String name = rdtTeamName.trim();
         return  this.lambdaQuery()
-                .eq(BasicProductBuEntity::getName, rdtTeamName)
+                .eq(BasicProductBuEntity::getName, name)
                 .one();
     }
 

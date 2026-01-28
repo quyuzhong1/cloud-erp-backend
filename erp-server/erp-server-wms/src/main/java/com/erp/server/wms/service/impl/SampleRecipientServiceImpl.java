@@ -2554,7 +2554,16 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
             addDTO.setProcessApplyCode(firstItem.getSourceCode()); // 流程申请单号：样品领用单号
             addDTO.setRemark(sampleRecipient.getUsageDesc()); // 备注
-            addDTO.setUsage(sampleRecipient.getUsage());
+            // 用途：从字典获取中文名称
+            if (StringUtils.isNotBlank(sampleRecipient.getUsage())) {
+                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                Map<String, String> usageNameMap = usageDictList.stream()
+                        .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                String usageCn = usageNameMap.getOrDefault(sampleRecipient.getUsage(), sampleRecipient.getUsage());
+                addDTO.setUsage(usageCn);
+            } else {
+                addDTO.setUsage("");
+            }
             
             // 构建客户信息
             OtherOutstockCustomerDTO.AddDTO customerDTO = new OtherOutstockCustomerDTO.AddDTO();

@@ -948,7 +948,7 @@ public enum ApiError implements Serializable {
     PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED(9605,"仅当质检结果为退货供应商时才允许下推退货单"),
     PO_RETURN_QTY_EXCEEDS_RECEIPT(9606,"【{0}】的退货数量不能大于收货数量"),
     PO_RETURN_TOTAL_QTY_EXCEEDS_INBOUND(9607,"【{0}】退货单的合计数量不能大于入库数量"),
-    PO_RETURN_SKU_CLOSE(9606,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持质检"),
+    PO_RETURN_SKU_CLOSE(9666,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持质检"),
     PO_PUSH_TOTAL_QTY_EXCEEDS_RECEIPT(9608,"【{0}】下推的数量合计不能大于收货数量"),
     PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN(9609,"质检单【{0}】已生成下游单据，不允许执行反审核"),
     PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED(9610,"【{0}】的收货数量不能大于未交货数量"),
@@ -1009,6 +1009,7 @@ public enum ApiError implements Serializable {
     PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行下推"),
     PO_RETURN_DETAIL_NOT_EXISTS(9666,"未找到采购退货单明细"),
     PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
