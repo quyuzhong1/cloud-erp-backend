@@ -51,6 +51,10 @@ public class AsyncTaskRecordDTO implements Serializable {
           * 主任务id
           */
          private String taskId;
+         /**
+          * 单据类型
+          */
+         private String businessType;
 
 
      }

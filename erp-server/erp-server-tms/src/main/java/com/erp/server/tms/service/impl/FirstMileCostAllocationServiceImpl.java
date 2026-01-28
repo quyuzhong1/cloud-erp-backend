@@ -2139,11 +2139,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-        AsyncTaskRecordDTO.TaskDTO dto = new AsyncTaskRecordDTO.TaskDTO();
-        dto.setIds(idsDTO.getIds());
-        dto.setReportDate(idsDTO.getReportDate());
-        dto.setTaskId(taskId);
-        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
+        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
+        taskDTO.setIds(idsDTO.getIds());
+        taskDTO.setReportDate(idsDTO.getReportDate());
+        taskDTO.setTaskId(taskId);
+        taskDTO.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
+        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, taskDTO, taskId);
         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
             log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
         }else {
