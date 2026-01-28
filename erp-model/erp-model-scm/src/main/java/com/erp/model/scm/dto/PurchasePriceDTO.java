@@ -451,6 +451,13 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
+
+        /**
+         *
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+
         /**
          * 报价明细
          */

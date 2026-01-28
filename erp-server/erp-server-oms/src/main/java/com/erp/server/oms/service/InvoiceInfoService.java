@@ -205,4 +205,20 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return InvoiceInfoEntity
      */
     InvoiceInfoEntity findLatestInvoice(String soId);
+
+    /**
+     * 查询发票附件URL列表（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return 附件URL列表
+     */
+    List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(InvoiceInfoDTO.PagingParamDTO dto, String type);
+
+    /**
+     * 构建发票附件ZIP文件（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return ZIP文件URL
+     */
+    String buildInvoiceAttachZip(InvoiceInfoDTO.PagingParamDTO dto, String type);
 }
