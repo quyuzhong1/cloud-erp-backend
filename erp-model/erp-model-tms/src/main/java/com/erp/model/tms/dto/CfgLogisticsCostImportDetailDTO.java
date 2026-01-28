@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -286,6 +287,18 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         * ERP字段类型
         */
         private String targetFieldType;
+        /**
+         * 费用项id
+         */
+        private String targetDetailFieldId;
+        /**
+         * 费用项
+         */
+        private String targetDetailField;
+        /**
+         * 费用项名称
+         */
+        private String targetDetailFieldName;
         /**
          * 排序
          */

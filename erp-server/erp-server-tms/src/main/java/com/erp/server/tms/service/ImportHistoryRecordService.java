@@ -1,7 +1,6 @@
 package com.erp.server.tms.service;
 
 import cn.hutool.json.JSONObject;
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -26,40 +25,40 @@ import java.util.Map;
 public interface ImportHistoryRecordService extends SuperService<ImportHistoryRecordEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2026-01-19
-    * @param dto
-    * @return
-    */
+     * 新增
+     * @author will
+     * @date: 2026-01-19
+     * @param dto
+     * @return
+     */
     BaseResultDTO.AddDTO add(ImportHistoryRecordDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author will
-    * @date: 2026-01-19
-    * @param dto
-    * @return
-    */
+     * 修改
+     * @author will
+     * @date: 2026-01-19
+     * @param dto
+     * @return
+     */
     Boolean update(ImportHistoryRecordDTO.UpdateDTO dto);
 
 
     /**
-    * 分页列表查询
-    * @author will
-    * @date: 2026-01-19
-    * @param pagingParamDTO
-    * @return PagingVO<ImportHistoryRecordDTO.ListDTO>>
-    */
+     * 分页列表查询
+     * @author will
+     * @date: 2026-01-19
+     * @param pagingParamDTO
+     * @return PagingVO<ImportHistoryRecordDTO.ListDTO>>
+     */
     PagingVO<ImportHistoryRecordDTO.ListDTO> paging(PagingDTO<ImportHistoryRecordDTO.PagingParamDTO> pagingParamDTO);
 
     /**
-    * 详情
-    * @author will
-    * @date: 2026-01-19
-    * @param id
-    * @return
-    */
+     * 详情
+     * @author will
+     * @date: 2026-01-19
+     * @param id
+     * @return
+     */
     ImportHistoryRecordDTO.ViewDTO view(String id);
     /**
      * 预处理导入的Excel数据
@@ -68,7 +67,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param importDTO
      * @return BatchResultDTO
      */
-    BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,ImportHistoryRecordDTO.ImportDTO dto);
+    BatchResultDTO preprocessingImportExcel(ImportHistoryRecordDTO.ImportSyncDTO importDTO);
     /**
      * 导入数据处理
      * @author will
@@ -79,7 +78,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param headMap
      * @return void
      */
-    void handleImportSuccessList(ImportHistoryRecordDTO.ImportDTO dto,BaseDTO.ImportDTO importDTO,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
+    void handleImportSuccessList(ImportHistoryRecordDTO.ImportSyncDTO dto,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
     /**
      * 重新生成
      * @author will
@@ -88,4 +87,12 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @return BatchResultDTO
      */
     BatchResultDTO regenerateImportExcel(String id);
+    /**
+     * 导入
+     * @author will
+     * @date 2026/1/28 11:43
+     * @param importSyncDTO
+     * @return null
+     */
+    BatchResultDTO importFile(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO);
 }

@@ -42,8 +42,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     private static final int BATCH_COUNT = 1000;
     private final String taskId;
     private final Integer importCount;
-    private final BaseDTO.ImportDTO importDTO;
-    private final ImportHistoryRecordDTO.ImportDTO dto;
+    private final ImportHistoryRecordDTO.ImportSyncDTO importDTO;
     private final CfgLogisticsCostImportEntity costImportEntity;
     private final List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList;
     @Getter
@@ -71,10 +70,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
-    public ImportHistoryRecordExcelListener(CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, ImportHistoryRecordDTO.ImportDTO dto, BaseDTO.ImportDTO importDTO) {
+    public ImportHistoryRecordExcelListener(CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, ImportHistoryRecordDTO.ImportSyncDTO importDTO) {
         this.costImportEntity = costImportEntity;
         this.cfgImportDetailList = cfgImportDetailList;
-        this.dto = dto;
         this.importDTO = importDTO;
         this.taskId = importDTO.getTaskId();
         this.importCount = importDTO.getImportCount();
@@ -110,11 +108,11 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(dto,importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
+                importHistoryRecordService.handleImportSuccessList(importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
-                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                    jsonObject.set(ObjectUtil.isNull(jsonObject) ? "" : String.valueOf(jsonObject.size() - 1) ,e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
                 });
                 errorList.addAll(successList);
             }
@@ -139,27 +137,28 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (!successList.isEmpty()) {
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(dto,importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
+                importHistoryRecordService.handleImportSuccessList(importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
-                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                    jsonObject.set(ObjectUtil.isNull(jsonObject) ? "" : String.valueOf(jsonObject.size() - 1) ,e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
                 });
                 errorList.addAll(successList);
             }
         }
         //添加导入历史记录表数据
         ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();
-        addDTO.setReconciliationMonth(dto.getReconciliationMonth());
+        addDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
         addDTO.setBusinessType(costImportEntity.getBusinessType());
         addDTO.setFileUrl(importDTO.getFileUrl());
         addDTO.setFileName(importDTO.getFileName());
-        if (CharSequenceUtil.equals(dto.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
+        if (CharSequenceUtil.equals(importDTO.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
             addDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
         } else {
             addDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        addDTO.setType(importDTO.getType());
         addDTO.setOperationUserId(userInfo.getUid());
         addDTO.setImportCount(count);
         addDTO.setMatchCount(count - errorList.size());

@@ -4,8 +4,10 @@ import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.entity.ReportPeriodMonthEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -159,4 +161,8 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
     void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
+
+    void asyncBatchPushAllocatedCost(List<FirstMileCostAllocationEntity> entityList, String reportPeriodStr);
+
+    void asyncPushAllocatedCost(String id,FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) ;
 }

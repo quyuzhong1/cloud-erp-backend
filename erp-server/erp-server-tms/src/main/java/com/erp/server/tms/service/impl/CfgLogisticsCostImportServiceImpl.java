@@ -37,6 +37,7 @@ import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -59,6 +60,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -93,6 +95,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     private SysUserFeign sysUserFeign;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private TmsCfgCostService tmsCfgCostService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -122,6 +126,15 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         List<String> targetFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.AddDTO::getTargetFieldId).collect(Collectors.toList());
         List<CfgLogisticsCostImportFieldEntity> cfgLogisticsCostImportFieldEntities = cfgLogisticsCostImportFieldService.listByIds(targetFieldIds);
         Map<String, CfgLogisticsCostImportFieldEntity> fieldMap = cfgLogisticsCostImportFieldEntities.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, cfgLogisticsCostImportFieldEntity -> cfgLogisticsCostImportFieldEntity,(o1,o2)->o1));
+
+        //费用项
+        Map<String, TmsCfgCostEntity> cfgCostMap = new HashMap<>();
+        List<String> targetDetailFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.AddDTO::getTargetDetailFieldId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(targetDetailFieldIds)){
+            cfgCostMap = tmsCfgCostService.listByIds(targetDetailFieldIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, Function.identity(), (o1, o2) -> o1));
+        }
+
+        int index  = 0;
         for (CfgLogisticsCostImportDetailDTO.AddDTO addDTO : detailList) {
             CfgLogisticsCostImportFieldEntity fieldEntity = fieldMap.get(addDTO.getTargetFieldId());
             if(Objects.nonNull(fieldEntity)){
@@ -130,6 +143,13 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 addDTO.setTargetFieldType(fieldEntity.getFieldType());
                 addDTO.setMainId(id);
             }
+
+            TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(addDTO.getTargetDetailFieldId());
+            if(Objects.nonNull(tmsCfgCostEntity)){
+                addDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
+                addDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
+            }
+            addDTO.setIndex(index++);
         }
         List<CfgLogisticsCostImportDetailEntity> detailEntityList = BeanMapper.copyList(detailList, CfgLogisticsCostImportDetailEntity.class);
         int i = 0;
@@ -137,7 +157,6 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             cfgLogisticsCostImportDetailEntity.setIndex(i++);
         }
         cfgLogisticsCostImportDetailService.saveBatch(detailEntityList);
-
         return new BaseResultDTO.AddDTO(cfgLogisticsCostImportEntity.getId(), code);
     }
 
@@ -204,15 +223,40 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         operateLogService.addModuleOperateLogByObj(old, cfgLogisticsCostImportEntity, ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(), cfgLogisticsCostImportEntity.getId(), msg);
 
         String id = dto.getId();
-        List<CfgLogisticsCostImportDetailEntity> detailList = BeanMapper.copyList(dto.getDetailList(), CfgLogisticsCostImportDetailEntity.class);
-        int i = 0;
-        for (CfgLogisticsCostImportDetailEntity cfgLogisticsCostImportDetailEntity : detailList) {
-            cfgLogisticsCostImportDetailEntity.setMainId(id);
-            cfgLogisticsCostImportDetailEntity.setIndex(i++);
+        //处理明细
+        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        List<String> targetFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetFieldId).collect(Collectors.toList());
+        List<CfgLogisticsCostImportFieldEntity> cfgLogisticsCostImportFieldEntities = cfgLogisticsCostImportFieldService.listByIds(targetFieldIds);
+        Map<String, CfgLogisticsCostImportFieldEntity> fieldMap = cfgLogisticsCostImportFieldEntities.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, cfgLogisticsCostImportFieldEntity -> cfgLogisticsCostImportFieldEntity,(o1,o2)->o1));
+
+        //费用项
+        Map<String, TmsCfgCostEntity> cfgCostMap = new HashMap<>();
+        List<String> targetDetailFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetDetailFieldId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(targetDetailFieldIds)){
+            cfgCostMap = tmsCfgCostService.listByIds(targetDetailFieldIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, Function.identity(), (o1, o2) -> o1));
         }
 
+        int index  = 0;
+        for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
+            CfgLogisticsCostImportFieldEntity fieldEntity = fieldMap.get(updateDTO.getTargetFieldId());
+            if(Objects.nonNull(fieldEntity)){
+                updateDTO.setTargetField(fieldEntity.getField());
+                updateDTO.setTargetFieldName(fieldEntity.getFieldName());
+                updateDTO.setTargetFieldType(fieldEntity.getFieldType());
+                updateDTO.setMainId(id);
+            }
+
+            TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(updateDTO.getTargetDetailFieldId());
+            if(Objects.nonNull(tmsCfgCostEntity)){
+                updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
+                updateDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
+            }
+            updateDTO.setIndex(index++);
+        }
+
+        List<CfgLogisticsCostImportDetailEntity> newDetailList = BeanMapper.copyList(detailList, CfgLogisticsCostImportDetailEntity.class);
         List<CfgLogisticsCostImportDetailEntity> oldDetailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
-        commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, detailList, oldDetailList,Arrays.asList("sourceField","sourceDetailField"));
+        commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, newDetailList, oldDetailList,Arrays.asList("sourceField","sourceDetailField"));
         return Boolean.TRUE;
     }
 
@@ -367,7 +411,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             }
             data.setDictPlatformName(dictPlatformName);
 
-            data.setDisabledName(data.getDisabled() ? "体用" : "启用");
+            data.setDisabledName(data.getDisabled() ? "停用" : "启用");
         }
    }
 

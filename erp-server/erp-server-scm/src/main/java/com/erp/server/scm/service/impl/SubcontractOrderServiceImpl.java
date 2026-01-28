@@ -718,7 +718,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         list.forEach(e -> {
             priceList.add(PurchasePriceDTO.PriceDTO.builder()
                     .purchaseOrgId(e.getPurchaseOrgId())
-                    .qty(e.getQty())
+                    .qty(e.getQty() == 0 ? e.getRepairQty() : e.getQty())
                     .skuId(e.getSkuId())
                     .supplierId(e.getSupplierId())
                     .build());
@@ -763,6 +763,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 dto.setCurrency(viewDTO.getCurrency());
                 dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
                 dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+            } else if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isBlank(dto.getParentId()) && MathUtil.compareTo(dto.getRepairQty(), MathUtil.ZERO) > 0){
+                //采购单价赋值
+                PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                        obj.getSkuId().equals(dto.getSkuId())
+                                && obj.getSupplierId().equals(dto.getSupplierId())
+                                && obj.getQty().equals(dto.getRepairQty())
+                                && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
+                        .findFirst().orElse(null);
+                if (ObjUtil.isEmpty(viewDTO)) {
+                    throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
+                }
+                dto.setPrice(viewDTO.getTaxPrice());
+                dto.setTaxRate(viewDTO.getTaxRate());
+                dto.setCurrency(viewDTO.getCurrency());
+                dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getRepairQty()).setScale(4, RoundingMode.DOWN));
             }
             //仓位名称
             String locationName = warehouseLocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),dto.getWarehouseId()) && StrUtil.equals(obj.getCode(), dto.getWarehouseLocation()))
