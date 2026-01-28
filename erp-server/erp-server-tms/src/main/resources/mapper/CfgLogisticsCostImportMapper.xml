@@ -53,6 +53,7 @@ clci.remark AS remark
         SELECT
             <include refid="Base_Column_List"></include>
             ,
+        clcid.id AS detailId,
         clcid.source_field AS sourceField,
         clcid.source_detail_field AS sourceDetailField,
         clcid.is_unique_key AS isUniqueKey,

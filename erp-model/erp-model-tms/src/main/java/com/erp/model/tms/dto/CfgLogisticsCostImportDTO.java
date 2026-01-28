@@ -172,7 +172,10 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         * 更新人名称
         */
         private String updateUserName;
-
+        /**
+         * 明细id
+         */
+        private String  detailId;
 
         /**
          * 物流商抬头字段
@@ -193,6 +196,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
          * 是否绝对值
          */
         private Boolean isAbsoluteValue;
+
 
         /**
          * ERP字段id
