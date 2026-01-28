@@ -32,6 +32,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -941,7 +942,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         if (CollectionUtils.isNotEmpty(changeDetailEntityList)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN.getMsg(), entity.getCode()));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),MessageUtils.getMessage(ApiError.BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN, entity.getCode()));
         }
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //反审核时移除sku和采购组织表记录
