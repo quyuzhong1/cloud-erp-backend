@@ -150,7 +150,8 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                     if(ExecutionStatusEnum.CLOSED.getCode().equals(purchaseOrderDetailEntity.getExecutionStatus())){
-                        throw new ServiceException(ApiError.PO_RETURN_SKU_CLOSE.getCode(),purchaseOrderEntity.getCode(),purchaseOrderDetailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.PO_RETURN_SKU_EXECUTION_STATUS_CLOSED, 
+                                purchaseOrderEntity.getCode(), purchaseOrderDetailEntity.getSkuNo());
                     }
                     poReturnDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                     poReturnDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());

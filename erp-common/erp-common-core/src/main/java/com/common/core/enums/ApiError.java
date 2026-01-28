@@ -978,6 +978,7 @@ public enum ApiError implements Serializable {
     PO_ORDER_REVERSE_FORBIDDEN(9635,"存在有效下推单据【采购订单{0}】，不支持反审核"),
     PO_RETURN_ORDER_REVERSE_FORBIDDEN(9636,"存在有效下推单据【采购退货单{0}】，不支持反审核"),
     PO_SUBCONTRACT_AND_PO_RETURN_REVERSE_FORBIDDEN(9637,"存在有效下推单据【委外退料单{0}】【采购退货单{1}】，不支持反审核"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9642,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
     PO_QC_STOCK_INSUFFICIENT(9638, "【{0}】库存不足,质检通知数量{1}，可用库存{2}"),
     PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN(9639, "【{0}】已质检完成，不允许操作反审核"),
     PO_QC_NOTICE_APPROVE_REQUIRED(9640, "请先审核通过质检通知单"),
@@ -991,6 +992,7 @@ public enum ApiError implements Serializable {
     PO_INSTOCK_PUSH_PO_RECONCILIATION_EXIST(9648, "采购入库单已生成对账记录，不支持反审核"),
     PO_RETURN_REPLENISH_QTY_CHECK(9649, "SKU【{0}】补货数量必须大于0"),
     PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(9650, "SKU【{0}】扣款数量必须大于0"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9658,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
     PO_RECONCILIATION_NOT_CONFIRMED_FOR_GENERATE(9651,"单据单号【{0}】未确认，不支持生成采购对账单"),
     PO_RECONCILIATION_ALREADY_GENERATED(9652,"单据单号【{0}】已生成采购对账单"),
     PO_RECONCILIATION_DETAIL_DELETE_FORBIDDEN(9653,"单据【{0}】已完成对账，不支持删除对账明细"),
@@ -1000,11 +1002,13 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN(9657,"单据单号【{0}】无需对账，不支持生成对账单"),
     PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN(9658,"单据未审核，不支持生成待对账明细"),
     PO_INSTOCK_QC_RETURN_RECONCILIATION_DETAIL_FORBIDDEN(9659,"质检退货单据不支持生成待对账明细"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9663,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
     PO_RECONCILIATION_MANUAL_GENERATE_FORBIDDEN(9660,"当前单据不支持手动生成对账明细"),
     PO_RECONCILIATION_NOT_FOUND(9661,"采购对账单不存在"),
     PO_RECONCILIATION_DETAIL_NOT_FOUND(9662,"采购对账明细不存在"),
     PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(9663,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
     PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(9664,"采购框架合同类型附件不能为空"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
