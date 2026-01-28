@@ -36,7 +36,7 @@ import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.dto.excel.LogisticsLastMileCostExcelDTO;
+import com.erp.model.tms.dto.excel.ImportHistoryRecordExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -326,7 +326,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 }
                successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
             }
-            LogisticsLastMileCostExcelDTO excelDTO = BeanUtil.toBean(successJson, LogisticsLastMileCostExcelDTO.class);
+            ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
             //基础验证
             List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
             if (CollectionUtils.isNotEmpty(msgList)) {
@@ -476,7 +476,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param excelDTO
      * @return com.erp.model.tms.entity.LogisticsBillEntity
      */
-    private LogisticsBillEntity addImportLogisticBill (LogisticsLastMileCostExcelDTO excelDTO) {
+    private LogisticsBillEntity addImportLogisticBill (ImportHistoryRecordExcelDTO excelDTO) {
         //新增物流单，格式化物流费用
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
 
@@ -551,7 +551,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param cfgCostList
      * @return void
      */
-    private LogisticsBillCostDTO.UpdateDTO handleLogisticsBillCostImportData(LogisticsBillCostEntity logisticsBillCostEntity, LogisticsLastMileCostExcelDTO excelDTO,
+    private LogisticsBillCostDTO.UpdateDTO handleLogisticsBillCostImportData(LogisticsBillCostEntity logisticsBillCostEntity, ImportHistoryRecordExcelDTO excelDTO,
                                                    ImportHistoryRecordDTO.ImportDTO dto,
                                                    List<TmsCostDetailDTO.UpdateDTO> updateList,
                                                    List<JSONObject> errorList,
@@ -654,7 +654,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @author Will
      * @date: 2024/5/11 14:24
      */
-    private List<String> checkCostImportData (LogisticsLastMileCostExcelDTO excelDTO
+    private List<String> checkCostImportData (ImportHistoryRecordExcelDTO excelDTO
             , List<LogisticsBillCostEntity> logisticsBillCostList, LogisticsBillDTO.LogisticsBillVo logisticsBillVo , String dictCostAttribution,CfgLogisticsCostImportEntity costImportEntity) {
         List<String> errorMsgList = new ArrayList<>();
         if (CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) && CharSequenceUtil.isBlank(excelDTO.getSoCode())
