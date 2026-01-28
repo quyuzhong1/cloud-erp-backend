@@ -35,7 +35,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -397,7 +397,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             String warehouseId = value.get(0).getWarehouseId();
             //虚拟库存校验
             Integer virtualQty = redisVirtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
-                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty).reduce(MathUtil.ZERO,Integer::sum);
             if(MathUtil.compareTo(virtualQty,MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
