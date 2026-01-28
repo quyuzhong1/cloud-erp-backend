@@ -8,7 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
@@ -18,6 +18,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ConfirmStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -30,6 +31,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -55,13 +59,15 @@ import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.listener.FirstMileCostChangeExcelListener;
 import com.erp.server.tms.mapper.FirstMileCostAllocationMapper;
-import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
 import com.erp.server.tms.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -83,7 +89,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -165,9 +170,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private LogisticsBillCostService logisticsBillCostService;
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-
     @Resource
-    private ReportPeriodMonthMapper reportPeriodMonthMapper;
+    private AsyncTaskRecordService asyncTaskRecordService;
+    @Resource
+    private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
+    @Resource
+    private MQProducerService mQProducerService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -2123,81 +2131,48 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
         }
     }
-
     @Override
-    public void asyncBatchPushAllocatedCost(List<FirstMileCostAllocationEntity> entityList, String reportPeriodStr){
-        List<String> sourceIds = entityList.stream().filter(e -> com.erp.model.srm.enums.ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
-        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
-        //目的仓ids
-        List<String> toWarehouseIds = firstMileDeliveryEntityList.stream().map(FirstMileDeliveryEntity::getDestWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(toWarehouseIds);
-
-        Map<String, String> warehouseToOrgMap = updateDTOS.stream()
-                .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getOrgId, (o1, o2) -> o1));
-
-        List<String> orgIds = new ArrayList<>(warehouseToOrgMap.values());
-        List<ReportPeriodMonthDTO.SelectDTO> reportPeriodMonthList = reportPeriodMonthMapper.queryList(orgIds)
-                .stream()
-                .filter(e -> e.getReportPeriodStr().equals(reportPeriodStr))
-                .collect(Collectors.toList());
-
-        // 创建 orgId 到 DTO 的映射，提高查找效率
-        Map<String, ReportPeriodMonthDTO.SelectDTO> orgToReportPeriodMap = reportPeriodMonthList.stream()
-                .collect(Collectors.toMap(ReportPeriodMonthDTO.SelectDTO::getOrgId, Function.identity()));
-
-        // 直接构建最终映射
-        Map<String, ReportPeriodMonthDTO.SelectDTO> warehouseToReportPeriodMap = new HashMap<>();
-        for (Map.Entry<String, String> entry : warehouseToOrgMap.entrySet()) {
-            String warehouseId = entry.getKey();
-            String orgId = entry.getValue();
-            ReportPeriodMonthDTO.SelectDTO dto = orgToReportPeriodMap.get(orgId);
-            if (dto != null) {
-                warehouseToReportPeriodMap.put(warehouseId, dto);
-            }
+    public void asyncBatchPushAllocatedCost(FirstMileCostAllocationDTO.IdsDTO idsDTO){
+        //新建一个任务
+        String jsonStr = JSONUtil.toJsonStr(idsDTO);
+        String taskId = asyncTaskRecordService.addTask(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(), jsonStr);
+        if(StringUtils.isBlank(taskId)){
+            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-        for (String sourceId : sourceIds) {
-            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
-            if(Objects.isNull(firstMileDeliveryEntity)){
-//                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单记录不存在"));
-                continue;
-            }
-            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
-//                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单明细记录不存在"));
-                continue;
-            }
-            ReportPeriodMonthDTO.SelectDTO reportPeriodMonth = warehouseToReportPeriodMap.getOrDefault(firstMileDeliveryEntity.getDestWarehouseId(), null);
-            if(Objects.isNull(reportPeriodMonth)){
-                //不存在核算周期
-                continue;
-            }
-            //已生成的费用分摊记录
-            if (!CollectionUtils.isEmpty(entityList)){
-                FirstMileCostAllocationEntity entity = entityList.stream().filter(e -> Objects.nonNull(e)
-                                && com.erp.model.srm.enums.ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus()) && Objects.equals(e.getSourceId(), sourceId))
-                        .max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
-                if (Objects.nonNull(entity) && !reportPeriodMonth.getReportPeriodMonth().isAfter(entity.getReportPeriodMonth())){
-//                    resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId, CharSequenceUtil.format("已存在核算区间【{}】不能下推发货单【{}】的核算区间【{}】", entity.getReportPeriodMonth(),entity.getSourceCode(),reportPeriodMonth.getMonth())));
-                    continue;
-                }
-            }
-            FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
-                    .setSourceId(firstMileDeliveryEntity.getId()).setSourceCode(firstMileDeliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth.getReportPeriodMonth()).setReportPeriodId(reportPeriodMonth.getId());
-            System.out.println("调用前主线程: " + Thread.currentThread().getName());
-            service.asyncPushAllocatedCost(entity.getId(),entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
-            System.out.println("调用后主线程: " + Thread.currentThread().getName());
+        AsyncTaskRecordDTO.TaskDTO dto = new AsyncTaskRecordDTO.TaskDTO();
+        dto.setIds(idsDTO.getIds());
+        dto.setReportDate(idsDTO.getReportDate());
+        dto.setTaskId(taskId);
+        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+        }else {
+            log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
         }
     }
-
     @Async("tmsExecutor")
     @DataIdempotent(keyIdName = "id")
     @Override
-    public void asyncPushAllocatedCost(String id,FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
-        System.out.println("asyncPushAllocatedCost 执行线程: " + Thread.currentThread().getName());
-        System.out.println("asyncPushAllocatedCost 执行线程ID: " + Thread.currentThread().getId());
-        service.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
-        System.out.println("asyncPushAllocatedCost 执行完成，线程: " + Thread.currentThread().getName());
+    public void asyncPushAllocatedCost(String id, String taskDetailId, FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
+        log.error(StrUtil.format("asyncPushAllocatedCost id: 【{}】, 执行线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
+
+        try {
+            BatchResultDTO result = service.calcAllocatedCost(entity, firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
+            if(!result.getSuccess()){
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),result.getMsg());
+            }else {
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.SUCCESS.getCode(),"");
+            }
+        } catch (Exception e) {
+            log.error("asyncPushAllocatedCost id: 【{}】, 异常: 【{}】",id,e);
+            //把Exception e 转字符串
+            String errorMsg = ExceptionUtils.getStackTrace(e);
+            asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),errorMsg);
+        } finally {
+            asyncTaskRecordService.updateTaskFinally(taskDetailId);
+        }
+
+        log.error(StrUtil.format("asyncPushAllocatedCost id: 【{}】, 执行完成线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
     }
 
     private void handleImportSuccessList(Set<String> mainIdList, List<FirstMileCostChangeExcelDTO> dataList, List<FirstMileCostChangeExcelDTO> errorList) {
