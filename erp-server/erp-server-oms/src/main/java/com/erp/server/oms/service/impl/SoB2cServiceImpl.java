@@ -425,6 +425,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         PagingParamDTO params = pagingParamDTO.getParams();
+        Boolean secondQuery = params.getSecondQuery();
+        if(secondQuery == null) {
+        	secondQuery = true;
+        }
 		params.setPermissionSql(getPermissionSql());
 		DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         String dynamicDataSource = "";
@@ -447,7 +451,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (params.getIsFullyManaged()){
                 pageData = this.baseMapper.fullyManagedPaging(query, params, null);
             }else {
-            	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource)) {
+            	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource) && secondQuery) {
             		int queryCount = 0;
             		String defaultSql = params.getSqlMap().get("default");
                     //转成 pgsql的条件
@@ -2230,6 +2234,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String iossTaxNo = resultDTO.getIossTaxNo();
             String declareOrgId = resultDTO.getDeclareOrgId();
             soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo,iossTaxNo,declareOrgId,pushPlatformCode);
+
+            //KOL-B2C订单需要回写跟踪单号
+            if(Objects.equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(),entity.getSourceType())){
+                KolSubB2cApplicationEntity kolSubB2cApplicationEntity = kolSubB2cApplicationService.getById(entity.getSourceId());
+                if (StringUtils.isNotBlank(trackNo)) {
+                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
+                }else {
+                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
+                }
+                kolSubB2cApplicationEntity.setTrackNo(trackNo);
+                kolSubB2cApplicationService.updateById(kolSubB2cApplicationEntity);
+            }
 
             //操作日志
             String msg = "获取物流单号成功，单号【{}/{}】，ioss税号【{}】，申报组织id【{}】，推送平台单号【{}】";
@@ -4888,6 +4904,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //查询发货单号（so_b2c_delivery 、 third_warehouse_delivery）
         Map<String, String> deliveryCodeMap = soB2cDeliveryFeign.getDeliveryCodeBySourceId(ids);
 
+        Map<String , DictBasicEntity> shopCostMap = dictBasicService.lambdaQuery().in(DictBasicEntity::getType, Arrays.asList("", "" ,"")).list()
+            	.stream().collect(Collectors.toMap(d -> d.getType() + "_" + d.getValue(), d -> d , (d1 , d2) -> d2));
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
             data.setMultiChannelTypeName(SoB2cMultiChannelTypeEnum.getName(data.getMultiChannelType()));
@@ -5184,6 +5202,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsEntity logisticsEntity = logisticsEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
             dto.setSoB2cLogisticsEntity(logisticsEntity);
             dto.setSoB2cDetailList(detailList);
+            dto.setShopCostMap(shopCostMap);
             SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto, Boolean.FALSE);
             data.setTotalProfit(financialInfoDTO.getProfit());
             data.setProfitCurrency(data.getCurrency());
@@ -6954,11 +6973,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
 
-        DictBasicEntity dictPlatformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), platformOption);
+        DictBasicEntity dictPlatformOption = null;
+        DictBasicEntity dictVatOption = null;
+        DictBasicEntity dictTransferOption = null;
+        Map<String , DictBasicEntity> shopCostMap = dto.getShopCostMap();
+        if(shopCostMap != null) {
+        	dictPlatformOption = shopCostMap.get(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType() + "_" + platformOption);
+        	dictVatOption = shopCostMap.get(DictBasicTypeEnum.SHOP_VAT_COST.getType() + "_" + vatOption);
+        	dictTransferOption = shopCostMap.get(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType() + "_" + transferOption);
+        }else {
+        	dictPlatformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), platformOption);
 
-        DictBasicEntity dictVatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), vatOption);
+            dictVatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), vatOption);
 
-        DictBasicEntity dictTransferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), transferOption);
+            dictTransferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), transferOption);
+        }
 
         //平台费
         BigDecimal dividePlatformRate = MathUtil.divide(platformRate, MathUtil.BigDecimal_100);

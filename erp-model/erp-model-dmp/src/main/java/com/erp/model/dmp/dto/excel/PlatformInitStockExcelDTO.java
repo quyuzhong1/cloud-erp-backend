@@ -14,6 +14,13 @@ public class PlatformInitStockExcelDTO implements Serializable {
 	/**
      * 周期
      */
+    @ExcelProperty(value = "*核对仓库")
+    @FieldValid(fieldName = "核对仓库", isNotBlank = true)
+	private String sourceSystemName;
+	
+	/**
+     * 周期
+     */
     @ExcelProperty(value = "*周期")
     @FieldValid(fieldName = "周期", isNotBlank = true)
 	private String checkMonth;
