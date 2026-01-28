@@ -2154,7 +2154,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Async("tmsExecutor")
     @DataIdempotent(keyIdName = "id")
     @Override
-    public void asyncPushAllocatedCost(String id, String taskDetailId, FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
+    public void asyncPushAllocatedCost(String id,String taskId, String taskDetailId, FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
         log.error(StrUtil.format("asyncPushAllocatedCost id: 【{}】, 执行线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
 
         try {
@@ -2170,7 +2170,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             String errorMsg = ExceptionUtils.getStackTrace(e);
             asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),errorMsg);
         } finally {
-            asyncTaskRecordService.updateTaskFinally(taskDetailId);
+            asyncTaskRecordService.updateTaskFinally(taskId);
         }
 
         log.error(StrUtil.format("asyncPushAllocatedCost id: 【{}】, 执行完成线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));

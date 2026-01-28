@@ -167,7 +167,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
 
             LogisticsBillEntity logisticsBillEntity = logisticsBillMap.getOrDefault(logisticsBillCostEntity.getLogisticsBillId(), new LogisticsBillEntity());
 
-            logisticsBillCostService.asyncPushAllocation(logisticsBillEntity.getId(), detail.getId(), dto.getReportDate(), logisticsBillCostEntity, smallBagCostAllocationList, logisticsBillEntity, allocationSettingDTO, feeTypeSettingMaps, rateMap);
+            logisticsBillCostService.asyncPushAllocation(logisticsBillEntity.getId(),taskId, detail.getId(), dto.getReportDate(), logisticsBillCostEntity, smallBagCostAllocationList, logisticsBillEntity, allocationSettingDTO, feeTypeSettingMaps, rateMap);
         }
 
     }
@@ -276,7 +276,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
 
             entity.setReportPeriodMonth(reportPeriodMonth.getReportPeriodMonth());
             entity.setReportPeriodId(reportPeriodMonth.getId());
-            firstMileCostAllocationService.asyncPushAllocatedCost(entity.getId(), detail.getId(), entity, firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
+            firstMileCostAllocationService.asyncPushAllocatedCost(entity.getId(), taskId,detail.getId(), entity, firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
 
             log.error(StrUtil.format("调用后主线程: 【{}】 ,线程ID: 【{}】", Thread.currentThread().getName(), Thread.currentThread().getId()));
         }
