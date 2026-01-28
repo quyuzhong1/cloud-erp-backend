@@ -375,4 +375,8 @@ public class RocketMqConsumerGroup {
     public static final String DMP_WDT_KOL_B2C_APPLICATION_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_kol_b2c_application_consumer";
 
 
+    //---------------------------------------------------tms---------------------------------------------------------------------------------------------
+    public static final String TMS_PUSH_ALLOCATION_COST_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-tms_push_allocation_cost_consumer";
+
+
 }
