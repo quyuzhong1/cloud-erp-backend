@@ -42,12 +42,12 @@ public class ImportHistoryRecordController extends BaseController {
 
 
     /**
-    * 列表查询
-    * @author will
-    * @date: 2026-01-19
-    * @param dto
-    * @return ApiResult<PagingVO<ImportHistoryRecordDTO.ListDTO>>
-    */
+     * 列表查询
+     * @author will
+     * @date: 2026-01-19
+     * @param dto
+     * @return ApiResult<PagingVO<ImportHistoryRecordDTO.ListDTO>>
+     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -61,12 +61,12 @@ public class ImportHistoryRecordController extends BaseController {
 
 
     /**
-    * 详情
-    * @author will
-    * @date:  2026-01-19
-    * @param id
-    * @return ApiResult<ImportHistoryRecordDTO.ViewDTO>>
-    */
+     * 详情
+     * @author will
+     * @date:  2026-01-19
+     * @param id
+     * @return ApiResult<ImportHistoryRecordDTO.ViewDTO>>
+     */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -92,7 +92,7 @@ public class ImportHistoryRecordController extends BaseController {
         for (BaseDTO.ImportDTO importDTO : dto.getList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = importHistoryRecordService.preprocessingImportExcel(importDTO,dto);
+                resultDTO = importHistoryRecordService.importFile(new ImportHistoryRecordDTO.ImportSyncDTO(dto,importDTO));
             }catch (Exception e){
                 resultDTO = BatchResultDTO.fail(importDTO.getTaskId(), importDTO.getFileUrl(), e.getMessage());
             }

@@ -32,7 +32,7 @@ public class ImportHistoryRecordFeignController {
         for (BaseDTO.ImportDTO importDTO : dto.getList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = importHistoryRecordService.preprocessingImportExcel(importDTO,dto);
+                resultDTO = importHistoryRecordService.preprocessingImportExcel(new ImportHistoryRecordDTO.ImportSyncDTO(dto,importDTO) );
             }catch (Exception e){
                 resultDTO = BatchResultDTO.fail(importDTO.getTaskId(), importDTO.getFileUrl(), e.getMessage());
             }

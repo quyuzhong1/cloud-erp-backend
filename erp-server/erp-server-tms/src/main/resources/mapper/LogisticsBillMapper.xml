@@ -764,36 +764,38 @@
     <!-- 根据唯一键查询物流单详情 -->
     <select id="listLogisticsBillByUniqueKey"
             resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
-            SELECT
-                lb.id,
-                lb.shop_id as shopId,
-                lb.shop_name as shopName,
-                lb.source_type as sourceType,
-                lb.source_id as sourceId,
-                lb.source_code as sourceCode,
-                lb.outstock_id as outstockId,
-                lb.outstock_code as outstockCode,
-                lb.transport_no as transportNo,
-                lb.channel_id as channelId,
-                lb.order_time as orderTime,
-                lb.so_delivery_id as soDeliveryId,
-                lb.so_delivery_code as soDeliveryCode,
-                lb.platform_code as platformCode,
-                lbd.id as detailId,
-                lbd.track_status as trackStatus,
-                lbd.track_no as trackNo
-            FROM logistics_bill lb
-            left join logistics_bill_detail lbd  on lb.id = lbd.main_id and lbd.is_deleted = false
-            WHERE 1=1
-            <trim prefix="AND (" suffix=")" prefixOverrides="OR">
-                <foreach collection="paramMap" item="valueList" index="field" separator=" ">
-                    <if test="valueList != null and valueList.size() > 0">
-                        OR ${field} IN
-                        <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                            #{val}
-                        </foreach>
-                    </if>
-                </foreach>
-            </trim>
+        select * from (
+        SELECT
+        lb.id,
+        lb.shop_id as shopId,
+        lb.shop_name as shopName,
+        lb.source_type as sourceType,
+        lb.source_id as sourceId,
+        lb.source_code as sourceCode,
+        lb.outstock_id as outstockId,
+        lb.outstock_code as outstockCode,
+        lb.transport_no as transportNo,
+        lb.channel_id as channelId,
+        lb.order_time as orderTime,
+        lb.so_delivery_id as soDeliveryId,
+        lb.so_delivery_code as soDeliveryCode,
+        lb.platform_code as platformCode,
+        lbd.id as detailId,
+        lbd.track_status as trackStatus,
+        lbd.track_no as trackNo
+        FROM logistics_bill lb
+        left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        WHERE lb.is_deleted = false
+        ) lb where 1 = 1
+        <trim prefix="AND (" suffix=")" prefixOverrides="OR">
+            <foreach collection="paramMap" item="valueList" index="field" separator=" ">
+                <if test="valueList != null and valueList.size() > 0">
+                    OR ${field} IN
+                    <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                        #{val}
+                    </foreach>
+                </if>
+            </foreach>
+        </trim>
     </select>
 </mapper>
