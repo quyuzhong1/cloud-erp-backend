@@ -1188,7 +1188,10 @@ public class SoB2cDTO implements Serializable {
          */
         private List<SoB2cDetailEntity> soB2cDetailList;
 
-
+        /**
+         * 店铺费率配置
+         */
+        private Map<String , DictBasicEntity> shopCostMap;
     }
 
     /**

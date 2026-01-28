@@ -4904,6 +4904,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //查询发货单号（so_b2c_delivery 、 third_warehouse_delivery）
         Map<String, String> deliveryCodeMap = soB2cDeliveryFeign.getDeliveryCodeBySourceId(ids);
 
+        Map<String , DictBasicEntity> shopCostMap = dictBasicService.lambdaQuery().in(DictBasicEntity::getType, Arrays.asList("", "" ,"")).list()
+            	.stream().collect(Collectors.toMap(d -> d.getType() + "_" + d.getValue(), d -> d , (d1 , d2) -> d2));
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
             data.setMultiChannelTypeName(SoB2cMultiChannelTypeEnum.getName(data.getMultiChannelType()));
@@ -5200,6 +5202,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsEntity logisticsEntity = logisticsEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
             dto.setSoB2cLogisticsEntity(logisticsEntity);
             dto.setSoB2cDetailList(detailList);
+            dto.setShopCostMap(shopCostMap);
             SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto, Boolean.FALSE);
             data.setTotalProfit(financialInfoDTO.getProfit());
             data.setProfitCurrency(data.getCurrency());
@@ -6970,11 +6973,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
 
-        DictBasicEntity dictPlatformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), platformOption);
+        DictBasicEntity dictPlatformOption = null;
+        DictBasicEntity dictVatOption = null;
+        DictBasicEntity dictTransferOption = null;
+        Map<String , DictBasicEntity> shopCostMap = dto.getShopCostMap();
+        if(shopCostMap != null) {
+        	dictPlatformOption = shopCostMap.get(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType() + "_" + platformOption);
+        	dictVatOption = shopCostMap.get(DictBasicTypeEnum.SHOP_VAT_COST.getType() + "_" + vatOption);
+        	dictTransferOption = shopCostMap.get(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType() + "_" + transferOption);
+        }else {
+        	dictPlatformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), platformOption);
 
-        DictBasicEntity dictVatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), vatOption);
+            dictVatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), vatOption);
 
-        DictBasicEntity dictTransferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), transferOption);
+            dictTransferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), transferOption);
+        }
 
         //平台费
         BigDecimal dividePlatformRate = MathUtil.divide(platformRate, MathUtil.BigDecimal_100);
