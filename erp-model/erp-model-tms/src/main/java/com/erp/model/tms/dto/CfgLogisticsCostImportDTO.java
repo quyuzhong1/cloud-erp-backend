@@ -213,7 +213,18 @@ public class CfgLogisticsCostImportDTO implements Serializable {
          * ERP字段类型
          */
         private String targetFieldType;
-
+        /**
+         * 费用项id
+         */
+        private String targetDetailFieldId;
+        /**
+         * 费用项
+         */
+        private String targetDetailField;
+        /**
+         * 费用项名称
+         */
+        private String targetDetailFieldName;
 
     }
 
