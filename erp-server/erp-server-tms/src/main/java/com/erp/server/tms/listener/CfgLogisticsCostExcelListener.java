@@ -216,7 +216,7 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
 
         String importTypeName = excelDTO.getImportTypeName();
         if(StringUtils.isNotBlank(importTypeName)){
-            String[] split = importType.split(",");
+            String[] split = importTypeName.split(",");
             List<String> importTypeList = Arrays.asList(split);
             for (String s : importTypeList) {
                 String code = CfgLogisticsCostImportImportTypeEnum.getCode(s);
