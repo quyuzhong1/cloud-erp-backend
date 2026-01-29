@@ -334,6 +334,7 @@ public enum ApiError implements Serializable {
     BILL_INCONSISTENT_VOID_STATUS(3042,"存在已作废订单"),
     BILL_PUSH_ALLOWED_APPROVED_ONLY(3043,"只有审核通过才能下推单据"),
     BILL_VOIDED_CANNOT_SUBMIT(3044,"已作废单据不能提交审核"),
+    BILL_VOIDED_CANNOT_DELETE(3044,"已作废单据不能删除"),
     BILL_INV_ORG_NOT_FOUND(3045,"库存组织不存在"),
     BILL_NOT_EXIST(3046,"单据不存在"),
     BILL_NOT_EXIST_WITH_TYPE(3047, "{0}单据不存在"),

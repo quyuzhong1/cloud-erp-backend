@@ -4074,4 +4074,34 @@ public class SoB2cDTO implements Serializable {
         @Size(message = "备注长度不能超过200", max = 200)
         private String remark;
     }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class B2cByPlatformOutboundDTO{
+        private String soB2cId;
+
+        private LocalDate soOutstockDate;
+
+        private String warehouseId;
+
+        private String warehouseName;
+
+        private String virtualWarehouseId;
+
+        private String billStatus;
+
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 是否记录日志
+         */
+        private boolean addOperationLog = false ;
+    }
 }

@@ -2980,18 +2980,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return BatchResultDTO.fail(cancelDeliveryDTO.getLogisticsBillId(), cancelDeliveryDTO.getBusinessCode(), "该发货单已进行重量分摊，不能取消发货");
         }
 
-        //查询装箱任务
-        PackingTaskEntity packingTaskEntity = packingTaskService.getById(cancelDeliveryDTO.getPackingTaskId());
-        if (ObjectUtil.isEmpty(packingTaskEntity)) {
-            return BatchResultDTO.fail(cancelDeliveryDTO.getPackingTaskId(), cancelDeliveryDTO.getPackingTaskId(), "装箱任务不存在");
+        //查询箱子明细数据
+        WmsCartonDetailEntity wmsCartonDetailEntity = wmsCartonDetailService.getById(cancelDeliveryDTO.getCartonDetailId());
+        if (ObjectUtil.isEmpty(wmsCartonDetailEntity)) {
+            return BatchResultDTO.fail(cancelDeliveryDTO.getCartonDetailId(), cancelDeliveryDTO.getSkuNo(), "装箱明细不存在");
         }
         //查询箱子
         WmsCartonSpecEntity old = wmsCartonSpecService.getById(cancelDeliveryDTO.getCartonSpecId());
         if (ObjectUtil.isEmpty(old)) {
             return BatchResultDTO.fail(cancelDeliveryDTO.getCartonSpecId(), cancelDeliveryDTO.getCartonSpecId(), "箱子不存在");
         }
-        packingTaskEntity.setIsCancelRequired(cancelDeliveryDTO.getIsCancelRequired());
-        packingTaskService.updateById(packingTaskEntity);
+        wmsCartonDetailEntity.setIsCancelRequired(cancelDeliveryDTO.getIsCancelRequired());
+        wmsCartonDetailService.updateById(wmsCartonDetailEntity);
 
         WmsCartonSpecEntity cartonSpecEntity = new WmsCartonSpecEntity();
         BeanUtil.copyProperties(old, cartonSpecEntity);
@@ -3013,7 +3013,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         );
         tmsFirstMileLogisticFeign.addFirstMileLogisticLog(new TmsFirstMileLogisticDTO.AddLogDTO(cancelDeliveryDTO.getLogisticsBillId(), "取消发货", formatContent));
 
-        return BatchResultDTO.success(packingTaskEntity.getId(), packingTaskEntity.getCode(), "操作成功");
+        return BatchResultDTO.success(wmsCartonDetailEntity.getId(), wmsCartonDetailEntity.getSkuNo(), "操作成功");
     }
 }
 

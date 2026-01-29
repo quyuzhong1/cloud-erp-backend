@@ -89,12 +89,6 @@ public class PackingTaskEntity extends BaseEntity<PackingTaskEntity> {
     @TableField("business_code")
     private String businessCode;
 
-    /**
-     * 是否取消重量分摊
-     */
-    @TableField("is_cancel_required")
-    private Boolean isCancelRequired;
-
     public static final String SOURCE_ID = "source_id";
 
     public static final String SOURCE_CODE = "source_code";

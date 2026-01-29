@@ -989,10 +989,16 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String warnMsg;
 
         /**
-         * 是否分摊 true 分摊 false 不分摊
+         * 是否分摊
          */
         @ExcelIgnore
         private Boolean isAllocateRequired;
+
+        /**
+         * 不分摊原因
+         */
+        @ExcelIgnore
+        private String notAllocateRemark;
 
         /**
          * 备注
@@ -1017,6 +1023,8 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelIgnore
         private LocalDateTime createTime;
+
+
     }
     /**
      * tab

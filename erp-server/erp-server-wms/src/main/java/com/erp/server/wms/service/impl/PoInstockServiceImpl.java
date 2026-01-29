@@ -2169,18 +2169,27 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (CollectionUtils.isEmpty(subDetailList)) {
                     throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
                 }
+                //获取委外订单
+                List<String> subIdList = subDetailList.stream().map(item -> item.getMainId()).collect(Collectors.toList());
+                List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(subIdList);
+                if (subcontractOrderList.isEmpty()) {
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+                }
+
                 List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (SubcontractOrderDetailEntity childSubDetail : subDetailList) {
-
-                    List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(childSubDetail.getMainId()));
-                    if (subcontractOrderList.isEmpty()) {
-                        throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
-                    }
-                    SubcontractOrderEntity subcontractOrderEntity = subcontractOrderList.get(0);
                     SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
                     addDetailDTO.setSubcontractOrderDetailId(childSubDetail.getId());
                     addDetailDTO.setSourceDetailId(detailEntity.getId());
-                    if (Objects.equals(subcontractOrderEntity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+
+                    SubcontractOrderEntity subcontractOrder = subcontractOrderList.stream()
+                            .filter(item -> Objects.equals(item.getId(), childSubDetail.getMainId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.isNull(subcontractOrder)) {
+                        throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+                    }
+                    if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
                         addDetailDTO.setIssueQty(childSubDetail.getQty() );
                         addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
                         addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());

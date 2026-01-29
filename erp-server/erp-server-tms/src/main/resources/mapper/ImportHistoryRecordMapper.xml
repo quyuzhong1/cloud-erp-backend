@@ -52,6 +52,9 @@
             <if test="params.importType != null and params.importType == 'history'">
                 and CURRENT_DATE - INTERVAL '1 month' > ihr.create_time
             </if>
+            <if test="params.businessType != null and params.businessType != ''">
+                and ihr.business_type = #{params.businessType}
+            </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}

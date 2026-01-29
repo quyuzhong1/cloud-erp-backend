@@ -644,15 +644,17 @@
     <!-- 取消分货分页查询 -->
     <select id="cancelDeliveryPaging" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$CancelDeliveryListDTO">
         with wcd as (
-        SELECT main_id,
-        sum(wcd.pack_qty) as packageQty,
-        max (wcd.sku_no) as skuNo
-        from wms_carton_detail wcd where is_deleted = false group by main_id
+        SELECT wcd.main_id,
+               wcd.id as cartonDetailId,
+            wcd.pack_qty as packageQty,
+            wcd.sku_no as skuNo
+        from wms_carton_detail wcd where is_deleted = false
         )
         select
             flb.id as logisticsBillId,
             flb.business_code as businessCode,
             wc.box_no as boxNo,
+            wcd.cartonDetailId,
             wcd.skuNo,
             wcd.packageQty,
             pt.id as packingTaskId,
@@ -687,6 +689,6 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pt.ID DESC
+        flb.business_code asc,wc.box_no asc
     </select>
 </mapper>
