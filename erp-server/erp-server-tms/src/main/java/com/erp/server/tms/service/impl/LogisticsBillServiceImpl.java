@@ -46,6 +46,7 @@ import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.LogisticsTrackExcelDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -165,6 +166,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public LogisticsBillEntity add(LogisticsBillDTO.AddDTO addDTO) {
@@ -276,6 +281,26 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
             if(Objects.nonNull(channelEntity)){
                 logisticsBillEntity.setChannelName(channelEntity.getName());
+            }
+        }
+
+        //费用分摊配置查询
+        logisticsBillEntity.setIsAllocateRequired(Boolean.FALSE);
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+        if (ObjectUtil.isNotEmpty(cfgSetting) && ObjectUtil.isNotEmpty(cfgSetting.getDataJson())) {
+            CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
+            if (CollUtil.isNotEmpty(allocationSettingDTO.getPackageBillTypeList())) {
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.OTHER.getCode())) {
+                    logisticsBillEntity.setIsAllocateRequired(Boolean.TRUE);
+                }
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.SO_B2C.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_B2C.getCode())) {
+                    logisticsBillEntity.setIsAllocateRequired(Boolean.TRUE);
+                }
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.SO_INFO.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_INFO.getCode())) {
+                    logisticsBillEntity.setIsAllocateRequired(Boolean.TRUE);
+                }
             }
         }
     }
