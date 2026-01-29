@@ -10,12 +10,12 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * @author Lambda
  * @Classname InventoryDTO
-
  * @Date 2023-05-16 16:59
  * @Created by yl
  */
@@ -66,14 +66,14 @@ public class InventoryQtyDTO implements Serializable {
     public static class SkuInventoryParamDTO {
 
         @NotNull
-        @Size(min = 1,message = "sku不能为空")
+        @Size(min = 1, message = "sku不能为空")
         private List<String> skuIdList;
 
         /**
          * 仓库id
          */
         @NotNull
-        @Size(min = 1,message = "仓库不能为空")
+        @Size(min = 1, message = "仓库不能为空")
         private List<String> warehouseIdList;
 
         /**
@@ -102,7 +102,7 @@ public class InventoryQtyDTO implements Serializable {
          * sku id
          */
         @NotNull
-        @Size(min = 1,message = "最少传输一条sku信息")
+        @Size(min = 1, message = "最少传输一条sku信息")
         private List<String> skuIds;
 
 
@@ -165,7 +165,6 @@ public class InventoryQtyDTO implements Serializable {
     }
 
 
-
     /**
      * sku 查询库存的参数
      */
@@ -174,14 +173,14 @@ public class InventoryQtyDTO implements Serializable {
     public static class SkuInventoryStatusParamDTO {
 
         @NotNull
-        @Size(min = 1,message = "sku不能为空")
+        @Size(min = 1, message = "sku不能为空")
         private List<String> skuIdList;
 
         /**
          * 仓库id
          */
         @NotNull
-        @Size(min = 1,message = "仓库不能为空")
+        @Size(min = 1, message = "仓库不能为空")
         private List<String> warehouseIdList;
 
         /**
@@ -197,6 +196,7 @@ public class InventoryQtyDTO implements Serializable {
 
 
     }
+
     /**
      * sku 查询库存的参数
      */
@@ -206,8 +206,76 @@ public class InventoryQtyDTO implements Serializable {
     @NoArgsConstructor
     public static class InventoryBySkuDTO {
         @NotNull
-        @Size(min = 1,message = "sku不能为空")
+        @Size(min = 1, message = "sku不能为空")
         private List<String> skuIdList;
     }
 
+    /**
+     * sku 即时库存(带状态)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InventoryDTO {
+
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * sku 编号
+         */
+        private String skuNo;
+
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+
+        /**
+         * 总库存
+         */
+        private Integer qty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InventoryChangeQueryDTO {
+        /**
+         * 仓库id
+         */
+        @NotEmpty(message = "仓库不能为空")
+        private String warehouseId;
+        /**
+         * 开始时间
+         */
+        @NotEmpty(message = "开始时间不能为空")
+        private LocalDateTime startTime;
+        /**
+         * 结束时间
+         */
+        @NotEmpty(message = "结束时间不能为空")
+        private LocalDateTime endTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InventoryChangeDTO {
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * sku 编号
+         */
+        private String skuNo;
+
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+    }
 }

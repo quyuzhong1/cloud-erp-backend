@@ -83,6 +83,29 @@
         select id, warehouse_id,name,code from third_warehouse tw where tw.is_deleted=false and tw.disabled=false
         and tw.warehouse_id=#{thirdId} and tw.category=#{category}
     </select>
+    <select id="listQueryMapping" resultType="com.erp.model.dmp.dto.ThirdWarehouseDTO$QueryMapDTO">
+        SELECT
+            tm.sys_id,
+            tm.sys_name,
+            tm.third_id,
+            tm.third_name,
+            tm.third_code
+        FROM
+            third_warehouse  tw
+            INNER JOIN third_mapping tm on tm.third_info_id = tw.id and tm.is_deleted = FALSE
+        WHERE
+            tw.is_deleted = FALSE
+          <if test="params.sysType!=null and params.sysType!=''">
+            AND tw.sys_type = #{params.sysType}
+          </if>
+          <if test="params.category!=null and params.category!=''">
+            AND tw.category = #{params.category}
+          </if>
+          <if test="params.inventorySyncMode!=null and params.inventorySyncMode!=''">
+              AND tw.inventory_sync_mode = #{params.inventorySyncMode}
+          </if>
+
+    </select>
 
 
 </mapper>
