@@ -258,4 +258,5 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     void asyncPushAllocation(String id,String taskId  ,String taskDetailId , String reportDate,LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap);
 
+    LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 }

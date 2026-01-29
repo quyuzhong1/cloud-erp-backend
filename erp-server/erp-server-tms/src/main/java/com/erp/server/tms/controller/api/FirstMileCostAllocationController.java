@@ -260,6 +260,14 @@ public class FirstMileCostAllocationController extends BaseController {
     }
 
     /**
+     * 统计下推费用分摊单据数量
+     */
+    @PostMapping("/pushAllocatedCostCount")
+    public ApiResult<FirstMileCostAllocationDTO.PushAllocatedCostCountDTO> pushAllocatedCostCount(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
+        return success(firstMileCostAllocationService.pushAllocatedCostCount(dto));
+    }
+
+    /**
      * 修改费用分摊预览
      * @param dto
      * @return

@@ -238,37 +238,30 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
             detail.setStartTime(now);
             asyncTaskDetailRecordService.save(detail);
 
-
+            String taskDetailId = detail.getId();
             String sourceId = entity.getSourceId();
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
             if (Objects.isNull(firstMileDeliveryEntity)) {
-                detail.setStatus(AsyncTaskRecordStatusEnum.FAILED.getCode());
-                detail.setEndTime(LocalDateTime.now());
-                detail.setErrorData("费用分摊发货单记录不存在");
-                asyncTaskDetailRecordService.updateById(detail);
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"费用分摊发货单记录不存在");
+                asyncTaskRecordService.updateTaskFinally(taskId);
                 continue;
             }
             List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)) {
-                detail.setStatus(AsyncTaskRecordStatusEnum.FAILED.getCode());
-                detail.setErrorData("费用分摊发货单明细记录不存在");
-                asyncTaskDetailRecordService.updateById(detail);
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"费用分摊发货单明细记录不存在");
+                asyncTaskRecordService.updateTaskFinally(taskId);
                 continue;
             }
             ReportPeriodMonthDTO.SelectDTO reportPeriodMonth = warehouseToReportPeriodMap.getOrDefault(firstMileDeliveryEntity.getDestWarehouseId(), null);
             if (Objects.isNull(reportPeriodMonth)) {
-                detail.setStatus(AsyncTaskRecordStatusEnum.FAILED.getCode());
-                detail.setEndTime(LocalDateTime.now());
-                detail.setErrorData("核算周期不存在");
-                asyncTaskDetailRecordService.updateById(detail);
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"核算周期不存在");
+                asyncTaskRecordService.updateTaskFinally(taskId);
                 continue;
             }
 
             if (com.erp.model.srm.enums.ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
-                detail.setStatus(AsyncTaskRecordStatusEnum.FAILED.getCode());
-                detail.setEndTime(LocalDateTime.now());
-                detail.setErrorData("费用分摊核算状态已确认");
-                asyncTaskDetailRecordService.updateById(detail);
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"费用分摊核算状态已确认");
+                asyncTaskRecordService.updateTaskFinally(taskId);
                 continue;
             }
 

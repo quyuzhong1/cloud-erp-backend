@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.*;
@@ -2018,6 +2019,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
     }
 
+
+
+    @Override
+    public LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto) {
+        LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocatedCostCountDTO = new LogisticsBillCostDTO.PushAllocatedCostCountDTO();
+        //所有 类型=自发货。状态是账单确认和暂估确认的物流单费用
+        LambdaQueryChainWrapper<LogisticsBillCostEntity> wrapper = lambdaQuery()
+                .eq(LogisticsBillCostEntity::getType, dto.getType());
+        if(CollUtil.isNotEmpty(dto.getIds())){
+            wrapper.in(LogisticsBillCostEntity::getId,dto.getIds());
+        }else {
+            wrapper.in(LogisticsBillCostEntity::getReconciliationStatus, Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()));
+        }
+        pushAllocatedCostCountDTO.setCount(wrapper.count());
+        return pushAllocatedCostCountDTO;
+    }
 
     @Override
     public void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto) {
