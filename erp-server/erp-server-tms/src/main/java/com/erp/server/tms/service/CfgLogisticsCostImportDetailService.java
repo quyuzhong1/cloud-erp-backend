@@ -24,7 +24,7 @@ public interface CfgLogisticsCostImportDetailService extends SuperService<CfgLog
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgLogisticsCostImportDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(CfgLogisticsCostImportDetailDTO.UpdateDTO dto);
 
     /**
     * 修改

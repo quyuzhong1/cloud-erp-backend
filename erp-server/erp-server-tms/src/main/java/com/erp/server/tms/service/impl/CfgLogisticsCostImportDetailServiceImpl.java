@@ -49,7 +49,7 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDetailDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDetailDTO.UpdateDTO addDTO) {
         CfgLogisticsCostImportDetailEntity cfgLogisticsCostImportDetailEntity = new CfgLogisticsCostImportDetailEntity();
         BeanMapperUtils.copy(addDTO, cfgLogisticsCostImportDetailEntity);
 
