@@ -376,6 +376,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
+        if(old.getInvalidStatus()){
+            throw new ServiceException(ApiError.BILL_VOID_EDIT_FORBIDDEN);
+        }
         handleUpdateData(addOrUpdateDTO);
 
         KolB2cApplicationEntity kolB2cApplicationEntity =  BeanMapperUtils.map(KolB2cApplicationEntity.class, addOrUpdateDTO);
@@ -725,6 +728,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException("只有待提交数据支持删除");
+        }
+        if (entity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
 
         //删除明细
