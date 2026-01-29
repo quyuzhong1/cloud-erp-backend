@@ -603,6 +603,11 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
     	/**
          * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
          */
