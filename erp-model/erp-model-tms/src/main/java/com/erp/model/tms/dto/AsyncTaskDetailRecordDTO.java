@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -8,23 +9,24 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-
+import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
 /**
  * <p>
- * 费用项配置字段配置请求响应实体
+ * 异步任务记录明细请求响应实体
  * </p>
  *
  * @author jack
- * @since 2026-01-20
+ * @since 2026-01-28
 */
 @Data
 @NoArgsConstructor
-public class CfgLogisticsCostImportDetailDTO implements Serializable {
+public class AsyncTaskDetailRecordDTO implements Serializable {
 
 
 
@@ -82,44 +84,44 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         private String  id;
 
         /**
-        * 物流商抬头字段
+        * 主表id
         */
-        private String sourceField;
+        private String mainId;
 
         /**
-        * 物流商明细字段
+        * 单据id
         */
-        private String sourceDetailField;
+        private String businessId;
 
         /**
-        * 是否唯一
+        * 单据编码
         */
-        private Boolean isUniqueKey;
+        private String businessCode;
 
         /**
-        * 是否绝对值
+        * 单据类型
         */
-        private Boolean isAbsoluteValue;
+        private String businessType;
 
         /**
-        * ERP字段id
+        * 开始时间
         */
-        private String targetFieldId;
+        private LocalDateTime startTime;
 
         /**
-        * ERP字段
+        * 结束时间
         */
-        private String targetField;
+        private LocalDateTime endTime;
 
         /**
-        * ERP字段名称
+        * 状态：success=成功,  failed=失败
         */
-        private String targetFieldName;
+        private String status;
 
         /**
-        * ERP字段类型
+        * json
         */
-        private String targetFieldType;
+        private String errorData;
 
 
         /**
@@ -166,48 +168,57 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         private String  id;
 
         /**
-        * 物流商抬头字段
+        * 主表id
         */
-        private String sourceField;
+        private String mainId;
 
         /**
-        * 物流商明细字段
+        * 单据id
         */
-        private String sourceDetailField;
+        private String businessId;
 
         /**
-        * 是否唯一
+        * 单据编码
         */
-        private Boolean isUniqueKey;
+        private String businessCode;
 
         /**
-        * 是否绝对值
+        * 单据类型
         */
-        private Boolean isAbsoluteValue;
+        private String businessType;
 
         /**
-        * ERP字段id
+        * 开始时间
         */
-        private String targetFieldId;
+        private LocalDateTime startTime;
 
         /**
-        * ERP字段
+        * 结束时间
         */
-        private String targetField;
+        private LocalDateTime endTime;
 
         /**
-        * ERP字段名称
+        * 状态：success=成功,  failed=失败
         */
-        private String targetFieldName;
+        private String status;
 
         /**
-        * ERP字段类型
+        * json
         */
-        private String targetFieldType;
+        private String errorData;
 
 
     }
 
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
 
     /**
     * 修改
@@ -229,69 +240,56 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
     public static class CommonDTO extends SuperDTO {
 
         /**
-         * 主表id
-         */
+        * 主表id
+        */
+        @NotBlank(message = "主表id不能为空")
+        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
-        * 物流商抬头字段
+        * 单据id
         */
-        @NotBlank(message = "物流商抬头字段不能为空")
-        @Size(max = 200,message = "物流商抬头字段最大长度不能超过200位")
-        private String sourceField;
+        @NotBlank(message = "单据id不能为空")
+        @Size(max = 19,message = "单据id最大长度不能超过19位")
+        private String businessId;
 
         /**
-        * 物流商明细字段
+        * 单据编码
         */
-        @Size(max = 200,message = "物流商明细字段最大长度不能超过200位")
-        private String sourceDetailField;
+        @NotBlank(message = "单据编码不能为空")
+        @Size(max = 50,message = "单据编码最大长度不能超过50位")
+        private String businessCode;
 
         /**
-        * 是否唯一
+        * 单据类型
         */
-        private Boolean isUniqueKey = false;
+        @NotBlank(message = "单据类型不能为空")
+        @Size(max = 50,message = "单据类型最大长度不能超过50位")
+        private String businessType;
 
         /**
-        * 是否绝对值
+        * 开始时间
         */
-        private Boolean isAbsoluteValue = false;
+        @NotNull(message = "开始时间不能为空")
+        private LocalDateTime startTime;
 
         /**
-        * ERP字段id
+        * 结束时间
         */
-        @NotBlank(message = "ERP字段id不能为空")
-        private String targetFieldId;
+        @NotNull(message = "结束时间不能为空")
+        private LocalDateTime endTime;
 
         /**
-        * ERP字段
+        * 状态：success=成功,  failed=失败
         */
-        private String targetField;
+        @NotBlank(message = "状态：success=成功,  failed=失败不能为空")
+        @Size(max = 50,message = "状态：success=成功,  failed=失败最大长度不能超过50位")
+        private String status;
 
         /**
-        * ERP字段名称
+        * json
         */
-        private String targetFieldName;
-
-        /**
-        * ERP字段类型
-        */
-        private String targetFieldType;
-        /**
-         * 费用项id
-         */
-        private String targetDetailFieldId;
-        /**
-         * 费用项
-         */
-        private String targetDetailField;
-        /**
-         * 费用项名称
-         */
-        private String targetDetailFieldName;
-        /**
-         * 排序
-         */
-        private Integer index;
+        private String errorData;
 
 
     }

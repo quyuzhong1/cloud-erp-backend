@@ -319,7 +319,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         @NotEmpty(message = "明细不能为空")
-        private List<CfgLogisticsCostImportDetailDTO.AddDTO> detailList;
+        private List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList;
     }
 
     /**

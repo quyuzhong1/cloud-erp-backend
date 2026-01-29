@@ -20,9 +20,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
-import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
-import com.erp.model.tms.entity.ReportPeriodMonthEntity;
-import com.erp.model.tms.enums.CostAllocationStatusEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -39,9 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -260,23 +255,7 @@ public class FirstMileCostAllocationController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        String reportPeriodStr = dto.getReportDate();
-        List<FirstMileCostAllocationEntity> entityList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(dto.getIds())){
-            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
-            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-            entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
-        }else if (CharSequenceUtil.isNotBlank(reportPeriodStr)){
-            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.lambdaQuery().eq(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.NOT.getCode()).list();
-            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-            entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
-        }
-        if (CollectionUtils.isEmpty(entityList)){
-            resultDTOS.add(BatchResultDTO.fail("","", MSG));
-            return failure(resultDTOS);
-        }
-        firstMileCostAllocationService.asyncBatchPushAllocatedCost(entityList,reportPeriodStr);
+        firstMileCostAllocationService.asyncBatchPushAllocatedCost(dto);
         return success();
     }
 
