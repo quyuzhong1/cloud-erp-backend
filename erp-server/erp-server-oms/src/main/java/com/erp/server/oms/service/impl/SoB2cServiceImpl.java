@@ -11864,4 +11864,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO dto) {
+        lambdaUpdate().eq(SoB2cEntity::getId, dto.getSoB2cId())
+                .set(StringUtils.isNotBlank(dto.getBillStatus()), SoB2cEntity::getBillStatus, dto.getBillStatus())
+                .set(SoB2cEntity::getSoOutstockDate,dto.getSoOutstockDate())
+                .update();
+
+        soB2cDetailService.lambdaUpdate().eq(SoB2cDetailEntity::getMainId, dto.getSoB2cId())
+                .set(SoB2cDetailEntity::getWarehouseId,dto.getWarehouseId())
+                .set(SoB2cDetailEntity::getWarehouseName,dto.getWarehouseName())
+                .set(SoB2cDetailEntity::getVirtualWarehouseId,dto.getVirtualWarehouseId())
+                .update();
+
+        // 记录跟踪号
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
+        if (Objects.nonNull(logisticsEntity)) {
+            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            soB2cLogisticsService.updateById(logisticsEntity);
+        }
+
+        if (dto.isAddOperationLog()) {
+            operateLogService.addModuleOperateLog("海外仓发货成功", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoB2cId(), "海外仓发货");
+        }
+
+    }
 }
