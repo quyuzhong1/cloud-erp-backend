@@ -258,6 +258,8 @@
             lbd.sign_time AS signTime,
             lb.ship_time AS shipTime,
             lb.remark,
+            lb.is_allocate_required,
+            lb.not_allocate_remark,
             lb.create_time AS createTime,
             COALESCE(fpt1.packing_status, fpt2.packing_status) AS packingStatus,
             fmb.status AS estimatedStatus,
