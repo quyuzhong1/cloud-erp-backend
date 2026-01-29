@@ -260,6 +260,16 @@ public class LogisticsBillDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 是否分摊
+         */
+        private Boolean isAllocateRequired;
+
+        /**
+         * 不分摊原因
+         */
+        private Boolean notAllocateRemark;
+
     }
 
     /**
