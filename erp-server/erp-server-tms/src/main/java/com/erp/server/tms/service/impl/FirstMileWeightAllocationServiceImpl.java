@@ -674,7 +674,8 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         for (WmsCartonDTO.DetailDTO cartonDetail : cartonDetailList) {
             //箱子明细设置的取消分摊
             if (cartonDetail.getIsCancelRequired()) {
-                return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "装箱SKU设置的取消分摊，不支持分摊");
+                log.warn("物流单【{}】的装箱内容物【{}】设置了取消分摊，跳过该箱子重量分摊计算", logisticsBillEntity.getTransportNo(), cartonDetail.getBoxNo());
+               continue;
             }
             FirstMileWeightAllocationEntity entity = new FirstMileWeightAllocationEntity();
             BeanMapper.copy(weightAllocationDTO, entity);
