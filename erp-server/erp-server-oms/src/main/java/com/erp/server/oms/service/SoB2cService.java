@@ -1167,4 +1167,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void retryPlatformOutbound( List<String> ids);
 
     void deleteB2cSoJob();
+
+    void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
 }
