@@ -268,7 +268,7 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 不分摊原因
          */
-        private Boolean notAllocateRemark;
+        private String notAllocateRemark;
 
     }
 
