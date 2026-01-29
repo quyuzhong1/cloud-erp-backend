@@ -431,7 +431,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private BigDecimal thirdActualWeight;
         /**
-         * 区域编码
+         * 区域编码【可排序】
          */
         private String subregionCode;
         /**
@@ -439,7 +439,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private String regionName;
         /**
-         * 部门id
+         * 部门id【可排序】
          */
         private String deptId;
         /**
@@ -447,7 +447,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private String deptName;
         /**
-         * 军区id
+         * 军区id【可排序】
          */
         private String partitionId;
         /**
@@ -455,7 +455,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private String partitionName;
         /**
-         * 是否分摊
+         * 是否分摊【可排序】
          */
         private Boolean isAllocateRequired;
         /**
@@ -463,7 +463,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private String isAllocateRequiredName;
         /**
-         * 不分摊原因
+         * 不分摊原因【可排序】
          */
         private String notAllocateRemark;
 
