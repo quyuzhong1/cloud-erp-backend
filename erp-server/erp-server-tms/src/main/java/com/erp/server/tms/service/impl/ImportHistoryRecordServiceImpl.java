@@ -539,7 +539,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //物流商信息
         excelDTO.setLogisticsSupplierName(costImportEntity.getDictPlatform());
         //付款类型
-        excelDTO.setPayType(logisticsPayTypeEnum.getName(excelDTO.getPayType()));
+        excelDTO.setPayType(CharSequenceUtil.isBlank(excelDTO.getPayType()) ? logisticsPayTypeEnum.PAY.getCode() : logisticsPayTypeEnum.getName(excelDTO.getPayType()));
 
         //物流单明细
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream()

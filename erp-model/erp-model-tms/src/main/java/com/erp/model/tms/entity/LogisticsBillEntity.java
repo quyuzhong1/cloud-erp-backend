@@ -192,6 +192,12 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("not_allocate_remark")
     private String notAllocateRemark;
 
+    /**
+     * 销售部门id
+     */
+    @TableField(exist = false)
+    private String salesDeptId;
+
     public static final String SALES_PLATFORM = "sales_platform";
 
     public static final String SHOP_ID = "shop_id";
