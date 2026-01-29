@@ -75,7 +75,9 @@
         lc.track_query_type AS trackQueryType,
         lb.platform_code as platformCode,
         lb.shipment_type as shipmentType,
-        lb.create_time AS createTime
+        lb.create_time AS createTime,
+        lb.is_allocate_required,
+        lb.not_allocate_remark
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false

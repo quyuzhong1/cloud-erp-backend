@@ -20,7 +20,7 @@ public class LogisticsLastMileCostExcelDTO implements Serializable {
      * 物流商
      */
     @ExcelProperty(value = "物流商", index = 0)
-    @FieldValid(fieldName = "物流商", isNotBlank = true, maxLength = 100)
+    @FieldValid(fieldName = "物流商",  maxLength = 100)
     private String logisticsSupplierName;
 
     /**
