@@ -24,6 +24,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
@@ -75,9 +76,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -2131,6 +2134,25 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
         }
     }
+    @Override
+    public FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto){
+        FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCountDTO = new FirstMileCostAllocationDTO.PushAllocatedCostCountDTO();
+        int count = 0;
+        if (CollUtil.isNotEmpty(dto.getIds())){
+            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
+            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+            count = listBySourceIds(sourceIds, null, null, null).size();
+        }else if (CharSequenceUtil.isNotBlank(dto.getReportDate())){
+            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.lambdaQuery()
+                    .eq(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.NOT.getCode())
+                    .list();
+            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+            count = listBySourceIds(sourceIds, null, null, null).size();
+        }
+        pushAllocatedCostCountDTO.setCount(count);
+        return pushAllocatedCostCountDTO;
+    }
+
     @Override
     public void asyncBatchPushAllocatedCost(FirstMileCostAllocationDTO.IdsDTO idsDTO){
         //新建一个任务

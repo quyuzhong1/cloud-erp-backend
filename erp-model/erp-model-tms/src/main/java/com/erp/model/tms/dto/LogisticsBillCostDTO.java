@@ -1048,7 +1048,20 @@ public class LogisticsBillCostDTO implements Serializable {
     	 */
     	private String type;
     	
+    } /**
+     * 支付状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushAllocatedCostCountDTO {
+        /**
+         *
+         */
+        private Integer count =0;
+
     }
+
+
     @Data
     @NoArgsConstructor
     public static class OutStockDTO {

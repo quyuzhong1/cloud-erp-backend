@@ -431,6 +431,18 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private List<String> ids;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PushAllocatedCostCountDTO {
+        /**
+         *
+         */
+        private Integer count =0;
+
+    }
+
+
     @Data
     @NoArgsConstructor
     public static class ResetIdsDTO extends PermissionsDTO {

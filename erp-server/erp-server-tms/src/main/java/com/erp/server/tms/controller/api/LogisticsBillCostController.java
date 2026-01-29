@@ -336,6 +336,19 @@ public class LogisticsBillCostController extends BaseController {
      	logisticsBillCostService.edit(dtoList);
      	return success();
      }
+
+
+    /**
+     * 下推分摊统计
+     * @author jack
+     * @date:  2025-01-29
+     * @return ApiResult
+     */
+    @PostMapping("/pushAllocationCount")
+    public ApiResult<LogisticsBillCostDTO.PushAllocatedCostCountDTO> pushAllocationCount(@RequestBody @Validated PushDTO dto) {
+        dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
+        return success(logisticsBillCostService.pushAllocationCount(dto));
+    }
      
      /**
       * 下推分摊
@@ -355,25 +368,6 @@ public class LogisticsBillCostController extends BaseController {
          dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
          logisticsBillCostService.batchAsyncPushAllocation(dto);
          return success();
-
-//         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-//         for (String id : dto.getIds()) {
-//             BatchResultDTO submit;
-//             try {
-//                 submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
-//             }catch (Exception e){
-//                 log.error("自发货费用 状态变更",e);
-//                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
-//                 if (ObjectUtil.isEmpty(entity)) {
-//                     submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 下推分摊");
-//                     resultDTOS.add(submit);
-//                     continue;
-//                 }
-//                 submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
-//             }
-//             resultDTOS.add(submit);
-//         }
-//         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
      }
      
      /**

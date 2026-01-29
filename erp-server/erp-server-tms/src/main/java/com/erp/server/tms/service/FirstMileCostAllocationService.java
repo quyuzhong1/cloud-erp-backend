@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -164,4 +165,5 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     void asyncPushAllocatedCost(String id, String taskId,String taskDetailId, FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList);
 
+    FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.@Valid IdsDTO dto);
 }
