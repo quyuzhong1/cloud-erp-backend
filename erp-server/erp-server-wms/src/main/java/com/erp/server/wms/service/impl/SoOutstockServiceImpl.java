@@ -1197,6 +1197,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDTO.setOutstockId(entity.getId());
             addDTO.setOutstockCode(entity.getCode());
             addDTO.setSourceCode(entity.getSoCode());
+            addDTO.setSalesDeptId(entity.getSalesDeptId());
             String soId = entity.getSoId();
             addDTO.setSourceId(soId);
             String orderType = entity.getOrderType();
