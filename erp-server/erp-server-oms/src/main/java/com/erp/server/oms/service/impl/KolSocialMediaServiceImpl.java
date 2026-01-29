@@ -417,6 +417,24 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
                 log.warn("views转换失败：{}", dto.getViews());
             }
         }
+
+        // 粉丝
+        if (StrUtil.isNotBlank(dto.getFollowerCount())) {
+            try {
+                entity.setFollowerCount(Long.parseLong(dto.getFollowerCount()));
+            } catch (NumberFormatException e) {
+                log.warn("followerCount转换失败：{}", dto.getFollowerCount());
+            }
+        }
+
+        // 转发
+        if (StrUtil.isNotBlank(dto.getRepostCount())) {
+            try {
+                entity.setRepostCount(Long.parseLong(dto.getRepostCount()));
+            } catch (NumberFormatException e) {
+                log.warn("repostCount转换失败：{}", dto.getRepostCount());
+            }
+        }
         
         // 评论数（comments）
         if (StrUtil.isNotBlank(dto.getComments())) {
