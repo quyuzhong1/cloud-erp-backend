@@ -1,20 +1,22 @@
 package com.erp.server.tms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
-import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
-import com.erp.model.tms.enums.CfgLogisticsCostImportCostTypeEnum;
-import com.erp.model.tms.enums.CfgLogisticsCostImportImportTypeEnum;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
 import com.erp.server.tms.service.CfgLogisticsCostImportService;
@@ -57,6 +59,8 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
 
     private Map<String, List<CfgLogisticsCostImportFieldEntity>> fieldMap;
 
+    private Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroup;
+
 
     private final CfgLogisticsCostImportService cfgLogisticsCostImportService = SpringUtil.getBean(CfgLogisticsCostImportService.class);
 
@@ -80,6 +84,7 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                                          Map<String, String> logisticsSupplierMap,
                                          Map<String, String> salesPlatformMap,
                                          Map<String, List<CfgLogisticsCostImportFieldEntity>> fieldMap,
+                                         Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroup,
                                          List<FindUserDTO> userList) {
         this.taskId = taskId;
         this.importType = importType;
@@ -89,7 +94,7 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
         this.logisticsSupplierMap = logisticsSupplierMap;
         this.salesPlatformMap = salesPlatformMap;
         this.fieldMap = fieldMap;
-
+        this.tmsCfgCostGroup = tmsCfgCostGroup;
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -129,7 +134,7 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
             }else {
                 excelDTO.setBusinessType(businessType);
 
-                String targetFieldName = excelDTO.getTargetFieldName();
+                String targetFieldName = excelDTO.getTargetFieldName().trim();
                 if(StringUtils.isNotBlank(targetFieldName)){
                     List<CfgLogisticsCostImportFieldEntity> fieldEntities = fieldMap.get(businessType);
                     if(CollUtil.isEmpty(fieldEntities)){
@@ -140,6 +145,34 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                             errorMsgList.add("【"+targetFieldName+"】字段基础数据不存在");
                         }else {
                             excelDTO.setTargetFieldId(fieldEntity.getId());
+                        }
+                    }
+
+                    if(Objects.equals(targetFieldName,"费用项明细")){
+                        String targetDetailFieldName = excelDTO.getTargetDetailFieldName().trim();
+                        if(StringUtils.isBlank(targetDetailFieldName)){
+                            errorMsgList.add(ApiError.LOGISTICS_BILL_DETAIL_FIELD_REQUIRED.getMsg());
+                        }else if(!targetDetailFieldName.contains("/") || targetDetailFieldName.split("/").length !=2){
+                            errorMsgList.add("格式错误，正确格式如：运费/物流费用");
+                        }else {
+                            String type ="";
+                            if(Objects.equals(businessType, SourceTypeEnum.LOGISTICS_BILL_COST.getCode())){
+                                type = DictCostAttributionEnum.SELF_DELIVER.getCode();
+                            }else {
+                                type = DictCostAttributionEnum.LAST_MILE.getCode();
+                            }
+                            List<TmsCfgCostEntity> tmsCfgCostEntities = tmsCfgCostGroup.get(type);
+
+                            List<String> list = Arrays.asList(targetDetailFieldName.split("/"));
+                            AllocationFeeTypeEnum allocationFeeTypeCode = AllocationFeeTypeEnum.getByName(list.get(0));
+                            TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostEntities.stream()
+                                    .filter(e -> Objects.equals(allocationFeeTypeCode, e.getDictCostCategory()) && Objects.equals(list.get(1), e.getCostName()))
+                                    .findFirst().orElse(null);
+                            if(Objects.isNull(tmsCfgCostEntity)){
+                                errorMsgList.add(StrUtil.format("【{}】费用项不存在",targetDetailFieldName));
+                            }else {
+                                excelDTO.setTargetDetailFieldId(tmsCfgCostEntity.getId());
+                            }
                         }
                     }
                 }

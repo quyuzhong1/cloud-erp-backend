@@ -114,11 +114,21 @@ public class CfgLogisticsCostExcelDTO implements Serializable {
     /**
      * 数大臣单据字段
      */
-    @ExcelProperty(value = "数大臣单据字段", index = 12)
-    @FieldValid(fieldName = "数大臣单据字段")
+    @ExcelProperty(value = "*数大臣单据字段", index = 12)
+    @FieldValid(fieldName = "数大臣单据字段",isNotBlank = true)
     private String  targetFieldName;
     @ExcelIgnore
     private String  targetFieldId;
+
+
+    /**
+     * 数大臣字段明细
+     */
+    @ExcelProperty(value = "数大臣字段明细", index = 13)
+    @FieldValid(fieldName = "数大臣字段明细")
+    private String  targetDetailFieldName;
+    @ExcelIgnore
+    private String  targetDetailFieldId;
 
     /**
      * 错误信息

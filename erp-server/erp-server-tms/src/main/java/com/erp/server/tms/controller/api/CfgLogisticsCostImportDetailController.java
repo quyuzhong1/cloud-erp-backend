@@ -2,7 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +17,11 @@ import com.common.core.controller.BaseController;
 import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import java.util.stream.Collectors;
-import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 
 /**
  * 费用项配置字段配置
@@ -51,7 +47,7 @@ public class CfgLogisticsCostImportDetailController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "费用项配置字段配置新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgLogisticsCostImportDetailDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgLogisticsCostImportDetailDTO.UpdateDTO dto) {
         return success(cfgLogisticsCostImportDetailService.add(dto));
     }
 
