@@ -575,5 +575,37 @@ public class LocalDateUtil {
     public static long calculateSeconds(LocalDateTime startTime, LocalDateTime endTime) {
         return startTime.until(endTime, ChronoUnit.SECONDS);
     }
+
+    /**
+     * 月结自动校对日期格式解析
+     * @param reportMonthStr 字符串
+     * @param errorMsgList 异常信息
+     * @return 本月首日
+     */
+    public static LocalDate parseCheckLocalDate(String reportMonthStr, List<String> errorMsgList) {
+        LocalDate reportMonth = null;
+        DateTimeFormatter[] formatters = new DateTimeFormatter[] {
+                DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd"),
+                DateTimeFormatter.ofPattern("yyyy年MM月dd")
+        };
+        String[] tryValues = new String[] {
+                reportMonthStr,
+                reportMonthStr,
+                reportMonthStr + "01"
+        };
+        for (int i = 0; i < formatters.length; i++) {
+            try {
+                reportMonth = LocalDate.parse(tryValues[i], formatters[i]).withDayOfMonth(1);
+                break;
+            } catch (Exception ignored) {
+                log.warn("解析日期失败: {}", tryValues[i]);
+            }
+        }
+        if (reportMonth == null) {
+            errorMsgList.add(CharSequenceUtil.format("导入月份格式【yyyy-MM-dd或yyyy/MM/dd或yyyy年MM月】错误:【{}】", reportMonthStr));
+        }
+        return reportMonth;
+    }
 }
 
