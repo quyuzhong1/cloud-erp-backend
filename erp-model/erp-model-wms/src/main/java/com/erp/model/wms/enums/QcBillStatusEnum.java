@@ -20,7 +20,9 @@ public enum QcBillStatusEnum implements EnumMessage {
     EXEMPTION("exemption", "免检"),
     FINISH_QC("finishQc", "已质检"),
     CANCEL("cancel", "取消"),
-    WAIT_RE_QC("waitReQc", "待复检");
+    WAIT_RE_QC("waitReQc", "待复检"),
+    VOIDED("voided", "已作废"),
+    ;
 
     /**
      * 类型
