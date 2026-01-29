@@ -2,11 +2,11 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.utils.Md5Util;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.InventoryBillStatusEnum;
 import com.erp.model.dmp.enums.InventoryOrderTypeEnum;
@@ -18,7 +18,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.server.dmp.pull.thread.PullErpDateThread;
+import com.erp.server.dmp.service.DictBasicService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +44,8 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private MQProducerService mqProducerService;
-
+    @Resource
+    private DictBasicService dictBasicService;
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
@@ -117,6 +118,8 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         warnMsgInfo.setTableName("dmp_wdt_warehouse_inventory_record");
         warnMsgInfo.setTableId(inputTaskId);
         warnMsgInfo.setKeyInfo(warnMsg);
+        List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
+        warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList) ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : new ArrayList<>());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }

@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -12,6 +13,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.wangdian.WdtOtherInventoryStockConsumer;
+import com.erp.server.dmp.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,8 @@ public abstract class DmpOutputWdtBaseTaskHandler extends DmpOutputTaskHandler {
 
     @Resource
     private WdtOtherInventoryStockConsumer wdtOtherInventoryStockConsumer;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -83,7 +87,12 @@ public abstract class DmpOutputWdtBaseTaskHandler extends DmpOutputTaskHandler {
         }catch (Exception e){
             log.error("DmpOutputWdtBaseTaskHandler pushData error, id: {}, requestData: {}", id, requestData, e);
             status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
-            msg = "【库存差异同步处理】 " + e.getMessage();
+            List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
+            String atUser = "";
+            if (CollUtil.isNotEmpty(viewDTOList)){
+                atUser = viewDTOList.stream().map(v -> CharSequenceUtil.format("<at user_id=\"{}\"></at>", v.getValue())).collect(Collectors.joining());
+            }
+            msg = atUser + "【库存差异同步处理】 " + e.getMessage();
         }
         dmpOutputUtils.updateStatus(id, status, CharSequenceUtil.isBlank(responseData) ? msg : responseData, msg);
     }
