@@ -352,6 +352,10 @@ public class LogisticsBillDTO implements Serializable {
          * 物流商id
          */
         private String logisticsSupplierId;
+        /**
+         * 部门id
+         */
+        private String salesDeptId;
 
         /**
          * 物流明细信息
