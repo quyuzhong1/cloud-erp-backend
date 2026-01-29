@@ -1435,6 +1435,12 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 箱号
          */
         private String boxNo;
+
+        /**
+         * 装箱明细id
+         */
+        private String cartonDetailId;
+
         /**
          * 装箱sku编码
          */
@@ -1485,6 +1491,12 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         @NotBlank(message = "物流单id不能为空")
         private String logisticsBillId;
+
+        /**
+         * 装箱明细id
+         */
+        private String cartonDetailId;
+
         /**
          * 装箱sku编码
          */
