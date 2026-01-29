@@ -268,6 +268,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FRowExpandType", 0);
         //工序
         entry.put("FOperID", (counter % 2 == 1) ? 10 : 0);
+        //项次
+        entry.put("FReplaceGroup", counter + 1);
         return entry;
     }
 
@@ -357,6 +359,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FRowExpandType", 0);
         //工序
         entry.put("FOperID", (counter % 2 == 1) ? 10 : 0);
+        //项次
+        entry.put("FReplaceGroup", counter + 1);
         return entry;
     }
 
