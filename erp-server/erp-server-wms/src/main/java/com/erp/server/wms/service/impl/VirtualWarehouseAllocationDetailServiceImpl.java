@@ -555,12 +555,12 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public List<VirtualWarehouseAllocationDetailEntity> listRepeatHandleDetail(List<String> fromWarehouseIdList, List<String> fromVirtualWarehouseIdList, List<String> skuIdList, List<String> detailIdList) {
+    public List<VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO> listRepeatHandleDetail(List<String> fromWarehouseIdList, List<String> fromVirtualWarehouseIdList, List<String> skuIdList) {
         if (CollUtil.isEmpty(fromWarehouseIdList) || CollUtil.isEmpty(fromVirtualWarehouseIdList)
-                || CollUtil.isEmpty(skuIdList) || CollUtil.isEmpty(detailIdList)) {
+                || CollUtil.isEmpty(skuIdList) ) {
             return Collections.emptyList();
         }
-        return baseMapper.listRepeatHandleDetail(fromWarehouseIdList,fromVirtualWarehouseIdList,skuIdList,detailIdList);
+        return baseMapper.listRepeatHandleDetail(fromWarehouseIdList,fromVirtualWarehouseIdList,skuIdList);
     }
 
 }
