@@ -255,11 +255,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
+    List<LogisticsBillCostEntity> listByCanPushAllocation(String type, String reportDate);
 
-    void asyncPushAllocation(String id,String taskId  ,String taskDetailId , String reportDate,LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap);
+    void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 
-    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
 }

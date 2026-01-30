@@ -17,7 +17,6 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.*;
@@ -2023,22 +2022,40 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto) {
-        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
-        taskDTO.setIds(dto.getIds());
-        taskDTO.setReportDate(dto.getReportDate());
-        taskDTO.setType(dto.getType());
+        List<LogisticsBillCostEntity> list = listByCanPushAllocation(dto.getType() ,dto.getReportDate());
 
         LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocatedCostCountDTO = new LogisticsBillCostDTO.PushAllocatedCostCountDTO();
-        List<String> ids = baseMapper.listByCanPushAllocation(taskDTO);
-        pushAllocatedCostCountDTO.setCount(ids.size());
+        pushAllocatedCostCountDTO.setCount(list.size());
         return pushAllocatedCostCountDTO;
     }
 
     @Override
-    public List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
+    public List<LogisticsBillCostEntity> listByCanPushAllocation(String type, String reportDate) {
+        LocalDate reportMonth = LocalDate.parse(reportDate + "-01");
+        LocalDateTime currentDateTime = reportMonth.atStartOfDay();
 
-        return baseMapper.listByCanPushAllocation(dto);
+        // startTime 设置为当月第一天的 00:00:00
+        LocalDateTime startTime = currentDateTime.withDayOfMonth(1)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+
+        // endTime 设置为当月最后一天的 23:59:59
+        LocalDateTime endTime = currentDateTime.withDayOfMonth(reportMonth.lengthOfMonth())
+                .withHour(23)
+                .withMinute(59)
+                .withSecond(59)
+                .withNano(999_999_999);
+        List<LogisticsBillCostEntity> list = lambdaQuery()
+                .ge(LogisticsBillCostEntity::getReconciliationMonth, startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                .eq(LogisticsBillCostEntity::getType, type)
+                .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
+                .list();
+        return list;
     }
+
 
     @Override
     public void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto) {
@@ -2070,346 +2087,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
         }
     }
-
-    @Async("tmsExecutor")
-    @Override
-    public void asyncPushAllocation(String id,String taskId ,String taskDetailId , String reportDate,LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap) {
-        log.error(StrUtil.format("asyncPushAllocation id: 【{}】, 执行线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
-        try {
-            asyncPushAllocationDetail(id, taskDetailId, reportDate, entity, smallBagCostAllocationList, logisticsBillEntity, allocationSettingDTO, feeTypeSettingMaps, rateMap);
-        } catch (Exception e) {
-            log.error("asyncPushAllocation id: 【{}】, 异常: 【{}】",id,e);
-            //把Exception e 转字符串
-            String errorMsg = ExceptionUtils.getStackTrace(e);
-            asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),errorMsg);
-        } finally {
-            asyncTaskRecordService.updateTaskFinally(taskId);
-        }
-        log.error(StrUtil.format("asyncPushAllocation id: 【{}】, 执行完成线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
-
-    }
-
-    private void asyncPushAllocationDetail(String id, String taskDetailId, String reportDate, LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap) {
-        String reconciliationStatus = entity.getReconciliationStatus();
-        LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
-                ? LogisticsBillCostTypeEnum.ESTIMATED : LogisticsBillCostTypeEnum.ACTUAL;
-        if(CollUtil.isNotEmpty(smallBagCostAllocationList)) {
-            if(smallBagCostAllocationList.stream().anyMatch(s -> SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(s.getFeeSource())) && costType.equals(LogisticsBillCostTypeEnum.ACTUAL)) {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"一个费用单只能下推一次费用分摊，不可重复下推分摊");
-                return;
-            }
-            if(smallBagCostAllocationList.stream().anyMatch(s -> s.getReportDate().equals(reportDate))) {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(), reportDate + "已存在下推分摊数据，不可下推分摊");
-                return;
-            }
-            if(smallBagCostAllocationList.stream().anyMatch(s -> !SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"存在历史未确认分摊数据，不可下推分摊");
-                return;
-            }
-        }
-
-        String outstockId = logisticsBillEntity.getOutstockId();
-        if(StringUtils.isBlank(outstockId)) {
-            asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"销售出库单id不存在");
-            return;
-        }
-
-        String weightPackageAllocation = allocationSettingDTO.getWeightPackageAllocation();
-        String packageOrgId = allocationSettingDTO.getPackageOrgId();
-        String packageWarehouseId = allocationSettingDTO.getPackageWarehouseId();
-
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
-        if(SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(logisticsBillEntity.getSourceType())) {
-            List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = FeignQuery.create(SoReturnInstockDetailEntity.class)
-                    .eq(SoReturnInstockDetailEntity::getMainId, outstockId).list();
-            if(CollUtil.isEmpty(soReturnInstockDetailEntityList)) {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"退货入库明细不存在");
-                return;
-            }
-            for(SoReturnInstockDetailEntity soReturnInstockDetailEntity : soReturnInstockDetailEntityList) {
-                SoOutstockDetailEntity soOutstockDetailEntity = new SoOutstockDetailEntity();
-                soOutstockDetailEntity.setId(soReturnInstockDetailEntity.getId());
-                soOutstockDetailEntity.setSkuId(soReturnInstockDetailEntity.getSkuId());
-                soOutstockDetailEntity.setSkuNo(soReturnInstockDetailEntity.getSkuNo());
-                soOutstockDetailEntity.setActualQty(soReturnInstockDetailEntity.getRealQty());
-                soOutstockDetailEntity.setWarehouseId(soReturnInstockDetailEntity.getWarehouseId());
-                soOutstockDetailEntityList.add(soOutstockDetailEntity);
-            }
-        }else {
-            soOutstockDetailEntityList = FeignQuery.create(SoOutstockDetailEntity.class)
-                    .eq(SoOutstockDetailEntity::getMainId, outstockId).list();
-            if(CollUtil.isEmpty(soOutstockDetailEntityList)) {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"销售出库单明细不存在");
-                return;
-            }
-            String warehouseId = FeignQuery.getById(SoOutstockEntity.class, outstockId).getWarehouseId();
-            soOutstockDetailEntityList.forEach(s -> s.setWarehouseId(warehouseId));
-        }
-
-        List<CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(Collections.singletonList(id));
-        Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
-        if(CollUtil.isNotEmpty(costList)) {
-            costList = costList.stream().filter(c -> costType.getCode().equals(c.getType()) && c.getIsAllocate()).collect(Collectors.toList());
-            costCategoryMaps = costList.stream().collect(Collectors.groupingBy(CostViewDTO::getDictCostCategory));
-        }
-
-        List<SmallBagCostAllocationEntity> addSmallBagCostAllocationEntityList = new ArrayList<>();
-        List<SmallBagCostAllocationDetailEntity> addSmallBagCostAllocationDetailEntityList = new ArrayList<>();
-
-        List<String> warehouseIds1 = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (CharSequenceUtil.isNotBlank(packageWarehouseId) && !warehouseIds1.contains(packageWarehouseId)){
-            warehouseIds1 = Stream.concat(warehouseIds1.stream(), Stream.of(packageWarehouseId)).collect(Collectors.toList());
-        }
-        Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, warehouseIds1)
-                .stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
-        Map<String, InventorySkuCostDetailEntity> unInventorySkuCostMap = new HashMap<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate parse = LocalDate.parse(reportDate + "-01", formatter);
-        List<InventorySkuCostEntity> inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, parse)
-                .eq(InventorySkuCostEntity::getStatus, "approve")
-                .in(CharSequenceUtil.isBlank(packageOrgId),InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
-                .eq(CharSequenceUtil.isNotBlank(packageOrgId),InventorySkuCostEntity::getCompanyId, packageOrgId)
-                .list();
-        Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
-        if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
-            List<String> warehouseIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            List<String> skuIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
-            List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery()
-                    .in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
-                    .in(CharSequenceUtil.isBlank(packageWarehouseId) && CollUtil.isNotEmpty(warehouseIds),InventorySkuCostDetailEntity::getWarehouseId, warehouseIds)
-                    .eq(CharSequenceUtil.isNotBlank(packageWarehouseId), InventorySkuCostDetailEntity::getWarehouseId,packageWarehouseId)
-                    .in(InventorySkuCostDetailEntity::getSkuId , skuIds).list();
-            if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
-                for(InventorySkuCostDetailEntity i : inventorySkuCostDetailEntityList) {
-                    InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(i.getMainId());
-                    String companyId = CharSequenceUtil.isBlank(packageOrgId) ? inventorySkuCostEntity.getCompanyId() : packageOrgId;
-                    String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? i.getWarehouseId() : packageWarehouseId;
-                    String skuId = i.getSkuId();
-                    unInventorySkuCostMap.put(companyId + "_" + warehouseId + "_" + skuId, i);
-                }
-            }
-        }
-
-        BigDecimal totalSkuCost = BigDecimal.ZERO;
-        List<ProductPackEntity> productPackEntityList = FeignQuery.create(ProductPackEntity.class)
-                .in(ProductPackEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
-                .list();
-        Map<String, BigDecimal> skuWeightCostMaps = productPackEntityList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getGrossWeight));
-        BigDecimal totalSkuWeightCost = BigDecimal.ZERO;
-        for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
-            String skuId = soOutstockDetailEntity.getSkuId();
-            Integer actualQty = soOutstockDetailEntity.getActualQty();
-            String orgId = CharSequenceUtil.isBlank(packageOrgId) ? wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId()) : packageOrgId;
-            String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? soOutstockDetailEntity.getWarehouseId() : packageWarehouseId;
-            InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
-            if(inventorySkuCostDetailEntity != null) {
-                totalSkuCost = totalSkuCost.add(inventorySkuCostDetailEntity.getProductCost().multiply(new BigDecimal(actualQty)));
-            }
-            BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
-            if(skuWeightCost != null) {
-                totalSkuWeightCost = totalSkuWeightCost.add(skuWeightCost.multiply(new BigDecimal(actualQty)));
-            }
-        }
-
-        SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = new SmallBagCostAllocationMainEntity();
-        String smallBagCostAllocationMainId = identifierGenerator.nextId(smallBagCostAllocationMainEntity).toString();
-        smallBagCostAllocationMainEntity.setId(smallBagCostAllocationMainId);
-        smallBagCostAllocationMainEntity.setCostId(id);
-        smallBagCostAllocationMainEntity.setReportDate(reportDate);
-        smallBagCostAllocationMainEntity.setReportStatus(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode());
-        smallBagCostAllocationMainEntity.setBigTableStatus(SmallBagCostAllocationBigTableStatusEnum.TODO.getCode());
-        smallBagCostAllocationMainEntity.setFeeSource(reconciliationStatus);
-
-        soOutstockDetailEntityList.sort((s1 , s2) -> s1.getActualQty().compareTo(s2.getActualQty()));
-        int i = 0;
-
-        Map<String, String> orgIdNameMaps = sysUserFeign.listAccountingCompany().stream().collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName));
-
-        String feeRule = entity.getFeeRule();
-        if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
-            if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
-                weightPackageAllocation = feeRule;
-            }
-        }
-
-        //物流组织
-        String logisticsSupplierId = "";
-        LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(entity.getChannelId());
-        if(Objects.nonNull(logisticsChannelEntity) && StringUtils.isNotBlank(logisticsChannelEntity.getMainId())){
-            LogisticsSupplierEntity LogisticsSupplierEntity = logisticsSupplierService.getById(logisticsChannelEntity.getMainId());
-            if(Objects.nonNull(LogisticsSupplierEntity)){
-                logisticsSupplierId = LogisticsSupplierEntity.getOrgId();
-            }
-        }
-
-        boolean skuCostFlag = false;
-        for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
-            i = i + 1;
-            String skuId = soOutstockDetailEntity.getSkuId();
-            String skuNo = soOutstockDetailEntity.getSkuNo();
-            SmallBagCostAllocationEntity smallBagCostAllocationEntity = new SmallBagCostAllocationEntity();
-            String mainId = identifierGenerator.nextId(smallBagCostAllocationEntity).toString();
-            smallBagCostAllocationEntity.setId(mainId);
-            smallBagCostAllocationEntity.setMainId(smallBagCostAllocationMainId);
-            smallBagCostAllocationEntity.setSkuId(skuId);
-            smallBagCostAllocationEntity.setSkuNo(skuNo);
-            smallBagCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
-
-            //组织id
-            String orgId = "";
-            if(CharSequenceUtil.isBlank(packageOrgId) || Objects.equals(CostAllocationOrgTypeEnum.BILL_ORG.getCode(),packageOrgId)){
-                //单据成本组织
-                orgId =  wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
-            }else if(Objects.equals(CostAllocationOrgTypeEnum.LOGISTICS_SUPPLIER_ORG.getCode(),packageOrgId)){
-                orgId = logisticsSupplierId;
-            }else {
-                orgId = packageOrgId;
-            }
-            String orgName = orgIdNameMaps.get(orgId);
-
-            Integer actualQty = soOutstockDetailEntity.getActualQty();
-            BigDecimal skuCostPre = BigDecimal.ZERO;
-            String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? soOutstockDetailEntity.getWarehouseId() : packageWarehouseId;
-            InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
-            if(inventorySkuCostDetailEntity != null) {
-                BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
-                if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
-                    skuCostPre = skuCost.multiply(new BigDecimal(actualQty)).divide(totalSkuCost, 8, RoundingMode.HALF_UP);
-                }
-                smallBagCostAllocationEntity.setUnitCost(skuCost);
-                smallBagCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
-            }else {
-                skuCostFlag = true;
-                smallBagCostAllocationEntity.setUnitCost(BigDecimal.ZERO);
-                smallBagCostAllocationEntity.setUnitCurrency("CNY");
-            }
-            BigDecimal skuWeightCostPre = BigDecimal.ZERO;
-            BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
-            if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0 && skuWeightCost != null) {
-                skuWeightCostPre = skuWeightCost.multiply(new BigDecimal(actualQty)).divide(totalSkuWeightCost, 8, RoundingMode.HALF_UP);
-            }
-
-            smallBagCostAllocationEntity.setDeliveryQty(actualQty);
-            BigDecimal billingWeight = entity.getBillingWeight();
-            BigDecimal skuWeight = null;
-            if(entity.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())) {
-                billingWeight = BigDecimal.ZERO;
-            }else {
-                if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
-                    billingWeight = entity.getBillingWeight();
-                }else if(ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(feeRule)) {
-                    billingWeight = entity.getActualWeight();
-                }else if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(feeRule)) {
-                    billingWeight = entity.getVolumeWeight();
-                }
-            }
-            if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)
-                    || WeightAllocationSmallBagEnum.NETWEIGHT.getCode().equals(weightPackageAllocation)
-                    || WeightAllocationSmallBagEnum.VOLUMEWEIGHT.getCode().equals(weightPackageAllocation)) {
-                skuWeight = billingWeight.multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
-                if(BigDecimal.ZERO.compareTo(billingWeight) != 0) {
-                    skuWeightCostPre = skuWeight.multiply(new BigDecimal(actualQty)).divide(billingWeight, 8, RoundingMode.HALF_UP);
-                }
-            }else if(WeightAllocationSmallBagEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
-                skuWeight = entity.getBillingWeightLogistics().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
-            }else if(WeightAllocationSmallBagEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(weightPackageAllocation)) {
-                skuWeight = skuWeightCostMaps.get(skuId).divide(new BigDecimal("1000"), 4 , RoundingMode.HALF_UP);
-            }
-            if(skuWeight == null) {
-                skuWeight = BigDecimal.ZERO;
-            }
-            smallBagCostAllocationEntity.setBillingWeight(billingWeight);
-            smallBagCostAllocationEntity.setSkuWeight(skuWeight);
-            addSmallBagCostAllocationEntityList.add(smallBagCostAllocationEntity);
-
-            for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
-                SmallBagCostAllocationDetailEntity smallBagCostAllocationDetailEntity = new SmallBagCostAllocationDetailEntity();
-                smallBagCostAllocationDetailEntity.setMainId(mainId);
-                String feeType = feeTypeSettingMap.getKey();
-                List<CostViewDTO> costViewDTOList = costCategoryMaps.get(feeType);
-                if(CollUtil.isEmpty(costViewDTOList)) {
-                    costViewDTOList = new ArrayList<>();
-                }
-                BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                String allocatedCurrency = "CNY";
-                if(CollUtil.isNotEmpty(costViewDTOList)) {
-                    allocatedCurrency = costViewDTOList.get(0).getCurrency();
-                }
-                String key = reportDate + "_" + allocatedCurrency;
-                BigDecimal rate = rateMap.get(key);
-                if(rate == null) {
-                    LocalDate localDate = LocalDate.parse(reportDate + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                    rate = dmpTaskFeign.getRate(localDate.withDayOfMonth(localDate.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), allocatedCurrency);
-                    if(ObjectUtil.isEmpty(rate)){
-                        log.error("币别【{}】,汇率为空，请维护汇率后再查询",allocatedCurrency);
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"汇率为空，请维护汇率后再查询");
-                        return;
-                    }
-                    rateMap.put(key, rate);
-                }
-                smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
-                BigDecimal billAmountExchange = smallBagCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4 , RoundingMode.DOWN);
-                smallBagCostAllocationDetailEntity.setBillAmountExchange(billAmountExchange);
-                smallBagCostAllocationDetailEntity.setFeeType(feeType);
-                String feeAllocationType = feeTypeSettingMap.getValue();
-                if(org.apache.commons.lang3.StringUtils.isBlank(feeAllocationType)) {
-                    feeAllocationType = CostAllocationEnum.WEIGHT_ALLOCATION.getCode();
-                }
-                smallBagCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
-                if(i < soOutstockDetailEntityList.size()) {
-                    if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
-                        smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(2, RoundingMode.DOWN));
-                        smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.multiply(skuWeightCostPre).setScale(2, RoundingMode.DOWN));
-                    }else {
-                        smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
-                        smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
-                    }
-                }else {
-                    smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
-                            .filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
-                    smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.subtract(addSmallBagCostAllocationDetailEntityList.stream()
-                            .filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmountExchange).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
-                }
-                smallBagCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
-                smallBagCostAllocationDetailEntity.setProductAllocatedAmount(smallBagCostAllocationDetailEntity.getAllocatedAmount()
-                        .divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
-                smallBagCostAllocationDetailEntity.setProductAllocatedAmountExchange(smallBagCostAllocationDetailEntity.getAllocatedAmountExchange()
-                        .divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
-                smallBagCostAllocationDetailEntity.setWeightAllocationType(weightPackageAllocation);
-                smallBagCostAllocationDetailEntity.setOrgId(orgId);
-                smallBagCostAllocationDetailEntity.setOrgName(orgName);
-                addSmallBagCostAllocationDetailEntityList.add(smallBagCostAllocationDetailEntity);
-            }
-        }
-
-        smallBagCostAllocationMainService.save(smallBagCostAllocationMainEntity);
-        if(CollUtil.isNotEmpty(addSmallBagCostAllocationEntityList)) {
-            smallBagCostAllocationService.saveBatch(addSmallBagCostAllocationEntityList);
-        }
-        if(CollUtil.isNotEmpty(addSmallBagCostAllocationDetailEntityList)) {
-            if(skuCostFlag) {
-                for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
-                    if(CostAllocationEnum.COST_ALLOCATION.getCode().equals(feeTypeSettingMap.getValue())) {
-                        addSmallBagCostAllocationDetailEntityList.forEach(a -> {
-                            if(a.getFeeType().equals(feeTypeSettingMap.getKey())) {
-                                a.setAllocatedAmount(BigDecimal.ZERO);
-                                a.setAllocatedAmountExchange(BigDecimal.ZERO);
-                                a.setProductAllocatedAmount(BigDecimal.ZERO);
-                                a.setProductAllocatedAmountExchange(BigDecimal.ZERO);
-                            }
-                        });
-                    }
-                }
-            }
-            smallBagCostAllocationDetailService.saveBatch(addSmallBagCostAllocationDetailEntityList);
-        }
-
-        lambdaUpdate().eq(LogisticsBillCostEntity::getId, entity.getId()).set(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKED.getCode()).update();
-
-        asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.SUCCESS.getCode(),"");
-    }
-
 
     @Transactional(rollbackFor = Exception.class)
 	@Override

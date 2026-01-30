@@ -347,27 +347,5 @@
             </if>
         </where>
     </select>
-    <select id="listByCanPushAllocation" resultType="java.lang.String">
-        SELECT
-            lbc.id
-        FROM
-            logistics_bill_cost AS lbc
-        WHERE
-            lbc.is_deleted = FALSE
-          AND lbc.reconciliation_status = 'confirmed'
-          and lbc.type = #{params.type}
-          and lbc.reconciliation_month = #{params.reportDate}
-          AND lbc.id NOT IN ( SELECT DISTINCT cost_id FROM small_bag_cost_allocation_main WHERE is_deleted = FALSE AND ( report_date = #{params.reportDate} OR report_status = 'confirmed' or fee_source ='confirmed' ))
-        UNION All
-        SELECT
-            lbc.id
-        FROM
-            logistics_bill_cost AS lbc
-        WHERE
-            lbc.is_deleted = FALSE
-          AND lbc.reconciliation_status ='estimateConfirm'
-          and lbc.type = #{params.type}
-          and lbc.reconciliation_month = #{params.reportDate}
-          AND lbc.id NOT IN ( SELECT DISTINCT cost_id FROM small_bag_cost_allocation_main WHERE is_deleted = FALSE AND ( report_date = #{params.reportDate} OR report_status = 'confirmed' ))
-    </select>
+
 </mapper>
