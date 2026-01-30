@@ -2072,7 +2072,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Async("tmsExecutor")
-    @DataIdempotent(keyIdName = "id")
     @Override
     public void asyncPushAllocation(String id,String taskId ,String taskDetailId , String reportDate,LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap) {
         log.error(StrUtil.format("asyncPushAllocation id: 【{}】, 执行线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
