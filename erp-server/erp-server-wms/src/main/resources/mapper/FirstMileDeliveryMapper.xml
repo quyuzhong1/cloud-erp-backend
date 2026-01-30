@@ -192,6 +192,7 @@
         concat(wcd.sku_no,'*',wcd.pack_qty) as boxDesc,
         wcd.sku_no as sku,
         wcd.sku_id as skuIds ,
+        wcd.is_cancel_required as isCancelRequired,
         concat(wcd.sku_no,':',wcd.sku_id)   as skuMapping
         from wms_carton_detail wcd where is_deleted = false
         )
@@ -199,7 +200,6 @@
         pt.source_id as id,
         pt.id taskId,
         pt.code taskCode,
-        pt.is_cancel_required as isCancelRequired,
         wc.id as boxId,
         wc.box_no,
         concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
@@ -212,6 +212,7 @@
         wcs.size_unit as sizeUnit,
         wcd.sku,
         wcd.skuIds,
+        wcd.isCancelRequired,
         wcd.skuMapping
         FROM packing_task pt
         INNER JOIN wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
