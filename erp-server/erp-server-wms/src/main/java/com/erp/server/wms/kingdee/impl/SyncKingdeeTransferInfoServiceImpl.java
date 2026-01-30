@@ -1,6 +1,5 @@
 package com.erp.server.wms.kingdee.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
@@ -19,13 +18,19 @@ import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.TransferInfoDetailEntity;
+import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.TransferInfoDetailService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleDetailService;
+import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.WmsPushMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -98,12 +103,6 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-
-        //根据来源查询parentId
-        if (CharSequenceUtil.equals(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),entity.getSourceType())) {
-            List<VirtualWarehousePushHandleDetailEntity> pushDetailList = virtualWarehousePushHandleDetailService.listBySourceId(entity.getSourceId());
-            wmsPushMsgEntity.setParentId(CollUtil.isEmpty(pushDetailList) ?  "" : pushDetailList.stream().map(VirtualWarehousePushHandleDetailEntity::getId).collect(Collectors.joining(",")));
-        }
         wmsPushMsgService.save(wmsPushMsgEntity);
         return null;
     }
