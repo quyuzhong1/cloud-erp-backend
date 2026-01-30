@@ -1371,6 +1371,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             soReturnInstockDetailService.delete(ids);
         }
         this.save(instockEntity);
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", instockEntity.getCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), instockEntity.getId(), "新增操作");
         return soReturnInstockDetailService.saveBatch(detailEntityList);
     }
 

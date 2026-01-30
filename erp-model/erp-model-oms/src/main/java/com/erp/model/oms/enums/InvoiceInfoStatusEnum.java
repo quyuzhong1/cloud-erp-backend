@@ -16,6 +16,8 @@ public enum InvoiceInfoStatusEnum implements EnumMessage {
 	INVOICING("invoicing", "开票中"),
 	INVOICE_FAILED("invoiceFailed", "开票失败"),
 	INVOICE_SUCCESS("invoiceSuccess", "开票成功"),
+	CANCELED("canceled", "已取消"),
+	VOIDED("voided", "已作废"),
     ;
     /**
      * 类型

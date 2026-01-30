@@ -33,6 +33,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
@@ -113,6 +114,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     
     @Resource
     private DmpInputTaskService dmpInputTaskService;
+    
+    @Resource
+    private DmpInputTaskFileHisService dmpInputTaskFileHisService;
     
     @Resource
     private DmpInputFileMongoRelationService dmpInputFileMongoRelationService;
@@ -687,6 +691,28 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 		List<List<String>> partition = Lists.partition(list, 50000);
 		for(List<String> p : partition) {
 			this.getBaseMapper().dmpInputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
+	}
+	
+	@Override
+	public void dmpFdsDeleteHisFile(String beforeUpdateTime, String size) {
+		List<DmpInputTaskFileHisEntity> list = dmpInputTaskFileHisService.lambdaQuery()
+				.ne(DmpInputTaskFileHisEntity::getFileUrl, "")
+				.lt(DmpInputTaskFileHisEntity::getUpdateTime, beforeUpdateTime)
+				.last(" limit " + size + " ")
+				.select(DmpInputTaskFileHisEntity::getId , DmpInputTaskFileHisEntity::getFileUrl)
+				.list();
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<DmpInputTaskFileHisEntity>> partition = Lists.partition(list, 1000);
+		for(List<DmpInputTaskFileHisEntity> p : partition) {
+			FastDFSClientUtil.deleteBatchFile(p.stream().map(DmpInputTaskFileHisEntity::getFileUrl).collect(Collectors.toList()));
+			dmpInputTaskFileHisService.lambdaUpdate()
+			.in(DmpInputTaskFileHisEntity::getId, p.stream().map(DmpInputTaskFileHisEntity::getId).collect(Collectors.toList()))
+			.set(DmpInputTaskFileHisEntity::getFileUrl, "")
+			.update();
 		}
 	}
 

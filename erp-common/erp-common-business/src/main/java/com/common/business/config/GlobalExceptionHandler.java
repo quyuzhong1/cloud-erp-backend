@@ -192,6 +192,17 @@ public class GlobalExceptionHandler {
         return buildResult(ApiError.HTTP_UNKNOWN);
     }
 
+    /** RuntimeException 异常处理（确保异常消息能传递到前端） */
+    @ExceptionHandler(RuntimeException.class)
+    public ApiResult<?> handleRuntimeException(RuntimeException e) {
+        log.error("[RuntimeException] {}", e.getMessage(), e);
+        // 优先使用异常消息，如果为空则使用默认消息
+        String msg = CharSequenceUtil.isNotBlank(e.getMessage()) 
+                ? e.getMessage() 
+                : MessageUtils.getMessage(ApiError.HTTP_UNKNOWN);
+        return buildResult(ApiError.HTTP_UNKNOWN.getCode(), msg);
+    }
+
     @ExceptionHandler(Exception.class)
     public ApiResult<?> handleGenericException(Exception e) {
         log.error("[UnknownException] {}", e.getMessage(), e);

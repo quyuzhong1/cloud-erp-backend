@@ -171,6 +171,17 @@ public class KolSocialMediaDTO implements Serializable {
         */
         private String createUserName;
 
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+
     }
 
     /**
