@@ -95,36 +95,18 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
 
     private void pushSmallBagCostAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
         String taskId = dto.getTaskId();
-        String type ="";
-        if(dto.getBusinessType().equals(SourceTypeEnum.LOGISTICS_BILL_COST.getCode())){
-            type = DictCostAttributionEnum.SELF_DELIVER.getCode(); //自发货
-        }else if(dto.getBusinessType().equals(SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode())){
-            type = DictCostAttributionEnum.LAST_MILE.getCode();//尾程
-        }else {
-            asyncTaskRecordService.updateTask(taskId, AsyncTaskRecordStatusEnum.FAILED.getCode(),"businessType【"+dto.getBusinessType()+"】对应处理方式不存在");
-            return ;
-        }
 
-        //所有 类型=自发货。状态是账单确认和暂估确认的物流单费用
-        LambdaQueryChainWrapper<LogisticsBillCostEntity> wrapper = logisticsBillCostService.lambdaQuery()
-                .eq(LogisticsBillCostEntity::getType, type);
-        if(CollUtil.isNotEmpty(dto.getIds())){
-            wrapper.in(LogisticsBillCostEntity::getId,dto.getIds());
-        }else {
-            wrapper.in(LogisticsBillCostEntity::getReconciliationStatus, Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()));
-        }
-        List<LogisticsBillCostEntity> list = wrapper.list();
-
-
-        if (CollectionUtils.isEmpty(list)){
+        List<String> ids = logisticsBillCostService.listByCanPushAllocation(dto);
+        if (CollectionUtils.isEmpty(ids)){
             asyncTaskRecordService.updateTask(taskId, AsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
             return;
         }else {
-            asyncTaskRecordService.lambdaUpdate().set(AsyncTaskRecordEntity::getDetailCount,list.size()).eq(AsyncTaskRecordEntity::getId,taskId).update();
+            asyncTaskRecordService.lambdaUpdate().set(AsyncTaskRecordEntity::getDetailCount,ids.size()).eq(AsyncTaskRecordEntity::getId,taskId).update();
         }
 
+        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByIds(ids);
+
         //查询所有小包费用
-        List<String> ids = list.stream().map(LogisticsBillCostEntity::getId).collect(Collectors.toList());
         List<SmallBagCostAllocationMainEntity> smallBagCostAllocationMainEntityList = smallBagCostAllocationMainService.lambdaQuery()
                 .in(SmallBagCostAllocationMainEntity::getCostId, ids).list();
         Map<String, List<SmallBagCostAllocationMainEntity>> smallBagCostAllocationGroupByCostId = smallBagCostAllocationMainEntityList.stream().collect(Collectors.groupingBy(SmallBagCostAllocationMainEntity::getCostId));

@@ -418,12 +418,17 @@ public class FirstMileCostAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class IdsDTO extends PermissionsDTO {
+
         /**
          *核算日期
          */
         @NotBlank(message = "核算日期不能为空")
         private String reportDate;
 
+        /**
+         *核算日期
+         */
+        private String reportPeriodId;
         /**
          * 表 ids
          */
