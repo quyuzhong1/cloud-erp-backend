@@ -2056,6 +2056,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public BatchResultDTO pushWeightAllocation(LogisticsBillEntity entity) throws InterruptedException {
+        if (!entity.getIsAllocateRequired()) {
+            return BatchResultDTO.fail(entity.getId(), entity.getOutstockCode(), "设置为不需要重量分摊，不能下推重量分摊");
+        }
+
         //重量分摊基础数据
         List<TmsFirstMileLogisticDTO.WeightAllocationDTO> list = baseMapper.assembleFirstMileEstimatedList(Collections.singletonList(entity.getId()));
         if(list.isEmpty()){
@@ -2258,6 +2262,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (!isAllocateRequired && StringUtils.isBlank(notAllocateRemark)) {
             return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"不分摊时，需填写不分摊备注");
         }
+        //判断是否已下推重量分摊
+        List<FirstMileWeightAllocationEntity> firstMileWeightAllocationList = firstMileWeightAllocationService.listByLogisticsBillIds(Collections.singletonList(id));
+        if (CollUtil.isNotEmpty(firstMileWeightAllocationList)) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"已下推重量分摊，无法修改是否分摊状态");
+        }
+
         logisticsBill.setIsAllocateRequired(isAllocateRequired);
         logisticsBill.setNotAllocateRemark(notAllocateRemark);
         if (!isAllocateRequired) {
