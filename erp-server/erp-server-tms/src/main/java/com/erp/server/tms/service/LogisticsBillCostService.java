@@ -4,6 +4,7 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.AsyncTaskRecordDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
@@ -259,4 +260,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void asyncPushAllocation(String id,String taskId  ,String taskDetailId , String reportDate,LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
+
+    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
 }
