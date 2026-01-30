@@ -422,5 +422,49 @@ public class TemplateManagementDTO implements Serializable {
         private Boolean disabled;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class TemplateResultDTO{
+        /**
+         * id
+         */
+        private String id;
 
+        /**
+         * 单据类型 transferOut
+         * sys/common/enumDropDown?type=SourceType
+         */
+        private String bizType;
+        /**
+         * 模板类型 shippingLabel
+         * sys/common/enumDropDown?type=TemplateManagementType
+         *
+         */
+        private String type;
+
+        /**
+         * 模板名称
+         */
+        private String name;
+
+        /**
+         * 前端渲染配置JSON
+         */
+        private String content;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TemplateParamsDTO{
+        /**
+         * 单据类型 transferOut
+         * sys/common/enumDropDown?type=TemplateManagementType
+         */
+        private String bizType;
+        /**
+         * 模板类型 shippingLabel
+         * sys/common/enumDropDown?type=SourceType
+         */
+        private String type;
+    }
 }
