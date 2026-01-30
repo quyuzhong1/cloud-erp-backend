@@ -176,7 +176,7 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
      */
     public VirtualWarehousePushHandleEntity getByAllocation(VirtualWarehouseAllocationEntity allocationEntity) {
         VirtualWarehousePushHandleEntity oldPushHandleEntity = getBySourceId(allocationEntity.getId());
-        if (ObjUtil.isEmpty(oldPushHandleEntity)) {
+        if (ObjUtil.isNotEmpty(oldPushHandleEntity)) {
             return oldPushHandleEntity;
         }
         VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(allocationEntity.getId(),
