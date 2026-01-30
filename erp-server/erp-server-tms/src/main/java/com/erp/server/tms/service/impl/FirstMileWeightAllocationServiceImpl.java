@@ -569,7 +569,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public List<FirstMileWeightAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds) {
-        if (logisticsBillIds.isEmpty()){
+        if (CollUtil.isNotEmpty(logisticsBillIds)){
             return this.lambdaQuery().in(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillIds).list();
         }
         return Collections.emptyList();
