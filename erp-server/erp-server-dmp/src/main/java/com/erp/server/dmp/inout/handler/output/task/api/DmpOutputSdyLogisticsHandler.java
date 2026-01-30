@@ -101,7 +101,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
         if(CollUtil.isNotEmpty(changeOrderPlatformCodeList)) {
         	aliexpressOrderTimeMap = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, changeOrderPlatformCodeList)
         		.isNotNull(DmpSoOutstockDetailEntity::getEstimateInvestmentTime).list()
-        		.stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getThirdOrderCode, DmpSoOutstockDetailEntity::getEstimateInvestmentTime));
+        		.stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getThirdOrderCode, DmpSoOutstockDetailEntity::getEstimateInvestmentTime , (d1 , d2) -> d1));
         }
         
         Map<String, String> map = new HashMap<>();
