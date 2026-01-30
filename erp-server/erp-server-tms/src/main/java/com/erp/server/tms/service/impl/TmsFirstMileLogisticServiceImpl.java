@@ -2056,7 +2056,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public BatchResultDTO pushWeightAllocation(LogisticsBillEntity entity) throws InterruptedException {
-        if (!entity.getIsAllocateRequired()) {
+        if (!entity.getIsAllocateWeightRequired()) {
             return BatchResultDTO.fail(entity.getId(), entity.getOutstockCode(), "设置为不需要重量分摊，不能下推重量分摊");
         }
 
@@ -2256,7 +2256,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (ObjectUtil.isEmpty(logisticsBill)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流单");
         }
-        if (logisticsBill.getIsAllocateRequired().equals(isAllocateRequired)) {
+        if (logisticsBill.getIsAllocateWeightRequired().equals(isAllocateRequired)) {
             return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"状态无变化，无需更新");
         }
         if (!isAllocateRequired && StringUtils.isBlank(notAllocateRemark)) {
@@ -2268,10 +2268,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"已下推重量分摊，无法修改是否分摊状态");
         }
 
-        logisticsBill.setIsAllocateRequired(isAllocateRequired);
-        logisticsBill.setNotAllocateRemark(notAllocateRemark);
+        logisticsBill.setIsAllocateWeightRequired(isAllocateRequired);
         if (!isAllocateRequired) {
-            logisticsBill.setNotAllocateRemark(notAllocateRemark);
+            logisticsBill.setNotAllocateWeightRemark(notAllocateRemark);
+        } else {
+            logisticsBill.setNotAllocateWeightRemark("");
         }
         boolean update = logisticsBillService.updateById(logisticsBill);
         if (!update) {

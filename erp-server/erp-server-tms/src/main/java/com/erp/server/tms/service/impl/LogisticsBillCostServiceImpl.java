@@ -2119,6 +2119,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		if(org.apache.commons.lang3.StringUtils.isBlank(outstockId)) {
 			throw new ServiceException("销售出库单id不存在");
 		}
+        //小包分摊设置未开启
+        if (!logisticsBillEntity.getIsAllocateCostRequired()) {
+            throw new  ServiceException(ApiError.LOGISTICS_SMALL_BAG_NOT_CAN_Allocate);
+        }
+
 		List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
 		if(SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(logisticsBillEntity.getSourceType())) {
 			List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = FeignQuery.create(SoReturnInstockDetailEntity.class)

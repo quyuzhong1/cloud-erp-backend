@@ -1667,6 +1667,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_SELECT_AT_LEAST_ONE(13624,"明细至少勾选一个识别单号"),
     LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED(13625,"数大臣单据字段【{0}】不允许重复"),
     LOGISTICS_BILL_DETAIL_FIELD_REQUIRED(13626,"数大臣单据明细字段不允许为空"),
+    LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
 
     /**
      * 财务管理 错误 信息 14000-14500
