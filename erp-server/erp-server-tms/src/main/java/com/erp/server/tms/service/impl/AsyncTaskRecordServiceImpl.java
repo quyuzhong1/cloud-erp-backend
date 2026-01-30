@@ -31,6 +31,15 @@ public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecord
 
     @Override
     public String addTask(String businessType, String json){
+        Integer count = lambdaQuery()
+                .eq(AsyncTaskRecordEntity::getBusinessType, businessType)
+                .eq(AsyncTaskRecordEntity::getDataJson, json)
+                .eq(AsyncTaskRecordEntity::getStatus, AsyncTaskRecordStatusEnum.ING.getCode())
+                .count();
+        if(count > 0){
+            return null;
+        }
+
         AsyncTaskRecordEntity entity = new AsyncTaskRecordEntity();
         entity.setBusinessType(businessType);
         entity.setDataJson(json);
