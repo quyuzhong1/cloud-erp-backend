@@ -189,8 +189,10 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
                 	}else {
                 		shudiyunB2cOrderDTO.setLogistics_delivery_time(signTimeFormat);
                 	}
+                	shudiyunB2cOrderDTO.setSigned_mode("平台签收");
                 }else {
                 	shudiyunB2cOrderDTO.setLogistics_delivery_time(signTimeFormat);
+                	shudiyunB2cOrderDTO.setSigned_mode("物流签收");
                 }
 
                 shudiyunB2cOrderDTO.setParent_node_no(dmpSoLogisticsEntity.getOutstockCode());
