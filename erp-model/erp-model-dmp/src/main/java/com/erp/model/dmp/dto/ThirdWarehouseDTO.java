@@ -1,6 +1,8 @@
 package com.erp.model.dmp.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -396,7 +398,9 @@ public class ThirdWarehouseDTO implements Serializable {
     }
 
     @Data
+    @Builder
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class QueryMapParamDTO {
         /**
          * 系统类型
