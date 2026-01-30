@@ -4,7 +4,9 @@ package com.erp.server.sys.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.sys.entity.TemplateManagementEntity;
+import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.server.sys.query.TemplateManagementQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -250,6 +252,17 @@ public class TemplateManagementController extends BaseController {
     public ApiResult<Object> exportList(@RequestBody @Validated TemplateManagementDTO.PagingParamDTO dto, HttpServletResponse response) {
         templateManagementService.exportList(dto, response);
         return success();
+    }
+
+
+    /**
+     * 查询模板管理
+     * @param  dto
+     * @return
+     */
+    @PostMapping("/getTemplateByType")
+    public ApiResult<List<TemplateManagementDTO.TemplateResultDTO>> getTemplateByType(@RequestBody @Validated TemplateManagementDTO.TemplateParamsDTO dto){
+        return success(templateManagementService.getTemplateByType(dto));
     }
 
 }
