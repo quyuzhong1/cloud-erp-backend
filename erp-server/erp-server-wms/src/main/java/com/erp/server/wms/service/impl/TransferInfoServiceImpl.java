@@ -1267,6 +1267,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOS = dmpThirdMappingFeign.listQueryMapping(queryMapParamDTO);
         if (CollUtil.isNotEmpty(queryMapDTOS) && queryMapDTOS.stream().anyMatch(e -> warehouseIdSet.contains(e.getSysId()))) {
             log.warn("直接调拨单同步旺店通时存在库存同步配置，调拨单号：{}", entity.getCode());
+            log.warn("直接调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), warehouseIdSet);
             return;//存在库存同步的配置则不再推送旺店通
         }
         //查询三方仓库映射

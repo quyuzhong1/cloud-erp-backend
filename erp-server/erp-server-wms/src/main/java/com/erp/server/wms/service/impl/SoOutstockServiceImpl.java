@@ -4161,7 +4161,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .build();
         List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOS = dmpThirdMappingFeign.listQueryMapping(queryMapParamDTO);
         if (CollUtil.isNotEmpty(queryMapDTOS) && queryMapDTOS.stream().anyMatch(e -> e.getSysId().equals(entity.getWarehouseId()))) {
-            log.warn("旺店通已配置库存同步, 不推送旺店通, 销售出库单Code={}", entity.getCode());
+            log.warn("销售出库单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getWarehouseId());
             return;//存在库存同步的配置则不再推送旺店通
         }
         List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
