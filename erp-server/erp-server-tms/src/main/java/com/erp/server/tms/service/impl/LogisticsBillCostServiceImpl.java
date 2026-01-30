@@ -2023,17 +2023,21 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto) {
+        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
+        taskDTO.setIds(dto.getIds());
+        taskDTO.setReportDate(dto.getReportDate());
+        taskDTO.setType(dto.getType());
+
         LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocatedCostCountDTO = new LogisticsBillCostDTO.PushAllocatedCostCountDTO();
-        //所有 类型=自发货。状态是账单确认和暂估确认的物流单费用
-        LambdaQueryChainWrapper<LogisticsBillCostEntity> wrapper = lambdaQuery()
-                .eq(LogisticsBillCostEntity::getType, dto.getType());
-        if(CollUtil.isNotEmpty(dto.getIds())){
-            wrapper.in(LogisticsBillCostEntity::getId,dto.getIds());
-        }else {
-            wrapper.in(LogisticsBillCostEntity::getReconciliationStatus, Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()));
-        }
-        pushAllocatedCostCountDTO.setCount(wrapper.count());
+        List<String> ids = baseMapper.listByCanPushAllocation(taskDTO);
+        pushAllocatedCostCountDTO.setCount(ids.size());
         return pushAllocatedCostCountDTO;
+    }
+
+    @Override
+    public List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
+
+        return baseMapper.listByCanPushAllocation(dto);
     }
 
     @Override
@@ -2058,6 +2062,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         taskDTO.setReportDate(dto.getReportDate());
         taskDTO.setTaskId(taskId);
         taskDTO.setBusinessType(businesType);
+        taskDTO.setType(dto.getType());
         SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, taskDTO, taskId);
         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
             log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
@@ -2067,7 +2072,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Async("tmsExecutor")
-    @DataIdempotent(keyIdName = "id")
     @Override
     public void asyncPushAllocation(String id,String taskId ,String taskDetailId , String reportDate,LogisticsBillCostEntity entity, List<SmallBagCostAllocationMainEntity> smallBagCostAllocationList, LogisticsBillEntity logisticsBillEntity, AllocationSettingDTO allocationSettingDTO, Map<String, String> feeTypeSettingMaps, Map<String, BigDecimal> rateMap) {
         log.error(StrUtil.format("asyncPushAllocation id: 【{}】, 执行线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
@@ -2402,6 +2406,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
 
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, entity.getId()).set(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKED.getCode()).update();
+
+        asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.SUCCESS.getCode(),"");
     }
 
 
