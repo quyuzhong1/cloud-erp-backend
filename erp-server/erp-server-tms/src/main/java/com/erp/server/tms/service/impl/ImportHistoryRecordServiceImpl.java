@@ -174,6 +174,22 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     @Override
     public BatchResultDTO importFile(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO) {
+        if (CharSequenceUtil.isBlank(importSyncDTO.getFileName())) {
+            return BatchResultDTO.fail(importSyncDTO.getTaskId(),importSyncDTO.getFileName(),ApiError.LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND.getMsg());
+        }
+        //查询配置主表信息
+        List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList = cfgLogisticsCostImportService.listByImport(importSyncDTO.getFileName(), importSyncDTO.getBusinessType(), importSyncDTO.getCostType());
+        if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
+            return BatchResultDTO.fail(importSyncDTO.getTaskId(),importSyncDTO.getFileName(),"无法识别导入模板，请检查配置是否正确");
+        }
+        //查询配置明细信息
+        List<String> mainIdList = cfgLogisticsCostImportList.stream().map(CfgLogisticsCostImportEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailEntity> importDetailList =  cfgLogisticsCostImportDetailService.listByMainIdList(mainIdList);
+        if (CollUtil.isEmpty(importDetailList)) {
+            return BatchResultDTO.fail(importSyncDTO.getTaskId(),importSyncDTO.getFileName(),ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND.getMsg());
+        }
+        importSyncDTO.setCfgLogisticsCostImportList(cfgLogisticsCostImportList);
+        importSyncDTO.setImportDetailList(importDetailList);
         importSyncDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         String taskId = downloadTaskFeign.saveImportTask("物流商费用导入", IMPORT_TMS_IMPORT_HISTORY_RECORD.getCode(), importSyncDTO);
         return  BatchResultDTO.success(taskId,importSyncDTO.getFileName(),"导入成功");
@@ -182,21 +198,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     @Override
     public BatchResultDTO preprocessingImportExcel(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO) {
-        if (CharSequenceUtil.isBlank(importSyncDTO.getFileName())) {
-            throw new ServiceException(ApiError.LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND);
-        }
-        //查询配置主表信息
-        List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList = cfgLogisticsCostImportService.listByImport(importSyncDTO.getFileName(), importSyncDTO.getBusinessType(), importSyncDTO.getCostType());
-        if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
-            return BatchResultDTO.fail(importSyncDTO.getTaskId(),importSyncDTO.getFileName(),"未找到配置信息");
-        }
-        //查询配置明细信息
-        List<String> mainIdList = cfgLogisticsCostImportList.stream().map(CfgLogisticsCostImportEntity::getId).distinct().collect(Collectors.toList());
-        List<CfgLogisticsCostImportDetailEntity> importDetailList =  cfgLogisticsCostImportDetailService.listByMainIdList(mainIdList);
-        if (CollUtil.isEmpty(importDetailList)) {
-            throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
-        }
-        Map<String,List<CfgLogisticsCostImportDetailEntity>> impotyDetailMap = importDetailList.stream().collect(Collectors.groupingBy(CfgLogisticsCostImportDetailEntity::getMainId));
+        Map<String,List<CfgLogisticsCostImportDetailEntity>> impotyDetailMap = importSyncDTO.getImportDetailList().stream().collect(Collectors.groupingBy(CfgLogisticsCostImportDetailEntity::getMainId));
 
         //下载文件
         byte[] bytes = fileFeign.downloadFile(importSyncDTO.getFileUrl());
@@ -205,7 +207,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         String batchNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
         importSyncDTO.setCode(batchNo);
 
-        for (CfgLogisticsCostImportEntity costImportEntity : cfgLogisticsCostImportList) {
+        for (CfgLogisticsCostImportEntity costImportEntity : importSyncDTO.getCfgLogisticsCostImportList()) {
             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList = impotyDetailMap.get(costImportEntity.getId());
             if (CollUtil.isEmpty(cfgImportDetailList)) {
                 throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
@@ -348,7 +350,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         } else {
             /**
-             * 不存在则是走纵横向费用项处理
+             * 不存在则是走横向费用项处理
              */
             for (JSONObject jsonObject :  successList) {
                 //主数据
