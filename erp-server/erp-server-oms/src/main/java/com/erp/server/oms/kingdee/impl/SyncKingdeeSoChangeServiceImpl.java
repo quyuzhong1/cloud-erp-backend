@@ -252,6 +252,19 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        // 原销售订单金蝶内码、原销售订单分录内码（供 DMP 使用 SaveXSaleOrder 时入参）
+        resultMap.put("saleOrderBillId", soInfo.getSyncKingdeeId());
+        List<String> soDetailIdsForEntry = detailList.stream().map(SoChangeDetailDTO.ViewDTO::getSoDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailListForEntry = soDetailService.listByIdsSeq(soDetailIdsForEntry);
+        Map<String, SoDetailEntity> soDetailMap = soDetailListForEntry.stream().collect(Collectors.toMap(SoDetailEntity::getId, o -> o, (a, b) -> a));
+        List<String> saleOrderEntryIds = new ArrayList<>();
+        for (SoChangeDetailDTO.ViewDTO d : detailList) {
+            SoDetailEntity soDetail = soDetailMap.get(d.getSoDetailId());
+            if (soDetail != null && StringUtils.isNotBlank(soDetail.getKingdeeDetailId())) {
+                saleOrderEntryIds.add(soDetail.getKingdeeDetailId());
+            }
+        }
+        resultMap.put("saleOrderEntryIds", saleOrderEntryIds);
 
         List<String> orgIdList = new ArrayList<>(2);
         //库存组织
