@@ -354,6 +354,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             Boolean isCheck = Boolean.valueOf(value);
             param.setIsVerifyBaseDataField(isCheck);
         }
+        // 根因修复：NeedUpDateFields 里列出的字段在 Model 中为空字符串会导致金蝶 ")"附近有语法错误，先清洗空串
+        KingdeeUtils.sanitizeModelEmptyStrings(param.getModel(), param.getNeedUpDateFields());
         RepoResult save = apiUtils.saveKingDee(param);
         if (!save.getResponseStatus().isIsSuccess()) {
             throw new ServiceException(ApiError.DMP_KINGDEE_ADD_FAILED);
