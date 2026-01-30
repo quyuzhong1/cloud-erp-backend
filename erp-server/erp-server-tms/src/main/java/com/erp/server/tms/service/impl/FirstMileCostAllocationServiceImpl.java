@@ -24,7 +24,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
@@ -76,11 +75,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -280,6 +277,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
+        if(entity.getSourceId().equals("1782943774607937538")){
+            System.out.println("11");
+        }
+
         if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "核算状态已确认，不可重新分摊");
         }
@@ -2141,13 +2142,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollUtil.isNotEmpty(dto.getIds())){
             List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
             List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-            count = listBySourceIds(sourceIds, null, null, null).size();
+            count = sourceIds.size();
         }else if (CharSequenceUtil.isNotBlank(dto.getReportDate())){
-            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.lambdaQuery()
-                    .eq(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.NOT.getCode())
-                    .list();
+            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listBySourceIds(null, null);
             List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-            count = listBySourceIds(sourceIds, null, null, null).size();
+            count = sourceIds.size();
         }
         pushAllocatedCostCountDTO.setCount(count);
         return pushAllocatedCostCountDTO;
@@ -2172,30 +2171,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }else {
             log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
         }
-    }
-    @Async("tmsExecutor")
-    @DataIdempotent(keyIdName = "id")
-    @Override
-    public void asyncPushAllocatedCost(String id,String taskId, String taskDetailId, FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
-        log.error(StrUtil.format("asyncPushAllocatedCost id: 【{}】, 执行线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
-
-        try {
-            BatchResultDTO result = service.calcAllocatedCost(entity, firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
-            if(!result.getSuccess()){
-                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),result.getMsg());
-            }else {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.SUCCESS.getCode(),"");
-            }
-        } catch (Exception e) {
-            log.error("asyncPushAllocatedCost id: 【{}】, 异常: 【{}】",id,e);
-            //把Exception e 转字符串
-            String errorMsg = ExceptionUtils.getStackTrace(e);
-            asyncTaskDetailRecordService.updateDetail(taskDetailId,AsyncTaskRecordStatusEnum.FAILED.getCode(),errorMsg);
-        } finally {
-            asyncTaskRecordService.updateTaskFinally(taskId);
-        }
-
-        log.error(StrUtil.format("asyncPushAllocatedCost id: 【{}】, 执行完成线程: 【{}】 ,执行线程ID: 【{}】",id,Thread.currentThread().getName(),Thread.currentThread().getId()));
     }
 
     private void handleImportSuccessList(Set<String> mainIdList, List<FirstMileCostChangeExcelDTO> dataList, List<FirstMileCostChangeExcelDTO> errorList) {
