@@ -648,7 +648,8 @@
         SELECT wcd.main_id,
                wcd.id as cartonDetailId,
             wcd.pack_qty as packageQty,
-            wcd.sku_no as skuNo
+            wcd.sku_no as skuNo,
+            wcd.is_cancel_required as isCancelRequired
         from wms_carton_detail wcd where is_deleted = false
         )
         select
@@ -658,6 +659,7 @@
             wcd.cartonDetailId,
             wcd.skuNo,
             wcd.packageQty,
+            wcd.isCancelRequired,
             pt.id as packingTaskId,
             wcs.id as cartonSpecId,
             wcs.package_weight as packageWeight,

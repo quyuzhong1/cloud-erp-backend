@@ -76,8 +76,8 @@
         lb.platform_code as platformCode,
         lb.shipment_type as shipmentType,
         lb.create_time AS createTime,
-        lb.is_allocate_required,
-        lb.not_allocate_remark
+        lb.is_allocate_cost_required as isAllocateRequired,
+        lb.not_allocate_cost_remark as notAllocateRemark
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
@@ -258,8 +258,8 @@
             lbd.sign_time AS signTime,
             lb.ship_time AS shipTime,
             lb.remark,
-            lb.is_allocate_required,
-            lb.not_allocate_remark,
+            lb.is_allocate_weight_required as isAllocateRequired,
+            lb.not_allocate_weight_remark as notAllocateRemark,
             lb.create_time AS createTime,
             COALESCE(fpt1.packing_status, fpt2.packing_status) AS packingStatus,
             fmb.status AS estimatedStatus,

@@ -315,4 +315,14 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillVo>
      */
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillByUniqueKey(Map<String, List<Object>> paramMap);
+    /**
+     * 更新是否需要分配
+     * @author will
+     * @date 2026/1/30 18:06
+     * @param id
+     * @param isAllocateRequired
+     * @param notAllocateRemark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateIsAllocateRequired(String id,Boolean isAllocateRequired, String notAllocateRemark);
 }

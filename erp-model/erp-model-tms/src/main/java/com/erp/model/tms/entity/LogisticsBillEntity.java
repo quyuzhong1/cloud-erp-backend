@@ -181,16 +181,28 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
 
 
     /**
-     * 是否分摊
+     * 是否分摊费用
      */
-    @TableField("is_allocate_required")
-    private Boolean isAllocateRequired;
+    @TableField("is_allocate_cost_required")
+    private Boolean isAllocateCostRequired;
 
     /**
-     * 不分摊原因
+     * 不分摊费用原因
      */
-    @TableField("not_allocate_remark")
-    private String notAllocateRemark;
+    @TableField("not_allocate_cost_remark")
+    private String notAllocateCostRemark;
+
+    /**
+     * 是否分摊重量
+     */
+    @TableField("is_allocate_weight_required")
+    private Boolean isAllocateWeightRequired;
+
+    /**
+     * 不分摊重量原因
+     */
+    @TableField("not_allocate_weight_remark")
+    private String notAllocateWeightRemark;
 
     /**
      * 销售部门id
