@@ -83,7 +83,7 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
             return;
         }
 
-        // 已有金蝶变更单ID：按原逻辑 View 后 Save 更新
+        // 已有金蝶变更单ID：用全量 makeApiFieldJson + getAllKey 更新，保存前对 Model 做空串清洗（根因修复 ")"附近有语法错误）
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
