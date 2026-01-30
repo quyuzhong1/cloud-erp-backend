@@ -83,6 +83,9 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
         }
         String reportMonthStr = excelDTO.getReportMonth();
         LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
+        if (null != reportMonth){
+            excelDTO.setReportMonth(reportMonth.toString());
+        }
         // 上个月1日
         LocalDate beforeMonth = LocalDate.now().withDayOfMonth(1).minusMonths(1);
         if (null != reportMonth && reportMonth.isBefore(beforeMonth)){
