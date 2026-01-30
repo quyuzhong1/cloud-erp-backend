@@ -78,6 +78,7 @@ public class FirstMileInTransitInitExcelListener extends AnalysisEventListener<F
         // 解析日期
         LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
         if (Objects.nonNull(reportMonth)){
+            excelDTO.setReportMonth(reportMonth.toString());
             List<AdsErpFirstMileInTransitDiffEntity> collect = shipmentList.stream()
                     .filter(e -> e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())
                             && (StringUtils.isBlank(excelDTO.getAsin()) || e.getPlatformSpuNo().equals(excelDTO.getAsin())))
