@@ -34,7 +34,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -1255,6 +1258,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         for (TransferInfoDetailEntity detail : transferDetailList) {
             warehouseIdSet.add(detail.getInWarehouseId());
             warehouseIdSet.add(detail.getOutWarehouseId());
+        }
+        ThirdWarehouseDTO.QueryMapParamDTO queryMapParamDTO = ThirdWarehouseDTO.QueryMapParamDTO.builder()
+                .sysType(PlatformDictEnum.WDT.getCode())
+                .category(ThirdSysTypeEnum.WAREHOUSE.getCode())
+                .inventorySyncMode(InventorySyncModeEnum.INVENTORY.getCode())
+                .build();
+        List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOS = dmpThirdMappingFeign.listQueryMapping(queryMapParamDTO);
+        if (CollUtil.isNotEmpty(queryMapDTOS) && queryMapDTOS.stream().anyMatch(e -> warehouseIdSet.contains(e.getSysId()))) {
+            log.warn("直接调拨单同步旺店通时存在库存同步配置，调拨单号：{}", entity.getCode());
+            return;//存在库存同步的配置则不再推送旺店通
         }
         //查询三方仓库映射
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");

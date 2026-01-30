@@ -1532,5 +1532,47 @@
         </foreach>
         GROUP BY i.warehouse_id, i.sku_id
     </select>
+    <select id="listWarehouseInventoryByParam"
+            resultType="com.erp.model.wms.dto.inventory.InventoryQtyDTO$InventoryDTO">
+        SELECT
+            warehouse_id,
+            sku_id,
+            sku_no,
+            SUM(qty) as qty
+        FROM inventory
+        where is_deleted = FALSE
+          <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                and warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+          </if>
+
+          <if test="params.inventoryStatusList != null and params.inventoryStatusList.size > 0">
+                and dict_inventory_status in
+                <foreach collection="params.inventoryStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+          </if>
+        GROUP BY warehouse_id,sku_no,sku_id
+    </select>
+    <select id="listInventoryChangeByParam"
+            resultType="com.erp.model.wms.dto.inventory.InventoryQtyDTO$InventoryChangeDTO">
+        SELECT
+            warehouse_id,
+            sku_id,
+            sku_no
+        FROM inventory
+        where is_deleted = FALSE
+          <if test="params.warehouseId != null and params.warehouseId != ''">
+                and warehouse_id = #{params.warehouseId}
+          </if>
+          <if test="params.startTime != null">
+                and update_time >= #{params.startTime}
+          </if>
+          <if test="params.endTime != null">
+                and update_time <![CDATA[ <= ]]> #{params.endTime}
+          </if>
+    </select>
 
 </mapper>

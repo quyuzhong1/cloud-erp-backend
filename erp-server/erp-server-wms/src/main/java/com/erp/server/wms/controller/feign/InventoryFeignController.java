@@ -12,7 +12,6 @@ import java.util.List;
 
 /**
  * @Classname: InventoryFeignController
-
  * @CreateTime: 2023-04-27  10:31
  * @Author: zhangchunlin
  */
@@ -61,7 +60,6 @@ public class InventoryFeignController extends BaseController {
     }
 
 
-
     @PostMapping("/listSkuInventoryStatusByParam")
     public List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> listSkuInventoryStatusByParam(@RequestBody @Valid InventoryQtyDTO.SkuInventoryStatusParamDTO dto) {
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> resultList = inventoryService.listSkuInventory(dto);
@@ -70,6 +68,7 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 根据sku获取库存列表
+     *
      * @param dto
      * @return
      */
@@ -77,13 +76,39 @@ public class InventoryFeignController extends BaseController {
     public List<InventoryEntity> listInventoryBySkuIds(@RequestBody @Valid InventoryQtyDTO.InventoryBySkuDTO dto) {
         return inventoryService.listInventoryBySkuIds(dto);
     }
+
     /**
      * 根据sku获取库存列表
+     *
      * @param skuNoList
      * @return
      */
     @PostMapping("/listInventoryBySkuNos")
     public List<InventoryEntity> listInventoryBySkuNos(@RequestBody List<String> skuNoList) {
         return inventoryService.listInventoryBySkuNos(skuNoList);
+    }
+
+    /**
+     * 根据仓库id、状态列表获取库存列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listWarehouseInventoryByParam")
+    public List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@RequestBody InventoryQtyDTO.SkuInventoryStatusParamDTO dto) {
+        List<InventoryQtyDTO.InventoryDTO> resultList = inventoryService.listWarehouseInventoryByParam(dto);
+        return resultList;
+    }
+
+    /**
+     * 根据仓库id、时间范围获取库存变更列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listInventoryChangeByParam")
+    public List<InventoryQtyDTO.InventoryChangeDTO> listInventoryChangeByParam(@RequestBody InventoryQtyDTO.InventoryChangeQueryDTO dto) {
+        List<InventoryQtyDTO.InventoryChangeDTO> resultList = inventoryService.listInventoryChangeByParam(dto);
+        return resultList;
     }
 }

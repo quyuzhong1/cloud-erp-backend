@@ -1256,6 +1256,22 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return resultList;
     }
 
+    @Override
+    public List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(InventoryQtyDTO.SkuInventoryStatusParamDTO dto) {
+        if (CollUtil.isEmpty(dto.getWarehouseIdList())){
+            return Collections.emptyList();
+        }
+        return baseMapper.listWarehouseInventoryByParam(dto);
+    }
+
+    @Override
+    public List<InventoryQtyDTO.InventoryChangeDTO> listInventoryChangeByParam(InventoryQtyDTO.InventoryChangeQueryDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getWarehouseId())){
+            return Collections.emptyList();
+        }
+        return baseMapper.listInventoryChangeByParam(dto);
+    }
+
     /**
      * 查询实体仓库存信息
      * @author will
