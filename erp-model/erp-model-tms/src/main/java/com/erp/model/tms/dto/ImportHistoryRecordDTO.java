@@ -4,6 +4,8 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -433,6 +435,15 @@ public class ImportHistoryRecordDTO implements Serializable {
          */
         @NotBlank(message = "对账月份不能为空")
         private String reconciliationMonth;
+
+        /**
+         * 费用配置
+         */
+        private List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList;
+        /**
+         * 费用配置明细
+         */
+        private List<CfgLogisticsCostImportDetailEntity> importDetailList;
 
         public ImportSyncDTO (ImportDTO importDTO,BaseDTO.ImportDTO baseImportDTO) {
             this.code = importDTO.getCode();
