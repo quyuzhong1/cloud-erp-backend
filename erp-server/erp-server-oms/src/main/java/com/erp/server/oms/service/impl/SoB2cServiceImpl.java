@@ -2266,13 +2266,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Boolean.TRUE.equals(isDelivery)) {
                 try {
                     UserContext.setIsUserSystem(true);
-                    // 查询配置的海外仓物流
-                    String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
-                    List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
-                    LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v->v.getWarehouseId().equals(soB2cDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
-                    String warehouseLogisticsChannelId = Objects.nonNull(viewDTO)?viewDTO.getPlatformLogisticsChannelId():"";
                     //提交发货
-                    submitDelivery(id, warehouseLogisticsChannelId);
+                    submitDelivery(id, "");
                 }catch (Exception e){
                     SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                     addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
