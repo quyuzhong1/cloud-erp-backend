@@ -94,6 +94,8 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
+            // 仅销售变更单：NeedUpDateFields 中字段在 Model 里为空串会导致金蝶 ")"附近有语法错误
+            KingdeeUtils.sanitizeModelEmptyStrings(param.getModel(), param.getNeedUpDateFields());
             kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             return;
         }
@@ -108,6 +110,8 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
+            // 仅销售变更单：NeedUpDateFields 中字段在 Model 里为空串会导致金蝶 ")"附近有语法错误
+            KingdeeUtils.sanitizeModelEmptyStrings(param.getModel(), param.getNeedUpDateFields());
             kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
         }
     }
@@ -201,6 +205,8 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
 
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(modelJson);
         param.setNeedUpDateFields(new ArrayList<>(Arrays.asList("FId", "FSaleOrderEntry")));
+        // 仅销售变更单：NeedUpDateFields 中字段在 Model 里为空串会导致金蝶 ")"附近有语法错误
+        KingdeeUtils.sanitizeModelEmptyStrings(param.getModel(), param.getNeedUpDateFields());
         kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, modelJson, param, type);
     }
 

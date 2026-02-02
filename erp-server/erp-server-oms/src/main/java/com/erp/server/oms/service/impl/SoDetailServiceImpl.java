@@ -1689,21 +1689,98 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             kingdeeDTO.setKingdeePushModuleCode(moduleCode);
             JSONObject jsonObject = dmpTaskFeign.getByKingdeeId(kingdeeDTO);
             List<SoDetailEntity> updateList = new ArrayList<>(10);
-            if (jsonObject.containsKey("SaleOrderEntry")) {
-                List<JSONObject> list = (List<JSONObject>) jsonObject.get("SaleOrderEntry");
+            // 金蝶接口文档：订单明细为 FSaleOrderEntry，view 可能返回 SaleOrderEntry 或 FSaleOrderEntry
+            Object entryListObj = jsonObject.get("SaleOrderEntry");
+            if (entryListObj == null) {
+                entryListObj = jsonObject.get("FSaleOrderEntry");
+            }
+            if (entryListObj instanceof List) {
+                List<JSONObject> list = (List<JSONObject>) entryListObj;
                 List<SoDetailEntity> detailList = this.lambdaQuery().eq(SoDetailEntity::getMainId, soId).orderByAsc(SoDetailEntity::getId).list();
-                for (int i = 0; i < list.size(); i++) {
-                    if (detailList.size() >= list.size()) {
-                        JSONObject object = list.get(i);
-                        String kingdeeDetailId = String.valueOf(object.getOrDefault("Id", ""));
-                        SoDetailEntity soDetail = detailList.get(i);
-                        //如果不相等
+                
+                // 修复：通过SKU + 数量匹配，而不是索引位置匹配；分录内码以文档 FEntryID 为准，兼容 Id
+                for (JSONObject object : list) {
+                    Object entryIdObj = object.get("FEntryID");
+                    if (entryIdObj == null) {
+                        entryIdObj = object.get("Id");
+                    }
+                    String kingdeeDetailId = entryIdObj != null ? String.valueOf(entryIdObj) : "";
+                    Object materialObj = object.get("MaterialId");
+                    if (materialObj == null) {
+                        materialObj = object.get("FMaterialId");
+                    }
+                    Map<String, Object> materialMap = materialObj instanceof Map ? (Map<String, Object>) materialObj : null;
+                    if (materialMap == null) {
+                        log.warn("金蝶返回的明细缺少物料信息(MaterialId/FMaterialId)，跳过");
+                        continue;
+                    }
+                    Object skuObj = materialMap.get("FNumber");
+                    if (skuObj == null) {
+                        skuObj = materialMap.get("Number");
+                    }
+                    String skuNo = skuObj != null ? skuObj.toString() : null;
+                    if (StringUtils.isBlank(skuNo)) {
+                        log.warn("金蝶返回的明细物料编码(FNumber/Number)为空，跳过");
+                        continue;
+                    }
+                    
+                    // 获取金蝶返回的数量和价格（金蝶文档：FQty 销售数量，FPrice 销售单价）
+                    BigDecimal kingdeeQty = null;
+                    BigDecimal kingdeePrice = null;
+                    try {
+                        if (object.containsKey("FQty")) {
+                            kingdeeQty = new BigDecimal(object.get("FQty").toString());
+                        }
+                        if (object.containsKey("FPrice")) {
+                            kingdeePrice = new BigDecimal(object.get("FPrice").toString());
+                        }
+                    } catch (Exception e) {
+                        log.warn("解析金蝶数量和价格失败，SKU: {}, 错误: {}", skuNo, e.getMessage());
+                    }
+                    
+                    // 通过 SKU + 数量 + 价格匹配（与 SoInfoServiceImpl.updateSyncKingdeeId 一致）
+                    BigDecimal finalKingdeeQty = kingdeeQty;
+                    BigDecimal finalKingdeePrice = kingdeePrice;
+                    List<SoDetailEntity> matched = detailList.stream()
+                        .filter(d -> {
+                            boolean skuMatch = d.getSkuNo().equals(skuNo);
+                            boolean qtyMatch = finalKingdeeQty == null || (d.getQty() != null && d.getQty().compareTo(finalKingdeeQty.intValue()) == 0);
+                            boolean priceMatch = finalKingdeePrice == null || (d.getPrice() != null && d.getPrice().compareTo(finalKingdeePrice) == 0);
+                            return skuMatch && qtyMatch && priceMatch;
+                        })
+                        .collect(Collectors.toList());
+                    
+                    if (matched.size() == 1) {
+                        // 唯一匹配，更新
+                        SoDetailEntity soDetail = matched.get(0);
                         if (!kingdeeDetailId.equals(soDetail.getKingdeeDetailId())) {
                             soDetail.setKingdeeDetailId(kingdeeDetailId);
                             updateList.add(soDetail);
+                            log.debug("更新kingdee_detail_id成功，SKU: {}, 数量: {}, 价格: {}, kingdeeId: {}", 
+                                skuNo, soDetail.getQty(), soDetail.getPrice(), kingdeeDetailId);
                         }
+                    } else if (matched.size() > 1) {
+                        // 多个匹配，尝试通过已匹配的记录排除
+                        List<SoDetailEntity> unmatched = matched.stream()
+                            .filter(d -> !updateList.contains(d))
+                            .collect(Collectors.toList());
+                        
+                        if (unmatched.size() == 1) {
+                            SoDetailEntity soDetail = unmatched.get(0);
+                            if (!kingdeeDetailId.equals(soDetail.getKingdeeDetailId())) {
+                                soDetail.setKingdeeDetailId(kingdeeDetailId);
+                                updateList.add(soDetail);
+                                log.debug("更新kingdee_detail_id成功（排除已匹配），SKU: {}, 数量: {}, 价格: {}, kingdeeId: {}", 
+                                    skuNo, soDetail.getQty(), soDetail.getPrice(), kingdeeDetailId);
+                            }
+                        } else {
+                            log.warn("找到多个匹配的销售订单明细，SKU: {}, 数量: {}, 价格: {}, 匹配数量: {}", 
+                                skuNo, kingdeeQty, kingdeePrice, matched.size());
+                        }
+                    } else {
+                        // 没有匹配，记录日志
+                        log.warn("未找到匹配的销售订单明细，SKU: {}, 数量: {}, 价格: {}", skuNo, kingdeeQty, kingdeePrice);
                     }
-
                 }
             }
             if (CollectionUtils.isNotEmpty(updateList)) {
