@@ -3038,14 +3038,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         //比较装箱重量和尺寸是否有变化
         String sizeContent = "";
-        String oldFormat = CharSequenceUtil.format("{}-{}-{}-{}-{}", old.getPackageWeight(),old.getWeightUnit(), old.getBoxLength(), old.getBoxWidth(), old.getBoxHeight());
+        String oldFormat = CharSequenceUtil.format("{}-{}-{}-{}-{}", old.getPackageWeight().stripTrailingZeros().toPlainString(),old.getWeightUnit(), old.getBoxLength().stripTrailingZeros().toPlainString(), old.getBoxWidth().stripTrailingZeros().toPlainString(), old.getBoxHeight().stripTrailingZeros().toPlainString());
         String thisFormat = CharSequenceUtil.format("{}-{}-{}-{}-{}", cancelDeliveryDTO.getPackageWeight(),cancelDeliveryDTO.getWeightUnit(), cancelDeliveryDTO.getBoxLength(), cancelDeliveryDTO.getBoxWidth(), cancelDeliveryDTO.getBoxHeight());
         if (!CharSequenceUtil.equals(oldFormat,thisFormat)) {
             sizeContent = CharSequenceUtil.format("更新[装箱重量/装箱尺寸]由[{}/{}]编辑为[{}/{}]",
                     CharSequenceUtil.format("{}{}",old.getPackageWeight(),old.getWeightUnit()),
                     CharSequenceUtil.format("{}*{}*{}", old.getBoxLength(), old.getBoxWidth(), old.getBoxHeight()),
-                    CharSequenceUtil.format("{}{}",cartonSpecEntity.getPackageWeight(),cartonSpecEntity.getWeightUnit()),
-                    CharSequenceUtil.format("{}*{}*{}", cartonSpecEntity.getBoxLength(), cartonSpecEntity.getBoxWidth(), cartonSpecEntity.getBoxHeight())
+                    CharSequenceUtil.format("{}{}",cartonSpecEntity.getPackageWeight().stripTrailingZeros().toPlainString(),cartonSpecEntity.getWeightUnit()),
+                    CharSequenceUtil.format("{}*{}*{}", cartonSpecEntity.getBoxLength().stripTrailingZeros().toPlainString(), cartonSpecEntity.getBoxWidth().stripTrailingZeros().toPlainString(), cartonSpecEntity.getBoxHeight().stripTrailingZeros().toPlainString())
             );
             logContent.append(sizeContent);
         }
