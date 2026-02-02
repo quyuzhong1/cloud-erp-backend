@@ -31,6 +31,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
+import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -626,6 +627,47 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             operateLogService.batchAddModuleOperateLog(addList);
         }
         return resultList;
+    }
+
+    @Override
+    public Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response) {
+        StocktakingTaskExcelListener excelListener = new StocktakingTaskExcelListener(this, stocktakingTaskDetailService, warehouseService,operateLogService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskFirstQtyExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("盘点任务初盘数量导入错误！>>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "盘点任务初盘数量导入错误信息";
+            ExcelUtil.export(fileName, "error", errorList, StocktakingTaskFirstQtyExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadFirstQtyTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/StocktakingTaskFirstQtyTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        }
     }
 
     /**

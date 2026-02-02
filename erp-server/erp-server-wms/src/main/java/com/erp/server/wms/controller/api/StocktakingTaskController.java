@@ -326,4 +326,29 @@ public class StocktakingTaskController extends BaseController {
         return success();
     }
 
+    /**
+     * 导入初盘数量
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入初盘数量")
+    @PostMapping("/importFirstQty")
+    public ApiResult importFirstQty(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = stocktakingTaskService.importFirstQty(excelFile, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载初盘数量模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载初盘数量模板")
+    @GetMapping("/downloadFirstQtyTemplate")
+    public ApiResult downloadFirstQtyTemplate(HttpServletResponse response) {
+        stocktakingTaskService.downloadFirstQtyTemplate(response);
+        return success();
+    }
+
 }
