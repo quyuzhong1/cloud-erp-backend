@@ -66,7 +66,6 @@ import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -74,7 +73,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,7 +98,7 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_B
 
 /**
  * <p>
- * 自发货费用 服务实现类
+ * 尾程费用(自发货) 服务实现类
  * </p>
  *
  * @author Will
@@ -195,10 +193,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         // 数据处理
         handleData(logisticsBillCostEntity);
 
-        log.info("开始新增自发货费用");
+        log.info("开始新增尾程费用(自发货)");
         boolean save = super.save(logisticsBillCostEntity);
         if(!save) {
-            throw new ServiceException("自发货费用保存失败");
+            throw new ServiceException("尾程费用(自发货)保存失败");
         }
         //添加费用明细
         tmsCostDetailService.batchAdd(addDTO.getCostDetailList(),logisticsBillCostEntity.getId(), DictCostAttributionEnum.SELF_DELIVER);
@@ -281,7 +279,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			}
     	
         }
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "自发货费用"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
         //赋值
         LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
         logisticsBillCostEntity.setBillingWeight(updateDTO.getBillingWeight());
@@ -311,17 +309,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         logisticsBillCostEntity.setChannelId(logisticsBillEntity.getChannelId());
         // 数据处理
         handleData(logisticsBillCostEntity);
-        log.info("编辑 开始修改自发货费用数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改尾程费用(自发货)数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsBillCostEntity);
         if(!save) {
-            throw new ServiceException("自发货费用保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostEntity));
+            throw new ServiceException("尾程费用(自发货)保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostEntity));
         }
         //更新费用明细
         tmsCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId(),DictCostAttributionEnum.SELF_DELIVER,isImport);
 
         // 记录主单操作日志
-        log.info("编辑 开始记录自发货费用日志数据，id：【{}】", logisticsBillCostEntity.getId());
-        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillCostEntity.getId(), "自发货费用");
+        log.info("编辑 开始记录尾程费用(自发货)日志数据，id：【{}】", logisticsBillCostEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillCostEntity.getId(), "尾程费用(自发货)");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillCostEntity, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), msg);
         return new BaseResultDTO.UpdateDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
     }
@@ -334,7 +332,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             LogisticsBillCostDTO.TabListDTO resultDTO = new LogisticsBillCostDTO.TabListDTO();
-            //自发货费用
+            //尾程费用(自发货)
             String tabSql = logisticsBillCostQueryHandler.getTabSql(statusEnum.getCode());
             //尾程费用
             if (DictCostAttributionEnum.LAST_MILE.equals(attribution)) {
@@ -379,7 +377,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		throw new ServiceException("对账状态修改为" + reconciliationStatus + "时，对账确认时间不能为空");
         }
     	LogisticsBillCostEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "自发货费用"));
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
         //自发货/尾程费用：状态变更【已确认/已作废】可以修改为其他状态【待确认/已确认】【现有功能优化】
 //        if (ReconciliationStatusEnum.INVALID.getCode().equals(entity.getReconciliationStatus()) || ReconciliationStatusEnum.CONFIRMED.getCode().equals(entity.getReconciliationStatus())) {
 //            throw new ServiceException(ApiError.ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS);
@@ -463,7 +461,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("自发货列表", EXPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("尾程费用(自发货)", EXPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1818,7 +1816,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 	@Override
 	public BatchResultDTO updatePayStatus(String id, String payStatus, LocalDateTime payTime) {
-        LogisticsBillCostEntity entity = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "自发货费用"));
+        LogisticsBillCostEntity entity = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
         if(payStatus.equals(entity.getPayStatus())) {
         	throw new ServiceException("修改前后支付状态一致");
         }
@@ -2456,7 +2454,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public Boolean importExcel(BaseDTO.ImportDTO dto) {
-        downloadTaskFeign.saveImportTask("自发货列表导入", IMPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
+        downloadTaskFeign.saveImportTask("尾程费用(自发货)导入", IMPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -2478,7 +2476,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillCostExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "自发货费用错误信息.xlsx";
+            String fileName = "尾程费用(自发货)错误信息.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, LogisticsBillCostExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);

@@ -625,7 +625,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("尾程费用列表", EXPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("尾程费用(平台发货)", EXPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -642,7 +642,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public Boolean importExcel(BaseDTO.ImportDTO dto) {
-        downloadTaskFeign.saveImportTask("尾程费用列表", IMPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
+        downloadTaskFeign.saveImportTask("尾程费用(平台发货)", IMPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 

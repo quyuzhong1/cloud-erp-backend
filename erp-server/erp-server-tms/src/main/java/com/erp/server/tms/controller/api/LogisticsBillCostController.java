@@ -38,14 +38,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 自发货费用
+ * 尾程费用(自发货)
  *
  * @author Will
  * @since 2023-11-06
  */
 @Slf4j
 @RestController
-@LogSystemModule("自发货费用")
+@LogSystemModule("尾程费用(自发货)")
 @RequestMapping("/logisticsBillCost")
 public class LogisticsBillCostController extends BaseController {
 
@@ -122,7 +122,7 @@ public class LogisticsBillCostController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "自发货费用修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "尾程费用(自发货)修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "tms:logisticsBillCost:update",
@@ -167,10 +167,10 @@ public class LogisticsBillCostController extends BaseController {
             try {
                 submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus(),dto.getConfirmTime());
             }catch (Exception e){
-                log.error("自发货费用 状态变更",e);
+                log.error("尾程费用(自发货) 状态变更",e);
                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+                    submit = BatchResultDTO.fail(id, id, "尾程费用(自发货)不存在, 状态变更");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -202,10 +202,10 @@ public class LogisticsBillCostController extends BaseController {
     		try {
     			submit = logisticsBillCostService.updatePayStatus(id,dto.getPayStatus(),dto.getPayTime());
     		}catch (Exception e){
-    			log.error("自发货费用 状态变更",e);
+    			log.error("尾程费用(自发货) 状态变更",e);
     			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+    				submit = BatchResultDTO.fail(id, id, "尾程费用(自发货)不存在, 状态变更");
     				resultDTOS.add(submit);
     				continue;
     			}
@@ -223,7 +223,7 @@ public class LogisticsBillCostController extends BaseController {
      * @param response
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载自发货费用模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载尾程费用(自发货)模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
         logisticsBillCostService.downloadTemplate(response);
@@ -251,7 +251,7 @@ public class LogisticsBillCostController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出尾程费用(自发货)模板")
     @PostMapping(value = "/exportExcel")
     public ApiResult<Object>exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
         Boolean flag = logisticsBillCostService.exportExcel(dto);
@@ -377,10 +377,10 @@ public class LogisticsBillCostController extends BaseController {
                  try {
                      submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
                  }catch (Exception e){
-                     log.error("自发货费用 状态变更",e);
+                     log.error("尾程费用(自发货) 状态变更",e);
                      LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
                      if (ObjectUtil.isEmpty(entity)) {
-                         submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 下推分摊");
+                         submit = BatchResultDTO.fail(id, id, "尾程费用(自发货)不存在, 下推分摊");
                          resultDTOS.add(submit);
                          continue;
                      }
@@ -413,10 +413,10 @@ public class LogisticsBillCostController extends BaseController {
      		try {
      			submit = logisticsBillCostService.delete(id);
      		}catch (Exception e){
-     			log.error("自发货费用 状态变更",e);
+     			log.error("尾程费用(自发货) 状态变更",e);
      			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
      			if (ObjectUtil.isEmpty(entity)) {
-     				submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+     				submit = BatchResultDTO.fail(id, id, "尾程费用(自发货)不存在, 状态变更");
      				resultDTOS.add(submit);
      				continue;
      			}
