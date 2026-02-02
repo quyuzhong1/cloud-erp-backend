@@ -307,5 +307,10 @@ public class TmsCostDetailDTO implements Serializable {
          * 类型
          */
         private String type;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
     }
 }

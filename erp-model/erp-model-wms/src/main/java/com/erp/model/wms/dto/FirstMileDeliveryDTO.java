@@ -1539,16 +1539,19 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 装箱尺寸(长)
          */
+        @NotBlank(message = "装箱尺寸(长)不能为空")
         private BigDecimal boxLength;
 
         /**
          * 装箱尺寸(宽)
          */
+        @NotBlank(message = "装箱尺寸(宽)不能为空")
         private BigDecimal boxWidth;
 
         /**
          * 装箱尺寸(高)
          */
+        @NotBlank(message = "装箱尺寸(高)不能为空")
         private BigDecimal boxHeight;
         /**
          * 是否取消
