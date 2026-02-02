@@ -614,6 +614,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<CreateOtherStockinRequest.GoodsList> ingoodsList = new ArrayList<>();
         for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
             if (CollUtil.isNotEmpty(skipWarehouseIds) && skipWarehouseIds.contains(detailEntity.getWarehouseId())){
+                log.warn("仓位移动单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), detailEntity.getWarehouseId());
                 continue;
             }
             CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
