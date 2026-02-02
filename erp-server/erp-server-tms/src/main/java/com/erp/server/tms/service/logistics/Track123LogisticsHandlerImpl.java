@@ -257,7 +257,6 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         });
         ValidatorUtil.validateEntity(registerRequests);
         try {
-            log.warn("注册运单号：{}", JSONUtil.toJsonStr(registerRequests));
             RegisterResult registerResult = trackShipperService.registerLogisticsNumber(token, registerRequests);
             //成功
             if (Objects.nonNull(registerResult) && "00000".equalsIgnoreCase(registerResult.getCode())) {

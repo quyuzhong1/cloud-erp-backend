@@ -81,7 +81,7 @@ public class WdtLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public LogisticsPlatformEnum getPlatForm() {
-        return LogisticsPlatformEnum.AMZ_MULTI_CHANNEL;
+        return LogisticsPlatformEnum.WDT;
     }
 
     @Override

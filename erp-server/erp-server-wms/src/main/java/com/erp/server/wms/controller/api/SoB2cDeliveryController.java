@@ -325,10 +325,24 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/printLogisticsBillConfirm")
     @Idempotent
     public ApiResult<String> printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
-        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
+        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirm(dto.getPrintType(),dto.getDetailList(), response);
         return success(pdfUrl);
     }
 
+    /**
+     * 打印物流面单确认分页查询
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
+     * @Author Luo_WG
+     * @Date 2023/12/13 20:13
+     **/
+    @PostMapping("/printLogisticsBillConfirmPaging")
+    @Idempotent
+    public ApiResult<String> printLogisticsBillConfirmPaging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response) {
+        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirmPaging(dto, response);
+        return success(pdfUrl);
+    }
     /**
      * 根据发货单大于物流面单
      * @author will
