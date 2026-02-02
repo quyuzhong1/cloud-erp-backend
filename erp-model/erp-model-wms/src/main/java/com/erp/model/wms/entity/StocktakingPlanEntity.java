@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -75,6 +76,12 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     */
     @TableField("type")
     private StocktakingTypeEnum type;
+
+    /**
+     * 盘点类型
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
 
     /**
     * 提交审核时间

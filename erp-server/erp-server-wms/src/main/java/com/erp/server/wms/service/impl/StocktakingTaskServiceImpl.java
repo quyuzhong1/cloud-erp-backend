@@ -823,6 +823,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             log.error("盘点计划【{}】没有需要盘点的库存记录", entity.getId());
             return Boolean.TRUE;
         }
+
+        if (entity.getBillDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY);
+        }
+
         String planCode = entity.getCode();
         // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
         inventoryList.stream().forEach(item -> {

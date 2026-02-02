@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.AdvanceQueryDTO;
@@ -182,6 +183,11 @@ public class StocktakingPlanDTO implements Serializable {
         * 盘点类型
         */
         private StocktakingTypeEnum type;
+
+        /**
+         * 盘点日期
+         */
+        private LocalDate billDate;
 
         /**
          * 盘点类型名称
@@ -401,6 +407,12 @@ public class StocktakingPlanDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
+        /**
+         * 盘点日期
+         */
+        @NotNull(message = "盘点日期不能为空")
+        private LocalDate billDate;
 
         /**
         * 盘点计划名称

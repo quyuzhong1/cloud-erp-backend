@@ -11,10 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -47,6 +44,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -472,9 +471,9 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // 明细
-        List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+        //List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
         // 生成盘点任务
-        stocktakingTaskService.createTaskList(entity, detailEntityList);
+        //stocktakingTaskService.createTaskList(entity, detailEntityList);
         return Boolean.TRUE;
     }
 
@@ -489,6 +488,21 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         this.lambdaUpdate().eq(StocktakingPlanEntity::getId, sourceId)
                 .set(StocktakingPlanEntity::getStatus, stocktakingStatus)
                 .update(new StocktakingPlanEntity());
+    }
+
+    @Override
+    public Boolean pushStockingTask(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<StocktakingPlanEntity> stocktakingPlanList = this.listByIds(ids);
+        if (stocktakingPlanList.isEmpty()) {
+            throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
+        }
+        for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            stocktakingTaskService.createTaskList(entity, detailEntityList);
+        }
+
+        return Boolean.TRUE;
     }
 
     /**
@@ -566,6 +580,9 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     * 新增修改处理数据
     */
     private void handleData(StocktakingPlanDTO.CommonDTO dto) {
+        if (dto.getBillDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY);
+        }
         // 按照仓库盘点和仓位盘点需要验证动销时间必填
         StocktakingTypeEnum type = dto.getType();
         if (StocktakingTypeEnum.BY_SKU.equals(type)) {

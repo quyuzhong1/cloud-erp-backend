@@ -62,7 +62,8 @@
         sp.start_time AS startTime,
         sp.end_time AS endTime,
         sp.create_time AS createTime,
-        sp.update_time AS updateTime
+        sp.update_time AS updateTime,
+        sp.bill_date AS billDate
         FROM  stocktaking_plan sp
         left join stocktaking_plan_detail spd on sp.id = spd.main_id and spd.is_deleted=false
         WHERE ${params.sqlMap.default} and sp.is_deleted=FALSE
