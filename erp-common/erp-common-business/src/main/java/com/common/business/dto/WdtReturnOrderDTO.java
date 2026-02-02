@@ -76,6 +76,7 @@ public class WdtReturnOrderDTO extends UniqueDto {
      * 创建人名称
      */
     private String createUserName;
+    private String createUserId;
 
 
     private String shopName;

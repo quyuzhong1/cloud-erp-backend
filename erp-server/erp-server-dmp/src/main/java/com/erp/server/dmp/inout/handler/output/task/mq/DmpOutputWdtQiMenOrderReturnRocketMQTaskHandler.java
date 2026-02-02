@@ -18,6 +18,7 @@ public class DmpOutputWdtQiMenOrderReturnRocketMQTaskHandler extends DmpOutputWd
 		WdtReturnOrderDTO resultEntity = super.initOrderInfoEntity(entity, itemList, cfgOutputId);
 		if(resultEntity != null) {
 			resultEntity.setApproveUserName("qimen");
+			resultEntity.setCreateUserId("1808810116456153089");
     		resultEntity.setCreateUserName("qimen");
     	}
 		return resultEntity;

@@ -234,7 +234,8 @@ public class WdtSoOutStockDTO extends UniqueDto {
      * 创建人名称
      */
     private String createUserName;
-    
+
+    private String createUserId;
     /**
      * 物流公司代码
     */
