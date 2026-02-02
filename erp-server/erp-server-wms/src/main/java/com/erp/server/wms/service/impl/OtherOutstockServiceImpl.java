@@ -1367,7 +1367,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                         userDTO,
                         orgDTO,
                         code,
-                        "",
+                        importExcelDTO.getRemark(),
                         userInfo.getUid(),
                         userInfo.getUserName()
                 );
