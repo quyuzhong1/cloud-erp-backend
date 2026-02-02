@@ -3623,6 +3623,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }else {
                 log.error("已达到最大重试次数" + MAX_RETRY_COUNT + "次，停止重试");
+                // 记录到操作日志：系统有重试，超过了最大次数
+                operateLogService.addModuleOperateLog("系统有重试，超过了最大次数", ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "重试失败");
                 String message = "重试创建出库单异常"+ e.getMessage();
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
