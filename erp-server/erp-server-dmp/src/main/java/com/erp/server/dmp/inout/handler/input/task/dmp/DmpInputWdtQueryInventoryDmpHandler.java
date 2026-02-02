@@ -167,7 +167,6 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         dmpDataMap.put("nextLevelId", nextLevelId);
         dmpDataMap.put("batchNo", batchNo);
         dmpDataMap.put("remark", "数大臣库存对比差异执行库存调整");
-        dmpDataMap.put("billStatus", InventoryBillStatusEnum.INIT.getCode());
         if (erpUsableQty > stockNum.intValue()) {
             //其他入库
             dmpDataMap.put("orderType", InventoryOrderTypeEnum.IN_STOCK.getCode());
@@ -179,7 +178,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
             dmpDataMap.put("qty", qty);
             if (availableSendStock.intValue() < qty) {
                 dmpDataMap.put("billStatus", InventoryBillStatusEnum.FAILED.getCode());
-                dmpDataMap.put("remark", CharSequenceUtil.format("【{}】【{}】数大臣可用库存数量【{}】小于旺店通可用库存【{}】锁定数量【{}】调整数量【{}】", skuNo, erpWarehouseName, erpUsableQty,availableSendStock.intValue(), lockNum.intValue(), qty));
+                dmpDataMap.put("remark", CharSequenceUtil.format("【{}】【{}】调整数量【{}】小于旺店通可用库存【{}】:旺店通总库存数量【{}】数大臣可用库存数量【{}】", skuNo, erpWarehouseName, qty,availableSendStock.intValue(), stockNum.intValue(), erpUsableQty));
             }
         }
         //重置pkey
