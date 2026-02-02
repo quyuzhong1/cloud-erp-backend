@@ -255,7 +255,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    List<LogisticsBillCostEntity> listByCanPushAllocation(String type, String reportDate);
+    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
 
     void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
 

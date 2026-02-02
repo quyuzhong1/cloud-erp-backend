@@ -191,7 +191,9 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
 
     private void pushSmallBagCostAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
         String taskId = dto.getTaskId();
-        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByCanPushAllocation(dto.getType() ,dto.getReportDate());
+//        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByCanPushAllocation(dto.getType() ,dto.getReportDate());
+        List<String> ids = logisticsBillCostService.listByCanPushAllocation(dto);
+        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByIds(ids);
 
         if(CollUtil.isEmpty(list)) {
             asyncTaskRecordService.updateTask(taskId,AsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
