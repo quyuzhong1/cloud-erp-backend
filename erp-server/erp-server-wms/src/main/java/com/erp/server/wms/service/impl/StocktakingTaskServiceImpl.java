@@ -827,7 +827,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return Boolean.TRUE;
         }
 
-        if (entity.getBillDate().isBefore(LocalDate.now())) {
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
             throw new ServiceException(ApiError.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY);
         }
 

@@ -7,9 +7,8 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
+import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
@@ -28,7 +27,7 @@ import java.util.*;
  * @Return:
  * @Description:
  **/
-public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<StocktakingTaskDetailExcelDTO> {
+public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<StocktakingTaskFirstQtyExcelDTO> {
 
     private StocktakingTaskDetailService stocktakingTaskDetailService;
 
@@ -38,7 +37,7 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
 
     private OperateLogService operateLogService;
 
-    private List<StocktakingTaskDetailExcelDTO> errorList = new ArrayList<>();
+    private List<StocktakingTaskFirstQtyExcelDTO> errorList = new ArrayList<>();
 
     private List<StocktakingTaskDetailEntity> updateList = new ArrayList<>();
 
@@ -59,7 +58,7 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
      * @param analysisContext
      */
     @Override
-    public void invoke(StocktakingTaskDetailExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(StocktakingTaskFirstQtyExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -118,17 +117,17 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
             errorList.add(excelDTO);
             return;
         }
-        //可用库存
-        Integer usableQty = taskDetail.getUsableQty();
-        //冻结数量
-        Integer frozenQty = taskDetail.getFrozenQty();
-        //差异数量 等于盘点库存-可用库存-冻结库存
-        Integer diffQty = qty - usableQty - frozenQty;
-        taskDetail.setDiffQty(diffQty);
-        taskDetail.setQty(qty);
+//        //可用库存
+////        Integer usableQty = taskDetail.getUsableQty();
+////        //冻结数量
+////        Integer frozenQty = taskDetail.getFrozenQty();
+////        //差异数量 等于盘点库存-可用库存-冻结库存
+////        Integer diffQty = qty - usableQty - frozenQty;
+////        taskDetail.setDiffQty(diffQty);
+////        taskDetail.setQty(qty);
+        updateList.add(taskDetail);
         String msg = StrUtil.format("用户【{}】 【{}】导入初盘库存", UserContext.getDefaultLoginUser().getUserName() , LocalDateTime.now());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), mainId, "初盘库存导入");
-        updateList.add(taskDetail);
     }
 
 
@@ -144,7 +143,7 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
 
     }
 
-    public List<StocktakingTaskDetailExcelDTO> getErrorList() {
+    public List<StocktakingTaskFirstQtyExcelDTO> getErrorList() {
         return errorList;
     }
 

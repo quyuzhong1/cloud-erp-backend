@@ -420,7 +420,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             log.error("盘点任务初盘数量导入错误！>>>>>{}", e);
             return Boolean.FALSE;
         }
-        List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
+        List<StocktakingTaskFirstQtyExcelDTO> errorList = excelListener.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "盘点任务初盘数量导入错误信息";
             ExcelUtil.export(fileName, "error", errorList, StocktakingTaskFirstQtyExcelDTO.class, response);
