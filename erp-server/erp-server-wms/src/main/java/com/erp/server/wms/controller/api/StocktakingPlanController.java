@@ -349,7 +349,12 @@ public class StocktakingPlanController extends BaseController {
         return success(stocktakingPlanService.view(id));
     }
 
-    @PostMapping("/pushStockingTask")
+    /**
+     * 下推盘点任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pushStocktakingTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:stocktakingPlan:pushStockingTask",

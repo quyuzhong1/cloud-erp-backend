@@ -187,7 +187,7 @@ public class StocktakingPlanDTO implements Serializable {
         /**
          * 盘点日期
          */
-        private LocalDate billDate;
+        private LocalDate stocktakingDate;
 
         /**
          * 盘点类型名称
@@ -412,7 +412,7 @@ public class StocktakingPlanDTO implements Serializable {
          * 盘点日期
          */
         @NotNull(message = "盘点日期不能为空")
-        private LocalDate billDate;
+        private LocalDate stocktakingDate;
 
         /**
         * 盘点计划名称

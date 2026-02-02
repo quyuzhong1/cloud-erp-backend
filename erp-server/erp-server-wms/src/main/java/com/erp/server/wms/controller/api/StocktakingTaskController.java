@@ -327,28 +327,19 @@ public class StocktakingTaskController extends BaseController {
     }
 
     /**
-     * 导入初盘数量
-     * @param excelFile
-     * @param response
+     * 下推盘盈盘亏单
+     * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入初盘数量")
-    @PostMapping("/importFirstQty")
-    public ApiResult importFirstQty(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = stocktakingTaskService.importFirstQty(excelFile, response);
-        return result ? success() : failure();
-    }
-
-    /**
-     * 下载初盘数量模板
-     *
-     * @return
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载初盘数量模板")
-    @GetMapping("/downloadFirstQtyTemplate")
-    public ApiResult downloadFirstQtyTemplate(HttpServletResponse response) {
-        stocktakingTaskService.downloadFirstQtyTemplate(response);
-        return success();
+    @PostMapping("/pushStocktakingProfitLoss")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:pushStocktakingProfitLoss",
+            serviceClass = StocktakingTaskService.class,
+            keyIdName = "id")
+    public ApiResult<?> pushStocktakingProfitLoss(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        boolean flag = stocktakingTaskService.pushStocktakingProfitLoss(dto);
+        return flag == true ? success() : failure();
     }
 
 }

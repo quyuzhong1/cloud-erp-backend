@@ -40,6 +40,11 @@ public class StocktakingTaskDetailExcelDTO {
     private String skuNo;
 
     @ColumnWidth(30)
+    @ExcelProperty(value = "初盘数量", index = 4)
+    @FieldValid(fieldName = "初盘数量",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    private String firstQty;
+
+    @ColumnWidth(30)
     @ExcelProperty(value = "盘点库存", index = 4)
     @FieldValid(fieldName = "盘点库存",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String qty;

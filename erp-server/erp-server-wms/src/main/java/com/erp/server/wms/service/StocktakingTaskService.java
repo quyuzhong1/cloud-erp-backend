@@ -155,18 +155,6 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      */
     List<StocktakingTaskDTO.CheckResultDTO> checkQty(List<String> ids);
 
-    /**
-     * 导入初盘数量
-     * @param excelFile
-     * @param response
-     * @return
-     */
-    Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response);
+    Boolean pushStocktakingProfitLoss(BaseIdsDTO.IdsDTO dto);
 
-
-    /**
-     * 下载初盘数量模板
-     * @param response
-     */
-    void downloadFirstQtyTemplate(HttpServletResponse response);
 }

@@ -580,7 +580,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     * 新增修改处理数据
     */
     private void handleData(StocktakingPlanDTO.CommonDTO dto) {
-        if (dto.getBillDate().isBefore(LocalDate.now())) {
+        if (dto.getStocktakingDate().isBefore(LocalDate.now())) {
             throw new ServiceException(ApiError.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY);
         }
         // 按照仓库盘点和仓位盘点需要验证动销时间必填

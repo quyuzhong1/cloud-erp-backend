@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
+import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
@@ -21,6 +22,7 @@ import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
+import com.erp.server.wms.listener.StocktakingTaskFirstQtyExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
@@ -407,5 +409,46 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                     );
         }
         return false;
+    }
+
+    @Override
+    public Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response) {
+        StocktakingTaskFirstQtyExcelListener excelListener = new StocktakingTaskFirstQtyExcelListener(stocktakingTaskService, this, warehouseService,operateLogService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskFirstQtyExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("盘点任务初盘数量导入错误！>>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "盘点任务初盘数量导入错误信息";
+            ExcelUtil.export(fileName, "error", errorList, StocktakingTaskFirstQtyExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadFirstQtyTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/StocktakingTaskFirstQtyTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        }
     }
 }

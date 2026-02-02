@@ -78,10 +78,10 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     private StocktakingTypeEnum type;
 
     /**
-     * 盘点类型
+     * 盘点日期
      */
-    @TableField("bill_date")
-    private LocalDate billDate;
+    @TableField("stocktaking_date")
+    private LocalDate stocktakingDate;
 
     /**
     * 提交审核时间
