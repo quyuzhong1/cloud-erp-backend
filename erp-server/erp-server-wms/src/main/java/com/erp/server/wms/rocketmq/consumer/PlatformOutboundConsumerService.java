@@ -526,6 +526,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateDto.setWarehouseName(overseasWarehouse.getWarehouseName());
             updateDto.setVirtualWarehouseId(virtualWarehouseId);
             updateDto.setTrackNo(dto.getTrackNo());
+            updateDto.setSoB2cId(mainEntity.getId());
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
                 updateDto.setBillStatus(dto.getOrderStatus());
                 updateDto.setAddOperationLog(true);
