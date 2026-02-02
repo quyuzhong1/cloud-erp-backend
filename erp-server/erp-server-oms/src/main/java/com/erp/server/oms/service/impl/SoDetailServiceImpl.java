@@ -1689,6 +1689,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             kingdeeDTO.setKingdeePushModuleCode(moduleCode);
             JSONObject jsonObject = dmpTaskFeign.getByKingdeeId(kingdeeDTO);
             List<SoDetailEntity> updateList = new ArrayList<>(10);
+            if (jsonObject == null) {
+                return;
+            }
             // 金蝶接口文档：订单明细为 FSaleOrderEntry，view 可能返回 SaleOrderEntry 或 FSaleOrderEntry
             Object entryListObj = jsonObject.get("SaleOrderEntry");
             if (entryListObj == null) {
@@ -1698,13 +1701,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 List<JSONObject> list = (List<JSONObject>) entryListObj;
                 List<SoDetailEntity> detailList = this.lambdaQuery().eq(SoDetailEntity::getMainId, soId).orderByAsc(SoDetailEntity::getId).list();
                 
-                // 修复：通过SKU + 数量匹配，而不是索引位置匹配；分录内码以文档 FEntryID 为准，兼容 Id
+                // 修复：通过 SKU + 数量 + 价格匹配；分录内码以文档 FEntryID 为准，兼容 Id
                 for (JSONObject object : list) {
                     Object entryIdObj = object.get("FEntryID");
                     if (entryIdObj == null) {
                         entryIdObj = object.get("Id");
                     }
                     String kingdeeDetailId = entryIdObj != null ? String.valueOf(entryIdObj) : "";
+                    if (StringUtils.isBlank(kingdeeDetailId)) {
+                        continue;
+                    }
                     Object materialObj = object.get("MaterialId");
                     if (materialObj == null) {
                         materialObj = object.get("FMaterialId");
@@ -1743,8 +1749,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     BigDecimal finalKingdeePrice = kingdeePrice;
                     List<SoDetailEntity> matched = detailList.stream()
                         .filter(d -> {
-                            boolean skuMatch = d.getSkuNo().equals(skuNo);
-                            boolean qtyMatch = finalKingdeeQty == null || (d.getQty() != null && d.getQty().compareTo(finalKingdeeQty.intValue()) == 0);
+                            boolean skuMatch = Objects.equals(d.getSkuNo(), skuNo);
+                            boolean qtyMatch = finalKingdeeQty == null || (d.getQty() != null && BigDecimal.valueOf(d.getQty()).compareTo(finalKingdeeQty) == 0);
                             boolean priceMatch = finalKingdeePrice == null || (d.getPrice() != null && d.getPrice().compareTo(finalKingdeePrice) == 0);
                             return skuMatch && qtyMatch && priceMatch;
                         })

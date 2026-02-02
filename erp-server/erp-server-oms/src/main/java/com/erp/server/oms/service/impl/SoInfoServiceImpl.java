@@ -2612,6 +2612,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             entryIdObj = item.get("Id");
                         }
                         String kingdeeId = entryIdObj != null ? entryIdObj.toString() : "";
+                        if (StringUtils.isBlank(kingdeeId)) {
+                            continue;
+                        }
                         Object materialObj = item.get("MaterialId");
                         if (materialObj == null) {
                             materialObj = item.get("FMaterialId");
@@ -2650,8 +2653,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         BigDecimal finalKingdeePrice = kingdeePrice;
                         List<SoDetailEntity> matched = soDetailList.stream()
                             .filter(d -> {
-                                boolean skuMatch = d.getSkuNo().equals(skuNo);
-                                boolean qtyMatch = finalKingdeeQty == null || (d.getQty() != null && d.getQty().compareTo(finalKingdeeQty.intValue()) == 0);
+                                boolean skuMatch = Objects.equals(d.getSkuNo(), skuNo);
+                                boolean qtyMatch = finalKingdeeQty == null || (d.getQty() != null && BigDecimal.valueOf(d.getQty()).compareTo(finalKingdeeQty) == 0);
                                 boolean priceMatch = finalKingdeePrice == null || (d.getPrice() != null && d.getPrice().compareTo(finalKingdeePrice) == 0);
                                 return skuMatch && qtyMatch && priceMatch;
                             })
