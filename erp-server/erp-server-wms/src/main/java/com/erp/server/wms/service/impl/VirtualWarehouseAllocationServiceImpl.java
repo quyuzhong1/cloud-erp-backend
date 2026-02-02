@@ -842,6 +842,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             }
             VirtualWarehouseAllocationDTO.TransferWarehouseDTO transferWarehouseDTO = new VirtualWarehouseAllocationDTO.TransferWarehouseDTO();
             transferWarehouseDTO.setSkuId(detailEntity.getSkuId());
+            transferWarehouseDTO.setSkuNo(detailEntity.getSkuNo());
             transferWarehouseDTO.setQty(detailEntity.getQty());
             transferWarehouseDTO.setFromWarehouseId(detailEntity.getWarehouseId());
             transferWarehouseDTO.setToWarehouseId(detailEntity.getToWarehouseId());
