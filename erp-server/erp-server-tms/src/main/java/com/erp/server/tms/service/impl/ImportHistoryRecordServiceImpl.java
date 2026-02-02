@@ -276,6 +276,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         //获取费用项配置信息
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(costAttribution);
+        //匹配结果序号
+        Integer matchIndex = getMapKey(headMap, "匹配结果");
         //错误信息序号
         Integer errorIndex = getMapKey(headMap, "错误信息");
 
@@ -351,7 +353,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson,errorMsgList, entry.getValue(), cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution);
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList, errorIndex);
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
 
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
@@ -370,7 +372,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList, errorIndex);
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
 
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
@@ -543,7 +545,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private void addOrUpdateData(JSONObject jsonObject,JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
                                  List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
-                                 CfgLogisticsCostImportEntity costImportEntity,  List<JSONObject> errorList, List<String> errorMsgList, Integer errorIndex) {
+                                 CfgLogisticsCostImportEntity costImportEntity,  List<JSONObject> errorList, List<String> errorMsgList,Integer matchIndex, Integer errorIndex) {
 
         ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
         //基础验证
@@ -591,6 +593,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             errorMsgList.add("物流费用项不能为空");
         }
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
+            jsonObject.set(matchIndex.toString(),"匹配失败");
             jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(jsonObject);
             return;
@@ -611,6 +614,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 errorMsgList.addAll(importMsgList);
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                jsonObject.set(matchIndex.toString(),"匹配失败");
                 jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(jsonObject);
                 return;
