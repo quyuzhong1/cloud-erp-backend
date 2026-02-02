@@ -3049,7 +3049,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             );
             logContent.append(sizeContent);
         }
-        if (CharSequenceUtil.isNotBlank(cancelContent) && CharSequenceUtil.isNotBlank(sizeContent)) {
+        if (CharSequenceUtil.isNotBlank(cancelContent) || CharSequenceUtil.isNotBlank(sizeContent)) {
             tmsFirstMileLogisticFeign.addFirstMileLogisticLog(new TmsFirstMileLogisticDTO.AddLogDTO(cancelDeliveryDTO.getLogisticsBillId(), "取消发货", logContent.toString()));
         }
     }
