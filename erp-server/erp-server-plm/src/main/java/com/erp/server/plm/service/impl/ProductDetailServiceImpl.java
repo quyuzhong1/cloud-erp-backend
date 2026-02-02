@@ -2517,6 +2517,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productInfoService.saveOrUpdate(byId);
         }
 
+        // 导入时保存产品与BU线关联（product_ref_bu）
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getBuId())) {
+            productRefBuService.addOrUpdate(id, productSpuBaseInfoDTO.getBuId());
+        }
 
         //2.修改/新增 sku信息
 
