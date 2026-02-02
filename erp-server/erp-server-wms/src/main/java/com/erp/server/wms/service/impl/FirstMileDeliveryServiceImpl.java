@@ -2977,7 +2977,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查询数据是否已进行重量分摊
         List<FirstMileWeightAllocationEntity> list = FeignQuery.create(FirstMileWeightAllocationEntity.class).eq(FirstMileWeightAllocationEntity::getLogisticsBillId, cancelDeliveryDTO.getLogisticsBillId()).list();
         if (CollUtil.isNotEmpty(list)) {
-            return BatchResultDTO.fail(cancelDeliveryDTO.getLogisticsBillId(), cancelDeliveryDTO.getBusinessCode(), "该发货单已进行重量分摊，不能取消发货");
+            return BatchResultDTO.fail(cancelDeliveryDTO.getLogisticsBillId(), cancelDeliveryDTO.getBusinessCode(), "该发货单已进行重量分摊，不能操作取消发货");
         }
 
         //查询箱子明细数据
