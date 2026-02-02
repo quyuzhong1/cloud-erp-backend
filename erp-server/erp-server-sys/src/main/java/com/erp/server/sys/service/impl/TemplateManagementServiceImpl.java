@@ -320,6 +320,8 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         for (TemplateManagementEntity templateManagementEntity : list) {
             TemplateManagementDTO.TemplateResultDTO templateResultDTO = new TemplateManagementDTO.TemplateResultDTO();
             BeanUtils.copyProperties(templateManagementEntity,templateResultDTO);
+            templateResultDTO.setTemplateId(templateManagementEntity.getId());
+            templateResultDTO.setTemplateName(templateManagementEntity.getName());
             templateResultDTOS.add(templateResultDTO);
         }
         return templateResultDTOS;

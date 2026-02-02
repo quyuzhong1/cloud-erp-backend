@@ -428,7 +428,7 @@ public class TemplateManagementDTO implements Serializable {
         /**
          * id
          */
-        private String id;
+        private String templateId;
 
         /**
          * 单据类型 transferOut
@@ -445,7 +445,7 @@ public class TemplateManagementDTO implements Serializable {
         /**
          * 模板名称
          */
-        private String name;
+        private String templateName;
 
         /**
          * 前端渲染配置JSON
