@@ -26,4 +26,18 @@ public interface ProductRefBuService extends SuperService<ProductRefBuEntity> {
 
 
     ProductRefBuEntity getByProductIds(String productId);
+
+    /**
+     * 根据产品id删除产品与BU线的关联（删除产品时同步清理，避免删除BU线时误判仍有关联）
+     *
+     * @param productId 产品id
+     */
+    void removeByProductId(String productId);
+
+    /**
+     * 根据产品id列表批量删除产品与BU线的关联
+     *
+     * @param productIds 产品id列表
+     */
+    void removeByProductIds(List<String> productIds);
 }

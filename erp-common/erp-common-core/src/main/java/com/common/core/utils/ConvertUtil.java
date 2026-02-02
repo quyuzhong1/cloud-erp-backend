@@ -804,4 +804,24 @@ public class ConvertUtil {
         return new String(c);
     }
 
+    /**
+     * 判断字符串是否包含全角字符（全角空格、全角符号等）
+     * 全角字符范围：\u3000(全角空格)、\uFF01-\uFF5E(全角ASCII字符)
+     *
+     * @param input 待检测字符串，null或空返回false
+     * @return true-包含全角字符，false-不包含
+     */
+    public static boolean containsFullWidthChar(String input) {
+        if (StringUtils.isBlank(input)) {
+            return false;
+        }
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '\u3000' || (c >= '\uFF01' && c <= '\uFF5E')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

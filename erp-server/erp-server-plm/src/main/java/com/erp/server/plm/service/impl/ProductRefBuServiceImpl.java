@@ -10,6 +10,7 @@ import com.erp.server.plm.service.BasicProductBuService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.plm.entity.ProductRefBuEntity;
 import com.erp.server.plm.mapper.ProductRefBuMapper;
 import com.erp.server.plm.service.ProductRefBuService;
@@ -117,6 +118,22 @@ public class ProductRefBuServiceImpl extends SuperServiceImpl<ProductRefBuMapper
             return null;
         }
         return productRefBuEntities.get(0);
+    }
+
+    @Override
+    public void removeByProductId(String productId) {
+        if (StrUtil.isEmpty(productId)) {
+            return;
+        }
+        remove(new LambdaQueryWrapper<ProductRefBuEntity>().eq(ProductRefBuEntity::getProductId, productId));
+    }
+
+    @Override
+    public void removeByProductIds(List<String> productIds) {
+        if (CollUtil.isEmpty(productIds)) {
+            return;
+        }
+        remove(new LambdaQueryWrapper<ProductRefBuEntity>().in(ProductRefBuEntity::getProductId, productIds));
     }
 
 }

@@ -2264,6 +2264,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    productRefBuService.removeByProductId(productInfoEntity.getId());
                     ProductInfoEntity infoEntity = productInfoService.getById(productInfoEntity.getId());
                     infoEntity.setIsDeleted(Boolean.TRUE);
                     productInfoService.removeById(productInfoEntity.getId());
@@ -2329,7 +2330,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
 
-        //8.删除spu信息
+        //8.删除产品与BU线关联（避免删除产品后删除BU线仍提示已绑定产品）
+        productRefBuService.removeByProductId(id);
+
+        //9.删除spu信息
         ProductInfoEntity infoEntity = productInfoService.getById(id);
         if (ObjectUtil.isNotEmpty(infoEntity)) {
             productInfoService.removeById(infoEntity.getId());
@@ -3100,6 +3104,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> hasRelationProductIds = productDetailEntityList.stream().filter(Objects::nonNull).map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
             //过滤存在关联记录的spu
             List<String> deleteProductIds = oldProductIds.stream().filter(e -> Objects.nonNull(e) && !hasRelationProductIds.contains(e)).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(deleteProductIds)) {
+                productRefBuService.removeByProductIds(deleteProductIds);
+            }
             productInfoService.removeByIds(deleteProductIds);
         }
         return this.getSkuListByProductId(newProductId);
@@ -4572,6 +4579,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    productRefBuService.removeByProductId(productInfoEntity.getId());
                     ProductInfoEntity infoEntity = productInfoService.getById(productInfoEntity.getId());
                     infoEntity.setIsDeleted(Boolean.TRUE);
                     productInfoService.removeById(productInfoEntity.getId());
