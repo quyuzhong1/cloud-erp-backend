@@ -165,13 +165,17 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
 
                             List<String> list = Arrays.asList(targetDetailFieldName.split("/"));
                             AllocationFeeTypeEnum allocationFeeTypeCode = AllocationFeeTypeEnum.getByName(list.get(0));
-                            TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostEntities.stream()
-                                    .filter(e -> Objects.equals(allocationFeeTypeCode, e.getDictCostCategory()) && Objects.equals(list.get(1), e.getCostName()))
-                                    .findFirst().orElse(null);
-                            if(Objects.isNull(tmsCfgCostEntity)){
-                                errorMsgList.add(StrUtil.format("【{}】费用项不存在",targetDetailFieldName));
+                            if(Objects.isNull(allocationFeeTypeCode)){
+                                errorMsgList.add("【"+list.get(0)+"】不存在");
                             }else {
-                                excelDTO.setTargetDetailFieldId(tmsCfgCostEntity.getId());
+                                TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostEntities.stream()
+                                        .filter(e -> Objects.equals(allocationFeeTypeCode.getCode(), e.getDictCostCategory()) && Objects.equals(list.get(1), e.getCostName()))
+                                        .findFirst().orElse(null);
+                                if(Objects.isNull(tmsCfgCostEntity)){
+                                    errorMsgList.add(StrUtil.format("【{}】费用项不存在",targetDetailFieldName));
+                                }else {
+                                    excelDTO.setTargetDetailFieldId(tmsCfgCostEntity.getId());
+                                }
                             }
                         }
                     }
@@ -224,9 +228,8 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                     errorMsgList.add("【"+s+"】不存在");
                 }
             }
-            excelDTO.setImportType(Arrays.stream(split)
-                    .map(CfgLogisticsCostImportImportTypeEnum::getCode)
-                    .collect(Collectors.joining(",")));
+            excelDTO.setImportTypeList(Arrays.stream(split)
+                    .map(CfgLogisticsCostImportImportTypeEnum::getCode).collect(Collectors.toList()));
         }
 
         String disabledName = excelDTO.getDisabledName();
@@ -235,7 +238,21 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
             excelDTO.setDisabled(disabled);
         }
 
+        String isUniqueKeyStr = excelDTO.getIsUniqueKeyStr();
+        if(StringUtils.isNotBlank(isUniqueKeyStr)){
+            Boolean isUniqueKey = isUniqueKeyStr.equals("是") ? true : false;
+            excelDTO.setIsUniqueKey(isUniqueKey);
+        }else {
+            excelDTO.setIsUniqueKey(false);
+        }
 
+        String isAbsoluteValueStr = excelDTO.getIsAbsoluteValueStr();
+        if(StringUtils.isNotBlank(isAbsoluteValueStr)){
+            Boolean isAbsoluteValue = isAbsoluteValueStr.equals("是") ? true : false;
+            excelDTO.setIsAbsoluteValue(isAbsoluteValue);
+        }else {
+            excelDTO.setIsAbsoluteValue(false);
+        }
 
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {

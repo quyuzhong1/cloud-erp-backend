@@ -7,6 +7,7 @@ import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author jack
@@ -86,7 +87,7 @@ public class CfgLogisticsCostExcelDTO implements Serializable {
     @FieldValid(fieldName = "*导入处理（多个用英文逗号隔开）",isNotBlank = true)
     private String  importTypeName;
     @ExcelIgnore
-    private String  importType;
+    private List<String> importTypeList;
 
     /**
      * 启用状态
@@ -129,6 +130,25 @@ public class CfgLogisticsCostExcelDTO implements Serializable {
     private String  targetDetailFieldName;
     @ExcelIgnore
     private String  targetDetailFieldId;
+
+    /**
+     *是否识别单号
+     */
+    @ExcelProperty(value = "是否识别单号", index = 14)
+    @FieldValid(fieldName = "是否识别单号")
+    private String  isUniqueKeyStr;
+    @ExcelIgnore
+    private Boolean isUniqueKey = false;
+
+
+    /**
+     * 是否绝对值处理
+     */
+    @ExcelProperty(value = "是否绝对值处理", index = 15)
+    @FieldValid(fieldName = "是否绝对值处理")
+    private String  isAbsoluteValueStr;
+    @ExcelIgnore
+    private Boolean isAbsoluteValue = false;
 
     /**
      * 错误信息
