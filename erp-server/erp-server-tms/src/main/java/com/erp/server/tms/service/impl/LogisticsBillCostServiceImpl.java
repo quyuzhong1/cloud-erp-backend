@@ -2022,38 +2022,45 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto) {
-        List<LogisticsBillCostEntity> list = listByCanPushAllocation(dto.getType() ,dto.getReportDate());
-
+//        List<LogisticsBillCostEntity> list = listByCanPushAllocation(dto.getType() ,dto.getReportDate());
+        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
+        taskDTO.setIds(dto.getIds());
+        taskDTO.setReportDate(dto.getReportDate());
+        taskDTO.setType(dto.getType());
+        List<String> ids = baseMapper.listByCanPushAllocation(taskDTO);
         LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocatedCostCountDTO = new LogisticsBillCostDTO.PushAllocatedCostCountDTO();
-        pushAllocatedCostCountDTO.setCount(list.size());
+        pushAllocatedCostCountDTO.setCount(ids.size());
         return pushAllocatedCostCountDTO;
     }
 
     @Override
-    public List<LogisticsBillCostEntity> listByCanPushAllocation(String type, String reportDate) {
-        LocalDate reportMonth = LocalDate.parse(reportDate + "-01");
-        LocalDateTime currentDateTime = reportMonth.atStartOfDay();
-
-        // startTime 设置为当月第一天的 00:00:00
-        LocalDateTime startTime = currentDateTime.withDayOfMonth(1)
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
-
-        // endTime 设置为当月最后一天的 23:59:59
-        LocalDateTime endTime = currentDateTime.withDayOfMonth(reportMonth.lengthOfMonth())
-                .withHour(23)
-                .withMinute(59)
-                .withSecond(59)
-                .withNano(999_999_999);
-        List<LogisticsBillCostEntity> list = lambdaQuery()
-                .ge(LogisticsBillCostEntity::getReconciliationMonth, startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
-                .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
-                .eq(LogisticsBillCostEntity::getType, type)
-                .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
-                .list();
-        return list;
+    public List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
+//        String type = dto.getType();
+//        String reportDate = dto.getReportDate();
+//        LocalDate reportMonth = LocalDate.parse(reportDate + "-01");
+//        LocalDateTime currentDateTime = reportMonth.atStartOfDay();
+//
+//        // startTime 设置为当月第一天的 00:00:00
+//        LocalDateTime startTime = currentDateTime.withDayOfMonth(1)
+//                .withHour(0)
+//                .withMinute(0)
+//                .withSecond(0)
+//                .withNano(0);
+//
+//        // endTime 设置为当月最后一天的 23:59:59
+//        LocalDateTime endTime = currentDateTime.withDayOfMonth(reportMonth.lengthOfMonth())
+//                .withHour(23)
+//                .withMinute(59)
+//                .withSecond(59)
+//                .withNano(999_999_999);
+//        List<LogisticsBillCostEntity> list = lambdaQuery()
+//                .ge(LogisticsBillCostEntity::getReconciliationMonth, startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+//                .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+//                .eq(LogisticsBillCostEntity::getType, type)
+//                .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
+//                .list();
+//        return list;
+        return baseMapper.listByCanPushAllocation(dto);
     }
 
 
