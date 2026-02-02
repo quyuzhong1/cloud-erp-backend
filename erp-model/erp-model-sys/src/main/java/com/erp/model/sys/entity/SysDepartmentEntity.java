@@ -71,4 +71,9 @@ public class SysDepartmentEntity implements Serializable {
 	@TableField(exist = false)
 	private String path = "";
 
+	/**
+	 * 是否禁用
+	 */
+	@TableField("disabled")
+	private Boolean disabled;
 }

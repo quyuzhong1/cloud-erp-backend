@@ -47,4 +47,17 @@ public interface FsEventConstant {
      * 补卡审批：补卡审批通过后推送消息
      */
       String REMEDY_APPROVAL_EVENT = "remedy_approval";
+    /**
+     * 飞书用户批量查询
+     */
+    String FS_USER_BATCH = "fsUserBatch";
+    /**
+     * 员工入职事件订阅
+     */
+    String USER_CREATED_EVENT = "contact.user.created_v3";
+    /**
+     * 员工离职事件订阅
+     */
+    String USER_DELETED_EVENT = "contact.user.deleted_v3";
+
 }

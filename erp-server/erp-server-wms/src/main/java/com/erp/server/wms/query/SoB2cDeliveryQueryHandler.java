@@ -1,9 +1,11 @@
 package com.erp.server.wms.query;
 
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
@@ -39,17 +41,27 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("sbl.code".equals(field)) {
+            DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+            String tableName = "so_b2c_logistics";
+            if (DynamicDataSourceTypeEnum.DORIS.equals(dynamicDataSourceTypeEnum)){
+                tableName =  "erp_oms.so_b2c_logistics";
+            }
             if(isContain()){
-                return " EXISTS (SELECT 1 from so_b2c_logistics sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.code " + compareCodeSplicingValueSql + ")";
+                return " EXISTS (SELECT 1 from "+tableName+" sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.code " + compareCodeSplicingValueSql + ")";
             }else{
-                return " not  EXISTS (SELECT 1 from so_b2c_logistics sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.code " + compareCodeSplicingValueSql + ")";
+                return " not  EXISTS (SELECT 1 from "+tableName+" sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.code " + compareCodeSplicingValueSql + ")";
             }
         }
         if ("sbl.track_no".equals(field)) {
+            DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+            String tableName = "so_b2c_logistics";
+            if (DynamicDataSourceTypeEnum.DORIS.equals(dynamicDataSourceTypeEnum)){
+                tableName =  "erp_oms.so_b2c_logistics";
+            }
             if(isContain()){
-                return " EXISTS (SELECT 1 from so_b2c_logistics sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
+                return " EXISTS (SELECT 1 from "+tableName+" sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
             }else{
-                return " not  EXISTS (SELECT 1 from so_b2c_logistics sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
+                return " not  EXISTS (SELECT 1 from "+tableName+" sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
             }
         }
         if ("isFullyManaged".equals(field)) {

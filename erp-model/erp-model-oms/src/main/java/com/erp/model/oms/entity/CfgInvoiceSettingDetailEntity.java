@@ -84,7 +84,6 @@ public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingD
     @TableField(exist = false)
     private String token;
 
-
     public static final String MAIN_ID = "main_id";
 
     public static final String DICT_PLATFORM = "dict_platform";

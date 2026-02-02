@@ -338,8 +338,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     private String getPermissionSql() {
-        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sbdid.warehouse_id");
-        String shopPermissionSql = authDataFeign.getShopPermissionSql("sbd.shop_id");
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if(dynamicDataSourceTypeEnum != null) {
+            dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSqlByDynamicDataSource("sbdid.warehouse_id",dynamicDataSource);
+        String shopPermissionSql = authDataFeign.getShopPermissionSqlByDynamicDataSource("sbd.shop_id",dynamicDataSource);
         if (CharSequenceUtil.isAllBlank(warehousePermissionSql, shopPermissionSql)) {
             return null;
         }

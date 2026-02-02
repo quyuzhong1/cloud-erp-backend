@@ -308,6 +308,11 @@ public class SoB2cDTO implements Serializable {
          * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
          */
         private Integer onlyQueryId;
+        
+        /**
+         * 需要二次查询pg库
+         */
+        private Boolean secondQuery;
     }
 
     @Data
@@ -1183,7 +1188,10 @@ public class SoB2cDTO implements Serializable {
          */
         private List<SoB2cDetailEntity> soB2cDetailList;
 
-
+        /**
+         * 店铺费率配置
+         */
+        private Map<String , DictBasicEntity> shopCostMap;
     }
 
     /**

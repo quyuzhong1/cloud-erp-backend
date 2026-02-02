@@ -1541,7 +1541,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(tmsFirstMileLogisticEntity.getShippingMethod()));
             logisticsViewDTO.setLogisticsMethod(tmsFirstMileLogisticEntity.getShippingMethod());
             //发货时间
-            logisticsViewDTO.setDeliveryTime(tmsFirstMileLogisticEntity.getDeliveryTime());
+            logisticsViewDTO.setDeliveryTime(data.getDeliveryDate().atStartOfDay());
             //备注
             logisticsViewDTO.setLogisticsRemark(tmsFirstMileLogisticEntity.getRemark());
             //物流运单号

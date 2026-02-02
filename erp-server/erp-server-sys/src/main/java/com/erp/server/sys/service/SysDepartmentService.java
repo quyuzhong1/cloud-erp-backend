@@ -45,7 +45,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      *
      * @return
      */
-    List<DepartmentDTO> findDepartmentTree();
+    List<DepartmentDTO> findDepartmentTree(SysDepartmentDTO.TreeParamsDTO dto);
 
     /**
      * 树形入参
@@ -160,5 +160,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     List<SysDepartmentEntity> listByParentIds();
 
     List<DeptUserDTO.Tree> cascadeTree();
+
+    void updateDisabled(SysDepartmentDTO.UpdateDisabledDTO dto);
 }
 

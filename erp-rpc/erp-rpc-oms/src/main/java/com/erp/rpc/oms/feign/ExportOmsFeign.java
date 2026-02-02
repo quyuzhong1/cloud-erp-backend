@@ -137,4 +137,22 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/exportOmsKolB2cApplication")
     PagingVO<KolB2cApplicationDTO.ListDTO> exportOmsKolB2cApplication(@RequestBody PagingDTO<KolB2cApplicationDTO.PagingParamDTO> dto);
+
+    /**
+     * 查询发票附件URL列表（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return 附件URL列表
+     */
+    @PostMapping("/feign/export/listExportUrl")
+    List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(@RequestBody InvoiceInfoDTO.PagingParamDTO dto, @org.springframework.web.bind.annotation.RequestParam("type") String type);
+
+    /**
+     * 构建发票附件ZIP文件（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return ZIP文件URL
+     */
+    @PostMapping("/feign/export/buildInvoiceAttachZip")
+    String buildInvoiceAttachZip(@RequestBody InvoiceInfoDTO.PagingParamDTO dto, @org.springframework.web.bind.annotation.RequestParam("type") String type);
 }

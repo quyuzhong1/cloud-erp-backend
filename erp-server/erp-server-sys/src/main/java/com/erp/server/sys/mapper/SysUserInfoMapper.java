@@ -28,7 +28,7 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
 
     List<UserDTO> findList(@Param("params") SysSearchUserDTO dto);
 
-    IPage<UserManageDTO> paging(Page query, @Param("params") SysUserPagingSearchDTO params, @Param("roleIds") List<String> roleIds);
+    IPage<UserManageDTO> paging(Page query, @Param("params") SysUserInfoDTO.PagingParamDTO params);
 
     List<UserDTO> findRoleIfExistList(@Param("params") SysSearchUserDTO dto);
 
@@ -96,4 +96,6 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
     List<SupplierUserVO> srmList(@Param("params") UserPagingSearchDTO dto);
 
     IPage<UserSelectDto.PageSelectDTO> pagingSelect(Page query, @Param("params") UserSelectDto.SelectDTO params);
+
+    List<SysUserInfoDTO.TabListDTO> tabList(@Param("params")  SysUserInfoDTO.PagingParamDTO params);
 }

@@ -144,6 +144,8 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     
     void dmpInputMoveToHistoryTable(String beforeUpdateTime , String size);
     
+    void dmpFdsDeleteHisFile(String beforeUpdateTime , String size);
+    
     void dmpRelationMoveToHistoryTable(String beforeUpdateTime , String size);
     
     void dmpOutputMoveToHistoryTable(String beforeUpdateTime , String size);

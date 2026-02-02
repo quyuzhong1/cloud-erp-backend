@@ -119,6 +119,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_CUSTOMER("EXPORT_OMS_CUSTOMER","客户列表","","",""),
     EXPORT_INVOICE_INFO("EXPORT_INVOICE_INFO","发票管理","","",""),
     EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号","","",""),
+    EXPORT_INVOICE_XML("EXPORT_INVOICE_XML","导出发票XML","","","ExportOmsInvoiceXmlHandler"),
+    EXPORT_INVOICE_PDF("EXPORT_INVOICE_PDF","导出发票PDF","","","ExportOmsInvoicePdfHandler"),
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据","","",""),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据","","",""),
     EXPORT_SO_MULTI_CHANNEL("EXPORT_SO_MULTI_CHANNEL","多渠道订单数据","","",""),
@@ -185,6 +187,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
     EXPORT_DICT_BASIC_ALL("EXPORT_DICT_BASIC_ALL", "字典数据导出","","",""),
     EXPORT_SYS_TEMPLATE("EXPORT_SYS_TEMPLATE", "模板导出","","",""),
+    EXPORT_SYS_USER_INFO("EXPORT_SYS_USER_INFO","用户管理导出","","",""),
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),
