@@ -471,9 +471,13 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	            	shudiyunB2cOrderDTO.setEstimate_investment_time(estimateInvestmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 	            }
 
-				// 添加发货类型
-				boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
-				shudiyunB2cOrderDTO.setFulfillment_type(isPlatformDelivery ? "0":"1");
+	            if(DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platformType)) {
+	            	shudiyunB2cOrderDTO.setFulfillment_type("1");
+	            }else {
+	            	// 添加发货类型
+					boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
+					shudiyunB2cOrderDTO.setFulfillment_type(isPlatformDelivery ? "0":"1");
+	            }
                 
     	        shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockDetailEntity.getThirdOrderCode());
 
