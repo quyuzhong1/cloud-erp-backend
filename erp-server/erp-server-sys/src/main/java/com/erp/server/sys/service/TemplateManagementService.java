@@ -52,4 +52,6 @@ public interface TemplateManagementService extends SuperService<TemplateManageme
     List<TemplateManagementDTO.PageSelectDTO> pagingSelect(TemplateManagementDTO.SelectDTO dto);
 
     void exportList(TemplateManagementDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    List<TemplateManagementDTO.TemplateResultDTO> getTemplateByType(TemplateManagementDTO.TemplateParamsDTO dto);
 }
