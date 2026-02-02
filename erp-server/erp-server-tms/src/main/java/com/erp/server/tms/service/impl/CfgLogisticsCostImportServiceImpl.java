@@ -598,11 +598,11 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }
 
         if(CollUtil.isNotEmpty(errorNoList)){
-            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
-
             //全部返回到错误列表
             List<CfgLogisticsCostExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getNo()) || errorNoList.contains(e.getNo())).collect(Collectors.toList());
             errorList2.addAll(collect);
+
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
         }
 
         CfgLogisticsCostImportServiceImpl bean = ApplicationContextUtils.getBean(CfgLogisticsCostImportServiceImpl.class);
