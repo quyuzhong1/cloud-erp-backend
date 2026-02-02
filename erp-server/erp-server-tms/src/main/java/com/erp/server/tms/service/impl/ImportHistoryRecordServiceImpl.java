@@ -301,6 +301,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
         }
 
+        //查询字段所在下标
+        long count = cfgImportDetailList.stream().map(CfgLogisticsCostImportDetailEntity::getMappingIndex).filter(ObjectUtil::isNotNull).count();
+        if (count == 0) {
+            throw new ServiceException(ApiError.LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND);
+        }
+
         //根据唯一字段进行数据查询
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = new ArrayList<>();
         try {
@@ -327,6 +333,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
              */
             List<Integer> uniqueIndexes = uniqueKeyList.stream()
                     .map(CfgLogisticsCostImportDetailEntity::getMappingIndex)
+                    .filter(ObjectUtil::isNotNull)
                     .collect(Collectors.toList());
 
             Map<String, List<JSONObject>> map = successList.stream()
@@ -345,6 +352,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
                         logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList, errorIndex);
+
+                //成功信息也要放到下载结果中
+                errorList.add(jsonObject);
             }
 
 
@@ -361,6 +371,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
                         logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList, errorIndex);
+
+                //成功信息也要放到下载结果中
+                errorList.add(jsonObject);
             }
         }
 
