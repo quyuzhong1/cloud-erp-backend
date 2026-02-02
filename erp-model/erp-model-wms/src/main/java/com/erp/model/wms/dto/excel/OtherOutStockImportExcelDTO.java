@@ -131,6 +131,12 @@ public class OtherOutStockImportExcelDTO implements Serializable {
     private String outType;
 
     /**
+     * 出库备注
+     */
+    @ExcelProperty(value = "出库备注", index = 15)
+    @FieldValid(fieldName = "出库备注", maxLength = 200)
+    private String detailRemark;
+    /**
      * 错误数据
      */
     private String errorMsg;
