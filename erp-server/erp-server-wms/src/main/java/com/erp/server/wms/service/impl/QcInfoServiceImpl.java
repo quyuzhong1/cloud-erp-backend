@@ -2720,6 +2720,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
                 excelDTO.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "-");
                 excelDTO.setSourceTypeName(SourceTypeEnum.getName(item.getSourceType()));
+                excelDTO.setInvalidStatusName(InvalidStatusEnum.getName(item.getInvalidStatus()));
                 resultList.add(excelDTO);
             }
 
