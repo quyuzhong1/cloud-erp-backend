@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -978,7 +979,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 详情
          */
-        private List<PrintLogisticsWaybillDetailDTO> detailList;
+        private LinkedList<PrintLogisticsWaybillDetailDTO> detailList;
     }
 
     /**
