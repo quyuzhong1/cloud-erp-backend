@@ -3002,18 +3002,56 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         cartonSpecEntity.setWeightUnit(cancelDeliveryDTO.getWeightUnit());
         wmsCartonSpecService.updateById(cartonSpecEntity);
 
-        //添加头程物流单操作日志
-        String formatContent = CharSequenceUtil.format("SKU【{}】【{}】取消分摊，更新[装箱重量/装箱尺寸]由[{}/{}]编辑为[{}/{}]",
-                cancelDeliveryDTO.getSkuNo(),
-                cancelDeliveryDTO.getIsCancelRequired() ? "是" : "否",
-                old.getPackageWeight(),
-                CharSequenceUtil.format("{}*{}*{}", old.getBoxLength(), old.getBoxWidth(), old.getBoxHeight()),
-                cartonSpecEntity.getPackageWeight(),
-                CharSequenceUtil.format("{}*{}*{}", cartonSpecEntity.getBoxLength(), cartonSpecEntity.getBoxWidth(), cartonSpecEntity.getBoxHeight())
-        );
-        tmsFirstMileLogisticFeign.addFirstMileLogisticLog(new TmsFirstMileLogisticDTO.AddLogDTO(cancelDeliveryDTO.getLogisticsBillId(), "取消发货", formatContent));
-
+        //添加日志
+        addLogCancelDelivery(cancelDeliveryDTO, old, wmsCartonDetailEntity, cartonSpecEntity);
         return BatchResultDTO.success(wmsCartonDetailEntity.getId(), wmsCartonDetailEntity.getSkuNo(), "操作成功");
+    }
+
+
+    /**
+     * 取消发货添加日志
+     * @author will
+     * @date 2026/2/2 11:27
+     * @param cancelDeliveryDTO
+     * @param old
+     * @param wmsCartonDetailEntity
+     * @param cartonSpecEntity
+     * @return void
+     */
+    private void addLogCancelDelivery (FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO,WmsCartonSpecEntity old,
+                                       WmsCartonDetailEntity wmsCartonDetailEntity,WmsCartonSpecEntity cartonSpecEntity) {
+        //添加头程物流单操作日志
+        StringBuilder logContent = new StringBuilder();
+        String formatContent = CharSequenceUtil.format("箱号【{}】SKU【{}】",
+                old.getBoxSpecNo(),
+                cancelDeliveryDTO.getSkuNo()
+        );
+        //是否取消分摊
+        logContent.append(formatContent);
+
+        String cancelContent = "";
+        if (!cancelDeliveryDTO.getIsCancelRequired().equals(wmsCartonDetailEntity.getIsCancelRequired())) {
+            cancelContent = CharSequenceUtil.format("【{}】取消分摊",
+                    cancelDeliveryDTO.getIsCancelRequired() ? "是" : "否"
+            );
+            logContent.append(cancelContent);
+        }
+        //比较装箱重量和尺寸是否有变化
+        String sizeContent = "";
+        String oldFormat = CharSequenceUtil.format("{}-{}-{}-{}-{}", old.getPackageWeight(),old.getWeightUnit(), old.getBoxLength(), old.getBoxWidth(), old.getBoxHeight());
+        String thisFormat = CharSequenceUtil.format("{}-{}-{}-{}-{}", cancelDeliveryDTO.getPackageWeight(),cancelDeliveryDTO.getWeightUnit(), cancelDeliveryDTO.getBoxLength(), cancelDeliveryDTO.getBoxWidth(), cancelDeliveryDTO.getBoxHeight());
+        if (!CharSequenceUtil.equals(oldFormat,thisFormat)) {
+            sizeContent = CharSequenceUtil.format("更新[装箱重量/装箱尺寸]由[{}/{}]编辑为[{}/{}]",
+                    CharSequenceUtil.format("{}{}",old.getPackageWeight(),old.getWeightUnit()),
+                    CharSequenceUtil.format("{}*{}*{}", old.getBoxLength(), old.getBoxWidth(), old.getBoxHeight()),
+                    CharSequenceUtil.format("{}{}",cartonSpecEntity.getPackageWeight(),cartonSpecEntity.getWeightUnit()),
+                    CharSequenceUtil.format("{}*{}*{}", cartonSpecEntity.getBoxLength(), cartonSpecEntity.getBoxWidth(), cartonSpecEntity.getBoxHeight())
+            );
+            logContent.append(sizeContent);
+        }
+        if (CharSequenceUtil.isNotBlank(cancelContent) && CharSequenceUtil.isNotBlank(sizeContent)) {
+            tmsFirstMileLogisticFeign.addFirstMileLogisticLog(new TmsFirstMileLogisticDTO.AddLogDTO(cancelDeliveryDTO.getLogisticsBillId(), "取消发货", logContent.toString()));
+        }
     }
 }
 

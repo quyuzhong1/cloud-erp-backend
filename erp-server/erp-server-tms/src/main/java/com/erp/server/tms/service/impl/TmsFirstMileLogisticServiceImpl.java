@@ -1561,7 +1561,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 //        // 更新已成功对账单
 //        List<String> billIds = Collections.singletonList(id);
 //        this.updateReconciliation(billIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), reconciliationEntity.getId());
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("下推对账单单号【{}】",reconciliationEntity.getCode()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), id, "更新渠道");
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("下推对账单单号【{}】",reconciliationEntity.getCode()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), id, "下推操作");
 
         return BatchResultDTO.success(id, curListDTO.getTransportNo(), OperationTypeEnum.ADD);
     }
@@ -2068,7 +2068,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         BatchResultDTO add = firstMileWeightAllocationService.add(entity.getId());
 
         //操作日志
-        operateLogService.addModuleOperateLog("下推重量分摊", ModuleTypeEnum.LOGISTICS_BILL.getCode(), entity.getId(), "更新渠道");
+        operateLogService.addModuleOperateLog("下推重量分摊", ModuleTypeEnum.LOGISTICS_BILL.getCode(), entity.getId(), "下推操作");
         return add;
     }
 
@@ -2284,7 +2284,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         } else {
             msg = CharSequenceUtil.format("是否分摊状态变更为否,不分摊备注：{},", notAllocateRemark);
         }
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "分摊设置操作");
         return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"更新成功");
     }
 

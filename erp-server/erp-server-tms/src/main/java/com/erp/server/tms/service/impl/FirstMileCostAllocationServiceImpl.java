@@ -11,7 +11,6 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -54,7 +53,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.listener.FirstMileCostChangeExcelListener;
@@ -63,7 +61,6 @@ import com.erp.server.tms.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -76,6 +73,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -627,6 +625,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
         List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(orgId, skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth(),toWarehouseId);
+
+        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(orgId);
+        if (ObjectUtil.isNotNull(company)) {
+            entity.setOrgName(company.getCompanyName());
+        }
+        entity.setOrgId(orgId);
         //保存分摊主表记录
         service.saveOrUpdate(entity);
         // 操作日志
