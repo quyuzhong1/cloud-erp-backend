@@ -732,7 +732,7 @@ public class ExcelUtil {
             File filePath = new File(tempDirectory,"template"+ LocalDate.now() +".xlsx");
             File tempFile = File.createTempFile(fileName, ".xlsx");
             if (!filePath.exists()) {
-                EasyExcel.write(filePath).head(hs).sheet(fileName).doWrite(new ArrayList<>());
+                EasyExcel.write(filePath).sheet(fileName).doWrite(new ArrayList<>());
             }
             if (list2.size() > BATCH_COUNT){
                 List<List<List<String>>> partition = ListUtil.partition(list2, BATCH_COUNT);
