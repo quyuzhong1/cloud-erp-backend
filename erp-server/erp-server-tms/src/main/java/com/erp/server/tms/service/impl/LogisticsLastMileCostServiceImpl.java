@@ -13,7 +13,6 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.enums.ImportTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -580,12 +579,10 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 .collect(Collectors.toList());
         LogisticsBillCostEntity logisticsBillCostEntity = null;
         if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
-            if(!ImportTypeEnum.ADD.getCode().equals(importType)){
-                errorMsgList.add("未找到对应对账类型的物流费用单");
-            }
+            errorMsgList.add("未找到对应对账类型的物流费用单");
         } else {
             if(logisticsBillCostEntityList.size() > 1) {
-                if (ImportTypeEnum.UPDATE.getCode().equals(importType)) {
+                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)) {
                     long count = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
                     if (count > 1) {
                         errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
@@ -606,7 +603,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
                     errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
                 }
-                if (ImportTypeEnum.UPDATE.getCode().equals(importType) ) {
+                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType) ) {
                     if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
                         errorMsgList.add("物流费用单已确认不支持更新");
                     }
