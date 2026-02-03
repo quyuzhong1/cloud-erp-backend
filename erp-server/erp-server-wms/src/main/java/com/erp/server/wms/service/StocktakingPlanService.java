@@ -153,4 +153,10 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
      */
     void updateForStocktakingStatus(String sourceId, StocktakingStatusEnum stocktakingStatusEnum);
 
+    /**
+     * 下推盘点任务
+     * @param dto
+     * @return
+     */
+    Boolean pushStockingTask(BaseIdsDTO.IdsDTO dto);
 }

@@ -51,4 +51,11 @@ public interface StocktakingPlanMapper extends BaseMapper<StocktakingPlanEntity>
      * @return
      */
     List<StocktakingPlanDTO.TabListDTO> tabList(@Param("params") StocktakingPlanDTO.PagingParamDTO searchParam);
+
+    /**
+     * 允许下推列表
+     * @param
+     * @return
+     */
+    List<StocktakingPlanDTO.AllowPushDTO> allowPushStocktakingPlan();
 }

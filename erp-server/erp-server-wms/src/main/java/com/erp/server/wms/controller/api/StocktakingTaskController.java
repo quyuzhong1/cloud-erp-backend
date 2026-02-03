@@ -326,4 +326,20 @@ public class StocktakingTaskController extends BaseController {
         return success();
     }
 
+    /**
+     * 下推盘盈盘亏单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pushStocktakingProfitLoss")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:pushStocktakingProfitLoss",
+            serviceClass = StocktakingTaskService.class,
+            keyIdName = "id")
+    public ApiResult<?> pushStocktakingProfitLoss(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        boolean flag = stocktakingTaskService.pushStocktakingProfitLoss(dto);
+        return flag == true ? success() : failure();
+    }
+
 }

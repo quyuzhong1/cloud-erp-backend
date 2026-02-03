@@ -46,17 +46,17 @@
         spl.approve_time AS approveTime,
         spl.approve_user_name AS approveUserName,
         spl.approve_status AS approveStatus,
-        spld.id as detailId,
-        spld.sku_no AS skuNo,
-        spld.sku_id AS skuId,
-        spld.warehouse_id AS warehouseId,
-        spld.warehouse_location AS warehouseLocation,
-        spld.qty,
-        spld.usable_qty AS usableQty,
-        spld.frozen_qty AS frozenQty,
-        spld.diff_qty AS diffQty,
-        w.name AS warehouseName,
-        wl.name as warehouseLocationName
+        spld.id as detailId
+        --,spld.sku_no AS skuNo,
+        --spld.sku_id AS skuId,
+        --spld.warehouse_id AS warehouseId,
+        --spld.warehouse_location AS warehouseLocation,
+        --spld.qty,
+        --spld.usable_qty AS usableQty,
+        --spld.frozen_qty AS frozenQty,
+        --spld.diff_qty AS diffQty,
+        --w.name AS warehouseName,
+        --wl.name as warehouseLocationName
         FROM stocktaking_profit_loss spl
         INNER JOIN stocktaking_profit_loss_detail spld
         ON spl.id=spld.main_id AND spld.is_deleted=FALSE

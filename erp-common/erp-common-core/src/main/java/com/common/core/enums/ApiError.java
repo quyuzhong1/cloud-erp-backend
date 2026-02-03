@@ -1409,6 +1409,8 @@ public enum ApiError implements Serializable {
     WH_BOX_RULE_SKU_DUPLICATE(11127,"箱规SKU【{0}】重复"),
     WH_BOX_RULE_PER_BOX_QTY_DUPLICATE(11128,"箱规单箱数量【{0}】重复"),
     WH_BOX_PER_QTY_FORBIDDEN_ONE(11129,"单箱数量必须大>1"),
+    WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY(11130,"盘点日期需要大于等于今天"),
+    WH_STOCKPLAN_NOT_FOUND(11131,"盘点计划不存在"),
     /**
      * 头程发货单 错误 信息 11500-12000
      */

@@ -10,10 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -456,21 +453,21 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         //完成
         StocktakingStatusEnum billStatus = StocktakingStatusEnum.COMPLETED;
-        Boolean isPass = Boolean.TRUE;
+        //Boolean isPass = Boolean.TRUE;
         if (ApproveType.REJECT.equals(dto.getType())) {
             //变待提交 状态改为复盘中
             approveStatus = ApproveStatusEnum.REJECT;
             billStatus = StocktakingStatusEnum.RECOUNT;
-            isPass = Boolean.FALSE;
+            //isPass = Boolean.FALSE;
         }
         Boolean result = updateForApprove(entity.getId(), approveStatus, billStatus);
-        if (result && isPass) {
-            // 组装盘盈盘亏单所需要的数据
-            List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(entity);
-            // 批量提审
-            List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
-
-        }
+//        if (result && isPass) {
+//            // 组装盘盈盘亏单所需要的数据
+//            List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(entity);
+//            // 批量提审
+//            List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
+//
+//        }
         // 查询盘点计划下其他单据是否全部审核完成
         List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
         // 全部审核完成 修改盘点计划单据状态
@@ -626,6 +623,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             operateLogService.batchAddModuleOperateLog(addList);
         }
         return resultList;
+    }
+
+    @Override
+    public Boolean pushStocktakingProfitLoss(BaseIdsDTO.IdsDTO dto) {
+
+        return null;
     }
 
     /**
@@ -823,6 +826,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             log.error("盘点计划【{}】没有需要盘点的库存记录", entity.getId());
             return Boolean.TRUE;
         }
+
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY);
+        }
+
         String planCode = entity.getCode();
         // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
         inventoryList.stream().forEach(item -> {
