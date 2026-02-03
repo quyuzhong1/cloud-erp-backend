@@ -563,7 +563,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
 
         List<StocktakingTaskDetailEntity> currentBatch = new ArrayList<>();
-        String currentSku = details.get(0).getSkuNo(); // 假设有 getSkuCode()
+        String currentSku = details.get(0).getSkuNo();
 
         for (StocktakingTaskDetailEntity detail : details) {
             // 如果当前 SKU 变化，并且当前批次已达到 batchSize，则新建批次
