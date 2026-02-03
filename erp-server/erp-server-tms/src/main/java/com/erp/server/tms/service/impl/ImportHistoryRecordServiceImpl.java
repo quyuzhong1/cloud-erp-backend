@@ -405,14 +405,13 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             if (CharSequenceUtil.equals(field,"错误信息")) {
                 continue;
             }
-            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(cfgDetailEntity)) {
-                log.warn("导入配置未找到字段【{}】的配置项",field);
+            if (CharSequenceUtil.equals(field,"匹配结果")) {
                 continue;
             }
-            //判断导入字段是否是费用项
-            if ("costItem".equals(cfgDetailEntity.getTargetField())){
-                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), entry.getValue().toString()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
+            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(cfgDetailEntity)) {
+                //判断导入字段是否是费用项
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), field) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
                     errorMsgList.add(CharSequenceUtil.format("费用管理尾程未找到该费用名称【{}】",field));
                     continue;
@@ -434,6 +433,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     updateList.add(updateDTO);
                 }
             }
+
             successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
         }
         return updateList;
@@ -480,6 +480,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CharSequenceUtil.equals(field,"错误信息")) {
                     continue;
                 }
+                if (CharSequenceUtil.equals(field,"匹配结果")) {
+                    continue;
+                }
                 CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(cfgDetailEntity)) {
                     log.warn("导入配置未找到字段【{}】的配置项",field);
@@ -498,6 +501,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                             errorMsgList.add("费用已存在，请勿重复导入");
                         }
                         hasData.set(tmsCfgCostEntity.getId(), tmsCfgCostEntity.getCostName());
+                    }
+                    if (StrUtil.isBlank(actualAmount) && StrUtil.isBlank(estimatedAmount)) {
+                        errorMsgList.add(CharSequenceUtil.format("费用项【{}】实际金额和预估金额不能同时为空",field));
                     }
                     if (StrUtil.isNotBlank(actualAmount)) {
                         TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
