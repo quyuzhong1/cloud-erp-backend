@@ -323,6 +323,11 @@ public class StocktakingPlanDTO implements Serializable {
         private String separateRuleName;
 
         /**
+         * 盘点日期
+         */
+        private LocalDate stocktakingDate;
+
+        /**
         * 盘点类型
         */
         private StocktakingTypeEnum type;

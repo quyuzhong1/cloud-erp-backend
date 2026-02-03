@@ -84,6 +84,12 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     private LocalDate stocktakingDate;
 
     /**
+     * 计划任务时间
+     */
+    @TableField("plan_task_time")
+    private LocalDateTime planTaskTime;
+
+    /**
     * 提交审核时间
     */
     @TableField("submit_time")

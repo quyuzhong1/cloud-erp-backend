@@ -125,6 +125,7 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
 ////        Integer diffQty = qty - usableQty - frozenQty;
 ////        taskDetail.setDiffQty(diffQty);
 ////        taskDetail.setQty(qty);
+        taskDetail.setFisrtQty(Integer.parseInt(excelDTO.getFirstQty()));
         updateList.add(taskDetail);
         String msg = StrUtil.format("用户【{}】 【{}】导入初盘库存", UserContext.getDefaultLoginUser().getUserName() , LocalDateTime.now());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), mainId, "初盘库存导入");
