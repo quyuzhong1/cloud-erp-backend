@@ -77,6 +77,9 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     private WarehouseLocationService warehouseLocationService;
 
     @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
+
+    @Resource
     private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
 
     @Resource
@@ -433,7 +436,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     public Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response) {
-        StocktakingTaskFirstQtyExcelListener excelListener = new StocktakingTaskFirstQtyExcelListener(stocktakingTaskService, this, warehouseService,operateLogService);
+        StocktakingTaskFirstQtyExcelListener excelListener = new StocktakingTaskFirstQtyExcelListener(stocktakingTaskService, this,stocktakingProfitLossService, warehouseService,operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskFirstQtyExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
