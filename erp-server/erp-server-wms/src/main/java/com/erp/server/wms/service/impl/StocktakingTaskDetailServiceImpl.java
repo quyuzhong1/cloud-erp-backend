@@ -14,10 +14,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
-import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
-import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.entity.StocktakingTaskUserEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PushStocktakingProfitLossStatusEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -77,6 +75,13 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     private StocktakingTaskMapper stocktakingTaskMapper;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
+
+    @Resource
+    private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Override
@@ -184,6 +189,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 //差异数量 等于盘点库存-可用库存-冻结库存
                 Integer diffQty = qty - usableQty - frozenQty;
                 taskDetail.setDiffQty(diffQty);
+                //初盘数量
+                taskDetail.setFisrtQty(item.getFirstQty());
                 updateTaskDetailList.add(taskDetail);
             }
         }
@@ -249,6 +256,22 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             item.setProductName(skuName);
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(item.getWarehouseId()) && e.getCode().equals(item.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             item.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //下推盘盈盘亏状态
+            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(item.getId());
+            if (stocktakingProfitLossDetailList.isEmpty()) {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getName());
+            } else {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.GENERATED.getName());
+            }
+
+            if (item.getDiffQty() == 0) {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getName());
+            }
+
         }
         return resultList;
     }
@@ -413,7 +436,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     public Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response) {
-        StocktakingTaskFirstQtyExcelListener excelListener = new StocktakingTaskFirstQtyExcelListener(stocktakingTaskService, this, warehouseService,operateLogService);
+        StocktakingTaskFirstQtyExcelListener excelListener = new StocktakingTaskFirstQtyExcelListener(stocktakingTaskService, this,stocktakingProfitLossService, warehouseService,operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskFirstQtyExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {

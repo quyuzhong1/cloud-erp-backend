@@ -9,13 +9,10 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.enums.StocktakingStatusEnum;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
-import com.erp.server.wms.service.StocktakingTaskService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -33,6 +30,8 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
 
     private StocktakingTaskService stocktakingTaskService;
 
+    private StocktakingProfitLossService stocktakingProfitLossService;
+
     private WarehouseService warehouseService;
 
     private OperateLogService operateLogService;
@@ -44,10 +43,12 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
 
     public StocktakingTaskFirstQtyExcelListener(StocktakingTaskService stocktakingTaskService,
                                         StocktakingTaskDetailService stocktakingTaskDetailService,
+                                        StocktakingProfitLossService stocktakingProfitLossService,
                                         WarehouseService warehouseService,
                                         OperateLogService operateLogService) {
         this.stocktakingTaskDetailService = stocktakingTaskDetailService;
         this.stocktakingTaskService = stocktakingTaskService;
+        this.stocktakingProfitLossService = stocktakingProfitLossService;
         this.warehouseService = warehouseService;
         this.operateLogService = operateLogService;
     }
@@ -106,25 +107,17 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
             return;
         }
 
-        //状态
-        StocktakingStatusEnum status = taskEntity.getStatus();
-        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
-        if(!statusList.contains(status)){
-            errorMsgList.add("只有复盘中,未开始的盘点任务才能修改盘点库存");
+        List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(taskEntity.getId());
+        if (!stocktakingProfitLossList.isEmpty()) {
+            errorMsgList.add("已生成盘盈盘亏单的盘点任务不允许修改");
         }
+
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
-//        //可用库存
-////        Integer usableQty = taskDetail.getUsableQty();
-////        //冻结数量
-////        Integer frozenQty = taskDetail.getFrozenQty();
-////        //差异数量 等于盘点库存-可用库存-冻结库存
-////        Integer diffQty = qty - usableQty - frozenQty;
-////        taskDetail.setDiffQty(diffQty);
-////        taskDetail.setQty(qty);
+
         taskDetail.setFisrtQty(Integer.parseInt(excelDTO.getFirstQty()));
         updateList.add(taskDetail);
         String msg = StrUtil.format("用户【{}】 【{}】导入初盘库存", UserContext.getDefaultLoginUser().getUserName() , LocalDateTime.now());

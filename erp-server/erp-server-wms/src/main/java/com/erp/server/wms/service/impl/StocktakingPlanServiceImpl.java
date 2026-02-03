@@ -470,11 +470,46 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // 明细
-        //List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
-        // 生成盘点任务
-        //stocktakingTaskService.createTaskList(entity, detailEntityList);
+        // 计算计划任务时间
+        LocalDateTime planTaskTime = calculatePlanTaskTime(entity.getStocktakingDate());
+        updatePlanTaskTime(entity.getId(), planTaskTime);
+
+        // 获取当前时间
+        LocalDateTime now = LocalDateTime.now();
+        // 检查是否是当天盘点，或者审核时间是否在23:50-23:59之间
+        boolean shouldCreateTaskImmediately = entity.getStocktakingDate().isEqual(LocalDate.now()) ||
+                (now.toLocalDate().isEqual(entity.getStocktakingDate()) &&
+                        now.getHour() == 23 &&
+                        now.getMinute() >= 50);
+
+        // 如果是当天盘点，直接生成任务
+        if (shouldCreateTaskImmediately) {
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            stocktakingTaskService.createTaskList(entity, detailEntityList);
+        }
+
         return Boolean.TRUE;
+    }
+
+    /**
+     * 计算计划任务时间
+     */
+    private LocalDateTime calculatePlanTaskTime(LocalDate stocktakingDate) {
+        if (stocktakingDate.isAfter(LocalDate.now())) {
+            // 盘点日期大于当天，生成时间为前一天23:50
+            return stocktakingDate.minusDays(1).atTime(23, 50);
+        }
+        return LocalDateTime.now();
+    }
+
+    /**
+     * 更新计划任务时间
+     */
+    public Boolean updatePlanTaskTime(String planId, LocalDateTime planTaskTime) {
+        return this.lambdaUpdate()
+                .eq(StocktakingPlanEntity::getId, planId)
+                .set(StocktakingPlanEntity::getPlanTaskTime, planTaskTime)
+                .update();
     }
 
     @Override
@@ -497,6 +532,15 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (stocktakingPlanList.isEmpty()) {
             throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
         }
+
+        for (String id : ids) {
+            List<StocktakingTaskEntity> stocktakingTaskList = stocktakingTaskService.listBySourceId(id);
+            if (!stocktakingTaskList.isEmpty()) {
+                StocktakingPlanEntity stoctakingPlan = this.getById(id);
+                throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_ALLOW_PUSH,stoctakingPlan.getCode());
+            }
+        }
+
         for (StocktakingPlanEntity entity : stocktakingPlanList) {
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
             stocktakingTaskService.createTaskList(entity, detailEntityList);

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -141,6 +142,13 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
     @Override
     public void removeByMainId(String mainId) {
         lambdaUpdate().eq(StocktakingProfitLossDetailEntity::getMainId, mainId).remove();
+    }
+
+    @Override
+    public List<StocktakingProfitLossDetailEntity> listBySourceId(String sourceId) {
+        return this.lambdaQuery()
+                .eq(StocktakingProfitLossDetailEntity::getSourceDetailId, sourceId)
+                .list();
     }
 
     /**
