@@ -453,21 +453,21 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         //完成
         StocktakingStatusEnum billStatus = StocktakingStatusEnum.COMPLETED;
-        Boolean isPass = Boolean.TRUE;
+        //Boolean isPass = Boolean.TRUE;
         if (ApproveType.REJECT.equals(dto.getType())) {
             //变待提交 状态改为复盘中
             approveStatus = ApproveStatusEnum.REJECT;
             billStatus = StocktakingStatusEnum.RECOUNT;
-            isPass = Boolean.FALSE;
+            //isPass = Boolean.FALSE;
         }
         Boolean result = updateForApprove(entity.getId(), approveStatus, billStatus);
-        if (result && isPass) {
-            // 组装盘盈盘亏单所需要的数据
-            List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(entity);
-            // 批量提审
-            List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
-
-        }
+//        if (result && isPass) {
+//            // 组装盘盈盘亏单所需要的数据
+//            List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(entity);
+//            // 批量提审
+//            List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
+//
+//        }
         // 查询盘点计划下其他单据是否全部审核完成
         List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
         // 全部审核完成 修改盘点计划单据状态
