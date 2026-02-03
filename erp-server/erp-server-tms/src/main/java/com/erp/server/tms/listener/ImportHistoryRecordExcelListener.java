@@ -177,8 +177,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         }
         headList.add("匹配结果");
         headList.add("错误信息");
-        map.put(map.size(),"匹配结果");
-        map.put(map.size() + 1,"错误信息");
+        int size = map.size();
+        map.put(size,"匹配结果");
+        map.put(size + 1,"错误信息");
         this.headMap = map;
         this.headList = headList;
     }
