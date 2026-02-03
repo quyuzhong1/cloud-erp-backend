@@ -146,4 +146,18 @@
         GROUP BY sp.approve_status
     </select>
 
+    <select id="allowPushStocktakingPlan" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$AllowPushDTO">
+        SELECT
+            sp.ID AS ID
+        FROM
+            stocktaking_plan sp
+            LEFT JOIN stocktaking_task st ON st.source_id = sp.ID
+            AND st.is_deleted = FALSE
+        WHERE
+            sp.is_deleted = FALSE
+            AND st.ID IS NULL
+            AND now( ) >= sp.plan_task_time
+            AND sp.end_time >= now( )
+    </select>
+
 </mapper>

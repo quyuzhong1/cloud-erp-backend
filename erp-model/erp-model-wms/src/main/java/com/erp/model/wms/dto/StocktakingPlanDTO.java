@@ -501,5 +501,11 @@ public class StocktakingPlanDTO implements Serializable {
         private String inventoryId;
     }
 
-
+    @Data
+    public static class AllowPushDTO{
+        /**
+         * id
+         */
+        private String id;
+    }
 }
