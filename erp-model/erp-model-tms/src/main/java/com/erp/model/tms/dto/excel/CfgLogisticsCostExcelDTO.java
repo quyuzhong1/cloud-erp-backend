@@ -69,7 +69,9 @@ public class CfgLogisticsCostExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*行开始", index = 6)
     @FieldValid(fieldName = "*行开始",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
-    private Integer  headerRow;
+    private String  headerRowStr;
+    @ExcelIgnore
+    private Integer headerRow;
 
     /**
      * 费用来源
