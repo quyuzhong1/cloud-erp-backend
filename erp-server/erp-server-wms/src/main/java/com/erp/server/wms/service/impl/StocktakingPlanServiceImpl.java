@@ -497,6 +497,15 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (stocktakingPlanList.isEmpty()) {
             throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
         }
+
+        for (String id : ids) {
+            List<StocktakingTaskEntity> stocktakingTaskList = stocktakingTaskService.listBySourceId(id);
+            if (!stocktakingTaskList.isEmpty()) {
+                StocktakingPlanEntity stoctakingPlan = this.getById(id);
+                throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_ALLOW_PUSH,stoctakingPlan.getCode());
+            }
+        }
+
         for (StocktakingPlanEntity entity : stocktakingPlanList) {
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
             stocktakingTaskService.createTaskList(entity, detailEntityList);

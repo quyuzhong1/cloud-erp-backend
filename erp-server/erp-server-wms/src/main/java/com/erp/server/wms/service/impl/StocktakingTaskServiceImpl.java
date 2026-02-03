@@ -205,7 +205,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     map(StocktakingTaskDetailEntity::getSkuId).distinct().count());
 
             item.setSkuCount(skuCount);
-
         }
     }
 
@@ -827,6 +826,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return Boolean.TRUE;
         }
 
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
+            throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
+        }
+
         if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
             throw new ServiceException(ApiError.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY);
         }
@@ -871,6 +874,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         inventoryMap.keySet().parallelStream().forEach(key -> {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
             StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
+            insertTask.setBillDate(entity.getStocktakingDate());
             this.save(insertTask);
             List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
             // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
