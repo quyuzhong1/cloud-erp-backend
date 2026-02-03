@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.service.LogisticsBillService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.List;
 @RocketMQMessageListener(topic = RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC,
         selectorExpression = "async_get_platform_label_tag",
         consumerGroup = RocketMqConsumerGroup.ASYNC_GET_PLATFORM_LABEL_CONSUMER)
+@Slf4j
 public class PlatformLabelPrintConsumerService implements RocketMQListener<LogisticsBillDTO.PrintLogisticsWaybillDTO> {
     @Resource
     private LogisticsBillService logisticsBillService;
@@ -33,6 +35,7 @@ public class PlatformLabelPrintConsumerService implements RocketMQListener<Logis
 
     @Override
     public void onMessage(LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
+        log.warn("接收到异步请求打印平台面单消息：{}", dto);
         dto.setIsFromMq(true);
         logisticsBillService.printLogisticsWaybill(Collections.singletonList(dto));
 //        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
