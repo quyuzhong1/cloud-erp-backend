@@ -154,4 +154,7 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDTO.CheckResultDTO>
      */
     List<StocktakingTaskDTO.CheckResultDTO> checkQty(List<String> ids);
+
+    Boolean pushStocktakingProfitLoss(BaseIdsDTO.IdsDTO dto);
+
 }

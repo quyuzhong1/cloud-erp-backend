@@ -1166,8 +1166,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             }
         }
 
-        List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
+        //List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        //List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
         List<String> userIdList=taskUserList.stream().map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
@@ -1186,15 +1186,15 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
 
-            String skuId = item.getSkuId();
-            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
-            if (Objects.nonNull(sku)) {
-                item.setProductName(sku.getName());
-                item.setUnit(sku.getUnitName());
-            } else {
-                item.setProductName("");
-                item.setUnit("");
-            }
+//            String skuId = item.getSkuId();
+//            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
+//            if (Objects.nonNull(sku)) {
+//                item.setProductName(sku.getName());
+//                item.setUnit(sku.getUnitName());
+//            } else {
+//                item.setProductName("");
+//                item.setUnit("");
+//            }
 
         }
 

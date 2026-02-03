@@ -89,6 +89,12 @@ public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetai
     @TableField("diff_qty")
     private Integer diffQty;
 
+    /**
+     * 初盘数量
+     */
+    @TableField("first_qty")
+    private Integer fisrtQty;
+
 
     public static final String MAIN_ID = "main_id";
 

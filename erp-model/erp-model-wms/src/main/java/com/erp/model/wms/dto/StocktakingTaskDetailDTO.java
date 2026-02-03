@@ -90,6 +90,11 @@ public class StocktakingTaskDetailDTO implements Serializable {
          */
         private Integer diffQty;
 
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
+
     }
 
 
