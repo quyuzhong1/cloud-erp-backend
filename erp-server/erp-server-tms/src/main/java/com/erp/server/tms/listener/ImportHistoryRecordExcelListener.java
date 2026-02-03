@@ -10,6 +10,8 @@ import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
@@ -167,9 +169,16 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = map.values().stream().map(String::toString).collect(Collectors.toList());
+        List<String> headList = map.values().stream().map(obj -> CharSequenceUtil.isBlank(obj) ? "" : obj).collect(Collectors.toList());
+
+        long blankCount = map.values().stream().filter(CharSequenceUtil::isBlank).count();
+        if (blankCount > 1) {
+            throw new ServiceException(ApiError.COMMON_FILE_HEAD_NOT_EMPTY);
+        }
+        headList.add("匹配结果");
         headList.add("错误信息");
-        map.put(map.size(),"错误信息");
+        map.put(map.size(),"匹配结果");
+        map.put(map.size() + 1,"错误信息");
         this.headMap = map;
         this.headList = headList;
     }
