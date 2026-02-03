@@ -120,8 +120,8 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 searchVirtualInventoryDTOS.stream().filter(obj -> CharSequenceUtil.equals(checkDataDTO.getSkuNo(),obj.getSkuNo()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdWarehouseNo(),obj.getWarehouseCode()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdVirtualWarehouseNo(),obj.getVirtualWarehouseCode()))
                         .findFirst().ifPresent(obj -> {
                             if (MathUtil.compareTo(obj.getQty(),totalPushQty) < 0) {
-                                throw new ServiceException("调用旺店通虚拟仓库存查询接口可用库存不足，SKU：【{}】，取消/调出数量：{}，虚拟仓库编码：【{}】，可用库存：{}，未同步完成数：{}", checkDataDTO.getSkuNo() ,totalPushQty ,fristCheckDataDTO.getThirdVirtualWarehouseNo()
-                                        , obj.getQty() , checkDataDTO.getQty());
+                                throw new ServiceException("调用旺店通虚拟仓库存查询接口可用库存不足，SKU：【{}】，取消/调出数量：{}，虚拟仓库编码：【{}】，可用库存：{}，未同步完成数：{}", checkDataDTO.getSkuNo() ,checkDataDTO.getQty() ,fristCheckDataDTO.getThirdVirtualWarehouseNo()
+                                        , obj.getQty() , totalPushQty);
                             }
                         });
             }
