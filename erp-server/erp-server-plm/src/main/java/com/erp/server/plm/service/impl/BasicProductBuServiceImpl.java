@@ -165,4 +165,12 @@ public class BasicProductBuServiceImpl extends SuperServiceImpl<BasicProductBuMa
                 .one();
     }
 
+    @Override
+    public List<BasicProductBuEntity> listByNames(List<String> buNames) {
+        if(CollUtil.isNotEmpty(buNames)) {
+            return this.lambdaQuery().in(BasicProductBuEntity::getName, buNames).list();
+        }
+        return Collections.emptyList();
+    }
+
 }

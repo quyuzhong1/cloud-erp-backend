@@ -10,9 +10,11 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
 import com.erp.model.dmp.dto.CfgOperateLogFieldDTO;
+import com.erp.model.plm.entity.ProductRefBuEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.ProductRefBuService;
 import com.erp.server.plm.service.ProductRefLabelService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -28,6 +30,9 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private ProductRefLabelService productRefLabelService;
+
+    @Resource
+    private ProductRefBuService productRefBuService;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -113,6 +118,21 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
             sb.append(" ) ");
             return sb.toString();
         }
+        if("buCode".equals(field)){
+            List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
+            List<ProductRefBuEntity> productRefBuEntities =  productRefBuService.listByBuNames(valueList);
+            List<String> productIds = productRefBuEntities.stream().map(ProductRefBuEntity::getProductId).distinct().collect(Collectors.toList());
+            //是否是第一个，否则需要加连接符
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) ){
+                super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.IN_LIST, productIds, QueryDataTypeEnum.STRING);
+            }
+
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) ){
+                super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.NOT_IN_LIST, productIds, QueryDataTypeEnum.STRING);
+
+            }
+        }
+
         return null;
     }
 

@@ -24,6 +24,7 @@ public interface ProductRefBuService extends SuperService<ProductRefBuEntity> {
 
     List<ProductRefBuEntity> listByProductIds(List<String> productIdList);
 
+    List<ProductRefBuEntity> listByBuNames(List<String> buNames);
 
     ProductRefBuEntity getByProductIds(String productId);
 
