@@ -492,7 +492,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if ("costItem".equals(cfgDetailEntity.getTargetField())){
                     TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), entry.getValue().toString()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
                     if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
-                        errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】",field));
+                        errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】",entry.getValue().toString()));
                         continue;
                     }
                     //校验后面数据是否存在重复的
@@ -503,7 +503,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         hasData.set(tmsCfgCostEntity.getId(), tmsCfgCostEntity.getCostName());
                     }
                     if (StrUtil.isBlank(actualAmount) && StrUtil.isBlank(estimatedAmount)) {
-                        errorMsgList.add(CharSequenceUtil.format("费用项【{}】实际金额和预估金额不能同时为空",field));
+                        errorMsgList.add(CharSequenceUtil.format("费用项【{}】实际金额和预估金额不能同时为空",entry.getValue().toString()));
                     }
                     if (StrUtil.isNotBlank(actualAmount)) {
                         TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
