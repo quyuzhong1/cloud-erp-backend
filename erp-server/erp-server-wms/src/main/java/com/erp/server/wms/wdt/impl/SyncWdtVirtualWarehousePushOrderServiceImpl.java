@@ -10,14 +10,12 @@ import com.common.business.dto.WdtSearchHandelDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.WdtVirtualInventoryService;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -126,7 +124,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 searchVirtualInventoryDTOS.stream().filter(obj -> CharSequenceUtil.equals(checkDataDTO.getSkuNo(),obj.getSkuNo()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdWarehouseNo(),obj.getWarehouseCode()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdVirtualWarehouseNo(),obj.getVirtualWarehouseCode()))
                         .findFirst().ifPresent(obj -> {
                             if (MathUtil.compareTo(totalPushQty,checkDataDTO.getQty()) < 0) {
-                                throw new ServiceException("调用旺店通虚拟仓库存查询接口可用库存不足，仓库编码：{}.虚拟仓库编码：{}，SKU：{}，可用库存：{}，需求数量：{}" , fristCheckDataDTO.getThirdWarehouseNo() ,fristCheckDataDTO.getThirdVirtualWarehouseNo(), checkDataDTO.getSkuNo()
+                                throw new ServiceException("调用旺店通虚拟仓库存查询接口可用库存不足，SKU：【{}】，取消/调出数量：{}，虚拟仓库编码：【{}】，可用库存：{}，未同步完成数：{}", checkDataDTO.getSkuNo() ,checkDataDTO.getQty() ,fristCheckDataDTO.getThirdVirtualWarehouseNo()
                                         , obj.getQty() , checkDataDTO.getQty());
                             }
                         });
