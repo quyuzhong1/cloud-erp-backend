@@ -3,8 +3,7 @@ import com.erp.model.plm.entity.BasicProductBuEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.BasicProductBuDTO;
-import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+
 import java.util.List;
 
 /**
@@ -42,4 +41,6 @@ public interface BasicProductBuService extends SuperService<BasicProductBuEntity
     void addOrUpdate(List<BasicProductBuDTO.DropDownDTO> dto);
 
     BasicProductBuEntity getByName(String rdtTeamName);
+
+    List<BasicProductBuEntity> listByNames(List<String> buNames);
 }
