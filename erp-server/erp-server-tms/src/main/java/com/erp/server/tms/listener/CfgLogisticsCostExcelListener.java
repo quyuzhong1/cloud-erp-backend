@@ -22,6 +22,7 @@ import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
 import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,13 +135,15 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
             }else {
                 excelDTO.setBusinessType(businessType);
 
-                String targetFieldName = excelDTO.getTargetFieldName().trim();
+                String targetFieldName = excelDTO.getTargetFieldName();
                 if(StringUtils.isNotBlank(targetFieldName)){
+                    targetFieldName = targetFieldName.trim();
                     List<CfgLogisticsCostImportFieldEntity> fieldEntities = fieldMap.get(businessType);
                     if(CollUtil.isEmpty(fieldEntities)){
                         errorMsgList.add("【"+businessTypeName+"】配置单据类型不存在字段基础数据");
                     }else {
-                        CfgLogisticsCostImportFieldEntity fieldEntity = fieldEntities.stream().filter(e -> e.getFieldName().equals(targetFieldName)).findFirst().orElse(null);
+                        String finalTargetFieldName = targetFieldName;
+                        CfgLogisticsCostImportFieldEntity fieldEntity = fieldEntities.stream().filter(e -> e.getFieldName().equals(finalTargetFieldName)).findFirst().orElse(null);
                         if(Objects.isNull(fieldEntity)){
                             errorMsgList.add("【"+targetFieldName+"】字段基础数据不存在");
                         }else {
@@ -149,12 +152,13 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                     }
 
                     if(Objects.equals(targetFieldName,"费用项明细")){
-                        String targetDetailFieldName = excelDTO.getTargetDetailFieldName().trim();
+                        String targetDetailFieldName = excelDTO.getTargetDetailFieldName();
                         if(StringUtils.isBlank(targetDetailFieldName)){
                             errorMsgList.add(ApiError.LOGISTICS_BILL_DETAIL_FIELD_REQUIRED.getMsg());
                         }else if(!targetDetailFieldName.contains("/") || targetDetailFieldName.split("/").length !=2){
                             errorMsgList.add("格式错误，正确格式如：运费/物流费用");
                         }else {
+                            targetDetailFieldName = targetDetailFieldName.trim();
                             String type ="";
                             if(Objects.equals(businessType, SourceTypeEnum.LOGISTICS_BILL_COST.getCode())){
                                 type = DictCostAttributionEnum.SELF_DELIVER.getCode();
@@ -230,6 +234,10 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
             }
             excelDTO.setImportTypeList(Arrays.stream(split)
                     .map(CfgLogisticsCostImportImportTypeEnum::getCode).collect(Collectors.toList()));
+        }
+        String headerRowStr = excelDTO.getHeaderRowStr();
+        if(StringUtils.isNotBlank(headerRowStr) && NumberUtils.isDigits(headerRowStr)){
+            excelDTO.setHeaderRow(Integer.parseInt(headerRowStr));
         }
 
         String disabledName = excelDTO.getDisabledName();
