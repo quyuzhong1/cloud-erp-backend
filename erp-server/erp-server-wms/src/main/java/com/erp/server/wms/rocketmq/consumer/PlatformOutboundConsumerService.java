@@ -343,11 +343,17 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         List<SoB2cEntity> listByReferenceNo = new ArrayList<>();
         if(StringUtils.isNotBlank(swOrderNumber)) {
             // 查询已有订单
-            listBySwOrderNumber = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getPlatformCode, swOrderNumber).list();
+            listBySwOrderNumber = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getPlatformCode, swOrderNumber)
+                    .eq(SoB2cEntity::getInvalidStatus,false)
+                    .eq(SoB2cEntity::getIsDeleted,false)
+                    .list();
         }
         if(StringUtils.isNotBlank(referenceNo)){
             // 查询已有订单
-            listByReferenceNo = FeignQuery.create(SoB2cEntity.class).eq (SoB2cEntity::getPlatformCode, referenceNo).list();
+            listByReferenceNo = FeignQuery.create(SoB2cEntity.class).eq (SoB2cEntity::getPlatformCode, referenceNo)
+                    .eq(SoB2cEntity::getInvalidStatus,false)
+                    .eq(SoB2cEntity::getIsDeleted,false)
+                    .list();
         }
 
         if (CollUtil.isEmpty(listBySwOrderNumber) && CollUtil.isEmpty(listByReferenceNo)) {
@@ -540,7 +546,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateDto.setVirtualWarehouseId(virtualWarehouseId);
             updateDto.setTrackNo(dto.getTrackNo());
             updateDto.setSoB2cId(mainEntity.getId());
-            if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
+            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
                 updateDto.setBillStatus(dto.getOrderStatus());
                 updateDto.setAddOperationLog(true);
             }
