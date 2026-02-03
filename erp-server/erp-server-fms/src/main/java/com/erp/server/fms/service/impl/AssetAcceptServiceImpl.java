@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -43,11 +44,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.AssetPurchaseOrderFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
@@ -1069,34 +1073,38 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         startDTO.setBusinessKey(SourceTypeEnum.ASSET_ACCEPTANCE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        
-        // 查询人员列表并按personType分组，同一personType的userId用逗号分割
-        List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
-                .eq(AssetAcceptPersonEntity::getAssetAcceptId, entity.getId())
-                .list();
-        
-        Map<String, String> personTypeUserIdMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(personList)) {
-            personTypeUserIdMap = personList.stream()
-                    .collect(Collectors.groupingBy(
-                            AssetAcceptPersonEntity::getPersonType,
-                            Collectors.mapping(
-                                    AssetAcceptPersonEntity::getUserId,
-                                    Collectors.joining(",")
-                            )
-                    ));
-        }
-        
+
         // 合并entity和人员信息到variablesMap
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        variablesMap.putAll(personTypeUserIdMap);
-        startDTO.setVariablesMap(variablesMap);
+        Map<String, Object> map = buildVariablesMap(entity);
+        startDTO.setVariablesMap(map);
         
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
     }
+
+    private Map<String, Object> buildVariablesMap(AssetAcceptEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.ASSET_ACCEPTANCE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        AssetAcceptDTO.ViewDTO viewDTO = this.view((entity.getId()));
+        map.put("detailList", viewDTO.getDetailList());
+        viewDTO.getPersonList().forEach(v->{
+            map.put(v.getPersonType(),v.getUserName());
+        });
+        Map<String,String> attachmentMap = new HashMap<>();
+        for (int i = 0; i < viewDTO.getAttachmentUrlList().size(); i++) {
+            String name = viewDTO.getAttachmentNameList().get(i);
+            attachmentMap.put(name,viewDTO.getAttachmentUrlList().get(i));
+        }
+        if(!attachmentMap.isEmpty()){
+            map.put("attachment", attachmentMap);
+        }
+        return map;
+    }
+
     private void fillOne(AssetAcceptDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
@@ -1327,6 +1335,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                                 else if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(approveStatus) 
                                         || ApproveStatusEnum.APPROVE_ING.getStatus().equals(approveStatus) 
                                         || ApproveStatusEnum.REJECT.getStatus().equals(approveStatus)) {
+                                    if (detail.getId().equals(acceptDetail.getId())) {
+                                        continue;
+                                    }
                                     processingAcceptQty += acceptQty;
                                 }
                             }

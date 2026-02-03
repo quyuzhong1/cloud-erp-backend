@@ -17,6 +17,7 @@ import java.util.List;
  */
 public interface OperateLogService extends IService<OperateLogEntity> {
 
+    Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation);
 
     /**
      * @description: 修改时保存日志

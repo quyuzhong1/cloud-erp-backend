@@ -102,6 +102,12 @@ public class ProductDetailExcelDTO {
     private String rdtTeamName;
 
     /**
+     * BU线
+     */
+    @FieldValid(fieldName = "BU线", isNotBlank = true, maxLength = 50)
+    private String buName;
+
+    /**
      * 产品开发状态
      */
     @FieldValid(fieldName = "产品开发状态",enumClass = ProductDetailStateEnum.class)
@@ -439,37 +445,37 @@ public class ProductDetailExcelDTO {
     /**
      * 产品尺寸(长)
      */
-    @FieldValid(fieldName = "产品尺寸(长)(cm)")
+    @FieldValid(fieldName = "产品尺寸(长)(mm)")
     private String productLength;
 
     /**
      * 产品尺寸(宽)
      */
-    @FieldValid(fieldName = "产品尺寸(宽)(cm)")
+    @FieldValid(fieldName = "产品尺寸(宽)(mm)")
     private String productWidth;
 
     /**
      * 产品尺寸(高)
      */
-    @FieldValid(fieldName = "产品尺寸(高)(cm)")
+    @FieldValid(fieldName = "产品尺寸(高)(mm)")
     private String productHeight;
 
     /**
      * 箱规(长)
      */
-    @FieldValid(fieldName = "箱规(长)(cm)")
+    @FieldValid(fieldName = "箱规(长)(mm)")
     private String boxLength;
 
     /**
      * 箱规(宽)
      */
-    @FieldValid(fieldName = "箱规(宽)(cm)")
+    @FieldValid(fieldName = "箱规(宽)(mm)")
     private String boxWidth;
 
     /**
      * 箱规(高)
      */
-    @FieldValid(fieldName = "箱规(高)(cm)")
+    @FieldValid(fieldName = "箱规(高)(mm)")
     private String boxHeight;
 
     /**

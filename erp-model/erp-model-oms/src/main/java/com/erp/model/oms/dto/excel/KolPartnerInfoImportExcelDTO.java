@@ -247,10 +247,18 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
     private String zipCode;
 
     /**
+     * 收件人税号
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "收件人税号", index = 25)
+    @FieldValid(fieldName = "收件人税号")
+    private String receiverTaxNo;
+
+    /**
      * 是否默认地址
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "默认地址", index = 25)
+    @ExcelProperty(value = "默认地址", index = 26)
     @FieldValid(fieldName = "默认地址")
     private String isDefaultName;
 
@@ -258,7 +266,7 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
      * 启用状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "启用状态", index = 26)
+    @ExcelProperty(value = "启用状态", index = 27)
     @FieldValid(fieldName = "启用状态")
     private String disabledName;
 
@@ -268,14 +276,14 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
      * 地址备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "地址备注", index = 27)
+    @ExcelProperty(value = "地址备注", index = 28)
     @FieldValid(fieldName = "地址备注")
     private String addressRemark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 28)
+    @ExcelProperty(value = "错误数据", index = 29)
     @ColumnWidth(50)
     private String  errorMsg = "";
 }

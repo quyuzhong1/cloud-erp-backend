@@ -200,6 +200,7 @@ public enum ModuleTypeEnum {
     KOL_B2C_APPLICATION("158", "B2C寄样申请单"),
     KOL_KOL_SAMPLE_COST("159", "寄样费用单"),
 
+    PRODUCT_BU("160", "产品BU线"),
 
 
 

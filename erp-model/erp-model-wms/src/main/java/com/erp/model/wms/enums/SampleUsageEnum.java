@@ -30,7 +30,8 @@ public enum SampleUsageEnum implements EnumMessage {
     SMALL_COLLECTION_BRAND_SAMPLE("smallCollectionBrandSample", "小集品牌送样"),
     PVT("PVT", "PVT阶段-供应商产线领样"),
     GALAXY_OFFLINE_STORE("galaxyOfflineStore", "星河线下店领用"),
-    OTHER("other", "其他")
+    OTHER("other", "其他"),
+    EMPLOYEE_BENEFITS("employeeBenefits", "员工福利"),
     ;
 
     @EnumValue

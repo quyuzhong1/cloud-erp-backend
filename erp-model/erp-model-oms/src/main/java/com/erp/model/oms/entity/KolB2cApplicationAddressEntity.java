@@ -100,6 +100,11 @@ public class KolB2cApplicationAddressEntity extends BaseEntity<KolB2cApplication
     @TableField("zip_code")
     private String zipCode;
 
+    /**
+     * 收件人税号
+     */
+    @TableField("receiver_tax_no")
+    private String receiverTaxNo;
 
     public static final String MAIN_ID = "main_id";
 
