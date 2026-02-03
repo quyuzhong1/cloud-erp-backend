@@ -735,4 +735,8 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2c/updateRemarkAndLog")
     void updateRemarkAndLog(@RequestBody SoB2cDTO.RemarkDTO remarkDTO);
+
+
+    @PostMapping("feign/soB2c/updateB2cByPlatformOutbound")
+    void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
 }
