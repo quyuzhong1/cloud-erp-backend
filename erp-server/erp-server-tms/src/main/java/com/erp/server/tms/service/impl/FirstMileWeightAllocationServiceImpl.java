@@ -594,6 +594,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "已下推重量分摊，不能再次下推");
         }
 
+        if (!logisticsBillEntity.getIsAllocateWeightRequired()) {
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "头程物流单设置的不分摊重量，不能下推重量分摊");
+        }
+
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
         //物流渠道
         LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillInfo.getChannelId());
