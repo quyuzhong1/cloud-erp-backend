@@ -11,10 +11,10 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.plm.entity.ProductChangeEntity;
+import com.erp.model.plm.entity.BomChangeEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.service.BomOperateLogService;
-import com.erp.server.plm.service.ProductChangeService;
+import com.erp.server.plm.service.BomChangeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,23 +23,23 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Component
-@ApproveBusinessKey(SourceTypeEnum.PRODUCT_CHANGE)
-public class ProductChangeApproveHandler extends AbstractApproveHandler {
+@ApproveBusinessKey(SourceTypeEnum.BOM_CHANGE)
+public class BomChangeApproveHandler extends AbstractApproveHandler {
 
     @Resource
-    private ProductChangeService productChangeService;
+    private BomChangeService bomChangeService;
 
     @Resource
     private BomOperateLogService bomOperateLogService;
 
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
-        return productChangeService.approve(dto);
+        return bomChangeService.approve(dto);
     }
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = productChangeService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = bomChangeService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();
     }
 
@@ -52,13 +52,13 @@ public class ProductChangeApproveHandler extends AbstractApproveHandler {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
-        ProductChangeEntity entity = productChangeService.getById(dto.getBusinessId());
+        BomChangeEntity entity = bomChangeService.getById(dto.getBusinessId());
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
         approveOne.setVariablesMap(dto.getVariablesMap());
         approveOne.setComment(dto.getComment());
-        Boolean approve = productChangeService.approveEnd(approveOne, entity);
+        Boolean approve = bomChangeService.approveEnd(approveOne, entity);
         if (!approve) {
             throw new ServiceException(ApiError.BILL_APPROVE_FAILED,SourceTypeEnum.getName(dto.getBusinessKey()));
         }

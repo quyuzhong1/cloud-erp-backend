@@ -33,9 +33,9 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
-import com.erp.model.plm.enums.ProductChangeStateEnum;
+import com.erp.model.plm.enums.BomChangeStateEnum;
 import com.erp.model.plm.vo.BomVO;
-import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.model.plm.vo.BomChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
@@ -49,7 +49,7 @@ import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.SearchType;
-import com.erp.server.plm.mapper.ProductChangeMapper;
+import com.erp.server.plm.mapper.BomChangeMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -73,11 +73,11 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, ProductChangeEntity> implements ProductChangeService {
+public class BomChangeServiceImpl extends ServiceImpl<BomChangeMapper, BomChangeEntity> implements BomChangeService {
 
 
     @Resource
-    private ProductChangeDetailsService changeDetailsService;
+    private BomChangeDetailsService changeDetailsService;
 
     @Resource
     private BomInfoService bomInfoService;
@@ -99,7 +99,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     private SysUserFeign sysUserFeign;
 
     @Autowired
-    private ProductChangeDetailsService productChangeDetailsService;
+    private BomChangeDetailsService bomChangeDetailsService;
 
     @Autowired
     private OperateLogService operateLogService;
@@ -137,7 +137,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean add(AddChangeDTO dto) {
-        ProductChangeEntity change = new ProductChangeEntity();
+        BomChangeEntity change = new BomChangeEntity();
         String type = dto.getType();
         String changeBom = BomConstant.CHANGE_BOM;
         Boolean isBom = changeBom.equals(type);
@@ -180,7 +180,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @param isBom
      * @return void
      */
-    private void handleData(ProductChangeEntity change,Boolean isBom) {
+    private void handleData(BomChangeEntity change, Boolean isBom) {
         if (isBom) {
             BomInfoEntity bomInfoEntity = bomInfoService.getById(change.getSourceId());
             change.setSourceCode(bomInfoEntity.getSerialNumber());
@@ -270,7 +270,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         //获取到变更信息
-        ProductChangeEntity entity = this.getById(dto.getId());
+        BomChangeEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
@@ -279,7 +279,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING.getState())) {
+        if(!Objects.equals(entity.getState(), BomChangeStateEnum.AUDIT_ING.getState())) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
@@ -297,11 +297,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @param entity
      * @param dto
      */
-    private void approveProcess(ProductChangeEntity entity, ApproveOneDTO dto) {
+    private void approveProcess(BomChangeEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.BOM_CHANGE.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -325,7 +325,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @param entity
      * @return Map<String,Object>
      */
-    private Map<String,Object> getVariablesMap(ProductChangeEntity entity) {
+    private Map<String,Object> getVariablesMap(BomChangeEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         //获取到对应的 json
         String detailsJson = changeDetailsService.getDetailsJson(entity.getId());
@@ -347,20 +347,20 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity) {
+    public Boolean approveEnd(ApproveOneDTO dto, BomChangeEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
         Integer approveStatus;
         if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
             //审核通过
-            approveStatus = ProductChangeStateEnum.AUDIT_PASS.getState();
+            approveStatus = BomChangeStateEnum.AUDIT_PASS.getState();
         } else if (dto.getType().equals(ApproveTypeEnum.CANCEL.getStatus())){
             //待提交
-            approveStatus = ProductChangeStateEnum.WAIT_SUBMIT.getState();
+            approveStatus = BomChangeStateEnum.WAIT_SUBMIT.getState();
         } else {
             //审核不通过
-            approveStatus = ProductChangeStateEnum.AUDIT_NO_PASS.getState();
+            approveStatus = BomChangeStateEnum.AUDIT_NO_PASS.getState();
         }
         //更新审核状态
         updateForApprove(entity.getId(), approveStatus,dto.getComment());
@@ -391,22 +391,22 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcess(String id) {
-        ProductChangeEntity entity = this.getById(id);
+        BomChangeEntity entity = this.getById(id);
         if (ObjectUtil.isNotEmpty(entity)) {
             throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING.getState())) {
+        if (!Objects.equals(entity.getState(), BomChangeStateEnum.AUDIT_ING.getState())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
-        updateForApprove(id, ProductChangeStateEnum.WAIT_SUBMIT.getState(),"");
+        updateForApprove(id, BomChangeStateEnum.WAIT_SUBMIT.getState(),"");
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "产品变更");
         bomOperateLogService.saveOperate(entity.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(),msg );
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
+        revokeDTO.setBusinessKey(SourceTypeEnum.BOM_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -416,18 +416,18 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(String id, Boolean isProcess) {
-        ProductChangeEntity entity = getById(id);
+        BomChangeEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到产品变更单数据");
         }
         // 待提交或审核不通过并且未作废允许提交
-        if ((!ProductChangeStateEnum.WAIT_SUBMIT.getState().equals(entity.getState()) && !ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(entity.getState()))) {
+        if ((!BomChangeStateEnum.WAIT_SUBMIT.getState().equals(entity.getState()) && !BomChangeStateEnum.AUDIT_NO_PASS.getState().equals(entity.getState()))) {
             throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         // 更新单据审核状态
         log.info("提交 开始修改委外发料单状态数据，id：【{}】", id);
-        this.updateForApprove(id, ProductChangeStateEnum.AUDIT_ING.getState(),"");
+        this.updateForApprove(id, BomChangeStateEnum.AUDIT_ING.getState(),"");
 
         log.info("提交 开始启动委外发料单流程，id=：【{}】", entity.getId());
         if (isProcess) {
@@ -447,11 +447,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @Date 2025/5/19 10:07
      **/
 
-    public void startProcess(ProductChangeEntity entity) {
+    public void startProcess(BomChangeEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getSourceCode());
-        startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.BOM_CHANGE.getCode());
         startDTO.setBusinessName(entity.getSourceCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -468,10 +468,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     public void updateForApprove(String id, Integer approveStatus,String comment) {
         //当前登录人
-        this.lambdaUpdate().eq(ProductChangeEntity::getId, id)
-                .set(ProductChangeEntity::getState, approveStatus)
-                .set(ObjectUtil.isNotEmpty(comment),ProductChangeEntity::getRemark, comment)
-                .set(ProductChangeStateEnum.AUDIT_PASS.getState().equals(approveStatus),ProductChangeEntity::getApprovalFinishTime,LocalDateTime.now())
+        this.lambdaUpdate().eq(BomChangeEntity::getId, id)
+                .set(BomChangeEntity::getState, approveStatus)
+                .set(ObjectUtil.isNotEmpty(comment), BomChangeEntity::getRemark, comment)
+                .set(BomChangeStateEnum.AUDIT_PASS.getState().equals(approveStatus), BomChangeEntity::getApprovalFinishTime,LocalDateTime.now())
                 .update();
     }
 
@@ -486,7 +486,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-28 11:50
      */
     @Override
-    public PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
+    public PagingVO<List<BomChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SearchPagingDTO params = dto.getParams();
         String searchKeyword = params.getSearchKeyword();
@@ -504,13 +504,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
 
         IPage pageData = baseMapper.paging(query, changeSearch, params);
-        List<ProductChangePagingVO> list = pageData.getRecords();
+        List<BomChangePagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(new Page());
         }
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
-        List<String> businessTableIds = list.stream().map(ProductChangePagingVO::getId).collect(Collectors.toList());
+        List<String> businessTableIds = list.stream().map(BomChangePagingVO::getId).collect(Collectors.toList());
         //当前审核人
         List<ProcessCurrentAuditorVO> currentAuditorList = workflowFeign.getProcessCurrentAudit(businessTableIds);
 
@@ -518,7 +518,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
         //获取到类型是bom 的 源 id
         List<String> bomIdList = list.stream().filter(c -> changeBom.equals(c.getType())).
-                map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
+                map(BomChangePagingVO::getSourceId).collect(Collectors.toList());
 
 
         List<BomVO> bomList = new ArrayList<>();
@@ -528,13 +528,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         //获取到类型是sku 的 源 id
         List<String> skuIdList = list.stream().filter(c -> changeSku.equals(c.getType())).
-                map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
+                map(BomChangePagingVO::getSourceId).collect(Collectors.toList());
 
         List<SkuVO> skuList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(skuIdList)) {
             skuList = productDetailService.getSkuBySkuIds(skuIdList);
         }
-        for (ProductChangePagingVO item : list) {
+        for (BomChangePagingVO item : list) {
             String type = item.getType();
             String sourceId = item.getSourceId();
             //如果是bom
@@ -588,20 +588,20 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     public Boolean cancellation(String productChangeId) {
-        ProductChangeEntity entity = this.getById(productChangeId);
+        BomChangeEntity entity = this.getById(productChangeId);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
         Integer state = entity.getState();
         //待提交
-        Integer waitAudit = ProductChangeStateEnum.WAIT_SUBMIT.getState();
+        Integer waitAudit = BomChangeStateEnum.WAIT_SUBMIT.getState();
         //审核不通过
-        Integer auditNoPassState = ProductChangeStateEnum.AUDIT_NO_PASS.getState();
+        Integer auditNoPassState = BomChangeStateEnum.AUDIT_NO_PASS.getState();
         //当不等于他们的时候
         if (!waitAudit.equals(state) && !auditNoPassState.equals(state)) {
             throw new ServiceException(ApiError.PROJECT_CHANGE_VOID_REQUIRED);
         }
-        entity.setState(ProductChangeStateEnum.CANCELLATION.getState());
+        entity.setState(BomChangeStateEnum.CANCELLATION.getState());
         return this.updateById(entity);
     }
 
@@ -637,7 +637,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-30 10:50
      */
     @Override
-    public ProductChangeDTO details(String id) {
+    public BomChangeDTO details(String id) {
         return null;
     }
 
@@ -654,12 +654,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     public Boolean edit(UpdateChangeDTO dto) {
         String id = dto.getId();
         //获取到变更信息
-        ProductChangeEntity changeEntity = this.getById(id);
+        BomChangeEntity changeEntity = this.getById(id);
         if (Objects.isNull(changeEntity)) {
             throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
         Integer state = changeEntity.getState();
-        Integer waitAudit = ProductChangeStateEnum.WAIT_SUBMIT.getState();
+        Integer waitAudit = BomChangeStateEnum.WAIT_SUBMIT.getState();
         //只有待提交才能编辑
         if (!waitAudit.equals(state)) {
             throw new ServiceException(ApiError.BILL_WAIT_APPROVE_REQUIRED);
@@ -691,7 +691,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-02-02 9:49
      */
     @Override
-    public ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity) {
+    public ProductBomChangeDTO getBomDetails(BomChangeEntity changeEntity) {
         try {
             if (changeEntity != null) {
                 ProductBomChangeDTO result = new ProductBomChangeDTO();
@@ -714,10 +714,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     }
 
     @Override
-    public ProductChangeDTO skuDetails(ProductChangeEntity changeEntity) {
+    public BomChangeDTO skuDetails(BomChangeEntity changeEntity) {
         try {
             if (changeEntity != null) {
-                ProductChangeDTO result = new ProductChangeDTO();
+                BomChangeDTO result = new BomChangeDTO();
                 result.setId(changeEntity.getId());
                 result.setSourceId(changeEntity.getSourceId());
                 result.setType(changeEntity.getType());
@@ -748,12 +748,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     public List<String> getBySourceId(List<String> sourceIds) {
         if (CollectionUtils.isNotEmpty(sourceIds)) {
             List<Integer> stateList = new ArrayList<>(2);
-            stateList.add(ProductChangeStateEnum.AUDIT_ING.getState());
-            stateList.add(ProductChangeStateEnum.WAIT_SUBMIT.getState());
-            LambdaQueryWrapper<ProductChangeEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.select(ProductChangeEntity::getSourceId);
-            queryWrapper.in(ProductChangeEntity::getSourceId, sourceIds);
-            queryWrapper.in(ProductChangeEntity::getState, stateList);
+            stateList.add(BomChangeStateEnum.AUDIT_ING.getState());
+            stateList.add(BomChangeStateEnum.WAIT_SUBMIT.getState());
+            LambdaQueryWrapper<BomChangeEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(BomChangeEntity::getSourceId);
+            queryWrapper.in(BomChangeEntity::getSourceId, sourceIds);
+            queryWrapper.in(BomChangeEntity::getState, stateList);
             return this.listObjs(queryWrapper, Object::toString);
         }
         return new ArrayList<>();
@@ -793,19 +793,19 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Override
     public List<String> listChangeField(String id) {
-        ProductChangeEntity productChangeEntity = this.getById(id);
-        if (ObjectUtils.isEmpty(productChangeEntity)) {
+        BomChangeEntity bomChangeEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(bomChangeEntity)) {
             throw new ServiceException(ApiError.PROJECT_CHANGE_INFO_NOT_FOUND);
         }
         //查询变更后的json字符串
-        String detailsJson = productChangeDetailsService.getDetailsJson(id);
+        String detailsJson = bomChangeDetailsService.getDetailsJson(id);
         if (StringUtils.isBlank(detailsJson)) {
             throw new ServiceException(ApiError.COMMON_CHANGE_NO_RECORD);
         }
         //变更后数据
         ProductSmallestUnitDTO newBom = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
         //变更前数据
-        ProductSmallestUnitDTO oldbom = productDetailService.getSkuBySkuId(productChangeEntity.getSourceId());
+        ProductSmallestUnitDTO oldbom = productDetailService.getSkuBySkuId(bomChangeEntity.getSourceId());
         if (ObjectUtils.isEmpty(oldbom)) {
             throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
@@ -826,13 +826,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     }
 
     @Override
-    public List<ProductChangePagingVO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<ProductChangePagingVO.TabListDTO> tabList = new ArrayList<>();
-        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.ALL, count()));
+    public List<BomChangePagingVO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<BomChangePagingVO.TabListDTO> tabList = new ArrayList<>();
+        tabList.add(new BomChangePagingVO.TabListDTO(SearchType.ALL, count()));
         String userId = UserContext.getDefaultLoginUser().getUid();
         //获取我的待办信息
         List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.WAIT_AUDIT, myToDoTasks.size()));
+        tabList.add(new BomChangePagingVO.TabListDTO(SearchType.WAIT_AUDIT, myToDoTasks.size()));
         return tabList;
     }
 

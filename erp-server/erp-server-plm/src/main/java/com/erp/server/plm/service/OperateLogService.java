@@ -94,5 +94,5 @@ public interface OperateLogService extends IService<OperateLogEntity> {
      * @param dto
      * @return
      */
-    PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto);
+    PagingVO<OperateLogShowDTO.HistoryDTO> getBomChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto);
 }

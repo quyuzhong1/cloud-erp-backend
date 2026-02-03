@@ -56,7 +56,6 @@ import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -135,7 +134,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -247,7 +245,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private SyncKingdeeProductDetailService syncKingdeeProductDetailService;
 
     @Resource
-    private ProductChangeService productChangeService;
+    private BomChangeService bomChangeService;
 
     @Resource
     private ProductPlanService productPlanService;
@@ -391,7 +389,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> productIdList = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
-        List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
+        List<String> changeIngSourceIds = bomChangeService.getBySourceId(sourceIds);
         List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
         List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
@@ -1248,12 +1246,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         @Override
                         public void afterCommit() {
                             // 调用消息推送方法
-                            noticeMessageService.productChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
+                            noticeMessageService.bomChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
                         }
                     });
                 }else{
                     // 调用消息推送方法
-                    noticeMessageService.productChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
+                    noticeMessageService.bomChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
                 }
             }
         }
@@ -1334,7 +1332,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //单品或者Bom都需要检查库存是否大于零
             String skuId = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId();
-            productChangeService.checkInventoryGreaterThanZero(productInfoEntity,productSpuBaseInfoDTO.getPropertyId(),skuId);
+            bomChangeService.checkInventoryGreaterThanZero(productInfoEntity,productSpuBaseInfoDTO.getPropertyId(),skuId);
         }
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
@@ -1767,7 +1765,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 //产品款名和产品品名关系处理
                 handleProductNames(obj, productInfoDTO);
                 //单品或者Bom都需要检查库存是否大于零
-                productChangeService.checkInventoryGreaterThanZero(productInfoEntity,productManySpecDTO.getProductInfoDTO().getPropertyId(),obj.getId());
+                bomChangeService.checkInventoryGreaterThanZero(productInfoEntity,productManySpecDTO.getProductInfoDTO().getPropertyId(),obj.getId());
                 //sku操作日志
                 addProductDetailLog(obj, oldEntity, obj.getId(), productInfoDTO.getId());
             });

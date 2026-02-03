@@ -12,13 +12,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductChangeEntity;
-import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.model.plm.entity.BomChangeEntity;
+import com.erp.model.plm.vo.BomChangePagingVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.constant.BomConstant;
-import com.erp.server.plm.query.ProductChangeHandler;
+import com.erp.server.plm.query.BomChangeHandler;
 import com.erp.server.plm.service.BomInfoService;
-import com.erp.server.plm.service.ProductChangeService;
+import com.erp.server.plm.service.BomChangeService;
 import com.erp.server.plm.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -45,11 +45,11 @@ import java.util.Objects;
 @RequestMapping("change")
 @RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 @Slf4j
-public class ProductChangeController extends BaseController {
+public class BomChangeController extends BaseController {
 
 
     @Resource
-    private ProductChangeService productChangeService;
+    private BomChangeService bomChangeService;
 
     @Resource
     private BomInfoService bomInfoService;
@@ -66,7 +66,7 @@ public class ProductChangeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加变更")
     @PostMapping("/add")
     public ApiResult<Object> add(@RequestBody @Validated AddChangeDTO dto) {
-        Boolean result = productChangeService.add(dto);
+        Boolean result = bomChangeService.add(dto);
         return result == true ? success() : failure();
     }
 
@@ -80,7 +80,7 @@ public class ProductChangeController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新变更:id={id},数据源id={源数据id},变更类型={type}")
     @PostMapping("/update")
     public ApiResult<Object> update(@RequestBody @Validated UpdateChangeDTO dto) {
-        Boolean result = productChangeService.edit(dto);
+        Boolean result = bomChangeService.edit(dto);
         return result == true ? success() : failure();
     }
 
@@ -92,9 +92,9 @@ public class ProductChangeController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery(handler = ProductChangeHandler.class)
-    public ApiResult<PagingVO<List<ProductChangePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
-        PagingVO<List<ProductChangePagingVO>> pagingVO = productChangeService.paging(dto);
+    @WebAdvanceQuery(handler = BomChangeHandler.class)
+    public ApiResult<PagingVO<List<BomChangePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
+        PagingVO<List<BomChangePagingVO>> pagingVO = bomChangeService.paging(dto);
         return success(pagingVO);
     }
 
@@ -106,8 +106,8 @@ public class ProductChangeController extends BaseController {
      * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tabList")
-    public ApiResult<List<ProductChangePagingVO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<ProductChangePagingVO.TabListDTO> tabList = productChangeService.tabList(dto);
+    public ApiResult<List<BomChangePagingVO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<BomChangePagingVO.TabListDTO> tabList = bomChangeService.tabList(dto);
         return success(tabList);
     }
 
@@ -122,7 +122,7 @@ public class ProductChangeController extends BaseController {
     public ApiResult<Object> details(@RequestBody @Validated BaseIdDTO dto) {
 
         //获取到变更信息
-        ProductChangeEntity changeEntity = productChangeService.getById(dto.getId());
+        BomChangeEntity changeEntity = bomChangeService.getById(dto.getId());
         if (Objects.isNull(changeEntity)) {
             throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
@@ -130,12 +130,12 @@ public class ProductChangeController extends BaseController {
         String type = changeEntity.getType();
         //对应就是bom
         if (BomConstant.CHANGE_BOM.equals(type)) {
-            ProductBomChangeDTO bomChange = productChangeService.getBomDetails(changeEntity);
+            ProductBomChangeDTO bomChange = bomChangeService.getBomDetails(changeEntity);
             object = bomChange;
         }
         //对应sku
         if (BomConstant.CHANGE_SKU.equals(type)) {
-            ProductChangeDTO skuChange = productChangeService.skuDetails(changeEntity);
+            BomChangeDTO skuChange = bomChangeService.skuDetails(changeEntity);
             object = skuChange;
         }
         if (object != null) {
@@ -153,7 +153,7 @@ public class ProductChangeController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废变更")
     @PostMapping("/cancellation")
     public ApiResult<Object> cancellation(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = productChangeService.cancellation(dto.getId());
+        Boolean result = bomChangeService.cancellation(dto.getId());
         return result == true ? success() : failure();
     }
 
@@ -164,8 +164,8 @@ public class ProductChangeController extends BaseController {
      * @return
      */
     @PostMapping("/list")
-    public ApiResult<List<ChangeInfoDTO>> list(@RequestBody @Validated ProductChangeListSearchDTO dto) {
-        List<ChangeInfoDTO> list = productChangeService.getChangeByType(dto.getType(), dto.getSearchKeyword());
+    public ApiResult<List<ChangeInfoDTO>> list(@RequestBody @Validated BomChangeListSearchDTO dto) {
+        List<ChangeInfoDTO> list = bomChangeService.getChangeByType(dto.getType(), dto.getSearchKeyword());
         return success(list);
     }
 
@@ -183,10 +183,10 @@ public class ProductChangeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = productChangeService.submit(id,Boolean.TRUE);
+                submit = bomChangeService.submit(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("产品变更单 提交审核失败",e);
-                ProductChangeEntity entity = productChangeService.getById(id);
+                BomChangeEntity entity = bomChangeService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "产品变更单不存在, 提交失败");
                     resultDTOS.add(submit);
@@ -214,10 +214,10 @@ public class ProductChangeController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = productChangeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = bomChangeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("变更单审核失败",e);
-                ProductChangeEntity entity = productChangeService.getById(id);
+                BomChangeEntity entity = bomChangeService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "变更单不存在, 审核失败");
                     resultDTOS.add(approveResult);
@@ -244,10 +244,10 @@ public class ProductChangeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = productChangeService.cancelProcess(id);
+                cancelResult = bomChangeService.cancelProcess(id);
             }catch (Exception e){
                 log.error("变更信息流程失败",e);
-                ProductChangeEntity entity = productChangeService.getById(id);
+                BomChangeEntity entity = bomChangeService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "变更信息不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
@@ -268,7 +268,7 @@ public class ProductChangeController extends BaseController {
      */
     @PostMapping("/listChangeField")
     public ApiResult<List<String>> listChangeField(@RequestBody @Validated BaseIdDTO dto) {
-        List<String> list = productChangeService.listChangeField(dto.getId());
+        List<String> list = bomChangeService.listChangeField(dto.getId());
         return success(list);
     }
 
@@ -280,7 +280,7 @@ public class ProductChangeController extends BaseController {
      */
     @PostMapping("/auditInfo")
     public ApiResult<List<ApproveNodeRecordVO>> auditInfo(@RequestBody @Validated BaseIdDTO dto) {
-        List<ApproveNodeRecordVO> list=productChangeService.auditInfo(dto.getId());
+        List<ApproveNodeRecordVO> list= bomChangeService.auditInfo(dto.getId());
         return success(list);
     }
 

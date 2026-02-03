@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.plm.mapper.ProductChangeMapper">
+<mapper namespace="com.erp.server.plm.mapper.BomChangeMapper">
 
 
 
-    <select id="paging" resultType="com.erp.model.plm.vo.ProductChangePagingVO">
+    <select id="paging" resultType="com.erp.model.plm.vo.BomChangePagingVO">
         SELECT
         id,
         type,source_id,state,
         create_time,
         approval_finish_time,
         remark
-        FROM product_change
+        FROM bom_change
         WHERE
         ${params.sqlMap.default} AND
             is_deleted = FALSE

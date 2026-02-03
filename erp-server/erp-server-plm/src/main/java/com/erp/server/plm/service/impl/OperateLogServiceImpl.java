@@ -253,7 +253,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
     }
 
     @Override
-    public PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
+    public PagingVO<OperateLogShowDTO.HistoryDTO> getBomChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
         Page<OperateLogShowDTO.HistoryDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         OperateLogShowDTO.PagingParamDTO params = dto.getParams();
         IPage<OperateLogShowDTO.HistoryDTO> pageData = baseMapper.getProductChangeHistory(query, params);
