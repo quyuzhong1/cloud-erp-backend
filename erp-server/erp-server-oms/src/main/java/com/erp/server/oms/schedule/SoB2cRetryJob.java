@@ -165,8 +165,12 @@ public class SoB2cRetryJob {
                             soB2cErrorService.updateById(soB2cErrorEntity);
                             continue;
                         };
+                        String newType = type;
+                        if(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode().equals(type) && soB2cErrorEntity.getMessage().contains("未获取面单")){
+                            newType = SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode();
+                        }
 
-                        List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId(),type);
+                        List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId(),newType);
                         try {
                             Thread.sleep(5000);
                         } catch (InterruptedException e) {
