@@ -1692,11 +1692,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (jsonObject == null) {
                 return;
             }
-            // 金蝶接口文档：订单明细为 FSaleOrderEntry，view 可能返回 SaleOrderEntry 或 FSaleOrderEntry
+            // 金蝶 view 接口返回：订单明细为 SaleOrderEntry
             Object entryListObj = jsonObject.get("SaleOrderEntry");
-            if (entryListObj == null) {
-                entryListObj = jsonObject.get("FSaleOrderEntry");
-            }
             if (entryListObj instanceof List) {
                 List<JSONObject> list = (List<JSONObject>) entryListObj;
                 List<SoDetailEntity> detailList = this.lambdaQuery().eq(SoDetailEntity::getMainId, soId).orderByAsc(SoDetailEntity::getId).list();
@@ -1730,15 +1727,17 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                         continue;
                     }
                     
-                    // 获取金蝶返回的数量和价格（金蝶文档：FQty 销售数量，FPrice 销售单价）
+                    // 金蝶 view 接口返回：明细数量 Qty、价格 Price
                     BigDecimal kingdeeQty = null;
                     BigDecimal kingdeePrice = null;
                     try {
-                        if (object.containsKey("FQty")) {
-                            kingdeeQty = new BigDecimal(object.get("FQty").toString());
+                        Object qtyObj = object.get("Qty");
+                        if (qtyObj != null) {
+                            kingdeeQty = new BigDecimal(qtyObj.toString());
                         }
-                        if (object.containsKey("FPrice")) {
-                            kingdeePrice = new BigDecimal(object.get("FPrice").toString());
+                        Object priceObj = object.get("Price");
+                        if (priceObj != null) {
+                            kingdeePrice = new BigDecimal(priceObj.toString());
                         }
                     } catch (Exception e) {
                         log.warn("解析金蝶数量和价格失败，SKU: {}, 错误: {}", skuNo, e.getMessage());

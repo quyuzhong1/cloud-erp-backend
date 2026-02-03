@@ -2577,11 +2577,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
             List<SoDetailEntity> updateList = new ArrayList<>(10);
             if (soJson != null) {
-                // 金蝶接口文档：订单明细为 FSaleOrderEntry，view 可能返回 SaleOrderEntry 或 FSaleOrderEntry
+                // 金蝶 view 接口返回：订单明细为 SaleOrderEntry
                 Object entryListObj = soJson.get("SaleOrderEntry");
-                if (entryListObj == null) {
-                    entryListObj = soJson.get("FSaleOrderEntry");
-                }
                 List<Map<String, Object>> resultList = entryListObj instanceof List ? (List<Map<String, Object>>) entryListObj : null;
                 if (CollectionUtils.isNotEmpty(resultList)) {
                     // 修复：通过SKU + 数量 + 价格匹配；分录内码以文档 FEntryID 为准，兼容 Id；物料编码以 FNumber 为准
@@ -2613,15 +2610,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             continue;
                         }
                         
-                        // 获取金蝶返回的数量和价格
+                        // 金蝶 view 接口返回：明细数量 Qty、价格 Price
                         BigDecimal kingdeeQty = null;
                         BigDecimal kingdeePrice = null;
                         try {
-                            if (item.containsKey("FQty")) {
-                                kingdeeQty = new BigDecimal(item.get("FQty").toString());
+                            Object qtyObj = item.get("Qty");
+                            if (qtyObj != null) {
+                                kingdeeQty = new BigDecimal(qtyObj.toString());
                             }
-                            if (item.containsKey("FPrice")) {
-                                kingdeePrice = new BigDecimal(item.get("FPrice").toString());
+                            Object priceObj = item.get("Price");
+                            if (priceObj != null) {
+                                kingdeePrice = new BigDecimal(priceObj.toString());
                             }
                         } catch (Exception e) {
                             log.warn("解析金蝶数量和价格失败，SKU: {}, 错误: {}", skuNo, e.getMessage());
