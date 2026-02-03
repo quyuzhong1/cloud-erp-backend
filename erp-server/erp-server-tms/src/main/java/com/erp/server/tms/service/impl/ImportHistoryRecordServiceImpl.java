@@ -354,7 +354,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
                         logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
-
+                //判断错误信息是否为空
+                if (CollUtil.isNotEmpty(errorMsgList)) {
+                    continue;
+                }
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
             }
@@ -374,6 +377,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
                         logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
 
+                //判断错误信息是否为空
+                if (CollUtil.isNotEmpty(errorMsgList)) {
+                    continue;
+                }
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
             }
