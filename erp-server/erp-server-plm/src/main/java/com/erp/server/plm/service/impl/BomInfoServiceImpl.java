@@ -115,7 +115,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
 
     @Resource
-    private ProductChangeService productChangeService;
+    private BomChangeService bomChangeService;
 
     @Resource
     private SysCodeService sysCodeService;
@@ -313,7 +313,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> skuIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
-            skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
+            skuIdList = bomChangeService.getChangeSearchCondition(searchKeyword);
         }
         //待审核
         List<String> bomIdList = new ArrayList<>();
@@ -512,7 +512,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> skuIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
-            skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
+            skuIdList = bomChangeService.getChangeSearchCondition(searchKeyword);
             if (CollectionUtils.isEmpty(skuIdList)) {
                 IPage<BomPagingVO> pageData = new Page<BomPagingVO>();
                 return new PagingVO<>(pageData);
@@ -525,7 +525,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         List<String> bomIds = list.stream().map(BomPagingVO::getId).collect(Collectors.toList());
 
-        List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
+        List<String> changeIngSourceIds = bomChangeService.getBySourceId(bomIds);
         List<FindUserDTO> userList = commonService.getAllUser();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
@@ -801,7 +801,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.PROJECT_FREEZE_REQUIRED);
         }
         List<String> bomIds = Arrays.asList(bomId);
-        List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
+        List<String> changeIngSourceIds = bomChangeService.getBySourceId(bomIds);
         if (changeIngSourceIds.contains(bomId)) {
             throw new ServiceException(ApiError.PROJECT_CHANGE_IN_PROGRESS_FORBIDDEN);
         }
@@ -922,7 +922,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.PROJECT_UNARCHIVE_REQUIRED);
         }
         List<String> bomIds = Arrays.asList(bomId);
-        List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
+        List<String> changeIngSourceIds = bomChangeService.getBySourceId(bomIds);
         if (changeIngSourceIds.contains(bomId)) {
             throw new ServiceException(ApiError.PROJECT_CHANGE_IN_PROGRESS_FORBIDDEN);
         }
@@ -994,7 +994,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
             throw new ServiceException(ApiError.PROJECT_CHANGE_REQUEST_REQUIRED);
         }
-        List<String> changeIngSourceIds = productChangeService.getBySourceId(Arrays.asList(sourceId));
+        List<String> changeIngSourceIds = bomChangeService.getBySourceId(Arrays.asList(sourceId));
         if (CollectionUtils.isNotEmpty(changeIngSourceIds)) {
             throw new ServiceException(ApiError.BOM_CHANGING);
         }

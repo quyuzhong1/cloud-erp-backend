@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class ProductChangeDTO implements Serializable {
+public class BomChangeDTO implements Serializable {
 
 
     /**

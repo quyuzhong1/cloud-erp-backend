@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("product_change")
-public class ProductChangeEntity extends BaseEntity<ProductChangeEntity> implements Serializable {
+@TableName("bom_change")
+public class BomChangeEntity extends BaseEntity<BomChangeEntity> implements Serializable {
     private static final long serialVersionUID = -79726809443887610L;
 
     /**

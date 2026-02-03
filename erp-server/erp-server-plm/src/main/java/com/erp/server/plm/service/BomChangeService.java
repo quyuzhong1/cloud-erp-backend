@@ -7,9 +7,9 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductChangeEntity;
+import com.erp.model.plm.entity.BomChangeEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.model.plm.vo.BomChangePagingVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 
 import java.util.List;
@@ -20,22 +20,22 @@ import java.util.List;
  * @author yl
  * @since 2023-01-11 14:05:03
  */
-public interface ProductChangeService  extends IService<ProductChangeEntity> {
+public interface BomChangeService extends IService<BomChangeEntity> {
 
 
     Boolean add(AddChangeDTO dto);
 
-    PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
+    PagingVO<List<BomChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
 
     Boolean cancellation(String id);
 
     List<ChangeInfoDTO> getChangeByType(String type, String searchKeyword);
 
-    ProductChangeDTO details(String id);
+    BomChangeDTO details(String id);
 
     Boolean edit(UpdateChangeDTO dto);
 
-    ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity);
+    ProductBomChangeDTO getBomDetails(BomChangeEntity changeEntity);
 
     /**
      * SKU 详情
@@ -44,7 +44,7 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      * @param changeEntity
      * @return com.erp.model.plm.dto.ProductChangeDTO
      */
-    ProductChangeDTO skuDetails(ProductChangeEntity changeEntity);
+    BomChangeDTO skuDetails(BomChangeEntity changeEntity);
 
     List<String> getBySourceId(List<String> sourceIds);
 
@@ -68,7 +68,7 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     /**
      * tab页
      */
-    List<ProductChangePagingVO.TabListDTO> tabList(PermissionsDTO dto);
+    List<BomChangePagingVO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
      * 检查库存是否大于零
@@ -92,7 +92,7 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      * @param entity
      * @return Boolean
      */
-    Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, BomChangeEntity entity);
     /**
      * 取消流程
      * @author will

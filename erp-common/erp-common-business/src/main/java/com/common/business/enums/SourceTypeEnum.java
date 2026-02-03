@@ -169,7 +169,7 @@ public enum SourceTypeEnum {
     SDY_PRODUCT_DETAIL("sdy_productDetail", "产品管理","product_detail"),
     WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
-    PRODUCT_CHANGE("productChange", "变更管理","product_change"),
+    BOM_CHANGE("bomChange", "BOM变更管理","bom_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
     APPLICATION_CATEGORY("applicationCategory", "应用分类","application_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),

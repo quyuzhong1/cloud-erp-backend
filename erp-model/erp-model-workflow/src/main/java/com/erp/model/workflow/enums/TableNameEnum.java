@@ -10,7 +10,7 @@ public enum TableNameEnum {
     PRODUCT_BOM_INFO("product_bom_info", "BOM管理"),
     PRODUCT_DETAIL("product_detail", "产品管理"),
     PROJECT_TASK("project_task", "任务列表"),
-    PRODUCT_CHANGE("product_change", "变更管理"),
+    BOM_CHANGE("bom_change", "BOM变更管理"),
     //scm
     PURCHASE_PRICE_CHANGE("purchase_price_change", "采购调价表"),
     SALES_DEMAND("sales_demand", "备货申请单"),
