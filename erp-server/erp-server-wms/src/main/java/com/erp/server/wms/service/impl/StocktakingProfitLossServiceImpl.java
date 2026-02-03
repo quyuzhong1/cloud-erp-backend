@@ -942,7 +942,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             }
             String code = docNoGenHelper.generateCode(businessNoType);
             entity.setCode(code);
-            entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+            entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
             addList.add(entity);
             for (StocktakingProfitLossDetailDTO.AddDTO item : dto.getDetailList()) {
                 StocktakingProfitLossDetailEntity detail = new StocktakingProfitLossDetailEntity();
