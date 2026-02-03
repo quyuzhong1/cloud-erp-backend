@@ -11916,6 +11916,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cDetailEntity::getWarehouseId,dto.getWarehouseId())
                 .set(SoB2cDetailEntity::getWarehouseName,dto.getWarehouseName())
                 .set(SoB2cDetailEntity::getVirtualWarehouseId,dto.getVirtualWarehouseId())
+                .set(SoB2cDetailEntity::getIsMatchWarehouseRule,dto.getIsMatchWarehouseRule())
+                .set(StringUtils.isNotBlank(dto.getWarehouseOrgId()),SoB2cDetailEntity::getWarehouseOrgId,dto.getWarehouseOrgId())
+                .set(StringUtils.isNotBlank(dto.getWarehouseOrgName()),SoB2cDetailEntity::getWarehouseOrgName,dto.getWarehouseOrgName())
                 .update();
 
         // 记录跟踪号

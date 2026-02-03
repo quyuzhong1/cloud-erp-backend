@@ -4090,6 +4090,15 @@ public class SoB2cDTO implements Serializable {
 
         private String warehouseName;
 
+        /**
+         * 库存组织id
+         */
+        private String warehouseOrgId;
+        /**
+         * 库存组织名称
+         */
+        private String warehouseOrgName;
+
         private String virtualWarehouseId;
 
         private String billStatus;
@@ -4103,5 +4112,10 @@ public class SoB2cDTO implements Serializable {
          * 是否记录日志
          */
         private boolean addOperationLog = false ;
+
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
     }
 }

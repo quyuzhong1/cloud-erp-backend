@@ -32,10 +32,7 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
-import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -101,6 +98,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     private SoB2cDeliveryService soB2cDeliveryService;
     @Resource
     private VirtualWarehouseChannelService virtualWarehouseChannelService;
+    @Resource
+    private WarehouseService warehouseService;
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -374,6 +373,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         Boolean platformWarehouseCodeNotExist = false;
         Boolean overseasProviderNotExist = false;
         OverseasProviderDTO.FeignDTO overseasWarehouse = null;
+        WarehouseEntity warehouseEntity = null;
         String platformWarehouseCode = dto.getWarehouseCode();
         if(StringUtils.isBlank(platformWarehouseCode)){
             platformWarehouseCodeNotExist = true;
@@ -383,8 +383,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             feignDTO.setCode(dto.getPlatform());
             feignDTO.setPlatformWarehouseCode(dto.getWarehouseCode());
             overseasWarehouse = overseasProviderService.getOverseasWarehouse(feignDTO);
-            if(Objects.isNull(overseasWarehouse)){
+            if(Objects.isNull(overseasWarehouse) || StringUtils.isBlank(overseasWarehouse.getWarehouseId())){
                 overseasProviderNotExist = true;
+            }else{
+                warehouseEntity = warehouseService.getById(overseasWarehouse.getWarehouseId());
             }
         }
 
@@ -530,6 +532,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateDto.setSoOutstockDate(dto.getOutBoundTime().toLocalDate());
             updateDto.setWarehouseId(overseasWarehouse.getWarehouseId());
             updateDto.setWarehouseName(overseasWarehouse.getWarehouseName());
+            if(Objects.nonNull(warehouseEntity)){
+                updateDto.setWarehouseOrgId(warehouseEntity.getOrgId());
+                updateDto.setWarehouseOrgName(warehouseEntity.getName());
+            }
+            updateDto.setIsMatchWarehouseRule(true);
             updateDto.setVirtualWarehouseId(virtualWarehouseId);
             updateDto.setTrackNo(dto.getTrackNo());
             updateDto.setSoB2cId(mainEntity.getId());
