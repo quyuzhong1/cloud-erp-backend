@@ -42,6 +42,8 @@
     <select id="paging" resultType="com.erp.model.tms.dto.ImportHistoryRecordDTO$ListDTO">
         select
             <include refid="Base_Column_List" />
+            ,ihr.clean_file_url as errorUrl
+            ,ihr.clean_file_name
         from import_history_record ihr
         <where>
             ${params.sqlMap.default}
