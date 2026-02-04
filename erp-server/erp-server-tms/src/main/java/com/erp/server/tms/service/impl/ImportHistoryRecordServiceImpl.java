@@ -576,7 +576,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             errorMsgList.addAll(msgList);
         }
         //物流商信息
-        excelDTO.setLogisticsSupplierName(costImportEntity.getDictPlatform());
+        excelDTO.setLogisticsSupplierId(costImportEntity.getDictPlatform());
         //付款类型
         excelDTO.setPayType(CharSequenceUtil.isBlank(excelDTO.getPayType()) ? logisticsPayTypeEnum.PAY.getCode() : logisticsPayTypeEnum.getName(excelDTO.getPayType()));
 
@@ -723,12 +723,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private LogisticsBillEntity addImportLogisticBill (ImportHistoryRecordExcelDTO excelDTO) {
         //新增物流单，格式化物流费用
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
-
-        List<LogisticsSupplierEntity> logisticsSupplierList = logisticsSupplierService.listByName(Collections.singletonList(excelDTO.getLogisticsSupplierName()));
-        if (CollUtil.isEmpty(logisticsSupplierList)) {
-            throw new ServiceException(ApiError.LOGISTICS_SUPPLIER_NAME_NOT_FOUND,excelDTO.getLogisticsSupplierName());
-        }
-        addDTO.setLogisticsSupplierId(logisticsSupplierList.get(0).getId());
+        addDTO.setLogisticsSupplierId(excelDTO.getLogisticsSupplierId());
 
         //发货单信息
         if (CharSequenceUtil.isNotBlank(excelDTO.getSoDeliveryCode())) {
