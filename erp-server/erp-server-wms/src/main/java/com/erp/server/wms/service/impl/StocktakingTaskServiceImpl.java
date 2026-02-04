@@ -86,6 +86,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     private StocktakingProfitLossService stocktakingProfitLossService;
 
     @Resource
+    private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
+
+    @Resource
     private InventoryService inventoryService;
 
     @Resource
@@ -689,6 +692,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     public Boolean pushStocktakingProfitLoss(BaseIdsDTO.IdsDTO dto) {
         List<StocktakingTaskEntity> stocktakingTaskList = this.listByIds(dto.getIds());
+
         for (StocktakingTaskEntity stocktakingTaskEntity : stocktakingTaskList) {
             // 组装盘盈盘亏单所需要的数据
             List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(stocktakingTaskEntity);

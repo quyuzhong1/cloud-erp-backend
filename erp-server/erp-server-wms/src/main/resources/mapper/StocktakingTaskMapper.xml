@@ -47,6 +47,7 @@
           st.status AS stocktakingStatus,
           st.approve_user_name AS approveUserName,
           st.bill_date as billDate,
+          std.id as detailId,
           std.first_qty as firstQty
           FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp ON st.source_id=sp.id AND sp.is_deleted=FALSE
