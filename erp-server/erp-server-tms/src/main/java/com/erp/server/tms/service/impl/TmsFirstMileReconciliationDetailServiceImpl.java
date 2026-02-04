@@ -444,6 +444,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 }
             }
         }
+        Map<String, LogisticsBillDetailEntity> logisticsBillDetailMap = logisticsBillDetailService.listByMainIds(billIds).stream().collect(Collectors.toMap(LogisticsBillDetailEntity::getMainId, Function.identity(), (o1, o2) -> o1));
+
         List<LogisticsBillCostEntity> updateBillList = new ArrayList<>(billIds.size());
         for (String billId : billIds) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> Objects.equals(billId, e.getId())).findFirst().orElse(null);
@@ -465,6 +467,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 entity.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
                 continue;
             }
+            LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailMap.getOrDefault(billId, null);
+            if(Objects.nonNull(logisticsBillDetailEntity)){
+                entity.setLogisticsBillDetailId(logisticsBillDetailEntity.getId());
+            }
+            entity.setFeeRule(actualDetailEntity.getFeeRule());
+            entity.setVolumeWeight(actualDetailEntity.getVolumeWeight());
+            entity.setActualWeight(actualDetailEntity.getActualWeight());
             // 更新实际重量和体积重, 计费重
             entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
             entity.setWeightLogistics(actualDetailEntity.getActualWeight());
@@ -690,12 +699,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         actualListDTO.setOtherTaxCost(BigDecimal.ZERO);
         // 总物流费用
         actualListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
-        // 实际重量【箱包装重量】（取物流单输入的重量）
-        actualListDTO.setActualWeight(null == sourceListDTO.getWeightLogistics() ? BigDecimal.ZERO : sourceListDTO.getWeightLogistics());
-        // 体积重 （取物流单输入的体积重）
-        actualListDTO.setVolumeWeight(null == sourceListDTO.getVolumeWeightLogistics() ? BigDecimal.ZERO : sourceListDTO.getVolumeWeightLogistics());
-        // 计费重
-        actualListDTO.setBillingWeight(actualListDTO.getActualWeight().max(actualListDTO.getVolumeWeight()));
+//        // 实际重量【箱包装重量】（取物流单输入的重量）
+//        actualListDTO.setActualWeight(null == sourceListDTO.getWeightLogistics() ? BigDecimal.ZERO : sourceListDTO.getWeightLogistics());
+//        // 体积重 （取物流单输入的体积重）
+//        actualListDTO.setVolumeWeight(null == sourceListDTO.getVolumeWeightLogistics() ? BigDecimal.ZERO : sourceListDTO.getVolumeWeightLogistics());
+//        // 计费重
+//        actualListDTO.setBillingWeight(actualListDTO.getActualWeight().max(actualListDTO.getVolumeWeight()));
         actualListDTO.setType(DetailReconciliationTypeEnum.ACTUAL.getCode());
         actualListDTO.setTypeName(DetailReconciliationTypeEnum.ACTUAL.getName());
 
@@ -722,15 +731,15 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     private void initSourceDataDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO) {
         sourceListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
-        sourceListDTO.setActualWeight(BigDecimal.ZERO);
-        sourceListDTO.setVolumeWeight(BigDecimal.ZERO);
-        sourceListDTO.setBillingWeight(BigDecimal.ZERO);
+//        sourceListDTO.setActualWeight(BigDecimal.ZERO);
+//        sourceListDTO.setVolumeWeight(BigDecimal.ZERO);
+//        sourceListDTO.setBillingWeight(BigDecimal.ZERO);
         sourceListDTO.setShippingCost(BigDecimal.ZERO);
         sourceListDTO.setDeclareCost(BigDecimal.ZERO);
         sourceListDTO.setOtherCost(BigDecimal.ZERO);
         sourceListDTO.setOtherTaxCost(BigDecimal.ZERO);
-        sourceListDTO.setVolumeWeightLogistics(BigDecimal.ZERO);
-        sourceListDTO.setWeightLogistics(BigDecimal.ZERO);
+//        sourceListDTO.setVolumeWeightLogistics(BigDecimal.ZERO);
+//        sourceListDTO.setWeightLogistics(BigDecimal.ZERO);
     }
 
 
