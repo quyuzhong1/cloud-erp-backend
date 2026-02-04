@@ -77,6 +77,17 @@ public class ImportHistoryRecordEntity extends BaseEntity<ImportHistoryRecordEnt
     @TableField("operation_user_id")
     private String operationUserId;
 
+    /**
+     * 清洗结果附件的url
+     */
+    @TableField("clean_file_url")
+    private String cleanFileUrl;
+
+    /**
+     * 清洗结果附件名称
+     */
+    @TableField("match_file_name")
+    private String cleanFileName;
 
     public static final String CODE = "code";
 

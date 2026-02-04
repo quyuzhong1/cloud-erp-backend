@@ -350,7 +350,19 @@ public class ImportHistoryRecordDTO implements Serializable {
         @Size(max = 19,message = "操作人id最大长度不能超过19位")
         private String operationUserId;
 
+        /**
+         * 清洗结果附件的url
+         */
+        @NotBlank(message = "清洗结果附件的url不能为空")
+        @Size(max = 255,message = "清洗结果附件的url最大长度不能超过255位")
+        private String cleanFileUrl;
 
+        /**
+         * 清洗结果附件名称
+         */
+        @NotBlank(message = "清洗结果附件名称不能为空")
+        @Size(max = 255,message = "清洗结果附件名称最大长度不能超过255位")
+        private String cleanFileName;
     }
 
 

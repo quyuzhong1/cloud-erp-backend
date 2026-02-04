@@ -12,6 +12,8 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
@@ -22,8 +24,10 @@ import com.erp.server.tms.service.ImportHistoryRecordService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +44,12 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<Integer,String>> {
 
+    public static final String MATCH_FIELD  = "匹配结果";
     public static final String MATCH_SUCCESS  = "匹配成功";
+    public static final String MATCH_FAIL  = "匹配失败";
+    public static final String ERROR_MSG  = "错误信息";
+
+
     private static final int BATCH_COUNT = 1000;
     private final String taskId;
     private final Integer importCount;
@@ -50,10 +59,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     @Getter
     private Integer count = 0;
     /**
-     * 错误信息
+     * 匹配数据信息
      */
     @Getter
-    private List<JSONObject> errorList = new ArrayList<>();
+    private List<JSONObject> matchList = new ArrayList<>();
     /**
      * 全部数据（用于判断导入是否为空）
      */
@@ -111,12 +120,12 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
                 importHistoryRecordService.handleImportSuccessList(importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
-                errorList.addAll(errorList2);
+                matchList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
                     jsonObject.set(ObjectUtil.isNull(jsonObject) ? "" : String.valueOf(jsonObject.size() - 1) ,e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
                 });
-                errorList.addAll(successList);
+                matchList.addAll(successList);
             }
             successList.clear();
             updateTask(count);
@@ -140,20 +149,42 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
                 importHistoryRecordService.handleImportSuccessList(importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
-                errorList.addAll(errorList2);
+                matchList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
                     jsonObject.set(ObjectUtil.isNull(jsonObject) ? "" : String.valueOf(jsonObject.size() - 1) ,e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
                 });
-                errorList.addAll(successList);
+                matchList.addAll(successList);
             }
         }
+        //添加匹配结果
+        addMatchExcelResult();
+    }
+    /**
+     * 添加匹配结果
+     * @author will
+     * @date 2026/2/4 16:28
+     * @return void
+     */
+    private void addMatchExcelResult() {
+
         //添加导入历史记录表数据
         ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();
         addDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
         addDTO.setBusinessType(costImportEntity.getBusinessType());
         addDTO.setFileUrl(importDTO.getFileUrl());
         addDTO.setFileName(importDTO.getFileName());
+        //清洗结果
+        String url = "";
+        String fileName = "物流商费用导入结果.xlsx";
+        if (CollectionUtils.isNotEmpty(matchList)) {
+            File file = ExcelUtil.customExportUtil(fileName, matchList, headList);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        addDTO.setCleanFileUrl(url);
+        addDTO.setCleanFileName(fileName);
         if (CharSequenceUtil.equals(importDTO.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
             addDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
         } else {
@@ -163,9 +194,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         addDTO.setType(importDTO.getType());
         addDTO.setOperationUserId(userInfo.getUid());
         addDTO.setImportCount(count);
+
         //匹配结果序号
-        Integer matchIndex = getMapKey(headMap, "匹配结果");
-        long errorCount = errorList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) obj.get(matchIndex.toString()))).count();
+        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
+        long errorCount = matchList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) obj.get(matchIndex.toString()))).count();
         addDTO.setMatchCount((int)errorCount);
         importHistoryRecordService.add(addDTO);
     }
@@ -178,11 +210,11 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (blankCount > 1) {
             throw new ServiceException(ApiError.COMMON_FILE_HEAD_NOT_EMPTY);
         }
-        headList.add("匹配结果");
-        headList.add("错误信息");
+        headList.add(MATCH_FIELD);
+        headList.add(ERROR_MSG);
         int size = map.size();
-        map.put(size,"匹配结果");
-        map.put(size + 1,"错误信息");
+        map.put(size,MATCH_FIELD);
+        map.put(size + 1,ERROR_MSG);
         this.headMap = map;
         this.headList = headList;
     }

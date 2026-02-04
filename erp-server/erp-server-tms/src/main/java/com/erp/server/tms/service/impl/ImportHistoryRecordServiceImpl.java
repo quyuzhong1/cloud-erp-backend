@@ -29,9 +29,11 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.dto.*;
@@ -63,6 +65,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_IMPORT_HISTORY_RECORD;
+import static com.erp.server.tms.listener.ImportHistoryRecordExcelListener.*;
 
 /**
  * <p>
@@ -227,22 +230,30 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 log.error("导入格式错误！", e);
                 throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
             }
+
+
+            //更新导入结果
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(importSyncDTO.getTaskId());
             importResultDTO.setCount(excelListenerUtil.getCount());
             //导出错误数据
-            List<JSONObject> errorList = excelListenerUtil.getErrorList();
+            List<JSONObject> errorList = excelListenerUtil.getMatchList();
+            Map<Integer, String> headMap = excelListenerUtil.getHeadMap();
+            //匹配结果序号
+            Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
+            List<JSONObject> matchErrorList = errorList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
+
             String url = "";
-            if (CollectionUtils.isNotEmpty(errorList)) {
+            if (CollectionUtils.isNotEmpty(matchErrorList) && !CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(),importSyncDTO.getProcessingType())) {
                 String fileName = "物流商费用错误数据.xlsx";
-                File file = ExcelUtil.customExportUtil(fileName, errorList, excelListenerUtil.getHeadList());
+                File file = ExcelUtil.customExportUtil(fileName, matchErrorList, excelListenerUtil.getHeadList());
                 if (!file.isDirectory()) {
                     url = FastDFSClientUtil.uploadFile(file, fileName);
                 }
             }
             importResultDTO.setErrorUrl(url);
             importResultDTO.setFinishTime(LocalDateTime.now());
-            importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+            importResultDTO.setRemark("处理完成，失败" + matchErrorList.size() + "条");
             importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
             downloadTaskFeign.updateTask(importResultDTO);
         }
@@ -277,9 +288,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //获取费用项配置信息
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(costAttribution);
         //匹配结果序号
-        Integer matchIndex = getMapKey(headMap, "匹配结果");
+        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         //错误信息序号
-        Integer errorIndex = getMapKey(headMap, "错误信息");
+        Integer errorIndex = getMapKey(headMap, ERROR_MSG);
 
         Map<String,List<Object>> paramMap = new HashMap<>();
         for (CfgLogisticsCostImportDetailEntity cfgDetail : cfgImportDetailList) {
@@ -348,7 +359,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 JSONObject jsonObject = entry.getValue().get(0);
                 //主数据
                 JSONObject successJson = new JSONObject();
-                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
+                jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
                 //错误数据
                 List<String> errorMsgList = new ArrayList<>();
                 List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson,errorMsgList, entry.getValue(), cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution);
@@ -371,7 +382,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             for (JSONObject jsonObject :  successList) {
                 //主数据
                 JSONObject successJson = new JSONObject();
-                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
+                jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
                 //错误数据
                 List<String> errorMsgList = new ArrayList<>();
                 List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
@@ -415,10 +426,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
             //字段名称
             String field = headList.get(Integer.parseInt(entry.getKey()));
-            if (CharSequenceUtil.equals(field,"错误信息")) {
+            if (CharSequenceUtil.equals(field,ERROR_MSG)) {
                 continue;
             }
-            if (CharSequenceUtil.equals(field,"匹配结果")) {
+            if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
                 continue;
             }
             CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
@@ -495,10 +506,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
             for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
                 String field = headList.get(Integer.parseInt(entry.getKey()));
-                if (CharSequenceUtil.equals(field,"错误信息")) {
+                if (CharSequenceUtil.equals(field,ERROR_MSG)) {
                     continue;
                 }
-                if (CharSequenceUtil.equals(field,"匹配结果")) {
+                if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
                     continue;
                 }
                 CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
@@ -617,7 +628,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             errorMsgList.add("物流费用项不能为空");
         }
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
-            jsonObject.set(matchIndex.toString(),"匹配失败");
+            jsonObject.set(matchIndex.toString(),MATCH_FAIL);
             jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(jsonObject);
             return;
@@ -638,7 +649,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 errorMsgList.addAll(importMsgList);
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                jsonObject.set(matchIndex.toString(),"匹配失败");
+                jsonObject.set(matchIndex.toString(),MATCH_FAIL);
                 jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(jsonObject);
                 return;
@@ -987,16 +998,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        List<String> fileUrlList = list.stream().map(ImportHistoryRecordDTO.ListDTO::getFileUrl).distinct().collect(Collectors.toList());
-        List<FileDTO.FileTaskDTO> fileTaskDTOList = fileFeign.listLatestFileTask(fileUrlList);
 
         // 属性赋值
         for(ImportHistoryRecordDTO.ListDTO data : list) {
-            //下载结果
-            FileDTO.FileTaskDTO fileTaskDTO = fileTaskDTOList.stream().filter(obj -> CharSequenceUtil.equals(obj.getFileUrl(), data.getFileUrl())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(fileTaskDTO)) {
-                data.setErrorUrl(fileTaskDTO.getErrorUrl());
-            }
             //对账月份
             if (CharSequenceUtil.isNotBlank(data.getReconciliationMonth())) {
                 String reconciliationMonthStr = LocalDate.parse(data.getReconciliationMonth() + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"))
