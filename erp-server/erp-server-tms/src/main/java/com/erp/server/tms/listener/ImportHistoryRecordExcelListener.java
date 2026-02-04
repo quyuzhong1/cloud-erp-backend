@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<Integer,String>> {
 
-
+    public static final String MATCH_SUCCESS  = "匹配成功";
     private static final int BATCH_COUNT = 1000;
     private final String taskId;
     private final Integer importCount;
@@ -163,7 +163,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         addDTO.setType(importDTO.getType());
         addDTO.setOperationUserId(userInfo.getUid());
         addDTO.setImportCount(count);
-        addDTO.setMatchCount(count - errorList.size());
+        //匹配结果序号
+        Integer matchIndex = getMapKey(headMap, "匹配结果");
+        long errorCount = errorList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) obj.get(matchIndex.toString()))).count();
+        addDTO.setMatchCount((int)errorCount);
         importHistoryRecordService.add(addDTO);
     }
 
@@ -191,5 +194,24 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 匹配表头数据
+     */
+    private Integer getMapKey (Map<Integer,String> headMap,String targetValue) {
+        Integer resultKey = null;
+        for (Integer key : headMap.keySet()) {
+            // 获取对应的value
+            String value = headMap.get(key);
+
+            // 如果value等于目标值，输出对应的key
+            if (value.contains(targetValue)) {
+                resultKey = key;
+                // 如果只需要找到一个匹配的key，可以break
+                break;
+            }
+        }
+        return  resultKey;
     }
 }
