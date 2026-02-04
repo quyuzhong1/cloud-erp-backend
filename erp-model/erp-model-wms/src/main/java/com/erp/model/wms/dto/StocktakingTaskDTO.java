@@ -231,6 +231,9 @@ public class StocktakingTaskDTO implements Serializable {
          */
         private Integer firstQty;
 
+
+        private String pushStocktakingProfitLossStatus;
+
         /**
          * 是否下推盘盈盘亏单
          */
