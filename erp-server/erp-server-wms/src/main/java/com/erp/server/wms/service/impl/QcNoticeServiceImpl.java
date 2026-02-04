@@ -1040,6 +1040,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
             Map<String, List<WmsAttachmentDTO.UpdateDTO>> listMap = attachmentList.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
 
+            data.setQcUserName(detailList.get(0).getQcUserName());
+            data.setQcDate(detailList.get(0).getQcDate());
+
             for (QcNoticeDetailDTO.ViewDTO dto : detailList) {
                 if(listMap.containsKey(dto.getId())){
                     List<WmsAttachmentDTO.UpdateDTO> updateDTOS = listMap.get(dto.getId());
