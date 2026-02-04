@@ -692,8 +692,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         for (StocktakingTaskEntity stocktakingTaskEntity : stocktakingTaskList) {
             // 组装盘盈盘亏单所需要的数据
             List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(stocktakingTaskEntity);
-            // 批量提审
-            List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
+            stocktakingProfitLossService.batchSave(list);
         }
 
         return Boolean.TRUE;

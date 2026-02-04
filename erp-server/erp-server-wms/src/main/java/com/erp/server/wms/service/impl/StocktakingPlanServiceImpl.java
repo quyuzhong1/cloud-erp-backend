@@ -536,13 +536,6 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
         }
 
-        List<StocktakingPlanEntity> unApproveList = stocktakingPlanList.stream()
-                .filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE))
-                .collect(Collectors.toList());
-        if (!unApproveList.isEmpty()) {
-            throw new ServiceException(ApiError.BILL_PUSH_DOWN_NOT_ALLOWED,unApproveList.get(0).getCode());
-        }
-
         for (String id : ids) {
             List<StocktakingTaskEntity> stocktakingTaskList = stocktakingTaskService.listBySourceId(id);
             if (!stocktakingTaskList.isEmpty()) {
