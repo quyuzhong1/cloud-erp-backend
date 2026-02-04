@@ -1033,6 +1033,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //单据状态
         data.setApproveStatusName(data.getApproveStatus().getName());
+        
+        //质检状态
+        data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
 
         if(CollUtil.isNotEmpty(data.getDetailList())){
             List<QcNoticeDetailDTO.ViewDTO> detailList = data.getDetailList();
