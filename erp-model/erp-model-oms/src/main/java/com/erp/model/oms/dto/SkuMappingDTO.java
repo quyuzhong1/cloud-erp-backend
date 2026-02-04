@@ -848,7 +848,14 @@ public class SkuMappingDTO implements Serializable {
          * id
          */
         private String id;
-
+        /**
+         * 系统创建时间
+         */
+        private LocalDateTime systemCreateTime;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
 
         /**
          * authId
