@@ -478,7 +478,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
             entity.setWeightLogistics(actualDetailEntity.getActualWeight());
             // 费用重取最大
-            entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
+            entity.setBillingWeight(entity.getBillingWeight());
             //默认kg
             entity.setWeightUnit(CharSequenceUtil.isBlank(actualDetailEntity.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.code : actualDetailEntity.getActualWeightUnit());
             // 设置实际费用明细
