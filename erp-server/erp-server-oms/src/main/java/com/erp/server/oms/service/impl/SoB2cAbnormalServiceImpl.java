@@ -193,9 +193,6 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
         String logisticsChannelIdKey="logisticsChannelId";
         mapList.forEach(v->v.remove(logisticsChannelIdKey));
-        if(id.equals("2001631240814084098")){
-            System.out.println(123);
-        }
         RuleLogisticsDTO.RuleMatchResultDTO matchResult = ruleLogisticsService.getRuleOrderMatchResult(ruleMap);
         if(Objects.isNull(matchResult) || Objects.isNull(matchResult.getLogisticsSupplierId())){
             return false;

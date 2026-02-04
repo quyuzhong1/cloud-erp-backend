@@ -1,17 +1,16 @@
 package com.erp.server.oms.service;
-import com.common.business.validator.ValidList;
-import com.common.core.controller.vo.ApiResult;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
 import com.erp.model.oms.entity.KolB2cApplicationEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.KolB2cApplicationDTO;
-import com.common.business.vo.PagingVO;
+
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -138,10 +137,10 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     * 撤销
     * @author jack
     * @date: 2025-12-04
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

@@ -2266,8 +2266,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Boolean.TRUE.equals(isDelivery)) {
                 try {
                     UserContext.setIsUserSystem(true);
+                    // 查询配置的海外仓物流
+                    String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
+                    List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+                    LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v->v.getWarehouseId().equals(soB2cDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
+                    String warehouseLogisticsChannelId = Objects.nonNull(viewDTO)?viewDTO.getPlatformLogisticsChannelId():"";
                     //提交发货
-                    submitDelivery(id, "");
+                    submitDelivery(id, warehouseLogisticsChannelId);
                 }catch (Exception e){
                     SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                     addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
@@ -3593,6 +3598,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }else {
                 log.error("已达到最大重试次数" + MAX_RETRY_COUNT + "次，停止重试");
+                // 记录到操作日志：系统有重试，超过了最大次数
+                operateLogService.addModuleOperateLog("系统有重试，超过了最大次数，异常类型：" + SoB2cErrorTypeEnum.getName(type), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "重试失败");
                 String message = "重试创建出库单异常"+ e.getMessage();
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
@@ -11864,5 +11871,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO dto) {
+        lambdaUpdate().eq(SoB2cEntity::getId, dto.getSoB2cId())
+                .set(StringUtils.isNotBlank(dto.getBillStatus()), SoB2cEntity::getBillStatus, dto.getBillStatus())
+                .set(SoB2cEntity::getSoOutstockDate,dto.getSoOutstockDate())
+                .update();
+
+        soB2cDetailService.lambdaUpdate().eq(SoB2cDetailEntity::getMainId, dto.getSoB2cId())
+                .set(SoB2cDetailEntity::getWarehouseId,dto.getWarehouseId())
+                .set(SoB2cDetailEntity::getWarehouseName,dto.getWarehouseName())
+                .set(SoB2cDetailEntity::getVirtualWarehouseId,dto.getVirtualWarehouseId())
+                .set(SoB2cDetailEntity::getIsMatchWarehouseRule,dto.getIsMatchWarehouseRule())
+                .set(StringUtils.isNotBlank(dto.getWarehouseOrgId()),SoB2cDetailEntity::getWarehouseOrgId,dto.getWarehouseOrgId())
+                .set(StringUtils.isNotBlank(dto.getWarehouseOrgName()),SoB2cDetailEntity::getWarehouseOrgName,dto.getWarehouseOrgName())
+                .update();
+
+        // 记录跟踪号
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
+        if (Objects.nonNull(logisticsEntity)) {
+            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            soB2cLogisticsService.updateById(logisticsEntity);
+        }
+
+        if (dto.isAddOperationLog()) {
+            operateLogService.addModuleOperateLog("海外仓发货成功", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoB2cId(), "海外仓发货");
+        }
+
     }
 }

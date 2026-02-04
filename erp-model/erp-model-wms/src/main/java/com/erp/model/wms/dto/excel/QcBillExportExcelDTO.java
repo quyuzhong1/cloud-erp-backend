@@ -221,4 +221,5 @@ public class QcBillExportExcelDTO  implements Serializable {
     private String sourceTypeName;
     private String sourceCode;
 
+    private String invalidStatusName;
 }
