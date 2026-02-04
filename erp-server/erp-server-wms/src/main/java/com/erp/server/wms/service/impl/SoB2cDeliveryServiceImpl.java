@@ -1782,7 +1782,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         int endIndex = Math.min(startIndex + pageSize, totalItems);
         // 使用 subList 截取对应范围的数据
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> list = dto.getParams().getDetailList().subList(startIndex, endIndex);
-        return this.printLogisticsBillConfirm(dto.getParams().getPrintType(), (LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO>) list, response);
+        return this.printLogisticsBillConfirm(dto.getParams().getPrintType(), new LinkedList<>(list), response);
     }
 
     @Override
