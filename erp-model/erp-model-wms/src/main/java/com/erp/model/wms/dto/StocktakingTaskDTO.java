@@ -118,6 +118,11 @@ public class StocktakingTaskDTO implements Serializable {
         private String id;
 
         /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
          * 盘点任务单号
          */
         private String code;
@@ -225,6 +230,14 @@ public class StocktakingTaskDTO implements Serializable {
          * 初盘数量
          */
         private Integer firstQty;
+
+
+        private String pushStocktakingProfitLossStatus;
+
+        /**
+         * 是否下推盘盈盘亏单
+         */
+        private Boolean isPushStocktakingProfitLoss;
     }
 
 
