@@ -51,7 +51,7 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
      */
      @Data
      @NoArgsConstructor
-     public static class PagingDTO {
+     public static class SourceSelfDTO {
 
          /**
          * 主键id
