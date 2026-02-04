@@ -474,7 +474,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             	}
             }
         }
-
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
 }

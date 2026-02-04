@@ -1021,7 +1021,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
             }
         }
-        
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
 
