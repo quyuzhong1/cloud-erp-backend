@@ -470,22 +470,25 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+
         // 计算计划任务时间
         LocalDateTime planTaskTime = calculatePlanTaskTime(entity.getStocktakingDate());
-        updatePlanTaskTime(entity.getId(), planTaskTime);
 
-        // 获取当前时间
         LocalDateTime now = LocalDateTime.now();
-        // 检查是否是当天盘点，或者审核时间是否在23:50-23:59之间
-        boolean shouldCreateTaskImmediately = entity.getStocktakingDate().isEqual(LocalDate.now()) ||
-                (now.toLocalDate().isEqual(entity.getStocktakingDate()) &&
+        LocalDate stocktakingDate = entity.getStocktakingDate();
+        // 检查是否是当天盘点，或者审核时间是否在前一天23:50-23:59之间
+        boolean shouldCreateTaskImmediately = now.toLocalDate().isEqual(stocktakingDate) ||
+                (now.toLocalDate().isEqual(stocktakingDate.minusDays(1)) &&
                         now.getHour() == 23 &&
                         now.getMinute() >= 50);
 
         // 如果是当天盘点，直接生成任务
         if (shouldCreateTaskImmediately) {
+            updatePlanTaskTime(entity.getId(), now);
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
             stocktakingTaskService.createTaskList(entity, detailEntityList);
+        } else {
+            updatePlanTaskTime(entity.getId(), planTaskTime);
         }
 
         return Boolean.TRUE;
@@ -533,11 +536,18 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
         }
 
+        List<StocktakingPlanEntity> unApproveList = stocktakingPlanList.stream()
+                .filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE))
+                .collect(Collectors.toList());
+        if (!unApproveList.isEmpty()) {
+            throw new ServiceException(ApiError.BILL_PUSH_DOWN_NOT_ALLOWED,unApproveList.get(0).getCode());
+        }
+
         for (String id : ids) {
             List<StocktakingTaskEntity> stocktakingTaskList = stocktakingTaskService.listBySourceId(id);
             if (!stocktakingTaskList.isEmpty()) {
                 StocktakingPlanEntity stoctakingPlan = this.getById(id);
-                throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_ALLOW_PUSH,stoctakingPlan.getCode());
+                throw new ServiceException(ApiError.WH_STOCKPLAN_ALREADY_PUSH,stoctakingPlan.getCode());
             }
         }
 
