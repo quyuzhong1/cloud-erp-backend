@@ -178,6 +178,7 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
         this.mode = addDTO.getMode();
         this.type = addDTO.getType();
         this.separateRule = addDTO.getSeparateRule();
+        this.stocktakingDate = addDTO.getStocktakingDate();
     }
 
     public StocktakingPlanEntity(StocktakingPlanDTO.UpdateDTO updateDTO) {
@@ -190,6 +191,7 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
         this.mode = updateDTO.getMode();
         this.type = updateDTO.getType();
         this.separateRule = updateDTO.getSeparateRule();
+        this.stocktakingDate = updateDTO.getStocktakingDate();
     }
 
     @Override

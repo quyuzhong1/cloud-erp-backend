@@ -201,10 +201,12 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         }
         //同步状态
         List<String> syncStatusList = hanleDetailList.stream().map(VirtualWarehousePushHandleDetailEntity::getSyncStatus).distinct().collect(Collectors.toList());
-        if (syncStatusList.size() > 1 || (syncStatusList.size() == 1 && !syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode()))) {
+        if ( !syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode())) {
             log.error("分货单明细手动完结状态异常，分货单id：{}，分货单明细id：{}，同步状态列表：{}", vwAllocationEntity.getId(), vwAllocationDetailEntity.getId(), syncStatusList);
             return BatchResultDTO.fail(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), ApiError.VM_MANUAL_STATUS_ERROR.getMsg());
         }
+        //失败的id列表
+        List<String> failedIdList = hanleDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSyncStatus(), VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode())).map(VirtualWarehousePushHandleDetailEntity::getId).collect(Collectors.toList());
 
         String code = VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode();
         if (syncStatusList.contains(code)) {
@@ -213,10 +215,10 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         dto.setSysTypeName(PlatformDictEnum.getByCode(dto.getSysType()).getName());
 
         //批量手动完结
-        virtualWarehousePushHandleDetailService.batchManualFinish(dto,code, handleDetailIdList);
+        virtualWarehousePushHandleDetailService.batchManualFinish(dto,code, failedIdList);
 
         //手动完结中台任务
-        dmpMqFeign.batchNoNeedSyncBySourceId(handleDetailIdList);
+        dmpMqFeign.batchNoNeedSyncBySourceId(failedIdList);
 
         return BatchResultDTO.success(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), OperationTypeEnum.MANUAL_FINISH);
     }
@@ -352,7 +354,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             log.warn("分货单明细手动同步异常，分货单id：{}，分货单明细id：{}，同步状态列表：{}", vwAllocationEntity.getId(), vwAllocationDetailEntity.getId(), syncStatusList);
             return BatchResultDTO.fail(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), ApiError.VM_MANUAL_STATUS_ERROR.getMsg());
         }
-        List<String> thirdCodes = hanleDetailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getThirdCode())).map(VirtualWarehousePushHandleDetailEntity::getId).collect(Collectors.toList());
+        List<String> thirdCodes = hanleDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getThirdCode())).map(VirtualWarehousePushHandleDetailEntity::getId).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(thirdCodes)) {
             log.warn("分货单明细手动同步异常，存在同步成功的第三方单号，分货单id：{}，分货单明细id：{}，单号：{}", vwAllocationEntity.getId(), vwAllocationDetailEntity.getId(), thirdCodes);
             return BatchResultDTO.fail(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(),"已存在未同步成功的第三方单号，无法同步");
