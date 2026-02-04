@@ -9,7 +9,6 @@ import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Lambda
@@ -83,7 +81,7 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
             return;
         }
 
-        // 已有金蝶变更单ID：用全量 makeApiFieldJson + getAllKey 更新，保存前对 Model 做空串清洗（根因修复 ")"附近有语法错误）
+        // 已有金蝶变更单ID：makeApiFieldJson 后只取第一层根字段作为 NeedUpDateFields，更新时 Model 需带内码、单据体需带分录内码
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
@@ -94,7 +92,9 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
-            // 仅销售变更单：NeedUpDateFields 中字段在 Model 里为空串会导致金蝶 ")"附近有语法错误
+            // View 失败时仍保存：NeedUpDateFields 仅第一层，空串清洗
+            ArrayList<String> rootKeys = new ArrayList<>(json.keySet());
+            param.setNeedUpDateFields(rootKeys);
             KingdeeUtils.sanitizeModelEmptyStrings(param.getModel(), param.getNeedUpDateFields());
             kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             return;
@@ -106,11 +106,13 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
             flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            KingdeeUtils.makeFieldJson(json, "FId", ".", id);
-            StringBuffer allKey = FastJsonUtil.getAllKey(json);
-            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
+            // FID/FId 已存在则不重复设置（避免覆盖）
+            if (json.get("FId") == null && json.get("FID") == null) {
+                KingdeeUtils.makeFieldJson(json, "FId", ".", id);
+            }
+            // NeedUpDateFields 仅取 Model 第一层根目录字段（更新字段时需设置内码，单据体需设置分录内码）
+            ArrayList<String> apiFieldList = new ArrayList<>(json.keySet());
             param.setNeedUpDateFields(apiFieldList);
-            // 仅销售变更单：NeedUpDateFields 中字段在 Model 里为空串会导致金蝶 ")"附近有语法错误
             KingdeeUtils.sanitizeModelEmptyStrings(param.getModel(), param.getNeedUpDateFields());
             kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
         }
