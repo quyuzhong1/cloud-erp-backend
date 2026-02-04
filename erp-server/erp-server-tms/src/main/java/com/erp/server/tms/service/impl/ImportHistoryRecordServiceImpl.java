@@ -356,25 +356,53 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                     .collect(Collectors.joining("_"))
                     ));
             for ( Map.Entry<String, List<JSONObject>> entry : map.entrySet()) {
-                JSONObject jsonObject = entry.getValue().get(0);
+                List<JSONObject> value = entry.getValue();
                 //主数据
                 JSONObject successJson = new JSONObject();
-                jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
-                //错误数据
-                List<String> errorMsgList = new ArrayList<>();
-                List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson,errorMsgList, entry.getValue(), cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution);
-                //新增或更新数据
-                addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex,costAttribution);
-                //判断错误信息是否为空
-                if (CollUtil.isNotEmpty(errorMsgList)) {
+
+                JSONObject hasData = new JSONObject();
+
+                List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
+                for (JSONObject jsonObject : value) {
+                    //初始化匹配成功
+                    jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
+                    //错误数据
+                    List<String> costErrorMsgList = new ArrayList<>();
+                    //费用项数据合并
+                    List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution,hasData,costErrorMsgList);
+                    //如果有错直接跳过不处理
+                    if (CollectionUtils.isNotEmpty(costErrorMsgList)) {
+                        jsonObject.set(matchIndex.toString(),MATCH_FAIL);
+                        jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(costErrorMsgList));
+                        errorList.add(jsonObject);
+                        continue;
+                    }
+                    updateAllList.addAll(updateList);
+                }
+                List<JSONObject> costSuccessList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
+                if (CollUtil.isEmpty(costSuccessList)) {
                     continue;
                 }
-                //成功信息也要放到下载结果中
-                errorList.add(jsonObject);
+                //按主费用单新增或更新数据
+                List<String> mainErrorMsgList = new ArrayList<>();
+                //新增或更新数据
+                addOrUpdateData(successJson, updateAllList,  logisticsBillCostList,
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,  mainErrorMsgList,costAttribution);
+                //物流费用主信息错误处理
+                for (JSONObject jsonObject : costSuccessList) {
+                    //初始化匹配成功
+                    jsonObject.set(matchIndex.toString(),MATCH_SUCCESS);
+                    //判断错误信息是否为空
+                    if (CollUtil.isNotEmpty(mainErrorMsgList)) {
+                        jsonObject.set(matchIndex.toString(),MATCH_FAIL);
+                        jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(mainErrorMsgList));
+                        errorList.add(jsonObject);
+                        continue;
+                    }
+                    //成功信息也要放到下载结果中
+                    errorList.add(jsonObject);
+                }
             }
-
-
         } else {
             /**
              * 不存在则是走横向费用项处理
@@ -387,11 +415,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<String> errorMsgList = new ArrayList<>();
                 List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
                 //新增或更新数据
-                addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex,costAttribution);
+                addOrUpdateData(successJson, updateList,  logisticsBillCostList,
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity, errorMsgList,costAttribution);
 
                 //判断错误信息是否为空
                 if (CollUtil.isNotEmpty(errorMsgList)) {
+                    jsonObject.set(matchIndex.toString(),MATCH_FAIL);
+                    jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(jsonObject);
                     continue;
                 }
                 //成功信息也要放到下载结果中
@@ -473,90 +504,87 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @author will
      * @date 2026/1/28 20:29
      * @param successJson
-     * @param errorMsgList
-     * @param value
      * @param cfgCostList
      * @param cfgImportDetailList
      * @param headList
      * @param sourceType
      * @return List<UpdateDTO>
      */
-    private List<TmsCostDetailDTO.UpdateDTO> rowFormatCost (JSONObject successJson,List<String> errorMsgList,List<JSONObject> value,List<TmsCfgCostEntity> cfgCostList,
-                                                            List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String sourceType,String costAttribution) {
+    private List<TmsCostDetailDTO.UpdateDTO> rowFormatCost (JSONObject successJson,JSONObject jsonObject,List<TmsCfgCostEntity> cfgCostList,
+                                                            List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String sourceType,
+                                                            String costAttribution,JSONObject hasData,List<String> errorMsgList) {
         List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
-        //用于判断是否存在重复的费用数据
-        JSONObject hasData = new JSONObject();
+        //查询币别
+        String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
+                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
+        String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
 
-        for (JSONObject jsonObject : value) {
+        //查询实际金额
+        String actualAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "actualAmount"))
+                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
+        String actualAmount = ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? "" : String.valueOf(jsonObject.get(actualAmountIndex));
 
-            //查询币别
-            String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
-                    .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-            String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
+        //查询预估金额
+        String estimatedAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "estimatedAmount"))
+                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
+        String estimatedAmount = ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? "" : String.valueOf(jsonObject.get(estimatedAmountIndex));
 
-            //查询实际金额
-            String actualAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "actualAmount"))
-                    .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-            String actualAmount = ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? "" : String.valueOf(jsonObject.get(actualAmountIndex));
-
-            //查询预估金额
-            String estimatedAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "estimatedAmount"))
-                    .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-            String estimatedAmount = ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? "" : String.valueOf(jsonObject.get(estimatedAmountIndex));
-
-            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-                String field = headList.get(Integer.parseInt(entry.getKey()));
-                if (CharSequenceUtil.equals(field,ERROR_MSG)) {
-                    continue;
-                }
-                if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
-                    continue;
-                }
-                CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(cfgDetailEntity)) {
-                    log.warn("导入配置未找到字段【{}】的配置项",field);
-                    continue;
-                }
-                //判断导入字段是否是费用项
-                if ("costItem".equals(cfgDetailEntity.getTargetField())){
-                    TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), cfgDetailEntity.getTargetDetailFieldName()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
-                        errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】",cfgDetailEntity.getTargetDetailFieldName()));
-                        continue;
-                    }
-                    //校验后面数据是否存在重复的
-                    if (ObjectUtil.isNotEmpty(tmsCfgCostEntity)) {
-                        if (ObjectUtil.isNotEmpty(hasData.get(tmsCfgCostEntity.getId()))) {
-                            errorMsgList.add("费用已存在，请勿重复导入");
-                        }
-                        hasData.set(tmsCfgCostEntity.getId(), tmsCfgCostEntity.getCostName());
-                    }
-                    if (StrUtil.isBlank(actualAmount) && StrUtil.isBlank(estimatedAmount)) {
-                        errorMsgList.add(CharSequenceUtil.format("费用项【{}】实际金额和预估金额不能同时为空",cfgDetailEntity.getTargetDetailFieldName()));
-                    }
-                    if (StrUtil.isNotBlank(actualAmount)) {
-                        TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
-                        updateDTO.setCostValue(new BigDecimal(actualAmount));
-                        updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-                        updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
-                        updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
-                        updateDTO.setCurrency(currency);
-                        updateDTO.setSourceType(sourceType);
-                        updateList.add(updateDTO);
-                    }
-                    if(StrUtil.isNotBlank(estimatedAmount)) {
-                        TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
-                        updateDTO.setCostValue(new BigDecimal(estimatedAmount));
-                        updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
-                        updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
-                        updateDTO.setSourceType(sourceType);
-                        updateDTO.setCurrency(currency);
-                        updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
-                        updateList.add(updateDTO);
-                    }
-                }
-                successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
+        for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
+            String field = headList.get(Integer.parseInt(entry.getKey()));
+            if (CharSequenceUtil.equals(field,ERROR_MSG)) {
+                continue;
             }
+            if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
+                continue;
+            }
+            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex())
+                    && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))
+                    && ((CharSequenceUtil.equals("costItem",obj.getTargetField()) && CharSequenceUtil.equals(obj.getSourceDetailField(),ObjectUtil.defaultIfNull(entry.getValue(),"").toString()))
+                    || !CharSequenceUtil.equals("costItem",obj.getTargetField()))
+            ).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(cfgDetailEntity)) {
+                log.warn("导入配置未找到字段【{}】的配置项",field);
+                continue;
+            }
+            //判断导入字段是否是费用项
+            if ("costItem".equals(cfgDetailEntity.getTargetField())){
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), cfgDetailEntity.getTargetDetailFieldName()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
+                    errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】",cfgDetailEntity.getTargetDetailFieldName()));
+                    continue;
+                }
+                //校验后面数据是否存在重复的
+                if (ObjectUtil.isNotEmpty(tmsCfgCostEntity)) {
+                    if (ObjectUtil.isNotEmpty(hasData.get(tmsCfgCostEntity.getId()))) {
+                        errorMsgList.add("费用已存在，请勿重复导入");
+                    }
+                    hasData.set(tmsCfgCostEntity.getId(), tmsCfgCostEntity.getCostName());
+                }
+                if (StrUtil.isBlank(actualAmount) && StrUtil.isBlank(estimatedAmount)) {
+                    errorMsgList.add(CharSequenceUtil.format("费用项【{}】实际金额和预估金额不能同时为空",cfgDetailEntity.getTargetDetailFieldName()));
+                }
+                if (StrUtil.isNotBlank(actualAmount)) {
+                    TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                    updateDTO.setCostValue(new BigDecimal(actualAmount));
+                    updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                    updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                    updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
+                    updateDTO.setCurrency(currency);
+                    updateDTO.setSourceType(sourceType);
+                    updateList.add(updateDTO);
+                }
+                if(StrUtil.isNotBlank(estimatedAmount)) {
+                    TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                    updateDTO.setCostValue(new BigDecimal(estimatedAmount));
+                    updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                    updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                    updateDTO.setSourceType(sourceType);
+                    updateDTO.setCurrency(currency);
+                    updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
+                    updateList.add(updateDTO);
+                }
+            }
+            successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
         }
         return updateList;
     }
@@ -565,7 +593,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * 新增或更新数据
      * @author will
      * @date 2026/1/28 20:34
-     * @param jsonObject
      * @param successJson
      * @param updateList
      * @param logisticsBillCostList
@@ -573,16 +600,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param cfgCostList
      * @param importDTO
      * @param costImportEntity
-     * @param errorList
      * @param errorMsgList
-     * @param errorIndex
      * @return void
      */
-    private void addOrUpdateData(JSONObject jsonObject,JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
+    private void addOrUpdateData(JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
                                  List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
-                                 CfgLogisticsCostImportEntity costImportEntity,  List<JSONObject> errorList, List<String> errorMsgList,Integer matchIndex, Integer errorIndex,String costAttribution) {
+                                 CfgLogisticsCostImportEntity costImportEntity,   List<String> errorMsgList,String costAttribution) {
 
         ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
+
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
@@ -601,15 +627,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || obj.getTrackNo().equals(excelDTO.getTrackNo()))
                 .collect(Collectors.toList());
         //未查询到物流单则需要按新增分货（按新单）逻辑处理
+        String importType = "";
         if (CollUtil.isEmpty(logisticsBillVoList)) {
             boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode());
             if (!contains) {
                 errorMsgList.add("未查到物流单，配置的导入处理类型不包含导入新增（按新单），请核查单号");
             }
-            costImportEntity.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode());
+            importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode();
         }
 
-        if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(costImportEntity.getImportType())) {
+        if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
             if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                 errorMsgList.add("单号已存在无法新增，请核查单号");
             }
@@ -628,9 +655,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             errorMsgList.add("物流费用项不能为空");
         }
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
-            jsonObject.set(matchIndex.toString(),MATCH_FAIL);
-            jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(jsonObject);
             return;
         }
 
@@ -644,14 +668,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(0);
             logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
             //物流费用数据验证
-            List<String> importMsgList = checkCostImportData(excelDTO,logisticsBillCostList,logisticsBillVo,costAttribution, costImportEntity);
-            if (CollectionUtils.isNotEmpty(importMsgList)) {
-                errorMsgList.addAll(importMsgList);
-            }
+            String thisImportType = checkCostImportData(excelDTO, logisticsBillCostList, logisticsBillVo, costAttribution, costImportEntity, errorMsgList);
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                jsonObject.set(matchIndex.toString(),MATCH_FAIL);
-                jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(jsonObject);
                 return;
             }
             //物流费用单
@@ -660,7 +678,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                     && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
                                     && CharSequenceUtil.equals(obj.getPayType(),excelDTO.getPayType()))
                     .findFirst().orElse(null);
-            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(costImportEntity.getImportType()) && Objects.isNull(logisticsBillCostEntity)){
+            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(thisImportType) && Objects.isNull(logisticsBillCostEntity)){
                 logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillVo.getDetailId())).findFirst().orElse(null);
             }
             if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
@@ -671,7 +689,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 return;
             }
             //数据格式化
-            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO, importDTO, updateList, errorList, jsonObject, errorIndex, cfgCostList);
+            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO, importDTO, updateList, errorMsgList, cfgCostList);
+            //有错误信息直接跳过不暂处理
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                return;
+            }
 
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(costImportEntity.getImportType())){
                 List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,updateList);
@@ -697,7 +719,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
             logisticsBillCostEntity = logisticsBillCost.get(0);
 
-            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO, importDTO, updateList, errorList, jsonObject, errorIndex, cfgCostList);
+            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO, importDTO, updateList, errorMsgList, cfgCostList);
+            //有错误信息直接跳过不暂处理
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                return;
+            }
+
             updateDataDTO.setCostDetailList(updateList);
             BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE);
             pairList.add(new Pair<>(update.getId(),confirmTime));
@@ -797,18 +824,13 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param excelDTO
      * @param importDTO
      * @param updateList
-     * @param errorList
-     * @param jsonObject
-     * @param errorIndex
      * @param cfgCostList
      * @return void
      */
     private LogisticsBillCostDTO.UpdateDTO handleLogisticsBillCostImportData(LogisticsBillCostEntity logisticsBillCostEntity, ImportHistoryRecordExcelDTO excelDTO,
                                                                              ImportHistoryRecordDTO.ImportSyncDTO importDTO,
                                                                              List<TmsCostDetailDTO.UpdateDTO> updateList,
-                                                                             List<JSONObject> errorList,
-                                                                             JSONObject jsonObject,
-                                                                             Integer errorIndex,
+                                                                             List<String> errorMsgList,
                                                                              List<TmsCfgCostEntity> cfgCostList) {
         //数据赋值
         LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
@@ -858,8 +880,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 updateList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));
             }
             if(!costIdTypeListMap.isEmpty()) {
-                jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(new ArrayList<>(costIdTypeListMap.values())));
-                errorList.add(jsonObject);
+                errorMsgList.addAll(costIdTypeListMap.values());
             }
         }
         return updateDataDTO;
@@ -906,13 +927,18 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @author Will
      * @date: 2024/5/11 14:24
      */
-    private List<String> checkCostImportData (ImportHistoryRecordExcelDTO excelDTO
-            , List<LogisticsBillCostEntity> logisticsBillCostList, LogisticsBillDTO.LogisticsBillVo logisticsBillVo , String dictCostAttribution,CfgLogisticsCostImportEntity costImportEntity) {
-        List<String> errorMsgList = new ArrayList<>();
+    private String checkCostImportData (ImportHistoryRecordExcelDTO excelDTO
+            , List<LogisticsBillCostEntity> logisticsBillCostList, LogisticsBillDTO.LogisticsBillVo logisticsBillVo ,
+                                        String dictCostAttribution,CfgLogisticsCostImportEntity costImportEntity,
+                                        List<String> errorMsgList) {
         if (CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) && CharSequenceUtil.isBlank(excelDTO.getSoCode())
                 && CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) && CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
-            throw new ServiceException(ApiError.LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL);
+            errorMsgList.add(ApiError.LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL.getMsg());
         }
+
+        //导入类型
+        String importType = "";
+
         //物流单明细
         if (CharSequenceUtil.isBlank(logisticsBillVo.getDetailId())) {
             errorMsgList.add("未找到对应的物流单明细");
@@ -926,7 +952,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
             errorMsgList.add("未找到对应的物流费用单");
-            return errorMsgList;
+            return importType;
         }
 
         List<LogisticsBillCostEntity> thisMonthEntityList = logisticsBillCostList.stream()
@@ -941,16 +967,24 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             if (!contains) {
                 errorMsgList.add("未查到物流费用单，配置的导入处理类型不包含导入新增（按原单），请核查单号");
             }
-            costImportEntity.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+            importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode();
         } else {
-            costImportEntity.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode());
+            boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode());
+            if (!contains) {
+                errorMsgList.add("配置的导入处理类型不包含导入更新，请核查配置");
+            }
+            importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode();
         }
-
+        //校验物流费用
         if(logisticsBillCostEntityList.size() > 1) {
-            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType())) {
-                long count = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
+            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)) {
+                long count = logisticsBillCostEntityList.stream().filter(obj -> (CharSequenceUtil.isBlank(obj.getReconciliationMonth()) || CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth()))
+                        && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
                 if (count > 1) {
                     errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
+                }
+                if (count == 0) {
+                    errorMsgList.add("出库单和运输单号对应对账类型的物流费用单无可更新的数据，请核查");
                 }
             } else {
                 //新增时判断是否已存在相同对账月份
@@ -968,7 +1002,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
                 errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
             }
-            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType()) ) {
+            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType) ) {
                 if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
                     errorMsgList.add("物流费用单已确认不支持更新");
                 }
@@ -981,7 +1015,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 }
             }
         }
-        return errorMsgList;
+        return  importType;
     }
 
 
