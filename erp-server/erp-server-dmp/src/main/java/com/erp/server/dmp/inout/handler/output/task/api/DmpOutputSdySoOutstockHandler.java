@@ -322,6 +322,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
             	}
             }
         }
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
 
