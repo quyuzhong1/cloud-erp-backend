@@ -333,7 +333,7 @@ public class StocktakingTaskController extends BaseController {
             menuCode = "wms:stocktakingPlan:pushStocktakingProfitLoss",
             serviceClass = StocktakingTaskService.class,
             keyIdName = "id")
-    @DistributeLocker
+    @DistributeLocker(keyName = "dto.getIds()")
     public ApiResult<?> pushStocktakingProfitLoss(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         boolean flag = stocktakingTaskService.pushStocktakingProfitLoss(dto);
         return flag == true ? success() : failure();
