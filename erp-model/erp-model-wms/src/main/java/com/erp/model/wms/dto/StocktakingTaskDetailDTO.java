@@ -215,6 +215,11 @@ public class StocktakingTaskDetailDTO implements Serializable {
          */
         private String stocktakingUserName;
 
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
+
     }
 
     @Data
