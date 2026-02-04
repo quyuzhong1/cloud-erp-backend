@@ -348,6 +348,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 JSONObject jsonObject = entry.getValue().get(0);
                 //主数据
                 JSONObject successJson = new JSONObject();
+                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
                 //错误数据
                 List<String> errorMsgList = new ArrayList<>();
                 List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson,errorMsgList, entry.getValue(), cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution);
@@ -358,7 +359,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     continue;
                 }
-                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
             }
@@ -371,6 +371,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             for (JSONObject jsonObject :  successList) {
                 //主数据
                 JSONObject successJson = new JSONObject();
+                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
                 //错误数据
                 List<String> errorMsgList = new ArrayList<>();
                 List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
@@ -382,7 +383,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     continue;
                 }
-                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
             }
