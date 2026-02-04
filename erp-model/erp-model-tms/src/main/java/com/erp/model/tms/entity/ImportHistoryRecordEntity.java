@@ -86,7 +86,7 @@ public class ImportHistoryRecordEntity extends BaseEntity<ImportHistoryRecordEnt
     /**
      * 清洗结果附件名称
      */
-    @TableField("match_file_name")
+    @TableField("clean_file_name")
     private String cleanFileName;
 
     public static final String CODE = "code";
