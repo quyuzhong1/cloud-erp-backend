@@ -527,6 +527,21 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return Collections.emptyList();
         }
 
+        // 遍历 taskDetailIdList，检查是否有对应的盈亏明细
+        Iterator<StocktakingTaskDetailEntity> iterator = stocktakingTaskDetailList.iterator();
+        while (iterator.hasNext()) {
+            StocktakingTaskDetailEntity detail = iterator.next();
+            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(detail.getId());
+
+            if (!CollectionUtils.isEmpty(stocktakingProfitLossDetailList) || detail.getDiffQty() == 0) {
+                iterator.remove();
+            }
+        }
+
+        if (stocktakingTaskDetailList.isEmpty()) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_PUSH_OVER);
+        }
+
         // 获取仓库信息（用于库存组织）
         List<String> warehouseIdList = stocktakingTaskDetailList.stream()
                 .map(StocktakingTaskDetailEntity::getWarehouseId)
