@@ -1,14 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
-import java.util.Optional;
-
-import javax.annotation.Resource;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,21 +16,22 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.ExpotParamDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.PagingParamDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.ReCreateDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.TotalDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.*;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpOutstockDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
-
-import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.Optional;
 /**
  * <p>
  * 第三方仓出库单据差异表 服务实现类
@@ -159,4 +153,9 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
 		downloadTaskFeign.saveDownloadTask("平台单据差异", FileTaskEventEnum.EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW.getCode(), dto);
 		return true;
 	}
+
+    @Override
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> sourceSelfPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
+        return null;
+    }
 }

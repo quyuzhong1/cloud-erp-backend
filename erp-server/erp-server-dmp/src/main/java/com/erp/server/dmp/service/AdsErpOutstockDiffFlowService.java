@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
 
 /**
@@ -43,4 +44,12 @@ public interface AdsErpOutstockDiffFlowService extends SuperService<AdsErpOutsto
     Boolean updateRemark(AdsErpOutstockDiffFlowDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpOutstockDiffFlowDTO.ExpotParamDTO dto);
+    /**
+     * 朔源数据分页
+     * @author will
+     * @date 2026/2/4 14:32
+     * @param dto
+     * @return PagingVO<SourceSelfDTO>
+     */
+    PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> sourceSelfPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto);
 }
