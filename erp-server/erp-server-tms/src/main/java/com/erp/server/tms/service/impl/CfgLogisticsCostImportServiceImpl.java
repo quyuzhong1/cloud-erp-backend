@@ -265,7 +265,14 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             }
             updateDTO.setIndex(index++);
         }
-
+        //校验费用项明细
+        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), "费用项明细")).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(itemList)){
+            long count = itemList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getSourceDetailField).count();
+            if(count != itemList.size()){
+                throw new ServiceException("费用项明细配置错误：物流商明细字段全部不为空或者全部为空");
+            }
+        }
         List<CfgLogisticsCostImportDetailEntity> newDetailList = BeanMapper.copyList(detailList, CfgLogisticsCostImportDetailEntity.class);
         List<CfgLogisticsCostImportDetailEntity> oldDetailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
         commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, newDetailList, oldDetailList,Arrays.asList("sourceField","sourceDetailField"));
