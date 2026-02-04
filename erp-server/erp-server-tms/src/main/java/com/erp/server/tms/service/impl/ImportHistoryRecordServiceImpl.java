@@ -1021,7 +1021,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             String value = headMap.get(key);
 
             // 如果value等于目标值，输出对应的key
-            if (value.equals(targetValue)) {
+            if (value.contains(targetValue)) {
                 resultKey = key;
                 // 如果只需要找到一个匹配的key，可以break
                 break;
