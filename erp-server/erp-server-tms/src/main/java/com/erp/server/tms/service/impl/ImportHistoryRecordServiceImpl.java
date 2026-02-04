@@ -353,7 +353,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson,errorMsgList, entry.getValue(), cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution);
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex,costAttribution);
                 //判断错误信息是否为空
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     continue;
@@ -375,7 +375,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex,costAttribution);
 
                 //判断错误信息是否为空
                 if (CollUtil.isNotEmpty(errorMsgList)) {
@@ -558,7 +558,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private void addOrUpdateData(JSONObject jsonObject,JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
                                  List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
-                                 CfgLogisticsCostImportEntity costImportEntity,  List<JSONObject> errorList, List<String> errorMsgList,Integer matchIndex, Integer errorIndex) {
+                                 CfgLogisticsCostImportEntity costImportEntity,  List<JSONObject> errorList, List<String> errorMsgList,Integer matchIndex, Integer errorIndex,String costAttribution) {
 
         ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
         //基础验证
@@ -622,7 +622,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(0);
             logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
             //物流费用数据验证
-            List<String> importMsgList = checkCostImportData(excelDTO,logisticsBillCostList,logisticsBillVo,DictCostAttributionEnum.LAST_MILE.getCode(), costImportEntity);
+            List<String> importMsgList = checkCostImportData(excelDTO,logisticsBillCostList,logisticsBillVo,costAttribution, costImportEntity);
             if (CollectionUtils.isNotEmpty(importMsgList)) {
                 errorMsgList.addAll(importMsgList);
             }
