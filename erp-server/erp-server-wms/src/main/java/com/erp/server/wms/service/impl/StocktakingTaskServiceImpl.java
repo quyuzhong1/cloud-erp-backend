@@ -86,6 +86,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     private StocktakingProfitLossService stocktakingProfitLossService;
 
     @Resource
+    private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
+
+    @Resource
     private InventoryService inventoryService;
 
     @Resource
@@ -169,6 +172,33 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(idList);
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
+
+        // 先按 code 分组，记录哪些 code 有关联的 GENERATED 状态
+        Map<String, Boolean> codePushStatusMap = new HashMap<>();
+        for (StocktakingTaskDTO.PagingViewDTO item : list) {
+            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(item.getDetailId());
+            if (stocktakingProfitLossDetailList.isEmpty()) {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+            } else {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                // 如果状态是 GENERATED，则标记该 code 需要设置为 true
+                codePushStatusMap.put(item.getCode(), true);
+            }
+
+            StocktakingTaskDetailEntity stocktakingTaskDetail = taskDetailList.stream()
+                    .filter(obj -> obj.getId().equals(item.getDetailId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(stocktakingTaskDetail)) {
+                if (stocktakingTaskDetail.getDiffQty() == 0) {
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+                }
+            }
+
+            // 先默认设置为 false，后续统一处理
+            item.setIsPushStocktakingProfitLoss(false);
+        }
+
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
             String id = item.getId();
             ApproveStatusEnum approveStatus = item.getApproveStatus();
@@ -205,6 +235,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     map(StocktakingTaskDetailEntity::getSkuId).distinct().count());
 
             item.setSkuCount(skuCount);
+
+            //根据 codePushStatusMap 设置 IsPushStocktakingProfitLoss
+            if (codePushStatusMap.getOrDefault(item.getCode(), false)) {
+                item.setIsPushStocktakingProfitLoss(true);
+            }
         }
     }
 
@@ -563,7 +598,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
 
         List<StocktakingTaskDetailEntity> currentBatch = new ArrayList<>();
-        String currentSku = details.get(0).getSkuNo(); // 假设有 getSkuCode()
+        String currentSku = details.get(0).getSkuNo();
 
         for (StocktakingTaskDetailEntity detail : details) {
             // 如果当前 SKU 变化，并且当前批次已达到 batchSize，则新建批次
@@ -689,11 +724,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     public Boolean pushStocktakingProfitLoss(BaseIdsDTO.IdsDTO dto) {
         List<StocktakingTaskEntity> stocktakingTaskList = this.listByIds(dto.getIds());
+
         for (StocktakingTaskEntity stocktakingTaskEntity : stocktakingTaskList) {
             // 组装盘盈盘亏单所需要的数据
             List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(stocktakingTaskEntity);
-            // 批量提审
-            List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
+            stocktakingProfitLossService.batchSave(list);
         }
 
         return Boolean.TRUE;

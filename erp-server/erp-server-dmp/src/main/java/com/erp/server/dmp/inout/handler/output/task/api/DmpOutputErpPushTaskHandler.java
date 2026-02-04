@@ -295,11 +295,13 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					}
 				}
 			}
-			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
-			if(CollUtil.isNotEmpty(erpQuerySync)) {
-				requestData = erpQuerySync.get(0).getRequestData();
-			}else {
-				return;
+			if (!CharSequenceUtil.equals(systemCode, PlatformDictEnum.WDT.getCode())) {
+				List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+				if (CollUtil.isNotEmpty(erpQuerySync)) {
+					requestData = erpQuerySync.get(0).getRequestData();
+				} else {
+					return;
+				}
 			}
 		}
 

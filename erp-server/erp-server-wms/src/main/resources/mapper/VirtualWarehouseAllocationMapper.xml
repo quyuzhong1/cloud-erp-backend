@@ -179,7 +179,7 @@
             vmad.to_virtual_warehouse_name AS toVirtualWarehouseName,
             third.finish_description AS finishDescription,
             vma.invalid_description AS invalidDescription,
-            COALESCE(third.sync_status,'1') AS syncStatus,
+            COALESCE(third.sync_status,'0') AS syncStatus,
             vmad.create_user_id AS createUserId,
             vmad.create_user_name AS createUserName,
             vmad.create_time AS createTime,

@@ -3,12 +3,11 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
@@ -17,7 +16,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
-import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.query.StocktakingTaskQueryHandler;
 import com.erp.server.wms.service.*;
@@ -34,8 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -337,6 +333,7 @@ public class StocktakingTaskController extends BaseController {
             menuCode = "wms:stocktakingPlan:pushStocktakingProfitLoss",
             serviceClass = StocktakingTaskService.class,
             keyIdName = "id")
+    @DistributeLocker
     public ApiResult<?> pushStocktakingProfitLoss(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         boolean flag = stocktakingTaskService.pushStocktakingProfitLoss(dto);
         return flag == true ? success() : failure();

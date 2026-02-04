@@ -327,8 +327,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         List<String> logisticsBillDetailIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getDetailId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
 
-        //判断是否存在费用明细配置，
-        long costItemCount = cfgImportDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetField(), "costItem")).count();
+        //判断是否存在费用明细配置，则走明细项
+        long costItemCount = cfgImportDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetField(), "costItem") && CharSequenceUtil.isNotBlank(obj.getSourceDetailField())).count();
         if (costItemCount > 0) {
             /**
              * 存在则是走纵向费用项处理
@@ -353,7 +353,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson,errorMsgList, entry.getValue(), cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution);
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex,costAttribution);
                 //判断错误信息是否为空
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     continue;
@@ -375,7 +375,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
                 //新增或更新数据
                 addOrUpdateData( jsonObject, successJson, updateList,  logisticsBillCostList,
-                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex);
+                        logisticsBillVos, cfgCostList,  importDTO,costImportEntity,   errorList,  errorMsgList,matchIndex, errorIndex,costAttribution);
 
                 //判断错误信息是否为空
                 if (CollUtil.isNotEmpty(errorMsgList)) {
@@ -404,6 +404,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                                              List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String costAttribution) {
         //用于判断是否存在重复的费用数据
         JSONObject hasData = new JSONObject();
+        //查询币别
+        String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
+                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
+        String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
         //费用数据
         List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
         for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
@@ -417,10 +421,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
             CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(cfgDetailEntity)) {
+                log.warn("导入配置未找到字段【{}】的配置项",field);
+                continue;
+            }
+            //判断导入字段是否是费用项
+            if ("costItem".equals(cfgDetailEntity.getTargetField())) {
                 //判断导入字段是否是费用项
-                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), field) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), cfgDetailEntity.getTargetDetailFieldName()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
-                    errorMsgList.add(CharSequenceUtil.format("费用管理尾程未找到该费用名称【{}】",field));
+                    errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】", cfgDetailEntity.getTargetDetailFieldName()));
                     continue;
                 }
                 //校验后面数据是否存在重复的
@@ -437,10 +446,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
                     updateDTO.setSourceType(SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode());
+                    updateDTO.setCurrency(currency);
                     updateList.add(updateDTO);
                 }
             }
-
             successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
         }
         return updateList;
@@ -558,7 +567,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private void addOrUpdateData(JSONObject jsonObject,JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
                                  List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
-                                 CfgLogisticsCostImportEntity costImportEntity,  List<JSONObject> errorList, List<String> errorMsgList,Integer matchIndex, Integer errorIndex) {
+                                 CfgLogisticsCostImportEntity costImportEntity,  List<JSONObject> errorList, List<String> errorMsgList,Integer matchIndex, Integer errorIndex,String costAttribution) {
 
         ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
         //基础验证
@@ -622,7 +631,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(0);
             logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
             //物流费用数据验证
-            List<String> importMsgList = checkCostImportData(excelDTO,logisticsBillCostList,logisticsBillVo,DictCostAttributionEnum.LAST_MILE.getCode(), costImportEntity);
+            List<String> importMsgList = checkCostImportData(excelDTO,logisticsBillCostList,logisticsBillVo,costAttribution, costImportEntity);
             if (CollectionUtils.isNotEmpty(importMsgList)) {
                 errorMsgList.addAll(importMsgList);
             }
@@ -904,12 +913,22 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
                 .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                         && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
-                        && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
 
-        //未查询到物流费用单则需要按新增分货（按原单）逻辑处理
         if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
+            errorMsgList.add("未找到对应的物流费用单");
+            return errorMsgList;
+        }
+
+        List<LogisticsBillCostEntity> thisMonthEntityList = logisticsBillCostList.stream()
+                .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
+                        && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
+                        && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
+                        && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
+                .collect(Collectors.toList());
+        //未查询到物流费用单则需要按新增分货（按原单）逻辑处理
+        if (CollUtil.isEmpty(thisMonthEntityList)) {
             boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
             if (!contains) {
                 errorMsgList.add("未查到物流费用单，配置的导入处理类型不包含导入新增（按原单），请核查单号");
@@ -919,45 +938,38 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             costImportEntity.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode());
         }
 
-        LogisticsBillCostEntity logisticsBillCostEntity = null;
-        if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
-            if(!CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(costImportEntity.getImportType())){
-                errorMsgList.add("未找到对应对账类型的物流费用单");
+        if(logisticsBillCostEntityList.size() > 1) {
+            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType())) {
+                long count = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
+                if (count > 1) {
+                    errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
+                }
+            } else {
+                //新增时判断是否已存在相同对账月份
+                long hasCount = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth())).count();
+                if (hasCount > 0) {
+                    errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
+                }
+                long confirmCount = logisticsBillCostEntityList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth()) && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
+                if (confirmCount > 0) {
+                    errorMsgList.add("已存在未确认的物流费用单，不支持新增");
+                }
             }
-        } else {
-            if(logisticsBillCostEntityList.size() > 1) {
-                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType())) {
-                    long count = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
-                    if (count > 1) {
-                        errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
-                    }
-                } else {
-                    //新增时判断是否已存在相同对账月份
-                    long hasCount = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth())).count();
-                    if (hasCount > 0) {
-                        errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
-                    }
-                    long confirmCount = logisticsBillCostEntityList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth()) && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
-                    if (confirmCount > 0) {
-                        errorMsgList.add("已存在未确认的物流费用单，不支持新增");
-                    }
+        }else {
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.get(0);
+            if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
+                errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
+            }
+            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType()) ) {
+                if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
+                    errorMsgList.add("物流费用单已确认不支持更新");
                 }
-            }else {
-                logisticsBillCostEntity = logisticsBillCostEntityList.get(0);
-                if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
-                    errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
+            } else{
+                if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
+                    errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
                 }
-                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(costImportEntity.getImportType()) ) {
-                    if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
-                        errorMsgList.add("物流费用单已确认不支持更新");
-                    }
-                } else{
-                    if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
-                        errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
-                    }
-                    if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), logisticsBillCostEntity.getReconciliationMonth()) && CharSequenceUtil.equals(logisticsBillCostEntity.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
-                        errorMsgList.add("已存在未确认的物流费用单，不支持新增");
-                    }
+                if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), logisticsBillCostEntity.getReconciliationMonth()) && CharSequenceUtil.equals(logisticsBillCostEntity.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+                    errorMsgList.add("已存在未确认的物流费用单，不支持新增");
                 }
             }
         }

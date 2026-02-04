@@ -66,7 +66,7 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //盘点数量
+        //初盘数量
         Integer qty = 0;
         try {
             qty = Integer.valueOf(excelDTO.getFirstQty());
@@ -118,7 +118,6 @@ public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<
             return;
         }
 
-        taskDetail.setFisrtQty(Integer.parseInt(excelDTO.getFirstQty()));
         updateList.add(taskDetail);
         String msg = StrUtil.format("用户【{}】 【{}】导入初盘库存", UserContext.getDefaultLoginUser().getUserName() , LocalDateTime.now());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), mainId, "初盘库存导入");

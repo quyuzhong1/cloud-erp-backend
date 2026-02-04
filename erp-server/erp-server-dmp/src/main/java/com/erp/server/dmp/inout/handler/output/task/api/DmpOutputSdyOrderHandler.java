@@ -35,6 +35,7 @@ import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSoOutstockDetailService;
 import com.erp.server.dmp.service.DmpSoOutstockService;
+import com.erp.server.dmp.service.DmpSoReturnDetailService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     private DictBasicService dictBasicService;
     @Resource
     private DmpSoOutstockDetailService dmpSoOutstockDetailService;
+    @Resource
+    private DmpSoReturnDetailService dmpSoReturnDetailService;
 
     @Override
     protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
@@ -447,7 +450,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 if(wdtSoOutstockMap.containsKey(dmpSoDetailEntity.getThirdDetailId())) {
                 	shudiyunB2cOrderDTO.setGoods_status("已发货");
                 }else {
-                	shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
+                	Map<String, Object> wdtSoReturnMap = cacheMap.get("wdtSoReturnMap");
+                	if(StringUtils.isNotBlank(dmpSoInfoEntity.getPlatformCode()) 
+                			&& StringUtils.isNotBlank(dmpSoDetailEntity.getSkuNo())
+                			&& wdtSoReturnMap.containsKey(dmpSoInfoEntity.getPlatformCode() + "_" + dmpSoDetailEntity.getSkuNo())) {
+                		shudiyunB2cOrderDTO.setGoods_status("已取消");
+                	}else {
+                		shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
+                	}
                 }
 
                 //取消金额、数量
@@ -929,8 +939,21 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 wdtSoOutstockMap = outStockDetailList.stream().filter(o -> finishIds.contains(o.getMainId()))
                 		.collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getSrcOrderDetailId , (d1 , d2) -> d1));
         	}
+        	
         }
         cacheMap.put("wdtSoOutstock", wdtSoOutstockMap);
+        
+        List<String> wdtPlatformCodeList = DmpSoInfoEntityMap.values().stream()
+        		.filter(d -> PlatformDictEnum.WDT.getCode().equalsIgnoreCase(d.getSourceSystem()) && StringUtils.isNotBlank(d.getPlatformCode()))
+        		.map(DmpSoInfoEntity::getPlatformCode)
+        		.collect(Collectors.toList());
+        Map<String, Object> wdtSoReturnMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(wdtPlatformCodeList)) {
+        	wdtSoReturnMap = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getTid, wdtPlatformCodeList).eq(DmpSoReturnDetailEntity::getReturnOriginalType, "1").list()
+    		.stream().filter(d -> StringUtils.isNotBlank(d.getSkuNo())).collect(Collectors.toMap(d -> d.getTid() + "_" + d.getSkuNo(), d -> null , (d1 , d2) -> d1));
+        }
+        cacheMap.put("wdtSoReturnMap", wdtSoReturnMap);
+        
         Set<String> jdSuitShopList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitShop").list()
         		.stream().map(com.erp.model.dmp.entity.DictBasicEntity::getValue).collect(Collectors.toSet());
         Set<String> jdSuitWarehouseList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitWarehouse").list()
@@ -998,7 +1021,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
             }
         }
-        
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
 
