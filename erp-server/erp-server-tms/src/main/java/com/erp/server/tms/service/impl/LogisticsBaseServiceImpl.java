@@ -341,8 +341,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             }
             //根据配置过滤是否符合配置
             if (CollUtil.isNotEmpty(prefixList)){
-                //判断是否符合配置
-                if (prefixList.stream().anyMatch(trackNo::startsWith)){
+                String finalTrackNo = trackNo;
+                String prefix = prefixList.stream().filter(e -> CharSequenceUtil.isNotBlank(e) && finalTrackNo.startsWith(e)).findFirst().orElse(null);
+                if (CharSequenceUtil.isNotBlank(prefix)){
                     detailIds.add(record.getId());
                     continue;
                 }
