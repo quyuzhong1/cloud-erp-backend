@@ -158,4 +158,9 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
     public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> sourceSelfPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
         return null;
     }
+
+    @Override
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
+        return null;
+    }
 }

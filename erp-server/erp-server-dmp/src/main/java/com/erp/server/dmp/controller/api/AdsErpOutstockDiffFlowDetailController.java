@@ -45,7 +45,7 @@ public class AdsErpOutstockDiffFlowDetailController extends BaseController {
      * @return ApiResult<PagingVO<PagingDTO>>
      */
     @PostMapping("/sourcePlatformPaging")
-    public ApiResult<PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO>> sourcePlatformPaging(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
+    public ApiResult<PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO>> sourcePlatformPaging(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
         return success(adsErpOutstockDiffFlowService.sourcePlatformPaging(dto));
     }
 }

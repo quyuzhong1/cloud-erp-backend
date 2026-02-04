@@ -103,13 +103,13 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
          */
         private String platformWarehouseLocation;
         /**
-         * 出库仓库id
+         * 出库仓库
          */
-        private String outstockWarehouseId;
+        private String platformWarehouse;
         /**
          * 出库仓库名称
          */
-        private String outstockWarehouseName;
+        private String platformWarehouseName;
         /**
          * 仓库id
          */
@@ -168,5 +168,95 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
          * ERP销售单号
          */
         private String soCode;
+        /**
+         * 销售平台
+         */
+        private String salesPlatform;
+
+        /**
+         * 销售平台名称
+         */
+        private String salesPlatformName;
+
+        /**
+         * ERP销售平台
+         */
+        private String erpSalesPlatform;
+        /**
+         * ERP销售平台名称
+         */
+        private String erpSalesPlatformName;
+        /**
+         * ERP店铺ID
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 单据日期
+         */
+        private String platformBillDate;
+
+        /**
+         * 出库仓库
+         */
+        private String platformWarehouse;
+        /**
+         * 出库仓库名称
+         */
+        private String platformWarehouseName;
+        /**
+         * 仓库id
+         */
+        private String erpWarehouseId;
+        /**
+         * 仓库名称
+         */
+        private String erpWarehouseName;
+
+        /**
+         * 平台单据状态
+         */
+        private String platformBillStatus;
+        /**
+         * 平台单据状态
+         */
+        private String erpBillStatus;
+        /**
+         * 标准单据状态名称
+         */
+        private String erpBillStatusName;
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 库存SKU
+         */
+        private String stockSku;
+
+        /**
+         * ERP_SKU_ID
+         */
+        private String skuId;
+
+        /**
+         * ERP_SKU
+         */
+        private String skuNo;
+
+        /**
+         * 出库数量
+         */
+        private Integer outstockQty;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
     }
 }
