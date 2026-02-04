@@ -200,7 +200,7 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getSkuNo());
-            jsonObject.set("qty",detailEntity.getQty());
+            jsonObject.set("qty",detailEntity.getQty() == 0 ? detailEntity.getRepairQty() : detailEntity.getQty());
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             jsonObject.set("price",detailEntity.getPrice());
             //新品首批

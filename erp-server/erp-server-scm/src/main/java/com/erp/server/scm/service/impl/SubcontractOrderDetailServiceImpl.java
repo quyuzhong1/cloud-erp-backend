@@ -201,8 +201,10 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
-        checkSourceDetailQty(list,mainId);
-
+        //普通委外订单校验
+        if (Objects.equals(SubcontractOrderTypeEnum.COMMON_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+            checkSourceDetailQty(list,mainId);
+        }
         List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
         if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
             resultList.addAll(generateRepairResultDetail(list, mainId,Boolean.TRUE));
