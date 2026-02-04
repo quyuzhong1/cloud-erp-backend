@@ -1403,7 +1403,8 @@ public enum ApiError implements Serializable {
     WH_BOX_PER_QTY_FORBIDDEN_ONE(11129,"单箱数量必须大>1"),
     WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY(11130,"盘点日期需要大于等于今天"),
     WH_STOCKPLAN_NOT_FOUND(11131,"盘点计划不存在"),
-    WH_STOCKPLAN_NOT_ALLOW_PUSH(11132,"盘点计划【{0}】已下推盘点任务"),
+    WH_STOCKPLAN_ALREADY_PUSH(11132,"盘点计划【{0}】已下推盘点任务"),
+
     /**
      * 头程发货单 错误 信息 11500-12000
      */

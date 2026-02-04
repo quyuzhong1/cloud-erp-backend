@@ -39,9 +39,11 @@ public class StocktakingPlanPushJob {
         BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
         List<StocktakingPlanDTO.AllowPushDTO> allowPushDTOList = stocktakingPlanMapper.allowPushStocktakingPlan();
         List<String> idList = allowPushDTOList.stream().map(item -> item.getId()).collect(Collectors.toList());
-        idsDTO.setIds(idList);
-        XxlJobHelper.log("stocktakingPlanPushJob push idList : {}", idList.toString());
-        stocktakingPlanService.pushStockingTask(idsDTO);
+        if (!idList.isEmpty()) {
+            idsDTO.setIds(idList);
+            XxlJobHelper.log("stocktakingPlanPushJob push idList : {}", idList.toString());
+            stocktakingPlanService.pushStockingTask(idsDTO);
+        }
         XxlJobHelper.log("stocktakingPlanPushJob end : {}", LocalDateTime.now());
     }
 }
