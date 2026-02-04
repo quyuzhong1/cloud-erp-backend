@@ -358,6 +358,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     continue;
                 }
+                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
             }
@@ -381,6 +382,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     continue;
                 }
+                jsonObject.set(matchIndex.toString(),ImportHistoryRecordExcelListener.MATCH_SUCCESS);
                 //成功信息也要放到下载结果中
                 errorList.add(jsonObject);
             }
