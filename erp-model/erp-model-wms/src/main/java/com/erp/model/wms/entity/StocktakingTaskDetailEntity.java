@@ -93,7 +93,7 @@ public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetai
      * 初盘数量
      */
     @TableField("first_qty")
-    private Integer fisrtQty;
+    private Integer firstQty;
 
 
     public static final String MAIN_ID = "main_id";

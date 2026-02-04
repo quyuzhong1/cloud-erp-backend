@@ -60,8 +60,8 @@ public class StocktakingTaskFirstQtyExcelDTO {
     private String frozenQty;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "*初盘数量", index = 8)
-    @FieldValid(fieldName = "*初盘数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    @ExcelProperty(value = "初盘数量", index = 8)
+    @FieldValid(fieldName = "初盘数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String firstQty;
 
     @ColumnWidth(30)

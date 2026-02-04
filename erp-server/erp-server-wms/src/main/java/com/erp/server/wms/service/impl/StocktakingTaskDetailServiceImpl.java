@@ -190,7 +190,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 Integer diffQty = qty - usableQty - frozenQty;
                 taskDetail.setDiffQty(diffQty);
                 //初盘数量
-                taskDetail.setFisrtQty(item.getFirstQty());
+                taskDetail.setFirstQty(item.getFirstQty());
                 updateTaskDetailList.add(taskDetail);
             }
         }
