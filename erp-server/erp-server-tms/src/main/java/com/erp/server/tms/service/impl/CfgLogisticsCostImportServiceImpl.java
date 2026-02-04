@@ -95,6 +95,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Resource
     private TmsCfgCostService tmsCfgCostService;
 
+    private final static String costItem = "费用项明细";
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -153,10 +155,10 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             addDTO.setIndex(index++);
         }
         //校验费用项明细
-        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), "费用项明细")).collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), costItem)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(itemList)){
-            long count = itemList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getSourceDetailField).count();
-            if(count != itemList.size()){
+            long count = itemList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getSourceDetailField).filter(StringUtils::isNotBlank).count();
+            if(count!=0 && count != itemList.size()){
                 throw new ServiceException("费用项明细配置错误：物流商明细字段全部不为空或者全部为空");
             }
         }
@@ -266,10 +268,10 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             updateDTO.setIndex(index++);
         }
         //校验费用项明细
-        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), "费用项明细")).collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), costItem)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(itemList)){
-            long count = itemList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getSourceDetailField).count();
-            if(count != itemList.size()){
+            long count = itemList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getSourceDetailField).filter(StringUtils::isNotBlank).count();
+            if(count!=0 && count != itemList.size()){
                 throw new ServiceException("费用项明细配置错误：物流商明细字段全部不为空或者全部为空");
             }
         }
@@ -322,7 +324,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
      */
     private void validateMainItemDuplicates(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
         Map<String, List<CfgLogisticsCostImportDetailDTO.UpdateDTO>> groupedByFieldName = detailList.stream()
-                .filter(dto -> !"costItem".equals(dto.getTargetField()))
+                .filter(dto -> !costItem.equals(dto.getTargetFieldName()))
                 .collect(Collectors.groupingBy(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetFieldName));
 
         groupedByFieldName.entrySet().stream()
