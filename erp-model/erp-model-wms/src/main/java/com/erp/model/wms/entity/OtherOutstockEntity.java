@@ -203,6 +203,12 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     @TableField("source_code")
     private String sourceCode;
 
+    /**
+     * 用途
+     */
+    @TableField("usage")
+    private String usage;
+
     @TableField(exist = false)
     private List<OtherOutstockDetailEntity> detailEntityList;
 

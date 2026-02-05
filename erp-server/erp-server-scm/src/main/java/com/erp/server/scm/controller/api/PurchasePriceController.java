@@ -417,6 +417,9 @@ public class PurchasePriceController extends BaseController {
             List<PurchasePriceChangeDetailEntity> changeDetailEntityList = changeDetailList.stream().filter(e -> priceDetailList.contains(e.getPurchasePriceDetailId())).collect(Collectors.toList());
             try {
                 resultDTOS.add(purchasePriceService.disApprove(entity,detailEntityList,changeDetailEntityList));
+            }catch (ServiceException e){
+                log.error("采购价目反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMsg()));
             }catch (Exception e){
                 log.error("采购价目反审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 @ContentRowHeight(45)
 public class ProductDetailExcelExportDTO {
 
+    private String productId;
     /**
      * 图片路径
      */
@@ -135,6 +136,12 @@ public class ProductDetailExcelExportDTO {
     @MenuCode("plm:product:detail:listProinfo")
     private String rdtTeamName;
 
+    /**
+     * BU线
+     */
+    @ExcelProperty("BU线")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String buName;
     /**
      * 产品开发状态
      */

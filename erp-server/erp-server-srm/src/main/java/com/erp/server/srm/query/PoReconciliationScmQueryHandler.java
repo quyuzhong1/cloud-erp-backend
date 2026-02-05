@@ -14,7 +14,7 @@ public class PoReconciliationScmQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         //选项卡
-        if("tab".equals(field)){
+        if("reconciliationDetail".equals(field)){
             return getTabSql(value);
         }
         return null;

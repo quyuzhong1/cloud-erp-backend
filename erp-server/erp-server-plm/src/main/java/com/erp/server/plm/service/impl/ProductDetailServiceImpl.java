@@ -331,6 +331,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private MoldInfoService moldInfoService;
 
+    @Resource
+    private BasicProductBuService basicProductBuService;
+
+    @Resource
+    private ProductRefBuService productRefBuService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -389,6 +395,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return new PagingVO<>(pageData);
         }
         List<String> productIdList = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+        List<ProductRefBuEntity> productRefBuEntities = productRefBuService.listByProductIds(productIdList);
         List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
@@ -406,6 +413,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
         for (ProductDetailShowDTO item : list) {
+            //BU名称
+            String buName = productRefBuEntities.stream().filter(p -> p.getProductId().
+                    equals(item.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getBuName())).orElse("");
+            item.setBuName(buName);
             if(StringUtils.isNotBlank(item.getApplicationCategoryId())){
                 List<String> applicationCategoryIdList = Arrays.stream(item.getApplicationCategoryId().split(","))
                         .map(String::trim)
@@ -505,6 +516,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
         if (ObjectUtils.isNotEmpty(applicationCategory)) {
             noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        }
+        ProductRefBuEntity productRefBuEntity = productRefBuService.getByProductIds(productId);
+        if(Objects.nonNull(productRefBuEntity)){
+            noSpecDetailById.setBuId(productRefBuEntity.getBuId());
+            noSpecDetailById.setBuName(productRefBuEntity.getBuName());
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -627,6 +643,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailBySkuId(skuId);
 
+        ProductRefBuEntity productRefBuEntity = productRefBuService.getByProductIds(productId);
+        if(Objects.nonNull(productRefBuEntity)){
+            noSpecDetailById.setBuId(productRefBuEntity.getBuId());
+            noSpecDetailById.setBuName(productRefBuEntity.getBuName());
+        }
         if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
@@ -796,7 +817,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetailById = productDetailMapper.getManySpecDetailById(productId);
-        if (!Objects.isNull(manySpecDetailById)) {
+        if (Objects.nonNull(manySpecDetailById)) {
+            ProductRefBuEntity productRefBuEntity = productRefBuService.getByProductIds(productId);
+            if(Objects.nonNull(productRefBuEntity)){
+                manySpecDetailById.setBuId(productRefBuEntity.getBuId());
+                manySpecDetailById.setBuName(productRefBuEntity.getBuName());
+            }
             //基础信息 禁用字段
             List<String> manySpecBaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
             manySpecDetailById.setDisableFieldList(manySpecBaseDisableFields);
@@ -1317,6 +1343,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 设置研发团队占用状态
             productRDTTeamService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getRdtTeamId()));
         }
+        //研发团队
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getRdtTeamId())) {
+            //根据id查询研发团队表中的研发团队
+            ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getById(productSpuBaseInfoDTO.getRdtTeamId());
+            if (ObjectUtils.isNotEmpty(productRDTTeam)) {
+                productSpuBaseInfoDTO.setRdtTeamName(productRDTTeam.getName());
+            }
+            // 设置研发团队占用状态
+            productRDTTeamService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getRdtTeamId()));
+        }
 
         //产品款名和产品品名关系处理
         handleProductNames(productNoSpecDTO);
@@ -1340,6 +1376,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
 
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
+        //Bu线
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getBuId())) {
+            //查询BU线
+            BasicProductBuEntity basicProductBuEntity = basicProductBuService.getById(productSpuBaseInfoDTO.getBuId());
+            if (ObjectUtils.isNotEmpty(basicProductBuEntity)) {
+                productSpuBaseInfoDTO.setBuName(basicProductBuEntity.getName());
+            }
+            productRefBuService.addOrUpdate(id,basicProductBuEntity.getId());
+        }
 
         //2.修改/新增 sku信息
 
@@ -1756,6 +1801,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 addProductInfoLog(productInfoDTO, productInfoEntity, productInfoDTO.getId(), productInfoDTO.getId());
             }
             productInfoService.updateSpec(productInfoDTO);
+        }
+
+        //Bu线
+        if (StringUtils.isNotBlank(productManySpecDTO.getProductInfoDTO().getBuId())) {
+            //查询BU线
+            BasicProductBuEntity basicProductBuEntity = basicProductBuService.getById(productManySpecDTO.getProductInfoDTO().getBuId());
+            if (ObjectUtils.isNotEmpty(basicProductBuEntity)) {
+                productInfoDTO.setBuName(basicProductBuEntity.getName());
+            }
+            productRefBuService.addOrUpdate(id,basicProductBuEntity.getId());
         }
 
         //2.修改/新增 sku信息
@@ -2209,6 +2264,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    productRefBuService.removeByProductId(productInfoEntity.getId());
                     ProductInfoEntity infoEntity = productInfoService.getById(productInfoEntity.getId());
                     infoEntity.setIsDeleted(Boolean.TRUE);
                     productInfoService.removeById(productInfoEntity.getId());
@@ -2274,7 +2330,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
 
-        //8.删除spu信息
+        //8.删除产品与BU线关联（避免删除产品后删除BU线仍提示已绑定产品）
+        productRefBuService.removeByProductId(id);
+
+        //9.删除spu信息
         ProductInfoEntity infoEntity = productInfoService.getById(id);
         if (ObjectUtil.isNotEmpty(infoEntity)) {
             productInfoService.removeById(infoEntity.getId());
@@ -2458,6 +2517,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productInfoService.saveOrUpdate(byId);
         }
 
+        // 导入时保存产品与BU线关联（product_ref_bu）
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getBuId())) {
+            productRefBuService.addOrUpdate(id, productSpuBaseInfoDTO.getBuId());
+        }
 
         //2.修改/新增 sku信息
 
@@ -2621,8 +2684,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<BasicDictEntity> insurancePropertyList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
             Map<String, BasicDictEntity>  insurancePropertyMap = insurancePropertyList.stream()
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
-
+            List<String> productIds = list.stream().map(ProductDetailExcelExportDTO::getProductId).distinct().collect(Collectors.toList());
+            List<ProductRefBuEntity> productRefBuEntities = productRefBuService.listByProductIds(productIds);
             for(ProductDetailExcelExportDTO l : list) {
+                ProductRefBuEntity productRefBuEntity = productRefBuEntities.stream()
+                        .filter(prb -> prb.getProductId().equals(l.getProductId()))
+                        .findFirst()
+                        .orElse(null);
+                if(Objects.nonNull(productRefBuEntity)){
+                    l.setBuName(productRefBuEntity.getBuName());
+                }
                 if(StringUtils.isNotBlank(l.getApplicationCategoryId())){
                     List<String> applicationCategoryIdList = Arrays.stream(l.getApplicationCategoryId().split(","))
                             .map(String::trim)
@@ -3037,6 +3108,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> hasRelationProductIds = productDetailEntityList.stream().filter(Objects::nonNull).map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
             //过滤存在关联记录的spu
             List<String> deleteProductIds = oldProductIds.stream().filter(e -> Objects.nonNull(e) && !hasRelationProductIds.contains(e)).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(deleteProductIds)) {
+                productRefBuService.removeByProductIds(deleteProductIds);
+            }
             productInfoService.removeByIds(deleteProductIds);
         }
         return this.getSkuListByProductId(newProductId);
@@ -4509,6 +4583,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    productRefBuService.removeByProductId(productInfoEntity.getId());
                     ProductInfoEntity infoEntity = productInfoService.getById(productInfoEntity.getId());
                     infoEntity.setIsDeleted(Boolean.TRUE);
                     productInfoService.removeById(productInfoEntity.getId());
@@ -5096,6 +5171,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
 
+        // 获取国家列表并缓存
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String, DictCountryDTO.ListDTO> countryMap = countryList.stream()
+                .collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, country -> country, (o1, o2) -> o1));
+
         //消息推送
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
 
@@ -5146,13 +5226,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
                 if (StringUtils.isNotBlank(dto.getSaleCountry())) {
                     String[] saleCountryList = dto.getSaleCountry().split(",");
-                    for (String saleCountry : saleCountryList) {
-                        DictCountryEntity countryEntity = sysUserFeign.getCountryById(saleCountry);
-                        if (ObjectUtils.isEmpty(countryEntity)) {
-                            errorMsgList.add("销售国家在系统中未找到");
+                    for (String saleCountryName : saleCountryList) {
+                        saleCountryName = saleCountryName.trim();
+                        DictCountryDTO.ListDTO countryDTO = countryMap.get(saleCountryName);
+                        if (ObjectUtils.isEmpty(countryDTO)) {
+                            errorMsgList.add("销售国家【" + saleCountryName + "】在系统中未找到");
                             break;
                         }
-                        saleCountryStr = saleCountryStr + countryEntity.getId() + ",";
+                        saleCountryStr = saleCountryStr + countryDTO.getId() + ",";
                     }
                 }
 
@@ -5174,6 +5255,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }else {
                         productInfoDTO.setRdtTeamId(productRDTTeam.getId());
                         productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+                    }
+                }
+                //BU线
+                if(StringUtils.isNotBlank(dto.getBuName())){
+                    String buName = dto.getBuName().trim();
+                    BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(buName);
+                    if (ObjectUtils.isEmpty(basicProductBuEntity)) {
+                        errorMsgList.add("BU线【" + buName + "】在系统中未找到");
+                    }else {
+                        productInfoDTO.setBuId(basicProductBuEntity.getId());
+                        productInfoDTO.setBuName(basicProductBuEntity.getName());
                     }
                 }
 
@@ -5391,14 +5483,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxLength = MathUtil.valueOf(dto.getBoxLength());
                 if(StringUtils.isBlank(dto.getBoxLength())){
                     boxLength = oldPackEntity.getBoxLength();
-                }else {
-                    boxLength = LengthConverterUtil.cmToMm(boxLength);
                 }
                 BigDecimal productLength = MathUtil.valueOf(dto.getProductLength());
                 if(StringUtils.isBlank(dto.getProductLength())){
                     productLength = oldPackEntity.getProductLength();
-                }else {
-                    productLength = LengthConverterUtil.cmToMm(productLength);
                 }
                 if(boxLength.compareTo(productLength)<0){
                     errorMsgList.add(ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN.getMsg());
@@ -5408,14 +5496,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxWidth = MathUtil.valueOf(dto.getBoxWidth());
                 if(StringUtils.isBlank(dto.getBoxWidth())){
                     boxWidth = oldPackEntity.getBoxWidth();
-                }else {
-                    boxWidth = LengthConverterUtil.cmToMm(boxWidth);
                 }
                 BigDecimal productWidth = MathUtil.valueOf(dto.getProductWidth());
                 if(StringUtils.isBlank(dto.getProductWidth())){
                     productWidth = oldPackEntity.getProductWidth();
-                }else {
-                    productWidth = LengthConverterUtil.cmToMm(productWidth);
                 }
                 if(boxWidth.compareTo(productWidth)<0){
                     errorMsgList.add(ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN.getMsg());
@@ -5425,14 +5509,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxHeight = MathUtil.valueOf(dto.getBoxHeight());
                 if(StringUtils.isBlank(dto.getBoxHeight())){
                     boxHeight = oldPackEntity.getBoxHeight();
-                }else {
-                    boxHeight = LengthConverterUtil.cmToMm(boxHeight);
                 }
                 BigDecimal productHeight = MathUtil.valueOf(dto.getProductHeight());
                 if(StringUtils.isBlank(dto.getProductHeight())){
                     productHeight = oldPackEntity.getProductHeight();
-                }else {
-                    productHeight = LengthConverterUtil.cmToMm(productHeight);
                 }
                 if(boxHeight.compareTo(productHeight)<0){
                     errorMsgList.add(ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN.getMsg());
@@ -5867,22 +5947,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
             if(MathUtil.valueOf(dto.getProductLength()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setProductLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductLength())));
+                productPackDTO.setProductLength(MathUtil.valueOf(dto.getProductLength()));
             }
             if(MathUtil.valueOf(dto.getProductWidth()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductWidth())));
+                productPackDTO.setProductWidth(MathUtil.valueOf(dto.getProductWidth()));
             }
             if(MathUtil.valueOf(dto.getProductHeight()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductHeight())));
+                productPackDTO.setProductHeight(MathUtil.valueOf(dto.getProductHeight()));
             }
             if(MathUtil.valueOf(dto.getBoxLength()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxLength())));
+                productPackDTO.setBoxLength(MathUtil.valueOf(dto.getBoxLength()));
             }
             if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxWidth())));
+                productPackDTO.setBoxWidth(MathUtil.valueOf(dto.getBoxWidth()));
             }
             if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxHeight())));
+                productPackDTO.setBoxHeight(MathUtil.valueOf(dto.getBoxHeight()));
             }
             /**
              * 毛重
@@ -6010,6 +6090,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
 
+        // 获取国家列表并缓存
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String, DictCountryDTO.ListDTO> countryMap = countryList.stream()
+                .collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, country -> country, (o1, o2) -> o1));
+
         ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
 
         for (ProductDetailExcelDTO dto : successList) {
@@ -6035,13 +6120,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             String saleCountryStr = "";
             if (StringUtils.isNotBlank(dto.getSaleCountry())) {
                 String[] saleCountryList = dto.getSaleCountry().split(",");
-                for (String saleCountry : saleCountryList) {
-                    DictCountryEntity countryEntity = sysUserFeign.getCountryById(saleCountry);
-                    if (ObjectUtils.isEmpty(countryEntity)) {
-                        errorMsgList.add("销售国家在系统中未找到");
+                for (String saleCountryName : saleCountryList) {
+                    saleCountryName = saleCountryName.trim();
+                    DictCountryDTO.ListDTO countryDTO = countryMap.get(saleCountryName);
+                    if (ObjectUtils.isEmpty(countryDTO)) {
+                        errorMsgList.add("销售国家【" + saleCountryName + "】在系统中未找到");
                         break;
                     }
-                    saleCountryStr = saleCountryStr + countryEntity.getId() + ",";
+                    saleCountryStr = saleCountryStr + countryDTO.getId() + ",";
                 }
             }
 
@@ -6081,7 +6167,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productInfoDTO.setRdtTeamName(productRDTTeam.getName());
                 }
             }
-
+            //BU线
+            if(StringUtils.isNotBlank(dto.getBuName())){
+                String buName = dto.getBuName().trim();
+                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(buName);
+                if (ObjectUtils.isEmpty(basicProductBuEntity)) {
+                    errorMsgList.add("BU线【" + buName + "】在系统中未找到");
+                }else {
+                    productInfoDTO.setBuId(basicProductBuEntity.getId());
+                    productInfoDTO.setBuName(basicProductBuEntity.getName());
+                }
+            }
             //迭代产品校验
             if (ProductTypeEnum.ITERATIVE_PRODUCT.getName().equals(dto.getTypeName())) {
                 if (isBlank(dto.getIterateRefSkuNo())) {
@@ -6324,6 +6420,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }else {
                     productInfoDTO.setRdtTeamId(productRDTTeam.getId());
                     productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+                }
+            }
+            //BU线
+            if(StringUtils.isNotBlank(dto.getBuName())){
+                String buName = dto.getBuName().trim();
+                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(buName);
+                if (ObjectUtils.isEmpty(basicProductBuEntity)) {
+                    errorMsgList.add("BU线【" + buName + "】在系统中未找到");
+                }else {
+                    productInfoDTO.setBuId(basicProductBuEntity.getId());
+                    productInfoDTO.setBuName(basicProductBuEntity.getName());
                 }
             }
             productInfoDTO.setApprovalStatus(0);
@@ -6624,12 +6731,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品包装信息
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
-            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductLength())));
-            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductWidth())));
-            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductHeight())));
-            productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxLength())));
-            productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxWidth())));
-            productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxHeight())));
+            productPackDTO.setProductLength(MathUtil.valueOf(dto.getProductLength()));
+            productPackDTO.setProductWidth(MathUtil.valueOf(dto.getProductWidth()));
+            productPackDTO.setProductHeight(MathUtil.valueOf(dto.getProductHeight()));
+            productPackDTO.setBoxLength(MathUtil.valueOf(dto.getBoxLength()));
+            productPackDTO.setBoxWidth(MathUtil.valueOf(dto.getBoxWidth()));
+            productPackDTO.setBoxHeight(MathUtil.valueOf(dto.getBoxHeight()));
             /**
              * 毛重
              */
@@ -7214,7 +7321,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
         List<ProductDetailEntity> productDetailEntityList = this.list();
-        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList, productBrandService, productRDTTeamService);
+        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList, productBrandService, productRDTTeamService, basicProductBuService);
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
