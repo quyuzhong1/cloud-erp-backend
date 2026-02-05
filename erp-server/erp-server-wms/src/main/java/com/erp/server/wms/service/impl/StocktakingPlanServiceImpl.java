@@ -15,6 +15,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -25,6 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
@@ -75,6 +77,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private WarehouseService warehouseService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private InventoryService inventoryService;
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public PagingVO<StocktakingPlanDTO.ListDTO> paging(PagingDTO<StocktakingPlanDTO.PagingParamDTO> pagingParamDTO) {
@@ -552,6 +558,18 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean pushStockingTaskByJob(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<StocktakingPlanEntity> stocktakingPlanList = this.listByIds(ids);
+        for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            stocktakingTaskService.createTaskListByJob(entity, detailEntityList);
+        }
+
+        return Boolean.TRUE;
+    }
+
     /**
      * 审核更新审核信息
      * @param id
@@ -651,6 +669,127 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (CollUtil.isNotEmpty(disabledWarehouseList)){
             throw new ServiceException(ApiError.WH_DISABLED, JSONUtil.toJsonStr(disabledWarehouseList));
         }
+    }
+
+    /**
+     * 处理盘点计划，过滤掉不符合条件的计划，并返回被移除的ID及原因
+     * @param idList 盘点计划ID列表
+     * @return 被移除的ID及其原因（key: 计划ID, value: 移除原因）
+     */
+    public Map<String, String> filterStocktakingPlan(List<String> idList) {
+        //记录被移除的ID及其原因
+        Map<String, String> removedIds = new HashMap<>();
+        if (CollUtil.isEmpty(idList)) {
+            log.warn("输入盘点计划ID列表为空");
+            return removedIds;
+        }
+
+        //查询所有盘点计划
+        List<StocktakingPlanEntity> planList = this.listByIds(idList);
+        if (CollUtil.isEmpty(planList)) {
+            log.warn("未查询到任何盘点计划，移除所有ID");
+            idList.clear();
+            return removedIds;
+        }
+
+        //遍历处理每个计划
+        Iterator<String> idIterator = idList.iterator();
+        while (idIterator.hasNext()) {
+            String planId = idIterator.next();
+            log.info("开始处理盘点计划ID: {}", planId);
+
+            //获取当前计划实体
+            StocktakingPlanEntity entity = planList.stream()
+                    .filter(e -> e.getId().equals(planId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (entity == null) {
+                log.warn("未找到ID为{}的盘点计划，移除该ID", planId);
+                removedIds.put(planId, "计划不存在");
+                idIterator.remove();
+                continue;
+            }
+
+            //查询盘点明细
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            if (CollUtil.isEmpty(detailEntityList)) {
+                log.warn("盘点计划【{}】无明细数据，跳过处理", entity.getId());
+                removedIds.put(planId, "无明细数据");
+                idIterator.remove();
+                continue;
+            }
+
+            //查询需要盘点的库存记录
+            List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);
+            if (CollUtil.isEmpty(inventoryList)) {
+                log.warn("盘点计划【{}】没有需要盘点的库存记录，跳过处理", entity.getId());
+                removedIds.put(planId, "无库存记录");
+                idIterator.remove();
+                continue;
+            }
+
+            //检查库存是否已被锁定
+            boolean hasConflict = false;
+            for (InventoryEntity item : inventoryList) {
+                String existKey = CharSequenceUtil.format(
+                        RedisKeyConstant.INVENTORY_LOCK,
+                        "*",
+                        item.getOrgId(),
+                        item.getWarehouseId(),
+                        item.getWarehouseLocation(),
+                        item.getSkuId(),
+                        item.getDictInventoryStatus()
+                );
+
+                Collection<String> keys = redisUtil.keys(existKey);
+                if (CollUtil.isNotEmpty(keys)) {
+                    WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
+                    String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
+                    log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存已存在盘点任务，跳过该计划",
+                            warehouseName,
+                            item.getWarehouseLocation(),
+                            item.getSkuNo(),
+                            item.getDictInventoryStatus()
+                    );
+                    removedIds.put(planId, "库存已锁定");
+                    hasConflict = true;
+                    break;
+                }
+            }
+
+            if (hasConflict) {
+                idIterator.remove();
+                continue;
+            }
+
+            //设置Redis锁
+            String planCode = entity.getCode();
+            inventoryList.forEach(item -> {
+                String redisKey = CharSequenceUtil.format(
+                        RedisKeyConstant.INVENTORY_LOCK,
+                        planCode,
+                        item.getOrgId(),
+                        item.getWarehouseId(),
+                        item.getWarehouseLocation(),
+                        item.getSkuId(),
+                        item.getDictInventoryStatus()
+                );
+                redisUtil.set(redisKey, planCode);
+                log.info("已设置库存锁定：key={}, value={}", redisKey, planCode);
+            });
+
+            log.info("盘点计划【{}】处理完成，共锁定{}条库存记录", entity.getId(), inventoryList.size());
+        }
+
+        //输出最终结果
+        log.info("盘点计划处理完成。输入ID列表: {}, 剩余有效ID: {}, 被移除ID: {}",
+                idList.size() + removedIds.size(),
+                idList,
+                removedIds
+        );
+
+        return removedIds;
     }
 
 }

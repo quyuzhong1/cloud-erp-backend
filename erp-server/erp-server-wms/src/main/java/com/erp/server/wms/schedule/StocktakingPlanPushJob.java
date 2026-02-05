@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -40,9 +41,16 @@ public class StocktakingPlanPushJob {
         List<StocktakingPlanDTO.AllowPushDTO> allowPushDTOList = stocktakingPlanMapper.allowPushStocktakingPlan();
         List<String> idList = allowPushDTOList.stream().map(item -> item.getId()).collect(Collectors.toList());
         if (!idList.isEmpty()) {
-            idsDTO.setIds(idList);
-            XxlJobHelper.log("stocktakingPlanPushJob push idList : {}", idList.toString());
-            stocktakingPlanService.pushStockingTask(idsDTO);
+            //过滤不能下推的盘点任务
+            Map<String, String> resultMap = stocktakingPlanService.filterStocktakingPlan(idList);
+            resultMap.forEach((key, value) ->
+                    XxlJobHelper.log("stocktakingPlanPushJob filter id: {}, filter reason: {}", key, value)
+            );
+            if (!idList.isEmpty()) {
+                idsDTO.setIds(idList);
+                XxlJobHelper.log("stocktakingPlanPushJob push idList : {}", idList.toString());
+                stocktakingPlanService.pushStockingTaskByJob(idsDTO);
+            }
         }
         XxlJobHelper.log("stocktakingPlanPushJob end : {}", LocalDateTime.now());
     }
