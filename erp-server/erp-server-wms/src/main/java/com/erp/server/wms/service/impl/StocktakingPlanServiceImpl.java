@@ -492,7 +492,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (shouldCreateTaskImmediately) {
             updatePlanTaskTime(entity.getId(), now);
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
-            stocktakingTaskService.createTaskList(entity, detailEntityList);
+            stocktakingTaskService.createTaskList(entity, detailEntityList,Boolean.TRUE);
         } else {
             updatePlanTaskTime(entity.getId(), planTaskTime);
         }
@@ -552,7 +552,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
 
         for (StocktakingPlanEntity entity : stocktakingPlanList) {
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
-            stocktakingTaskService.createTaskList(entity, detailEntityList);
+            stocktakingTaskService.createTaskList(entity, detailEntityList,Boolean.FALSE);
         }
 
         return Boolean.TRUE;
