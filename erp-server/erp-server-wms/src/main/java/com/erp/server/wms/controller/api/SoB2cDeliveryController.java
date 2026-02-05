@@ -339,9 +339,8 @@ public class SoB2cDeliveryController extends BaseController {
      **/
     @PostMapping("/printLogisticsBillConfirmPaging")
     @Idempotent
-    public ApiResult<String> printLogisticsBillConfirmPaging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response) {
-        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirmPaging(dto, response);
-        return success(pdfUrl);
+    public ApiResult<PagingVO<String>> printLogisticsBillConfirmPaging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response) {
+        return success(soB2cDeliveryService.printLogisticsBillConfirmPaging(dto, response));
     }
     /**
      * 根据发货单大于物流面单
