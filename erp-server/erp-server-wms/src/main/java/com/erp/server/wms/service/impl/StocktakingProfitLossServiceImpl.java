@@ -1021,40 +1021,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     @Override
-    public List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds) {
-        if (CollectionUtils.isEmpty(warehouseIds)){
-            throw new ServiceException("仓库IDS 不能为空");
-        }
-        if (CollectionUtils.isEmpty(orgIds)){
-            throw new ServiceException("组织IDS 不能为空");
-        }
-        if (CollectionUtils.isEmpty(skuIds)){
-            throw new ServiceException("SKU IDS不能为空");
-        }
-        return baseMapper.maxDateByParams(warehouseIds, orgIds, skuIds);
-    }
-
-    @Override
-    public String findLastOneCode(String warehouseId, String skuId, LocalDate billDate) {
-        List<String> codeList = baseMapper.findLastOneCode(warehouseId, skuId, billDate);
-        return codeList.stream().findFirst().orElse("");
-    }
-
-    @Override
-    public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
-        // 最新盘盈盘亏单有效单据日期列表
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
-        if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
-            // 已有日期之前对应仓位已审核的盘盈盘亏单
-            return lastStocktakingProfitLossList.stream()
-                    .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
-                            (billDate.isBefore(e.getBillDate()) || billDate.equals(e.getBillDate()))
-                    );
-        }
-        return false;
-    }
-
-    @Override
     public PagingVO<StocktakingProfitLossDTO.ExportViewDTO> exportStocktakingProfitLoss(PagingDTO<StocktakingProfitLossDTO.ExportDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         //获取导出数据
