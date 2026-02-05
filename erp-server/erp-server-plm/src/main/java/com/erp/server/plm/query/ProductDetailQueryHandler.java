@@ -119,18 +119,7 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
             return sb.toString();
         }
         if("buCode".equals(field)){
-            List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
-            List<ProductRefBuEntity> productRefBuEntities =  productRefBuService.listByBuNames(valueList);
-            List<String> productIds = productRefBuEntities.stream().map(ProductRefBuEntity::getProductId).distinct().collect(Collectors.toList());
-            //是否是第一个，否则需要加连接符
-            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) ){
-                super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.IN_LIST, productIds, QueryDataTypeEnum.STRING);
-            }
-
-            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) ){
-                super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.NOT_IN_LIST, productIds, QueryDataTypeEnum.STRING);
-
-            }
+            return "exists (SELECT 1 from product_ref_bu a inner join  basic_product_bu b on a.bu_id = b.id where a.is_deleted = false and b.is_deleted = false and a.product_id = pi.id and b.name "+compareCodeSplicingValueSql+")";
         }
 
         return null;
