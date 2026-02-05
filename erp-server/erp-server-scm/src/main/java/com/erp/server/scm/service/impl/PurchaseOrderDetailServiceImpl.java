@@ -30,10 +30,7 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ConfirmTypeEnum;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
@@ -101,6 +98,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private PurchasePriceDetailService purchasePriceDetailService;
     @Resource
     private PurchasePriceService purchasePriceService;
+
+    @Resource
+    private SubcontractOrderService subcontractOrderService;
 
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
@@ -397,13 +397,25 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     if (Objects.isNull(subcontractOrderDetailEntity)){
                         throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
                     }else {
-                        BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getRepairPrice()) ? subcontractOrderDetailEntity.getRepairPrice():BigDecimal.ZERO;
-                        Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getRepairQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
-                        addDTO.setTaxPrice(subcontractOrderDetailEntity.getRepairPrice());
-                        addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
-                        addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
-                        addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
-                        addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
+                        SubcontractOrderEntity subcontractOrder = subcontractOrderService.getById(subcontractOrderDetailEntity.getMainId());
+                        if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT)) {
+                            BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getRepairPrice()) ? subcontractOrderDetailEntity.getRepairPrice():BigDecimal.ZERO;
+                            Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getRepairQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
+                            addDTO.setTaxPrice(subcontractOrderDetailEntity.getRepairPrice());
+                            addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
+                            addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
+                            addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
+                            addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
+                        } else {
+                            BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getPrice()) ? subcontractOrderDetailEntity.getPrice():BigDecimal.ZERO;
+                            Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
+                            addDTO.setTaxPrice(subcontractOrderDetailEntity.getPrice());
+                            addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
+                            addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
+                            addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
+                            addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
+                        }
+
                     }
                     //成品直接返回
                     continue;
