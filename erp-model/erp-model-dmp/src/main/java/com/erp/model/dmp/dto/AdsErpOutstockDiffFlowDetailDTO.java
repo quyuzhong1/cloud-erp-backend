@@ -1,6 +1,5 @@
 package com.erp.model.dmp.dto;
 
-import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,7 +26,7 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
+    public static class PagingParamDTO {
         /**
          * 主键ids
          */

@@ -22,6 +22,7 @@ import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpOutstockDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
+import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -48,6 +49,10 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -156,12 +161,14 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
 
     @Override
     public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> sourceSelfPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
-        return null;
+        PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> pagingVO = dmpRestCloudService.outstockSourceSelfPaging(dto);
+        return pagingVO;
     }
 
     @Override
     public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
-        return null;
+        PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> pagingVO = dmpRestCloudService.outstockSourcePlatformPaging(dto);
+        return pagingVO;
     }
 
     @Override
