@@ -11,18 +11,18 @@ import java.util.List;
 
 /**
  * <p>
- * 第三方仓出库单据差异表请求响应实体
+ * 第三方仓流水差异表请求响应实体
  * </p>
  *
  * @author shukai
- * @since 2025-11-12
+ * @since 2025-11-14
 */
 @Data
 @NoArgsConstructor
-public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
+public class AdsErpInventoryDiffFlowDetailDTO implements Serializable {
 
 
-	/**
+    /**
      * 列表参数
      */
     @Data
@@ -38,8 +38,8 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExpotParamDTO extends PagingParamDTO{
-    	/**
+    public static class ExpotParamDTO extends AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO {
+        /**
          * 主键id
          */
         private List<String> ids;
@@ -48,37 +48,37 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
     /**
      * 列表
      */
-     @Data
-     @NoArgsConstructor
-     public static class SourceSelfDTO {
+    @Data
+    @NoArgsConstructor
+    public static class SourceSelfDTO {
         /**
          * 操作时间
          */
-         private LocalDateTime operationTime;
-         /**
-          * 操作单号
-          */
-         private String operationCode ;
-         /**
-          * 业务单号
-          */
-         private String businessCode;
-         /**
-          * 平台操作类型
-          */
-         private String platformOperationType;
-         /**
-          * 平台操作类型名称
-          */
-         private String platformOperationTypeName;
-         /**
-          * 标准操作类型
-          */
-         private String operationType;
-         /**
-          * 标准操作类型名称
-          */
-         private String operationTypeName;
+        private LocalDateTime operationTime;
+        /**
+         * 操作单号
+         */
+        private String operationCode ;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+        /**
+         * 平台操作类型
+         */
+        private String platformOperationType;
+        /**
+         * 平台操作类型名称
+         */
+        private String platformOperationTypeName;
+        /**
+         * 标准操作类型
+         */
+        private String operationType;
+        /**
+         * 标准操作类型名称
+         */
+        private String operationTypeName;
 
         /**
          * 库存SKU
@@ -139,7 +139,7 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
          */
         private String referenceNo;
 
-     }
+    }
 
 
     /**
@@ -148,95 +148,6 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SourcePlatformDTO {
-
-        /**
-         * 出库单号
-         */
-        private String outstockCode;
-
-        /**
-         * ERP下单单号
-         */
-        private String soDeliveryCode;
-
-        /**
-         * 平台原始订单号
-         */
-        private String platformOrderCode;
-
-        /**
-         * ERP销售单号
-         */
-        private String soCode;
-        /**
-         * 销售平台
-         */
-        private String salesPlatform;
-
-        /**
-         * 销售平台名称
-         */
-        private String salesPlatformName;
-
-        /**
-         * ERP销售平台
-         */
-        private String erpSalesPlatform;
-        /**
-         * ERP销售平台名称
-         */
-        private String erpSalesPlatformName;
-        /**
-         * ERP店铺ID
-         */
-        private String shopId;
-        /**
-         * 店铺名称
-         */
-        private String shopName;
-
-        /**
-         * 单据日期
-         */
-        private String platformBillDate;
-
-        /**
-         * 出库仓库
-         */
-        private String platformWarehouse;
-        /**
-         * 出库仓库名称
-         */
-        private String platformWarehouseName;
-        /**
-         * 仓库id
-         */
-        private String erpWarehouseId;
-        /**
-         * 仓库名称
-         */
-        private String erpWarehouseName;
-
-        /**
-         * 平台单据状态
-         */
-        private String platformBillStatus;
-        /**
-         * 平台单据状态名称
-         */
-        private String platformBillStatusName;
-        /**
-         * 平台单据状态
-         */
-        private String erpBillStatus;
-        /**
-         * 标准单据状态名称
-         */
-        private String erpBillStatusName;
-        /**
-         * 跟踪号
-         */
-        private String trackNo;
 
         /**
          * 库存SKU
@@ -254,13 +165,50 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 出库数量
-         */
-        private Integer outstockQty;
-
-        /**
          * 平台产品名称
          */
         private String platformSkuName;
+
+        /**
+         * 出库仓库
+         */
+        private String platformWarehouse;
+        /**
+         * 出库仓库名称
+         */
+        private String platformWarehouseName;
+        /**
+         * 仓库id
+         */
+        private String erpWarehouseId;
+        /**
+         * 仓库名称
+         */
+        private String erpWarehouseName;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer freezeQty;
+        /**
+         * 在途库存
+         */
+        private Integer inTransitQty;
+        /**
+         * 待出库库存
+         */
+        private Integer reservedQty;
+        /**
+         * 其他库存
+         */
+        private Integer otherQty;
     }
+
 }

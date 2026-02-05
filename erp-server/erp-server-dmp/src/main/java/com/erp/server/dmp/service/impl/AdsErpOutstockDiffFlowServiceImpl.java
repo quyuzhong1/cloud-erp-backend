@@ -163,4 +163,16 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
     public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
         return null;
     }
+
+    @Override
+    public Boolean exportSourcePlatform(AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_OUTSTOCK_DETAIL_PLATFORM.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportSourceSelf(AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-库存流水", FileTaskEventEnum.EXPORT_ADS_ERP_OUTSTOCK_DETAIL_SELF.getCode(), dto);
+        return Boolean.TRUE;
+    }
 }

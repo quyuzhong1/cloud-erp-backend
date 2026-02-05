@@ -60,4 +60,20 @@ public interface AdsErpOutstockDiffFlowService extends SuperService<AdsErpOutsto
      * @return PagingVO<SourcePlatformDTO>
      */
     PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto);
+    /**
+     * 导出朔源数据-平台
+     * @author will
+     * @date 2026/2/5 09:21
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportSourcePlatform(AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto);
+    /**
+     * 导出朔源数据-自有
+     * @author will
+     * @date 2026/2/5 09:22
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportSourceSelf(AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto);
 }
