@@ -1258,7 +1258,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(soDetailIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(SoDetailEntity::getId, soDetailIdList).orderByDesc(SoDetailEntity::getId).list();
+        return this.lambdaQuery().in(SoDetailEntity::getId, soDetailIdList).orderByAsc(SoDetailEntity::getKingdeeDetailId).list();
     }
 
 
