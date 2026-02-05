@@ -496,5 +496,5 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param response
      * @return
      */
-    String printLogisticsBillConfirmPaging(PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response);
+    PagingVO<String> printLogisticsBillConfirmPaging(PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response);
 }

@@ -376,17 +376,23 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 record2s.add(record);
             }else if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(pushType)){
                 //销售出库单把客户id传递到了物流单店铺id上
-                collect.stream().filter(e -> e.getCustomerId().equals(record.getShopId()) || e.getShopId().equals(record.getShopId())).findFirst().ifPresent(e -> {
-                    record.setTelNumber(e.getMobile());
+                LogisticsThirdChannelRefDTO.PagingVO pagingVO1 = collect.stream().filter(e -> e.getCustomerId().equals(record.getShopId()) || e.getShopId().equals(record.getShopId())).findFirst().orElse(null);
+                if (Objects.nonNull(pagingVO1)){
+                    record.setTelNumber(pagingVO1.getMobile());
                     record.setThirdRefId(pagingVO.getId());
                     record2s.add(record);
-                });
+                }else {
+                    record2s.add(record);
+                }
             }else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(pushType)){
-                collect.stream().filter(e -> e.getDictPlatform().equals(record.getSalesPlatform())).findFirst().ifPresent(e -> {
-                    record.setTelNumber(e.getMobile());
+                LogisticsThirdChannelRefDTO.PagingVO pagingVO1 = collect.stream().filter(e -> e.getDictPlatform().equals(record.getSalesPlatform())).findFirst().orElse(null);
+                if (Objects.nonNull(pagingVO1)) {
+                    record.setTelNumber(pagingVO1.getMobile());
                     record.setThirdRefId(pagingVO.getId());
                     record2s.add(record);
-                });
+                }else {
+                    record2s.add(record);
+                }
             }else if (LogisticsThirdChannelRefPushTypeEnum.ORDER_RECEIVER.getCode().equals(pushType)){
                 record.setThirdRefId(pagingVO.getId());
                 record2s.add(record);

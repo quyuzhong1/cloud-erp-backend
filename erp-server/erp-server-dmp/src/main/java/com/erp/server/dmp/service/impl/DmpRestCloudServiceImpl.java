@@ -4,11 +4,14 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.DmpRestCloudDTO;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +78,142 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                         responseJson.getInteger("total"),
                         responseJson.getInteger("pageSize"),
                         responseJson.getInteger("pageNo")
+                );
+            }else {
+                throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> outstockSourceSelfPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
+        // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
+        Map<String, Object> map = new HashMap<>();
+        map.put("currPage", dto.getCurrPage());
+        map.put("pageSize", dto.getPageSize());
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/outstock/sourceSelfPaging")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+        if (200 != response.getStatus()) {
+            throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+        }else {
+            String body = response.body();
+            JSONObject responseJson = JSON.parseObject(body);
+            Integer errCode = responseJson.getInteger("errcode");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null != errCode && 0 == errCode) {
+                List<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> resultList = responseJson.getJSONArray("rows")
+                        .stream()
+                        .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO.class))
+                       .collect(Collectors.toList());
+                return new PagingVO<>(resultList,
+                        responseJson.getInteger("total"),
+                        responseJson.getInteger("pageSize"),
+                        responseJson.getInteger("pageNo")
+                );
+            }else {
+                throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> outstockSourcePlatformPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
+        // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
+        Map<String, Object> map = new HashMap<>();
+        map.put("currPage", dto.getCurrPage());
+        map.put("pageSize", dto.getPageSize());
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/outstock/sourcePlatformPaging")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+        if (200 != response.getStatus()) {
+            throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+        }else {
+            String body = response.body();
+            JSONObject responseJson = JSON.parseObject(body);
+            Integer errCode = responseJson.getInteger("errcode");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null != errCode && 0 == errCode) {
+                List<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("rows")
+                        .stream()
+                        .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO.class))
+                        .collect(Collectors.toList());
+                return new PagingVO<>(resultList,
+                        responseJson.getInteger("total"),
+                        responseJson.getInteger("pageSize"),
+                        responseJson.getInteger("currPage")
+                );
+            }else {
+                throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> inventorySourceSelfPaging(PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto) {
+        // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
+        Map<String, Object> map = new HashMap<>();
+        map.put("currPage", dto.getCurrPage());
+        map.put("pageSize", dto.getPageSize());
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/inventory/sourceSelfPaging")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+        if (200 != response.getStatus()) {
+            throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+        }else {
+            String body = response.body();
+            JSONObject responseJson = JSON.parseObject(body);
+            Integer errCode = responseJson.getInteger("errcode");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null != errCode && 0 == errCode) {
+                List<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> resultList = responseJson.getJSONArray("rows")
+                        .stream()
+                        .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO.class))
+                        .collect(Collectors.toList());
+                return new PagingVO<>(resultList,
+                        responseJson.getInteger("total"),
+                        responseJson.getInteger("pageSize"),
+                        responseJson.getInteger("currPage")
+                );
+            }else {
+                throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> inventorySourcePlatformPaging(PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto) {
+        // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
+        Map<String, Object> map = new HashMap<>();
+        map.put("currPage", dto.getCurrPage());
+        map.put("pageSize", dto.getPageSize());
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/inventory/sourcePlatformPaging")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+        if (200 != response.getStatus()) {
+            throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+        }else {
+            String body = response.body();
+            JSONObject responseJson = JSON.parseObject(body);
+            Integer errCode = responseJson.getInteger("errcode");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null != errCode && 0 == errCode) {
+                List<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("rows")
+                        .stream()
+                        .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO.class))
+                        .collect(Collectors.toList());
+                return new PagingVO<>(resultList,
+                        responseJson.getInteger("total"),
+                        responseJson.getInteger("pageSize"),
+                        responseJson.getInteger("currPage")
                 );
             }else {
                 throw new ServiceException("调用restCloud流程信息错误:{}", response.body());

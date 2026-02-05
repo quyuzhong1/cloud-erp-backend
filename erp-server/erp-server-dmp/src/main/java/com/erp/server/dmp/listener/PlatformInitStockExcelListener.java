@@ -91,7 +91,7 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
         Map<String, PlatformInitStockExcelDTO> checkMonthAndWarehouseMap = new HashMap<>();
         List<PlatformInitStockExcelDTO> listInit = adsErpInventoryDiffFlowMapper.listInit(warehouseNameList, checkMonthList);
         if(CollUtil.isNotEmpty(listInit)) {
-        	checkMonthAndWarehouseMap = listInit.stream().collect(Collectors.toMap(c -> c.getCheckMonth() + "_" + c.getPlatformWarehouseName() + "_" + c.getStockSku(), v -> v , (c1 , c2) -> c1));
+        	checkMonthAndWarehouseMap = listInit.stream().collect(Collectors.toMap(c -> c.getAccountCode() + "_" + c.getCheckMonth() + "_" + c.getPlatformWarehouseName() + "_" + c.getStockSku(), v -> v , (c1 , c2) -> c1));
         }
         List<PlatformInitStockExcelDTO> insertDbList = new ArrayList<>();
         for (PlatformInitStockExcelDTO excelDTO : dataList) {
@@ -126,7 +126,8 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
         	}
         	
         	OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = list.get(0);
-        	PlatformInitStockExcelDTO dbExcelDTO = checkMonthAndWarehouseMap.get(excelDTO.getCheckMonth() + "_" + excelDTO.getPlatformWarehouseName() + "_" + excelDTO.getStockSku());
+        	String accountCode = idPlatformAccountMap.get(overseasProviderWarehouseEntity.getMainId());
+        	PlatformInitStockExcelDTO dbExcelDTO = checkMonthAndWarehouseMap.get(accountCode + "_" + excelDTO.getCheckMonth() + "_" + excelDTO.getPlatformWarehouseName() + "_" + excelDTO.getStockSku());
         	if(dbExcelDTO != null) {
         		excelDTO.setId(dbExcelDTO.getId());
         		excelDTO.setCreateUserId(dbExcelDTO.getCreateUserId());
@@ -138,7 +139,7 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
             	excelDTO.setCreateUserName(defaultLoginUser.getUserName());
             	excelDTO.setCreateTime(LocalDateTime.now());
         	}
-        	excelDTO.setAccountCode(idPlatformAccountMap.get(overseasProviderWarehouseEntity.getMainId()));
+        	excelDTO.setAccountCode(accountCode);
         	excelDTO.setPlatformWarehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode());
         	excelDTO.setUpdateUserId(defaultLoginUser.getUid());
         	excelDTO.setUpdateUserName(defaultLoginUser.getUserName());

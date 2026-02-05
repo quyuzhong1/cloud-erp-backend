@@ -1096,9 +1096,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             map.put(v.getPersonType(),v.getUserName());
         });
         Map<String,String> attachmentMap = new HashMap<>();
-        for (int i = 0; i < viewDTO.getAttachmentUrlList().size(); i++) {
-            String name = viewDTO.getAttachmentNameList().get(i);
-            attachmentMap.put(name,viewDTO.getAttachmentUrlList().get(i));
+        if(CollectionUtils.isNotEmpty(viewDTO.getAttachmentUrlList())){
+            for (int i = 0; i < viewDTO.getAttachmentUrlList().size(); i++) {
+                String name = viewDTO.getAttachmentNameList().get(i);
+                attachmentMap.put(name,viewDTO.getAttachmentUrlList().get(i));
+            }
         }
         if(!attachmentMap.isEmpty()){
             map.put("attachment", attachmentMap);
