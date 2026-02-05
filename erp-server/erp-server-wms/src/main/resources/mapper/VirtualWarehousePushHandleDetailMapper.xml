@@ -84,7 +84,7 @@
         <if test="params.finishDescription!=null and params.finishDescription!=''">
             , finish_description = #{params.finishDescription}
         </if>
-        where is_deleted= false and id in
+        where is_deleted= false and sync_status = '4' and id in
         <foreach collection="handleDetailIdList" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>

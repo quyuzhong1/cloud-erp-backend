@@ -5,6 +5,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.utils.ConvertUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -80,6 +81,17 @@ public class KolPartnerInfoExcelListener extends AnalysisEventListener<KolPartne
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+        }
+
+        // 达人昵称、详细地址、联系人不允许包含全角符号
+        if (ConvertUtil.containsFullWidthChar(excelDTO.getNickname())) {
+            errorMsgList.add("达人昵称不能包含全角符号");
+        }
+        if (ConvertUtil.containsFullWidthChar(excelDTO.getDetailAddress())) {
+            errorMsgList.add("详细地址不能包含全角符号");
+        }
+        if (ConvertUtil.containsFullWidthChar(excelDTO.getContactPerson())) {
+            errorMsgList.add("联系人不能包含全角符号");
         }
 
         //存在错误数据则直接返回

@@ -186,8 +186,6 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
                 	LocalDateTime estimateInvestmentTime = aliexpressOrderTimeMap.get(dmpSoLogisticsEntity.getOrderPlatformCode());
                 	if(estimateInvestmentTime != null) {
                 		shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(estimateInvestmentTime));
-                	}else {
-                		shudiyunB2cOrderDTO.setLogistics_delivery_time(signTimeFormat);
                 	}
                 	shudiyunB2cOrderDTO.setSigned_mode("平台签收");
                 }else {

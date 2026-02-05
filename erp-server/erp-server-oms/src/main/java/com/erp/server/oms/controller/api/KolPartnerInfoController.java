@@ -254,7 +254,7 @@ public class KolPartnerInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "企业达人库下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/kolPartnerInfoTemplate.xlsx";
+        String standardPath = "excel/kolPartnerInfoTemplate.xlsx";
         String standardExcelName = "kolPartnerInfoTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();

@@ -94,6 +94,16 @@ public class ProductInfoDTO {
     private String rdtTeamId;
 
     /**
+     * BU线Id
+     */
+    private String buId;
+
+    /**
+     * BU线名称
+     */
+    private String buName;
+
+    /**
      * 分类id
      */
     @NotBlank(message = "产品分类不能为空")

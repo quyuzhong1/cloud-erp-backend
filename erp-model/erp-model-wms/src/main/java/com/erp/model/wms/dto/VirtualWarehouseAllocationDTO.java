@@ -436,7 +436,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */
-        private String syncStatus;
+        private String syncStatus = "0";
         /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */

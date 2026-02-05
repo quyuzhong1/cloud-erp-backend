@@ -87,36 +87,20 @@
 
     <!-- 查询一天内分货的明细数据 -->
     <select id="listRepeatHandleDetail"
-            resultType="com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity">
+            resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO$RepeatHandleDetailDTO">
             select
-                vwad.id,
-                vwad.create_user_id,
-                vwad.create_user_name,
-                vwad.create_time,
-                vwad.update_user_id,
-                vwad.update_user_name,
-                vwad.update_time,
-                vwad.version,
-                vwad.is_deleted,
-                vwad.disabled,
-                vwad.main_id,
-                vwad.sku_id,
-                vwad.sku_no,
-                vwad.warehouse_id,
-                vwad.warehouse_name,
-                vwad.from_virtual_warehouse_id,
-                vwad.from_virtual_warehouse_code,
-                vwad.from_virtual_warehouse_name,
-                vwad.qty,
-                vwad.to_virtual_warehouse_id,
-                vwad.to_virtual_warehouse_code,
-                vwad.to_virtual_warehouse_name,
-                vwphd.handle_detail_id as handleDetailId
+                    vwad.sku_id as skuId,
+                    vwad.sku_no as skuNo,
+                    vwphd.warehouse_id as warehouseId,
+                    vwphd.from_virtual_warehouse_id as virtualWarehouseId,
+                    vwphd.qty
             from virtual_warehouse_allocation_detail vwad
             inner join virtual_warehouse_allocation vwa on vwa.id = vwad.main_id  and vwa.is_deleted = false and vwa.disabled = false
-            inner join virtual_warehouse_push_handle_relation vwphd on vwphd.source_detail_id = vwad.id and vwphd.is_deleted = false
+            inner join virtual_warehouse_push_handle_relation vwphdr on vwphdr.source_detail_id = vwad.id and vwphdr.is_deleted = false
+            inner join virtual_warehouse_push_handle_detail vwphd on vwphd.id = vwphdr.handle_detail_id and vwphd.is_deleted = false
             <where>
                 vwad.is_deleted = false and vwad.disabled = false and vwa.status = 'handle' and vwa.handle_date >= (CURRENT_DATE - INTERVAL '1 DAY')
+                and vwphd.sync_status in ('1','4') and vwphd.from_virtual_warehouse_id != ''
                 <if test="fromWarehouseIdList != null and fromWarehouseIdList.size > 0">
                     and vwad.warehouse_id in
                     <foreach collection="fromWarehouseIdList" item="item" open="(" close=")" separator=",">
@@ -132,12 +116,6 @@
                 <if test="skuIdList != null and skuIdList.size > 0">
                     and vwad.sku_id in
                     <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="detailIdList != null and detailIdList.size > 0">
-                    and vwad.id not in
-                    <foreach collection="detailIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>

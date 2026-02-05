@@ -226,6 +226,10 @@ public class KolAddressInfoDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+         * 收件人税号
+         */
+        private String receiverTaxNo;
 
     }
 

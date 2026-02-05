@@ -727,13 +727,14 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                             }
                         }
 
-                        kolAddressInfoDTO.setProvince(item.getProvince());
-                        kolAddressInfoDTO.setCity(item.getCity());
-                        kolAddressInfoDTO.setDistrict(item.getDistrict());
-                        kolAddressInfoDTO.setDetailAddress(item.getDetailAddress());
-                        kolAddressInfoDTO.setContactPerson(item.getContactPerson());
-                        kolAddressInfoDTO.setPhone(item.getContactPersonPhone());
-                        kolAddressInfoDTO.setZipCode(item.getZipCode());
+                            kolAddressInfoDTO.setProvince(item.getProvince());
+                            kolAddressInfoDTO.setCity(item.getCity());
+                            kolAddressInfoDTO.setDistrict(item.getDistrict());
+                            kolAddressInfoDTO.setDetailAddress(item.getDetailAddress());
+                            kolAddressInfoDTO.setContactPerson(item.getContactPerson());
+                            kolAddressInfoDTO.setPhone(item.getContactPersonPhone());
+                            kolAddressInfoDTO.setZipCode(item.getZipCode());
+                            kolAddressInfoDTO.setReceiverTaxNo(item.getReceiverTaxNo());
 
                         String isDefaultName = item.getIsDefaultName();
                         if(StringUtils.isBlank(isDefaultName) || "是".equals(isDefaultName)){

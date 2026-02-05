@@ -17,6 +17,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.core.utils.*;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -1405,6 +1406,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 userIdSet.add(dto.getWarehouseChargeId());
             }
         });
+        List<String> deptIdList = list.stream()
+                .map(SampleRecipientDTO.ListDTO::getDeptId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SysDepartmentEntity> sysDepartmentEntityList = sysUserFeign.getDeptByIds(deptIdList);
+        Map<String, String> deptNameMap = sysDepartmentEntityList.stream()
+                .collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName, (v1, v2) -> v1));
+
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
         // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
@@ -1417,6 +1427,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
+            data.setDeptName(deptNameMap.getOrDefault(data.getDeptId(),""));
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setUsage(usageNameMap.getOrDefault(data.getUsage(), ""));
@@ -2542,7 +2553,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setReceiveOrgId(sampleRecipient.getPickOrgId()); // 领料组织ID
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
             addDTO.setProcessApplyCode(firstItem.getSourceCode()); // 流程申请单号：样品领用单号
-            addDTO.setRemark("样品领用单【下推】其他出库单"); // 备注
+            addDTO.setRemark(sampleRecipient.getUsageDesc()); // 备注
+            // 用途：从字典获取中文名称
+            if (StringUtils.isNotBlank(sampleRecipient.getUsage())) {
+                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                Map<String, String> usageNameMap = usageDictList.stream()
+                        .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                String usageCn = usageNameMap.getOrDefault(sampleRecipient.getUsage(), sampleRecipient.getUsage());
+                addDTO.setUsage(usageCn);
+            } else {
+                addDTO.setUsage("");
+            }
             
             // 构建客户信息
             OtherOutstockCustomerDTO.AddDTO customerDTO = new OtherOutstockCustomerDTO.AddDTO();
