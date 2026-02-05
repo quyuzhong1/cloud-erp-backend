@@ -44,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -286,7 +287,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         //销售订单号
         resultMap.put("soCode", soInfo.getCode());
         resultMap.put("soId", soInfo.getId());
-        resultMap.put("discountAmount", soInfoEntity.getDiscountAmount());
+        resultMap.put("discountAmount", soInfoEntity.getDiscountAmount() != null ? soInfoEntity.getDiscountAmount() : BigDecimal.ZERO);
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
@@ -308,8 +309,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 }
             }
         }
-        //变更原因
-        resultMap.put("remark", entity.getRemark());
+        //变更原因（空则传空串）
+        resultMap.put("remark", StringUtils.isNotBlank(entity.getRemark()) ? entity.getRemark() : "");
         resultMap.put("seller", soInfo.getSellerName());
         //获取员工
         if (StringUtils.isNotBlank(sellerId)) {
@@ -352,44 +353,47 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             String changeType = item.getChangeType().getCode();
             //是否是删除
             Boolean isDelete = deleteCode.equals(changeType);
-            //金蝶详情id
-            jsonObject.set("kingdeeDetailId", item.getKingdeeDetailId());
-            jsonObject.set("skuNo", item.getSkuNo());
-            jsonObject.set("changeType", item.getChangeType().getCode());
-            jsonObject.set("soDetailId", item.getSoDetailId());
-            jsonObject.set("requireDate", LocalDateTimeUtil.format(requireDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
-            jsonObject.set("oldQty", item.getOldQty());
+            //金蝶详情id（空则传空串，避免金蝶 FEntryID 异常）
+            jsonObject.set("kingdeeDetailId", StringUtils.isNotBlank(item.getKingdeeDetailId()) ? item.getKingdeeDetailId() : "");
+            jsonObject.set("skuNo", StringUtils.isNotBlank(item.getSkuNo()) ? item.getSkuNo() : "");
+            jsonObject.set("changeType", item.getChangeType() != null ? item.getChangeType().getCode() : "");
+            jsonObject.set("soDetailId", StringUtils.isNotBlank(item.getSoDetailId()) ? item.getSoDetailId() : "");
+            jsonObject.set("requireDate", requireDate != null ? LocalDateTimeUtil.format(requireDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "");
+            int oldQtyVal = item.getOldQty() != null ? item.getOldQty() : 0;
+            jsonObject.set("oldQty", oldQtyVal);
             if (isDelete) {
-                jsonObject.set("qty", item.getOldQty());
-                jsonObject.set("baseQty", item.getOldQty());
-                jsonObject.set("stockBaseQty", item.getOldQty());
-                jsonObject.set("currentInventoryQty", item.getOldQty());
-                jsonObject.set("curInventoryQty", item.getOldQty());
-                jsonObject.set("taxPrice", item.getOldPrice());
-                jsonObject.set("taxRate", item.getOldTaxRate());
-
+                jsonObject.set("qty", oldQtyVal);
+                jsonObject.set("baseQty", oldQtyVal);
+                jsonObject.set("stockBaseQty", oldQtyVal);
+                jsonObject.set("currentInventoryQty", oldQtyVal);
+                jsonObject.set("curInventoryQty", oldQtyVal);
+                jsonObject.set("taxPrice", item.getOldTaxPrice() != null ? item.getOldTaxPrice() : BigDecimal.ZERO);
+                jsonObject.set("taxRate", item.getOldTaxRate() != null ? item.getOldTaxRate() : BigDecimal.ZERO);
+                jsonObject.set("price", item.getOldPrice() != null ? item.getOldPrice() : BigDecimal.ZERO);
             } else {
-                jsonObject.set("qty", item.getQty());
-                jsonObject.set("baseQty", item.getQty());
-                jsonObject.set("stockBaseQty", item.getQty());
-                jsonObject.set("currentInventoryQty", item.getQty());
-                jsonObject.set("curInventoryQty", item.getQty());
-                jsonObject.set("taxPrice", item.getTaxPrice());
-                jsonObject.set("taxRate", item.getTaxRate());
+                int qtyVal = item.getQty() != null ? item.getQty() : 0;
+                jsonObject.set("qty", qtyVal);
+                jsonObject.set("baseQty", qtyVal);
+                jsonObject.set("stockBaseQty", qtyVal);
+                jsonObject.set("currentInventoryQty", qtyVal);
+                jsonObject.set("curInventoryQty", qtyVal);
+                jsonObject.set("taxPrice", item.getTaxPrice() != null ? item.getTaxPrice() : BigDecimal.ZERO);
+                jsonObject.set("taxRate", item.getTaxRate() != null ? item.getTaxRate() : BigDecimal.ZERO);
+                jsonObject.set("price", item.getPrice() != null ? item.getPrice() : (item.getOldPrice() != null ? item.getOldPrice() : BigDecimal.ZERO));
             }
 
-            jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
-            jsonObject.set("oldPrice", item.getOldPrice());
-            jsonObject.set("oldTaxRate", item.getOldTaxRate());
-            jsonObject.set("isGift", item.getIsGift());
-            jsonObject.set("amount", item.getAmount());
+            jsonObject.set("oldTaxPrice", item.getOldTaxPrice() != null ? item.getOldTaxPrice() : BigDecimal.ZERO);
+            jsonObject.set("oldPrice", item.getOldPrice() != null ? item.getOldPrice() : BigDecimal.ZERO);
+            jsonObject.set("oldTaxRate", item.getOldTaxRate() != null ? item.getOldTaxRate() : BigDecimal.ZERO);
+            jsonObject.set("isGift", item.getIsGift() != null ? item.getIsGift() : false);
+            jsonObject.set("amount", item.getAmount() != null ? item.getAmount() : (item.getOldAmount() != null ? item.getOldAmount() : BigDecimal.ZERO));
 
             //是否补发
-            jsonObject.set("isReissue", item.getIsReissue());
+            jsonObject.set("isReissue", item.getIsReissue() != null ? item.getIsReissue() : false);
             jsonObject.set("unit", "Pcs");
-            jsonObject.set("remark", item.getRemark());
-            jsonObject.set("warehouseOrgCode", warehouseOrgCode);
-            jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
+            jsonObject.set("remark", StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : "");
+            jsonObject.set("warehouseOrgCode", StringUtils.isNotBlank(warehouseOrgCode) ? warehouseOrgCode : "");
+            jsonObject.set("kingdeeWarehouseCode", StringUtils.isNotBlank(kingdeeWarehouseCode) ? kingdeeWarehouseCode : "");
             list.add(jsonObject);
         }
 
