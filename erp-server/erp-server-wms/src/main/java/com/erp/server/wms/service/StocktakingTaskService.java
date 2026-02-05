@@ -127,7 +127,7 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @param detailEntityList
      * @return
      */
-    Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList);
+    Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList,Boolean isNowExecute);
 
     /**
      * 创建盘点任务

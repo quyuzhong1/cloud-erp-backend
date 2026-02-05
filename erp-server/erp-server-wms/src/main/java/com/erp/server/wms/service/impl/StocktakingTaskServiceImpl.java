@@ -934,12 +934,18 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean createTaskList(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList) {
+    public Boolean createTaskList(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList,Boolean isNowExecute) {
         // 1. 查询所有需要盘点的库存记录
         List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);
         if (CollUtil.isEmpty(inventoryList)) {
             log.error("盘点计划【{}】没有需要盘点的库存记录", entity.getId());
             return Boolean.TRUE;
+        }
+
+        if (!isNowExecute) {
+            if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
+                throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
+            }
         }
 
         if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
