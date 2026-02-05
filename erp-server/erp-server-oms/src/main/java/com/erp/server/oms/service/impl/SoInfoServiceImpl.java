@@ -2586,8 +2586,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         try {
+            log.info("[updateSyncKingdeeId] 开始，订单id: {}, syncKingdeeId: {}", id, syncKingdeeId);
             if (StringUtils.isEmpty(id)) {
+                log.warn("[updateSyncKingdeeId] 订单主表id为空，跳过");
                 return Boolean.TRUE;
+            }
+            if (StringUtils.isBlank(syncKingdeeId)) {
+                log.warn("[updateSyncKingdeeId] 没有金蝶id(syncKingdeeId为空)，订单id: {}，后续仍会尝试拉取金蝶数据", id);
             }
 
             KingdeeDTO dto = new KingdeeDTO();
@@ -2597,19 +2602,46 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
             List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
             List<SoDetailEntity> updateList = new ArrayList<>(10);
-            if (soJson != null) {
+            if (soDetailList == null || soDetailList.isEmpty()) {
+                log.warn("[updateSyncKingdeeId] 本地没有订单明细(soDetailList为空)，订单id: {}，无法做明细匹配", id);
+            } else {
+                log.debug("[updateSyncKingdeeId] 本地订单明细条数: {}，订单id: {}", soDetailList.size(), id);
+            }
+            if (soJson == null) {
+                log.warn("[updateSyncKingdeeId] 没有金蝶返回数据(getByKingdeeId返回null)，订单id: {}, syncKingdeeId: {}，可能未推送或金蝶侧无数据", id, syncKingdeeId);
+            } else {
+                Object billNoObj = soJson.get("FBillNo");
+                if (billNoObj == null) {
+                    billNoObj = soJson.get("Number");
+                }
+                String billNo = billNoObj != null ? billNoObj.toString() : null;
+                if (StringUtils.isBlank(billNo)) {
+                    log.warn("[updateSyncKingdeeId] 金蝶返回数据中还没有单号(FBillNo/Number为空)，订单id: {}, syncKingdeeId: {}", id, syncKingdeeId);
+                } else {
+                    log.debug("[updateSyncKingdeeId] 金蝶单号: {}，订单id: {}", billNo, id);
+                }
                 // 金蝶 view 接口返回：订单明细为 SaleOrderEntry
                 Object entryListObj = soJson.get("SaleOrderEntry");
                 List<Map<String, Object>> resultList = entryListObj instanceof List ? (List<Map<String, Object>>) entryListObj : null;
+                if (entryListObj != null && !(entryListObj instanceof List)) {
+                    log.warn("[updateSyncKingdeeId] 金蝶返回的SaleOrderEntry不是列表类型，实际类型: {}，订单id: {}, syncKingdeeId: {}", entryListObj.getClass().getName(), id, syncKingdeeId);
+                }
+                if (CollectionUtils.isEmpty(resultList)) {
+                    log.warn("[updateSyncKingdeeId] 金蝶返回数据中没有明细记录(SaleOrderEntry为空或空列表)，订单id: {}, syncKingdeeId: {}，无法回写kingdee_detail_id", id, syncKingdeeId);
+                }
                 if (CollectionUtils.isNotEmpty(resultList)) {
+                    log.info("[updateSyncKingdeeId] 开始按金蝶明细匹配，金蝶明细条数: {}，本地明细条数: {}，订单id: {}", resultList.size(), soDetailList.size(), id);
                     // 修复：通过SKU + 数量 + 价格匹配；分录内码以文档 FEntryID 为准，兼容 Id；物料编码以 FNumber 为准
-                    for (Map<String, Object> item : resultList) {
+                    for (int idx = 0; idx < resultList.size(); idx++) {
+                        Map<String, Object> item = resultList.get(idx);
+                        int rowNum = idx + 1;
                         Object entryIdObj = item.get("FEntryID");
                         if (entryIdObj == null) {
                             entryIdObj = item.get("Id");
                         }
                         String kingdeeId = entryIdObj != null ? entryIdObj.toString() : "";
                         if (StringUtils.isBlank(kingdeeId)) {
+                            log.warn("[updateSyncKingdeeId] 金蝶明细第{}行没有金蝶分录id(FEntryID/Id为空)，订单id: {}，跳过该行", rowNum, id);
                             continue;
                         }
                         Object materialObj = item.get("MaterialId");
@@ -2618,7 +2650,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         }
                         Map<String, Object> materialMap = materialObj instanceof Map ? (Map<String, Object>) materialObj : null;
                         if (materialMap == null) {
-                            log.warn("金蝶返回的明细缺少物料信息(MaterialId/FMaterialId)，跳过");
+                            log.warn("[updateSyncKingdeeId] 金蝶明细第{}行缺少物料信息(MaterialId/FMaterialId)，订单id: {}，跳过", rowNum, id);
                             continue;
                         }
                         Object skuObj = materialMap.get("FNumber");
@@ -2627,7 +2659,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         }
                         String skuNo = skuObj != null ? skuObj.toString() : null;
                         if (StringUtils.isBlank(skuNo)) {
-                            log.warn("金蝶返回的明细物料编码(FNumber/Number)为空，跳过");
+                            log.warn("[updateSyncKingdeeId] 金蝶明细第{}行物料编码(FNumber/Number)为空，订单id: {}，跳过", rowNum, id);
                             continue;
                         }
                         
@@ -2644,7 +2676,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                                 kingdeePrice = new BigDecimal(priceObj.toString());
                             }
                         } catch (Exception e) {
-                            log.warn("解析金蝶数量和价格失败，SKU: {}, 错误: {}", skuNo, e.getMessage());
+                            log.warn("[updateSyncKingdeeId] 金蝶明细第{}行解析数量/价格失败，订单id: {}, SKU: {}, 错误: {}", rowNum, id, skuNo, e.getMessage());
                         }
                         
                         // 优先通过SKU + 数量 + 价格匹配
@@ -2665,8 +2697,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             if (!kingdeeId.equals(soDetail.getKingdeeDetailId())) {
                                 soDetail.setKingdeeDetailId(kingdeeId);
                                 updateList.add(soDetail);
-                                log.debug("更新kingdee_detail_id成功，SKU: {}, 数量: {}, 价格: {}, kingdeeId: {}", 
-                                    skuNo, soDetail.getQty(), soDetail.getPrice(), kingdeeId);
+                                log.info("[updateSyncKingdeeId] 金蝶第{}行唯一匹配，更新kingdee_detail_id，订单id: {}, 明细id: {}, SKU: {}, 数量: {}, 价格: {}, kingdeeDetailId: {} -> {}", 
+                                    rowNum, id, soDetail.getId(), skuNo, soDetail.getQty(), soDetail.getPrice(), soDetail.getKingdeeDetailId(), kingdeeId);
+                            } else {
+                                log.debug("[updateSyncKingdeeId] 金蝶第{}行唯一匹配但已存在相同kingdee_detail_id，无需更新，订单id: {}, SKU: {}, kingdeeId: {}", rowNum, id, skuNo, kingdeeId);
                             }
                         } else if (matched.size() > 1) {
                             // 多个匹配，尝试通过已匹配的记录排除
@@ -2679,31 +2713,47 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                                 if (!kingdeeId.equals(soDetail.getKingdeeDetailId())) {
                                     soDetail.setKingdeeDetailId(kingdeeId);
                                     updateList.add(soDetail);
-                                    log.debug("更新kingdee_detail_id成功（排除已匹配），SKU: {}, 数量: {}, 价格: {}, kingdeeId: {}", 
-                                        skuNo, soDetail.getQty(), soDetail.getPrice(), kingdeeId);
+                                    log.info("[updateSyncKingdeeId] 金蝶第{}行多匹配排除后唯一，更新kingdee_detail_id，订单id: {}, 明细id: {}, SKU: {}, kingdeeDetailId: {} -> {}", 
+                                        rowNum, id, soDetail.getId(), skuNo, soDetail.getKingdeeDetailId(), kingdeeId);
+                                } else {
+                                    log.debug("[updateSyncKingdeeId] 金蝶第{}行多匹配排除后唯一但已存在相同kingdee_detail_id，无需更新，订单id: {}, SKU: {}", rowNum, id, skuNo);
                                 }
                             } else {
-                                log.warn("找到多个匹配的销售订单明细，SKU: {}, 数量: {}, 价格: {}, 匹配数量: {}", 
-                                    skuNo, kingdeeQty, kingdeePrice, matched.size());
+                                log.warn("[updateSyncKingdeeId] 金蝶第{}行找到多个匹配的销售订单明细，订单id: {}, SKU: {}, 数量: {}, 价格: {}, 匹配数量: {}", 
+                                    rowNum, id, skuNo, kingdeeQty, kingdeePrice, matched.size());
                             }
                         } else {
-                            // 没有匹配，记录日志
-                            log.warn("未找到匹配的销售订单明细，SKU: {}, 数量: {}, 价格: {}", skuNo, kingdeeQty, kingdeePrice);
+                            // 没有对应的明细记录匹配上
+                            log.warn("[updateSyncKingdeeId] 金蝶第{}行没有对应的明细记录匹配上(本地无SKU/数量/价格一致明细)，订单id: {}, SKU: {}, 数量: {}, 价格: {}, 金蝶分录id: {}, 本地明细数: {}", 
+                                rowNum, id, skuNo, kingdeeQty, kingdeePrice, kingdeeId, soDetailList.size());
                         }
                     }
+                    log.debug("[updateSyncKingdeeId] 金蝶明细遍历结束，待更新明细数: {}，订单id: {}", updateList.size(), id);
                 }
             }
             if (!updateList.isEmpty()) {
                 soDetailService.updateBatchById(updateList);
+                log.info("[updateSyncKingdeeId] 已批量更新{}条明细的kingdee_detail_id，订单id: {}", updateList.size(), id);
+            } else {
+                log.info("[updateSyncKingdeeId] 没有需要更新的明细(可能已一致或未匹配到)，订单id: {}, syncKingdeeId: {}", id, syncKingdeeId);
             }
 
-            return this.lambdaUpdate()
+            boolean setSyncKingdeeId = StringUtils.isNotBlank(syncKingdeeId);
+            boolean mainUpdated = this.lambdaUpdate()
                     .eq(SoInfoEntity::getId, id)
-                    .set(StringUtils.isNotBlank(syncKingdeeId), SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
+                    .set(setSyncKingdeeId, SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
                     .update();
+            if (setSyncKingdeeId) {
+                log.info("[updateSyncKingdeeId] 主表sync_kingdee_id更新: {}，订单id: {}，syncKingdeeId: {}", mainUpdated, id, syncKingdeeId);
+            } else {
+                log.debug("[updateSyncKingdeeId] 未设置主表sync_kingdee_id(syncKingdeeId为空)，订单id: {}", id);
+            }
+            log.info("[updateSyncKingdeeId] 结束，订单id: {}, 结果: {}", id, mainUpdated);
+            return mainUpdated;
         } catch (Exception e) {
-            log.error("同步状态出错>>>>{}", e);
+            log.error("[updateSyncKingdeeId] 同步状态出错，订单id: {}, syncKingdeeId: {}, 异常: ", id, syncKingdeeId, e);
         }
+        log.warn("[updateSyncKingdeeId] 异常后返回true，订单id: {}", id);
         return Boolean.TRUE;
     }
 
