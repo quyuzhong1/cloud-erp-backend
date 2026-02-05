@@ -1126,6 +1126,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 log.error("查询验收组织信息失败，orgId: {}", data.getAcceptOrgId(), e);
             }
         }
+        data.setIsNeedSealStr(data.getIsNeedSeal() ? "是" : "否");
 
         // 填充验收人姓名
         if (StringUtils.isNotBlank(data.getAcceptUserId()) && StringUtils.isBlank(data.getAcceptUserName())) {
