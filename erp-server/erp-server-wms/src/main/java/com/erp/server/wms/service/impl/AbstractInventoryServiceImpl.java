@@ -294,8 +294,10 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                             && e.getSkuId().equalsIgnoreCase(skuId))
                     .findFirst()
                     .orElse(null);
-            if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))) {
-                // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+            // 业务规则：根据盘点任务创建日期判断，当业务单据日期 <= 盘点任务创建日期时，禁止操作
+            // 判断逻辑：!billDate.isAfter(盘点日期) 等价于 billDate <= 盘点日期
+            if (null != lastDTO && !billDate.isAfter(lastDTO.getBillDate())) {
+                // 已有盘盈盘亏单【{}】不允许操作【{}】及之前单据
                 ServiceException.runError(ApiError.WH_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
             }
         }

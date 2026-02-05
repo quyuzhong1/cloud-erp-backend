@@ -7607,6 +7607,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         dynamicExcelDTO.setData(data);
         dynamicExcelDTO.setSheetName("产品sku明细表");
-        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
+        // 必须传总记录数 totalCount，不能传 totalPage，否则导出分页逻辑会误判导致只导出一页数据（如仅1000条）
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), paging.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }
 }

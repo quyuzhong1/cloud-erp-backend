@@ -105,8 +105,9 @@ public class TrackShipperService {
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
+        log.warn("注册物流单号请求数据：{}", JSONObject.toJSONString(registerRequests));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
-        System.out.println(result);
+        log.warn("注册物流单号返回数据：{}", result);
         try {
             return JSONUtil.toBean(result, RegisterResult.class);
         }catch (Exception e){

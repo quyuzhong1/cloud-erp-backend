@@ -332,6 +332,36 @@ public class QcNoticeDTO implements Serializable {
         private String qcTypeName;
 
         /**
+         * 质检状态 QcNoticeStatusEnum
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称 QcNoticeStatusEnum
+         */
+        private String qcStatusName;
+
+        /**
+         * 质检人名称
+         */
+        private String qcUserName;
+
+        /**
+         * 质检时间
+         */
+        private LocalDateTime qcDate;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
         * 备注
         */
         private String remark;

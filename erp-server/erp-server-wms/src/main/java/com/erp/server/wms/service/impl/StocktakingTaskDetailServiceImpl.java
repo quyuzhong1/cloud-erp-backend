@@ -422,13 +422,14 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
-        // 最新盘盈盘亏单有效单据日期列表
+        // 查询最新盘点任务明细（根据盘点任务创建日期）
         List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
         if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
-            // 已有日期之前对应仓位已审核的盘盈盘亏单
+            // 业务规则：根据盘点任务创建日期判断，当业务单据日期 <= 盘点任务创建日期时，返回true（已关闭）
+            // 判断逻辑：!billDate.isAfter(盘点日期) 等价于 billDate <= 盘点日期
             return lastStocktakingProfitLossList.stream()
                     .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
-                            (billDate.isBefore(e.getBillDate()))
+                            (!billDate.isAfter(e.getBillDate()))
                     );
         }
         return false;

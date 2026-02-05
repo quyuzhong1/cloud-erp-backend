@@ -154,8 +154,13 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                         autoSubmitDelivery = getLogisticsRuleResult(id);
                         if(autoSubmitDelivery){
                             try {
+                                // 查询配置的海外仓物流
+                                List<SoB2cDetailEntity> soB2cDetailEntityList2 = soB2cDetailService.listByMainId(id);
+                                List<LogisticsMappingDTO.ViewDTO> viewDTOS2 = logisticsMappingFeign.listByChannelIdAndType(soB2cLogistics.getLogisticsChannelId(), LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+                                LogisticsMappingDTO.ViewDTO viewDTO2 = viewDTOS2.stream().filter(v->v.getWarehouseId().equals(soB2cDetailEntityList2.get(0).getWarehouseId())).findFirst().orElse(null);
+                                String warehouseLogisticsChannelId2 = Objects.nonNull(viewDTO2)?viewDTO2.getPlatformLogisticsChannelId():"";
                                 //提交发货
-                                soB2cService.submitDelivery(id, "");
+                                soB2cService.submitDelivery(id, warehouseLogisticsChannelId2);
                             }catch (Exception e){
                                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                                 addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
@@ -188,9 +193,6 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
         String logisticsChannelIdKey="logisticsChannelId";
         mapList.forEach(v->v.remove(logisticsChannelIdKey));
-        if(id.equals("2001631240814084098")){
-            System.out.println(123);
-        }
         RuleLogisticsDTO.RuleMatchResultDTO matchResult = ruleLogisticsService.getRuleOrderMatchResult(ruleMap);
         if(Objects.isNull(matchResult) || Objects.isNull(matchResult.getLogisticsSupplierId())){
             return false;
