@@ -186,8 +186,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
                 updateStatus.setSoCode(mainEntity.getCode());
                 updateStatus.setSoId(mainEntity.getId());
-                if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
-                    updateStatus.setBillStatus(billStatus);
+                updateStatus.setBillStatus(billStatus);
+                if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
                     updateStatus.setAddOperationLog(true);
                 }
                 updateStatus.setTrackNo(dto.getTrackNo());
@@ -216,8 +216,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
             updateStatus.setSoCode(mainEntity.getCode());
             updateStatus.setSoId(mainEntity.getId());
-            if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
-                updateStatus.setBillStatus(billStatus);
+            updateStatus.setBillStatus(billStatus);
+            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
                 updateStatus.setAddOperationLog(true);
             }
             updateStatus.setTrackNo(dto.getTrackNo());
