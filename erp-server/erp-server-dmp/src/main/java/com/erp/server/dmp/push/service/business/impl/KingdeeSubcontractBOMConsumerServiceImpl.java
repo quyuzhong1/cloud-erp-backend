@@ -10,7 +10,6 @@ import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -18,8 +17,10 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
@@ -53,6 +54,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -129,13 +134,17 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
         SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
+        SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
+        if (Objects.isNull(sysAccountingCompany)) {
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
+        }
         int counter = 0;
         //原数据行
         for (int i = 0; i < ppBomEntries.size(); i++) {
             if (Objects.nonNull(subcontractOrder)) {
                 JSONObject srcEntry = ppBomEntries.getJSONObject(i);
-                JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,srcEntry, bomBillNo,subcontractOrder.getCode(),counter);
-                JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,srcEntry, bomBillNo,subcontractOrder.getCode(),counter);
+                JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter);
+                JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter);
                 counter++;
                 FEntities.put(changeBeforPpBom);
                 FEntities.put(changeAfterPpBom);
@@ -151,7 +160,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                     .collect(Collectors.toList());
             if (!details.isEmpty()) {
                 for (SubcontractOrderDetailEntity subcontractOrderDetail : details) {
-                    entries = createNewPpBomEntry(view, FEntities, subcontractOrderDetail, bomBillNo);
+                    entries = createNewPpBomEntry(view, FEntities, subcontractOrderDetail,sysAccountingCompany, bomBillNo);
                 }
             }
         }
@@ -165,7 +174,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entries.put("FDocumentStatus", "Z");
         //委外组织
         JSONObject subOrgJson = new JSONObject();
-        subOrgJson.put("FNumber", "100");
+        subOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entries.put("FSubOrgId", subOrgJson);
         //金蝶工单补充字段
         entries.put("FSUBREQID", view.get("SubReqId"));
@@ -175,7 +184,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    private JSONObject createChangeBeforePpBomEntry(JSONObject view,JSONObject srcEntry, String bomBillNo,String subCode,int counter) {
+    private JSONObject createChangeBeforePpBomEntry(JSONObject view,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
         JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -204,7 +213,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode", "1");
         //发料组织
         JSONObject supplyOrgJson = new JSONObject();
-        supplyOrgJson.put("FNumber", "100");
+        supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
         //entry.put("FIssueType", "2");
@@ -282,7 +291,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createChangeAfterPpBomEntry(JSONObject view,JSONObject srcEntry, String bomBillNo,String subCode,int counter) {
+    private JSONObject createChangeAfterPpBomEntry(JSONObject view,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
         JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -311,7 +320,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode", "1");
         //发料组织
         JSONObject supplyOrgJson = new JSONObject();
-        supplyOrgJson.put("FNumber", "100");
+        supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
         //entry.put("FIssueType", "1");
@@ -384,7 +393,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity detail, String bomBillNo) {
+    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity detail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
         Map<String, Object> entry = new HashMap<>();
 
@@ -413,7 +422,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode", "1");
         //发料组织
         JSONObject supplyOrgJson = new JSONObject();
-        supplyOrgJson.put("FNumber", "100");
+        supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
         entry.put("FIssueType", "1");
