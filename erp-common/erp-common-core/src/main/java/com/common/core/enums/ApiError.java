@@ -1413,7 +1413,8 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY(11130,"盘点日期需要大于等于今天"),
     WH_STOCKPLAN_NOT_FOUND(11131,"盘点计划不存在"),
     WH_STOCKPLAN_ALREADY_PUSH(11132,"盘点计划【{0}】已下推盘点任务"),
-    WH_STOCKTAKING_PUSH_OVER(11132,"盘点任务下推盘盈盘亏单完毕"),
+    WH_STOCKTAKING_PUSH_OVER(11133,"盘点任务下推盘盈盘亏单完毕"),
+    WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY(11134,"盘点日期不能小于当前日期，请修改后重新审核"),
     /**
      * 头程发货单 错误 信息 11500-12000
      */
