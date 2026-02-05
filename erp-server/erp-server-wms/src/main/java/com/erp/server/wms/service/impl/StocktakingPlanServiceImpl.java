@@ -474,6 +474,11 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY);
+        }
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
@@ -492,7 +497,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (shouldCreateTaskImmediately) {
             updatePlanTaskTime(entity.getId(), now);
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
-            stocktakingTaskService.createTaskList(entity, detailEntityList);
+            stocktakingTaskService.createTaskList(entity, detailEntityList,Boolean.TRUE);
         } else {
             updatePlanTaskTime(entity.getId(), planTaskTime);
         }
@@ -552,7 +557,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
 
         for (StocktakingPlanEntity entity : stocktakingPlanList) {
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
-            stocktakingTaskService.createTaskList(entity, detailEntityList);
+            stocktakingTaskService.createTaskList(entity, detailEntityList,Boolean.FALSE);
         }
 
         return Boolean.TRUE;

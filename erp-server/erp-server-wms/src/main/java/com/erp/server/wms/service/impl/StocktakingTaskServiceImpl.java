@@ -487,12 +487,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         //完成
         StocktakingStatusEnum billStatus = StocktakingStatusEnum.COMPLETED;
-        //Boolean isPass = Boolean.TRUE;
         if (ApproveType.REJECT.equals(dto.getType())) {
-            //变待提交 状态改为复盘中
             approveStatus = ApproveStatusEnum.REJECT;
             billStatus = StocktakingStatusEnum.IN_PROGRESS;
-            //isPass = Boolean.FALSE;
         }
         Boolean result = updateForApprove(entity.getId(), approveStatus, billStatus);
 
@@ -937,7 +934,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean createTaskList(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList) {
+    public Boolean createTaskList(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList,Boolean isNowExecute) {
         // 1. 查询所有需要盘点的库存记录
         List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);
         if (CollUtil.isEmpty(inventoryList)) {
@@ -945,8 +942,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return Boolean.TRUE;
         }
 
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
+        if (!isNowExecute) {
+            if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
+                throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
+            }
         }
 
         if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
