@@ -2668,10 +2668,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             Map<String, String> finalUserIdNameMaps = userIdNameMaps;
 
-            List<String> mainSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getMainSupplier).distinct().collect(Collectors.toList());
-            List<String> secondSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getSecondSupplier).distinct().collect(Collectors.toList());
-            mainSupplierIds.addAll(secondSupplierIds);
-            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
             List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
             String chargeId = "";
             String productPropertyId = "";
@@ -2785,15 +2781,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
 
-                // 一级供应商名称
-                if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
-                    req.setMainSupplier(supplierMap.get(req.getMainSupplier()).getName());
-                }
-
-                // 二级供应商名称
-                if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
-                    req.setSecondSupplier(supplierMap.get(req.getSecondSupplier()).getName());
-                }
 
                 //销售状态编码转换成中文
                 req.setProductStateName(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductStateName())));
