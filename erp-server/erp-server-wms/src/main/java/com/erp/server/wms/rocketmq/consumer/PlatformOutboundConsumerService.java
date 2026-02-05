@@ -182,6 +182,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 }
                 String soCode = thirdWarehouseDeliveryEntity.getSoCode();
                 SoB2cEntity mainEntity = soB2cFeign.getSoCode(soCode);
+                if(Objects.isNull(mainEntity)){
+                    log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                    return ApiResult.success();
+                }
+                if( Objects.equals(mainEntity.getInvalidStatus(),true)){
+                    log.error("第三方出库单: B2C销售订单已作废 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                    return ApiResult.success();
+                }
 
                 SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
                 updateStatus.setSoCode(mainEntity.getCode());
@@ -206,6 +214,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     return ApiResult.success();
                 }
                 log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                return ApiResult.success();
+            }
+            if( Objects.equals(mainEntity.getInvalidStatus(),true)){
+                log.error("第三方出库单: B2C销售订单已作废 >>>>>>>{}",JSONUtil.toJsonStr(dto));
                 return ApiResult.success();
             }
             ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getByCodeAndSoId(mainEntity.getShippingOrderNo(),mainEntity.getId());
