@@ -398,7 +398,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                         throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
                     }else {
                         SubcontractOrderEntity subcontractOrder = subcontractOrderService.getById(subcontractOrderDetailEntity.getMainId());
-                        if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT)) {
+                        if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
                             BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getRepairPrice()) ? subcontractOrderDetailEntity.getRepairPrice():BigDecimal.ZERO;
                             Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getRepairQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
                             addDTO.setTaxPrice(subcontractOrderDetailEntity.getRepairPrice());
