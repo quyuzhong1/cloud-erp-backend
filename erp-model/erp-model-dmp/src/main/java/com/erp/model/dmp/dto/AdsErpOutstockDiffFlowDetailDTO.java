@@ -96,7 +96,7 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
         /**
          * 平台产品名称
          */
-        private String platformSkuName;
+        private String platformProductName;
         /**
          * 平台仓位
          */
@@ -260,6 +260,6 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
         /**
          * 平台产品名称
          */
-        private String platformSkuName;
+        private String platformProductName;
     }
 }

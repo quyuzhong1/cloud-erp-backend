@@ -167,7 +167,7 @@ public class AdsErpInventoryDiffFlowDetailDTO implements Serializable {
         /**
          * 平台产品名称
          */
-        private String platformSkuName;
+        private String platformProductName;
 
         /**
          * 出库仓库
@@ -188,7 +188,7 @@ public class AdsErpInventoryDiffFlowDetailDTO implements Serializable {
         /**
          * 实际库存
          */
-        private Integer realQty;
+        private Integer actualQty;
         /**
          * 可用库存
          */
@@ -196,7 +196,7 @@ public class AdsErpInventoryDiffFlowDetailDTO implements Serializable {
         /**
          * 冻结库存
          */
-        private Integer freezeQty;
+        private Integer frozenQty;
         /**
          * 在途库存
          */
