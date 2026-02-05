@@ -474,6 +474,11 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY);
+        }
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
