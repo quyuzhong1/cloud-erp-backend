@@ -298,6 +298,10 @@ public class AssetAcceptDTO implements Serializable {
         private Boolean isNeedSeal;
 
         /**
+         * 是否需要盖章
+         */
+        private String isNeedSealStr;
+        /**
         * 验收组织ID
         */
         private String acceptOrgId;
