@@ -1,14 +1,16 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
-import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
 
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -87,4 +89,36 @@ public interface AdsErpInventoryDiffFlowService extends SuperService<AdsErpInven
     Boolean exportExcel(AdsErpInventoryDiffFlowDTO.ExpotParamDTO dto);
     
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception;
+    /**
+     * 朔源信息-每日库存
+     * @author will
+     * @date 2026/2/5 09:28
+     * @param dto
+     * @return PagingVO<SourcePlatformDTO>
+     */
+    PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto);
+    /**
+     * 导出朔源数据-每日库存
+     * @author will
+     * @date 2026/2/5 09:28
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportSourcePlatform(AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO dto);
+    /**
+     * 朔源信息 -按流水
+     * @author will
+     * @date 2026/2/5 09:29
+     * @param dto
+     * @return PagingVO<SourceSelfDTO>
+     */
+    PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> sourceSelfPaging(PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto);
+    /**
+     * 导出- 按流水
+     * @author will
+     * @date 2026/2/5 09:29
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportSourceSelf(AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO dto);
 }
