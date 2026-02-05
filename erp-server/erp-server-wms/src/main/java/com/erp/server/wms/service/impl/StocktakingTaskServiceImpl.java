@@ -526,17 +526,22 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         // 遍历 taskDetailIdList，检查是否有对应的盈亏明细
         Iterator<StocktakingTaskDetailEntity> iterator = stocktakingTaskDetailList.iterator();
+        StringBuilder stocktakingProfitLossCode = new StringBuilder();
         while (iterator.hasNext()) {
             StocktakingTaskDetailEntity detail = iterator.next();
             List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(detail.getId());
 
             if (!CollectionUtils.isEmpty(stocktakingProfitLossDetailList) || detail.getDiffQty() == 0) {
+                if (!CollectionUtils.isEmpty(stocktakingProfitLossDetailList)) {
+                    StocktakingProfitLossEntity stocktakingProfitLoss = stocktakingProfitLossService.getById(stocktakingProfitLossDetailList.get(0).getMainId());
+                    stocktakingProfitLossCode.append("【" +stocktakingProfitLoss.getCode() + "】 ");
+                }
                 iterator.remove();
             }
         }
 
         if (stocktakingTaskDetailList.isEmpty()) {
-            throw new ServiceException(ApiError.WH_STOCKTAKING_PUSH_OVER);
+            throw new ServiceException(ApiError.WH_STOCKTAKING_PUSH_OVER,taskCode,stocktakingProfitLossCode);
         }
 
         // 获取仓库信息（用于库存组织）
