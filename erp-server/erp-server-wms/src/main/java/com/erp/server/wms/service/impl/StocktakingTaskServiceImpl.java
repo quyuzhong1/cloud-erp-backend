@@ -526,17 +526,22 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         // 遍历 taskDetailIdList，检查是否有对应的盈亏明细
         Iterator<StocktakingTaskDetailEntity> iterator = stocktakingTaskDetailList.iterator();
+        List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = new ArrayList<>();
         StringBuilder stocktakingProfitLossCode = new StringBuilder();
         while (iterator.hasNext()) {
             StocktakingTaskDetailEntity detail = iterator.next();
-            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(detail.getId());
+            stocktakingProfitLossDetailList.addAll(stocktakingProfitLossDetailService.listBySourceId(detail.getId()));
 
             if (!CollectionUtils.isEmpty(stocktakingProfitLossDetailList) || detail.getDiffQty() == 0) {
-                if (!CollectionUtils.isEmpty(stocktakingProfitLossDetailList)) {
-                    StocktakingProfitLossEntity stocktakingProfitLoss = stocktakingProfitLossService.getById(stocktakingProfitLossDetailList.get(0).getMainId());
-                    stocktakingProfitLossCode.append("【" +stocktakingProfitLoss.getCode() + "】 ");
-                }
                 iterator.remove();
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(stocktakingProfitLossDetailList)) {
+            List<String> mainIdList = stocktakingProfitLossDetailList.stream().map(item -> item.getMainId()).collect(Collectors.toList());
+            List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listByIds(mainIdList);
+            for (StocktakingProfitLossEntity stocktakingProfitLoss : stocktakingProfitLossList) {
+                stocktakingProfitLossCode.append("【" +stocktakingProfitLoss.getCode() + "】 ");
             }
         }
 
