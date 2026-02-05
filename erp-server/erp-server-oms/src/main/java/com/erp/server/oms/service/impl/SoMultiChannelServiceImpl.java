@@ -119,6 +119,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cService soB2cService;
     @Lazy
     @Resource
+    private SoB2cErrorService soB2cErrorService;
+
+    @Lazy
+    @Resource
     private ShopInfoService shopInfoService;
     @Resource
     private CustomerInfoService customerInfoService;
@@ -580,6 +584,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(CreateStatusEnum.SUCCESS.getCode().equals(createResultDTO.getCreateStatus()), SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_DELIVERY.getCode())
                 .set(CreateStatusEnum.FAILED.getCode().equals(createResultDTO.getCreateStatus()), SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_FAILED.getCode())
                 .eq(SoB2cEntity::getId, soMultiChannelEntity.getSoId()).update();
+        //删除提交发货异常标识
+        if (CreateStatusEnum.SUCCESS.getCode().equals(createResultDTO.getCreateStatus())){
+            soB2cErrorService.removeErrorOrder(soMultiChannelEntity.getSoId(), SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+        }
         //更新多渠道订单创建状态
         this.lambdaUpdate()
                 .set(SoMultiChannelEntity::getCreateStatus, createResultDTO.getCreateStatus())
