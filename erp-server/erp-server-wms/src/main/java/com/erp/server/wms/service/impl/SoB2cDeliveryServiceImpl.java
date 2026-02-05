@@ -1783,12 +1783,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 使用 subList 截取对应范围的数据
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> list = dto.getParams().getDetailList().subList(startIndex, endIndex);
         String printUrl = this.printLogisticsBillConfirm(dto.getParams().getPrintType(), new LinkedList<>(list), response);
-        PagingVO<String> pagingVO = new PagingVO<>();
-        pagingVO.setCurrPage(currentPage);
-        pagingVO.setPageSize(pageSize);
-        pagingVO.setList(Collections.singletonList(printUrl));
-        pagingVO.setTotalPage(totalPage);
-        return pagingVO;
+        return new PagingVO<>(Collections.singletonList(printUrl),totalItems,pageSize,currentPage);
     }
 
     @Override
