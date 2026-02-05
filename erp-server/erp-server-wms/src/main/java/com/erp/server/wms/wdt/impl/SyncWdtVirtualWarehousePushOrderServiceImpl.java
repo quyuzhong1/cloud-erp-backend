@@ -9,16 +9,11 @@ import com.common.business.dto.WdtSearchHandelDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.WdtVirtualInventoryService;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
@@ -198,9 +193,6 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             }
             request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
-
-            //查询旺店通可用库存是否足够
-            checkWdtUseInventoryQty(request,detailList);
 
             //添加本地任务
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
