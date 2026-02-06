@@ -690,6 +690,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
+        //下推生成的盘盈盘亏单不允许修改
+        if (StringUtils.isNotBlank(old.getSourceId())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE);
+        }
         StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
         BeanMapper.copy(dto, entity);
         if (Objects.isNull(entity.getBillDate())) {
