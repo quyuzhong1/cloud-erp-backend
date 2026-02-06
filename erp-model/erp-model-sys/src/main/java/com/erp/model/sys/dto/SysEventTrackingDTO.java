@@ -240,7 +240,10 @@ public class SysEventTrackingDTO implements Serializable {
          */
         private String timeZone;
 
-
+        /**
+         * sessionId
+         */
+        private String sessionId;
     }
 
     /**

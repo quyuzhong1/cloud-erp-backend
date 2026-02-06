@@ -3206,7 +3206,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             this.submitAndApprove(id);
         }
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 
     @Override
@@ -3299,7 +3299,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }
         }
-        return false;
+        return true;
     }
 
 

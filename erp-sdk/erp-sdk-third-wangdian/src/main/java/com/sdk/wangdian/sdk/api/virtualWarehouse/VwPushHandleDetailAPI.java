@@ -16,4 +16,8 @@ public interface VwPushHandleDetailAPI
      */
     @Api(value = "setting.strategy.VirtualWarehouse.stockSearch", paged = true)
     String search(String request, Pager pager) throws WdtErpException;
+
+
+    @Api(value = "setting.strategy.VirtualWarehouse.orderSearch")
+    VwPushHandelDetailResponse orderSearch(Map<String, Object> request, Object detailList) throws WdtErpException;
 }

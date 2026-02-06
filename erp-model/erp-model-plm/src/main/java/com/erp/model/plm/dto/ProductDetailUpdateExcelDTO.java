@@ -50,6 +50,12 @@ public class ProductDetailUpdateExcelDTO {
     private String rdtTeamName;
 
     /**
+     * BU线
+     */
+    @FieldValid(fieldName = "BU线", maxLength = 30)
+    private String buName;
+
+    /**
      * 错误信息
      */
     private String errorMsg;

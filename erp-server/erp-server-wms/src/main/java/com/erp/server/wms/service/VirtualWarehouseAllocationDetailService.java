@@ -112,8 +112,7 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @param fromWarehouseIdList
      * @param fromVirtualWarehouseIdList
      * @param skuIdList
-     * @param detailIdList
-     * @return List<VirtualWarehouseAllocationDetailEntity>
+     * @return List<VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO>
      */
-    List<VirtualWarehouseAllocationDetailEntity> listRepeatHandleDetail(List<String> fromWarehouseIdList, List<String> fromVirtualWarehouseIdList, List<String> skuIdList, List<String> detailIdList);
+    List<VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO> listRepeatHandleDetail(List<String> fromWarehouseIdList, List<String> fromVirtualWarehouseIdList, List<String> skuIdList);
 }

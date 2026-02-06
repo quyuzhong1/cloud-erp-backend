@@ -441,7 +441,7 @@ public class KolB2cApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "B2C-KOL寄样申请下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/kolB2cApplicationTemplate.xlsx";
+        String standardPath = "excel/kolB2cApplicationTemplate.xlsx";
         String standardExcelName = "kolB2cApplicationTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();

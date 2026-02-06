@@ -111,6 +111,11 @@ public class KolAddressInfoEntity extends BaseEntity<KolAddressInfoEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * 收件人税号
+     */
+    @TableField("receiver_tax_no")
+    private String receiverTaxNo;
 
     public static final String MAIN_ID = "main_id";
 

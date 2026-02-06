@@ -10,9 +10,11 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
 import com.erp.model.dmp.dto.CfgOperateLogFieldDTO;
+import com.erp.model.plm.entity.ProductRefBuEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.ProductRefBuService;
 import com.erp.server.plm.service.ProductRefLabelService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -28,6 +30,9 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private ProductRefLabelService productRefLabelService;
+
+    @Resource
+    private ProductRefBuService productRefBuService;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -113,6 +118,10 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
             sb.append(" ) ");
             return sb.toString();
         }
+        if("buCode".equals(field)){
+            return "exists (SELECT 1 from product_ref_bu a inner join  basic_product_bu b on a.bu_id = b.id where a.is_deleted = false and b.is_deleted = false and a.product_id = pi.id and b.name "+compareCodeSplicingValueSql+")";
+        }
+
         return null;
     }
 

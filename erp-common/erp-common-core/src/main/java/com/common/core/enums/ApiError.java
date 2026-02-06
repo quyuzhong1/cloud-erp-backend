@@ -94,7 +94,7 @@ public enum ApiError implements Serializable {
     COMMON_COPY_FAILED(1010,"对象复制异常"),
     COMMON_NOT_FOUND(1011,"{0}未找到"),
     COMMON_HAS_EXIST(1012,"{0}已存在"),
-    COMMON_DUPLICATION_NAME(1013,"名称不能重复"),
+    COMMON_DUPLICATION_NAME(1013,"名称【{0}】不能重复"),
     COMMON_COPY_ERROR(1014,"对象复制时类型错误"),
     COMMON_COMPANY_NOT_FOUND(1015, "核算公司不存在"),
     COMMON_ROLE_NOT_FOUND(1016, "角色不存在"),
@@ -339,7 +339,7 @@ public enum ApiError implements Serializable {
     BILL_NOT_EXIST(3046,"单据不存在"),
     BILL_NOT_EXIST_WITH_TYPE(3047, "{0}单据不存在"),
     BILL_ALREADY_EXIST(3048, "{0}单据已存在"),
-    BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN(3049, "【{0}】单据存在变更单,无法反审核"),
+    BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN(3049, "【{0}】单据存在调价表,无法反审核"),
     BILL_SUBMIT_ALLOWED_PENDING_ONLY(3050,"仅待提交状态的单据允许提交"),
     BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED(3051,"仅待处理、处理中、已处理状态允许撤销"),
     BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE(3052,"已处理的数据不允许重复操作"),
@@ -580,6 +580,7 @@ public enum ApiError implements Serializable {
     PRODUCT_ALREADY_INITIATED(5026, "已立项的产品不能再次立项"),
     PRODUCT_INITIATE_REQUIRED(5027, "项目未立项"),
     PRODUCT_INITIATE_MISSING_EXISTS(5028, "存在未立项的项目"),
+    PRODUCT_BU_IS_EXISTS_REF(5050,"产品BU线已绑定产品"),
     PRODUCT_SKU_REQUIRED(5029,"sku必须选择一个"),
     PRODUCT_SKU_NOT_FOUND(5030,"SKU不存在"),
     PRODUCT_NOT_FOUND_SKU(5031,"SKU【{0}】不存在"),
@@ -948,6 +949,7 @@ public enum ApiError implements Serializable {
     PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED(9605,"仅当质检结果为退货供应商时才允许下推退货单"),
     PO_RETURN_QTY_EXCEEDS_RECEIPT(9606,"【{0}】的退货数量不能大于收货数量"),
     PO_RETURN_TOTAL_QTY_EXCEEDS_INBOUND(9607,"【{0}】退货单的合计数量不能大于入库数量"),
+    PO_RETURN_SKU_CLOSE(9666,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持质检"),
     PO_PUSH_TOTAL_QTY_EXCEEDS_RECEIPT(9608,"【{0}】下推的数量合计不能大于收货数量"),
     PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN(9609,"质检单【{0}】已生成下游单据，不允许执行反审核"),
     PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED(9610,"【{0}】的收货数量不能大于未交货数量"),
@@ -1005,6 +1007,7 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_NOT_FOUND(9662,"采购对账明细不存在"),
     PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(9663,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
     PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(9664,"采购框架合同类型附件不能为空"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500

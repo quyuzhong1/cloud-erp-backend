@@ -22,6 +22,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -121,6 +123,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         WarehouseEntity warehouse = warehouseService.getById(returnWarehouseId);
         String warehouseOrgId = Objects.nonNull(warehouse) ? warehouse.getOrgId() : "";
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
             //获取界面传过来的采购单详情表id集合
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -141,6 +144,25 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
 
             List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = listReturnOrderDetailByPodIds(orderDetailIds);
+            
+            // 先收集所有已关闭的SKU
+            List<String> closedSkuNos = new ArrayList<>();
+            for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream()
+                        .filter(detail -> detail.getId().equals(addDTO.getPurchaseOrderDetailId()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity) 
+                        && ExecutionStatusEnum.CLOSED.getCode().equals(purchaseOrderDetailEntity.getExecutionStatus())) {
+                    closedSkuNos.add(purchaseOrderDetailEntity.getSkuNo());
+                }
+            }
+            // 如果有已关闭的SKU，一次性抛出错误
+            if (CollUtil.isNotEmpty(closedSkuNos)) {
+                String skuNosStr = String.join("】、【", closedSkuNos);
+                throw new ServiceException(ApiError.PO_RETURN_SKU_EXECUTION_STATUS_CLOSED, 
+                        purchaseOrderEntity.getCode(), skuNosStr);
+            }
+            
             for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
                 PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
                 poReturnDetailEntity.setMainId(id);
@@ -300,6 +322,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         //创建保存详情的集合
         List<PoReturnDetailEntity> listDetail = new ArrayList<>();
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
             //获取界面传过来的采购单详情表id集合
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -318,6 +341,25 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
 
             List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
             List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
+            
+            // 先收集所有已关闭的SKU
+            List<String> closedSkuNos = new ArrayList<>();
+            for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream()
+                        .filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity) 
+                        && ExecutionStatusEnum.CLOSED.getCode().equals(purchaseOrderDetailEntity.getExecutionStatus())) {
+                    closedSkuNos.add(purchaseOrderDetailEntity.getSkuNo());
+                }
+            }
+            // 如果有已关闭的SKU，一次性抛出错误
+            if (CollUtil.isNotEmpty(closedSkuNos)) {
+                String skuNosStr = String.join("】、【", closedSkuNos);
+                throw new ServiceException(ApiError.PO_RETURN_SKU_CLOSE, 
+                        purchaseOrderEntity.getCode(), skuNosStr);
+            }
+            
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
                 BeanMapperUtils.copy(updateDTO, poReturnDetailEntity);
