@@ -1,0 +1,67 @@
+# 数据源查询配置示例
+# 将此配置添加到 application.yml 或 application-{profile}.yml 中
+
+erp:
+  datasource:
+    query:
+      # DORIS查询最大重试次数
+      doris-max-retry-count: 3
+
+      # 是否启用DORIS双数据源查询策略
+      doris-strategy-enabled: true
+
+      # 查询超时时间（毫秒）
+      query-timeout: 30000
+
+      # 是否启用查询性能监控
+      performance-monitor-enabled: true
+
+      # 慢查询阈值（毫秒）
+      # 超过此阈值的查询会被记录为慢查询
+      slow-query-threshold: 3000
+
+      # 是否启用查询结果缓存
+      cache-enabled: false
+
+      # 缓存过期时间（秒）
+      cache-expire-seconds: 300
+
+# 不同环境的配置示例
+
+---
+# 开发环境配置
+spring:
+  profiles: dev
+
+erp:
+  datasource:
+    query:
+      doris-max-retry-count: 2  # 开发环境减少重试次数
+      performance-monitor-enabled: true
+      slow-query-threshold: 2000  # 开发环境更严格的慢查询阈值
+
+---
+# 测试环境配置
+spring:
+  profiles: test
+
+erp:
+  datasource:
+    query:
+      doris-max-retry-count: 3
+      performance-monitor-enabled: true
+      slow-query-threshold: 3000
+
+---
+# 生产环境配置
+spring:
+  profiles: prod
+
+erp:
+  datasource:
+    query:
+      doris-max-retry-count: 3
+      performance-monitor-enabled: true
+      slow-query-threshold: 5000  # 生产环境放宽慢查询阈值
+      cache-enabled: true  # 生产环境启用缓存
+      cache-expire-seconds: 600  # 10分钟缓存
