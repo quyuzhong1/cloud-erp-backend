@@ -139,6 +139,8 @@
     <select id="exportAllPoReconciliationDetail"
             resultType="com.erp.model.srm.dto.PoReconciliationDTO$ExportDetailDTO">
             select
+        po.id as poId,
+        po.source_type as poSourceType,
                 pr.code,
                 pr.status,
                 pr.start_date as startDate,
