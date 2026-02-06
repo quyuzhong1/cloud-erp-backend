@@ -93,7 +93,7 @@
                     vwad.sku_no as skuNo,
                     vwphd.warehouse_id as warehouseId,
                     vwphd.from_virtual_warehouse_id as virtualWarehouseId,
-                    vwphd.qty
+                    vwad.qty
             from virtual_warehouse_allocation_detail vwad
             inner join virtual_warehouse_allocation vwa on vwa.id = vwad.main_id  and vwa.is_deleted = false and vwa.disabled = false
             inner join virtual_warehouse_push_handle_relation vwphdr on vwphdr.source_detail_id = vwad.id and vwphdr.is_deleted = false
