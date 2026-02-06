@@ -613,29 +613,40 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /**
      * 按 SKU 排序后，200 行拆单，但相同 SKU 不拆分
      */
-    private List<List<StocktakingTaskDetailEntity>> splitBySkuAndBatch(List<StocktakingTaskDetailEntity> details, int batchSize) {
+    private List<List<StocktakingTaskDetailEntity>> splitBySkuAndBatch(
+            List<StocktakingTaskDetailEntity> details, int batchSize) {
+
         List<List<StocktakingTaskDetailEntity>> batches = new ArrayList<>();
         if (CollectionUtils.isEmpty(details)) {
             return batches;
         }
 
         List<StocktakingTaskDetailEntity> currentBatch = new ArrayList<>();
-        String currentSku = details.get(0).getSkuNo();
 
-        for (StocktakingTaskDetailEntity detail : details) {
-            // 如果当前 SKU 变化，并且当前批次已达到 batchSize，则新建批次
-            if (!detail.getSkuNo().equals(currentSku) && currentBatch.size() >= batchSize) {
-                batches.add(new ArrayList<>(currentBatch));
-                currentBatch.clear();
+        for (int i = 0; i < details.size(); i++) {
+            StocktakingTaskDetailEntity detail = details.get(i);
+
+            // 如果当前批次为空，直接添加（新批次开始）
+            if (currentBatch.isEmpty()) {
+                currentBatch.add(detail);
+                continue;
             }
 
-            currentBatch.add(detail);
-            currentSku = detail.getSkuNo(); // 更新当前 SKU
+            // 检查是否可以添加到当前批次：
+            // 如果当前批次未满（< batchSize）
+            // 如果当前明细的SKU与当前批次的最后一个SKU相同（允许无限扩容）
+            StocktakingTaskDetailEntity lastInBatch = currentBatch.get(currentBatch.size() - 1);
+            boolean canAddToCurrentBatch =
+                    (currentBatch.size() < batchSize) ||
+                            detail.getSkuNo().equals(lastInBatch.getSkuNo());
 
-            // 如果批次达到 batchSize，并且下一个 SKU 不同，则新建批次
-            if (currentBatch.size() >= batchSize && !detail.getSkuNo().equals(currentSku)) {
+            if (canAddToCurrentBatch) {
+                currentBatch.add(detail);
+            } else {
+                // 否则，结束当前批次，开始新批次
                 batches.add(new ArrayList<>(currentBatch));
                 currentBatch.clear();
+                currentBatch.add(detail);
             }
         }
 
