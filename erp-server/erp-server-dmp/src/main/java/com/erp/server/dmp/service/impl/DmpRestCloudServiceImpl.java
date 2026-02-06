@@ -91,6 +91,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
+        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_self")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
@@ -125,6 +126,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
+        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_platform")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
@@ -159,6 +161,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
+        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_platform")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
@@ -193,6 +196,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
+        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_self")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
