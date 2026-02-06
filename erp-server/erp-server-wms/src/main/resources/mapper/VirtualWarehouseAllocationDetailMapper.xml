@@ -89,6 +89,7 @@
     <select id="listRepeatHandleDetail"
             resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO$RepeatHandleDetailDTO">
             select
+                     vwad.id as detailId,
                     vwad.sku_id as skuId,
                     vwad.sku_no as skuNo,
                     vwphd.warehouse_id as warehouseId,
