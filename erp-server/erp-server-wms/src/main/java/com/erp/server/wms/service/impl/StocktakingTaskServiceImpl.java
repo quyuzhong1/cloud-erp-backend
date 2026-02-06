@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -762,8 +763,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             // 组装盘盈盘亏单所需要的数据
             List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(stocktakingTaskEntity);
             stocktakingProfitLossService.batchSave(list);
-        }
+            String msg = StrUtil.format("用户【{}】下推盘盈盘亏单 ", UserContext.getDefaultLoginUser().getUserName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), stocktakingTaskEntity.getId(), "生成盘盈盘亏单");
 
+        }
         return Boolean.TRUE;
     }
 
