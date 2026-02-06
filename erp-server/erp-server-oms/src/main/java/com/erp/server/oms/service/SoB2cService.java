@@ -900,6 +900,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
     SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
 
+    Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
+            , SoB2cDetailDTO.ListDTO detailDTO, List<String> ignoreInventorySkuIds);
+
+    void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
+            , SoB2cDetailDTO.DetailLabelDTO detailLabelDTO, SoB2cDetailDTO.ListDTO detailDTO);
+
     /**
      * 校验是否缺货状态
      *
@@ -1165,4 +1171,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
 
     void retryPlatformOutbound( List<String> ids);
+
+    /**
+     * 分页查询 - 新的分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<SoB2cDTO.PagingDTO> newPaging(PagingDTO<SoB2cDTO.PagingParamDTO> dto);
 }

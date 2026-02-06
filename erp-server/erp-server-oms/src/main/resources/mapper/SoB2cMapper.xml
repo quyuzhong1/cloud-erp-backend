@@ -363,6 +363,81 @@
         sbe.delivery_warning_time as deliveryWarningTime,
         sbe.order_source_type as orderSourceType
     </sql>
+    <select id="newPaging" resultType="com.erp.model.oms.dto.SoB2cDTO$PagingDTO">
+        select
+        sb2c.id,
+        sb2c.code,
+        sb2c.platform_code as platformCode,
+        sb2cl.weight,
+        sb2c.pay_time as payTime,
+        sb2c.dict_platform as dictPlatform,
+        sb2c.shop_id as shopId,
+        sb2c.shop_name as shopName,
+        sb2c.bill_status as billStatus,
+        sb2c.approve_status as approveStatus,
+        sb2cr.country_name as countryName,
+        sb2cr.country as country,
+        sb2cr.partition_id as partitionId,
+        fdp.code as partitionCode,
+        fdp.name as partitionName,
+        sbe.required_delivery_time as requiredDeliveryTime,
+        sb2c.amount as amount,
+        sb2c.currency as currency,
+        sb2cr.name as buyerName,
+        sb2cr.email as email,
+        sb2cr.tel_number as telNumber,
+        sb2cl.name as sellerLogisticName,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
+        sbd.code as deliveryCode,
+        sb2cl.logistics_channel_id as logisticsChannelId,
+        sb2cl.logistics_channel_name as logisticsChannelName,
+        sb2cl.code as transportNo,
+        sb2cl.track_no as trackNo,
+        sb2c.create_user_name as createUserName,
+        sb2c.source_code as sourceCode,
+        sb2c.source_type as sourceType,
+        sb2c.package_status as packageStatus,
+        sb2c.transfer_status as transferStatus,
+        sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
+        sb2c.label_json as label,
+        sb2c.abnormal_type as abnormalType,
+        sb2c.is_intercept as isIntercept,
+        sb2c.is_match_order_rule as isMatchOrderRule,
+        sb2c.is_match_logistics_rule as isMatchLogisticsRule,
+        sb2c.sign_order_error as signOrderError,
+        sb2c.frozen_type as frozenType,
+        sb2c.is_change_receiver_address as isChangeReceiverAddress,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
+        sb2c.is_manual_delivery as isManualDelivery,
+        sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
+        sb2c.is_out_of_range_delivery as isOutOfRangeDelivery,
+        sb2c.vat_invoice_status as vatInvoiceStatus,
+        sb2c.nfe_invoice_status as nfeInvoiceStatus,
+        sb2c.multi_channel_type as multiChannelType,
+        sbe.id as extendId
+        from so_b2c sb2c
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        <if test="isOutStock != null and isOutStock == true">
+            and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')
+            and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+        </if>
+        order by sb2c.id desc
+    </select>
     <update id="updateBatchApproveById">
         <foreach collection="updateList" item="item" index="index" separator=";">
             UPDATE so_b2c

@@ -4074,4 +4074,564 @@ public class SoB2cDTO implements Serializable {
         @Size(message = "备注长度不能超过200", max = 200)
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * vat发票状态
+         */
+        private String vatInvoiceStatus;
+        /**
+         * vat发票状态名称
+         */
+        private String vatInvoiceStatusName;
+        /**
+         * 平台订单状态
+         */
+        private String platformOrderStatus;
+        /**
+         * 平台订单状态名称
+         * 全托管平台订单状态
+         */
+        private String platformOrderStatusName;
+        /**
+         * 多渠道类型
+         * SoB2cMultiChannelTypeEnum
+         */
+        private String multiChannelType;
+        /**
+         * 多渠道类型名称
+         */
+        private String multiChannelTypeName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
+
+        /**
+         * 发票状态，SoB2cNfeStatusEnum枚举,pending待开票,invoicing开票中,invoiceFailure开票失败,notNeedInvoice无需开票,waitUpload待上传,uploadFailure上传失败,uploadSuccess已上传notNeedUpload无需上传
+         */
+        private String nfeInvoiceStatus;
+        /**
+         * nfe发票状态名称
+         */
+        private String nfeInvoiceStatusName;
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
+        /**
+         * 店铺
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
+         * 付款状态
+         */
+        private String payStatus;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
+
+        /**
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
+        /**
+         * 作废备注
+         */
+        private String invalidRemark;
+        /**
+         * 作废类型
+         */
+        private String invalidType;
+        /**
+         * 作废类型名称
+         */
+        private String invalidTypeName;
+
+        /**
+         * 组包状态  not 不需要  wait 待组包   already 已经组包
+         *
+         */
+        private String packageStatus;
+        /**
+         * 中转状态 not 不需要  wait 待中转   already 已经中转
+         */
+        private String transferStatus;
+
+
+        /**
+         * 国家
+         */
+        private String countryName;
+
+        /**
+         * 国家代号
+         */
+        private String country;
+        /**
+         * 省份编码
+         */
+        private String province;
+        /**
+         * 省份名称
+         */
+        private String provinceName;
+        /**
+         * 城市编码
+         */
+        private String city;
+        /**
+         * 城市名称
+         */
+        private String cityName;
+        /**
+         * 邮编
+         */
+        private String postCode;
+
+        /**
+         * 是否对接了第三方海外仓
+         * true 是
+         */
+        private Boolean isOverseasProviderWarehouse;
+
+        /**
+         * 买家自选物流
+         */
+        private String sellerLogisticName;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商名
+         */
+        private String transferLogisticsSupplierName;
+        /**
+         * 中转物流商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转物流商渠道名
+         */
+        private String transferLogisticsChannelName;
+
+        /**
+         * 实际运费(优先实际、没有取预估)
+         */
+        private BigDecimal shippingCost;
+
+        /**
+         * 实际运费币别
+         */
+        private String shippingCostCurrency;
+
+        /**
+         * 总利润
+         */
+        private BigDecimal totalProfit;
+
+        /**
+         * 利润币别（列表默认人民币）
+         */
+        private String profitCurrency;
+
+        /**
+         * 利润率
+         */
+        private BigDecimal profitRate;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 订单状态（审核状态、订单状态，取最后一级状态）
+         */
+        private String status;
+
+        /**
+         * 订单状态名称
+         */
+        private String statusName;
+        /**
+         * 买家id
+         */
+        private String buyerId;
+
+        /**
+         * 买家名称
+         */
+        private String buyerName;
+
+        /**
+         * 买家邮箱
+         */
+        private String email;
+
+        /**
+         * 买家电话
+         */
+        private String telNumber;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币别（原币）
+         */
+        private String currency;
+
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
+
+        /**
+         * 买家备注
+         */
+        private String buyerRemark;
+
+        /**
+         * 订单备注
+         */
+        private String remark;
+
+        /**
+         * 拦截状态
+         */
+        private Boolean isIntercept;
+
+        /**
+         * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
+         */
+        private String abnormalType;
+
+        /**
+         * 异常原因名称
+         */
+        private String abnormalTypeName;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型，（selfAdd,ERP新增；soB2c，平台新增）
+         */
+        private String sourceType;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 标签
+         */
+        private String label;
+        /**
+         * 扩展字段
+         */
+        private String extendData;
+        /**
+         * 是否可送
+         */
+        private Boolean isDeliver;
+        /**
+         * 标签对象
+         */
+        private LabelDTO labelDTO;
+
+        /**
+         * 是否匹配订单规则
+         */
+        private Boolean isMatchOrderRule;
+
+        /**
+         * 是否匹配物流规则
+         */
+        private Boolean isMatchLogisticsRule;
+
+        /**
+         * 订单异常的标示
+         */
+        private String signOrderError;
+
+        /**
+         * 物流类型
+         */
+        private String logisticType;
+
+        /**
+         * 物流类型中文
+         */
+        private String logisticTypeName;
+
+
+        /**
+         * b2c销售订单明细信息
+         */
+        private List<SoB2cDetailDTO.ListDTO> detailList;
+        /**
+         * 运输状态
+         */
+        private String  trackStatus;
+
+        /**
+         * 运输状态
+         */
+        private String  trackStatusName;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包装重量单位
+         */
+        private String weightUnit;
+        /**
+         * 包装长度单位
+         */
+        private String sizeUnit;
+        /**
+         * 包装 长
+         */
+        private BigDecimal length;
+        /**
+         * 包装 宽
+         */
+        private BigDecimal width;
+        /**
+         * 包装 高
+         */
+        private BigDecimal height;
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+        /**
+         * 发货仓库名称
+         */
+        private String fromWarehouseName;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
+        /**
+         * 冻结类型（manual手动冻结，automatic自动冻结）
+         */
+        private String frozenType;
+        /**
+         * 是否地址修改 true 是  false 否
+         */
+        private Boolean isChangeReceiverAddress;
+        /**
+         * 是否更换sku true 是  false 否
+         */
+        private Boolean isChangeSku;
+        /**
+         * 是否标记不出库发货 true 是  false 否
+         */
+        private Boolean isNotOutbound;
+        /**
+         * 是否标记手动发货true 是  false 否(以label为准)
+         */
+        private Boolean isManualDelivery;
+        /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
+        /**
+         * 标签
+         */
+        private Boolean tag;
+
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+        /**
+         * 实际发货时间
+         */
+        private LocalDateTime deliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
+
+        /**
+         * 是否超出范围派送
+         */
+        private Boolean isOutOfRangeDelivery;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+
+        /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
+
+        //属性字段
+
+        private String extendId;
+        /**
+         * 最晚发货时间/要求发货时间
+         */
+        private LocalDateTime requiredDeliveryTime;
+        /**
+         * 要求收货时间
+         */
+        private LocalDateTime requiredReceiveTime;
+        /**
+         * 发货预警时间
+         */
+        private LocalDateTime deliveryWarningTime;
+        /**
+         * 预警时间
+         * 未发货时
+         * 当前时间< 预警时间时 无异常 黑色
+         * 当前时间> 预警时间时 且 当前时间< 要求发货时间 有异常
+         * 要求发货时间-当前时间  正数 橙色  负数红色
+         * 已发货时
+         * 要求发货时间>实际发货时间：则显示未超时
+         * 要求发货时间<实际发货时间：则显示已超期N小时
+         */
+        private BigDecimal warningHour;
+        /**
+         * 发货预警描述【导出使用】
+         */
+        private String deliveryWarningDesc;
+        /**
+         * 订单来源类型
+         * SoB2cExtendOrderSourceTypeEnum
+         */
+        private String orderSourceType;
+        private String orderSourceTypeName;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
+
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+    }
 }
