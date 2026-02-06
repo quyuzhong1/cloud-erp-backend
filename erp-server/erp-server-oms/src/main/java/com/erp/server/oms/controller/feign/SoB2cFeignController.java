@@ -1005,4 +1005,9 @@ public class SoB2cFeignController extends BaseController {
         }
         return soB2cDetailService.updateBatchById(soB2cDetailEntityList);
     }
+
+    @PostMapping("/updateB2cByPlatformOutbound")
+    public void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO){
+        soB2cService.updateB2cByPlatformOutbound(b2cByPlatformOutboundDTO);
+    }
 }

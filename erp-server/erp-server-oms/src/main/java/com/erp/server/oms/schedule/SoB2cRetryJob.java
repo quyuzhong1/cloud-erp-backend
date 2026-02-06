@@ -195,6 +195,10 @@ public class SoB2cRetryJob {
                                 soB2cErrorEntity.getMainId(),
                                 ExceptionUtil.stacktraceToString(e)
                         );
+                        // 重试达到最大次数仍失败时，记录到操作日志
+                        if (soB2cErrorEntity.getRetryCount() + 1 > maxRetryCount) {
+                            operateLogService.addModuleOperateLog("系统有重试，超过了最大次数，异常类型：" + SoB2cErrorTypeEnum.getName(soB2cErrorEntity.getType()), ModuleTypeEnum.SO_B2C.getCode(), soB2cErrorEntity.getMainId(), "重试失败");
+                        }
                         // 成功重新记录重试数量任务
                         boolean update = soB2cErrorService.lambdaUpdate()
                                 .set(SoB2cErrorEntity::getRetryCount, soB2cErrorEntity.getRetryCount() + 1)

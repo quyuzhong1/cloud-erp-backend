@@ -1,5 +1,6 @@
 package com.erp.server.fms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -137,7 +138,7 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     * @param id
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
 
     /**

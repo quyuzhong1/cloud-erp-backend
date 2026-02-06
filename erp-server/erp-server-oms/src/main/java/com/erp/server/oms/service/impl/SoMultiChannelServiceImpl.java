@@ -119,6 +119,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cService soB2cService;
     @Lazy
     @Resource
+    private SoB2cErrorService soB2cErrorService;
+
+    @Lazy
+    @Resource
     private ShopInfoService shopInfoService;
     @Resource
     private CustomerInfoService customerInfoService;
@@ -580,6 +584,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(CreateStatusEnum.SUCCESS.getCode().equals(createResultDTO.getCreateStatus()), SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_DELIVERY.getCode())
                 .set(CreateStatusEnum.FAILED.getCode().equals(createResultDTO.getCreateStatus()), SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_FAILED.getCode())
                 .eq(SoB2cEntity::getId, soMultiChannelEntity.getSoId()).update();
+        //删除提交发货异常标识
+        if (CreateStatusEnum.SUCCESS.getCode().equals(createResultDTO.getCreateStatus())){
+            soB2cErrorService.removeErrorOrder(soMultiChannelEntity.getSoId(), SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+        }
         //更新多渠道订单创建状态
         this.lambdaUpdate()
                 .set(SoMultiChannelEntity::getCreateStatus, createResultDTO.getCreateStatus())
@@ -801,7 +809,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     public void updateSoOutstock(PlatformSoOutStockDTO dto) {
         String deliveryCode = dto.getMerchantOrderId();
         List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
-
+        log.warn("更新多渠道订单生成出库单标识，多渠道订单编号：【{}】，出库单明细数量：【{}】", deliveryCode, detailList.size());
         SoMultiChannelEntity soMultiChannelEntity = this.getByDeliveryCode(deliveryCode);
         if (Objects.isNull(soMultiChannelEntity)) {
             return;
@@ -822,6 +830,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 } else {
                     soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.NONE.getCode());
                 }
+                log.warn("多渠道订单更新出库数量，多渠道订单明细ID：【{}】，出库数量：【{}】", soMultiChannelDetailEntity.getId(), qtyShipped);
                 soMultiChannelDetailService.updateById(soMultiChannelDetailEntity);
             }
         });

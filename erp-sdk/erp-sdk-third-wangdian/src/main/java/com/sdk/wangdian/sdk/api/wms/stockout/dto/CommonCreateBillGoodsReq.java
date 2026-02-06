@@ -32,4 +32,9 @@ public class CommonCreateBillGoodsReq {
 	 * 仓库ID
 	 */
 	private String warehouseId;
+
+	/**
+	 * 本地任务父级id
+	 */
+	private String parentId;
 }

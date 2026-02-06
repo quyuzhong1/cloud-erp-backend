@@ -1033,12 +1033,18 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //单据状态
         data.setApproveStatusName(data.getApproveStatus().getName());
+        
+        //质检状态
+        data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
 
         if(CollUtil.isNotEmpty(data.getDetailList())){
             List<QcNoticeDetailDTO.ViewDTO> detailList = data.getDetailList();
             List<String> ids = detailList.stream().map(QcNoticeDetailDTO.ViewDTO::getId).collect(Collectors.toList());
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
             Map<String, List<WmsAttachmentDTO.UpdateDTO>> listMap = attachmentList.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
+
+            data.setQcUserName(detailList.get(0).getQcUserName());
+            data.setQcDate(detailList.get(0).getQcDate());
 
             for (QcNoticeDetailDTO.ViewDTO dto : detailList) {
                 if(listMap.containsKey(dto.getId())){

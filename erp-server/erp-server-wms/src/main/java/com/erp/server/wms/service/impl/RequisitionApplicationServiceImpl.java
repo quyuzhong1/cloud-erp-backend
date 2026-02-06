@@ -406,6 +406,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public Boolean handleSave(List<RequisitionApplicationDTO.HandleListDTO> list) {
         List<String> raIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
+        if (CollUtil.isEmpty(requisitionApplicationEntities)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"要货申请单");
+        }
+        long count = requisitionApplicationEntities.stream().filter(req -> !RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus().equals(req.getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_WAIT_HANDLE_ONLY);
+        }
 
         //根据调出调入仓id查询仓库信息
         List<String> warehouseIds = list.stream().map(req -> req.getFromWarehouseId()).collect(Collectors.toList());
@@ -482,7 +489,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //修改处理信息
         Boolean flag = updateHandleDate(raIds, RequisitionApplicationStatusEnum.HANDLE_ING.getStatus());
-
+        if (!flag) {
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+        }
         //保存处理选择的调出,调入,批准数量等信息
         updateHandleDetailDate(list, warehouseList);
 
