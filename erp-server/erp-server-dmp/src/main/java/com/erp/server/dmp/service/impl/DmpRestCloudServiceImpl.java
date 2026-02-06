@@ -91,7 +91,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/ods_dmp_clean/clean_so_outstock_source_self")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_self")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
@@ -125,7 +125,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/ods_dmp_clean/clean_so_outstock_source_platform")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_platform")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
@@ -159,7 +159,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/ods_dmp_clean/clean_inventory_source_platform")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_platform")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
@@ -193,7 +193,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/erp/ods_dmp_clean/clean_inventory_source_self")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_self")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
