@@ -37,3 +37,4 @@ erp-common/erp-common-business/mvnw
 erp-common/erp-common-business/mvnw.cmd
 erp-common/erp-common-business/.mvn/
 rebel.xml
+.claude/settings.local.json
