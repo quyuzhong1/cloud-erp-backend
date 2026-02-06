@@ -110,8 +110,10 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 throw new ServiceException("调用旺店通虚拟仓库存查询接口无可用库存，仓库编码：{}.虚拟仓库编码：{}，SKU列表：{}" , fristCheckDataDTO.getThirdWarehouseNo(), fristCheckDataDTO.getThirdVirtualWarehouseNo(), skuNoList);
             }
             for (VirtualWarehousePushHandleDetailDTO.CheckDataDTO checkDataDTO : value) {
-                //需要出的数量
-                Integer totalPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), checkDataDTO.getWarehouseId())
+                //待同步完成数
+                Integer totalPushQty = oldDetailList.stream().filter(obj ->
+                                   !CharSequenceUtil.equals(obj.getDetailId(), checkDataDTO.getDetailId())
+                                && CharSequenceUtil.equals(obj.getWarehouseId(), checkDataDTO.getWarehouseId())
                                 && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), checkDataDTO.getVirtualWarehouseId())
                                 && CharSequenceUtil.equals(obj.getSkuId(), checkDataDTO.getSkuId()))
                         .map(VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO::getQty)
@@ -119,8 +121,8 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
 
                 searchVirtualInventoryDTOS.stream().filter(obj -> CharSequenceUtil.equals(checkDataDTO.getSkuNo(),obj.getSkuNo()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdWarehouseNo(),obj.getWarehouseCode()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdVirtualWarehouseNo(),obj.getVirtualWarehouseCode()))
                         .findFirst().ifPresent(obj -> {
-                            if (MathUtil.compareTo(obj.getQty(),totalPushQty) < 0) {
-                                throw new ServiceException("调用旺店通虚拟仓库存查询接口可用库存不足，SKU：【{}】，取消/调出数量：{}，虚拟仓库编码：【{}】，可用库存：{}，待同步完成数：{}", checkDataDTO.getSkuNo() ,checkDataDTO.getQty() ,fristCheckDataDTO.getThirdVirtualWarehouseNo()
+                            if (MathUtil.compareTo(obj.getQty(),totalPushQty + checkDataDTO.getQty()) < 0) {
+                                throw new ServiceException("旺店通虚拟仓【{}】可用库存不足，SKU：【{}】，取消/调出数量：{}，虚拟仓库编码：【{}】，可用库存：{}，待同步完成数：{}，可用库存-取消/调出数量-待同步完成数＜0",obj.getVirtualWarehouseCode(), checkDataDTO.getSkuNo() ,checkDataDTO.getQty() ,fristCheckDataDTO.getThirdVirtualWarehouseNo()
                                         , obj.getQty() , totalPushQty);
                             }
                         });
