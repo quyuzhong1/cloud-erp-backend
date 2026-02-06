@@ -452,6 +452,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
         String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
+        //币别赋值
+        if (ObjectUtil.isNotNull(currency)) {
+            CurrencyEnum currencyEnum = CurrencyEnum.getByNameOrCode(currency);
+            if (ObjectUtil.isEmpty(currencyEnum)){
+                errorMsgList.add("币别不存在");
+            } else {
+                currency = currencyEnum.getCurrencyCode();
+            }
+        }
+
         //费用数据
         List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
         for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
@@ -518,16 +528,34 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
         String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
+        //币别赋值
+        if (CharSequenceUtil.isNotBlank(currency)) {
+            CurrencyEnum currencyEnum = CurrencyEnum.getByNameOrCode(currency);
+            if (ObjectUtil.isEmpty(currencyEnum)){
+                errorMsgList.add("币别不存在");
+            } else {
+                currency = currencyEnum.getCurrencyCode();
+            }
+        }
 
         //查询实际金额
         String actualAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "actualAmount"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String actualAmount = ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? "" : String.valueOf(jsonObject.get(actualAmountIndex));
+        String actualAmount = ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? null : String.valueOf(jsonObject.get(actualAmountIndex));
+        if (ObjectUtil.isNotNull(actualAmount) && !StrUtil.isNumeric(actualAmount)) {
+            errorMsgList.add("实际金额格式不正确");
+        }
 
         //查询预估金额
         String estimatedAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "estimatedAmount"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String estimatedAmount = ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? "" : String.valueOf(jsonObject.get(estimatedAmountIndex));
+        String estimatedAmount = ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? null : String.valueOf(jsonObject.get(estimatedAmountIndex));
+        if (ObjectUtil.isNotNull(estimatedAmount) && !StrUtil.isNumeric(estimatedAmount)) {
+            errorMsgList.add("预估金额格式不正确");
+        }
+        if (CollUtil.isNotEmpty(errorMsgList)) {
+            return updateList;
+        }
 
         for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
             String field = headList.get(Integer.parseInt(entry.getKey()));
@@ -617,7 +645,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //物流商信息
         excelDTO.setLogisticsSupplierId(costImportEntity.getDictPlatform());
         //付款类型
-        excelDTO.setPayType(CharSequenceUtil.isBlank(excelDTO.getPayType()) ? logisticsPayTypeEnum.PAY.getCode() : logisticsPayTypeEnum.getName(excelDTO.getPayType()));
+        String payTypeCode = logisticsPayTypeEnum.getByName(excelDTO.getPayType());
+        if (CharSequenceUtil.isBlank(payTypeCode)) {
+            payTypeCode = logisticsPayTypeEnum.PAY.getCode();
+        }
+        excelDTO.setPayType(payTypeCode);
 
         //物流单明细
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream()
@@ -675,13 +707,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             //物流费用单
             logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj ->
                             CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillVo.getDetailId())
-                                    && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
+                                    && (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
+                                    || (CharSequenceUtil.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(),obj.getReconciliationStatus())
+                                    && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode())))
                                     && CharSequenceUtil.equals(obj.getPayType(),excelDTO.getPayType()))
                     .findFirst().orElse(null);
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(thisImportType) && Objects.isNull(logisticsBillCostEntity)){
                 logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillVo.getDetailId())).findFirst().orElse(null);
             }
             if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
+                errorMsgList.add("未找到对应物流费用单");
                 return;
             }
             //预处理直接跳过处理
@@ -835,7 +870,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //数据赋值
         LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
         updateDataDTO.setId(logisticsBillCostEntity.getId());
-        updateDataDTO.setBillingWeightLogistics(CharSequenceUtil.isBlank(excelDTO.getBillingWeightStr()) ? null : new BigDecimal(excelDTO.getBillingWeightStr()));
+        updateDataDTO.setBillingWeightLogistics(CharSequenceUtil.isBlank(excelDTO.getBillingWeightLogistics()) ? null : new BigDecimal(excelDTO.getBillingWeightLogistics()));
         updateDataDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
         updateDataDTO.setPayType(excelDTO.getPayType());
 
@@ -978,8 +1013,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //校验物流费用
         if(logisticsBillCostEntityList.size() > 1) {
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)) {
+                //更新时判断是否有多条可更新的数据,需要对账月份未空或者对账月份一致，并且为待确认或者暂估确认但是未下推费用分摊的数据
                 long count = logisticsBillCostEntityList.stream().filter(obj -> (CharSequenceUtil.isBlank(obj.getReconciliationMonth()) || CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth()))
-                        && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
+                        && (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()) || (CharSequenceUtil.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(),obj.getReconciliationStatus())
+                        && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode())))
+                ).count();
                 if (count > 1) {
                     errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
                 }
@@ -1003,8 +1041,13 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
             }
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType) ) {
-                if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
-                    errorMsgList.add("物流费用单已确认不支持更新");
+                if (!CharSequenceUtil.equals(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),logisticsBillCostEntity.getReconciliationStatus())
+                        && !CharSequenceUtil.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
+                    errorMsgList.add("物流费用单非待确认不支持更新");
+                }
+                if (CharSequenceUtil.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(),logisticsBillCostEntity.getReconciliationStatus())
+                        && !CharSequenceUtil.equals(logisticsBillCostEntity.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode())) {
+                    errorMsgList.add("暂估确认物流费用单已下推费用分摊，不支持更新");
                 }
             } else{
                 if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
