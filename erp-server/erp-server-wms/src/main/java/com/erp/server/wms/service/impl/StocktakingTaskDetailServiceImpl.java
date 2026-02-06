@@ -162,10 +162,12 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             }
             //这是修改的数量
             Integer updateQty = item.getQty();
+            Integer updateFirstQty = item.getFirstQty();
             //这是数控
             Integer dbQty = taskDetail.getQty();
+            Integer dbFirstQty = taskDetail.getFirstQty();
             //是否秀发i
-            Boolean isUpdate = !updateQty.equals(dbQty);
+            Boolean isUpdate = !updateQty.equals(dbQty) || !updateFirstQty.equals(dbFirstQty);
             if (isUpdate) {
                 OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
                 addModuleOperateLogDTO.setOperation("修改操作");
@@ -178,6 +180,10 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 sb.append(taskDetail.getQty());
                 Integer qty = item.getQty();
                 sb.append("修改为:").append(qty);
+                sb.append("初盘库存由原来的:");
+                sb.append(taskDetail.getFirstQty());
+                Integer firstQty = item.getFirstQty();
+                sb.append("修改为:").append(firstQty);
                 addModuleOperateLogDTO.setContent(sb.toString());
                 operateLogList.add(addModuleOperateLogDTO);
 
