@@ -52,6 +52,10 @@ public class AdsErpInventoryDiffFlowDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class SourceSelfDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 操作时间
          */
         private LocalDateTime operationTime;
@@ -148,6 +152,10 @@ public class AdsErpInventoryDiffFlowDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SourcePlatformDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
         /**
          * 库存SKU
