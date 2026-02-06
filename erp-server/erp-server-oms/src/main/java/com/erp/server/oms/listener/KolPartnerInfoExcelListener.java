@@ -83,16 +83,16 @@ public class KolPartnerInfoExcelListener extends AnalysisEventListener<KolPartne
             errorMsgList.addAll(msgList);
         }
 
-        // 达人昵称、详细地址、联系人不允许包含全角符号
-        if (ConvertUtil.containsFullWidthChar(excelDTO.getNickname())) {
-            errorMsgList.add("达人昵称不能包含全角符号");
-        }
-        if (ConvertUtil.containsFullWidthChar(excelDTO.getDetailAddress())) {
-            errorMsgList.add("详细地址不能包含全角符号");
-        }
-        if (ConvertUtil.containsFullWidthChar(excelDTO.getContactPerson())) {
-            errorMsgList.add("联系人不能包含全角符号");
-        }
+//        // 达人昵称、详细地址、联系人不允许包含全角符号
+//        if (ConvertUtil.containsFullWidthChar(excelDTO.getNickname())) {
+//            errorMsgList.add("达人昵称不能包含全角符号");
+//        }
+//        if (ConvertUtil.containsFullWidthChar(excelDTO.getDetailAddress())) {
+//            errorMsgList.add("详细地址不能包含全角符号");
+//        }
+//        if (ConvertUtil.containsFullWidthChar(excelDTO.getContactPerson())) {
+//            errorMsgList.add("联系人不能包含全角符号");
+//        }
 
         // 达人昵称、详细地址、联系人不允许包含特殊字符（表情符号等）
         if (ConvertUtil.containsSpecialChar(excelDTO.getNickname())) {
