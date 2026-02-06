@@ -108,7 +108,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
         List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(task.getId());
         if (!stocktakingProfitLossList.isEmpty()) {
-            throw new ServiceException("只有复盘中,已生成盘盈盘亏单的盘点任务不允许修改");
+            throw new ServiceException("已生成盘盈盘亏单的盘点任务不允许修改");
         }
 
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
