@@ -12,8 +12,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -1126,7 +1124,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 log.error("查询验收组织信息失败，orgId: {}", data.getAcceptOrgId(), e);
             }
         }
-        data.setIsNeedSealStr(data.getIsNeedSeal() ? "是" : "否");
+        data.setIsNeedSealStr(Boolean.TRUE.equals(data.getIsNeedSeal()) ? "是" : "否");
 
         // 填充验收人姓名
         if (StringUtils.isNotBlank(data.getAcceptUserId()) && StringUtils.isBlank(data.getAcceptUserName())) {
@@ -2156,8 +2154,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             for (AssetAcceptDetailEntity detailEntity : list) {
                 AssetAcceptDTO.AssetPurchaseOrderRefListDTO assetPurchaseOrderRefListDTO = new AssetAcceptDTO.AssetPurchaseOrderRefListDTO();
                 assetPurchaseOrderRefListDTO.setAssetAcceptCode(assetAcceptEntity.getCode());
-                assetPurchaseOrderRefListDTO.setApproveStatuts(assetAcceptEntity.getApproveStatus().getCode());
-                assetPurchaseOrderRefListDTO.setApproveStatutsName(assetAcceptEntity.getApproveStatus().getName());
+                assetPurchaseOrderRefListDTO.setApproveStatus(assetAcceptEntity.getApproveStatus().getCode());
+                assetPurchaseOrderRefListDTO.setApproveStatusName(assetAcceptEntity.getApproveStatus().getName());
                 assetPurchaseOrderRefListDTO.setInvalidStatus(assetAcceptEntity.getInvalidStatus());
                 assetPurchaseOrderRefListDTO.setInvalidStatusName(InvalidStatusEnum.getName(assetAcceptEntity.getInvalidStatus()));
                 assetPurchaseOrderRefListDTO.setSkuId(detailEntity.getSkuId());
@@ -2210,7 +2208,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     SysUserDTO sysUserById = sysUserFeign.getSysUserById(assetAcceptEntity.getApproveUserId());
                     assetPurchaseOrderRefListDTO.setApproveUserName(sysUserById.getUserName());
                 }
-                assetPurchaseOrderRefListDTO.setApproveStatutsName(ApproveStatusEnum.getName(assetPurchaseOrderRefListDTO.getApproveStatuts()));
+                assetPurchaseOrderRefListDTO.setApproveStatusName(ApproveStatusEnum.getName(assetPurchaseOrderRefListDTO.getApproveStatus()));
                 assetPurchaseOrderRefListDTO.setInvalidStatusName(InvalidStatusEnum.getName(assetPurchaseOrderRefListDTO.getInvalidStatus()));
 
                 //明细信息
