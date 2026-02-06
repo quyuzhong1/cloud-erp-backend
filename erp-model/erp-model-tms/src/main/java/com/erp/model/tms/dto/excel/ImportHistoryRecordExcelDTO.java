@@ -50,9 +50,9 @@ public class ImportHistoryRecordExcelDTO implements Serializable {
     /**
      * 计费重[物流商]
      */
-    @FieldValid(fieldName = "计费重[物流商]", formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
-    private String billingWeightStr;
-    
+    @FieldValid(fieldName = "计费重[物流商]", formatPattern = FieldFormatPatternTypeEnum.NUMBER)
+    private String billingWeightLogistics;
+
     /**
      * 类型
      */

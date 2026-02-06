@@ -51,6 +51,17 @@ public enum logisticsPayTypeEnum implements EnumMessage  {
         return "";
     }
 
+    public static String getByName(String name) {
+        if (StringUtils.isNotBlank(name)) {
+            for (logisticsPayTypeEnum item : logisticsPayTypeEnum.values()) {
+                if (name.equals(item.getName())) {
+                    return item.getStatus();
+                }
+            }
+        }
+        return "";
+    }
+
     public static logisticsPayTypeEnum getByStatus(String status){
         return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
                 .findFirst().orElse(null);
