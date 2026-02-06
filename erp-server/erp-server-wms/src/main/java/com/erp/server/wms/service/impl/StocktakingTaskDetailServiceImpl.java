@@ -17,7 +17,6 @@ import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PushStocktakingProfitLossStatusEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
-import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
 import com.erp.server.wms.listener.StocktakingTaskFirstQtyExcelListener;
@@ -106,13 +105,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
 
-        List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(task.getId());
-        if (!stocktakingProfitLossList.isEmpty()) {
-            throw new ServiceException("已生成盘盈盘亏单的盘点任务不允许修改");
-        }
-
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseService, operateLogService);
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(stocktakingTaskService,this,stocktakingProfitLossService, task.getCode(), taskDetailList, warehouseService, operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
