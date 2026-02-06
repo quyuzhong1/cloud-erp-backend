@@ -976,7 +976,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Override
     public List<StocktakingProfitLossEntity> listBySourceId(String sourceId) {
         return this.lambdaQuery().eq(StocktakingProfitLossEntity::getSourceId, sourceId).
-                eq(StocktakingProfitLossEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING).
                 list();
 
     }
