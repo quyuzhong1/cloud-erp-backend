@@ -94,6 +94,17 @@ public class KolPartnerInfoExcelListener extends AnalysisEventListener<KolPartne
             errorMsgList.add("联系人不能包含全角符号");
         }
 
+        // 达人昵称、详细地址、联系人不允许包含特殊字符（表情符号等）
+        if (ConvertUtil.containsSpecialChar(excelDTO.getNickname())) {
+            errorMsgList.add("达人昵称存在特殊字符");
+        }
+        if (ConvertUtil.containsSpecialChar(excelDTO.getDetailAddress())) {
+            errorMsgList.add("详细地址存在特殊字符");
+        }
+        if (ConvertUtil.containsSpecialChar(excelDTO.getContactPerson())) {
+            errorMsgList.add("联系人存在特殊字符");
+        }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
