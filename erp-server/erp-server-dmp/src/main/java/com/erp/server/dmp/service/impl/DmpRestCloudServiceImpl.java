@@ -207,7 +207,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         }else {
             String body = response.body();
             JSONObject responseJson = JSON.parseObject(body);
-            Integer errCode = responseJson.getInteger("errcode");
+            Integer errCode = responseJson.getInteger("state");
             // 判断结果异常:ETLProcessRunResultCode
             if (null != errCode && 0 == errCode) {
                 List<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("rows")
