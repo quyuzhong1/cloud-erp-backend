@@ -105,11 +105,10 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (Objects.isNull(task)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
-        //状态
-        StocktakingStatusEnum status = task.getStatus();
-        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
-        if (!statusList.contains(status)) {
-            throw new ServiceException("只有复盘中,未开始的盘点任务才能修改盘点库存");
+
+        List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(task.getId());
+        if (!stocktakingProfitLossList.isEmpty()) {
+            throw new ServiceException("只有复盘中,已生成盘盈盘亏单的盘点任务不允许修改");
         }
 
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
