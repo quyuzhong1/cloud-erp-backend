@@ -18,9 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -91,7 +89,9 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
+        JSONObject data = new JSONObject();
+        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_self")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
@@ -102,13 +102,13 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         }else {
             String body = response.body();
             JSONObject responseJson = JSON.parseObject(body);
-            Integer errCode = responseJson.getInteger("errcode");
+            Boolean state = responseJson.getBoolean("state");
             // 判断结果异常:ETLProcessRunResultCode
-            if (null != errCode && 0 == errCode) {
-                List<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> resultList = responseJson.getJSONArray("rows")
+            if (null != state && state) {
+                List<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> resultList = responseJson.getJSONArray("data")
                         .stream()
                         .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO.class))
-                       .collect(Collectors.toList());
+                        .collect(Collectors.toList());
                 return new PagingVO<>(resultList,
                         responseJson.getInteger("total"),
                         responseJson.getInteger("pageSize"),
@@ -126,7 +126,9 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
+        JSONObject data = new JSONObject();
+        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_platform")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
@@ -137,10 +139,10 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         }else {
             String body = response.body();
             JSONObject responseJson = JSON.parseObject(body);
-            Integer errCode = responseJson.getInteger("errcode");
-            // 判断结果异常:ETLProcessRunResultCode
-            if (null != errCode && 0 == errCode) {
-                List<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("rows")
+            Boolean state = responseJson.getBoolean("state");
+            // 判断结果异常
+            if (null != state && state) {
+                List<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("data")
                         .stream()
                         .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO.class))
                         .collect(Collectors.toList());
@@ -161,7 +163,9 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
+        JSONObject data = new JSONObject();
+        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_platform")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
@@ -172,10 +176,10 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         }else {
             String body = response.body();
             JSONObject responseJson = JSON.parseObject(body);
-            Integer errCode = responseJson.getInteger("errcode");
+            Boolean state = responseJson.getBoolean("state");
             // 判断结果异常:ETLProcessRunResultCode
-            if (null != errCode && 0 == errCode) {
-                List<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> resultList = responseJson.getJSONArray("rows")
+            if (null != state && state) {
+                List<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> resultList = responseJson.getJSONArray("data")
                         .stream()
                         .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO.class))
                         .collect(Collectors.toList());
@@ -196,7 +200,9 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
-        map.put("ids", CharSequenceUtil.join(",",dto.getParams().getIds()));
+        JSONObject data = new JSONObject();
+        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_self")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
@@ -207,10 +213,10 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         }else {
             String body = response.body();
             JSONObject responseJson = JSON.parseObject(body);
-            Integer errCode = responseJson.getInteger("state");
+            Boolean state = responseJson.getBoolean("state");
             // 判断结果异常:ETLProcessRunResultCode
-            if (null != errCode && 0 == errCode) {
-                List<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("rows")
+            if (null != state && state) {
+                List<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("data")
                         .stream()
                         .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO.class))
                         .collect(Collectors.toList());
