@@ -493,7 +493,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     }
                     hasData.set(tmsCfgCostEntity.getId(), tmsCfgCostEntity.getCostName());
                 }
+
                 if (ObjectUtil.isNotEmpty(tmsCfgCostEntity) && ObjectUtil.isNotEmpty(entry.getValue())) {
+                    //校验费用值类型
+                    List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckValueDTO(entry.getValue().toString()));
+                    if (CollUtil.isNotEmpty(errorMsg)) {
+                        errorMsgList.add(tmsCfgCostEntity.getCostName() + errorMsg.get(0));
+                        continue;
+                    }
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     updateDTO.setCostValue(new BigDecimal(entry.getValue().toString()));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
@@ -655,7 +662,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream()
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) || obj.getPlatformCode().equals(excelDTO.getPlatformCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) || obj.getSoDeliveryCode().equals(excelDTO.getSoDeliveryCode()))
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoCode()) || obj.getSourceCode().equals(excelDTO.getSoCode()))
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSourceCode()) || obj.getSourceCode().equals(excelDTO.getSourceCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || obj.getTrackNo().equals(excelDTO.getTrackNo()))
                 .collect(Collectors.toList());
         //未查询到物流单则需要按新增分货（按新单）逻辑处理
@@ -821,19 +828,19 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
         }
         //销售订单信息
-        if (CharSequenceUtil.isNotBlank(excelDTO.getSoCode())) {
-            if (CharSequenceUtil.isNotBlank(addDTO.getSourceCode()) && !CharSequenceUtil.equals(addDTO.getSourceCode(),excelDTO.getSoCode())) {
+        if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())) {
+            if (CharSequenceUtil.isNotBlank(addDTO.getSourceCode()) && !CharSequenceUtil.equals(addDTO.getSourceCode(),excelDTO.getSourceCode())) {
                 throw new ServiceException("发货单对应的销售订单与导入的销售订单不匹配，请核查");
             }
-            if (excelDTO.getSoCode().startsWith("XSD")) {
-                List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getCode, excelDTO.getSoCode()).list();
+            if (excelDTO.getSourceCode().startsWith("XSD")) {
+                List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getCode, excelDTO.getSourceCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSourceId(list.get(0).getId());
                     addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
                     addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
                 }
-            } else if (excelDTO.getSoCode().startsWith("XSDS")) {
-                List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getCode, excelDTO.getSoCode()).list();
+            } else if (excelDTO.getSourceCode().startsWith("XSDS")) {
+                List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getCode, excelDTO.getSourceCode()).list();
                 if (CollUtil.isNotEmpty(list)) {
                     addDTO.setSourceId(list.get(0).getId());
                     addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
@@ -841,7 +848,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 }
             }
         }
-        addDTO.setSourceCode(excelDTO.getSoCode());
+        addDTO.setSourceCode(excelDTO.getSourceCode());
         addDTO.setPlatformCode(excelDTO.getPlatformCode());
         addDTO.setSoDeliveryCode(excelDTO.getSoDeliveryCode());
 
@@ -966,7 +973,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             , List<LogisticsBillCostEntity> logisticsBillCostList, LogisticsBillDTO.LogisticsBillVo logisticsBillVo ,
                                         String dictCostAttribution,CfgLogisticsCostImportEntity costImportEntity,
                                         List<String> errorMsgList) {
-        if (CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) && CharSequenceUtil.isBlank(excelDTO.getSoCode())
+        if (CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) && CharSequenceUtil.isBlank(excelDTO.getSourceCode())
                 && CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) && CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
             errorMsgList.add(ApiError.LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL.getMsg());
         }
@@ -989,11 +996,20 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             errorMsgList.add("未找到对应的物流费用单");
             return importType;
         }
+        /**
+         * 同一物流单明细可能存在多条物流费用单，需进一步筛选出符合对账类型的物流费用单
+         * 1、存在对账月份为空且对账状态为暂估确认且未下推分摊的单，或者对账月份为空且对账状态为待确认的物流费用单，或者对账月份与导入数据一致的物流费用单，走更新逻辑
+         * 2、其他情况走新增（按原单）逻辑
+         */
 
         List<LogisticsBillCostEntity> thisMonthEntityList = logisticsBillCostList.stream()
                 .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                         && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
-                        && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
+                        && (
+                        (CharSequenceUtil.isBlank(obj.getReconciliationMonth()) && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode()) && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode()))
+                                || (CharSequenceUtil.isBlank(obj.getReconciliationMonth()) && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))
+                                || CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
+                )
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
         //未查询到物流费用单则需要按新增分货（按原单）逻辑处理
