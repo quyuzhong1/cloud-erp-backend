@@ -162,6 +162,7 @@ public enum BusinessNoTypeEnum {
     CODE_DR(120 ,"DR","企业达人库",BusinessNoConstant.DR),
     CODE_KOLC(121 ,"KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
 
+    CODE_BG(122 ,"BG","产品信息变更单",BusinessNoConstant.BG),
 
 
 

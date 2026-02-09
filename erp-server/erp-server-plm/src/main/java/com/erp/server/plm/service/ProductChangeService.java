@@ -139,8 +139,13 @@ public interface ProductChangeService extends SuperService<ProductChangeEntity> 
     * @author lrp
     * @date: 2026-02-03
     * @param dto
-    * @param response
     * @return
     */
-    void exportList(ProductChangeDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(ProductChangeDTO.PagingParamDTO dto  );
+
+    void downloadTemplate(HttpServletResponse response);
+
+    void importExcel(BaseDTO.ImportDTO dto);
+
+    void importProductChange(BaseDTO.ImportDTO dto);
 }

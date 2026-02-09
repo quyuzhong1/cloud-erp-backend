@@ -1,10 +1,19 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
+import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.ProductChangeDetailDTO;
+import com.erp.model.plm.entity.MoldRefSkuEntity;
+import com.erp.model.plm.entity.ProductChangeDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.plm.service.ProductChangeDetailService;
+import com.erp.server.plm.service.ProductDetailService;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -25,8 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -66,6 +73,15 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     @Resource
     private WorkflowFeign workflowFeign;
 
+    @Resource
+    private ProductChangeDetailService productChangeDetailService;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -78,19 +94,17 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
         log.info("开始新增产品变更信息单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BG);
         productChangeEntity.setCode(code);
         boolean save = super.save(productChangeEntity);
         if(!save) {
             throw new ServiceException("产品变更信息单保存失败");
         }
+        productChangeDetailService.add(productChangeEntity,addDTO.getDetailDTOList());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "产品变更信息单" , productChangeEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, productChangeEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(productChangeEntity.getId(), code);
     }
@@ -112,18 +126,15 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
         // 数据处理
         handleData(productChangeEntity);
-        log.info("编辑 开始修改产品变更信息单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(productChangeEntity);
         if(!save) {
             throw new ServiceException("产品变更信息单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        productChangeDetailService.update(productChangeEntity,addOrUpdateDTO.getDetailDTOList());
 
         // 记录主单操作日志
-            log.info("编辑 开始记录产品变更信息单日志数据，单号：【{}】", productChangeEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), productChangeEntity.getCode(), "产品变更信息单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogByUpdate(old, productChangeEntity, null, productChangeEntity.getId(),"", msg);
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), productChangeEntity.getCode(), "产品变更信息单");
+        operateLogService.addSysLogByUpdate(old, productChangeEntity, String.valueOf(ProductChangeEntity.class), productChangeEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
 
@@ -166,11 +177,26 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     }
 
     @Override
-    public void exportList(ProductChangeDTO.ExportDTO param, HttpServletResponse response) {
-        List<ProductChangeDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
+    public void exportList(ProductChangeDTO.PagingParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("产品信息变更单", FileTaskEventEnum.EXPORT_PLM_PRODUCT_CHANGE.getCode(), param);
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "excel/productChangeTemplate.xlsx";
+        String excelName = "产品信息变更导入模板.xlsx";
+        com.common.core.utils.ExcelUtil.downloadTemplate(path, excelName, response);
+    }
+
+    @Override
+    public void importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("产品信息变更导入", FileTaskEventEnum.IMPORT_FMS_ASSET_ACCEPT.getCode(), dto);
+    }
+
+    @Override
+    public void importProductChange(BaseDTO.ImportDTO dto) {
+
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -182,17 +208,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改产品变更信息单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
-
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动产品变更信息单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录产品变更信息单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -234,8 +255,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -249,8 +269,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -274,15 +293,13 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         ProductChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -291,7 +308,6 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -303,15 +319,13 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
-        log.info("删除 开始删除产品变更信息单主单数据，id：【{}】", id);
         super.removeById(id);
+        productChangeDetailService.deleteByMainId(id);
         // 删除日志数据
-        log.info("删除 开始删除产品变更信息单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除产品变更信息单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getCode(), "删除产品变更信息单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -327,21 +341,14 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
-        log.info("撤销 开始修改产品变更信息单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -372,8 +379,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -440,23 +446,33 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     * 新增修改处理数据
     */
     private void handleData(ProductChangeEntity productChangeEntity) {
-    // TODO 验证数据 & 数据赋值
+        List<SkuVO> skuVOList = productDetailService.getSkuBaseByIds(Arrays.asList(productChangeEntity.getSkuId()));
+        if(CollectionUtil.isEmpty(skuVOList)){
+            throw new ServiceException("未找到对应的产品信息数据");
+        }
+        SkuVO skuVO = skuVOList.get(0);
+        productChangeEntity.setSkuNo(skuVO.getSkuNo());
+        productChangeEntity.setProductName(skuVO.getSkuName());
     }
 
     @Override
     public ProductChangeDTO.ViewDTO view(String id) {
-    ProductChangeEntity productChangeEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到产品变更信息单数据"));
-    ProductChangeDTO.ViewDTO data = BeanMapperUtils.map(ProductChangeDTO.ViewDTO.class, productChangeEntity);
-    // 数据填充处理
-    fillOne(data);
-    // TODO 查询明细数据（如果有的话）
-    return data;
+        ProductChangeEntity productChangeEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
+        ProductChangeDTO.ViewDTO data = BeanMapperUtils.map(ProductChangeDTO.ViewDTO.class, productChangeEntity);
+        List<ProductChangeDetailEntity> detailList = productChangeDetailService.listByMains(Arrays.asList(id));
+        List<ProductChangeDetailDTO.ViewDTO> detailDTOList = BeanMapperUtils.copyList(ProductChangeDetailDTO.ViewDTO.class, detailList);
+        data.setDetailDTOList(detailDTOList);
+        // 数据填充处理
+        fillOne(data);
+        return data;
     }
 
     private void fillOne(ProductChangeDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
           return;
         }
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
     }
 
    /**
@@ -469,8 +485,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         // 属性赋值
         for(ProductChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-        // TODO 其他如需要显示名称的字段赋值
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         }
    }
 }

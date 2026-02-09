@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.entity.ProductChangeEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -21,56 +23,19 @@ public interface ProductChangeDetailService extends SuperService<ProductChangeDe
     * 新增
     * @author lrp
     * @date: 2026-02-03
-    * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(ProductChangeDetailDTO.AddDTO dto);
+    Boolean add(ProductChangeEntity productChangeEntity,List<ProductChangeDetailDTO.AddDTO> detailDTOList);
 
     /**
     * 修改
     * @author lrp
     * @date: 2026-02-03
-    * @param dto
     * @return
     */
-    Boolean update(ProductChangeDetailDTO.UpdateDTO dto);
+    Boolean update(ProductChangeEntity productChangeEntity ,List<ProductChangeDetailDTO.UpdateDTO> updateDTOList);
 
+    List<ProductChangeDetailEntity> listByMains(List<String> mainIds);
 
-    /**
-    * 分页列表查询
-    * @author lrp
-    * @date: 2026-02-03
-    * @param pagingParamDTO
-    * @return PagingVO<ProductChangeDetailDTO.ListDTO>>
-    */
-    PagingVO<ProductChangeDetailDTO.ListDTO> paging(PagingDTO<ProductChangeDetailDTO.PagingParamDTO> pagingParamDTO);
-
-    /**
-    * 状态统计
-    * @author lrp
-    * @date: 2026-02-03
-    * @param dto
-    * @return List<ProductChangeDetailDTO.TabListDTO>>
-    */
-    List<ProductChangeDetailDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
-    * 详情
-    * @author lrp
-    * @date: 2026-02-03
-    * @param id
-    * @return
-    */
-    ProductChangeDetailDTO.ViewDTO view(String id);
-
-
-    /**
-    * 导出Excel
-    * @author lrp
-    * @date: 2026-02-03
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(ProductChangeDetailDTO.ExportDTO dto, HttpServletResponse response);
+    void deleteByMainId(String mainId);
 }

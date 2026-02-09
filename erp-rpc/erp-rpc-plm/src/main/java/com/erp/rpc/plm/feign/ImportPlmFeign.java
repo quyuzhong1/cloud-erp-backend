@@ -32,4 +32,7 @@ public interface ImportPlmFeign {
     @PostMapping("/feign/import/importBatchUpload")
     void importBatchUpload(@RequestBody RefProductImgAttachmentDTO.BatchUploadDTO dto);
 
+    @PostMapping("/feign/import/importProductChange")
+    void importProductChange(@RequestBody BaseDTO.ImportDTO dto);
+
 }

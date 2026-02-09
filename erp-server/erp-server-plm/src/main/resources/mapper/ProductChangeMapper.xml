@@ -40,7 +40,31 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductChangeDTO$ListDTO">
-
+        select
+            pc.id,
+            pcd.id as detailId,
+            pc.code,
+            pc.approve_status as approveStatus,
+            pc.invalid_status as invalidStatus,
+            pc.sku_id as skuId,
+            pc.sku_no as skuNo,
+            pc.reason,
+            pc.bill_date as billDate,
+            pc.product_name as productName,
+            pc.approve_time as approveTime,
+            pc.approve_user_id as approveUserId,
+            pc.approve_user_name as approveUserName,
+            pc.create_time as createTime,
+            pc.create_user_name as createUserName,
+            pcd.field,
+            pcd.old_value as oldValue,
+            pcd.new_value as newValue,
+        pcd.remark as detailRemark
+        from product_change pc
+        inner join product_change_detail pcd on pc.id = pcd.main_id
+        where ${params.sqlMap.default}
+          and  pc.is_deleted = false
+          and pcd.is_deleted = false
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

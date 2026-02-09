@@ -154,7 +154,6 @@ public class ProductChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
 		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -193,7 +192,6 @@ public class ProductChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
 		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : ids) {
@@ -232,7 +230,6 @@ public class ProductChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
 		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -272,7 +269,6 @@ public class ProductChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
 		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -311,7 +307,6 @@ public class ProductChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
         Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -356,7 +351,6 @@ public class ProductChangeController extends BaseController {
     * @author lrp
     * @date:  2026-02-03
     * @param dto
-    * @param response
     * @return
     */
     @PostMapping("/export")
@@ -366,9 +360,33 @@ public class ProductChangeController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品变更信息表导出Excel数据")
-    public void exportList(@RequestBody @Validated ProductChangeDTO.ExportDTO dto, HttpServletResponse response) {
-        productChangeService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated ProductChangeDTO.PagingParamDTO dto) {
+        productChangeService.exportList(dto);
+        return success(true);
     }
 
+    /**
+     * 下载导入模板
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        productChangeService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入Excel数据
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 导入参数
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "产品信息变更导入Excel数据")
+    public ApiResult<Boolean> importExcel(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        // 异步导入任务
+        productChangeService.importExcel(dto);
+        return success(true);
+    }
 
 }

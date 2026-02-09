@@ -1,10 +1,12 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.entity.ProductChangeEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -53,130 +55,78 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
     @Resource
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(ProductChangeDetailDTO.AddDTO addDTO) {
-        ProductChangeDetailEntity productChangeDetailEntity = new ProductChangeDetailEntity();
-        BeanMapperUtils.copy(addDTO, productChangeDetailEntity);
-
-        // 数据处理
-        handleData(productChangeDetailEntity);
-
-        log.info("开始新增产品变更信息单");
-        boolean save = super.save(productChangeDetailEntity);
+    public Boolean add(ProductChangeEntity productChangeEntity, List<ProductChangeDetailDTO.AddDTO> detailDTOList) {
+        detailDTOList.forEach(v->v.setMainId(productChangeEntity.getSkuId()));
+        List<ProductChangeDetailEntity> detailEntityList = BeanMapperUtils.copyList(ProductChangeDetailEntity.class, detailDTOList);
+        boolean save = super.saveBatch(detailEntityList);
         if(!save) {
-            throw new ServiceException("产品变更信息单保存失败");
+            throw new ServiceException("产品变更信息明细单保存失败");
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "产品变更信息单" , productChangeDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, productChangeDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(productChangeDetailEntity.getId(), productChangeDetailEntity.getId());
+        return true;
     }
 
     /**
     * 修改
     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(ProductChangeDetailDTO.UpdateDTO addOrUpdateDTO) {
-        ProductChangeDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品变更信息单"));
-        ProductChangeDetailEntity productChangeDetailEntity =  BeanMapperUtils.map(ProductChangeDetailEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(productChangeDetailEntity);
-        log.info("编辑 开始修改产品变更信息单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(productChangeDetailEntity);
-        if(!save) {
-            throw new ServiceException("产品变更信息单保存失败");
+    public Boolean update(ProductChangeEntity productChangeEntity ,List<ProductChangeDetailDTO.UpdateDTO> updateDTOList) {
+        //查询数据库数据
+        List<ProductChangeDetailEntity> dbList = this.listByMains(Lists.newArrayList(productChangeEntity.getSkuId()));
+        List<String> dbIdList = dbList.stream().map(ProductChangeDetailEntity::getId).collect(Collectors.toList());
+        //删除
+        List<String> updateIdList = updateDTOList.stream().filter(v-> ObjectUtil.isNotEmpty(v.getId())).map(ProductChangeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> delIdList = dbIdList.stream().filter(v->!updateIdList.contains(v)).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(delIdList)){
+            boolean remove = this.removeByIds(delIdList);
+            if(!remove) {
+                throw new ServiceException("产品变更信息明细单删除失败");
+            }
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录产品变更信息单日志数据，id：【{}】", productChangeDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), productChangeDetailEntity.getId(), "产品变更信息单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addSysLogByUpdate(old, productChangeDetailEntity, null, productChangeDetailEntity.getId(),"", msg);
+        //新增
+        List<ProductChangeDetailDTO.AddDTO> addDTOList = updateDTOList.stream().filter(v-> ObjectUtil.isEmpty(v.getId())).map(v->{
+            ProductChangeDetailDTO.AddDTO addDTO = BeanUtil.toBean(v, ProductChangeDetailDTO.AddDTO.class);
+            addDTO.setMainId(productChangeEntity.getSkuId());
+            return addDTO;
+        }).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(addDTOList)){
+            List<ProductChangeDetailEntity> addEntityList = BeanMapperUtils.copyList(ProductChangeDetailEntity.class, addDTOList);
+            boolean save = super.saveBatch(addEntityList);
+            if(!save) {
+                throw new ServiceException("产品变更信息明细单新增失败");
+            }
+        }
+        //更新
+        List<ProductChangeDetailDTO.UpdateDTO> needUpdateList = updateDTOList.stream().filter(v-> ObjectUtil.isNotEmpty(v.getId())).collect(Collectors.toList());
+        for (ProductChangeDetailDTO.UpdateDTO updateDTO : needUpdateList) {
+            ProductChangeDetailEntity productChangeDetailEntity = BeanUtil.toBean(updateDTO, ProductChangeDetailEntity.class);
+            ProductChangeDetailEntity old = dbList.stream().filter(v->v.getId().equals(productChangeDetailEntity.getId())).findFirst().orElse(null);
+            boolean update = this.updateById(productChangeDetailEntity);
+            if(!update) {
+                throw new ServiceException("产品变更信息明细单修改失败");
+            }
+            // 记录子单操作日志
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), productChangeDetailEntity.getId(), "产品变更信息单明细");
+            operateLogService.addSysLogByUpdate(old, productChangeDetailEntity, String.valueOf(ProductChangeDetailEntity.class), productChangeEntity.getId(),productChangeDetailEntity.getId(), msg);
+        }
         return Boolean.TRUE;
     }
 
-
     @Override
-    public PagingVO<ProductChangeDetailDTO.ListDTO> paging(PagingDTO<ProductChangeDetailDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<ProductChangeDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
+    public List<ProductChangeDetailEntity> listByMains(List<String> mainIds) {
+        if(CollectionUtil.isEmpty(mainIds)){
+            return new ArrayList<>();
         }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+
+        return lambdaQuery().in(ProductChangeDetailEntity::getMainId,mainIds).list();
     }
 
     @Override
-    public List<ProductChangeDetailDTO.TabListDTO> tabList(PermissionsDTO param) {
-        ProductChangeDetailDTO.PagingParamDTO searchParam = new ProductChangeDetailDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<ProductChangeDetailDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(ProductChangeDetailDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new ProductChangeDetailDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new ProductChangeDetailDTO.TabListDTO("all", list.stream().mapToInt(ProductChangeDetailDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+    public void deleteByMainId(String mainId) {
+        lambdaUpdate().eq(ProductChangeDetailEntity::getMainId,mainId).remove();
     }
 
-    @Override
-    public void exportList(ProductChangeDetailDTO.ExportDTO param, HttpServletResponse response) {
-
-    }
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(ProductChangeDetailEntity productChangeDetailEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
-
-    @Override
-    public ProductChangeDetailDTO.ViewDTO view(String id) {
-    ProductChangeDetailEntity productChangeDetailEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到产品变更信息单数据"));
-    ProductChangeDetailDTO.ViewDTO data = BeanMapperUtils.map(ProductChangeDetailDTO.ViewDTO.class, productChangeDetailEntity);
-    // 数据填充处理
-    fillOne(data);
-    // TODO 查询明细数据（如果有的话）
-    return data;
-    }
-
-    private void fillOne(ProductChangeDetailDTO.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
-          return;
-        }
-    }
-
-   /**
-    * 分页查询、导出 数据处理
-   */
-   private void fillList(List<ProductChangeDetailDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 属性赋值
-        for(ProductChangeDetailDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
-        }
-   }
 }

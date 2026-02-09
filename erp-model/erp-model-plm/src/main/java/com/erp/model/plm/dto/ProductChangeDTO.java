@@ -2,6 +2,8 @@ package com.erp.model.plm.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -88,6 +90,7 @@ public class ProductChangeDTO implements Serializable {
         */
         private String  id;
 
+        private String  detailId;
         /**
         * 变更单号
         */
@@ -165,6 +168,28 @@ public class ProductChangeDTO implements Serializable {
         */
         private String createUserName;
 
+        /**
+         * 变更字段
+         */
+        private String field;
+
+        /**
+         * 变更字段名称
+         */
+        private String fieldName;
+
+        /**
+         * 变更原值
+         */
+        private String oldValue;
+        /**
+         * 变更新值
+         */
+        private String newValue;
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
     }
 
 
@@ -202,10 +227,14 @@ public class ProductChangeDTO implements Serializable {
         */
         private String approveStatus;
 
+        private String approveStatusName;
+
         /**
         * 作废状态（false未作废，true已作废）
         */
         private Boolean invalidStatus;
+
+        private String invalidStatusName;
 
         /**
         * skuid
@@ -247,6 +276,7 @@ public class ProductChangeDTO implements Serializable {
         */
         private String approveUserName;
 
+        private List<ProductChangeDetailDTO.ViewDTO> detailDTOList;
 
     }
 
@@ -257,7 +287,7 @@ public class ProductChangeDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        private List<ProductChangeDetailDTO.AddDTO> detailDTOList;
     }
 
     /**
@@ -272,6 +302,8 @@ public class ProductChangeDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        private List<ProductChangeDetailDTO.UpdateDTO> detailDTOList;
 
     }
 
@@ -289,8 +321,6 @@ public class ProductChangeDTO implements Serializable {
         /**
         * 变更原因
         */
-        @NotBlank(message = "变更原因不能为空")
-        @Size(max = 255,message = "变更原因最大长度不能超过255位")
         private String reason;
 
         /**
@@ -301,8 +331,6 @@ public class ProductChangeDTO implements Serializable {
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 255,message = "产品名称最大长度不能超过255位")
         private String productName;
 
 

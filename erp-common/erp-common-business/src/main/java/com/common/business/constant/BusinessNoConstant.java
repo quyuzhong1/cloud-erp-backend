@@ -262,4 +262,7 @@ public interface BusinessNoConstant {
     String CYCL="CYCL";
     //AWD出库
     String AWD="AWD";
+
+    String BG = "BG";
+
 }
