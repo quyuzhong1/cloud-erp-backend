@@ -284,6 +284,10 @@ public class VirtualWarehouseAllocationDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class RepeatHandleDetailDTO {
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 出库实体仓id
          */
         private String warehouseId;
