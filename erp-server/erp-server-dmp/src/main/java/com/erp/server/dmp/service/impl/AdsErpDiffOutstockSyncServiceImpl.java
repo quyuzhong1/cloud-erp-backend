@@ -8,10 +8,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-
+import com.erp.server.dmp.service.DmpRestCloudService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -64,6 +63,8 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -288,5 +289,16 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 		downloadTaskFeign.saveDownloadTask("出库同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC.getCode(), dto);
 		return true;
 	}
+
+    @Override
+    public PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<PagingParamDTO> dto) {
+        return  dmpRestCloudService.diffOutstockSyncSourcePlatformPaging(dto);
+    }
+
+    @Override
+    public Boolean exportSourcePlatform(PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC_DETAIL_PLATFORM.getCode(), dto);
+        return Boolean.TRUE;
+    }
 
 }

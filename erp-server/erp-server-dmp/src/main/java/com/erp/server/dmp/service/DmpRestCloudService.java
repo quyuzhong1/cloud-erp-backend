@@ -2,6 +2,7 @@ package com.erp.server.dmp.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.DmpRestCloudDTO;
@@ -56,4 +57,6 @@ public interface DmpRestCloudService {
      * @return PagingVO<SourcePlatformDTO>
      */
     PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> inventorySourcePlatformPaging(@Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto);
+
+    PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> diffOutstockSyncSourcePlatformPaging(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
 }

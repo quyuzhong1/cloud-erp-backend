@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -131,4 +132,42 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.ExpotParamDTO dto) {
         return success(adsErpDiffOutstockSyncService.exportExcel(dto));
     }
+
+    /**
+     * 查询朔源信息分页-平台出库单
+     * @author jack
+     * @date 2026-02-09
+     * @param dto
+     * @return ApiResult<PagingVO<PagingDTO>>
+     */
+    @PostMapping("/sourcePlatformPaging")
+    public ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO>> sourcePlatformPaging(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
+        return success(adsErpDiffOutstockSyncService.sourcePlatformPaging(dto));
+    }
+
+    /**
+     * 导出朔源信息-平台出库单
+     * @author jack
+     * @date 2026-02-09
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
+    @PostMapping(value = "/exportSourcePlatform")
+    public ApiResult<Object>exportSourcePlatform(@RequestBody AdsErpDiffOutstockSyncDTO.PagingParamDTO dto) {
+        Boolean flag = adsErpDiffOutstockSyncService.exportSourcePlatform(dto);
+        return flag == true ? success() : failure();
+    }
+
+//    /**
+//     * 查询朔源信息分页-平台出库单
+//     * @author jack
+//     * @date 2026-02-09
+//     * @param dto
+//     * @return ApiResult<PagingVO<PagingDTO>>
+//     */
+//    @PostMapping("/sourceSelfPaging")
+//    public ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourceSelfDTO>> sourceSelfPaging(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
+//        return success(adsErpDiffOutstockSyncService.sourceSelfPaging(dto));
+//    }
 }
