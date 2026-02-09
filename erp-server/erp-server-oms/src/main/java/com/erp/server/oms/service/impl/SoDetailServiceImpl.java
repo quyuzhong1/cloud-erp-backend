@@ -13,7 +13,10 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -57,7 +60,6 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.oms.constant.OmsConstant;
-import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.listener.SoDetailExcelListener;
 import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianDeliveryService;
@@ -1911,12 +1913,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity) {
+    @DistributeLocker(keyName = "detailId")
+    public BatchResultDTO batchUnLockVirtualInventorys(String detailId) {
         SoDetailEntity old =  this.getById(detailId);
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
-        SoInfoEntity soInfoEntity = ObjectUtil.isEmpty(oldEntity) ? soInfoService.getById(old.getMainId()) : oldEntity;
+        SoInfoEntity soInfoEntity =soInfoService.getById(old.getMainId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.SO_NOT_FOUND);
         }

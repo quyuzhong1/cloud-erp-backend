@@ -1086,10 +1086,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
     private Map<String, Object> buildVariablesMap(AssetAcceptEntity entity) {
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
-        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.ASSET_ACCEPTANCE.getCode());
-        dto.setVariablesMap(BeanUtil.beanToMap(entity));
-        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         AssetAcceptDTO.ViewDTO viewDTO = this.view((entity.getId()));
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.ASSET_ACCEPTANCE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(viewDTO));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         map.put("detailList", viewDTO.getDetailList());
         viewDTO.getPersonList().forEach(v->{
             map.put(v.getPersonType(),v.getUserName());

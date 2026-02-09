@@ -52,6 +52,8 @@ import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.Tools;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -290,16 +292,16 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 			List<String> mSkuSdcThirdCodes = changeDmpSoOutstockEntity.stream().filter(c -> StringUtils.isNotBlank(c.getPlatformCode()) && !c.getPlatformCode().startsWith("JY"))
 					.map(DmpSoOutstockEntity::getPlatformCode).collect(Collectors.toList());
 			if(CollUtil.isNotEmpty(mSkuSdcThirdCodes)) {
-				Map<String, String> mSkuSdcIdThirdCodeMaps = dmpSoDeliveryService.lambdaQuery().in(DmpSoDeliveryEntity::getThirdDeliveryCode, mSkuSdcThirdCodes)
-						.select(DmpSoDeliveryEntity::getId , DmpSoDeliveryEntity::getThirdDeliveryCode)
-						.list().stream().collect(Collectors.toMap(DmpSoDeliveryEntity::getId , DmpSoDeliveryEntity::getThirdDeliveryCode));
+				List<SoB2cEntity> soB2cEntityList = FeignQuery.create(SoB2cEntity.class).in(SoB2cEntity::getCode, mSkuSdcThirdCodes)
+						.select(SoB2cEntity::getId , SoB2cEntity::getCode).list();
+				Map<String, String> mSkuSdcIdThirdCodeMaps = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId , SoB2cEntity::getCode));
 					if(CollUtil.isNotEmpty(mSkuSdcIdThirdCodeMaps)) {
-						Map<String, List<DmpSoDeliveryDetailEntity>> mSkuMainIdDetailMap = dmpSoDeliveryDetailService.lambdaQuery().in(DmpSoDeliveryDetailEntity::getMainId, mSkuSdcIdThirdCodeMaps.keySet()).list()
-								.stream().collect(Collectors.groupingBy(DmpSoDeliveryDetailEntity::getMainId));
+						List<SoB2cDetailEntity> soB2cDetailEntityList = FeignQuery.create(SoB2cDetailEntity.class).in(SoB2cDetailEntity::getMainId, mSkuSdcIdThirdCodeMaps.keySet()).list();
+						Map<String, List<SoB2cDetailEntity>> mSkuMainIdDetailMap = soB2cDetailEntityList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
 							for(Map.Entry<String, String> mSkuIdThirdCodeMap : mSkuSdcIdThirdCodeMaps.entrySet()) {
-								List<DmpSoDeliveryDetailEntity> mSkuDetailList = mSkuMainIdDetailMap.get(mSkuIdThirdCodeMap.getKey());
+								List<SoB2cDetailEntity> mSkuDetailList = mSkuMainIdDetailMap.get(mSkuIdThirdCodeMap.getKey());
 								if(CollUtil.isNotEmpty(mSkuDetailList)) {
-									for(DmpSoDeliveryDetailEntity mSkuDetail : mSkuDetailList) {
+									for(SoB2cDetailEntity mSkuDetail : mSkuDetailList) {
 										String platformSku = mSkuDetail.getPlatformSkuNo();
 										if(StringUtils.isNotBlank(platformSku)) {
 											platformCodeSkuMSkuMap.put(mSkuIdThirdCodeMap.getValue() + "_" + mSkuDetail.getSkuNo(), platformSku);

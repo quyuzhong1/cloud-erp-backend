@@ -32,7 +32,7 @@ public class ImportHistoryRecordExcelDTO implements Serializable {
      * 销售订单号
      */
     @FieldValid(fieldName = "销售订单号", maxLength = 100)
-    private String soCode;
+    private String sourceCode;
 
 
     /**
@@ -68,25 +68,25 @@ public class ImportHistoryRecordExcelDTO implements Serializable {
     /**
      * 包装尺寸(物流商)
      */
-    @FieldValid(fieldName = "包装尺寸长(物流商)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "包装尺寸长(物流商)",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String  thirdLength;
 
     /**
      * 计费重[物流商]
      */
-    @FieldValid(fieldName = "包装尺寸宽(物流商)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "包装尺寸宽(物流商)",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String  thirdWidth;
 
     /**
      * 包装尺寸高(物流商)
      */
-    @FieldValid(fieldName = "包装尺寸高(物流商)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "包装尺寸高(物流商)",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String  thirdHeight;
 
     /**
      * 实重(物流商)
      */
-    @FieldValid(fieldName = "实重(物流商)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "实重(物流商)",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String  thirdActualWeight;
 
     /**
