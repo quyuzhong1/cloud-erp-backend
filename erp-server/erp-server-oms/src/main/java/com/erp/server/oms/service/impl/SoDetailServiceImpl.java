@@ -1914,7 +1914,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(keyName = "detailId")
-    public BatchResultDTO batchUnLockVirtualInventory(String detailId) {
+    public BatchResultDTO batchUnLockVirtualInventorys(String detailId) {
         SoDetailEntity old =  this.getById(detailId);
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
