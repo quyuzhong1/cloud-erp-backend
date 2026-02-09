@@ -90,7 +90,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
-        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        data.put("ids", dto.getParams().getIds().stream()
+                .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_self")
                 .header("Content-Type", "application/json")
@@ -127,7 +128,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
-        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        data.put("ids", dto.getParams().getIds().stream()
+                .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_so_outstock_source_platform")
                 .header("Content-Type", "application/json")
@@ -164,7 +166,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
-        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        data.put("ids", dto.getParams().getIds().stream()
+                .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_platform")
                 .header("Content-Type", "application/json")
@@ -201,7 +204,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
-        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        data.put("ids", dto.getParams().getIds().stream()
+                .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_self")
                 .header("Content-Type", "application/json")
