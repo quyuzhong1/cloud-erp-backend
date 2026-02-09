@@ -23,7 +23,7 @@ public enum SyncOperateEnum {
     OPERATE_SYNC_ERROR("operateSyncError", "","同步错误任务"),
 
     OPERATE_DELIVERY("operateDelivery", "","发货"),
-    OPERATE_PUSH("operatePush", "","下推"),
+    //OPERATE_PUSH("operatePush", "","下推"),
 
     ;
     private String code;
