@@ -825,6 +825,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
                     addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
+            } else {
+                addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
         //销售订单信息
@@ -846,6 +848,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
                     addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
+            } else {
+                addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
         addDTO.setSourceCode(excelDTO.getSourceCode());
@@ -854,6 +858,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
         addDetailDTO.setTrackNo(excelDTO.getTrackNo());
+        addDetailDTO.setTrackEnable(Boolean.FALSE);
         addDTO.setDetailList(Collections.singletonList(addDetailDTO));
         return logisticsBillService.add(addDTO);
     }
