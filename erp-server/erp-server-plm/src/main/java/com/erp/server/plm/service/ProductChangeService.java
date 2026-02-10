@@ -1,4 +1,5 @@
 package com.erp.server.plm.service;
+import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -148,4 +149,6 @@ public interface ProductChangeService extends SuperService<ProductChangeEntity> 
     void importExcel(BaseDTO.ImportDTO dto);
 
     void importProductChange(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<ProductChangeImportExcelDTO> successList, List<String> errorNoList, List<ProductChangeImportExcelDTO> errorList2, String importType);
 }

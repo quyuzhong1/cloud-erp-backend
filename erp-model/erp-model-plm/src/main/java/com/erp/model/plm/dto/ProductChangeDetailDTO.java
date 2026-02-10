@@ -232,6 +232,7 @@ public class ProductChangeDetailDTO implements Serializable {
         @Size(max = 255,message = "变更字段最大长度不能超过255位")
         private String field;
 
+        private String fieldName;
         /**
         * 变更原值
         */

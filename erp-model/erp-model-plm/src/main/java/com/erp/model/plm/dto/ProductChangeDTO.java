@@ -318,6 +318,7 @@ public class ProductChangeDTO implements Serializable {
         @Size(max = 255,message = "skuid最大长度不能超过255位")
         private String skuId;
 
+        private String skuNo;
         /**
         * 变更原因
         */

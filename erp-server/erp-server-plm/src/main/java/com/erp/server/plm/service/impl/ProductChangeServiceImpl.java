@@ -2,16 +2,26 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.dto.KolPartnerInfoDTO;
+import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.plm.dto.ProductChangeDetailDTO;
+import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.MoldRefSkuEntity;
 import com.erp.model.plm.entity.ProductChangeDetailEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.listener.ProductChangeExcelListener;
 import com.erp.server.plm.service.ProductChangeDetailService;
 import com.erp.server.plm.service.ProductDetailService;
 import io.seata.common.util.StringUtils;
@@ -28,6 +38,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +46,15 @@ import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
+import java.util.stream.Stream;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -81,6 +97,15 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private FileFeign fileFeign;
+
+    @Resource
+    private ProductChangeService productChangeService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -191,12 +216,124 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     @Override
     public void importExcel(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("产品信息变更导入", FileTaskEventEnum.IMPORT_FMS_ASSET_ACCEPT.getCode(), dto);
+        downloadTaskFeign.saveImportTask("产品信息变更导入", FileTaskEventEnum.IMPORT_PLM_PRODUCT_CHANGE.getCode(), dto);
     }
 
     @Override
     public void importProductChange(BaseDTO.ImportDTO dto) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
 
+        ProductChangeExcelListener excelListenerUtil = new ProductChangeExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), ProductChangeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<ProductChangeImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "产品信息变更错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, ProductChangeImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public void handleImportSuccessList(List<ProductChangeImportExcelDTO> successList, List<String> errorNoList, List<ProductChangeImportExcelDTO> errorList, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if(CollUtil.isNotEmpty(errorNoList)){
+            successList = successList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(e.getSkuNo()) && !errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
+
+            //全部返回到错误列表
+            List<ProductChangeImportExcelDTO> collect = successList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isBlank(e.getSkuNo()) || errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
+            errorList.addAll(collect);
+        }
+
+        if(CollUtil.isEmpty(successList)){
+            return;
+        }
+        List<String> skuNoList = successList.stream().map(ProductChangeImportExcelDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listBySkuNoList(skuNoList);
+        List<ProductChangeEntity> dbList = this.lambdaQuery()
+            .in(ProductChangeEntity::getSkuNo, skuNoList)
+            .eq(ProductChangeEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+            .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+            .list();
+        Map<String,List<ProductChangeImportExcelDTO>> groupMap = successList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(e.getSkuNo())).collect(Collectors.groupingBy(ProductChangeImportExcelDTO::getSkuNo));
+        List<ProductChangeDTO.AddDTO> addList = new ArrayList<>();
+
+        for (Map.Entry<String, List<ProductChangeImportExcelDTO>> entry : groupMap.entrySet()) {
+            List<String> errorMsgList = new ArrayList<>();
+            String skuNo = entry.getKey();
+            //判断数据库是否已存在
+            List<ProductChangeEntity> existList = dbList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).collect(Collectors.toList());
+            if(CollectionUtil.isNotEmpty(existList)){
+                errorMsgList.add("SKU编号已存在未审核的变更单");
+            }
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).findFirst().orElse(null);
+            if(Objects.isNull(productDetailEntity)){
+                errorMsgList.add("SKU编号在系统中不存在");
+            }
+            if(!Objects.requireNonNull(productDetailEntity).getStatus().equals(2)){
+                errorMsgList.add("只有已审核的sku可以变更");
+            }
+
+            if(CollectionUtils.isNotEmpty(errorMsgList)){
+                List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
+                entry.getValue().forEach(v->v.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList)));
+                errorList.addAll(entry.getValue());
+                continue;
+            }
+            //校验通过，封装新增的数据
+            ProductChangeImportExcelDTO first = entry.getValue().get(0);
+            ProductChangeDTO.AddDTO addDTO = new ProductChangeDTO.AddDTO();
+            addDTO.setBillDate(first.getBillDate());
+            addDTO.setProductName(productDetailEntity.getName());
+            addDTO.setReason(first.getReason());
+            addDTO.setSkuId(productDetailEntity.getId());
+            addDTO.setSkuNo(skuNo);
+            List<ProductChangeDetailDTO.AddDTO> detailDTOList = entry.getValue().stream().map(v -> {
+                ProductChangeDetailDTO.AddDTO detailDTO = new ProductChangeDetailDTO.AddDTO();
+                detailDTO.setFieldName(v.getField());
+                detailDTO.setNewValue(v.getNewValue());
+                detailDTO.setRemark(v.getRemark());
+                return detailDTO;
+            }).collect(Collectors.toList());
+            addDTO.setDetailDTOList(detailDTOList);
+            try {
+                addList.forEach(v->productChangeService.add(v));
+            }catch (Exception e){
+                log.error("新增失败", e);
+                entry.getValue().forEach(v->v.setErrorMsg("新增失败："+e.getMessage()));
+                errorList.addAll(entry.getValue());
+             }
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
