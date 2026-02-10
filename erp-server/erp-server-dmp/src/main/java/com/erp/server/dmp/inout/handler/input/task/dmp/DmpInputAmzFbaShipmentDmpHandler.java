@@ -25,7 +25,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
-        //List<Map<String, Object>> lxData = new ArrayList<>();
+        List<Map<String, Object>> lxData = new ArrayList<>();
         List<Map<String, Object>> labelData = new ArrayList<>();
         if (CollUtil.isNotEmpty(dmpInputDataDmpRelationMaps)) {
             for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
@@ -41,7 +41,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                     List<ParamData> lxParamDataList = Collections.singletonList(
                             new ParamData("shipment_id", "shipment_id", PannoEnum.IN, shipmentIds)
                     );
-                    //lxData.addAll(mongoService.findMongoData(lxParamDataList, "lingxing_fba_shipment_data"));
+                    lxData.addAll(mongoService.findMongoData(lxParamDataList, "lingxing_fba_shipment_data"));
                     labelData.addAll(mongoService.findMongoData(lxParamDataList, "amazon_fba_shipment_label_data"));
                 }
             }
@@ -82,15 +82,15 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                     labelType =  labelPrepType.getDesc();
                 }
                 dmpDataMap.put("labelType", labelType);
-//                if (!lxData.isEmpty()) {
-//                    for (Map<String, Object> lxDatum : lxData) {
-//                        if (lxDatum.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
-//                            int isSta = (int)lxDatum.get("is_sta");
-//                            dmpDataMap.put("isSta",isSta == 0 ? Boolean.FALSE : Boolean.TRUE);
-//                        }
-//                    }
-//
-//                }
+                if (!lxData.isEmpty()) {
+                    for (Map<String, Object> lxDatum : lxData) {
+                        if (lxDatum.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
+                            String fulfillmentCenter = lxDatum.get("destination_fulfillment_center_id").toString();
+                            dmpDataMap.put("fulfillmentCenter",fulfillmentCenter);
+                        }
+                    }
+
+                }
                 String shipmentName = mongoData.get("shipmentName").toString();
                 if (shipmentName.contains("ASDN")) {
                     dmpDataMap.put("isSta",Boolean.FALSE);
