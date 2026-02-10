@@ -46,7 +46,20 @@ public class ShopeeLogisticsService {
     private static String ORDER_LIST = "order_list";
     
     private static String RESULT_LIST= "result_list";
-    
+
+    public static void main(String[] args) {
+
+        ShopeeLogisticsService shopeeOrderService = new ShopeeLogisticsService();
+        BaseRequest baseRequest = BaseRequest.builder()
+                .host("https://openplatform.shopee.cn")
+                .accessToken("eyJhbGciOiJIUzI1NiJ9.CLa8ehABGLHL7qgGIAEooM-qzAYwseSXwgU4AUAB.cI2aba0IK4sOn5xwgZt7tS3DCfM22QUQP56CbKc1jBE")
+                .shopId(Long.parseLong("1696310705"))
+                .partnerId(Long.parseLong("2006582"))
+                .partnerKey("446568575a4b52694578456c4c78645969735a6f716b4b6550496754705a7a63")
+                .build();
+        JSONObject jsonObject = shopeeOrderService.requestShippingParameter(baseRequest,"2602060WJX5CUW","");
+        System.out.println(jsonObject);
+    }
     /**
      * 获取渠道列表
      *
@@ -254,7 +267,9 @@ public class ShopeeLogisticsService {
         if (StringUtils.isNotBlank(packageNumber)){
             paramMap.put("package_number", packageNumber);
         }
+        System.out.println(JSONUtil.toJsonStr(paramMap));
         BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + path, paramMap);
+        System.out.println(JSONUtil.toJsonStr(baseResponse));
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
             log.error(ERR_BF, baseResponse);
             throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET, orderSn,baseResponse));
