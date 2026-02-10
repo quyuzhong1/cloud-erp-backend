@@ -70,6 +70,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -960,6 +961,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (Objects.isNull(soB2cEntity)) {
             throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = soB2cFeign.listSoB2cReceiverByMainIdList(Collections.singletonList(soId));
         List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
@@ -1009,6 +1011,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
+            String partitionId = "";
+            if(CollectionUtils.isNotEmpty(soB2cReceiverEntityList)){
+                SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntityList.get(0);
+                if(StringUtils.isBlank(partitionId)){
+                    partitionId = soB2cReceiverEntity.getPartitionId();
+                }
+            }
+            if(StringUtils.isBlank(partitionId)){
+                partitionId = customerInfoEntity.getPartitionId();
+            }
             if(StringUtils.isNotBlank(platformType)) {
             	List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
                         .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
@@ -1017,6 +1029,19 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
             		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
             	}
+            }
+
+            if(StringUtils.isNotBlank(soB2cEntity.getDictPlatform()) && StringUtils.isNotBlank(partitionId)) {
+                List<CfgDeptRelationEntity> cfgDeptRelationEntityList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDictPlatform, soB2cEntity.getDictPlatform())
+                        .eq(CfgDeptRelationEntity::getPartitionId, partitionId)
+                        .eq(CfgDeptRelationEntity::getDisabled,false)
+                        .list();
+                if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(cfgDeptRelationEntityList)) {
+                    List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(cfgDeptRelationEntityList.get(0).getDeptId()));
+                    if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(deptList)){
+                        resultMap.put("salesDeptCode",deptList.get(0).getCode());
+                    }
+                }
             }
         }
 
@@ -1048,7 +1073,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
-                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
+//                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
 
