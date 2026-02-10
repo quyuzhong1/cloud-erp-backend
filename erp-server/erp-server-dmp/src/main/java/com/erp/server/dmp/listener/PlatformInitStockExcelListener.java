@@ -76,18 +76,20 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
             return;
         }
         List<String> sourceSystemNameList = dataList.stream().map(PlatformInitStockExcelDTO::getSourceSystemName).distinct().collect(Collectors.toList());
-        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class).in(OverseasProviderEntity::getName, sourceSystemNameList).list();
-		Map<String, List<OverseasProviderEntity>> sourceSystemNameMap = overseasProviderEntityList.stream().collect(Collectors.groupingBy(OverseasProviderEntity::getName));
-		
         List<String> warehouseNameList = dataList.stream().map(PlatformInitStockExcelDTO::getPlatformWarehouseName).distinct().collect(Collectors.toList());
-        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList = FeignQuery.create(OverseasProviderWarehouseEntity.class).in(OverseasProviderWarehouseEntity::getPlatformWarehouseName, warehouseNameList).list();
-        Map<String, List<OverseasProviderWarehouseEntity>> nameGroupMap = overseasProviderWarehouseEntityList.stream().collect(Collectors.groupingBy(OverseasProviderWarehouseEntity::getPlatformWarehouseName));
-        
         List<String> checkMonthList = dataList.stream().map(PlatformInitStockExcelDTO::getCheckMonth).distinct().collect(Collectors.toList());
+        
+        AdsErpInventoryDiffFlowMapper adsErpInventoryDiffFlowMapper = ApplicationContextUtils.getBean(AdsErpInventoryDiffFlowMapper.class);
+        Map<String, List<PlatformInitStockExcelDTO>> sourceSystemNameMaps = adsErpInventoryDiffFlowMapper.listDimCheckWareHouse()
+        		.stream().collect(Collectors.groupingBy(PlatformInitStockExcelDTO::getSourceSystemName));
+        Map<String, Map<String, PlatformInitStockExcelDTO>> sourceSystemNameWareHouseNameMaps = new HashMap<>();
+        for(Map.Entry<String, List<PlatformInitStockExcelDTO>> sourceSystemNameMap : sourceSystemNameMaps.entrySet()) {
+        	sourceSystemNameWareHouseNameMaps.put(sourceSystemNameMap.getKey(), 
+        			sourceSystemNameMap.getValue().stream().collect(Collectors.toMap(PlatformInitStockExcelDTO::getPlatformWarehouseName, d -> d , (d1 , d2) -> d1)));
+        }
         
         LoginUser defaultLoginUser = UserContext.getNonLoginUser();
         IdentifierGenerator identifierGenerator = ApplicationContextUtils.getBean(IdentifierGenerator.class);
-        AdsErpInventoryDiffFlowMapper adsErpInventoryDiffFlowMapper = ApplicationContextUtils.getBean(AdsErpInventoryDiffFlowMapper.class);
         Map<String, PlatformInitStockExcelDTO> checkMonthAndWarehouseMap = new HashMap<>();
         List<PlatformInitStockExcelDTO> listInit = adsErpInventoryDiffFlowMapper.listInit(warehouseNameList, checkMonthList);
         if(CollUtil.isNotEmpty(listInit)) {
@@ -96,37 +98,22 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
         List<PlatformInitStockExcelDTO> insertDbList = new ArrayList<>();
         for (PlatformInitStockExcelDTO excelDTO : dataList) {
         	String sourceSystemName = excelDTO.getSourceSystemName();
-        	List<OverseasProviderEntity> mainList = sourceSystemNameMap.get(sourceSystemName);
-        	if(CollUtil.isEmpty(mainList)) {
+        	Map<String, PlatformInitStockExcelDTO> warehouseNameMaps = sourceSystemNameWareHouseNameMaps.get(sourceSystemName);
+        	if(CollUtil.isEmpty(warehouseNameMaps)) {
         		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】核对仓库在系统不存在", sourceSystemName));
                 errorList.add(excelDTO);
                 continue;
         	}
-        	Map<String, String> idPlatformAccountMap = mainList.stream().collect(Collectors.toMap(OverseasProviderEntity::getId, OverseasProviderEntity::getPlatformAccount));
-        	
         	String platformWarehouseName = excelDTO.getPlatformWarehouseName();
-			List<OverseasProviderWarehouseEntity> list = nameGroupMap.get(platformWarehouseName);
-        	if(CollUtil.isEmpty(list)) {
-        		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库名称在系统不存在", platformWarehouseName));
-                errorList.add(excelDTO);
-                continue;
-        	}
         	
-        	list = list.stream().filter(l -> idPlatformAccountMap.containsKey(l.getMainId())).collect(Collectors.toList());
-        	if(CollUtil.isEmpty(list)) {
+        	PlatformInitStockExcelDTO dimCheckWarehouseDTO = warehouseNameMaps.get(platformWarehouseName);
+        	if(dimCheckWarehouseDTO == null) {
         		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库名称在{}下不存在", platformWarehouseName , sourceSystemName));
                 errorList.add(excelDTO);
                 continue;
         	}
         	
-        	if(list.size() > 1) {
-        		excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库名称在{}下存在多个，请联系实施处理", platformWarehouseName , sourceSystemName));
-                errorList.add(excelDTO);
-                continue;
-        	}
-        	
-        	OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = list.get(0);
-        	String accountCode = idPlatformAccountMap.get(overseasProviderWarehouseEntity.getMainId());
+        	String accountCode = dimCheckWarehouseDTO.getAccountCode();
         	PlatformInitStockExcelDTO dbExcelDTO = checkMonthAndWarehouseMap.get(accountCode + "_" + excelDTO.getCheckMonth() + "_" + excelDTO.getPlatformWarehouseName() + "_" + excelDTO.getStockSku());
         	if(dbExcelDTO != null) {
         		excelDTO.setId(dbExcelDTO.getId());
@@ -140,7 +127,7 @@ public class PlatformInitStockExcelListener extends AnalysisEventListener<Platfo
             	excelDTO.setCreateTime(LocalDateTime.now());
         	}
         	excelDTO.setAccountCode(accountCode);
-        	excelDTO.setPlatformWarehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode());
+        	excelDTO.setPlatformWarehouseCode(dimCheckWarehouseDTO.getPlatformWarehouseCode());
         	excelDTO.setUpdateUserId(defaultLoginUser.getUid());
         	excelDTO.setUpdateUserName(defaultLoginUser.getUserName());
         	excelDTO.setUpdateTime(LocalDateTime.now());
