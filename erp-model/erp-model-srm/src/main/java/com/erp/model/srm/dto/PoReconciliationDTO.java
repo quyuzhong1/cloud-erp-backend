@@ -2,6 +2,7 @@ package com.erp.model.srm.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -487,6 +488,23 @@ public class PoReconciliationDTO implements Serializable {
          * 对账单号
          */
         private String code;
+
+        /**
+         * 采购申请单id集合
+         */
+        @JsonIgnore
+        private List<String> purchaseApplicationIds;
+
+        /**
+         * 采购来源类型
+         */
+        private String poSourceType;
+
+        /**
+         * 采购订单ID
+         */
+        private String poId;
+
         /**
          * 对账状态
          */
