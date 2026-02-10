@@ -164,7 +164,10 @@ public class ImportHistoryRecordDTO implements Serializable {
         private String operationUserId;
 
 
-
+        /**
+         * 操作人名称
+         */
+        private String operationUserName;
 
         /**
          * 创建时间

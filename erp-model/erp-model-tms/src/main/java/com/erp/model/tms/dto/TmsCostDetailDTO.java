@@ -327,8 +327,27 @@ public class TmsCostDetailDTO implements Serializable {
         /**
          * 费用值
          */
-        @FieldValid(fieldName = "费用值",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+        @FieldValid(fieldName = "费用值",formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
         private String costValue;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CheckAmountDTO {
+
+        /**
+         * 实际金额
+         */
+        @FieldValid(fieldName = "实际金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
+        private String actualAmount;
+
+        /**
+         * 预估金额
+         */
+        @FieldValid(fieldName = "预估金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
+        private String estimatedAmount;
 
     }
 
