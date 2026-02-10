@@ -425,6 +425,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     addDTO.setSourceCode(list.get(0).getSourceCode());
                     addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
                 }
+            }else {
+                addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
         //销售订单信息
@@ -444,6 +446,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     addDTO.setSourceId(list.get(0).getId());
                     addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
                 }
+            }else {
+                addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
         addDTO.setSourceCode(excelDTO.getSoCode());
@@ -452,6 +456,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
         LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
         addDetailDTO.setTrackNo(excelDTO.getTrackNo());
+        addDetailDTO.setTrackEnable(Boolean.FALSE);
         addDTO.setDetailList(Collections.singletonList(addDetailDTO));
         return logisticsBillService.add(addDTO);
     }
