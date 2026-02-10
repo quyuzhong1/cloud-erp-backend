@@ -261,4 +261,9 @@ public class ExportDmpFeignController {
     public PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> exportAdsErpInventoryDetailSelf(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto){
         return adsErpInventoryDiffFlowService.sourceSelfPaging(dto);
     }
+
+    @PostMapping("/exportDiffOutstockSyncSourcePlatform")
+    public PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> exportDiffOutstockSyncSourcePlatform(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto){
+        return adsErpDiffOutstockSyncService.sourcePlatformPaging(dto);
+    }
 }
