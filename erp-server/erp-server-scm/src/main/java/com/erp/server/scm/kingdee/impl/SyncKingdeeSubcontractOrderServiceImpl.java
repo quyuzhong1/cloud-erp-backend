@@ -29,6 +29,7 @@ import com.erp.model.scm.entity.ScmPushMsgEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.SubcontractOrderTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -142,6 +143,8 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         resultMap.put("id",entity.getId());
         //编码
         resultMap.put("code",entity.getCode());
+        //单据类型
+        resultMap.put("type",Objects.equals(entity.getType(), SubcontractOrderTypeEnum.COMMON_SUBCONTRACT.getCode()) ? "WWDD01_SYS" : "WWDD02_SYS");
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //操作（枚举SyncKingdeeOperateEnum）

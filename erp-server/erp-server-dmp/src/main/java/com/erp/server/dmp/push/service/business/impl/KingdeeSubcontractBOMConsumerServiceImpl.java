@@ -92,7 +92,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         /**
          * 下推
          */
-        if (SyncOperateEnum.OPERATE_PUSH.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operatePush(bomApiUtils,bomChangeApiUtils,apiUtils,skuApiUtils,platformEntity, map,json,type);
         }
 

@@ -194,9 +194,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
                 updateStatus.setSoCode(mainEntity.getCode());
                 updateStatus.setSoId(mainEntity.getId());
-                updateStatus.setBillStatus(billStatus);
-                if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
-                    updateStatus.setAddOperationLog(true);
+                if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+                    //只有已发货才更新
+                    updateStatus.setBillStatus(billStatus);
+
+                    //防止同一个单多次来取重复记录日志，只有一开始订单状态不是已发货才记录日志
+                    if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
+                        updateStatus.setAddOperationLog(true);
+                    }
                 }
                 updateStatus.setTrackNo(dto.getTrackNo());
                 soB2cFeign.updateSoB2cStatusByParams(updateStatus);
@@ -228,9 +233,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
             updateStatus.setSoCode(mainEntity.getCode());
             updateStatus.setSoId(mainEntity.getId());
-            updateStatus.setBillStatus(billStatus);
-            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
-                updateStatus.setAddOperationLog(true);
+            if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+                //只有已发货才更新
+                updateStatus.setBillStatus(billStatus);
+                //防止同一个单多次来取重复记录日志，只有一开始订单状态不是已发货才记录日志
+                if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
+                    updateStatus.setAddOperationLog(true);
+                }
             }
             updateStatus.setTrackNo(dto.getTrackNo());
             soB2cFeign.updateSoB2cStatusByParams(updateStatus);
@@ -558,9 +567,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateDto.setVirtualWarehouseId(virtualWarehouseId);
             updateDto.setTrackNo(dto.getTrackNo());
             updateDto.setSoB2cId(mainEntity.getId());
-            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
+            if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+                //只有已发货才更新
                 updateDto.setBillStatus(dto.getOrderStatus());
-                updateDto.setAddOperationLog(true);
+
+                //防止同一个单多次来取重复记录日志，只有一开始订单状态不是已发货才记录日志
+                if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
+                    updateDto.setAddOperationLog(true);
+                }
             }
             soB2cFeign.updateB2cByPlatformOutbound(updateDto);
 

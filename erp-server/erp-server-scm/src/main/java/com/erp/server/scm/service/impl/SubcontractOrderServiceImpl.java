@@ -442,7 +442,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             kingdeeSubcontractBOMDTO.setSourceId(entity.getId());
             kingdeeSubcontractBOMDTO.setSourceCode(entity.getCode());
             //下推委外用料清单变更单
-            sendSubcontractBOMPushTask(Arrays.asList(kingdeeSubcontractBOMDTO),SyncOperateEnum.OPERATE_PUSH.getCode());
+            sendSubcontractBOMPushTask(Arrays.asList(kingdeeSubcontractBOMDTO),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
