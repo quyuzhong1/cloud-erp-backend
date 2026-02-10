@@ -41,8 +41,6 @@
                 po.source_type as poSourceType
         from po_reconciliation_detail prd
         left join foreign_purchase_order po on prd.po_id = po.id and po.is_deleted = false
-        left join po_reconciliation_ref_detail prrd on prrd.source_detail_id = prd.source_detail_id and prd.is_deleted = false
-        left join po_reconciliation pr on pr.id = prrd.po_reconciliation_id and pr.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and prd.is_deleted = false and prd.status in ('waitReconciliation','partReconciliation','notNeedReconciliation')
