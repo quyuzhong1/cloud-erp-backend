@@ -94,7 +94,7 @@
                 #{app}
             </foreach>
         </if>
-        ORDER BY m.create_time DESC limit 10000
+        ORDER BY m.create_time DESC limit #{param.pageSize} offset #{param.offSet}
     </select>
     
     <select id="listNotReadMessageNum" resultType="com.erp.model.sys.dto.MessageDTO$NotReadMessageNum">
