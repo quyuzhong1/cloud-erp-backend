@@ -2,10 +2,7 @@ package com.erp.server.dmp.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
-import com.erp.model.dmp.dto.DmpRestCloudDTO;
+import com.erp.model.dmp.dto.*;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -59,4 +56,6 @@ public interface DmpRestCloudService {
     PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> inventorySourcePlatformPaging(@Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto);
 
     PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> diffOutstockSyncSourcePlatformPaging(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
+
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> diffReturnInstockSourcePlatformPaging(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
 }

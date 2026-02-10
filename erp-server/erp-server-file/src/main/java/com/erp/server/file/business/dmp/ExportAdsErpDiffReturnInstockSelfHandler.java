@@ -3,7 +3,7 @@ package com.erp.server.file.business.dmp;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -15,25 +15,25 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 朔源查询-平台出库单
+ * 朔源查询-erp出库单
  * @author jack
  * @date 2026/2/5 10:11
  */
 @Component
 @Slf4j
-public class ExportAdsErpDiffOutstockSyncDetailPlatformHandler extends AbstractPageFileEventHandler<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO, AdsErpDiffOutstockSyncDTO.PagingParamDTO> {
+public class ExportAdsErpDiffReturnInstockSelfHandler extends AbstractPageFileEventHandler<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO, AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> {
 
     @Resource
     private ExportDmpFeign exportDmpFeign;
 
     @Override
-    protected PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> getPageData(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
-        return exportDmpFeign.exportDiffOutstockSyncSourcePlatform(dto);
+    protected PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> getPageData(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
+        return exportDmpFeign.exportDiffReturnInstockSyncSourcePlatform(dto);
     }
 
     @Override
-    protected List<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> getData(FileTask fileTask) {
-        AdsErpDiffOutstockSyncDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AdsErpDiffOutstockSyncDTO.PagingParamDTO>() {});
+    protected List<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> getData(FileTask fileTask) {
+        AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO>() {});
         return listSeqData(dto);
     }
 
@@ -44,6 +44,6 @@ public class ExportAdsErpDiffOutstockSyncDetailPlatformHandler extends AbstractP
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC_DETAIL_PLATFORM;
+        return FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_DETAIL_SELF;
     }
 }

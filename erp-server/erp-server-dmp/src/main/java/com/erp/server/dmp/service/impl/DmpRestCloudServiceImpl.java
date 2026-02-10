@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
@@ -10,10 +11,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
-import com.erp.model.dmp.dto.DmpRestCloudDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -243,7 +241,9 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("currPage", dto.getCurrPage());
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
-        data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        if(CollUtil.isNotEmpty(dto.getParams().getIds())){
+            data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        }
         map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_diff_outstock_sync_source_platform")
                 .header("Content-Type", "application/json")
@@ -261,6 +261,45 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                 List<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("data")
                         .stream()
                         .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpDiffOutstockSyncDTO.SourcePlatformDTO.class))
+                        .collect(Collectors.toList());
+                return new PagingVO<>(resultList,
+                        responseJson.getInteger("total"),
+                        responseJson.getInteger("pageSize"),
+                        responseJson.getInteger("currPage")
+                );
+            }else {
+                throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> diffReturnInstockSourcePlatformPaging(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
+        // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
+        Map<String, Object> map = new HashMap<>();
+        map.put("currPage", dto.getCurrPage());
+        map.put("pageSize", dto.getPageSize());
+        JSONObject data = new JSONObject();
+        if(CollUtil.isNotEmpty(dto.getParams().getIds())){
+            data.put("ids",CharSequenceUtil.join(",",dto.getParams().getIds()));
+        }
+        map.put("data", Collections.singletonList(data));
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_diff_return_instock_sync_source_platform")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+        if (200 != response.getStatus()) {
+            throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+        }else {
+            String body = response.body();
+            JSONObject responseJson = JSON.parseObject(body);
+            Boolean state = responseJson.getBoolean("state");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null != state && state) {
+                List<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> resultList = responseJson.getJSONArray("data")
+                        .stream()
+                        .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO.class))
                         .collect(Collectors.toList());
                 return new PagingVO<>(resultList,
                         responseJson.getInteger("total"),

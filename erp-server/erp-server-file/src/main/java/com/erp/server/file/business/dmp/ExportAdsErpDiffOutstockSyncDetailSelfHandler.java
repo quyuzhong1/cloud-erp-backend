@@ -15,8 +15,8 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 朔源查询-平台出库单
- * @author will
+ * 朔源查询-erp出库单
+ * @author jack
  * @date 2026/2/5 10:11
  */
 @Component
