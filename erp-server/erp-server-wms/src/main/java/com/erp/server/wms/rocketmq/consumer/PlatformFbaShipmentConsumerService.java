@@ -22,6 +22,7 @@ import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -113,6 +114,24 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         log.info("[Fba货件] 消费:dto={}", JSONUtil.toJsonStr(dto));
         // 组合信息
         FbaShipmentEntity entity = FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToEntity(dto);
+
+        /**
+         * 更新映射
+         */
+        List<CfgAmzFulfillmentCenterEntity> list = cfgAmzFulfillmentCenterService.lambdaQuery()
+                .eq(CfgAmzFulfillmentCenterEntity::getCode, entity.getFulfillmentCenter())
+                .list();
+        if (list.isEmpty()) {
+            CfgAmzFulfillmentCenterEntity cfgAmzFulfillmentCenterEntity = new CfgAmzFulfillmentCenterEntity();
+            cfgAmzFulfillmentCenterEntity.setCode(entity.getFulfillmentCenter());
+            cfgAmzFulfillmentCenterEntity.setCountry(dto.getFulfillmentCenterCountry());
+            cfgAmzFulfillmentCenterService.save(cfgAmzFulfillmentCenterEntity);
+        } else {
+            cfgAmzFulfillmentCenterService.lambdaUpdate()
+                    .set(CfgAmzFulfillmentCenterEntity::getCountry,entity.getFulfillmentCenter())
+                    .eq(CfgAmzFulfillmentCenterEntity::getCode,dto.getFulfillmentCenterCountry())
+                    .update();
+        }
 
         // 签收信息
         List<PlatformFbaShipmentReceiveDTO> receiveDTOList = dto.getReceiveDTOList();
