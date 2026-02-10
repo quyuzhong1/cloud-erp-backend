@@ -48,30 +48,19 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
-        List<MessageDTO.NotReadMessageNum> notReadMessageNumList = new ArrayList<>();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        String uid = userInfo.getUid();
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
         paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
-        List<MessageEntity> list = baseMapper.list(paramDTO);
-        //获取已读的消息通知
-        List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(uid);
-        for (MessageTypeEnum typeEnum : MessageTypeEnum.values()) {
-            List<MessageEntity> messageEntityList = list.stream().filter(req -> req.getType().equals(typeEnum.getCode())).collect(Collectors.toList());
-            List<String> messageIds = messageEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
-            List<MessageUserReadEntity> readEntities = messageUserReadEntities.stream().filter(req -> messageIds.contains(req.getMessageId())).collect(Collectors.toList());
-            MessageDTO.NotReadMessageNum notReadMessageNum = new MessageDTO.NotReadMessageNum();
-            notReadMessageNum.setType(typeEnum.getCode());
-            notReadMessageNum.setTypeName(typeEnum.getName());
-            notReadMessageNum.setTypeRemark(typeEnum.getRemark());
-            notReadMessageNum.setCount(messageEntityList.size() - readEntities.size());
-            if (CollectionUtils.isNotEmpty(messageEntityList)) {
-                notReadMessageNum.setLatestTime(messageEntityList.get(MathUtil.ZERO).getCreateTime());
-            }
-            notReadMessageNumList.add(notReadMessageNum);
-        }
+        List<MessageDTO.NotReadMessageNum> notReadMessageNumList = baseMapper.listNotReadMessageNum(paramDTO);
+        notReadMessageNumList.forEach(n -> {
+        	MessageTypeEnum messageTypeEnum = MessageTypeEnum.getMessageTypeEnum(n.getType());
+        	if(messageTypeEnum != null) {
+        		n.setTypeName(messageTypeEnum.getName());
+        		n.setTypeRemark(messageTypeEnum.getRemark());
+        	}
+        });
         return notReadMessageNumList;
     }
 
@@ -79,9 +68,6 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type) {
         List<MessageDTO.NotReadMessageNumDetail> notReadMessageNumDetailList = new ArrayList<>();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        //获取已读的消息通知
-        List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
-        List<String> messageIds = messageUserReadEntities.stream().map(req -> req.getMessageId()).collect(Collectors.toList());
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setType(type);
@@ -93,30 +79,34 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
             notReadMessageNumDetail.setId(messageEntity.getId());
             notReadMessageNumDetail.setDataJson(messageEntity.getDataJson());
             notReadMessageNumDetail.setCreateTime(messageEntity.getCreateTime());
-            if (!messageIds.contains(messageEntity.getId())) {
-                notReadMessageNumDetail.setIsRead(Boolean.FALSE);
-            } else {
-                notReadMessageNumDetail.setIsRead(Boolean.TRUE);
-            }
+            notReadMessageNumDetail.setIsRead(messageEntity.getIsRead());
             notReadMessageNumDetailList.add(notReadMessageNumDetail);
         }
-        readMessage(messageUserReadEntities, list);
+        newReadMessage(type);
         notReadMessageNumDetailList.sort(Comparator.comparing(MessageDTO.NotReadMessageNumDetail::getCreateTime));
         return notReadMessageNumDetailList;
     }
 
     @Override
     public Boolean readAll() {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        //获取已读的消息通知
-        List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
-        //获取所有消息通知
-        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
-        paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
-        List<MessageEntity> list = baseMapper.list(paramDTO);
-        readMessage(messageUserReadEntities, list);
+        newReadMessage(null);
         return Boolean.TRUE;
+    }
+    
+    private void newReadMessage(String type) {
+    	LoginUser userInfo = UserContext.getDefaultLoginUser();
+    	
+    	String lastSql = " and message_id in (select id from message where application IN ( 'PDA' , 'ALL' ) ) ";
+    	if(StringUtils.isNotBlank(type)) {
+    		lastSql = " and message_id in (select id from message where application IN ( 'PDA' , 'ALL' ) and type = '"+ type +"' ) ";
+    	}
+    	
+    	messageUserReadService.lambdaUpdate().set(MessageUserReadEntity::getIsRead, true)
+	    	.eq(MessageUserReadEntity::getIsRead, false)
+	    	.eq(MessageUserReadEntity::getUserId, userInfo.getUid())
+	    	.last(lastSql).update();
+    	
+        redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
     }
 
     @Override
