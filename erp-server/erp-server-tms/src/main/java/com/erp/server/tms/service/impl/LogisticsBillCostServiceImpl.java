@@ -1227,6 +1227,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //数据赋值
         LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
         updateDataDTO.setId(logisticsBillCostEntity.getId());
+        updateDataDTO.setPayType(billCostExcelDTO.getPayType());
         String billingWeight = billCostExcelDTO.getBillingWeight();
         if(StringUtils.isNotBlank(billingWeight)) {
             updateDataDTO.setBillingWeight(new BigDecimal(billingWeight));

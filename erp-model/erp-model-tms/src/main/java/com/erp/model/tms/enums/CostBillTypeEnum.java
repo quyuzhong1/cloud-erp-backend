@@ -13,6 +13,7 @@ public enum CostBillTypeEnum implements EnumMessage {
     B2C("B2C", "B2C订单"),
     AFTER_SALES("AfterSale","售后订单-补/换/赠"),
     SORETURN_INSTOCK("soReturnInstock", "退货入库单"),
+    OTHER("other", "其他"),
     ;
     /**
      * 类型
