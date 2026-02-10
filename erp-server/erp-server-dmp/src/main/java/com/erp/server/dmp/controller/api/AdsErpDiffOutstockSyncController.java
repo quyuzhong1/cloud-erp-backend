@@ -138,7 +138,7 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
      * @author jack
      * @date 2026-02-09
      * @param dto
-     * @return ApiResult<PagingVO<PagingDTO>>
+     * @return ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO>>
      */
     @PostMapping("/sourcePlatformPaging")
     public ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO>> sourcePlatformPaging(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
@@ -159,15 +159,31 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-//    /**
-//     * 查询朔源信息分页-平台出库单
-//     * @author jack
-//     * @date 2026-02-09
-//     * @param dto
-//     * @return ApiResult<PagingVO<PagingDTO>>
-//     */
-//    @PostMapping("/sourceSelfPaging")
-//    public ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourceSelfDTO>> sourceSelfPaging(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
-//        return success(adsErpDiffOutstockSyncService.sourceSelfPaging(dto));
-//    }
+    /**
+     * 查询朔源信息分页-ERP出库单
+     * @author jack
+     * @date 2026-02-09
+     * @param dto
+     * @return ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO>>
+     */
+    @PostMapping("/sourceSelfPaging")
+    public ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO>> sourceSelfPaging(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
+        return success(adsErpDiffOutstockSyncService.sourcePlatformPaging(dto));
+    }
+
+    /**
+     * 导出朔源信息-ERP出库单
+     * @author jack
+     * @date 2026-02-09
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
+    @PostMapping(value = "/exportSourceSelf")
+    public ApiResult<Object>exportSourceSelf(@RequestBody AdsErpDiffOutstockSyncDTO.PagingParamDTO dto) {
+        Boolean flag = adsErpDiffOutstockSyncService.exportSourceSelf(dto);
+        return flag == true ? success() : failure();
+    }
+
+
 }

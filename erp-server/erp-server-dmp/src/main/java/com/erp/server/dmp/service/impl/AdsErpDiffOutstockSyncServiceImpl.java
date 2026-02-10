@@ -300,5 +300,10 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC_DETAIL_PLATFORM.getCode(), dto);
         return Boolean.TRUE;
     }
+    @Override
+    public Boolean exportSourceSelf(PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-ERP出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC_DETAIL_SELF.getCode(), dto);
+        return Boolean.TRUE;
+    }
 
 }

@@ -91,4 +91,6 @@ public interface AdsErpDiffOutstockSyncService extends SuperService<AdsErpDiffOu
     PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
 
     Boolean exportSourcePlatform(AdsErpDiffOutstockSyncDTO.PagingParamDTO dto);
+
+    Boolean exportSourceSelf(AdsErpDiffOutstockSyncDTO.PagingParamDTO dto);
 }
