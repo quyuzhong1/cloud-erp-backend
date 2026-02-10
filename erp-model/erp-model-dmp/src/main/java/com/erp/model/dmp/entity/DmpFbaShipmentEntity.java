@@ -102,6 +102,12 @@ public class DmpFbaShipmentEntity extends BaseEntity<DmpFbaShipmentEntity> {
     private Boolean isSta;
 
     /**
+     * 平台物流中心国家
+     */
+    @TableField("fulfillment_center_country")
+    private String fulfillmentCenterCountry;
+
+    /**
      * 任务来源唯一加密代号
      */
     @TableField("unique_encrypt")

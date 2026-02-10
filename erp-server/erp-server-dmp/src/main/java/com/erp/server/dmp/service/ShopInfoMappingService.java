@@ -31,4 +31,9 @@ public interface ShopInfoMappingService extends SuperService<ShopInfoMappingEnti
      * 根据店铺ID和平台类型查询映射关系
      */
     ShopInfoMappingEntity getByShopIdAndType(String shopId, String thirdPlatformType);
+
+    /**
+     * 根据sid和平台类型查询映射关系
+     */
+    ShopInfoMappingEntity getBySIdAndType(String sid, String thirdPlatformType);
 }
