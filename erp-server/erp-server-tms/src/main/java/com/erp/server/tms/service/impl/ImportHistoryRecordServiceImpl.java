@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -44,12 +45,14 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.ImportHistoryRecordExcelListener;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,6 +103,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private TmsCostDetailService tmsCostDetailService;
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -386,7 +391,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 //按主费用单新增或更新数据
                 List<String> mainErrorMsgList = new ArrayList<>();
                 //新增或更新数据
-                addOrUpdateData(successJson, updateAllList,  logisticsBillCostList,
+                addOrUpdateData(uniqueKeyList,successJson, updateAllList,  logisticsBillCostList,
                         logisticsBillVos, cfgCostList,  importDTO,costImportEntity,  mainErrorMsgList,costAttribution);
                 //物流费用主信息错误处理
                 for (JSONObject jsonObject : costSuccessList) {
@@ -415,7 +420,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<String> errorMsgList = new ArrayList<>();
                 List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
                 //新增或更新数据
-                addOrUpdateData(successJson, updateList,  logisticsBillCostList,
+                addOrUpdateData(uniqueKeyList,successJson, updateList,  logisticsBillCostList,
                         logisticsBillVos, cfgCostList,  importDTO,costImportEntity, errorMsgList,costAttribution);
 
                 //判断错误信息是否为空
@@ -549,18 +554,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         String actualAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "actualAmount"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
         String actualAmount = ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? null : String.valueOf(jsonObject.get(actualAmountIndex));
-        if (ObjectUtil.isNotNull(actualAmount) && !StrUtil.isNumeric(actualAmount)) {
-            errorMsgList.add("实际金额格式不正确");
-        }
 
         //查询预估金额
         String estimatedAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "estimatedAmount"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
         String estimatedAmount = ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? null : String.valueOf(jsonObject.get(estimatedAmountIndex));
-        if (ObjectUtil.isNotNull(estimatedAmount) && !StrUtil.isNumeric(estimatedAmount)) {
-            errorMsgList.add("预估金额格式不正确");
-        }
-        if (CollUtil.isNotEmpty(errorMsgList)) {
+
+        //校验费用值类型
+        List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckAmountDTO(actualAmountIndex,estimatedAmount));
+        if (CollUtil.isNotEmpty(errorMsg)) {
+            errorMsgList.addAll(errorMsg);
             return updateList;
         }
 
@@ -638,7 +641,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param errorMsgList
      * @return void
      */
-    private void addOrUpdateData(JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
+    private void addOrUpdateData(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList ,JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
                                  List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
                                  CfgLogisticsCostImportEntity costImportEntity,   List<String> errorMsgList,String costAttribution) {
 
@@ -657,14 +660,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             payTypeCode = logisticsPayTypeEnum.PAY.getCode();
         }
         excelDTO.setPayType(payTypeCode);
+        //查询根据唯一键匹配物流单
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream().filter(obj -> uniqueKeyList.stream().allMatch(uniqueKey -> CharSequenceUtil.equals(String.valueOf(successJson.get(uniqueKey.getTargetField())), BeanUtil.getFieldValue(obj, uniqueKey.getTargetField()).toString()))).collect(Collectors.toList());
 
-        //物流单明细
-        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream()
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) || obj.getPlatformCode().equals(excelDTO.getPlatformCode()))
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) || obj.getSoDeliveryCode().equals(excelDTO.getSoDeliveryCode()))
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSourceCode()) || obj.getSourceCode().equals(excelDTO.getSourceCode()))
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || obj.getTrackNo().equals(excelDTO.getTrackNo()))
-                .collect(Collectors.toList());
         //未查询到物流单则需要按新增分货（按新单）逻辑处理
         String importType = "";
         if (CollUtil.isEmpty(logisticsBillVoList)) {
@@ -1011,25 +1009,24 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                         && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
                         && (
-                        (CharSequenceUtil.isBlank(obj.getReconciliationMonth()) && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode()) && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode()))
-                                || (CharSequenceUtil.isBlank(obj.getReconciliationMonth()) && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))
-                                || CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
+                        (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode()) && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode()))
+                                || (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))
                 )
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
         //未查询到物流费用单则需要按新增分货（按原单）逻辑处理
-        if (CollUtil.isEmpty(thisMonthEntityList)) {
-            boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
-            if (!contains) {
-                errorMsgList.add("未查到物流费用单，配置的导入处理类型不包含导入新增（按原单），请核查单号");
-            }
-            importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode();
-        } else {
+        if (CollUtil.isNotEmpty(thisMonthEntityList)) {
             boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode());
             if (!contains) {
                 errorMsgList.add("配置的导入处理类型不包含导入更新，请核查配置");
             }
             importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode();
+        } else {
+            boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+            if (!contains) {
+                errorMsgList.add("未查到物流费用单，配置的导入处理类型不包含导入新增（按原单），请核查单号");
+            }
+            importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode();
         }
         //校验物流费用
         if(logisticsBillCostEntityList.size() > 1) {
@@ -1097,6 +1094,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             return;
         }
 
+        List<String> operationUserIdList = list.stream().map(ImportHistoryRecordDTO.ListDTO::getOperationUserId).distinct().collect(Collectors.toList());
+        List<FindUserDTO> findUserList = sysUserFeign.getUserListByUserIds(operationUserIdList);
+        Map<String, String> userMap = findUserList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
         // 属性赋值
         for(ImportHistoryRecordDTO.ListDTO data : list) {
             //对账月份
@@ -1107,6 +1107,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
             //处理状态名称
             data.setStatusName(ImportHistoryRecordStatusEnum.getName(data.getStatus()));
+
+            //操作人名称
+            data.setOperationUserName(userMap.get(data.getOperationUserId()));
         }
     }
 

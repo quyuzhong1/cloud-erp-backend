@@ -8,8 +8,6 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
@@ -190,9 +188,8 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         } else {
             addDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
         }
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
         addDTO.setType(importDTO.getType());
-        addDTO.setOperationUserId(userInfo.getUid());
+        addDTO.setOperationUserId(importDTO.getUserId());
         addDTO.setImportCount(count);
 
         //匹配结果序号
