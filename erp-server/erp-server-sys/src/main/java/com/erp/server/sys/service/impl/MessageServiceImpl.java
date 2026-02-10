@@ -65,7 +65,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
-    public List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type) {
+    public List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type , Integer pageNo , Integer pageSize) {
         List<MessageDTO.NotReadMessageNumDetail> notReadMessageNumDetailList = new ArrayList<>();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //获取所有消息通知
@@ -73,6 +73,14 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         paramDTO.setType(type);
         paramDTO.setUserId(userInfo.getUid());
         paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        if(pageNo == null) {
+        	pageNo = 1;
+        }
+        if(pageSize == null) {
+        	pageSize = 1000;
+        }
+        paramDTO.setPageSize(pageSize);
+        paramDTO.setOffSet((pageNo - 1) * pageSize);
         List<MessageEntity> list = baseMapper.list(paramDTO);
         for (MessageEntity messageEntity : list) {
             MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
