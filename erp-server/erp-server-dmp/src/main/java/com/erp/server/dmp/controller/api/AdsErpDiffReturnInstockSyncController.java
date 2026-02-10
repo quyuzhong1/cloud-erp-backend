@@ -141,10 +141,50 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
      * @author jack
      * @date 2026-02-09
      * @param dto
-     * @return ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO>>
+     * @return ApiResult<PagingVO<adsErpDiffReturnInstockSyncService.SourcePlatformDTO>>
      */
     @PostMapping("/sourcePlatformPaging")
     public ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO>> sourcePlatformPaging(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
         return success(adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto));
+    }
+
+    /**
+     * 导出朔源信息-平台出库单
+     * @author jack
+     * @date 2026-02-09
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
+    @PostMapping(value = "/exportSourcePlatform")
+    public ApiResult<Object>exportSourcePlatform(@RequestBody AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto) {
+        Boolean flag = adsErpDiffReturnInstockSyncService.exportSourcePlatform(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 查询朔源信息分页-ERP出库单
+     * @author jack
+     * @date 2026-02-09
+     * @param dto
+     * @return ApiResult<PagingVO<adsErpDiffReturnInstockSyncService.SourcePlatformDTO>>
+     */
+    @PostMapping("/sourceSelfPaging")
+    public ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO>> sourceSelfPaging(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
+        return success(adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto));
+    }
+
+    /**
+     * 导出朔源信息-ERP出库单
+     * @author jack
+     * @date 2026-02-09
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
+    @PostMapping(value = "/exportSourceSelf")
+    public ApiResult<Object>exportSourceSelf(@RequestBody AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto) {
+        Boolean flag = adsErpDiffReturnInstockSyncService.exportSourceSelf(dto);
+        return flag == true ? success() : failure();
     }
 }

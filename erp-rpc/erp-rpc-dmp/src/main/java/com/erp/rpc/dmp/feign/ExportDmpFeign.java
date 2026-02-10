@@ -122,4 +122,8 @@ public interface ExportDmpFeign {
 
     @PostMapping("/feign/export/exportDiffOutstockSyncSourcePlatform")
     PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> exportDiffOutstockSyncSourcePlatform(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
+
+
+    @PostMapping("/feign/export/exportDiffReturnInstockSyncSourcePlatform")
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> exportDiffReturnInstockSyncSourcePlatform(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
 }
