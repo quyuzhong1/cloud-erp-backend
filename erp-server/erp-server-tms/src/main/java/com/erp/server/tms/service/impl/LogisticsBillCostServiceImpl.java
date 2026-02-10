@@ -286,6 +286,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         logisticsBillCostEntity.setBillingWeightLogistics(updateDTO.getBillingWeightLogistics());
         logisticsBillCostEntity.setRemark(updateDTO.getRemark());
         logisticsBillCostEntity.setCurrency(updateDTO.getCurrency());
+        logisticsBillCostEntity.setPayType(CharSequenceUtil.blankToDefault(updateDTO.getPayType(), old.getPayType()));
 
         Optional.ofNullable(updateDTO.getActualWeight()).ifPresent(logisticsBillCostEntity::setActualWeight);
         Optional.ofNullable(updateDTO.getVolumeWeight()).ifPresent(logisticsBillCostEntity::setVolumeWeight);
@@ -1143,6 +1144,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
                     addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
+            }else {
+                addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
         //销售订单信息
@@ -1164,6 +1167,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
                     addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                 }
+            }else {
+                addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
         addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
@@ -1173,6 +1178,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
         addDetailDTO.setTrackNo(excelDTO.getTrackNo());
+        addDetailDTO.setTrackEnable(Boolean.FALSE);
         addDTO.setDetailList(Collections.singletonList(addDetailDTO));
         return logisticsBillService.add(addDTO);
     }
@@ -1221,6 +1227,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //数据赋值
         LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
         updateDataDTO.setId(logisticsBillCostEntity.getId());
+        updateDataDTO.setPayType(billCostExcelDTO.getPayType());
         String billingWeight = billCostExcelDTO.getBillingWeight();
         if(StringUtils.isNotBlank(billingWeight)) {
             updateDataDTO.setBillingWeight(new BigDecimal(billingWeight));

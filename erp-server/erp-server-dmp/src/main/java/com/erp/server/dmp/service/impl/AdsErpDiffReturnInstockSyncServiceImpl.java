@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.erp.server.dmp.service.DmpRestCloudService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +65,8 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -288,4 +291,22 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 		downloadTaskFeign.saveDownloadTask("退货同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC.getCode(), dto);
 		return true;
 	}
+
+    @Override
+    public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<PagingParamDTO> dto) {
+        return  dmpRestCloudService.diffReturnInstockSourcePlatformPaging(dto);
+    }
+
+    @Override
+    public Boolean exportSourcePlatform(PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_DETAIL_PLATFORM.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportSourceSelf(PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-ERP出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_DETAIL_SELF.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
 }
