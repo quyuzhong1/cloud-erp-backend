@@ -111,7 +111,14 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());
                 paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
-                paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
+                
+                // 根据数据类型设置查询条件：平台类型或仓库类型
+                if (StringUtils.isNotBlank(dto.getType())) {
+                    paramDTO.setType(dto.getType());
+                } else {
+                    paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
+                }
+                
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform()) ||
@@ -125,6 +132,12 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
                     paramDTO.setPlatformSkuIdList(StringUtils.isNotBlank(dto.getPlatformSkuId()) ? Collections.singletonList(dto.getPlatformSkuId()) : null);
                 }
+                
+                // FBT仓库类型需要使用authId进行匹配
+                if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType()) && StringUtils.isNotBlank(dto.getAuthId())) {
+                    paramDTO.setAuthId(dto.getAuthId());
+                }
+                
                 paramDTO.setIsExpire(false);
                 List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
 
@@ -156,6 +169,15 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 //订货通设置b2b平台
                 if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
                     skuMappingEntity.setType(RuleTypeEnum.B2B_PLATFORM);
+                }
+                // FBT仓库类型设置为WAREHOUSE类型
+                if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())) {
+                    skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
+                    // 仓库类型需要设置authId作为关联标识
+                    if (StringUtils.isNotBlank(dto.getAuthId())) {
+                        // authId存储在warehouseId字段，用于关联overseas_provider
+                        skuMappingEntity.setWarehouseId(dto.getAuthId());
+                    }
                 }
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
