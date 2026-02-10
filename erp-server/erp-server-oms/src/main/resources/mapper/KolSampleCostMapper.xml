@@ -184,6 +184,10 @@
               where kba.is_deleted = false
              ) sba
                  left join kolFeedback kfb on sba.detailId = kfb.source_detail_id
+        where sba.so_detail_id in 
+        <foreach collection="soDetailIdList" item="id" open="(" separator="," close=")">
+             #{id}
+         </foreach>
     </select>
 
 
