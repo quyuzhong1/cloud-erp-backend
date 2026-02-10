@@ -13,9 +13,7 @@ import com.erp.model.oms.dto.KolPartnerInfoDTO;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
-import com.erp.model.plm.entity.MoldRefSkuEntity;
-import com.erp.model.plm.entity.ProductChangeDetailEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -28,7 +26,6 @@ import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.ProductChangeService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -49,6 +46,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
@@ -336,6 +334,70 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResultDTO.AddDTO batchAdd(ProductChangeDTO.BatchAddDTO dto) {
+        List<ProductChangeEntity> dbList = this.lambdaQuery()
+            .in(ProductChangeEntity::getSkuId, dto.getSkuIds())
+            .eq(ProductChangeEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+            .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+            .list();
+        if (CollectionUtil.isNotEmpty(dbList)) {
+            throw new ServiceException("已存在未审核的变更单");
+        }
+        List<SkuVO> skuVOList = productDetailService.getSkuBaseByIds(dto.getSkuIds());
+        List<String> notApproveSku = skuVOList.stream().filter(v->!v.getStatus().equals(2)).map(v->v.getSkuNo()).collect(Collectors.toList());
+        if(CollectionUtil.isNotEmpty(notApproveSku)){
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_SKU_NOT_APPROVE + String.join(",", notApproveSku));
+        }
+        List<ProductChangeEntity> mainList = new ArrayList<>();
+        List<OperateLogEntity> operateLogEntities = new ArrayList<>();
+        for (String skuId : dto.getSkuIds()) {
+            SkuVO skuVO = skuVOList.stream().filter(v -> Objects.equals(v.getSkuId(), skuId)).findFirst().orElse(null);
+            if(Objects.isNull(skuVO)){
+                throw new ServiceException("skuId在系统中不存在");
+            }
+            ProductChangeEntity productChangeEntity = new ProductChangeEntity();
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BG);
+            productChangeEntity.setCode(code);
+            productChangeEntity.setSkuId(skuId);
+            productChangeEntity.setSkuNo(skuVO.getSkuNo());
+            productChangeEntity.setProductName(skuVO.getSkuName());
+            productChangeEntity.setBillDate(LocalDate.now());
+            List<ProductChangeDetailEntity> detailEntityList = new ArrayList<>();
+            for (ProductChangeDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+                ProductChangeDetailEntity productChangeDetailEntity = new ProductChangeDetailEntity();
+                productChangeDetailEntity.setField(addDTO.getFieldName());
+                productChangeDetailEntity.setNewValue(addDTO.getNewValue());
+                productChangeDetailEntity.setRemark(addDTO.getRemark());
+                detailEntityList.add(productChangeDetailEntity);
+            }
+            productChangeEntity.setDetailEntityList(detailEntityList);
+            mainList.add(productChangeEntity);
+
+        }
+        this.saveBatch(mainList);
+        for (ProductChangeEntity productChangeEntity : mainList) {
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "产品变更信息单" , productChangeEntity.getCode());
+            OperateLogEntity operateLogEntity = new OperateLogEntity();
+            operateLogEntity.setModuleType(ModuleTypeEnum.PRODUCT_CHANGE.getCode());
+            operateLogEntity.setBusinessId(productChangeEntity.getId());
+            operateLogEntity.setContent(msg);
+            operateLogEntity.setOperation("新增操作");
+            operateLogEntities.add(operateLogEntity);
+        }
+        List<ProductChangeDetailEntity> detailEntityList = new ArrayList<>();
+        for (ProductChangeEntity productChangeEntity : mainList) {
+            List<ProductChangeDetailEntity> productChangeDetailEntities = productChangeEntity.getDetailEntityList();
+            productChangeDetailEntities.forEach(v->v.setMainId(productChangeEntity.getId()));
+            detailEntityList.addAll(productChangeDetailEntities);
+        }
+        operateLogService.addSysLogByBatchSave(operateLogEntities);
+        productChangeDetailService.saveBatch(detailEntityList);
+        return new BaseResultDTO.AddDTO();
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submit(String id) {
@@ -585,9 +647,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     private void handleData(ProductChangeEntity productChangeEntity) {
         List<SkuVO> skuVOList = productDetailService.getSkuBaseByIds(Arrays.asList(productChangeEntity.getSkuId()));
         if(CollectionUtil.isEmpty(skuVOList)){
-            throw new ServiceException("未找到对应的产品信息数据");
+            throw new ServiceException(ApiError.COMMON_NO_SKU);
         }
         SkuVO skuVO = skuVOList.get(0);
+        if(!skuVO.getStatus().equals(2)){
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_SKU_NOT_APPROVE);
+        }
         productChangeEntity.setSkuNo(skuVO.getSkuNo());
         productChangeEntity.setProductName(skuVO.getSkuName());
     }

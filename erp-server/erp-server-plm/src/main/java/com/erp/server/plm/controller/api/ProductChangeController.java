@@ -389,4 +389,16 @@ public class ProductChangeController extends BaseController {
         return success(true);
     }
 
+    /**
+     * 批量新增
+     * @author lrp
+     * @date:  2026-02-03
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品变更信息表新增")
+    public ApiResult<BaseResultDTO.AddDTO> batchAdd(@RequestBody @Validated ProductChangeDTO.BatchAddDTO dto) {
+        return success(productChangeService.batchAdd(dto));
+    }
 }

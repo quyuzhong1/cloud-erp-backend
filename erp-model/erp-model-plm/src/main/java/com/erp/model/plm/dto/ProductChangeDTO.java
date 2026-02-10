@@ -281,6 +281,18 @@ public class ProductChangeDTO implements Serializable {
     }
 
     /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchAddDTO {
+        @NotEmpty
+        private List<String> skuIds;
+
+        @NotEmpty
+        private List<ProductChangeDetailDTO.AddDTO> detailList;
+    }
+    /**
     * 新增
     */
     @Data

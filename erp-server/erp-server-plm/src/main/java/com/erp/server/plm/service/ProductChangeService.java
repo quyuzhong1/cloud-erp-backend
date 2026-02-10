@@ -151,4 +151,6 @@ public interface ProductChangeService extends SuperService<ProductChangeEntity> 
     void importProductChange(BaseDTO.ImportDTO dto);
 
     void handleImportSuccessList(List<ProductChangeImportExcelDTO> successList, List<String> errorNoList, List<ProductChangeImportExcelDTO> errorList2, String importType);
+
+    BaseResultDTO.AddDTO batchAdd(ProductChangeDTO.BatchAddDTO dto);
 }

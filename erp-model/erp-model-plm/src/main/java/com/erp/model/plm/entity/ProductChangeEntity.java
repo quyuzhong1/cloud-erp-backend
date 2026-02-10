@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -84,6 +86,8 @@ public class ProductChangeEntity extends BaseEntity<ProductChangeEntity> {
     @TableField("approve_user_name")
     private String approveUserName;
 
+    @TableField(exist = false)
+    private List<ProductChangeDetailEntity> detailEntityList;
 
     public static final String CODE = "code";
 
