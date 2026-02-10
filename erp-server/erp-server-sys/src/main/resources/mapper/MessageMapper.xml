@@ -77,7 +77,8 @@
             m.is_deleted,
             m.type,
             m.data_json,
-            m.remark
+            m.remark,
+            mur.is_read
         FROM message m
         LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE
         WHERE m.is_deleted = FALSE
@@ -93,6 +94,25 @@
                 #{app}
             </foreach>
         </if>
-        ORDER BY m.create_time DESC
+        ORDER BY m.create_time DESC limit 10000
+    </select>
+    
+    <select id="listNotReadMessageNum" resultType="com.erp.model.sys.dto.MessageDTO$NotReadMessageNum">
+        SELECT m."type",count(*) count,max(m.create_time) latestTime FROM message m 
+        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE WHERE m.is_deleted = FALSE 
+        <if test="param.userId != null and param.userId != ''">
+            AND mur.user_id = #{param.userId}
+        </if>
+        <if test="param.type != null and param.type != ''">
+            AND m.type = #{param.type}
+        </if>
+        <if test="param.application != null and param.application.size > 0">
+            AND m.application IN
+            <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                #{app}
+            </foreach>
+        </if>
+        and mur.is_read = false 
+        GROUP BY m."type"
     </select>
 </mapper>
