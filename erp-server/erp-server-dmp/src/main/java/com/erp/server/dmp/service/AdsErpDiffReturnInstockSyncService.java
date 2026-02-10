@@ -87,4 +87,6 @@ public interface AdsErpDiffReturnInstockSyncService extends SuperService<AdsErpD
     Boolean updateRemark(AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO dto);
+
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
 }
