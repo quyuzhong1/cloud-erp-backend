@@ -94,12 +94,15 @@ public class LingxingApiUtils {
 
     @Value("${openApi.lingxing.appId:}")
     public void setAppId(String appId) {
-        LingxingApiUtils.APP_ID = appId;
+        //LingxingApiUtils.APP_ID = appId;
+        LingxingApiUtils.APP_ID = "ak_v1mOqadGTMHkC";
+
     }
 
     @Value("${openApi.lingxing.appSecret:}")
     public void setAppSecret(String appSecret) {
-        LingxingApiUtils.APP_SECRET = appSecret;
+        //LingxingApiUtils.APP_SECRET = appSecret;
+        LingxingApiUtils.APP_SECRET = "qTfvINLPVs6sO9T9jstxAw==";
     }
 
     /**
