@@ -58,9 +58,21 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
-		
+
 		List<String> orderSnList = findMongoData.stream().map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
-		
+		List<ParamData> detailParamDataList = new ArrayList<>();
+		detailParamDataList.add(new ParamData("order_sn", "order_sn", PannoEnum.IN, orderSnList));
+		List<Map<String, Object>> detailMongoData = mongoService.findMongoData(detailParamDataList, parentStorageName);
+		if(CollUtil.isEmpty(detailMongoData)) {
+			log.warn("没有订单详情数据，订单SN列表：{}", orderSnList);
+			return new ArrayList<>();
+		}
+		//过滤出订单状态是READY_TO_SHIP的订单
+		List<String> readyToShipOrderSnList = detailMongoData.stream().filter(f -> "READY_TO_SHIP".equals(f.get("order_status"))).map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
+		if(CollUtil.isEmpty(readyToShipOrderSnList)) {
+			log.warn("没有READY_TO_SHIP状态的订单，订单SN列表：{}", orderSnList);
+			return new ArrayList<>();
+		}
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
 			.eq(CfgAppClientEntity::getBusinessType, appClientEnum.getBusinessType())
@@ -89,7 +101,7 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 		// 结果resultList
 		List<JSONObject> resultList = new LinkedList<>();
 
-		for (String orderSn : orderSnList) {
+		for (String orderSn : readyToShipOrderSnList) {
 			JSONObject data = null;
 			long sleepTime = 1000;
 			int count = 0;
