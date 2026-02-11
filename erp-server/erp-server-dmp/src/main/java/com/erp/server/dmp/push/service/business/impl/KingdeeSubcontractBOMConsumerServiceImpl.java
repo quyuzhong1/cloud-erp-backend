@@ -5,7 +5,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
@@ -28,6 +27,7 @@ import com.erp.server.dmp.push.service.business.KingdeeSubcontractBOMConsumerSer
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
@@ -92,10 +92,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         /**
          * 下推
          */
-        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
-            operatePush(bomApiUtils,bomChangeApiUtils,apiUtils,skuApiUtils,platformEntity, map,json,type);
-        }
-
+//
+        operatePush(bomApiUtils,bomChangeApiUtils,apiUtils,skuApiUtils,platformEntity, map,json,type);
     }
 
     /**
@@ -155,12 +153,19 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (Objects.nonNull(subcontractOrder)) {
             String mainId = subcontractOrder.getId();
             List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
-            List<SubcontractOrderDetailEntity> details = subcontractOrderDetails.stream()
+            List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
                     .filter(item -> StringUtils.isNotBlank(item.getParentId()))
                     .collect(Collectors.toList());
-            if (!details.isEmpty()) {
-                for (SubcontractOrderDetailEntity subcontractOrderDetail : details) {
-                    entries = createNewPpBomEntry(view, FEntities, subcontractOrderDetail,sysAccountingCompany, bomBillNo);
+            List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
+                    .filter(item -> StringUtils.isBlank(item.getParentId()))
+                    .collect(Collectors.toList());
+            if (!parentList.isEmpty() && !childList.isEmpty()) {
+                for (SubcontractOrderDetailEntity subcontractOrderDetail : childList) {
+                    SubcontractOrderDetailEntity parentDetail = parentList.stream()
+                            .filter(item -> Objects.equals(item.getId(), subcontractOrderDetail.getParentId()))
+                            .findFirst()
+                            .orElse(null);
+                    entries = createNewPpBomEntry(view, FEntities, parentDetail,subcontractOrderDetail,sysAccountingCompany, bomBillNo);
                 }
             }
         }
@@ -402,13 +407,13 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity detail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
+    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
         Map<String, Object> entry = new HashMap<>();
 
         //物料编码
         JSONObject skuJson = new JSONObject();
-        skuJson.put("FNumber", detail.getSkuNo());
+        skuJson.put("FNumber", chilDetail.getSkuNo());
         entry.put("FMaterialID", skuJson);
         entry.put("FMaterialID2", skuJson);
 
@@ -432,21 +437,23 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //发料方式
         entry.put("FIssueType", "1");
         //需求日期
-        entry.put("FNeedDate2",detail.getPlanDeliveryDate().toString());
+        entry.put("FNeedDate2",chilDetail.getPlanDeliveryDate().toString());
         //新增
         entry.put("FChangeType","1");
         //应发数量
-        entry.put("FMustQty",detail.getQty());
+        entry.put("FMustQty",chilDetail.getQty());
         //生产数量
-        entry.put("FProduceQty",detail.getQty());
+        entry.put("FProduceQty",chilDetail.getQty());
         //用料清单类型
         entry.put("FPPBomEntryType","0");
         //基本单位未领数量
-        entry.put("FBaseNoPickedQty",detail.getQty());
+        entry.put("FBaseNoPickedQty",chilDetail.getQty());
         //源单类型
         entry.put("FSrcBillType", "SUB_PPBOM");
         //源单编号
         entry.put("FSrcBillNo", bomBillNo);
+        //分子
+        entry.put("FNumerator", chilDetail.getQty() / parentDetail.getRepairQty());
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
         return entries;
