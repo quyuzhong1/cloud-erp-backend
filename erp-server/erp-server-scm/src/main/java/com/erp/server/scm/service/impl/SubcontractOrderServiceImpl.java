@@ -431,18 +431,20 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //发送金蝶
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
 
-            SubcontractBOMDTO.KingdeeSubcontractBOMDTO kingdeeSubcontractBOMDTO = new SubcontractBOMDTO.KingdeeSubcontractBOMDTO();
+            if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),entity.getType())) {
+                SubcontractBOMDTO.KingdeeSubcontractBOMDTO kingdeeSubcontractBOMDTO = new SubcontractBOMDTO.KingdeeSubcontractBOMDTO();
 
-            String id = IdUtil.getSnowflake().nextIdStr();
-            this.lambdaUpdate()
-                    .set(SubcontractOrderEntity::getSubcontractBomId,id)
-                    .eq(SubcontractOrderEntity::getId,entity.getId())
-                    .update();
-            kingdeeSubcontractBOMDTO.setId(id);
-            kingdeeSubcontractBOMDTO.setSourceId(entity.getId());
-            kingdeeSubcontractBOMDTO.setSourceCode(entity.getCode());
-            //下推委外用料清单变更单
-            sendSubcontractBOMPushTask(Arrays.asList(kingdeeSubcontractBOMDTO),SyncOperateEnum.OPERATE_APPROVE.getCode());
+                String id = IdUtil.getSnowflake().nextIdStr();
+                this.lambdaUpdate()
+                        .set(SubcontractOrderEntity::getSubcontractBomId,id)
+                        .eq(SubcontractOrderEntity::getId,entity.getId())
+                        .update();
+                kingdeeSubcontractBOMDTO.setId(id);
+                kingdeeSubcontractBOMDTO.setSourceId(entity.getId());
+                kingdeeSubcontractBOMDTO.setSourceCode(entity.getCode());
+                //下推委外用料清单变更单
+                sendSubcontractBOMPushTask(Arrays.asList(kingdeeSubcontractBOMDTO),SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }
         }
         return Boolean.TRUE;
     }

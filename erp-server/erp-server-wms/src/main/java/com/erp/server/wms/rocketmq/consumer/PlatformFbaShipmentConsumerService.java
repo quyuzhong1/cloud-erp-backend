@@ -158,6 +158,11 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         // 查询当前店铺
         ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
 
+        //国家
+        entity.setCountryId(dto.getFulfillmentCenterCountry());
+        DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getFulfillmentCenterCountry());
+        entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
+
         // 查询仓库中心对应国家并设置对应店铺
         checkAndSetCountryWithShop(entity, dto, currentShopEntity);
 
@@ -193,8 +198,8 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         }
 
         // 查询国家信息
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
-        entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
+        //DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
+        //entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
         // 新增或更新
         FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentId(entity.getFbaShipmentId());

@@ -161,7 +161,7 @@
             sod.warehouse_name as warehouseName
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
-        where so.is_deleted = false and so.approve_status = 'approve' and so.source_type in ('soInfo','soDeliveryNotice','soB2c','soB2cDelivery')
+        where so.is_deleted = false and so.approve_status = 'approve'
         <if test="param.startTime != null">
             and so.bill_date &gt;= #{param.startTime}
         </if>
