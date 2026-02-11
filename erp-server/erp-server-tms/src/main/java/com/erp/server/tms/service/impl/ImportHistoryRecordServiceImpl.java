@@ -739,9 +739,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                 errorMsgList.add("单号已存在无法新增，请核查单号");
             }
-            if (CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
-                errorMsgList.add("物流单号不能为空");
-            }
         } else {
             if (CollUtil.isEmpty(logisticsBillVoList)) {
                 errorMsgList.add("未找到对应物流单");
@@ -801,7 +798,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 return;
             }
 
-            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(costImportEntity.getImportType())){
+            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(thisImportType)){
                 List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,updateList);
                 List<BaseResultDTO.AddDTO> addDTOS = logisticsBillCostService.addPayAndRefund(dtoList);
                 pairList = addDTOS.stream()
