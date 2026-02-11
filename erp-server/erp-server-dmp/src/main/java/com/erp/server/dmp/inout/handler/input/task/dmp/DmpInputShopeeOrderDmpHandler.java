@@ -118,7 +118,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				dmpDataMap.put("extendData", labelJsonObject.toJSONString());
 
 				// 订单状态
-				Object order_status = dmpDataMap.get("order_status");
+				Object order_status = detailMaps.get("order_status");
 				if(order_status != null) {
 					boolean isCancel = Boolean.FALSE;
 					String deliveryStatus = "";
@@ -177,7 +177,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 					dmpDataMap.put("invalidStatus", invalidStatus);
 					dmpDataMap.put("platformOriginalStatus", platformOriginalStatus);
 				}
-				Object pay_time = dmpDataMap.get("pay_time");
+				Object pay_time = detailMaps.get("pay_time");
 				if(pay_time != null) {
 					Long payTime = Long.valueOf(pay_time.toString());
 					if (Objects.nonNull(payTime) && payTime.compareTo(0L) > 0) {
@@ -190,7 +190,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 					dmpDataMap.put("payStatus", false);
 				}
 				
-				Object package_list = dmpDataMap.get("package_list");
+				Object package_list = detailMaps.get("package_list");
 				if(package_list != null) {
 					List<Map<String, Object>> packageList = (List<Map<String, Object>>)package_list;
 					List<String> collect = packageList.stream().map(p -> p.get("package_number").toString()).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -198,7 +198,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 		            dmpDataMap.put("extendData", labelJsonObject.toJSONString());
 				}
 				
-				Object ship_by_date = dmpDataMap.get("ship_by_date");
+				Object ship_by_date = detailMaps.get("ship_by_date");
 				if(ship_by_date != null) {
 					Long shipByDate = Long.valueOf(ship_by_date.toString());
 					if(shipByDate.compareTo(0L) > 0) {
@@ -256,7 +256,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 					}
 				}
 				dmpDataMap.put("nextLevelId", nextLevelId);
-				Object item_list_obj = dmpDataMap.get("item_list");
+				Object item_list_obj = detailMaps.get("item_list");
 				if(item_list_obj != null) {
 					BigDecimal allAmount = BigDecimal.ZERO;
 					List<Map<String, Object>> item_list = (List<Map<String, Object>>)item_list_obj;
