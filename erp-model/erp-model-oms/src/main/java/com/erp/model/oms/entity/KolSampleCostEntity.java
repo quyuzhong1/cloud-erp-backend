@@ -41,6 +41,12 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     */
     @TableField("source_type")
     private String sourceType;
+
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
     /**
     * 寄样类型
     */
