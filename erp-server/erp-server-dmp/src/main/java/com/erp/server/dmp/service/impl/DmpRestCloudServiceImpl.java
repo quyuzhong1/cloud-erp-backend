@@ -242,8 +242,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
         if(CollUtil.isNotEmpty(dto.getParams().getIds())){
-            data.put("ids", dto.getParams().getIds().stream()
-                    .collect(Collectors.joining("','", "", "")));
+            data.put("sql", StrUtil.format(" and t.id in ({0}) ",dto.getParams().getIds().stream()
+                    .collect(Collectors.joining("','", "'", "'"))));
         }
         map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_diff_outstock_sync_source_platform")
@@ -282,8 +282,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
         if(CollUtil.isNotEmpty(dto.getParams().getIds())){
-            data.put("ids", dto.getParams().getIds().stream()
-                    .collect(Collectors.joining("','", "", "")));
+            data.put("sql", StrUtil.format(" and t.id in ({0}) ",dto.getParams().getIds().stream()
+                    .collect(Collectors.joining("','", "'", "'"))));
         }
         map.put("data", Collections.singletonList(data));
         HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_diff_return_instock_sync_source_platform")
