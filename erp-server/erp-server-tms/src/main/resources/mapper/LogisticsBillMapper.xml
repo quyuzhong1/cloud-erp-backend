@@ -83,7 +83,7 @@
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
         where
             ${params.sqlMap.default}
-            and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale')
+            and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale','other')
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
@@ -151,7 +151,7 @@
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
         WHERE  lb.is_deleted=false
-        and lb.order_type in ('B2B','B2C','AfterSale')
+        and lb.order_type in ('B2B','B2C','AfterSale','other')
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
@@ -681,7 +681,7 @@
         FROM logistics_bill lb
         <if test="orderType == 'B2B' or orderType == 'B2C'">
             LEFT JOIN foreign_so_outstock so on lb.outstock_id = so.id and so.is_deleted = false
-            where lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale')
+            where lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale','other')
             and so.id is null
         </if>
         <if test="orderType == 'firstMile'">
@@ -789,7 +789,7 @@
         lbd.track_no as trackNo
         FROM logistics_bill lb
         left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-        WHERE lb.is_deleted = false
+        WHERE lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale','other')
         ) lb where 1 = 1
         <trim prefix="AND (" suffix=")" prefixOverrides="OR">
             <foreach collection="paramMap" item="valueList" index="field" separator=" ">
