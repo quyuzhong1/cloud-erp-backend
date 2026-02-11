@@ -1210,6 +1210,11 @@ public class TikTokSdkClientService {
         } catch (Exception e) {
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（非美国站点）返回值 responseMap={}，转换成实体错误", apiResult.getData()));
         }
+        if (!Objects.equals(shipOrderOther.getCode(), 0) ) {
+            log.error("调用url={},入参params={}, TikTok订单发货（其他站点）失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（非美国站点）失败，返回值 responseMap={}",
+                    sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
         return shipOrderOther;
     }
 
