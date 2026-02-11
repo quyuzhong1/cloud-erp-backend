@@ -377,21 +377,28 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     errorList.add(importExcelDTO);
                     continue;
                 }
-                 //计算总数量
-                Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(Integer.SIZE, Integer::sum);
-                for (KolSampleCostEntity entity : costList) {
-                    BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), MathUtil.valueOf(totalQty))
-                            .multiply(MathUtil.valueOf(importExcelDTO.getAmountStr()))
-                            .multiply(MathUtil.valueOf(importExcelDTO.getExchangeRateStr()));
-                    if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
-                        //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
-                        entity.setShippingCost(cost);
-                    }
-                    if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
-                        //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
-                        entity.setOtherCost(cost);
-                    }
+            //计算总数量
+            Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            for (KolSampleCostEntity entity : costList) {
+                BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), MathUtil.valueOf(totalQty))
+                        .multiply(MathUtil.valueOf(importExcelDTO.getAmountStr()))
+                        .multiply(MathUtil.valueOf(importExcelDTO.getExchangeRateStr()));
+                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
+                    //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
+                    entity.setShippingCost(cost);
                 }
+                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
+                    //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
+                    entity.setOtherCost(cost);
+                }
+                BigDecimal totalCost = entity.getProductCost()
+                        .add(entity.getFirstMileShippingCost())
+                        .add(entity.getClearanceCustomsTax())
+                        .add(entity.getShippingCost())
+                        .add(entity.getCustomsTax())
+                        .add(entity.getOtherCost());
+                entity.setTotalCost(totalCost);
+            }
                 super.updateBatchById(costList);
 
                 //操作日志
