@@ -306,4 +306,9 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean batchUpdateOutstockRelation(AdsErpDiffOutstockSyncDTO.BatchUpdateParamsDTO dto) {
+        return null;
+    }
+
 }

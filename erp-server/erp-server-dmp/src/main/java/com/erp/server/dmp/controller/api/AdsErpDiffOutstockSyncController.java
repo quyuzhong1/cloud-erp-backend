@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -184,6 +185,19 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
         Boolean flag = adsErpDiffOutstockSyncService.exportSourceSelf(dto);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 批量修改
+     * @author jack
+     * @date 2026-02-11
+     * @param dto
+     */
+    @PostMapping("/batchUpdateOutstockRelation")
+    public ApiResult<Boolean> batchUpdateOutstockRelation(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.BatchUpdateParamsDTO dto) {
+        return success(adsErpDiffOutstockSyncService.batchUpdateOutstockRelation(dto));
+    }
+
+
 
 
 }

@@ -1066,4 +1066,17 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
     }
 
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateParamsDTO {
+
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+    }
+
+
 }
