@@ -73,6 +73,7 @@ public class KingdeeTransferOutConsumerServiceImpl implements KingdeeTransferOut
          */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map);
+            operateDelete(apiUtils,platformEntity,map,operate);
         }
         /**
          * 审核
