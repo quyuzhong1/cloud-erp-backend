@@ -41,9 +41,9 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 		if(StringUtils.isBlank(childId)) {
 			throw new ServiceException("未查询到DmpInputShopeeOrderDoChildDmpHandler子类id");
 		}
-		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).eq(DmpInputTaskEntity::getCfgInputId, childId).list();
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).eq(DmpInputTaskEntity::getCfgInputId, "1801574477567165671").list();
 		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
-		List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
+		List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "Shopee_orderDetail_data");
 		return this.afterDoDmpInputMongoChildEntityList(dmpInputMongoChildList);
 	}
 	
