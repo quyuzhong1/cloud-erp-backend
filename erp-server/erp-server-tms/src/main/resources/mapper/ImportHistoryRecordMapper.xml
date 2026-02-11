@@ -49,10 +49,10 @@
             ${params.sqlMap.default}
             and ihr.is_deleted = false
             <if test="params.importType != null and params.importType == 'new'">
-                and concat( ihr.reconciliation_month,'-01') ::TIMESTAMP >= CURRENT_DATE - INTERVAL '1 month'
+                and concat( ihr.reconciliation_month,'-01') ::TIMESTAMP >= date_trunc('month', CURRENT_DATE) - INTERVAL '1 month'
             </if>
             <if test="params.importType != null and params.importType == 'history'">
-                and CURRENT_DATE - INTERVAL '1 month' > concat( ihr.reconciliation_month,'-01') ::TIMESTAMP
+                and date_trunc('month', CURRENT_DATE) - INTERVAL '1 month' > concat( ihr.reconciliation_month,'-01') ::TIMESTAMP
             </if>
             <if test="params.businessType != null and params.businessType != ''">
                 and ihr.business_type = #{params.businessType}
