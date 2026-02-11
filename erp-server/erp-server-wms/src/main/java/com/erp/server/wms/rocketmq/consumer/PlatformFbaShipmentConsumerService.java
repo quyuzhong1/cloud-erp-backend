@@ -128,8 +128,8 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             cfgAmzFulfillmentCenterService.save(cfgAmzFulfillmentCenterEntity);
         } else {
             cfgAmzFulfillmentCenterService.lambdaUpdate()
-                    .set(CfgAmzFulfillmentCenterEntity::getCountry,entity.getFulfillmentCenter())
-                    .eq(CfgAmzFulfillmentCenterEntity::getCode,dto.getFulfillmentCenterCountry())
+                    .set(CfgAmzFulfillmentCenterEntity::getCountry, dto.getFulfillmentCenterCountry())
+                    .eq(CfgAmzFulfillmentCenterEntity::getCode, entity.getFulfillmentCenter())
                     .update();
         }
 

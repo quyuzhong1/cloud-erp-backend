@@ -71,6 +71,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
          */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map);
+            operateDelete(apiUtils,platformEntity,map,operate);
         }
         /**
          * 审核
