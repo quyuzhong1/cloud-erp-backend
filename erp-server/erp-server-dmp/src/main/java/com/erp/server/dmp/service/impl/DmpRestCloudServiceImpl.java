@@ -242,7 +242,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
         if(CollUtil.isNotEmpty(dto.getParams().getIds())){
-            data.put("sql", StrUtil.format(" and t.id in ({0}) ",dto.getParams().getIds().stream()
+            data.put("sql", StrUtil.format(" and t.id in ({}) ",dto.getParams().getIds().stream()
                     .collect(Collectors.joining("','", "'", "'"))));
         }
         map.put("data", Collections.singletonList(data));
@@ -282,7 +282,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
         if(CollUtil.isNotEmpty(dto.getParams().getIds())){
-            data.put("sql", StrUtil.format(" and t.id in ({0}) ",dto.getParams().getIds().stream()
+            data.put("sql", StrUtil.format(" and t.id in ({}) ",dto.getParams().getIds().stream()
                     .collect(Collectors.joining("','", "'", "'"))));
         }
         map.put("data", Collections.singletonList(data));
