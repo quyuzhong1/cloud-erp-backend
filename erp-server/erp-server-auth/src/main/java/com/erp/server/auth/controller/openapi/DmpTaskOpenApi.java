@@ -1,10 +1,13 @@
 package com.erp.server.auth.controller.openapi;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Resource;
 
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.common.business.dto.base.BatchResultDTO;
@@ -20,6 +23,7 @@ import com.erp.server.auth.config.OpenApi;
  *
  */
 @OpenApi
+@Slf4j
 public class DmpTaskOpenApi {
 
     @Resource
@@ -41,7 +45,8 @@ public class DmpTaskOpenApi {
      * @return
      */
     @OpenApi("createInputTaskTask")
-    public ApiResult<Boolean> createInputTaskTask(@RequestBody List<DmpInoutDTO.CreateInputDTO> createDTOList){
-        return ApiResult.success(dmpInoutTaskFeign.doInputTask(createDTOList));
+    public ApiResult<Boolean> createInputTaskTask(@RequestBody DmpInoutDTO.CreateInputDTO createDTOList){
+        log.warn("DmpTaskOpenApi createInputTaskTask receive param:{}", createDTOList);
+        return ApiResult.success(dmpInoutTaskFeign.doInputTask(Collections.singletonList(createDTOList)));
     }
 }
