@@ -50,6 +50,15 @@ public enum MessageTypeEnum {
         }
         return "";
     }
+    
+    public static MessageTypeEnum getMessageTypeEnum(String code) {
+    	for (MessageTypeEnum messageTypeEnum : MessageTypeEnum.values()) {
+    		if (code.equals(messageTypeEnum.getCode())) {
+    			return messageTypeEnum;
+    		}
+    	}
+    	return null;
+    }
 
     public static String getCodeByName(String name) {
         for (MessageTypeEnum messageTypeEnum : MessageTypeEnum.values()) {
