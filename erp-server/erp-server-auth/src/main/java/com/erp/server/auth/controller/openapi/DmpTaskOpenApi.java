@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.common.business.dto.base.BatchResultDTO;
@@ -34,4 +35,13 @@ public class DmpTaskOpenApi {
         return dmpInoutTaskFeign.doEtlTask(dto);
     }
 
+
+    /**
+     * 生成dmp_input_task任务
+     * @return
+     */
+    @OpenApi("createInputTaskTask")
+    public ApiResult<Boolean> createInputTaskTask(@RequestBody List<DmpInoutDTO.CreateInputDTO> createDTOList){
+        return ApiResult.success(dmpInoutTaskFeign.doInputTask(createDTOList));
+    }
 }
