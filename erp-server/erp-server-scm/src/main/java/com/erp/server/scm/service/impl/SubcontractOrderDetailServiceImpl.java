@@ -754,8 +754,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     break;
                 }
 
-                if (detailEntity.getRepairQty() % childEntity.getQty() != 0) {
-                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】数量需要为整数倍", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+                if (detailEntity.getRepairQty() % childEntity.getQty() == 0 || childEntity.getQty()  % detailEntity.getRepairQty() == 0) {
+                    errorMessages.add(StrUtil.format("父级SKU【{}】和子件SKU【{}】数量需要为整数倍", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
                     hasChildError = true;
                     break;
                 }

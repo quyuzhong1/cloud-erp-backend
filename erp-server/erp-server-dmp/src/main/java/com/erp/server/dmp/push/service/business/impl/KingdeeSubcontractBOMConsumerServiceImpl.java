@@ -453,7 +453,13 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //源单编号
         entry.put("FSrcBillNo", bomBillNo);
         //分子
-        entry.put("FNumerator", chilDetail.getQty() / parentDetail.getRepairQty());
+        if (chilDetail.getQty() > parentDetail.getRepairQty()) {
+            entry.put("FNumerator", chilDetail.getQty() / parentDetail.getRepairQty());
+        } else {
+            entry.put("FNumerator", "1");
+            entry.put("FFDenominator",parentDetail.getRepairQty() / chilDetail.getQty());
+        }
+
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
         return entries;
