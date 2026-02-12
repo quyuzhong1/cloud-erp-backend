@@ -234,7 +234,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //分子
         entry.put("FNumerator",srcEntry.get("Numerator"));
         //分母
-        entry.put("FFDenominator",srcEntry.get("Denominator"));
+        entry.put("FDenominator",srcEntry.get("Denominator"));
         //应发数量
         entry.put("FMustQty",srcEntry.get("MustQty"));
         //生产数量
@@ -344,7 +344,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //分子
         entry.put("FNumerator",0);
         //分母
-        entry.put("FFDenominator",srcEntry.get("Denominator"));
+        entry.put("FDenominator",srcEntry.get("Denominator"));
         //应发数量
         entry.put("FMustQty",0);
         //生产数量
@@ -440,24 +440,17 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FNeedDate2",chilDetail.getPlanDeliveryDate().toString());
         //新增
         entry.put("FChangeType","1");
-        //应发数量
-        entry.put("FMustQty",chilDetail.getQty());
-        //生产数量
-        entry.put("FProduceQty",chilDetail.getQty());
         //用料清单类型
         entry.put("FPPBomEntryType","0");
-        //基本单位未领数量
-        entry.put("FBaseNoPickedQty",chilDetail.getQty());
         //源单类型
         entry.put("FSrcBillType", "SUB_PPBOM");
         //源单编号
         entry.put("FSrcBillNo", bomBillNo);
-        //分子
+        //分子 分母
         if (chilDetail.getQty() > parentDetail.getRepairQty()) {
             entry.put("FNumerator", chilDetail.getQty() / parentDetail.getRepairQty());
         } else {
-            entry.put("FNumerator", "1");
-            entry.put("FFDenominator",parentDetail.getRepairQty() / chilDetail.getQty());
+            entry.put("FDenominator", parentDetail.getRepairQty() / chilDetail.getQty());
         }
 
         ppBomEntries.put(entry);
