@@ -615,7 +615,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         String estimatedAmount = ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? null : String.valueOf(jsonObject.get(estimatedAmountIndex));
 
         //校验费用值类型
-        List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckAmountDTO(actualAmountIndex,estimatedAmount));
+        List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckAmountDTO(actualAmount,estimatedAmount));
         if (CollUtil.isNotEmpty(errorMsg)) {
             errorMsgList.addAll(errorMsg);
             return updateList;
@@ -663,6 +663,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (StrUtil.isBlank(actualAmount) && StrUtil.isBlank(estimatedAmount)) {
                     errorMsgList.add(CharSequenceUtil.format("费用项【{}】实际金额和预估金额不能同时为空",cfgDetailEntity.getTargetDetailFieldName()));
                 }
+
                 if (StrUtil.isNotBlank(actualAmount)) {
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     updateDTO.setCostValue(new BigDecimal(actualAmount));
@@ -913,6 +914,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
+
+        //订单类型默认其他
+        if (CharSequenceUtil.isBlank(addDTO.getOrderType())) {
+            addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
+        }
+
         addDTO.setSourceCode(excelDTO.getSourceCode());
         addDTO.setPlatformCode(excelDTO.getPlatformCode());
         addDTO.setSoDeliveryCode(excelDTO.getSoDeliveryCode());
@@ -970,7 +977,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             updateDataDTO.setThirdActualWeight(new BigDecimal(thirdActualWeight));
         }
 
-        updateList.forEach(u -> u.setCurrency(updateDataDTO.getCurrency()));
+        updateList.forEach(u ->  u.setCurrency( CharSequenceUtil.isBlank(u.getCurrency()) ?  updateDataDTO.getCurrency() : u.getCurrency()));
         List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
         List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.listByMainIdList(Collections.singletonList(logisticsBillCostEntity.getId()));
         if(CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
@@ -1012,7 +1019,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             addDataDTO.setSourceId(updateDataDTO.getId());
             addDataDTO.setBillingWeight(updateDataDTO.getBillingWeight());
             addDataDTO.setBillingWeightLogistics(updateDataDTO.getBillingWeightLogistics());
-            addDataDTO.setCurrency(updateDataDTO.getCurrency());
+            addDataDTO.setCurrency(u.getCurrency());
 
             addDataDTO.setReconciliationMonth(updateDataDTO.getReconciliationMonth());
             addDataDTO.setThirdHeight(updateDataDTO.getThirdHeight());
@@ -1097,9 +1104,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if(logisticsBillCostEntityList.size() > 1) {
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)) {
                 //更新时判断是否有多条可更新的数据,需要对账月份未空或者对账月份一致，并且为待确认或者暂估确认但是未下推费用分摊的数据
-                long count = logisticsBillCostEntityList.stream().filter(obj -> (CharSequenceUtil.isBlank(obj.getReconciliationMonth()) || CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth()))
-                        && (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()) || (CharSequenceUtil.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(),obj.getReconciliationStatus())
-                        && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode())))
+                long count = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()) || (CharSequenceUtil.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(),obj.getReconciliationStatus())
+                        && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode()))
                 ).count();
                 if (count > 1) {
                     errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
