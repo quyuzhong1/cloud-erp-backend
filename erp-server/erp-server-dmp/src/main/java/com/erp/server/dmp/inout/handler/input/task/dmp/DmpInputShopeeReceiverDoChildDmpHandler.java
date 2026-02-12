@@ -107,6 +107,7 @@ public class DmpInputShopeeReceiverDoChildDmpHandler extends DmpInputDoChildDmpH
 					dmpInputMongoChild.put("receiverTelNumber", recipientAddress.get("phone"));
 					dmpInputMongoChild.put("country", recipientAddress.get("region"));
 					dmpInputMongoChild.put("province", recipientAddress.get("state"));
+					dmpInputMongoChild.put("city", recipientAddress.get("city"));
 					
 					String district = "";
 					Object districtObj = recipientAddress.get("district");

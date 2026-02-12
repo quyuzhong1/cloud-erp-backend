@@ -62,7 +62,7 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 		List<String> orderSnList = findMongoData.stream().map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
 		List<ParamData> detailParamDataList = new ArrayList<>();
 		detailParamDataList.add(new ParamData("order_sn", "order_sn", PannoEnum.IN, orderSnList));
-		List<Map<String, Object>> detailMongoData = mongoService.findMongoData(detailParamDataList, parentStorageName);
+		List<Map<String, Object>> detailMongoData = mongoService.findMongoData(detailParamDataList, "Shopee_orderDetail_data");
 		if(CollUtil.isEmpty(detailMongoData)) {
 			log.warn("没有订单详情数据，订单SN列表：{}", orderSnList);
 			return new ArrayList<>();
