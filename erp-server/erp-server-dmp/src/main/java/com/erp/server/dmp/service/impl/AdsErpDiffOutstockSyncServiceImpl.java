@@ -355,7 +355,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         Boolean isQtySame = false;
         Boolean isStatusSame = false;
 
-        Date billDate = entity.getBillDate();
+        Date billDate = entity.getPlatformBillDate();
         Date detailBillDate = detailEntity.getBillDate();
         if (Objects.nonNull(billDate) && Objects.nonNull(detailBillDate) && billDate.getYear() == detailBillDate.getYear() && billDate.getMonth() == detailBillDate.getMonth()) {
             isDateSame = true;
@@ -427,8 +427,8 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         //更新平台记录
         updateById(entity);
         //删除对应的erp记录
-        removeById(detailEntity);
-
+        detailEntity.setIsDeleted(true);
+        updateById(detailEntity);
         return BatchResultDTO.success(entity.getId(), entity.getPlatformOutstockCode(), OperationTypeEnum.UPDATE);
     }
 
