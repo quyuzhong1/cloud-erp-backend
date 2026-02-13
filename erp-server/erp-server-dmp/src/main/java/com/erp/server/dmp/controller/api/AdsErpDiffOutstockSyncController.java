@@ -1,12 +1,16 @@
 package com.erp.server.dmp.controller.api;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.BaseIdsDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ClientTypeEnum;
+import com.erp.model.wms.entity.SampleBorrowInfoEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -187,17 +191,48 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
     }
 
     /**
+     * 批量修改--查询
+     * @author jack
+     * @date 2026-02-11
+     * @param dto
+     */
+    @PostMapping("/listPlateformOutstockNotExistRelation")
+    public ApiResult<List<AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO>> listPlateformOutstockNotExistRelation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(adsErpDiffOutstockSyncService.listPlateformOutstockNotExistRelation(dto));
+    }
+
+
+    /**
+     * 批量修改--查询erp出库单
+     * @author jack
+     * @date 2026-02-11
+     * @param dto
+     */
+    @PostMapping("/listErpOutstockByParams")
+    public ApiResult<List<AdsErpDiffOutstockSyncDTO.ErpOutstockResultDTO>> listErpoutstockByParams(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.ErpOutstockParamsDTO dto) {
+        return success(adsErpDiffOutstockSyncService.listErpOutstockByParams(dto));
+    }
+
+    /**
      * 批量修改
      * @author jack
      * @date 2026-02-11
      * @param dto
      */
     @PostMapping("/batchUpdateOutstockRelation")
-    public ApiResult<Boolean> batchUpdateOutstockRelation(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.BatchUpdateParamsDTO dto) {
-        return success(adsErpDiffOutstockSyncService.batchUpdateOutstockRelation(dto));
+    public ApiResult<List<BatchResultDTO>> batchUpdateOutstockRelation(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.BatchUpdateParamsDTO dto) {
+        List<AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO> list = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO relationDTO : list) {
+            BatchResultDTO result;
+            try {
+                result = adsErpDiffOutstockSyncService.batchUpdateOutstockRelation(relationDTO);
+            }catch (Exception e){
+                result = BatchResultDTO.fail(relationDTO.getId(), relationDTO.getPlatformOutstockCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
-
-
 
 }

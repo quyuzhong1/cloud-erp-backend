@@ -1,8 +1,8 @@
 package com.erp.model.dmp.dto;
 
 import java.util.Date;
+
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.PagingParamDTO;
 
 import java.util.List;
 import lombok.Data;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -1072,11 +1072,93 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BatchUpdateParamsDTO {
-
-        @NotEmpty(message = "ids不能为空")
-        private List<String> ids;
+        /**
+         * sku明细
+         */
+        private List<PlateformOutstockNotExistRelationDTO> list;
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpOutstockParamsDTO {
+
+        @NotBlank(message = "核对仓库不能为空")
+        private String sourceSystemName;
+
+        @NotBlank(message = "核对周期不能为空")
+        private String checkMonth;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpOutstockResultDTO {
+
+        /**
+         *销售出库单号
+         */
+        private String outstockCode;
+        /**
+         *sku明细
+         */
+        private List<ErpOutstockResultDetailDTO> skuList;
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpOutstockResultDetailDTO {
+        /**
+         * detailId
+         */
+        private String detailId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PlateformOutstockNotExistRelationDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 平台出库单号
+         */
+        private String platformOutstockCode;
+        /**
+         * 原始单号
+         */
+        private String orderCode;
+        /**
+         * 库存SKU
+         */
+        private String stockSku;
+
+        /**
+         *销售出库单号
+         */
+        private String outstockCode;
+
+        /**
+         * detailId
+         */
+        private String detailId;
+
+
+    }
 
 }
