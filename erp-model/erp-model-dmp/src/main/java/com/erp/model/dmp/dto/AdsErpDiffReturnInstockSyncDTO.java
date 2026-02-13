@@ -2,7 +2,6 @@ package com.erp.model.dmp.dto;
 
 import java.util.Date;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.PagingParamDTO;
 
 import java.util.List;
 import lombok.Data;
@@ -10,10 +9,9 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -979,8 +977,6 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
 
     }
 
-
-
     /**
      * 溯源列表
      */
@@ -1110,5 +1106,102 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
          */
         private String productName;
     }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateParamsDTO {
+        /**
+         * sku明细
+         */
+        private List<PlateformReturnInstockNotExistRelationDTO> list;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpReturnInstockParamsDTO {
+
+        @NotBlank(message = "核对仓库不能为空")
+        private String sourceSystemName;
+
+        @NotBlank(message = "核对周期不能为空")
+        private String checkMonth;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpReturnInstockResultDTO {
+
+        /**
+         *销售出库单号
+         */
+        private String returnInstockCode;
+        /**
+         *sku明细
+         */
+        private List<ErpReturnInstockResultDetailDTO> skuList;
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpReturnInstockResultDetailDTO {
+        /**
+         * detailId
+         */
+        private String detailId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PlateformReturnInstockNotExistRelationDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 平台入库单号
+         */
+        private String platformReturnInstockCode;
+        /**
+         * 原始单号
+         */
+        private String platformOrderCode;
+        /**
+         * 库存SKU
+         */
+        private String stockSku;
+
+        /**
+         *入库单号
+         */
+        private String returnInstockCode;
+
+        /**
+         * detailId
+         */
+        private String detailId;
+
+
+    }
+
 
 }

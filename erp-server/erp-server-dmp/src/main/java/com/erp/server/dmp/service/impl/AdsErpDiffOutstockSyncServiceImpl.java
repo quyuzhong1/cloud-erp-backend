@@ -1,23 +1,23 @@
 package com.erp.server.dmp.service.impl;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.core.utils.BeanMapper;
 import com.erp.server.dmp.service.DmpRestCloudService;
+import jodd.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -305,5 +305,168 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         downloadTaskFeign.saveDownloadTask("朔源查询-ERP出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC_DETAIL_SELF.getCode(), dto);
         return Boolean.TRUE;
     }
+
+    @Override
+    public List<AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO> listPlateformOutstockNotExistRelation(BaseIdsDTO.IdsDTO dto) {
+        List<AdsErpDiffOutstockSyncEntity> list = lambdaQuery().in(AdsErpDiffOutstockSyncEntity::getId, dto.getIds())
+                .ne(AdsErpDiffOutstockSyncEntity::getSourceSystemName,"")
+                .ne(AdsErpDiffOutstockSyncEntity::getCheckMonth,"")
+                .eq(AdsErpDiffOutstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false)
+                .list();
+        if(CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<AdsErpDiffOutstockSyncEntity> notPlatform = list.stream().filter(e -> StringUtil.isBlank(e.getDiffTag()) || !e.getDiffTag().equals("platform")).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(notPlatform)){
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM);
+        }
+        //判断list集合中的sourceSystemName值是否全部一致
+        if (list.stream().map(AdsErpDiffOutstockSyncEntity::getSourceSystemName).distinct().count() > 1) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM);
+        }
+        //判断list集合中的checkMonth值是否全部一致
+        if (list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).distinct().count() > 1) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD);
+        }
+        return BeanMapper.copyList(list,AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO.class);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO batchUpdateOutstockRelation(AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO dto) {
+        AdsErpDiffOutstockSyncEntity entity = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getId, dto.getId())
+                .eq(AdsErpDiffOutstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffOutstockSyncEntity::getDiffTag,"platform")
+                .eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false)
+                .one();
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
+        }
+        AdsErpDiffOutstockSyncEntity detailEntity = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getId, dto.getDetailId())
+                .eq(AdsErpDiffOutstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffOutstockSyncEntity::getDiffTag,"erp")
+                .eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false)
+                .one();
+        if (Objects.isNull(detailEntity)) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
+        }
+        Boolean isDateSame = false;
+        Boolean isQtySame = false;
+        Boolean isStatusSame = false;
+
+        Date billDate = entity.getBillDate();
+        Date detailBillDate = detailEntity.getBillDate();
+        if (Objects.nonNull(billDate) && Objects.nonNull(detailBillDate) && billDate.getYear() == detailBillDate.getYear() && billDate.getMonth() == detailBillDate.getMonth()) {
+            isDateSame = true;
+        }
+        //平台-出库数量 、ERP-实发数量相等
+        Integer platformQty = entity.getPlatformQty();
+        Integer qty = detailEntity.getQty();
+        Integer diffQty = 0;
+        String diffTag ="same";
+        String diffTagName ="完全匹配";
+        String suggestType ="";
+        if(Objects.nonNull(platformQty) && Objects.nonNull(qty)){
+            if(Objects.equals(platformQty,qty)){
+                isQtySame = true;
+            }else if(platformQty > qty ){
+                diffQty = platformQty - qty;
+                suggestType ="请核实单据";
+            }else if(platformQty < qty ){
+                diffQty = platformQty - qty;
+                suggestType ="请核实单据";
+            }
+        }
+        //平台-单据状态/ERP-ERP单据状态
+        String platformBillStatusName = entity.getPlatformBillStatusName();
+        String billStatusName = detailEntity.getBillStatusName();
+        if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已发货") && Objects.equals(billStatusName,"已审核")){
+            isStatusSame =true;
+        }
+
+        if(isDateSame && isQtySame && isStatusSame){
+
+        }else {
+//            StringBuffer sb = new StringBuffer();
+//            if(!isDateSame){
+//                sb.append("单据日期;");
+//            }
+//            if(!isQtySame){
+//                sb.append("单据数量;");
+//            }
+//            if(!isStatusSame){
+//                sb.append("单据状态;");
+//            }
+            if(diffQty > 0){
+                diffTag ="platform";
+                diffTagName ="平台单据多";
+            }else {
+                diffTag ="erp";
+                diffTagName ="ERP单据多";
+            }
+        }
+        //获取diffQty的绝对值
+        entity.setDiffQty(Math.abs(diffQty));
+        entity.setDiffTag(diffTag);
+        entity.setDiffTagName(diffTagName);
+        entity.setSuggestType(suggestType);
+        //erp其余字段补充道平台
+        entity.setBillName(detailEntity.getBillName());
+        entity.setBillStatusName(detailEntity.getBillStatusName());
+        entity.setShopName(detailEntity.getShopName());
+        entity.setSalesPlatformName(detailEntity.getSalesPlatformName());
+        entity.setOrderCode(detailEntity.getOrderCode());
+        entity.setSoCode(detailEntity.getSoCode());
+        entity.setOutstockCode(detailEntity.getOutstockCode());
+        entity.setSkuNo(detailEntity.getSkuNo());
+        entity.setQty(detailEntity.getQty());
+        entity.setSkuQty(detailEntity.getSkuNo()+"*"+detailEntity.getQty());
+        entity.setErpWarehouseName(detailEntity.getErpWarehouseName());
+        entity.setBillDate(detailEntity.getBillDate());
+        //更新平台记录
+        updateById(entity);
+        //删除对应的erp记录
+        removeById(detailEntity);
+
+        return BatchResultDTO.success(entity.getId(), entity.getPlatformOutstockCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public List<AdsErpDiffOutstockSyncDTO.ErpOutstockResultDTO> listErpOutstockByParams(AdsErpDiffOutstockSyncDTO.ErpOutstockParamsDTO dto) {
+        // 参数校验
+        if (dto == null || StringUtils.isBlank(dto.getCheckMonth()) || StringUtils.isBlank(dto.getSourceSystemName())) {
+            throw new IllegalArgumentException("参数不能为空");
+        }
+        List<AdsErpDiffOutstockSyncEntity> list = lambdaQuery()
+                .eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, dto.getCheckMonth())
+                .eq(AdsErpDiffOutstockSyncEntity::getSourceSystemName, dto.getSourceSystemName())
+                .eq(AdsErpDiffOutstockSyncEntity::getDiffTag, "erp")
+                .eq(AdsErpDiffOutstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false)
+                .list();
+
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+
+        List<AdsErpDiffOutstockSyncDTO.ErpOutstockResultDTO> result = new ArrayList<>();
+        Map<String, List<AdsErpDiffOutstockSyncEntity>> group = list.stream().filter(e -> StringUtils.isNotBlank(e.getOutstockCode())).collect(Collectors.groupingBy(AdsErpDiffOutstockSyncEntity::getOutstockCode));
+        for (Map.Entry<String, List<AdsErpDiffOutstockSyncEntity>> entry : group.entrySet()) {
+            AdsErpDiffOutstockSyncDTO.ErpOutstockResultDTO entity = new AdsErpDiffOutstockSyncDTO.ErpOutstockResultDTO();
+            List<AdsErpDiffOutstockSyncDTO.ErpOutstockResultDetailDTO> skuList = new ArrayList<>();
+            for (AdsErpDiffOutstockSyncEntity syncEntity : entry.getValue()) {
+                AdsErpDiffOutstockSyncDTO.ErpOutstockResultDetailDTO detail = new AdsErpDiffOutstockSyncDTO.ErpOutstockResultDetailDTO();
+                detail.setDetailId(syncEntity.getId());
+                detail.setSkuNo(syncEntity.getSkuNo());
+                skuList.add(detail);
+            }
+            entity.setOutstockCode(entry.getKey());
+            entity.setSkuList(skuList);
+            result.add(entity);
+        }
+        return result;
+    }
+
 
 }
