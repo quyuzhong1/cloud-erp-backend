@@ -10,6 +10,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
+import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import jodd.util.StringUtil;
@@ -358,7 +359,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         Boolean isQtySame = false;
         Boolean isStatusSame = false;
 
-        Date billDate = entity.getBillDate();
+        Date billDate = entity.getPlatformBillDate();
         Date detailBillDate = detailEntity.getBillDate();
         if (Objects.nonNull(billDate) && Objects.nonNull(detailBillDate) && billDate.getYear() == detailBillDate.getYear() && billDate.getMonth() == detailBillDate.getMonth()) {
             isDateSame = true;
@@ -430,8 +431,8 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         //更新平台记录
         updateById(entity);
         //删除对应的erp记录
-        removeById(detailEntity);
-
+        detailEntity.setIsDeleted(true);
+        updateById(detailEntity);
         return BatchResultDTO.success(entity.getId(), entity.getPlatformReturnInstockCode(), OperationTypeEnum.UPDATE);
     }
 
