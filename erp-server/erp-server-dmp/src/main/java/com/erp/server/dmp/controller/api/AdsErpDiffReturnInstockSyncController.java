@@ -1,30 +1,28 @@
 package com.erp.server.dmp.controller.api;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
 
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
-import com.erp.server.dmp.query.AdsErpDiffOutstockSyncQueryHandler;
 import com.erp.server.dmp.query.AdsErpDiffReturnInstockSyncQueryHandler;
 import com.erp.server.dmp.service.AdsErpDiffReturnInstockSyncService;
 
@@ -186,5 +184,52 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
     public ApiResult<Object>exportSourceSelf(@RequestBody AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto) {
         Boolean flag = adsErpDiffReturnInstockSyncService.exportSourceSelf(dto);
         return flag == true ? success() : failure();
+    }
+
+
+
+    /**
+     * 批量修改--查询
+     * @author jack
+     * @date 2026-02-11
+     * @param dto
+     */
+    @PostMapping("/listPlateformReturnInstockNotExistRelation")
+    public ApiResult<List<AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO>> listPlateformReturnInstockNotExistRelation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(adsErpDiffReturnInstockSyncService.listPlateformReturnInstockNotExistRelation(dto));
+    }
+
+
+    /**
+     * 批量修改--查询erp入库单
+     * @author jack
+     * @date 2026-02-11
+     * @param dto
+     */
+    @PostMapping("/listErpReturnInstockByParams")
+    public ApiResult<List<AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDTO>> listErpReturnInstockByParams(@RequestBody @Validated AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockParamsDTO dto) {
+        return success(adsErpDiffReturnInstockSyncService.listErpReturnInstockByParams(dto));
+    }
+
+    /**
+     * 批量修改
+     * @author jack
+     * @date 2026-02-11
+     * @param dto
+     */
+    @PostMapping("/batchUpdateReturnInstockRelation")
+    public ApiResult<List<BatchResultDTO>> batchUpdateReturnInstockRelation(@RequestBody @Validated AdsErpDiffReturnInstockSyncDTO.BatchUpdateParamsDTO dto) {
+        List<AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO> list = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO relationDTO : list) {
+            BatchResultDTO result;
+            try {
+                result = adsErpDiffReturnInstockSyncService.batchUpdateReturnInstockRelation(relationDTO);
+            }catch (Exception e){
+                result = BatchResultDTO.fail(relationDTO.getId(), relationDTO.getPlatformReturnInstockCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
