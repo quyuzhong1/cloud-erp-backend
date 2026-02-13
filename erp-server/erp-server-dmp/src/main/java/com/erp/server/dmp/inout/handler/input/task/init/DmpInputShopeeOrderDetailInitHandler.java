@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -61,63 +62,88 @@ public class DmpInputShopeeOrderDetailInitHandler extends DmpInputInitHandler{
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
-		
-		List<Object> itemIds = findMongoData.stream().map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
-		
+		// 1. 提取所有 order_sn
+		List<String> itemIds = findMongoData.stream()
+				.map(f -> f.get("order_sn").toString())
+				.collect(Collectors.toList());
+
+		// 2. 获取应用配置及店铺授权（原逻辑保持不变）
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
-			.eq(CfgAppClientEntity::getBusinessType, appClientEnum.getBusinessType())
-			.eq(CfgAppClientEntity::getDictPlatform, appClientEnum.getPlatform())
-			.eq(CfgAppClientEntity::getPlatformType, appClientEnum.getPlatformType())
-			.list();
-		if(CollUtil.isEmpty(cfgAppClientEntityList)) {
+				.eq(CfgAppClientEntity::getBusinessType, appClientEnum.getBusinessType())
+				.eq(CfgAppClientEntity::getDictPlatform, appClientEnum.getPlatform())
+				.eq(CfgAppClientEntity::getPlatformType, appClientEnum.getPlatformType())
+				.list();
+		if (CollUtil.isEmpty(cfgAppClientEntityList)) {
 			throw new ServiceException("shopee应用未配置");
 		}
-		
 		CfgAppClientEntity cfgAppClientEntity = cfgAppClientEntityList.get(0);
-		List<ShopAuthEntity> shopAuthEntityList = FeignQuery.create(ShopAuthEntity.class).eq(ShopAuthEntity::getShopId, findMongoData.get(0).get("nextLevelId").toString()).list();
-		if(CollUtil.isEmpty(shopAuthEntityList)) {
+
+		List<ShopAuthEntity> shopAuthEntityList = FeignQuery.create(ShopAuthEntity.class)
+				.eq(ShopAuthEntity::getShopId, findMongoData.get(0).get("nextLevelId").toString())
+				.list();
+		if (CollUtil.isEmpty(shopAuthEntityList)) {
 			throw new ServiceException("shopee授权未配置");
 		}
 		ShopAuthEntity shopAuthEntity = shopAuthEntityList.get(0);
-		OrderRequest orderRequest = OrderRequest.builder()
-                .host(cfgAppClientEntity.getUrl())
-                .offset(0)
-                .token(shopAuthEntity.getAccessToken())
-                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
-                .tmpPartnerKey(cfgAppClientEntity.getClientSecret())
-                .timeFrom(null)
-                .timeTo(null)
-                .build();
-		orderRequest.setOrderSns(StringUtils.join(itemIds, ","));
-		
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-    	ShopeeResponse data = null;
-    	long sleepTime = 1000;
-    	int count = 0;
-    	while(data == null) {
-    		data = this.execute(orderRequest);
-    		if(data == null) {
-    			if(count == 10) {
-    				throw new ServiceException("调用shopee订单明细接口重试" + count + "失败");
-    			}
-    			try {
-					Thread.sleep(sleepTime);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
+		// 3. 构建基础 OrderRequest（复用）
+		OrderRequest orderRequest = OrderRequest.builder()
+				.host(cfgAppClientEntity.getUrl())
+				.offset(0)
+				.token(shopAuthEntity.getAccessToken())
+				.shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
+				.partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
+				.tmpPartnerKey(cfgAppClientEntity.getClientSecret())
+				.timeFrom(null)
+				.timeTo(null)
+				.build();
+
+		// 4. 将 itemIds 按 50 个一组分割
+		int batchSize = 50;
+		List<List<String>> batches = new ArrayList<>();
+		for (int i = 0; i < itemIds.size(); i += batchSize) {
+			int end = Math.min(i + batchSize, itemIds.size());
+			batches.add(itemIds.subList(i, end));
+		}
+
+		// 5. 合并所有订单数据
+		JSONArray allOrderList = new JSONArray();
+		for (List<String> batch : batches) {
+			orderRequest.setOrderSns(StringUtils.join(batch, ","));
+
+			ShopeeResponse data = null;
+			long sleepTime = 1000;
+			int count = 0;
+			while (data == null) {
+				data = this.execute(orderRequest);
+				if (data == null) {
+					if (count == 10) {
+						throw new ServiceException("调用shopee订单明细接口重试" + count + "失败");
+					}
+					try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+					sleepTime += 1000;
+					count++;
 				}
-    			sleepTime = sleepTime + 1000;
-    			count = count + 1;
-    		}
-    	}
-        
-    	JSONObject result = data.getResponse();
-        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.getJSONArray("order_list").toJSONString(0));
+			}
+
+			JSONObject result = data.getResponse();
+			JSONArray orderList = result.getJSONArray("order_list");
+			// 将当前批次的订单列表添加到总数组中
+			for (int i = 0; i < orderList.size(); i++) {
+				allOrderList.put(orderList.get(i));
+			}
+		}
+
+		// 6. 封装返回结果（保持原返回结构：仅一个DTO，msg为所有订单的JSON字符串）
+		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		dmpInputTaskInitDTO.setMsg(allOrderList.toJSONString(0));
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-    
 		return dmpInputTaskInitDTOList;
 	}
 	
