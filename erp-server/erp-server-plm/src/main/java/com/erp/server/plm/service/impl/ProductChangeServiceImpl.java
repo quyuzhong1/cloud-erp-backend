@@ -9,32 +9,29 @@ import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.oms.dto.KolPartnerInfoDTO;
-import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ProductChangeFieldEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductChangeExcelListener;
-import com.erp.server.plm.service.ProductChangeDetailService;
-import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.*;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.server.plm.mapper.ProductChangeMapper;
-import com.erp.server.plm.service.ProductChangeService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,27 +43,21 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
-import java.util.stream.Stream;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -104,6 +95,30 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
     @Resource
     private ProductChangeService productChangeService;
+
+    @Resource
+    private ProductInfoService productInfoService;
+
+    @Resource
+    private ProductPackService productPackService;
+
+    @Resource
+    private ProductPurchaseService productPurchaseService;
+
+    @Resource
+    private ProductSaleService productSaleService;
+
+    @Resource
+    private ProductRefBuService productRefBuService;
+
+    @Resource
+    private ProductCostService productCostService;
+
+    @Resource
+    private BasicProductBuService basicProductBuService;
+
+    private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
+    private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -318,7 +333,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             addDTO.setSkuNo(skuNo);
             List<ProductChangeDetailDTO.AddDTO> detailDTOList = entry.getValue().stream().map(v -> {
                 ProductChangeDetailDTO.AddDTO detailDTO = new ProductChangeDetailDTO.AddDTO();
-                detailDTO.setFieldName(v.getField());
+                detailDTO.setField(Objects.requireNonNull(ProductChangeFieldEnum.getByFieldLabel(v.getField())).getEntityField());
                 detailDTO.setNewValue(v.getNewValue());
                 detailDTO.setRemark(v.getRemark());
                 return detailDTO;
@@ -368,8 +383,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             List<ProductChangeDetailEntity> detailEntityList = new ArrayList<>();
             for (ProductChangeDetailDTO.AddDTO addDTO : dto.getDetailList()) {
                 ProductChangeDetailEntity productChangeDetailEntity = new ProductChangeDetailEntity();
-                productChangeDetailEntity.setField(addDTO.getFieldName());
-                productChangeDetailEntity.setNewValue(addDTO.getNewValue());
+                productChangeDetailEntity.setField(addDTO.getField());
+                productChangeDetailEntity.setNewValue(addDTO.getNewValue().toString());
                 productChangeDetailEntity.setRemark(addDTO.getRemark());
                 detailEntityList.add(productChangeDetailEntity);
             }
@@ -561,9 +576,380 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            List<ProductChangeDetailEntity> detailEntityList = productChangeDetailService.listByMains(Collections.singletonList(entity.getId()));
+            if (detailEntityList.isEmpty()) {
+                log.warn("变更单ID：{} 无变更明细，无需更新业务表", entity.getId());
+                return Boolean.TRUE;
+            }
+            updateSkuChange(entity,detailEntityList);
+        }
 
         return Boolean.TRUE;
+    }
+
+    public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList) {
+        String skuId = entity.getSkuId();
+        ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
+        if(Objects.isNull(productDetailEntity)){
+            throw new ServiceException("产品明细信息不存在，SKU ID：" + skuId);
+        }
+
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+        if(Objects.isNull(productInfoEntity)){
+            throw new ServiceException("产品基础信息不存在，产品ID：" + productDetailEntity.getProductId());
+        }
+        String pid = productInfoEntity.getId();
+        ProductCostEntity productCostEntity = productCostService.getBySkuId(skuId);
+        ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(skuId);
+        ProductSaleEntity productSaleEntity = productSaleService.getBySkuId(skuId);
+        ProductPackEntity productPackEntity = productPackService.getBySkuId(skuId);
+
+        ProductDetailEntity oldDetailEntity = new ProductDetailEntity();
+        ProductDetailEntity oldProductInfoEntity = new ProductDetailEntity();
+        ProductDetailEntity oldProductCostEntity = new ProductDetailEntity();
+        ProductDetailEntity oldProductPurchaseEntity = new ProductDetailEntity();
+        ProductDetailEntity oldProductSaleEntity = new ProductDetailEntity();
+        ProductDetailEntity oldProductPackEntity = new ProductDetailEntity();
+
+        BeanMapperUtils.copy(productDetailEntity, oldDetailEntity);
+        BeanMapperUtils.copy(productInfoEntity, oldProductInfoEntity);
+        BeanMapperUtils.copy(productCostEntity, oldProductCostEntity);
+        BeanMapperUtils.copy(productPurchaseEntity, oldProductPurchaseEntity);
+        BeanMapperUtils.copy(productSaleEntity, oldProductSaleEntity);
+        BeanMapperUtils.copy(productPackEntity, oldProductPackEntity);
+
+        // 标记各个实体是否有变更
+        boolean costChanged = false;
+        boolean detailChanged = false;
+        boolean infoChanged = false;
+        boolean packChanged = false;
+        boolean purchaseChanged = false;
+        boolean saleChanged = false;
+
+        for (ProductChangeDetailEntity detail : detailEntityList) {
+            String field = detail.getField();
+            String newValueStr = detail.getNewValue();
+            if (StringUtils.isBlank(field) || StringUtils.isBlank(newValueStr)) {
+                log.warn("变更明细ID：{} 字段/新值为空，跳过更新", detail.getId());
+                continue;
+            }
+
+            // 匹配字段枚举
+            ProductChangeFieldEnum fieldEnum = ProductChangeFieldEnum.getByEntityField(field);
+            if (fieldEnum == null) {
+                throw new ServiceException("不支持的变更字段：" + field);
+            }
+            // 转换新值为对应数据类型
+            Object newValue = convertValue(fieldEnum.getDataType(), newValueStr);
+            if (newValue == null) {
+                throw new ServiceException("新值转换失败，字段：" + fieldEnum.getFieldLabel() + "，值：" + newValueStr);
+            }
+
+            // 根据枚举匹配业务表，执行更新
+            switch (fieldEnum) {
+
+                // product_cost
+                case EXPECTED_PROJECT_APPROVAL_COST:
+                    productCostEntity.setProjectApprovalCost((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case ACTUAL_MASS_PRODUCTION_COST:
+                    productCostEntity.setMassCost((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case EXPECTED_PROJECT_COST:
+                    productCostEntity.setProjectCost((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case TAX_RATE:
+                    productCostEntity.setTaxRate((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case TARGET_TAX_INCLUDED_COST:
+                    productCostEntity.setTargetTaxCost((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case STANDARD_RETAIL_PRICE:
+                    productCostEntity.setRetailPrice((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case ACTUAL_GROSS_PROFIT_MARGIN:
+                    productCostEntity.setActualGpmUsd((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+
+                // product_detail
+                case EXPECTED_ON_SHELF_TIME:
+                    productDetailEntity.setPlanListingTime((LocalDate) newValue);
+                    detailChanged = true;
+                    break;
+
+                // product_info
+                case SALE_MODE:
+                    productInfoEntity.setSaleMethod((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_NAME_CN:
+                    productInfoEntity.setName((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_SELLING_POINT:
+                    productInfoEntity.setSellSpot((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_USAGE:
+                    productInfoEntity.setUsageDesc((String) newValue);
+                    infoChanged = true;
+                    break;
+                case MAIN_MATERIAL:
+                    productInfoEntity.setMaterials((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_ATTRIBUTE:
+                    productInfoEntity.setPropertyId((String) newValue);
+                    infoChanged = true;
+                    break;
+                case ENTRUSTED_DEVELOPMENT_COST:
+                    productInfoEntity.setEntrustedDevelopCost((BigDecimal) newValue);
+                    infoChanged = true;
+                    break;
+                case SAMPLE_FEE:
+                    productInfoEntity.setSampleFee((BigDecimal) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_NAME_EN:
+                    productInfoEntity.setNameEn((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_CATEGORY:
+                    productInfoEntity.setCategoryId((String) newValue);
+                    infoChanged = true;
+                    break;
+                case APPLICATION_CATEGORY:
+                    productInfoEntity.setApplicationCategoryId((String) newValue);
+                    infoChanged = true;
+                    break;
+                case R_D_TEAM:
+                    productInfoEntity.setRdtTeamId((String) newValue);
+                    infoChanged = true;
+                    break;
+                case BRAND:
+                    productInfoEntity.setBrandId((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_GRADE:
+                    productInfoEntity.setGradeId((String) newValue);
+                    infoChanged = true;
+                    break;
+                case SALE_CHANNEL:
+                    productInfoEntity.setSalesChannel((String) newValue);
+                    infoChanged = true;
+                    break;
+                case IS_CUSTOMIZED:
+                    productInfoEntity.setIsCustomized((Integer) newValue);
+                    infoChanged = true;
+                    break;
+                case HAS_INFRINGEMENT_RISK:
+                    productInfoEntity.setPirateRisk((Integer) newValue);
+                    infoChanged = true;
+                    break;
+
+                // product_pack
+                case PRODUCT_LENGTH:
+                    productPackEntity.setProductLength((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case PRODUCT_WIDTH:
+                    productPackEntity.setProductWidth((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case PRODUCT_HEIGHT:
+                    productPackEntity.setProductHeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case GROSS_WEIGHT:
+                    productPackEntity.setGrossWeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case NET_WEIGHT:
+                    productPackEntity.setNetWeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_LENGTH:
+                    productPackEntity.setBoxLength((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_WIDTH:
+                    productPackEntity.setBoxWidth((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_HEIGHT:
+                    productPackEntity.setBoxHeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_WEIGHT:
+                    productPackEntity.setBoxWeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_QUANTITY:
+                    productPackEntity.setBoxQty((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+
+                // product_purchase
+                case EAN_CODE:
+                    productPurchaseEntity.setEan((String) newValue);
+                    purchaseChanged = true;
+                    break;
+                case TRIAL_PRODUCTION_QUANTITY:
+                    productPurchaseEntity.setTrialProductionQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case FIRST_BATCH_MASS_PRODUCTION_QUANTITY:
+                    productPurchaseEntity.setFirstMassQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case PLANNED_FIRST_BATCH_ORDER_QUANTITY:
+                    productPurchaseEntity.setPlanOrderQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case EXPECTED_FIRST_BATCH_ARRIVAL_TIME:
+                    productPurchaseEntity.setPlanArrivalTime((LocalDate) newValue);
+                    purchaseChanged = true;
+                    break;
+                case MOQ:
+                    productPurchaseEntity.setMoq((Integer) newValue);
+                    purchaseChanged = true;
+                    break;
+                case DELIVERY_CYCLE:
+                    productPurchaseEntity.setDeliveryCycle((BigDecimal) newValue);
+                    purchaseChanged = true;
+                    break;
+                case FIRST_BATCH_ORDER_TIME:
+                    productPurchaseEntity.setPlaceOrderTime((LocalDate) newValue);
+                    purchaseChanged = true;
+                    break;
+                case ACTUAL_FIRST_BATCH_ARRIVAL_QUANTITY:
+                    productPurchaseEntity.setActualArrivalQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case ACTUAL_FIRST_BATCH_ARRIVAL_TIME:
+                    productPurchaseEntity.setActualArrivalTime((LocalDate) newValue);
+                    purchaseChanged = true;
+                    break;
+                case FIRST_BATCH_ARRIVAL_STATUS:
+                    productPurchaseEntity.setArrivalState((Integer) newValue);
+                    purchaseChanged = true;
+                    break;
+
+                // product_ref_bu
+                case BU_LINE:
+                    productRefBuService.addOrUpdate(productInfoEntity.getId(), (String) newValue);
+                    // 不涉及上面几个实体的变更，所以无需设置标志
+                    break;
+
+                // product_sale
+                case ANNUAL_TARGET_SALES_VOLUME:
+                    productSaleEntity.setYearSaleQty((Long) newValue);
+                    saleChanged = true;
+                    break;
+                case ANNUAL_TARGET_SALES_AMOUNT:
+                    productSaleEntity.setYearSaleAmount((BigDecimal) newValue);
+                    saleChanged = true;
+                    break;
+                case MONTHLY_TARGET_SALES_VOLUME:
+                    productSaleEntity.setMonthSaleQty((Long) newValue);
+                    saleChanged = true;
+                    break;
+                case MONTHLY_TARGET_SALES_AMOUNT:
+                    productSaleEntity.setMonthSaleAmount((BigDecimal) newValue);
+                    saleChanged = true;
+                    break;
+                case COLLECTION_DEGREE_TARGET_SALES_VOLUME:
+                    productSaleEntity.setTargetSalesQty((BigDecimal) newValue);
+                    saleChanged = true;
+                    break;
+                case SALE_COUNTRY:
+                    productSaleEntity.setSaleCountry((String) newValue);
+                    saleChanged = true;
+                    break;
+                case ON_SHELF_TIME:
+                    productSaleEntity.setListingTime((LocalDate) newValue);
+                    saleChanged = true;
+                    break;
+                case OFF_SHELF_TIME:
+                    productSaleEntity.setDelistingTime((LocalDate) newValue);
+                    saleChanged = true;
+                    break;
+                case SALE_PLATFORM:
+                    productSaleEntity.setSalesPlatform((String) newValue);
+                    saleChanged = true;
+                    break;
+                case IS_IMAGE_COMPLETED:
+                    productSaleEntity.setIsFinishedImg((Integer) newValue);
+                    saleChanged = true;
+                    break;
+                case IS_VIDEO_COMPLETED:
+                    productSaleEntity.setIsFinishedVideo((Integer) newValue);
+                    saleChanged = true;
+                    break;
+
+                default:
+                    log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getFieldLabel());
+            }
+        }
+
+        // 仅对有变更的实体执行更新
+        if (detailChanged) {
+            productDetailService.updateById(productDetailEntity);
+            operateLogService.addSysLogByUpdate(oldDetailEntity, productDetailEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (infoChanged) {
+            productInfoService.updateById(productInfoEntity);
+            operateLogService.addSysLogByUpdate(oldProductInfoEntity, productInfoEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (purchaseChanged) {
+            productPurchaseService.updateById(productPurchaseEntity);
+            operateLogService.addSysLogByUpdate(oldProductPurchaseEntity, productPurchaseEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (saleChanged) {
+            productSaleService.updateById(productSaleEntity);
+            operateLogService.addSysLogByUpdate(oldProductSaleEntity, productSaleEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (packChanged) {
+            productPackService.updateById(productPackEntity);
+            operateLogService.addSysLogByUpdate(oldProductPackEntity, productPackEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (costChanged) {
+            productCostService.updateById(productCostEntity);
+            operateLogService.addSysLogByUpdate(oldProductCostEntity, productCostEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+    }
+
+    /**
+     * 通用值类型转换：String -> 目标类型（String/Date/BigDecimal等）
+     */
+    private Object convertValue(Class<?> targetType, String valueStr) {
+        try {
+            if (targetType == String.class) {
+                return valueStr;
+            } else if (targetType == LocalDate.class) {
+                return LocalDate.parse(valueStr);
+            } else if (targetType == BigDecimal.class) {
+                return new BigDecimal(valueStr);
+            } else if (targetType == Integer.class) {
+                return Integer.parseInt(valueStr);
+            } else if (targetType == Long.class) {
+                return Long.valueOf(valueStr);
+            }else{
+                throw new ServiceException("不支持的目标类型转换：" + targetType.getName());
+            }
+        } catch (NumberFormatException e) {
+            log.error("数值转换失败，值：{}，目标类型：{}", valueStr, targetType.getName(), e);
+        }
+        return null;
     }
 
     /**
@@ -690,4 +1076,5 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         }
    }
+
 }

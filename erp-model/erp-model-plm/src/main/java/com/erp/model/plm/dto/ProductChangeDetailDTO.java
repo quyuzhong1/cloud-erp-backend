@@ -95,12 +95,12 @@ public class ProductChangeDetailDTO implements Serializable {
         /**
         * 变更原值
         */
-        private String oldValue;
+        private Object oldValue;
 
         /**
         * 变更新值
         */
-        private String newValue;
+        private Object newValue;
 
         /**
         * 备注
@@ -169,12 +169,12 @@ public class ProductChangeDetailDTO implements Serializable {
         /**
         * 变更原值
         */
-        private String oldValue;
+        private Object oldValue;
 
         /**
         * 变更新值
         */
-        private String newValue;
+        private Object newValue;
 
         /**
         * 备注
@@ -232,20 +232,19 @@ public class ProductChangeDetailDTO implements Serializable {
         @Size(max = 255,message = "变更字段最大长度不能超过255位")
         private String field;
 
-        private String fieldName;
         /**
         * 变更原值
         */
         @NotBlank(message = "变更原值不能为空")
         @Size(max = 255,message = "变更原值最大长度不能超过255位")
-        private String oldValue;
+        private Object oldValue;
 
         /**
         * 变更新值
         */
         @NotBlank(message = "变更新值不能为空")
         @Size(max = 255,message = "变更新值最大长度不能超过255位")
-        private String newValue;
+        private Object newValue;
 
         /**
         * 备注

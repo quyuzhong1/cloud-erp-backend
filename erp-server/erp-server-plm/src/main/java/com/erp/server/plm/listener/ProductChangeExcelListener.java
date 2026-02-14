@@ -10,6 +10,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.plm.dto.excel.BomCombinationImportExcelDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
+import com.erp.model.plm.enums.ProductChangeFieldEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.ProductChangeService;
 import lombok.Getter;
@@ -85,9 +86,12 @@ public class ProductChangeExcelListener extends AnalysisEventListener<ProductCha
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        if(ProductChangeFieldEnum.getByFieldLabel(excelDTO.getField()) == null){
+            errorMsgList.add("字段名称不存在");
+        }
 
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
