@@ -2,6 +2,7 @@ package com.erp.model.plm.enums;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.function.Function;
 
 /**
  * 产品变更字段映射枚举
@@ -36,8 +37,8 @@ public enum ProductChangeFieldEnum {
     BRAND("品牌", "product_info", "brandId", String.class),
     PRODUCT_GRADE("产品等级", "product_info", "gradeId", String.class),
     SALE_CHANNEL("销售渠道", "product_info", "salesChannel", String.class),
-    IS_CUSTOMIZED("是否客户定制", "product_info", "isCustomized", Integer.class),
-    HAS_INFRINGEMENT_RISK("存在侵权风险", "product_info", "pirateRisk", Integer.class),
+    IS_CUSTOMIZED("是否客户定制", "product_info", "isCustomized", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 0 : Integer.parseInt(s))),
+    HAS_INFRINGEMENT_RISK("存在侵权风险", "product_info", "pirateRisk", Integer.class,s -> "有风险".equals(s) ? 1 : ("无风险".equals(s) ? 2 : Integer.parseInt(s))),
 
     // product_pack 分类
     PRODUCT_LENGTH("产品尺寸（长）（mm）", "product_pack", "productLength", BigDecimal.class),
@@ -62,7 +63,7 @@ public enum ProductChangeFieldEnum {
     FIRST_BATCH_ORDER_TIME("首批下单时间", "product_purchase", "placeOrderTime", LocalDate.class),
     ACTUAL_FIRST_BATCH_ARRIVAL_QUANTITY("实际首批到货量", "product_purchase", "actualArrivalQty", Long.class),
     ACTUAL_FIRST_BATCH_ARRIVAL_TIME("实际首批到货时间", "product_purchase", "actualArrivalTime", LocalDate.class),
-    FIRST_BATCH_ARRIVAL_STATUS("首批到货状态", "product_purchase", "arrivalState", Integer.class),
+    FIRST_BATCH_ARRIVAL_STATUS("首批到货状态", "product_purchase", "arrivalState", Integer.class,s -> "未到货".equals(s) ? 1 : ("已到货".equals(s) ? 2 :("部分到货".equals(s)?3:Integer.parseInt(s)) )),
 
     // product_ref_bu 分类
     BU_LINE("BU线", "product_ref_bu", "buId", String.class),
@@ -77,8 +78,8 @@ public enum ProductChangeFieldEnum {
     ON_SHELF_TIME("上市时间", "product_sale", "listingTime", LocalDate.class),
     OFF_SHELF_TIME("退市时间", "product_sale", "delistingTime", LocalDate.class),
     SALE_PLATFORM("销售平台", "product_sale", "salesPlatform", String.class),
-    IS_IMAGE_COMPLETED("图片是否完成", "product_sale", "isFinishedImg", Integer.class),
-    IS_VIDEO_COMPLETED("视频是否完成", "product_sale", "isFinishedVideo", Integer.class),
+    IS_IMAGE_COMPLETED("图片是否完成", "product_sale", "isFinishedImg", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 0 : Integer.parseInt(s))),
+    IS_VIDEO_COMPLETED("视频是否完成", "product_sale", "isFinishedVideo", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 0 : Integer.parseInt(s))),
     ;
 
     // 前端下拉框显示的字段名
@@ -90,13 +91,22 @@ public enum ProductChangeFieldEnum {
     // 字段数据类型
     private final Class<?> dataType;
 
+    private final Function<String, Object> converter;  // 第五个参数：自定义转换器
+
+    // 四个参数的构造函数，调用五个参数的构造函数并传入 null 转换器（表示使用默认转换逻辑）
     ProductChangeFieldEnum(String fieldLabel, String tableName, String entityField, Class<?> dataType) {
+        this(fieldLabel, tableName, entityField, dataType, null);
+    }
+
+    // 五个参数的构造函数，允许传入自定义转换器
+    ProductChangeFieldEnum(String fieldLabel, String tableName, String entityField, Class<?> dataType,
+                           Function<String, Object> converter) {
         this.fieldLabel = fieldLabel;
         this.tableName = tableName;
         this.entityField = entityField;
         this.dataType = dataType;
+        this.converter = converter;
     }
-
     // 根据前端显示的字段名获取枚举
     public static ProductChangeFieldEnum getByFieldLabel(String fieldLabel) {
         for (ProductChangeFieldEnum e : values()) {
@@ -114,6 +124,47 @@ public enum ProductChangeFieldEnum {
             }
         }
         return null;
+    }
+
+    /**
+     * 使用枚举的转换器（如果存在）将字符串转换为目标类型的对象；
+     * 如果转换器为 null，则调用默认的转换方法 {@link #convertDefault(String)}。
+     */
+    public Object convert(String value) {
+        if (converter != null) {
+            return converter.apply(value);
+        }
+        return convertDefault(value);
+    }
+
+    /**
+     * 默认转换逻辑：根据 dataType 将字符串转换为对应类型。
+     * 对于 Integer 类型，如果字符串是“是”/“否”，同样转换为 1/0，以保持统一。
+     */
+    private Object convertDefault(String value) {
+        if (value == null) {
+            return null;
+        }
+        if (dataType == String.class) {
+            return value;
+        } else if (dataType == Integer.class) {
+            // 支持“是”/“否”转换，同时保留数字字符串的解析
+            if ("是".equals(value)) {
+                return 1;
+            } else if ("否".equals(value)) {
+                return 0;
+            } else {
+                return Integer.parseInt(value);
+            }
+        } else if (dataType == Long.class) {
+            return Long.parseLong(value);
+        } else if (dataType == BigDecimal.class) {
+            return new BigDecimal(value);
+        } else if (dataType == LocalDate.class) {
+            return LocalDate.parse(value); // 假设格式为 yyyy-MM-dd
+        } else {
+            throw new IllegalArgumentException("不支持的数据类型: " + dataType);
+        }
     }
 
     // getter

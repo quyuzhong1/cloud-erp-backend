@@ -117,6 +117,18 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     @Resource
     private BasicProductBuService basicProductBuService;
 
+    @Resource
+    private BasicDictService basicDictService;
+
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
+    @Resource
+    private ProductRDTTeamService productRDTTeamService;
+
+    @Resource
+    private ProductBrandService productBrandService;
+
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
@@ -281,10 +293,10 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         }
 
         if(CollUtil.isNotEmpty(errorNoList)){
-            successList = successList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(e.getSkuNo()) && !errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getSkuNo()) && !errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
 
             //全部返回到错误列表
-            List<ProductChangeImportExcelDTO> collect = successList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isBlank(e.getSkuNo()) || errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
+            List<ProductChangeImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getSkuNo()) || errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
             errorList.addAll(collect);
         }
 
@@ -334,7 +346,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             List<ProductChangeDetailDTO.AddDTO> detailDTOList = entry.getValue().stream().map(v -> {
                 ProductChangeDetailDTO.AddDTO detailDTO = new ProductChangeDetailDTO.AddDTO();
                 detailDTO.setField(Objects.requireNonNull(ProductChangeFieldEnum.getByFieldLabel(v.getField())).getEntityField());
-                detailDTO.setNewValue(v.getNewValue());
+                detailDTO.setNewValue(v.getNewValueObj());
                 detailDTO.setRemark(v.getRemark());
                 return detailDTO;
             }).collect(Collectors.toList());
@@ -583,15 +595,17 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                 log.warn("变更单ID：{} 无变更明细，无需更新业务表", entity.getId());
                 return Boolean.TRUE;
             }
-            updateSkuChange(entity,detailEntityList);
+            ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+            updateSkuChange(entity,detailEntityList,productDetailEntity);
+            //推送金蝶
+            productDetailService.sendSinglePushTask(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
 
         return Boolean.TRUE;
     }
 
-    public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList) {
+    public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList,ProductDetailEntity productDetailEntity) {
         String skuId = entity.getSkuId();
-        ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
         if(Objects.isNull(productDetailEntity)){
             throw new ServiceException("产品明细信息不存在，SKU ID：" + skuId);
         }
@@ -628,6 +642,11 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         boolean purchaseChanged = false;
         boolean saleChanged = false;
 
+        List<BasicDictEntity> basicDictList = basicDictService.list();
+        List<BasicCategoryEntity> basicCategoryEntities = basicCategoryService.list();
+        List<ProductRDTTeamEntity> productRDTTeamEntities = productRDTTeamService.list();
+        List<ProductBrandEntity> productBrandEntities = productBrandService.list();
+
         for (ProductChangeDetailEntity detail : detailEntityList) {
             String field = detail.getField();
             String newValueStr = detail.getNewValue();
@@ -649,7 +668,6 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
             // 根据枚举匹配业务表，执行更新
             switch (fieldEnum) {
-
                 // product_cost
                 case EXPECTED_PROJECT_APPROVAL_COST:
                     productCostEntity.setProjectApprovalCost((BigDecimal) newValue);
@@ -708,7 +726,10 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     infoChanged = true;
                     break;
                 case PRODUCT_ATTRIBUTE:
+                    String propertyId = (String) newValue;
+                    BasicDictEntity basicDictEntity = basicDictList.stream().filter(e -> Objects.equals(e.getId(), propertyId)).findFirst().orElse(new BasicDictEntity());
                     productInfoEntity.setPropertyId((String) newValue);
+                    productInfoEntity.setProperty(basicDictEntity.getName());
                     infoChanged = true;
                     break;
                 case ENTRUSTED_DEVELOPMENT_COST:
@@ -724,7 +745,10 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     infoChanged = true;
                     break;
                 case PRODUCT_CATEGORY:
-                    productInfoEntity.setCategoryId((String) newValue);
+                    String categoryId = (String) newValue;
+                    BasicCategoryEntity basicCategoryEntity = basicCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), categoryId)).findFirst().orElse(new BasicCategoryEntity());
+                    productInfoEntity.setCategoryId(categoryId);
+                    productInfoEntity.setCategory(basicCategoryEntity.getName());
                     infoChanged = true;
                     break;
                 case APPLICATION_CATEGORY:
@@ -732,15 +756,24 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     infoChanged = true;
                     break;
                 case R_D_TEAM:
-                    productInfoEntity.setRdtTeamId((String) newValue);
+                    String rdtTeamId = (String) newValue;
+                    ProductRDTTeamEntity productRDTTeamEntity = productRDTTeamEntities.stream().filter(e -> Objects.equals(e.getId(), rdtTeamId)).findFirst().orElse(new ProductRDTTeamEntity());
+                    productInfoEntity.setRdtTeamId(rdtTeamId);
+                    productInfoEntity.setRdtTeamName(productRDTTeamEntity.getName());
                     infoChanged = true;
                     break;
                 case BRAND:
-                    productInfoEntity.setBrandId((String) newValue);
+                    String brandId = (String) newValue;
+                    ProductBrandEntity productBrandEntity = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), brandId)).findFirst().orElse(new ProductBrandEntity());
+                    productInfoEntity.setBrandId(brandId);
+                    productInfoEntity.setBrandName(productBrandEntity.getName());
                     infoChanged = true;
                     break;
                 case PRODUCT_GRADE:
-                    productInfoEntity.setGradeId((String) newValue);
+                    String gradeId = (String) newValue;
+                    BasicDictEntity gradeDict = basicDictList.stream().filter(e -> Objects.equals(e.getId(), gradeId)).findFirst().orElse(new BasicDictEntity());
+                    productInfoEntity.setGradeId(gradeId);
+                    productInfoEntity.setGrade(gradeDict.getName());
                     infoChanged = true;
                     break;
                 case SALE_CHANNEL:
@@ -931,25 +964,21 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     /**
      * 通用值类型转换：String -> 目标类型（String/Date/BigDecimal等）
      */
-    private Object convertValue(Class<?> targetType, String valueStr) {
-        try {
-            if (targetType == String.class) {
-                return valueStr;
-            } else if (targetType == LocalDate.class) {
-                return LocalDate.parse(valueStr);
-            } else if (targetType == BigDecimal.class) {
-                return new BigDecimal(valueStr);
-            } else if (targetType == Integer.class) {
-                return Integer.parseInt(valueStr);
-            } else if (targetType == Long.class) {
-                return Long.valueOf(valueStr);
-            }else{
-                throw new ServiceException("不支持的目标类型转换：" + targetType.getName());
-            }
-        } catch (NumberFormatException e) {
-            log.error("数值转换失败，值：{}，目标类型：{}", valueStr, targetType.getName(), e);
+    @Override
+    public Object convertValue(Class<?> targetType, String valueStr) {
+        if (targetType == String.class) {
+            return valueStr;
+        } else if (targetType == LocalDate.class) {
+            return LocalDate.parse(valueStr);
+        } else if (targetType == BigDecimal.class) {
+            return new BigDecimal(valueStr);
+        } else if (targetType == Integer.class) {
+            return Integer.parseInt(valueStr);
+        } else if (targetType == Long.class) {
+            return Long.valueOf(valueStr);
+        }else{
+            throw new ServiceException("不支持的目标类型转换：" + targetType.getName());
         }
-        return null;
     }
 
     /**
