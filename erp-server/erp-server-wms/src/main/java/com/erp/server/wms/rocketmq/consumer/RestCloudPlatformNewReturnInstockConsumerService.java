@@ -348,10 +348,20 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		// 查询对应店铺
 		String platformShopCode = dto.getAuthId();
 		List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(),thisPlatform, null));
-		List<String> shopIds = shopList.stream()
-				.filter(e -> e.getPlatformShopCode().equalsIgnoreCase(platformShopCode))
-				.map(BaseEntity::getId)
-				.collect(Collectors.toList());
+		List<String> shopIds ;
+		//京东取的是店铺ID
+		if (CharSequenceUtil.equals(thisPlatform,PlatformDictEnum.NASDAQ_JD.getCode()) ) {
+			shopIds = shopList.stream()
+					.map(BaseEntity::getId)
+					.filter(id -> id.equals(platformShopCode))
+					.collect(Collectors.toList());
+		} else {
+			shopIds = shopList.stream()
+					.filter(e -> e.getPlatformShopCode().equalsIgnoreCase(platformShopCode))
+					.map(BaseEntity::getId)
+					.collect(Collectors.toList());
+		}
+
 		if (CollectionUtils.isEmpty(shopIds)){
 			log.warn("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
 			ServiceException.runError("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
