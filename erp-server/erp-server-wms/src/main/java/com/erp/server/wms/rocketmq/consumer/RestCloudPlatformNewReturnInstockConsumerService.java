@@ -104,9 +104,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	@Override
 	public void handle(String data) {
 		PlatformReturnInstockDTO dto = JSONUtil.toBean(data, PlatformReturnInstockDTO.class);
-		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())){
+		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) || PlatformDictEnum.NASDAQ_JD.getCode().equalsIgnoreCase(dto.getPlatform())){
+			String thisPlatform = PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) ? PlatformDictEnum.AMAZON.getCode() : PlatformDictEnum.NASDAQ_JD.getCode();
 			// 平台仓入库处理
-			platformWarehouseHandle(dto);
+			platformWarehouseHandle(dto,thisPlatform);
 		} else {
 			// 海外仓入库处理
 			overseasWarehouseHandle(dto);
@@ -335,7 +336,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	/**
 	 * 平台仓入库平台处理
 	 */
-	public void platformWarehouseHandle(PlatformReturnInstockDTO dto) {
+	public void platformWarehouseHandle(PlatformReturnInstockDTO dto,String thisPlatform) {
 		// 根据
 		List<SoReturnInstockEntity> soReturnList = soReturnInstockService.lambdaQuery()
 				.in(SoReturnInstockEntity::getSourceCode, dto.getUniqueId())
@@ -346,11 +347,21 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		// 查询对应店铺
 		String platformShopCode = dto.getAuthId();
-		List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
-		List<String> shopIds = shopList.stream()
-				.filter(e -> e.getPlatformShopCode().equalsIgnoreCase(platformShopCode))
-				.map(BaseEntity::getId)
-				.collect(Collectors.toList());
+		List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(),thisPlatform, null));
+		List<String> shopIds ;
+		//京东取的是店铺ID
+		if (CharSequenceUtil.equals(thisPlatform,PlatformDictEnum.NASDAQ_JD.getCode()) ) {
+			shopIds = shopList.stream()
+					.map(BaseEntity::getId)
+					.filter(id -> id.equals(platformShopCode))
+					.collect(Collectors.toList());
+		} else {
+			shopIds = shopList.stream()
+					.filter(e -> e.getPlatformShopCode().equalsIgnoreCase(platformShopCode))
+					.map(BaseEntity::getId)
+					.collect(Collectors.toList());
+		}
+
 		if (CollectionUtils.isEmpty(shopIds)){
 			log.warn("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
 			ServiceException.runError("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
