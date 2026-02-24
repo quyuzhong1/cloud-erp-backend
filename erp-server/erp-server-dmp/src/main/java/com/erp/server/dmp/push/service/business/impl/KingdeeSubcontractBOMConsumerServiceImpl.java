@@ -6,7 +6,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.KingdeeParamDTO;
-import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -76,7 +75,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //读取配置，初始化SDK
         KingdeeApiUtils bomApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM.getCode());
         KingdeeApiUtils bomChangeApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM_CHANGE.getCode());
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
         KingdeeApiUtils skuApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_MATERIAL.getCode());
 
         //根据录入值和字段配置生成JSONObject
@@ -92,42 +90,65 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         /**
          * 下推
          */
-//
-        operatePush(bomApiUtils,bomChangeApiUtils,apiUtils,skuApiUtils,platformEntity, map,json,type);
+        operatePush(bomApiUtils,bomChangeApiUtils,skuApiUtils,platformEntity, map,json,type);
     }
 
     /**
      * 下推
      */
-    public void operatePush(KingdeeApiUtils bomApiUtils,KingdeeApiUtils bomChangeApiUtils,KingdeeApiUtils apiUtils,KingdeeApiUtils skuApiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,Integer type) {
+    public void operatePush(KingdeeApiUtils bomApiUtils,KingdeeApiUtils bomChangeApiUtils,KingdeeApiUtils skuApiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,Integer type) {
         //判断金蝶系统是否已存在该数据
         LinkedList<String> queryFilters = new LinkedList<>();
+
+        JSONArray jsonArray = (JSONArray) map.get("list");
+        List<JSONObject> list = new ArrayList<>();
+        for (Object obj : jsonArray) {
+            if (obj instanceof JSONObject) {
+                list.add((JSONObject) obj);
+            }
+        }
+
         String syncKingdeeId = map.get("syncKingdeeId").toString();
         queryFilters.add(String.format("FSubReqId = '%s'", syncKingdeeId));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FId,FBillNo";
-        List<Map<String, Object>> queryList = bomApiUtils.queryList(filterStr, fieldKeys, 1, 1, 1);
+        List<Map<String, Object>> queryList = bomApiUtils.queryList(filterStr, fieldKeys, 1000, 1, 1000);
         if (!queryList.isEmpty()) {
             Map<String, Object> bomMap = queryList.get(0);
             KingdeeUtils.makeFieldJson(json,"Ids",".", bomMap.get("FId"));
-            Map<String, Object> bomChangeViewMap = new HashMap<>();
-            bomChangeViewMap.put("syncKingdeeId",bomMap.get("FId"));
-            JSONObject view = kingdeeCommonService.view(bomApiUtils, platformEntity.getId(), bomChangeViewMap);
-            //转换数据
-            JSONObject convertData = convertData(view,skuApiUtils,platformEntity.getId(),syncKingdeeId,queryList.get(0).get("FBillNo").toString());
 
-            KingdeeParamDTO.SaveParamDTO saveParam = new KingdeeParamDTO.SaveParamDTO(convertData);
-            saveParam.setIsVerifyBaseDataField(Boolean.FALSE);
-            //新增
-            RepoResult save = bomChangeApiUtils.saveKingDee(saveParam);
-            //提交
-            kingdeeCommonService.submit(null,bomChangeApiUtils,save.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
-            //审核
-            kingdeeCommonService.audit(null,bomChangeApiUtils,save.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
+            //转换数据
+            for (Map<String, Object> query : queryList) {
+                Map<String, Object> bomChangeViewMap = new HashMap<>();
+                bomChangeViewMap.put("syncKingdeeId",query.get("FId"));
+                JSONObject view = kingdeeCommonService.view(bomApiUtils, platformEntity.getId(), bomChangeViewMap);
+                //处理旧单
+                JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),syncKingdeeId,query.get("FBillNo").toString());
+                KingdeeParamDTO.SaveParamDTO saveOldParam = new KingdeeParamDTO.SaveParamDTO(convertOldData);
+                saveOldParam.setIsVerifyBaseDataField(Boolean.FALSE);
+                //新增
+                RepoResult saveOld = bomChangeApiUtils.saveKingDee(saveOldParam);
+                //提交
+                kingdeeCommonService.submit(null,bomChangeApiUtils,saveOld.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
+                //审核
+                kingdeeCommonService.audit(null,bomChangeApiUtils,saveOld.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
+
+                //新增新单
+                JSONObject convertNewData = convertNewData(view,list,syncKingdeeId,query.get("FBillNo").toString());
+                KingdeeParamDTO.SaveParamDTO saveNewParam = new KingdeeParamDTO.SaveParamDTO(convertNewData);
+                saveNewParam.setIsVerifyBaseDataField(Boolean.FALSE);
+                //新增
+                RepoResult saveNew = bomChangeApiUtils.saveKingDee(saveNewParam);
+                //提交
+                kingdeeCommonService.submit(null,bomChangeApiUtils,saveNew.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
+                //审核
+                kingdeeCommonService.audit(null,bomChangeApiUtils,saveNew.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
+            }
+
         }
     }
 
-    public JSONObject convertData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,String syncKingdeeId,String bomBillNo){
+    public JSONObject convertOldData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,String syncKingdeeId,String bomBillNo){
         JSONArray ppBomEntries = view.getJSONArray("PPBomEntry");
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
@@ -148,27 +169,77 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 FEntities.put(changeAfterPpBom);
             }
         }
+        entries.put("FEntity",FEntities);
+        //单据类型
+        JSONObject typeJson = new JSONObject();
+        typeJson.put("FNumber", "WWYLQDBGD01_SYS");
+        entries.put("FBillType", typeJson);
+        //单据日期
+        entries.put("FDate", LocalDate.now().toString());
+        //单据状态
+        entries.put("FDocumentStatus", "Z");
+        //委外组织
+        JSONObject subOrgJson = new JSONObject();
+        subOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
+        entries.put("FSubOrgId", subOrgJson);
+        //是否自动调整JSON字段顺序
+        entries.put("IsAutoAdjustField", Boolean.TRUE);
+        //金蝶工单补充字段
+        entries.put("FSUBREQID", view.get("SubReqId"));
+        entries.put("FSUBBILLNO", view.get("SubReqBillNO"));
+        entries.put("FSUBREQENTRYID", view.get("SubReqEntryId"));
+        entries.put("FSUBREQENTRYSEQ", view.get("SubReqEntrySeq"));
+        return entries;
+    }
+
+    public JSONObject convertNewData(JSONObject view,List<JSONObject> list,String syncKingdeeId,String bomBillNo){
+        JSONArray FEntities = new JSONArray();
+        JSONObject entries = new JSONObject();
+        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
+        SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
+        if (Objects.isNull(sysAccountingCompany)) {
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
+        }
 
         //添加新行
-        if (Objects.nonNull(subcontractOrder)) {
-            String mainId = subcontractOrder.getId();
-            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
-            List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
-                    .filter(item -> StringUtils.isNotBlank(item.getParentId()))
-                    .collect(Collectors.toList());
-            List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
-                    .filter(item -> StringUtils.isBlank(item.getParentId()))
-                    .collect(Collectors.toList());
-            if (!parentList.isEmpty() && !childList.isEmpty()) {
-                for (SubcontractOrderDetailEntity subcontractOrderDetail : childList) {
-                    SubcontractOrderDetailEntity parentDetail = parentList.stream()
-                            .filter(item -> Objects.equals(item.getId(), subcontractOrderDetail.getParentId()))
-                            .findFirst()
-                            .orElse(null);
-                    entries = createNewPpBomEntry(view, FEntities, subcontractOrder,parentDetail,subcontractOrderDetail,sysAccountingCompany, bomBillNo);
-                }
-            }
-        }
+//        if (Objects.nonNull(subcontractOrder)) {
+//            String mainId = subcontractOrder.getId();
+//            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
+//
+//            List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
+//                    .filter(item -> StringUtils.isNotBlank(item.getParentId()))
+//                    .collect(Collectors.toList());
+//
+//            List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
+//                    .filter(item -> StringUtils.isBlank(item.getParentId()))
+//                    .collect(Collectors.toList());
+//
+//            if (!parentList.isEmpty() && !childList.isEmpty()) {
+//                List<JSONObject> childJsonList = list.stream()
+//                        .filter(item -> StringUtils.isNotBlank(item.get("parentId").toString()))
+//                        .collect(Collectors.toList());
+//
+//                for (SubcontractOrderDetailEntity subcontractOrderDetail : childList) {
+//                    SubcontractOrderDetailEntity parentDetail = parentList.stream()
+//                            .filter(item -> Objects.equals(item.getId(), subcontractOrderDetail.getParentId()))
+//                            .findFirst()
+//                            .orElse(null);
+//
+//                    SubcontractOrderDetailEntity finalParentDetail = parentDetail;
+//                    List<JSONObject> filterChildJsonList = childJsonList.stream()
+//                            .filter(item -> Objects.equals(item.get("parentId"), finalParentDetail.getParentId()))
+//                            .collect(Collectors.toList());
+//                    if (!filterChildJsonList.isEmpty()) {
+//                        for (JSONObject jsonObject : filterChildJsonList) {
+//                            if (Objects.equals(jsonObject.get("detailId"), subcontractOrderDetail.getId())) {
+//                                entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
         //单据类型
         JSONObject typeJson = new JSONObject();
         typeJson.put("FNumber", "WWYLQDBGD01_SYS");
@@ -407,7 +478,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
+    private JSONObject createNewPpBomEntry(JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
         Map<String, Object> entry = new HashMap<>();
 
