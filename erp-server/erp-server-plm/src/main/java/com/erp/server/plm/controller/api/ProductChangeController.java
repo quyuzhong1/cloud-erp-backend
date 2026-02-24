@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.plm.query.ProductChangeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -102,6 +104,7 @@ public class ProductChangeController extends BaseController {
             menuCode = "plm:productChange:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = ProductChangeQueryHandler.class)
     public ApiResult<PagingVO<ProductChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ProductChangeDTO.PagingParamDTO> dto) {
         return success(productChangeService.paging(dto));
     }
