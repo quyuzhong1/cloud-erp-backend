@@ -9,6 +9,7 @@ import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -207,23 +208,24 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         ProductChangeDTO.PagingParamDTO searchParam = new ProductChangeDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<ProductChangeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(ProductChangeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new ProductChangeDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
-        }
-        });
+        List<ProductChangeDTO.TabListDTO> resultList = new ArrayList<>();
         // 计算合计数量
-        list.add(new ProductChangeDTO.TabListDTO("all","全部", list.stream().mapToInt(ProductChangeDTO.TabListDTO::getCount).sum()));
-        for (ProductChangeDTO.TabListDTO tabListDTO : list) {
-            if(StringUtils.isBlank(tabListDTO.getTabFlagName())) {
-                tabListDTO.setTabFlagName(ApproveStatusEnum.getName(tabListDTO.getTabFlag()));
+        resultList.add(new ProductChangeDTO.TabListDTO("all","全部", list.stream().mapToInt(ProductChangeDTO.TabListDTO::getCount).sum()));
+
+        // 获取状态列表
+        List<ApproveStatusEnum> statusList = new ArrayList<>(Arrays.asList(ApproveStatusEnum.values()));
+        // 不存在的状态赋值为0
+        statusList.forEach(status -> {
+            Optional<ProductChangeDTO.TabListDTO> optional = list.stream().filter(item -> item.getTabFlag().equals(status.getStatus())).findFirst();
+            if (optional.isPresent()) {
+                ProductChangeDTO.TabListDTO tabListDTO = optional.get();
+                tabListDTO.setTabFlagName(status.getName());
+                resultList.add(optional.get());
+            } else {
+                resultList.add(new ProductChangeDTO.TabListDTO(status.getStatus(), status.getName(), 0));
             }
-        }
-        return list;
+        });
+        return resultList;
     }
 
     @Override
