@@ -36,10 +36,6 @@ public class SoB2cDetailController extends BaseController {
     @Resource
     private SoB2cDetailService soB2cDetailService;
 
-    /**
-     * b2c销售订单明细信息
-     */
-    private List<SoB2cDetailDTO.ListDTO> detailList;
 
     /**
      * 明细查询
@@ -49,9 +45,22 @@ public class SoB2cDetailController extends BaseController {
      * @author zdy
      * @date: 2023-08-18
      */
-    @PostMapping("/listDetail")
+    @PostMapping("/listDetailById")
     public ApiResult<List<SoB2cDetailDTO.ListDTO>> listDetailByMainId(@RequestBody @Validated BaseIdDTO dto) {
         return success(soB2cDetailService.listDetailByMainId(dto.getId()));
+    }
+
+    /**
+     * 明细查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < SoB2cDTO.ListDTO>>
+     * @author zdy
+     * @date: 2023-08-18
+     */
+    @PostMapping("/listDetailByIds")
+    public ApiResult<List<SoB2cDetailDTO.ListDTO>> listDetailByMainIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soB2cDetailService.listDetailByMainIds(dto.getIds()));
     }
 
 }
