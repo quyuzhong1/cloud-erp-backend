@@ -1421,7 +1421,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 detailList.add(detailAdd);
             }
             add.setDetailList(detailList);
-            this.add(add);
+            // 创建发货通知单
+            String deliveryNoticeId = this.add(add);
+            // 获取创建的发货通知单实体
+            SoDeliveryNoticeEntity entity = this.getById(deliveryNoticeId);
+            if (ObjectUtil.isNotEmpty(entity)) {
+                // 自动提审
+                this.submit(entity, Boolean.TRUE);
+            }
         }
         return Boolean.TRUE;
     }

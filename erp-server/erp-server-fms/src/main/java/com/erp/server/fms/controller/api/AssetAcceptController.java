@@ -4,6 +4,7 @@ package com.erp.server.fms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -358,7 +359,7 @@ public class AssetAcceptController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = assetAcceptService.cancelProcess(id);
+                cancelResult = assetAcceptService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("资产验收单撤回流程失败",e);
                 AssetAcceptEntity entity = idEntityMap.get(id);

@@ -110,6 +110,11 @@ public class ProductSkuExcelDTO extends PermissionsDTO {
     private List<String> rdtTeamList;
 
     /**
+     * BU线
+     */
+    private List<String> buIdList;
+
+    /**
      * 产品 经理
      */
     private List<String> productChargeIdList;

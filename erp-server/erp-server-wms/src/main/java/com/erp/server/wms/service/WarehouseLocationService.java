@@ -350,4 +350,6 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation, WarehouseLocationTypeEnum type);
 
     WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo);
+
+    List<BatchResultDTO> updateStatusBatch(WarehouseLocationDTO.UpdateStatusDto dto);
 }

@@ -1,7 +1,6 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -36,7 +35,7 @@ public interface VirtualWarehouseAllocationDetailMapper extends BaseMapper<Virtu
      * @author will 
      * @date 2025/12/29 14:10
      * @param fromWarehouseIdList
-     * @return VirtualWarehouseAllocationDetailEntity
+     * @return VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO
      */
-    List<VirtualWarehouseAllocationDetailEntity> listRepeatHandleDetail(@Param("fromWarehouseIdList")List<String> fromWarehouseIdList,@Param("fromVirtualWarehouseIdList") List<String> fromVirtualWarehouseIdList,@Param("skuIdList") List<String> skuIdList,@Param("detailIdList") List<String> detailIdList);
+    List<VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO> listRepeatHandleDetail(@Param("fromWarehouseIdList")List<String> fromWarehouseIdList,@Param("fromVirtualWarehouseIdList") List<String> fromVirtualWarehouseIdList,@Param("skuIdList") List<String> skuIdList);
 }

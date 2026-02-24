@@ -111,6 +111,11 @@ public class SysEventTrackingEntity extends BaseEntity<SysEventTrackingEntity> {
      */
     @TableField("time_zone")
     private String timeZone;
+    /**
+     * 会话ID
+     */
+    @TableField("session_id")
+    private String sessionId;
 
 
     public static final String ENV = "env";

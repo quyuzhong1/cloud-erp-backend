@@ -208,6 +208,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
+    @Resource
+    private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
+
+
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -1261,6 +1265,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if(mappingList.isEmpty()){
             return;
         }
+
+        //根据来源查询parentId
+        String parentId = "";
+        if (CharSequenceUtil.equals(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),entity.getSourceType())) {
+            List<VirtualWarehousePushHandleDetailEntity> pushDetailList = virtualWarehousePushHandleDetailService.listBySourceId(entity.getSourceId());
+            parentId = CollUtil.isEmpty(pushDetailList) ?  "" : pushDetailList.stream().map(VirtualWarehousePushHandleDetailEntity::getId).collect(Collectors.joining(","));
+        }
+
+
         //每个调出仓转换为一个其他出库单
         Map<String, List<TransferInfoDetailEntity>> outWarehouseCollect = transferDetailList.stream().collect(Collectors.groupingBy(item -> item.getOutWarehouseId()));
         for (Map.Entry<String, List<TransferInfoDetailEntity>> entry : outWarehouseCollect.entrySet()) {
@@ -1272,6 +1285,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
                 outGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getOutWarehouseLocation()) ? detailEntity.getOutWarehouseLocation() : "");
                 outGoods.setWarehouseId(warehouseId);
+                outGoods.setParentId(parentId);
                 outGoodsList.add(outGoods);
             }
             abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), outGoodsList, SourceTypeEnum.OTHER_OUTSTOCK);
@@ -1287,6 +1301,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 inGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
                 inGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
                 inGoods.setWarehouseId(warehouseId);
+                inGoods.setParentId(parentId);
                 inGoodsList.add(inGoods);
             }
             abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), inGoodsList, SourceTypeEnum.OTHER_INSTOCK);

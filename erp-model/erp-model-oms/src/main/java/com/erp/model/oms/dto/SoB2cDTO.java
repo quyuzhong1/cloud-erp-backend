@@ -4075,6 +4075,50 @@ public class SoB2cDTO implements Serializable {
         private String remark;
     }
 
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class B2cByPlatformOutboundDTO{
+        private String soB2cId;
+
+        private LocalDate soOutstockDate;
+
+        private String warehouseId;
+
+        private String warehouseName;
+
+        /**
+         * 库存组织id
+         */
+        private String warehouseOrgId;
+        /**
+         * 库存组织名称
+         */
+        private String warehouseOrgName;
+
+        private String virtualWarehouseId;
+
+        private String billStatus;
+
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 是否记录日志
+         */
+        private boolean addOperationLog = false ;
+
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
+    }
+
     @Data
     @NoArgsConstructor
     public static class PagingDTO {

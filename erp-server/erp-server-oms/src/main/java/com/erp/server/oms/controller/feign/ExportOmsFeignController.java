@@ -326,7 +326,7 @@ public class ExportOmsFeignController {
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoMultiChannelQueryHandler.class)
     public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return soMultiChannelService.paging(dto);
     }

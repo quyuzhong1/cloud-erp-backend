@@ -224,21 +224,46 @@ public class VirtualWarehousePushHandleDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class CheckDataDTO {
         /**
+         * 单据类型
+         */
+        private int orderType;
+        /**
          * 仓库ID
          */
         private String warehouseId;
+        /**
+         * 第三方仓库编码
+         */
+        private String thirdWarehouseNo;
         /**
          * 虚拟仓ID
          */
         private String virtualWarehouseId;
         /**
+         * 第三方虚拟仓编码
+         */
+        private String thirdVirtualWarehouseNo;
+
+        /**
          * SKUId
          */
         private String skuId;
         /**
+         * SKU编码
+         */
+        private String skuNo;
+        /**
          * 明细id
          */
         private String detailId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 分货单拆单明细id
+         */
+        private String handleDetailId;
     }
 
 

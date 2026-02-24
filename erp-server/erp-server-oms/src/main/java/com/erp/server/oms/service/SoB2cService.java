@@ -1172,6 +1172,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     void retryPlatformOutbound( List<String> ids);
 
+    void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
+
     /**
      * 分页查询 - 新的分页查询
      * @param dto

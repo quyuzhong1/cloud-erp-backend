@@ -190,6 +190,17 @@
             </foreach>
         </if>
 
+        <if test="params.buIdList !=null and params.buIdList.size>0">
+            and pi.id in (
+                select product_id from product_ref_bu prb
+                where prb.is_deleted = false and prd.bu_id in
+            <foreach collection="params.buIdList" item="buId" open="(" separator="," close=")">
+                #{buId}
+            </foreach>
+
+            )
+        </if>
+
         <if test="params.propertyList !=null and params.propertyList.size>0">
             AND pi.property_id IN
             <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
@@ -482,6 +493,7 @@
 
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelExportDTO">
         SELECT
+            pi.id as productId,
         pd.images_url as imageUrl,
         pi.spu_no as spuNo,
         pi.name as spuName,
@@ -663,7 +675,15 @@
                 #{rdtTeamId}
             </foreach>
         </if>
-
+        <if test="params.buIdList !=null and params.buIdList.size>0">
+            and pi.id in (
+            select product_id from product_ref_bu prb
+            where prb.is_deleted = false and prd.bu_id in
+            <foreach collection="params.buIdList" item="buId" open="(" separator="," close=")">
+                #{buId}
+            </foreach>
+            )
+        </if>
         <if test="params.propertyList !=null and params.propertyList.size>0">
             AND pi.property_id IN
             <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">

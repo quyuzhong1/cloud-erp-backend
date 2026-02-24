@@ -167,6 +167,8 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
             return resultMap;
         }
 
+        resultMap.put("usage", entity.getUsage());
+        resultMap.put("processApplyCode", entity.getProcessApplyCode());
         //其他出库类型
         resultMap.put("type", entity.getType());
         resultMap.put("outType", entity.getOutType());
