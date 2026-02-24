@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  *
  */
-@FeignClient(name = "erp-tms", contextId = "importHistoryRecord" ,configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-tms", contextId = "ImprotHistoryRecordFeign" ,configuration = {FeignErrorDecoder.class})
 public interface ImprotHistoryRecordFeign {
     /**
      * 导入的Excel数据（预处理、导入、导入确认）
@@ -23,6 +24,6 @@ public interface ImprotHistoryRecordFeign {
      * @return ApiResult<Object>
      */
     @PostMapping(value = "/feign/importHistoryRecord/preprocessingImportExcel")
-    List<BatchResultDTO> preprocessingImportExcel(@RequestBody ImportHistoryRecordDTO.ImportDTO dto);
+    ApiResult<List<BatchResultDTO>> preprocessingImportExcel(@RequestBody ImportHistoryRecordDTO.ImportDTO dto);
 
 }

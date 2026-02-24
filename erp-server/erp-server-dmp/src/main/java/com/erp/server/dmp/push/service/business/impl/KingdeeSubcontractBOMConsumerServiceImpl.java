@@ -165,7 +165,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                             .filter(item -> Objects.equals(item.getId(), subcontractOrderDetail.getParentId()))
                             .findFirst()
                             .orElse(null);
-                    entries = createNewPpBomEntry(view, FEntities, parentDetail,subcontractOrderDetail,sysAccountingCompany, bomBillNo);
+                    entries = createNewPpBomEntry(view, FEntities, subcontractOrder,parentDetail,subcontractOrderDetail,sysAccountingCompany, bomBillNo);
                 }
             }
         }
@@ -234,7 +234,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //分子
         entry.put("FNumerator",srcEntry.get("Numerator"));
         //分母
-        entry.put("FFDenominator",srcEntry.get("Denominator"));
+        entry.put("FDenominator",srcEntry.get("Denominator"));
         //应发数量
         entry.put("FMustQty",srcEntry.get("MustQty"));
         //生产数量
@@ -344,7 +344,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //分子
         entry.put("FNumerator",0);
         //分母
-        entry.put("FFDenominator",srcEntry.get("Denominator"));
+        entry.put("FDenominator",srcEntry.get("Denominator"));
         //应发数量
         entry.put("FMustQty",0);
         //生产数量
@@ -407,7 +407,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
+    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
         Map<String, Object> entry = new HashMap<>();
 
@@ -437,27 +437,28 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //发料方式
         entry.put("FIssueType", "1");
         //需求日期
-        entry.put("FNeedDate2",chilDetail.getPlanDeliveryDate().toString());
+        entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
         entry.put("FChangeType","1");
-        //应发数量
-        entry.put("FMustQty",chilDetail.getQty());
-        //生产数量
-        entry.put("FProduceQty",chilDetail.getQty());
         //用料清单类型
         entry.put("FPPBomEntryType","0");
-        //基本单位未领数量
-        entry.put("FBaseNoPickedQty",chilDetail.getQty());
         //源单类型
         entry.put("FSrcBillType", "SUB_PPBOM");
         //源单编号
         entry.put("FSrcBillNo", bomBillNo);
-        //分子
+        //分子 分母
         if (chilDetail.getQty() > parentDetail.getRepairQty()) {
             entry.put("FNumerator", chilDetail.getQty() / parentDetail.getRepairQty());
         } else {
-            entry.put("FNumerator", "1");
-            entry.put("FFDenominator",parentDetail.getRepairQty() / chilDetail.getQty());
+            entry.put("FDenominator", parentDetail.getRepairQty() / chilDetail.getQty());
+        }
+
+        if (chilDetail.getQty() == 1) {
+            entry.put("FDenominator", parentDetail.getRepairQty());
+        }
+
+        if (parentDetail.getRepairQty() == 1) {
+            entry.put("FNumerator", parentDetail.getRepairQty());
         }
 
         ppBomEntries.put(entry);

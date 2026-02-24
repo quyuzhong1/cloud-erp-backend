@@ -103,9 +103,9 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDTO.AddDTO dto) {
         //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),"");
-
         // 验证明细列表
         validateDetailList(dto.getDetailList());
+
 
         dto.setImportType(String.join(",", dto.getImportTypeList()));
         CfgLogisticsCostImportEntity cfgLogisticsCostImportEntity = new CfgLogisticsCostImportEntity();
@@ -304,6 +304,23 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         validateAtLeastOneUniqueKey(detailList);
         validateMainItemDuplicates(detailList);
         validateCostItemFields(detailList);
+        validateLogisticsCostImportUniqueFields(detailList);
+    }
+
+    /**
+     * 验证字段是否允许作为识别单号
+     */
+    private void validateLogisticsCostImportUniqueFields(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+        //校验字段是否可以唯一
+        List<String> uniqueKeyTargetFieldIds = detailList.stream().filter(e -> e.getIsUniqueKey()).map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetFieldId).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(uniqueKeyTargetFieldIds)){
+            List<CfgLogisticsCostImportFieldEntity> uniqueKeyTargetField = cfgLogisticsCostImportFieldService.listByIds(uniqueKeyTargetFieldIds).stream().filter(e -> !e.getIsUniqueField()).collect(Collectors.toList());;
+            if(CollUtil.isNotEmpty(uniqueKeyTargetField)){
+                //uniqueKeyTargetField中的fieldName字段，使用英文逗号拼接成一个字符串
+                String uniqueKeyTargetFieldName = uniqueKeyTargetField.stream().map(CfgLogisticsCostImportFieldEntity::getFieldName).collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED,uniqueKeyTargetFieldName);
+            }
+        }
     }
 
     /**
