@@ -277,7 +277,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
         if(count != null && count > 0) {
             throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
         }
-        boolean reCreate = RestCloudApiUtil.reCreate("", "dbtodb/check_month_diff_so_outstock");
+        boolean reCreate = RestCloudApiUtil.reCreate(dto.getCheckMonth(), "ods_erp/ods_flow_inventory_diff_recreate");
         if(reCreate) {
             lambdaUpdate().eq(AdsErpInventoryDiffEntity::getCheckMonth, checkMonth)
                     .set(AdsErpInventoryDiffEntity::getExecStatus, "doing")
