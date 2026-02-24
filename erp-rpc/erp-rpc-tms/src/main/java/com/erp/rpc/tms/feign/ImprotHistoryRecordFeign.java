@@ -13,7 +13,7 @@ import java.util.List;
 /**
  *
  */
-@FeignClient(name = "erp-tms", contextId = "importHistoryRecord" ,configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-tms", contextId = "ImprotHistoryRecordFeign" ,configuration = {FeignErrorDecoder.class})
 public interface ImprotHistoryRecordFeign {
     /**
      * 导入的Excel数据（预处理、导入、导入确认）
