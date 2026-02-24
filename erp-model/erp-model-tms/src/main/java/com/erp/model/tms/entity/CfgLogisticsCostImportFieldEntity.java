@@ -71,6 +71,11 @@ public class CfgLogisticsCostImportFieldEntity extends BaseEntity<CfgLogisticsCo
     */
     @TableField("field_type")
     private String fieldType;
+    /**
+     * 是否唯一字段
+     */
+    @TableField("is_unique_field")
+    private Boolean isUniqueField;
 
 
     public static final String SYS_CLASSIFY = "sys_classify";
@@ -90,6 +95,8 @@ public class CfgLogisticsCostImportFieldEntity extends BaseEntity<CfgLogisticsCo
     public static final String FIELD_NAME = "field_name";
 
     public static final String FIELD_TYPE = "field_type";
+
+    public static final String IS_UNIQUE_FIELD = "is_unique_field";
 
     @Override
     public Serializable pkVal() {

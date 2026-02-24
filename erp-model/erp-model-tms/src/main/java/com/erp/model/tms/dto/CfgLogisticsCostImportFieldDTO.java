@@ -65,7 +65,10 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
         * ERP字段类型名称
         */
         private String fieldTypeName;
-
+        /**
+         * 是否唯一字段
+         */
+        private Boolean isUniqueField;
     }
 
     /**

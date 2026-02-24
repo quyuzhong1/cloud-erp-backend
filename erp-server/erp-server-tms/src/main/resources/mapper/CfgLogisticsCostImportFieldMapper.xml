@@ -21,6 +21,7 @@
        <result column="field" property="field" />
        <result column="field_name" property="fieldName" />
        <result column="field_type" property="fieldType" />
+       <result column="is_unique_field" property="isUniqueField" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -42,7 +43,8 @@ clcif.class_path AS classPath,
 clcif.parent_id AS parentId,
 clcif.field AS field,
 clcif.field_name AS fieldName,
-clcif.field_type AS fieldType
+clcif.field_type AS fieldType,
+clcif.is_unique_field AS isUniqueField
     </sql>
 
     <select id="listByBusinessType" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$ListDTO">
