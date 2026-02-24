@@ -401,4 +401,9 @@ public class ProductChangeController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> batchAdd(@RequestBody @Validated ProductChangeDTO.BatchAddDTO dto) {
         return success(productChangeService.batchAdd(dto));
     }
+
+    @PostMapping("/getProductChangeFieldEnum")
+    public ApiResult<List<ProductChangeDTO.ProductChangeFieldDTO>> getProductChangeFieldEnum() {
+        return success(productChangeService.getProductChangeFieldEnum());
+    }
 }

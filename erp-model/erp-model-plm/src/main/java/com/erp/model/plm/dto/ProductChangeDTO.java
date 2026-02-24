@@ -32,6 +32,17 @@ import java.util.Map;
 public class ProductChangeDTO implements Serializable {
 
 
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductChangeFieldDTO {
+        private String code;
+
+        private String name;
+    }
 
      /**
      * 状态统计

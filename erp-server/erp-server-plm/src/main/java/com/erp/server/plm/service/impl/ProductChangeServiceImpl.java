@@ -983,6 +983,19 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         }
     }
 
+    @Override
+    public List<ProductChangeDTO.ProductChangeFieldDTO> getProductChangeFieldEnum() {
+        List<ProductChangeDTO.ProductChangeFieldDTO> fieldList = new ArrayList<>();
+        for (ProductChangeFieldEnum fieldEnum : ProductChangeFieldEnum.values()) {
+            ProductChangeDTO.ProductChangeFieldDTO fieldDTO = new ProductChangeDTO.ProductChangeFieldDTO();
+            fieldDTO.setCode(fieldEnum.getEntityField());
+            fieldDTO.setName(fieldEnum.getFieldLabel());
+            fieldList.add(fieldDTO);
+        }
+        return fieldList;
+
+    }
+
     /**
     * 启动流程
     *
