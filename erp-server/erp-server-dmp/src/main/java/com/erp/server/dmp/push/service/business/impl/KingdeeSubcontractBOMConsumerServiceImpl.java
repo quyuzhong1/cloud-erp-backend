@@ -165,7 +165,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                             .filter(item -> Objects.equals(item.getId(), subcontractOrderDetail.getParentId()))
                             .findFirst()
                             .orElse(null);
-                    entries = createNewPpBomEntry(view, FEntities, parentDetail,subcontractOrderDetail,sysAccountingCompany, bomBillNo);
+                    entries = createNewPpBomEntry(view, FEntities, subcontractOrder,parentDetail,subcontractOrderDetail,sysAccountingCompany, bomBillNo);
                 }
             }
         }
@@ -407,7 +407,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
+    private JSONObject createNewPpBomEntry(JSONObject view,JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
         Map<String, Object> entry = new HashMap<>();
 
@@ -437,7 +437,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //发料方式
         entry.put("FIssueType", "1");
         //需求日期
-        entry.put("FNeedDate2",chilDetail.getPlanDeliveryDate().toString());
+        entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
         entry.put("FChangeType","1");
         //用料清单类型
