@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -42,6 +43,7 @@ public class UserManageDTO implements Serializable {
      * 用户状态1：正常 0：禁用
      */
     private Integer userState;
+    private String userStateName;
     /**
      * 最近登录的时间
      */
@@ -60,10 +62,26 @@ public class UserManageDTO implements Serializable {
      */
     private Integer loginCount;
     /**
+     * 创建人id
+     */
+    private String createUserId;
+    /**
+     * 创建人名称
+     */
+    private String createUserName;
+    /**
      * 创建时间
      */
 
     private Date createTime;
+    /**
+     * 更新人id
+     */
+    private String updateUserId;
+    /**
+     * 更新人名称
+     */
+    private String updateUserName;
     /**
      * 更新时间
      */
@@ -87,6 +105,7 @@ public class UserManageDTO implements Serializable {
     private String mail;
 
     private List<String> roleIdList;
+    private String roleNames;
     //店铺id集合
     private List<String> shopIdList;
     /**
@@ -99,4 +118,14 @@ public class UserManageDTO implements Serializable {
      * 仓库授权类型（all全部授权，part指定授权）
      */
     private String warehouseAuthType;
+
+    private List<String> departmentIdList;
+    private String departmentNames;
+
+    /**
+     * 第三方授权类型  SysUserInfoThirdAuthTypeEnum
+     */
+    private String thirdAuthType;
+    private String thirdAuthTypeName;
+
 }

@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -119,6 +120,12 @@ public class CfgThirdNoticeDTO implements Serializable {
          */
         @Dict
         private List<CfgRuleConditionDTO.View> conditionList;
+
+        /**
+         * 适用范围：billType  =单据类型,billHeader=单据整单,billLine=单据明细  枚举：CfgThirdNoticeApplyScopeEnum
+         */
+        private String applyScope;
+        private String applyScopeName;
     }
 
     /**
@@ -224,6 +231,11 @@ public class CfgThirdNoticeDTO implements Serializable {
         private List<String> noticeMethodList;
 
         /**
+         * 适用范围：billType  =单据类型,billHeader=单据整单,billLine=单据明细  枚举：CfgThirdNoticeApplyScopeEnum
+         */
+        private String applyScope;
+
+        /**
          * 推送信息
          */
         private List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList;
@@ -316,6 +328,12 @@ public class CfgThirdNoticeDTO implements Serializable {
          */
         private String cron;
         private String cronType;
+
+        /**
+         * 适用范围：billType  =单据类型,billHeader=单据整单,billLine=单据明细  枚举：CfgThirdNoticeApplyScopeEnum
+         */
+        private String applyScope;
+        private String applyScopeName;
     }
 
     @Data
@@ -393,6 +411,32 @@ public class CfgThirdNoticeDTO implements Serializable {
          * 主键id
          */
         private List<String> ids;
+
+    }
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO{
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 通知状态
+         */
+        private String noticeStatus;
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        /**
+         * 单据类型
+         */
+        private String businessType;
+
 
     }
 

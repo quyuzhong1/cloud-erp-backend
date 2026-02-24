@@ -1,41 +1,21 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import com.erp.server.dmp.push.service.lingxing.LxCommonService;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.constant.DmpOutputConstant;
-import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.entity.DmpPushMsgEntity;
-import com.erp.model.dmp.entity.DmpPushMsgHisEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -43,14 +23,25 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.push.service.lingxing.LxCommonService;
 import com.erp.server.dmp.push.service.sdy.SdyCommonService;
 import com.erp.server.dmp.service.DmpPushMsgHisService;
 import com.erp.server.dmp.service.DmpPushMsgService;
+import com.erp.server.dmp.service.DmpPushWdtService;
 import com.erp.server.dmp.service.impl.DmpOutputTaskRecordMergeServiceImpl;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -61,6 +52,8 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	private DmpPushMsgService dmpPushMsgService;
 	@Autowired
 	private DmpPushMsgHisService dmpPushMsgHisService;
+    @Autowired
+    private DmpPushWdtService dmpPushWdtService;
 
 	@Override
 	public List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -149,7 +142,21 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 
 		String parentId = dmpPushMsgEntity.getParentId();
 		if(StringUtils.isNotBlank(parentId) && SyncOperateEnum.OPERATE_APPROVE.getCode().equals(syncOperate)) {
-			String[] split = parentId.split(",");
+			List<String> split = Arrays.stream(parentId.split(",")).collect(Collectors.toList());
+
+			//如果是推送旺店通的检查上级单据是否拆分成了其他出入库单
+			if (CharSequenceUtil.equals(systemCode, PlatformDictEnum.WDT.getCode())) {
+				List<DmpPushWdtEntity> wdtPushList = dmpPushWdtService.lambdaQuery()
+						.eq(DmpPushWdtEntity::getOperateType, syncOperate)
+						.eq(DmpPushWdtEntity::getType,"1")
+						.in(DmpPushWdtEntity::getSourceId, split)
+						.list();
+				if (CollUtil.isNotEmpty(wdtPushList)) {
+					split = wdtPushList.stream().map(DmpPushWdtEntity::getId).distinct().collect(Collectors.toList());
+				}
+			}
+
+
 			for(String s : split) {
 				List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery()
 						.eq(DmpPushMsgEntity::getSourceId, s)
@@ -158,6 +165,8 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.select(DmpPushMsgEntity::getId)
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
+
+
 				if(CollUtil.isEmpty(list)) {
 					List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
 					if(CollUtil.isNotEmpty(erpQuerySync)) {
@@ -286,11 +295,13 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					}
 				}
 			}
-			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
-			if(CollUtil.isNotEmpty(erpQuerySync)) {
-				requestData = erpQuerySync.get(0).getRequestData();
-			}else {
-				return;
+			if (!CharSequenceUtil.equals(systemCode, PlatformDictEnum.WDT.getCode())) {
+				List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+				if (CollUtil.isNotEmpty(erpQuerySync)) {
+					requestData = erpQuerySync.get(0).getRequestData();
+				} else {
+					return;
+				}
 			}
 		}
 

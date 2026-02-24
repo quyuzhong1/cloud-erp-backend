@@ -43,5 +43,7 @@ public interface SysRoleUserService extends IService<SysRoleUserEntity> {
     void copyRoleUser(String copyRoleId, String newRoleId);
 
     List<SysRoleUserEntity> roleUserList(String roleId);
+
+    List<SysUserDTO.RoleDTO> listRoleByUserIds(List<String> userIds);
 }
 

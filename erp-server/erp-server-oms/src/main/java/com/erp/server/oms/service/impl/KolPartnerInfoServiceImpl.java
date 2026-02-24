@@ -95,6 +95,10 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
+    @Resource
+    private KolB2cApplicationAddressService  kolB2cApplicationAddressService;
+    @Resource
+    private KolFeedbackService  kolFeedbackService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -124,7 +128,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         }
         addDTO.setCountryName(listDTO.getNameCn());
 
-        KolPartnerInfoEntity one = lambdaQuery().eq(KolPartnerInfoEntity::getNickname, addDTO.getNickname()).one();
+        KolPartnerInfoEntity one = lambdaQuery().eq(KolPartnerInfoEntity::getNickname, addDTO.getNickname()).eq(KolPartnerInfoEntity::getIsDeleted, false).one();
         if(Objects.nonNull(one)){
             throw new ServiceException("达人昵称已存在");
         }
@@ -396,6 +400,13 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Override
     public BatchResultDTO delete(String id) {
         KolPartnerInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到企业达人库数据"));
+        //校验KOL-B2C是否被引用
+        Integer count = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getPartnerId, id).count();
+        //校验KOL-回片登记是否被引用
+        Integer count1 = kolFeedbackService.lambdaQuery().eq(KolFeedbackEntity::getPartnerId, id).count();
+        if(count > 0 || count1 > 0){
+            throw new ServiceException(ApiError.SAMPLE_PARTNER_IN_USE);
+        }
         // 删除主单数据
         log.info("删除 开始删除企业达人库主单数据，id：【{}】", id);
         super.removeById(id);
@@ -515,24 +526,46 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
             Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
 
-            List<String> nicknameList = successList.stream().map(KolPartnerInfoImportExcelDTO::getNickname).distinct().collect(Collectors.toList());
+            List<String> nicknameList = successList.stream()
+                    .map(KolPartnerInfoImportExcelDTO::getNickname)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
             //企业达人库旧数据
-            List<KolPartnerInfoEntity> oldList = lambdaQuery().in(KolPartnerInfoEntity::getNickname, nicknameList).list();
-            Map<String, String> oldMap = oldList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
+            Map<String, String> oldMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(nicknameList)) {
+                List<KolPartnerInfoEntity> oldList = lambdaQuery()
+                        .in(KolPartnerInfoEntity::getNickname, nicknameList)
+                        .eq(KolPartnerInfoEntity::getIsDeleted, false)
+                        .list();
+                oldMap = oldList.stream()
+                        .collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
+            }
 
             //按昵称分组
             Map<String, List<KolPartnerInfoImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(KolPartnerInfoImportExcelDTO::getNickname));
 
             List<KolPartnerInfoDTO.AddDTO> addList = new ArrayList<>();
+            // 用于记录当前批次中已处理的昵称，避免同一批次内重复
+            Set<String> processedNicknameSet = new HashSet<>();
 
             for (Map.Entry<String, List<KolPartnerInfoImportExcelDTO>> entry : collect.entrySet()) {
                 List<String> errorMsgList = new ArrayList<>();
 
                 String nickname = entry.getKey();
+                // 如果昵称为空，跳过处理
+                if(StringUtils.isBlank(nickname)){
+                    continue;
+                }
+                // 检查数据库中是否已存在
                 if(oldMap.containsKey(nickname)){
                     errorMsgList.add("达人昵称已存在");
-                }else {
-                    oldMap.put(nickname, "1");
+                } else if(processedNicknameSet.contains(nickname)){
+                    // 检查当前批次内是否重复（理论上不会发生，因为已经分组）
+                    errorMsgList.add("达人昵称已存在");
+                } else {
+                    // 记录当前批次中已处理的昵称
+                    processedNicknameSet.add(nickname);
                 }
 
                 List<KolPartnerInfoImportExcelDTO> list = entry.getValue();
@@ -581,30 +614,6 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 }else {
                     errorMsgList.add("国家名称不存在");
                 }
-                //省
-                String provinceId = provinceMap.getOrDefault(mainInfo.getProvince(), "");
-                if(StringUtils.isNotBlank(provinceId)){
-                    mainInfo.setProvinceId(provinceId);
-                }else {
-                    errorMsgList.add("省不存在");
-                }
-                //市
-                String cityId = cityMap.getOrDefault(mainInfo.getCity(), "");
-                if(StringUtils.isNotBlank(cityId)){
-                    mainInfo.setCityId(cityId);
-                }else {
-                    errorMsgList.add("市不存在");
-                }
-                //区域
-                String districtId = districtMap.getOrDefault(mainInfo.getDistrict(), "");
-                if(StringUtils.isNotBlank(districtId)){
-                    mainInfo.setDistrictId(districtId);
-                }else {
-                    if(countryId.equals(DictValueEnum.CN.getCode())){
-                        errorMsgList.add("区域不存在");
-                    }
-                }
-
                 //语言
                 String language = languageMap.getOrDefault(mainInfo.getLanguageName(), "");
                 if(StringUtils.isNotBlank(language)){
@@ -630,42 +639,93 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
                 KolPartnerInfoDTO.AddDTO addDTO = new KolPartnerInfoDTO.AddDTO();
                 BeanMapperUtils.copy(mainInfo,addDTO);
-                if(CollUtil.isEmpty(list)){
-                    if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                        List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
-                        mainInfo.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
-                        errorList.add(mainInfo);
-                    }else{
-                        addList.add(addDTO);
-                    }
-                }else {
-                    List<KolAddressInfoDTO.AddDTO> kolAddressInfoDTOList = new ArrayList<>();
-                    List<KolCooperationPlatformDTO.AddDTO> kolCooperationPlatformDTOList = new ArrayList<>();
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
+                    mainInfo.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
+                    errorList.add(mainInfo);
+                    continue;
+                }
 
-                    Boolean isAdd = true;
-                    Boolean isFirstAddress = true;
-                    for (KolPartnerInfoImportExcelDTO item : list) {
-                        List<String> msgList = new ArrayList<>();
+                List<KolAddressInfoDTO.AddDTO> kolAddressInfoDTOList = new ArrayList<>();
+                List<KolCooperationPlatformDTO.AddDTO> kolCooperationPlatformDTOList = new ArrayList<>();
 
-                        //合作平台
-                        KolCooperationPlatformDTO.AddDTO kolCooperationPlatformDTO = new KolCooperationPlatformDTO.AddDTO();
-                        BeanMapperUtils.copy(item,kolCooperationPlatformDTO);
-                        kolCooperationPlatformDTO.setRemark(item.getPlatformRemark());
-                        kolCooperationPlatformDTOList.add(kolCooperationPlatformDTO);
+                Boolean isAdd = true;
+                Boolean isFirstAddress = true;
+                for (KolPartnerInfoImportExcelDTO item : list) {
+                    List<String> msgList = new ArrayList<>();
 
-                        if(isFirstAddress && StringUtils.isNotBlank(item.getAddressCountryName())){
-                            isFirstAddress = false;
-                            //地址信息
-                            KolAddressInfoDTO.AddDTO kolAddressInfoDTO = new KolAddressInfoDTO.AddDTO();
+                    //合作平台
+                    KolCooperationPlatformDTO.AddDTO kolCooperationPlatformDTO = new KolCooperationPlatformDTO.AddDTO();
+                    BeanMapperUtils.copy(item,kolCooperationPlatformDTO);
+                    kolCooperationPlatformDTO.setRemark(item.getPlatformRemark());
+                    kolCooperationPlatformDTOList.add(kolCooperationPlatformDTO);
 
-                            //国家
-                            String addressCountryId = dictCountryMap.getOrDefault(item.getAddressCountryName(), "");
-                            if(StringUtils.isNotBlank(addressCountryId)){
-                                kolAddressInfoDTO.setCountryId(addressCountryId);
-                                kolAddressInfoDTO.setCountryName(item.getAddressCountryName());
+                    if(isFirstAddress && StringUtils.isNotBlank(item.getAddressCountryName())){
+                        isFirstAddress = false;
+                        //地址信息
+                        KolAddressInfoDTO.AddDTO kolAddressInfoDTO = new KolAddressInfoDTO.AddDTO();
+
+                        //国家
+                        String addressCountryId = dictCountryMap.getOrDefault(item.getAddressCountryName(), "");
+                        if(StringUtils.isNotBlank(addressCountryId)){
+                            kolAddressInfoDTO.setCountryId(addressCountryId);
+                            kolAddressInfoDTO.setCountryName(item.getAddressCountryName());
+                        }else {
+                            msgList.add("地址信息--国家名称未找到");
+                        }
+
+                        // 判断是否为中国大陆或中国，只有在这种情况下才需要校验省、城市、区域
+                        boolean isChina = StringUtils.isNotBlank(addressCountryId) &&
+                                (addressCountryId.equals(DictValueEnum.CN.getCode()) ||
+                                        DictValueEnum.CN.getName().equals(item.getAddressCountryName()));
+
+                        if(isChina){
+                            //省
+                            String provinceId = provinceMap.getOrDefault(item.getProvince(), "");
+                            if(StringUtils.isNotBlank(provinceId)){
+                                kolAddressInfoDTO.setProvinceId(provinceId);
                             }else {
-                                msgList.add("地址信息--国家名称不存在");
+                                msgList.add("地址信息--省未找到");
                             }
+                            //市
+                            String cityId = cityMap.getOrDefault(item.getCity(), "");
+                            if(StringUtils.isNotBlank(cityId)){
+                                kolAddressInfoDTO.setCityId(cityId);
+                            }else {
+                                msgList.add("地址信息--市未找到");
+                            }
+                            //区域
+                            if(StringUtils.isBlank(item.getDistrict())) {
+                                msgList.add("国家为中国大陆则区域不能为空");
+                            }else{
+                                String districtId = districtMap.getOrDefault(item.getDistrict(), "");
+                                if(StringUtils.isNotBlank(districtId)){
+                                    kolAddressInfoDTO.setDistrictId(districtId);
+                                }else {
+                                    msgList.add("地址信息--区域未找到");
+                                }
+                            }
+                        }else {
+                            // 非中国大陆或中国，不校验省、城市、区域，但可以设置值
+                            if(StringUtils.isNotBlank(item.getProvince())){
+                                String provinceId = provinceMap.getOrDefault(item.getProvince(), "");
+                                if(StringUtils.isNotBlank(provinceId)){
+                                    kolAddressInfoDTO.setProvinceId(provinceId);
+                                }
+                            }
+                            if(StringUtils.isNotBlank(item.getCity())){
+                                String cityId = cityMap.getOrDefault(item.getCity(), "");
+                                if(StringUtils.isNotBlank(cityId)){
+                                    kolAddressInfoDTO.setCityId(cityId);
+                                }
+                            }
+                            if(StringUtils.isNotBlank(item.getDistrict())){
+                                String districtId = districtMap.getOrDefault(item.getDistrict(), "");
+                                if(StringUtils.isNotBlank(districtId)){
+                                    kolAddressInfoDTO.setDistrictId(districtId);
+                                }
+                            }
+                        }
 
                             kolAddressInfoDTO.setProvince(item.getProvince());
                             kolAddressInfoDTO.setCity(item.getCity());
@@ -674,43 +734,46 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                             kolAddressInfoDTO.setContactPerson(item.getContactPerson());
                             kolAddressInfoDTO.setPhone(item.getContactPersonPhone());
                             kolAddressInfoDTO.setZipCode(item.getZipCode());
+                            kolAddressInfoDTO.setReceiverTaxNo(item.getReceiverTaxNo());
 
-                            String isDefaultName = item.getIsDefaultName();
-                            if(StringUtils.isBlank(isDefaultName) || "是".equals(isDefaultName)){
-                                kolAddressInfoDTO.setIsDefault(Boolean.TRUE);
-                            }else{
-                                kolAddressInfoDTO.setIsDefault(Boolean.FALSE);
-                            }
-
-                            String disabledName = item.getDisabledName();
-                            if(StringUtils.isBlank(disabledName) || "启用".equals(disabledName)){
-                                kolAddressInfoDTO.setDisabled(Boolean.FALSE);
-                            }else{
-                                kolAddressInfoDTO.setDisabled(Boolean.TRUE);
-                            }
-                            kolAddressInfoDTO.setRemark(item.getAddressRemark());
-                            kolAddressInfoDTOList.add(kolAddressInfoDTO);
+                        String isDefaultName = item.getIsDefaultName();
+                        if(StringUtils.isBlank(isDefaultName) || "是".equals(isDefaultName)){
+                            kolAddressInfoDTO.setIsDefault(Boolean.TRUE);
+                        }else{
+                            kolAddressInfoDTO.setIsDefault(Boolean.FALSE);
                         }
 
-                        if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
-                            isAdd = Boolean.FALSE;
-                            List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
-                            item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
-                            errorList.add(item);
+                        String disabledName = item.getDisabledName();
+                        if(StringUtils.isBlank(disabledName) || "启用".equals(disabledName)){
+                            kolAddressInfoDTO.setDisabled(Boolean.FALSE);
+                        }else{
+                            kolAddressInfoDTO.setDisabled(Boolean.TRUE);
                         }
+                        kolAddressInfoDTO.setRemark(item.getAddressRemark());
+                        kolAddressInfoDTOList.add(kolAddressInfoDTO);
                     }
-                    if(isAdd){
-                        addDTO.setKolAddressInfoDTOList(kolAddressInfoDTOList);
-                        addDTO.setKolCooperationPlatformDTOList(kolCooperationPlatformDTOList);
-                        addList.add(addDTO);
+
+                    if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
+                        isAdd = Boolean.FALSE;
+                        List<String> itemErrorList = Stream.concat(errorMsgList.stream(), msgList.stream()).distinct().collect(Collectors.toList());
+                        item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
+                        errorList.add(item);
                     }
                 }
 
-                if(CollUtil.isNotEmpty(addList)){
-                    KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
-                    for (KolPartnerInfoDTO.AddDTO dto : addList) {
-                        kolPartnerInfoService.add(dto);
-                    }
+                // 内层循环结束后，仅当本批次无错误时再 set 并加入 addList，避免同一 addDTO 被重复添加
+                if (isAdd) {
+                    addDTO.setKolAddressInfoDTOList(kolAddressInfoDTOList);
+                    addDTO.setKolCooperationPlatformDTOList(kolCooperationPlatformDTOList);
+                    addList.add(addDTO);
+                }
+            }
+
+            // 所有 entry 处理完毕后，再统一落库，避免在循环内重复插入
+            if (CollUtil.isNotEmpty(addList)) {
+                KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
+                for (KolPartnerInfoDTO.AddDTO dto : addList) {
+                    kolPartnerInfoService.add(dto);
                 }
             }
         }
@@ -806,7 +869,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
     @Override
     public List<KolPartnerInfoDTO.DropDownDTO> dropDown(KolPartnerInfoDTO.SelectDTO dto) {
-        return this.baseMapper.dropDown(dto);
+        return this.baseMapper.dropDown(dto.getSearchKeyword());
     }
 
     @Override

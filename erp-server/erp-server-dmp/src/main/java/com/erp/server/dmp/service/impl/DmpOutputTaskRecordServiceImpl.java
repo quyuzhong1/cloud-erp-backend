@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
@@ -32,6 +33,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
@@ -112,6 +114,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     
     @Resource
     private DmpInputTaskService dmpInputTaskService;
+    
+    @Resource
+    private DmpInputTaskFileHisService dmpInputTaskFileHisService;
     
     @Resource
     private DmpInputFileMongoRelationService dmpInputFileMongoRelationService;
@@ -688,6 +693,28 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 			this.getBaseMapper().dmpInputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
 		}
 	}
+	
+	@Override
+	public void dmpFdsDeleteHisFile(String beforeUpdateTime, String size) {
+		List<DmpInputTaskFileHisEntity> list = dmpInputTaskFileHisService.lambdaQuery()
+				.ne(DmpInputTaskFileHisEntity::getFileUrl, "")
+				.lt(DmpInputTaskFileHisEntity::getUpdateTime, beforeUpdateTime)
+				.last(" limit " + size + " ")
+				.select(DmpInputTaskFileHisEntity::getId , DmpInputTaskFileHisEntity::getFileUrl)
+				.list();
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<DmpInputTaskFileHisEntity>> partition = Lists.partition(list, 1000);
+		for(List<DmpInputTaskFileHisEntity> p : partition) {
+			FastDFSClientUtil.deleteBatchFile(p.stream().map(DmpInputTaskFileHisEntity::getFileUrl).collect(Collectors.toList()));
+			dmpInputTaskFileHisService.lambdaUpdate()
+			.in(DmpInputTaskFileHisEntity::getId, p.stream().map(DmpInputTaskFileHisEntity::getId).collect(Collectors.toList()))
+			.set(DmpInputTaskFileHisEntity::getFileUrl, "")
+			.update();
+		}
+	}
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
@@ -808,5 +835,18 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Override
     public List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(List<String> sourceCodeList, String outputClass) {
         return baseMapper.getLastOutputTaskRecordList(sourceCodeList, outputClass);
+    }
+
+    @Override
+    public List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(DmpSyncTaskDTO.ListDTO listDTO) {
+        List<DmpPushTaskDTO.SyncInfoDTO> list = baseMapper.listErrorData(listDTO);
+        if (CollUtil.isNotEmpty(list)) {
+            return list;
+        }
+        List<DmpPushTaskEntity> taskList = dmpPushTaskService.listByParam(listDTO);
+        if (CollUtil.isEmpty(taskList)) {
+            return Collections.emptyList();
+        }
+        return BeanUtil.copyToList(taskList,DmpPushTaskDTO.SyncInfoDTO.class);
     }
 }

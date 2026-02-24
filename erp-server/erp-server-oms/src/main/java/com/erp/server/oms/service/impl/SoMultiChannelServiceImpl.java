@@ -119,6 +119,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cService soB2cService;
     @Lazy
     @Resource
+    private SoB2cErrorService soB2cErrorService;
+
+    @Lazy
+    @Resource
     private ShopInfoService shopInfoService;
     @Resource
     private CustomerInfoService customerInfoService;
@@ -275,19 +279,19 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         // 获取状态列表
         List<SoMultiChannelDTO.TabListDTO> list1 = new ArrayList<>();
         //待提交
-        int waitSubmitCount = list.stream().filter(e -> ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        int waitSubmitCount = list.stream().filter(e -> ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(e.getApproveStatus()) && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
         list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode(), ApproveStatusEnum.WAIT_SUBMIT.getName(),"",null,"", waitSubmitCount));
         //审核中
-        int approveIngCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE_ING.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        int approveIngCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE_ING.getCode().equals(e.getApproveStatus()) && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
         list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName(),"",null,"", approveIngCount));
         //创建中
-        int approveCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.CREATING.getCode().equals(e.getCreateStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        int approveCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.CREATING.getCode().equals(e.getCreateStatus()) && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
         list1.add(new SoMultiChannelDTO.TabListDTO(CreateStatusEnum.CREATING.getCode(), CreateStatusEnum.CREATING.getName(),"",null,"", approveCount));
         //创建成功
-        int successCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.SUCCESS.getCode().equals(e.getCreateStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        int successCount = list.stream().filter(e -> ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) && CreateStatusEnum.SUCCESS.getCode().equals(e.getCreateStatus()) && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
         list1.add(new SoMultiChannelDTO.TabListDTO(CreateStatusEnum.SUCCESS.getCode(), CreateStatusEnum.SUCCESS.getName(),"",null,"", successCount));
         //审核不通过
-        int rejectCount = list.stream().filter(e -> ApproveStatusEnum.REJECT.getCode().equals(e.getApproveStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
+        int rejectCount = list.stream().filter(e -> ApproveStatusEnum.REJECT.getCode().equals(e.getApproveStatus()) && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
         list1.add(new SoMultiChannelDTO.TabListDTO(ApproveStatusEnum.REJECT.getCode(), ApproveStatusEnum.REJECT.getName(),"",null,"", rejectCount));
         //已作废
         int voidedCount = list.stream().filter(e -> InvalidStatusEnum.VOIDED.getStatus().equals(e.getInvalidStatus())).mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum();
@@ -580,6 +584,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(CreateStatusEnum.SUCCESS.getCode().equals(createResultDTO.getCreateStatus()), SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_DELIVERY.getCode())
                 .set(CreateStatusEnum.FAILED.getCode().equals(createResultDTO.getCreateStatus()), SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_FAILED.getCode())
                 .eq(SoB2cEntity::getId, soMultiChannelEntity.getSoId()).update();
+        //删除提交发货异常标识
+        if (CreateStatusEnum.SUCCESS.getCode().equals(createResultDTO.getCreateStatus())){
+            soB2cErrorService.removeErrorOrder(soMultiChannelEntity.getSoId(), SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+        }
         //更新多渠道订单创建状态
         this.lambdaUpdate()
                 .set(SoMultiChannelEntity::getCreateStatus, createResultDTO.getCreateStatus())
@@ -801,7 +809,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     public void updateSoOutstock(PlatformSoOutStockDTO dto) {
         String deliveryCode = dto.getMerchantOrderId();
         List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
-
+        log.warn("更新多渠道订单生成出库单标识，多渠道订单编号：【{}】，出库单明细数量：【{}】", deliveryCode, detailList.size());
         SoMultiChannelEntity soMultiChannelEntity = this.getByDeliveryCode(deliveryCode);
         if (Objects.isNull(soMultiChannelEntity)) {
             return;
@@ -822,6 +830,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 } else {
                     soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.NONE.getCode());
                 }
+                log.warn("多渠道订单更新出库数量，多渠道订单明细ID：【{}】，出库数量：【{}】", soMultiChannelDetailEntity.getId(), qtyShipped);
                 soMultiChannelDetailService.updateById(soMultiChannelDetailEntity);
             }
         });

@@ -6,9 +6,11 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.ProductDetailUpdateExcelDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.BasicProductBuEntity;
 import com.erp.model.plm.entity.ProductBrandEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductRDTTeamEntity;
+import com.erp.server.plm.service.BasicProductBuService;
 import com.erp.server.plm.service.ProductBrandService;
 import com.erp.server.plm.service.ProductRDTTeamService;
 import lombok.Getter;
@@ -29,6 +31,7 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
     private List<ProductDetailEntity> productDetailEntityList;
     private ProductBrandService productBrandService;
     private ProductRDTTeamService productRDTTeamService;
+    private BasicProductBuService basicProductBuService;
 
     /**
      * 错误信息
@@ -44,12 +47,13 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
      */
     private List<ProductInfoDTO> successList = new ArrayList<>();
 
-    public ProductDetailUpdateExcelListener(List<BasicCategoryEntity> categoryList, Map<String, String> applicationCategoryMap, List<ProductDetailEntity> productDetailEntityList, ProductBrandService productBrandService, ProductRDTTeamService productRDTTeamService) {
+    public ProductDetailUpdateExcelListener(List<BasicCategoryEntity> categoryList, Map<String, String> applicationCategoryMap, List<ProductDetailEntity> productDetailEntityList, ProductBrandService productBrandService, ProductRDTTeamService productRDTTeamService, BasicProductBuService basicProductBuService) {
         this.categoryList = categoryList;
         this.applicationCategoryMap = applicationCategoryMap;
         this.productDetailEntityList = productDetailEntityList;
         this.productBrandService = productBrandService;
         this.productRDTTeamService = productRDTTeamService;
+        this.basicProductBuService = basicProductBuService;
     }
     /**
      * @Description 每解析一行数据回调一遍
@@ -140,6 +144,20 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
             } else {
                 productSpuBaseInfoDTO.setRdtTeamId(productRDTTeam.getId());
                 productSpuBaseInfoDTO.setRdtTeamName(productRDTTeam.getName());
+            }
+        }
+        
+        //BU线处理
+        if (StringUtils.isNotBlank(data.getBuName())) {
+            String buName = data.getBuName().trim();
+            BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(buName);
+            if (ObjectUtils.isEmpty(basicProductBuEntity)) {
+                data.setErrorMsg("BU线【" + buName + "】在系统中未找到");
+                errorList.add(data);
+                return;
+            } else {
+                productSpuBaseInfoDTO.setBuId(basicProductBuEntity.getId());
+                productSpuBaseInfoDTO.setBuName(basicProductBuEntity.getName());
             }
         }
         

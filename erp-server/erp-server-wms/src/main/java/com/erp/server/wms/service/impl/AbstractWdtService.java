@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
@@ -295,7 +294,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setOuterNo(outerCode);
         request.setWarehouseNo(thirdWarehouseCode);
         request.setIsCheck(Boolean.TRUE);
-        request.setGoodsList((List<CreateOtherStockoutRequest.GoodsList>) combinationList);
+        List<CreateOtherStockoutRequest.GoodsList> coodsList = (List<CreateOtherStockoutRequest.GoodsList>) combinationList;
+        request.setGoodsList(coodsList);
         request.setSourceId(outerCode);
         request.setOperateCode(operateEnum.getCode());
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
@@ -334,6 +334,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
         wmsPushMsgEntity.setThirdCode(outerCode);
+        wmsPushMsgEntity.setParentId(coodsList.get(0).getParentId());
         if (SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
             List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
             String positionNos = goodsList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));
@@ -353,7 +354,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setOuterNo(outerCode);
         request.setWarehouseNo(thirdWarehouseCode);
         request.setIsCheck(Boolean.TRUE);
-        request.setGoodsList((List<CreateOtherStockinRequest.GoodsList>) combinationList);
+        List<CreateOtherStockinRequest.GoodsList> coodsList = (List<CreateOtherStockinRequest.GoodsList>) combinationList;
+        request.setGoodsList(coodsList);
         request.setSourceId(outerCode);
         request.setOperateCode(operateEnum.getCode());
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
@@ -391,6 +393,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
         wmsPushMsgEntity.setThirdCode(outerCode);
+        wmsPushMsgEntity.setParentId(coodsList.get(0).getParentId());
         if(SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
             List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
             String positionNos = goodsList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));

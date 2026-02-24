@@ -12,7 +12,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -39,6 +41,8 @@ import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
+import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.DictNoticeRoleOptionDTO;
@@ -46,6 +50,7 @@ import com.erp.model.sys.dto.MqConsumerRecordDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.*;
+import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -340,25 +345,34 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     public void sendThirdNoticeByMqAsync(Map<String, Object> jsonMap, List<String> diffFields) {
         //参数校验
         if (MapUtils.isEmpty(jsonMap) || CollectionUtils.isEmpty(diffFields)) {
-            log.error("MQ消息处理中止 - 参数不合法 jsonMap:{}, diffFields:{}", jsonMap, diffFields);
+            log.error("通知配置消费者：MqRecordConsumerService MQ消息处理中止 - 参数不合法 jsonMap:{}, diffFields:{}", jsonMap, diffFields);
             return;
         }
         //根据table获取业务单据类型（带缓存）
         String table = jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table"));
         String businessKey = getBusinessKeyWithCache(table);
         if (StringUtils.isBlank(businessKey)) {
-            log.error("未找到table[{}]对应的业务类型", table);
+            log.error("通知配置消费者：未找到table[{}]对应的业务类型", table);
             return;
         }
 
-        //检查是否存在有效配置
-        List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
+        LambdaQueryChainWrapper<CfgThirdNoticeEntity> lambdaQueryChainWrapper = cfgThirdNoticeService.lambdaQuery()
                 .eq(CfgThirdNoticeEntity::getBusinessType, businessKey)
                 .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
-                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
-                .list();
+                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE);
+        //模具监控（配置在预警策略和返还策略）
+        if(Objects.equals(businessKey , SourceTypeEnum.MOLD_MONITOR.getCode())){
+            List<String> cfgThirdNoticeIds = getCfgNoticeByMoldMonitor(jsonMap);
+            if(CollUtil.isEmpty(cfgThirdNoticeIds)){
+                return;
+            }
+            lambdaQueryChainWrapper.in(CfgThirdNoticeEntity::getId,cfgThirdNoticeIds);
+        }
+
+        //检查是否存在有效配置
+        List<CfgThirdNoticeEntity> cfgThirdNoticeList = lambdaQueryChainWrapper.list();
         if (CollUtil.isEmpty(cfgThirdNoticeList)) {
-            log.error("业务类型[{}]无有效通知配置", businessKey);
+            log.error("通知配置消费者：业务类型[{}]无有效通知配置", businessKey);
             return;
         }
 
@@ -371,7 +385,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         // //保存mq消费记录
         String id = mqConsumerRecordService.addMqRecord(dto);
         if (StringUtils.isBlank(id)) {
-            log.error("保存MQ消费记录失败");
+            log.error("通知配置消费者：保存MQ消费记录失败");
             return;
         }
 
@@ -397,6 +411,47 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             dto.setMqConsumerRecordId(id);
             sendThirdNoticeByMq(dto);
         }
+    }
+
+
+    //模具监控（配置在预警策略和返还策略）
+    private static List<String> getCfgNoticeByMoldMonitor(Map<String, Object> jsonMap) {
+        String sourceId = jsonMap.get("source_id") == null ? "" : String.valueOf(jsonMap.get("source_id"));
+        String sourceType = jsonMap.get("source_type") == null ? "" : String.valueOf(jsonMap.get("source_type"));
+        if(StringUtils.isBlank(sourceId) || StringUtils.isBlank(sourceType)){
+            log.error("通知配置消费者：模具监控策略类型或策略id为空");
+            return Collections.emptyList();
+        }
+
+        String noticeType ="";
+        String moldCode ="";
+        if(Objects.equals(sourceType,SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+            List<CfgMoldReturnAlertRuleEntity> list = FeignQuery.create(CfgMoldReturnAlertRuleEntity.class).eq(CfgMoldReturnAlertRuleEntity::getId, sourceId).list();
+            if(CollUtil.isEmpty(list)){
+                log.error("通知配置消费者：模具监控返还策略不存在");
+                return Collections.emptyList();
+            }
+            noticeType = list.get(0).getNoticeType();
+            moldCode = list.get(0).getMoldCode();
+        }else if(Objects.equals(sourceType,SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
+            List<CfgMoldAlertRuleEntity> list = FeignQuery.create(CfgMoldAlertRuleEntity.class).eq(CfgMoldReturnAlertRuleEntity::getId, sourceId).list();
+            if(CollUtil.isEmpty(list)){
+                log.error("通知配置消费者：模具监控预警策略不存在");
+                return Collections.emptyList();
+            }
+            noticeType = list.get(0).getNoticeType();
+            moldCode = list.get(0).getMoldCode();
+        }else {
+            log.error("通知配置消费者：模具监控类型数据策略类型异常【{}】",sourceType);
+        }
+
+
+        if(StringUtils.isBlank(noticeType)){
+            log.error("通知配置消费者：模具监控通知类型为空,模具【{}】",moldCode);
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(noticeType.split(","));
     }
 
     /**
@@ -761,25 +816,85 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                             continue;
                         }
 
+
                         Boolean save = insertBatch(Arrays.asList(recordEntity));
                         if(Boolean.TRUE.equals(save)){
-                            SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
-                            sendMessage.setThirdNoticePushRecordEntity(recordEntity);
-                            sendMessage.setTitle(title);
-                            sendMessage.setContent(content);
-                            sendMessage.setReceiverUserIds(Arrays.asList(userId));
-                            sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
-                            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_TOPIC, RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(), sendMessage, recordEntity.getId());
-                            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                                log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
-                            }else {
-                                log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                            boolean uat = BusinessCommonConstants.hasProfile("uat");
+                            boolean dev = BusinessCommonConstants.hasProfile("dev");
+                            boolean test = BusinessCommonConstants.hasProfile("test");
+                            boolean prod = BusinessCommonConstants.hasProfile("prod");
+                            //根据环境进行消息发送
+                            if(dev||test||uat){//开发、测试、uat环境
+                                log.error("通知配置消费者：走开发、测试、uat环境");
+                                FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+                                String thirdUnionId = unionMap.get(userId).getThirdUnionId();
+                                sendMessage.setUnionIds(Arrays.asList(thirdUnionId));
+                                sendMessage.setContentMap(contentMap);
+                                oldSend(sendMessage,recordEntity);
+                            }else {//生产环境
+                                log.error("通知配置消费者：走生产环境");
+                                SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
+                                sendMessage.setThirdNoticePushRecordEntity(recordEntity);
+                                sendMessage.setTitle(title);
+                                sendMessage.setContent(content);
+                                sendMessage.setReceiverUserIds(Arrays.asList(userId));
+                                sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
+                                SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_TOPIC, RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(), sendMessage, recordEntity.getId());
+                                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                                    log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                                }else {
+                                    log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                                }
                             }
+
                         }
                     }
                 }
             }
         }
+    }
+
+    public void oldSend(FsBatchSendMessageDTO dto, ThirdNoticePushRecordEntity thirdNoticePushRecordEntity){
+        log.info("SendThirdNoticeConsumerService 开始");
+        LocalDateTime now = LocalDateTime.now();
+        try {
+            //发送消息的结果
+            Boolean sendResult = fsService.sendMessage(dto);
+            //当发送成功后
+            if (Boolean.TRUE.equals(sendResult)) {
+                log.info("sendMessage 当发送成功");
+                String messageId = thirdNoticePushRecordEntity.getId();
+                lambdaUpdate()
+                        .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+                        .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                        .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                        .update();
+            }else {
+                log.info("sendMessage 当发送失败");
+                String messageId = thirdNoticePushRecordEntity.getId();
+                ThirdNoticePushRecordEntity record = getById(messageId);
+                String errorReason = record.getErrorReason();
+                if(StringUtils.isBlank(errorReason)){
+                    errorReason = "发送消息失败";
+                }
+                lambdaUpdate()
+                        .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())
+                        .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                        .set(ThirdNoticePushRecordEntity::getErrorReason,errorReason)
+                        .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                        .update();
+            }
+        }catch(Exception e) {
+            log.error("sendMessage 发送异常 ",e);
+            String messageId = thirdNoticePushRecordEntity.getId();
+            lambdaUpdate()
+                    .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())
+                    .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                    .set(ThirdNoticePushRecordEntity::getErrorReason, JSONUtil.toJsonStr(e))
+                    .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                    .update();
+        }
+        log.info("SendThirdNoticeConsumerService 结束");
     }
 
 

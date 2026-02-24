@@ -191,51 +191,31 @@ public class InvoiceInfoController extends BaseController {
     }
 
     /**
-     * 导出发票xml(返回url下载)
+     * 导出发票xml(异步导出，返回任务ID)
      * @author will
      * @date 2025/4/8 09:39
      * @param dto
-     * @return ApiResult<String>
+     * @return ApiResult<String> 返回任务ID
      */
     @PostMapping("/exportXml")
     @WebAdvanceQuery
-    public ResponseEntity<StreamingResponseBody> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+    public ApiResult<String> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
         InvoiceInfoDTO.ExportResultDTO resultDTO = invoiceInfoService.exportXml(dto);
-        // 编码文件名（兼容所有Java版本）
-        String encodedFileName;
-        try {
-            encodedFileName = URLEncoder.encode(resultDTO.getFileName(), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new ServiceException("编码失败");
-        }
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''" + encodedFileName)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resultDTO.getResponseBody());
+        return success(resultDTO.getTaskId());
     }
 
     /**
-     * 导出发票pdf(返回url下载)
+     * 导出发票pdf(异步导出，返回任务ID)
      * @author will
      * @date 2025/4/8 09:39
      * @param dto
-     * @return ApiResult<String>
+     * @return ApiResult<String> 返回任务ID
      */
     @PostMapping("/exportPdf")
     @WebAdvanceQuery
-    public ResponseEntity<StreamingResponseBody> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+    public ApiResult<String> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
         InvoiceInfoDTO.ExportResultDTO resultDTO = invoiceInfoService.exportPdf(dto);
-        // 编码文件名（兼容所有Java版本）
-        String encodedFileName;
-        try {
-            encodedFileName = URLEncoder.encode(resultDTO.getFileName(), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new ServiceException("编码失败");
-        }
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''" + encodedFileName)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resultDTO.getResponseBody());
+        return success(resultDTO.getTaskId());
     }
 
     /**

@@ -20,7 +20,7 @@ public class FirstMileInTransitInitExcelDTO implements Serializable {
      * 导入月份
      */
     @ExcelProperty(value = "导入月份", index = 0)
-    @FieldValid(fieldName = "*导入月份",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE_)
+    @FieldValid(fieldName = "*导入月份",isNotBlank = true)
     private String reportMonth;
 
 

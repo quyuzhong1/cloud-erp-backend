@@ -207,6 +207,10 @@ public class KolB2cApplicationAddressDTO implements Serializable {
         @Size(max = 20,message = "邮编最大长度不能超过20位")
         private String zipCode;
 
+        /**
+         * 收件人税号
+         */
+        private String receiverTaxNo;
 
     }
 

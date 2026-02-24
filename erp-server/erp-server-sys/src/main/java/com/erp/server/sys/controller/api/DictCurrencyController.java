@@ -1,12 +1,13 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.server.sys.service.DictCurrencyService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -36,5 +37,15 @@ public class DictCurrencyController extends BaseController {
     public ApiResult<List<CurrencyDTO.ViewDTO>> getList() {
         List<CurrencyDTO.ViewDTO>  list=  dictCurrencyService.getList();
         return success(list);
+    }
+    /**
+     * 货币分页查询-高级搜索
+     *
+     * @return ApiResult<PagingVO <CurrencyDTO.ViewDTO>>
+     * @author zdy
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<CurrencyDTO.ViewDTO>> pagingSelect(@RequestBody @Validated PagingDTO<CurrencyDTO.SelectDTO> dto) {
+        return success(dictCurrencyService.pagingSelect(dto));
     }
 }

@@ -59,6 +59,7 @@ import com.erp.server.srm.listener.PoReconciliationDetailExcelListener;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -81,6 +82,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PO_RECONCILIATION_DETAIL;
@@ -439,6 +441,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .in(KingdeePaymentConditionEntity::getCode, paymentConditionList)
                 .list();
 
+        // 采购申请单id集合
+        List<String> purchaseApplicationIds = Lists.newArrayList();
+        List<String> purchaseOrderIds = list.stream().map(PoReconciliationDTO.ExportDetailDTO::getPoId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationRefPoEntity> refList = FeignQuery.create(PurchaseApplicationRefPoEntity.class).in(PurchaseApplicationRefPoEntity::getPurchaseOrderId,purchaseOrderIds).list();
+
         for (PoReconciliationDTO.ExportDetailDTO exportDetailDTO :list) {
             //单据类型
             exportDetailDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(exportDetailDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(exportDetailDTO.getReturnSourceType()) : "采购入库");
@@ -462,6 +469,46 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             exportDetailDTO.setPaymentConditionName(paymentConditionName);
             //业务状态名称
             exportDetailDTO.setBusinessStatusName(ConfirmStatusEnum.CONFIRM.getName());
+
+
+            // 采购申请单号
+            if (CollUtil.isNotEmpty(refList) && CharSequenceUtil.isBlank(exportDetailDTO.getPoSourceType())) {
+                // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
+                List<PurchaseApplicationRefPoEntity> filterRefList = refList.stream().filter(r -> {
+                    if (Objects.equals(exportDetailDTO.getPoId(), r.getPurchaseOrderId())) {
+                        return true;
+                    }
+                    return false;
+                }).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(filterRefList)) {
+                    List<String> applicationIds = filterRefList.stream().map(PurchaseApplicationRefPoEntity::getPurchaseApplicationId).distinct().collect(Collectors.toList());
+                    purchaseApplicationIds.addAll(applicationIds);
+                    exportDetailDTO.setPurchaseApplicationIds(applicationIds);
+                }
+
+            }
+        }
+
+        if (CollUtil.isNotEmpty(purchaseApplicationIds)) {
+            List<PurchaseApplicationEntity> purchaseApplicationList = FeignQuery.getByIds(PurchaseApplicationEntity.class,purchaseApplicationIds);
+            // 采购申请单id和采购申请单对应map
+            Map<String, PurchaseApplicationEntity> refMap = purchaseApplicationList.stream().collect(Collectors.toMap(PurchaseApplicationEntity::getId, Function.identity()));
+
+            list.forEach(obj -> {
+                if (CollUtil.isNotEmpty(obj.getPurchaseApplicationIds())) {
+                    StringBuffer applicationCodes = new StringBuffer();
+                    obj.getPurchaseApplicationIds().forEach(applicationId -> {
+                        PurchaseApplicationEntity refEntity = refMap.get(applicationId);
+                        if (Objects.nonNull(refEntity)) {
+                            applicationCodes.append(refEntity.getCode()).append(",");
+                        }
+                    });
+                    if (applicationCodes.toString().endsWith(",")) {
+                        applicationCodes.deleteCharAt(applicationCodes.length() - 1);
+                    }
+                    obj.setPoSourceCode(applicationCodes.toString());
+                }
+            });
         }
 
     }
@@ -561,7 +608,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             }
 
             //已对账明细信息
-            List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationId(), listDTO.getId())).collect(Collectors.toList());
+            List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationRefDetailList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationId(), listDTO.getId()))
+                    .sorted(Comparator.comparing(PoReconciliationRefDetailEntity::getSourceType)
+                            .thenComparing(PoReconciliationRefDetailEntity::getDate)
+                    ).collect(Collectors.toList());
             if (CollUtil.isEmpty(refDetailList)) {
                continue;
             }

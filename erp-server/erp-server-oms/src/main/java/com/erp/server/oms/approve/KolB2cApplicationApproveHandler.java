@@ -50,7 +50,7 @@ public class KolB2cApplicationApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = kolB2cApplicationService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = kolB2cApplicationService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 
@@ -76,7 +76,7 @@ public class KolB2cApplicationApproveHandler extends AbstractApproveHandler {
             return Boolean.TRUE;
         }
         //添加日志
-        return operateLogService.addModuleOperateLog(CharSequenceUtil.format("【{}】审核，审核【{}】了一个销售退货单",dto.getApprovePlatformEnum().getName(), ApproveTypeEnum.getName(dto.getApproveStatus().getStatus())), ModuleTypeEnum.SO_RETURN.getCode(),dto.getBusinessId(), "审核操作");
+        return operateLogService.addModuleOperateLog(CharSequenceUtil.format("【{}】审核，审核【{}】了一个销售退货单",dto.getApprovePlatformEnum().getName(), ApproveTypeEnum.getName(dto.getApproveStatus().getStatus())), ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(),dto.getBusinessId(), "审核操作");
     }
 
     @Override
@@ -86,7 +86,7 @@ public class KolB2cApplicationApproveHandler extends AbstractApproveHandler {
             return;
         }
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
-        dto.getComments().stream().map(obj -> new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("【{}】流程添加评论【{}】",dto.getApprovePlatformEnum().getName(),obj), ModuleTypeEnum.SO.getCode(), dto.getId(), "添加评论"))
+        dto.getComments().stream().map(obj -> new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("【{}】流程添加评论【{}】",dto.getApprovePlatformEnum().getName(),obj), ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), dto.getId(), "添加评论"))
                 .forEach(operateLogList::add);
         operateLogService.batchAddModuleOperateLog(operateLogList);
     }

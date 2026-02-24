@@ -58,6 +58,7 @@ public interface OtherOutStockConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "billDate", source = "billDate"),
             @Mapping(target = "remark", source = "remark"),
+            @Mapping(target = "usage", source = "importExcelDTO.usage"),
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
             @Mapping(target = "warehouseKeeperId", source = "uid"),
             @Mapping(target = "warehouseKeeperName", source = "userName"),
@@ -114,7 +115,7 @@ public interface OtherOutStockConverter {
             @Mapping(target = "unit", expression = "java(cn.hutool.core.text.CharSequenceUtil.isBlank(skuVO.getUnitName()) ? \"\" : skuVO.getUnitName())"),
             @Mapping(target = "actualQty", source = "actualQty"),
             @Mapping(target = "warehouseLocation", expression = "java(null == locationEntity ? \"\" : locationEntity.getCode())"),
-            @Mapping(target = "remark", source = "importExcelDTO.remark"),
+            @Mapping(target = "remark", source = "importExcelDTO.detailRemark"),
     })
     OtherOutstockDetailEntity combineDetailEntity(OtherOutStockImportExcelDTO importExcelDTO,
                                                   SkuVO skuVO,

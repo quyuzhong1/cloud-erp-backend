@@ -12,6 +12,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -87,7 +88,7 @@ public class B2bThirdDeliveryController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    public ApiResult<B2bThirdDeliveryDTO.ViewDTO> view(@RequestBody @Validated B2bThirdDeliveryDTO.ViewQueryDTO dto) {
+    public ApiResult<B2bThirdDeliveryDTO.ViewDTO> view(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto) {
         return success(b2bThirdDeliveryService.view(dto));
     }
 
@@ -112,7 +113,6 @@ public class B2bThirdDeliveryController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2B三方发货单修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:b2bThirdDelivery:update",
@@ -275,6 +275,7 @@ public class B2bThirdDeliveryController extends BaseController {
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
 
             }
+            resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

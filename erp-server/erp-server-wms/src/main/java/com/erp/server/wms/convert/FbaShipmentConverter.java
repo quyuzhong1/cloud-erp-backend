@@ -27,6 +27,10 @@ public interface FbaShipmentConverter {
     @Mapping(target = "productName", ignore = true)
     @Mapping(target = "imageUrl", ignore = true)
     @Mapping(target = "deliveryQty", ignore = true)
+    @Mapping(target = "packageLength", source = "packageLength", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
+    @Mapping(target = "packageWidth", source = "packageWidth", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
+    @Mapping(target = "packageHeight", source = "packageHeight", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
+    @Mapping(target = "packageWeight", source = "packageWeight", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
 
     @Mapping(target = "receiveTime", source = "receiveDate")
@@ -93,7 +97,19 @@ public interface FbaShipmentConverter {
             @Mapping(target = "planQty", source = "declareQty"),
             @Mapping(target = "deliveryQty", source = "declareQty"),
             @Mapping(target = "platformSkuNo", source = "msku"),
-            @Mapping(target = "platformSpuNo", source = "asin")
+            @Mapping(target = "platformSpuNo", source = "asin"),
+            @Mapping(target = "imageUrl", ignore = true),
+            @Mapping(target = "netWeight", ignore = true),
+            @Mapping(target = "productName", ignore = true),
+            @Mapping(target = "productSizeHeight", source = "packageHeight"),
+            @Mapping(target = "productSizeLength", source = "packageLength"),
+            @Mapping(target = "productSizeWidth", source = "packageWidth"),
+            @Mapping(target = "sourceDetailId", source = "id"),
+            @Mapping(target = "stockSku", ignore = true),
+            @Mapping(target = "thirdWarehouseSku", ignore = true),
+            @Mapping(target = "useDeliveryQty", ignore = true),
+            @Mapping(target = "warehouseLocation", ignore = true),
+            @Mapping(target = "warehouseLocationName", ignore = true)
     })
     FirstMileDeliveryDetailDTO.ViewDTO fbaShipmentDetailEntityToDeliveryDetailViewDTO(FbaShipmentDetailEntity detailEntity);
 
@@ -122,10 +138,16 @@ public interface FbaShipmentConverter {
             @Mapping(target = "platformShipmentStatus", source = "entity.platformShipmentStatus"),
             @Mapping(target = "shipmentReceiveTime", source = "entity.shipmentReceiveTime"),
             @Mapping(target = "labelType", source = "entity.labelType"),
+            @Mapping(target = "labelUrl", source = "oldEntity.labelUrl"),
+            @Mapping(target = "pageType", source = "oldEntity.pageType"),
             @Mapping(target = "packType", source = "entity.packType"),
             @Mapping(target = "deliveryFromAddress", source = "entity.deliveryFromAddress"),
             @Mapping(target = "deliveryToAddress", source = "entity.deliveryToAddress"),
             @Mapping(target = "isPackingDownload", source = "oldEntity.isPackingDownload"),
+            @Mapping(target = "isSta", source = "entity.isSta"),
+            @Mapping(target = "sourceType", source = "entity.sourceType"),
+            @Mapping(target = "referenceId", source = "entity.referenceId"),
+            @Mapping(target = "remark", source = "oldEntity.remark"),
             @Mapping(target = "isUserSystem" ,ignore = true),
     })
     FbaShipmentEntity oldToNew(FbaShipmentEntity entity, FbaShipmentEntity oldEntity);
@@ -196,8 +218,12 @@ public interface FbaShipmentConverter {
     @Mapping(target = "uniqueIndex", ignore = true)
     @Mapping(target = "handleStatus", constant = "already")
     @Mapping(target = "sourcePlatform", constant = "erp")
-    @Mapping(target = "sourceType", constant = "change")
+    @Mapping(target = "sourceType", source = "sourceType")
     @Mapping(target = "receiveUTCDate", ignore = true)
     @Mapping(target = "isUserSystem" ,ignore = true)
-    FbaShipmentReceiveEntity receivedDTOToEntity(FbaShipmentDTO.ReceivedDTO dto, FbaShipmentEntity mainEntity, FbaShipmentDetailEntity detailEntity);
+    FbaShipmentReceiveEntity receivedDTOToEntity(FbaShipmentDTO.ReceivedDTO dto, FbaShipmentEntity mainEntity, FbaShipmentDetailEntity detailEntity, String sourceType);
+
+    @Mapping(target = "detailList", ignore = true)
+    @Mapping(target = "id", source = "entity.id")
+    FbaShipmentDTO.ViewAwdDTO awdShipmentToViewDTO(FbaShipmentEntity entity, FbaShipmentExtendEntity fbaShipmentExtendEntity);
 }

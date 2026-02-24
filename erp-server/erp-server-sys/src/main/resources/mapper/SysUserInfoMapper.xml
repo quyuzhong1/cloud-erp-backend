@@ -2,6 +2,40 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.sys.mapper.SysUserInfoMapper">
 
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        sui.uid AS uid,
+sui.user_name AS userName,
+sui.real_name AS realName,
+sui.mobile AS mobile,
+sui.user_state AS userState,
+sui.last_login_time AS lastLoginTime,
+sui.last_login_ip AS lastLoginIp,
+sui.login_count AS loginCount,
+sui.create_time AS createTime,
+sui.update_time AS updateTime,
+sui.user_account AS userAccount,
+sui.password AS password,
+sui.salt AS salt,
+sui.email AS email,
+sui.head_icon AS headIcon,
+sui.code AS code,
+sui.sync_kingdee_status AS syncKingdeeStatus,
+sui.sync_kingdee_time AS syncKingdeeTime,
+sui.sync_kingdee_id AS syncKingdeeId,
+sui.sync_operate AS syncOperate,
+sui.create_user_name AS createUserName,
+sui.create_user_id AS createUserId,
+sui.update_user_name AS updateUserName,
+sui.update_user_id AS updateUserId,
+sui.user_type AS userType,
+sui.need_change_pwd AS needChangePwd,
+sui.is_super AS isSuper,
+sui.is_deleted AS isDeleted,
+sui.delete_state AS deleteState,
+sui.third_auth_type AS thirdAuthType
+    </sql>
+
     <select id="findList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT uid AS userId,user_name,real_name,mobile
         FROM sys_user_info
@@ -17,48 +51,67 @@
 
     <select id="paging" resultType="com.erp.model.sys.dto.UserManageDTO">
         SELECT
-        uid,
-        user_name,
-        real_name,
-        mobile,
-        user_state,
-        last_login_time,
-        head_icon,
-        last_login_ip,
-        login_count,
-        user_account,
-        create_time,
-        update_time,
-        email
+        <include refid="Base_Column_List"></include>
         FROM sys_user_info sui
-        WHERE is_deleted = false AND user_account not in ('admin')
-        <if test="params.state !=null">
-            AND sui.user_state=#{params.state}
+        WHERE
+        ${params.sqlMap.default}
+        AND sui.is_deleted = false
+        AND sui.user_account != ('admin')
+        AND sui.user_type ='erp'
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
         </if>
-        <if test="params.startTime!=null">
-            AND last_login_time &gt;=#{params.startTime}
-        </if>
-        <if test="params.endTime!=null">
-            AND last_login_time &lt;=#{params.endTime}
-        </if>
-        <if test="params.userType != null and params.userType != ''">
-            AND sui.user_type = #{params.userType}
-        </if>
-        <if test="roleIds !=null  and  roleIds.size()>0">
-            AND uid in
-            (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in
-                <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
-                    #{roleId}
-                </foreach>
-            )
-        </if>
-
-        ORDER BY update_time DESC
-
+        sui.create_time desc
     </select>
+
+<!--    <select id="paging" resultType="com.erp.model.sys.dto.UserManageDTO">-->
+<!--        SELECT-->
+<!--        uid,-->
+<!--        user_name,-->
+<!--        real_name,-->
+<!--        mobile,-->
+<!--        user_state,-->
+<!--        last_login_time,-->
+<!--        head_icon,-->
+<!--        last_login_ip,-->
+<!--        login_count,-->
+<!--        user_account,-->
+<!--        create_time,-->
+<!--        update_time,-->
+<!--        email-->
+<!--        FROM sys_user_info sui-->
+<!--        WHERE is_deleted = false AND user_account not in ('admin')-->
+<!--        <if test="params.state !=null">-->
+<!--            AND sui.user_state=#{params.state}-->
+<!--        </if>-->
+<!--        <if test="params.searchKeyword !=null and params.searchKeyword!=''">-->
+<!--            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')-->
+<!--        </if>-->
+<!--        <if test="params.startTime!=null">-->
+<!--            AND last_login_time &gt;=#{params.startTime}-->
+<!--        </if>-->
+<!--        <if test="params.endTime!=null">-->
+<!--            AND last_login_time &lt;=#{params.endTime}-->
+<!--        </if>-->
+<!--        <if test="params.userType != null and params.userType != ''">-->
+<!--            AND sui.user_type = #{params.userType}-->
+<!--        </if>-->
+<!--        <if test="roleIds !=null  and  roleIds.size()>0">-->
+<!--            AND uid in-->
+<!--            (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in-->
+<!--                <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">-->
+<!--                    #{roleId}-->
+<!--                </foreach>-->
+<!--            )-->
+<!--        </if>-->
+<!--        ORDER BY update_time DESC-->
+<!--    </select>-->
 
     <select id="findRoleIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
@@ -400,6 +453,20 @@
         </if>
         uid desc
         ) userInfo
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.sys.dto.SysUserInfoDTO$TabListDTO">
+        SELECT
+        sui.user_state AS tabFlag,
+        count(*)  AS count
+        FROM  sys_user_info sui
+        WHERE sui.is_deleted=FALSE
+            and sui.user_type ='erp'
+        AND sui.user_account != ('admin')
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY sui.user_state
     </select>
 
 

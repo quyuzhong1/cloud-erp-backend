@@ -48,7 +48,7 @@ public class SysFeignController extends BaseController {
      */
     @GetMapping("/company/list")
     public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyList() {
-        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList();
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList(null);
         return success(list);
     }
 
@@ -77,7 +77,7 @@ public class SysFeignController extends BaseController {
     public ApiResult<List<SysDeptDropDownVO>> departmentDropDown() {
         List<SysDepartmentEntity> entities = sysDepartmentService.listDept();
         List<SysDeptDropDownVO> resultList = entities.stream()
-                .map(x -> new SysDeptDropDownVO(x.getId(), x.getName()))
+                .map(x -> new SysDeptDropDownVO(x.getId(), x.getName(),x.getDisabled()))
                 .collect(Collectors.toList());
         return success(resultList);
     }

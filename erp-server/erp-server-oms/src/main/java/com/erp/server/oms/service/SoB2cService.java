@@ -13,10 +13,7 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.wms.dto.ReportOrderDataDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -199,6 +196,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date: 2023/8/18 16:49
      */
     BatchResultDTO submitDelivery(String id, String channelId);
+    /**
+     * 检查发货限制
+     * @param id 订单ID
+     * @param deliveryType 发货类型 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.DeliveryRestrictionEnum}
+     * @return 如果有限制返回错误信息，否则返回null
+     */
+    String checkDeliveryRestriction(String id, String deliveryType);
     /**
      * @description: 发货拦截
      * @author Will
@@ -1044,9 +1048,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      *
      * @param entity
      * @param soB2cLogisticsEntity
+     * @param checkBillStatus
      * @return
      */
-    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean checkBillStatus);
 
     /**
      * 销售统计
@@ -1147,7 +1152,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     BatchResultDTO retryPackagePlan(String soId);
 
-    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList);
+    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse);
     /**
      * 1,创建订单
      * 2,匹配订单规则
@@ -1156,4 +1161,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 5.创建发货单
      */
     String processOrderCreation(SoB2cDTO.AddDTO dto);
+
+    BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
+
+    void retryPlatformOutbound( List<String> ids);
+
+    void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
 }

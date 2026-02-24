@@ -26,8 +26,6 @@ import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -149,26 +147,37 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 break;
             case GET_LOGISTICS_LABEL:
                 SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
-                soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogistics);
+                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogistics, false);
                 if(resultDTO1.getSuccess()){
-                    autoSubmitDelivery = getLogisticsRuleResult(id);
-                    if(autoSubmitDelivery){
-                        try {
-                            //提交发货
-                            soB2cService.submitDelivery(id, "");
-                        }catch (Exception e){
-                            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                            addError.setParamJson("");
-                            addError.setReturnJson("");
-                            addError.setMainId(id);
-                            addError.setMessage(e.getMessage());
-                            soB2cErrorService.add(addError);
+                    //配货中才自动提交
+                    if(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())){
+                        autoSubmitDelivery = getLogisticsRuleResult(id);
+                        if(autoSubmitDelivery){
+                            try {
+                                // 查询配置的海外仓物流
+                                List<SoB2cDetailEntity> soB2cDetailEntityList2 = soB2cDetailService.listByMainId(id);
+                                List<LogisticsMappingDTO.ViewDTO> viewDTOS2 = logisticsMappingFeign.listByChannelIdAndType(soB2cLogistics.getLogisticsChannelId(), LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+                                LogisticsMappingDTO.ViewDTO viewDTO2 = viewDTOS2.stream().filter(v->v.getWarehouseId().equals(soB2cDetailEntityList2.get(0).getWarehouseId())).findFirst().orElse(null);
+                                String warehouseLogisticsChannelId2 = Objects.nonNull(viewDTO2)?viewDTO2.getPlatformLogisticsChannelId():"";
+                                //提交发货
+                                soB2cService.submitDelivery(id, warehouseLogisticsChannelId2);
+                            }catch (Exception e){
+                                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                                addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                                addError.setParamJson("");
+                                addError.setReturnJson("");
+                                addError.setMainId(id);
+                                addError.setMessage(e.getMessage());
+                                soB2cErrorService.add(addError);
+                            }
                         }
                     }
                 }
                 resultDTOList.add(resultDTO1);
+                break;
+            case GET_EXCHANGE_RATE:
+                BatchResultDTO batchResultDTO1 = soB2cService.refreshExchangeRate(soB2cEntity);
+                resultDTOList.add(batchResultDTO1);
                 break;
             default:
                 break;
@@ -184,9 +193,6 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
         String logisticsChannelIdKey="logisticsChannelId";
         mapList.forEach(v->v.remove(logisticsChannelIdKey));
-        if(id.equals("2001631240814084098")){
-            System.out.println(123);
-        }
         RuleLogisticsDTO.RuleMatchResultDTO matchResult = ruleLogisticsService.getRuleOrderMatchResult(ruleMap);
         if(Objects.isNull(matchResult) || Objects.isNull(matchResult.getLogisticsSupplierId())){
             return false;

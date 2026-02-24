@@ -1070,4 +1070,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }).collect(Collectors.toList());
         return warehouseChannelDTOS;
     }
+
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel(LogisticsSupplierDTO.SelectDTO dto) {
+        return baseMapper.listChannel(dto);
+    }
 }

@@ -52,9 +52,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                 dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
             }
             if(dynamicDataSource != null && dynamicDataSource.equals("doris") ){ // 切换到doris
-                return "(sb2c.id in ( SELECT so_id FROM erp_wms.third_warehouse_delivery where is_deleted = false  AND status != 'cancelDelivery' and code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
+                return "(sb2c.id in ( SELECT so_id FROM erp_wms.third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
             }else {
-                return "(sb2c.id in ( SELECT so_id FROM foreign_third_warehouse_delivery where is_deleted = false  AND status != 'cancelDelivery' and code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
+                return "(sb2c.id in ( SELECT so_id FROM foreign_third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
             }
 
 

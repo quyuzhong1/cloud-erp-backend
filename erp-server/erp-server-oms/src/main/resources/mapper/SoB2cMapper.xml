@@ -413,24 +413,19 @@
     </select>
 
     <!-- 列表数量查询 -->
-    <select id="listCount" resultType="java.lang.Integer">
+    <select id="listCount" resultType="com.erp.model.oms.dto.SoB2cDTO$ListCountDto">
         select
-        count(*)
+        sb2c.bill_status,sb2c.invalid_status,sb2c.is_frozen,sb2c.approve_status,sb2c.pay_status,sb2c.sign_order_error,count(*) count
         from so_b2c sb2c
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
-            <!--替换logistics inner JOIN-->
-            AND EXISTS ( SELECT 1 FROM so_b2c_logistics sb2cl WHERE sb2cl.main_id = sb2c.id AND sb2cl.is_deleted = false )
-            <!--替换receiver JOIN-->
-            AND EXISTS ( SELECT 1 FROM so_b2c_receiver sb2cr WHERE sb2cr.main_id = sb2c.id AND sb2cr.is_deleted = false )
-            <!--替换shop_info JOIN-->
-            AND EXISTS ( SELECT 1 FROM shop_info si WHERE si.id = sb2c.shop_id AND si.is_deleted = false )
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
         </where>
+        group by sb2c.bill_status,sb2c.invalid_status,sb2c.is_frozen,sb2c.approve_status,sb2c.pay_status,sb2c.sign_order_error
     </select>
 
     <!-- 合并列表查询 -->

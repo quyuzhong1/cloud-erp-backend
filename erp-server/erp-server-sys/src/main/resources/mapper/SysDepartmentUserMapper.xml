@@ -83,6 +83,23 @@
         LIMIT 1
     </select>
 
+    <select id="getDeptByUserIdWithDisabledFilter" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
+        SELECT
+        sdu.department_id,
+        sd.name AS departmentName,
+        sdu.user_id,
+        sui.user_name,
+        sd.code
+        FROM sys_department_user sdu
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        WHERE sui.is_deleted = false
+        AND sdu.user_id = #{userId}
+        AND (sd.disabled IS NULL OR sd.disabled = false)
+        ORDER BY sdu.create_time DESC
+        LIMIT 1
+    </select>
+
     <select id="listDeptUserByDeptId" resultType="com.common.business.dto.FindUserDTO">
          SELECT
             sui.uid AS userId,

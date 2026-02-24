@@ -9,6 +9,8 @@ import com.common.business.annotation.MenuCode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @Description 产品sku信息导出
  **/
@@ -19,6 +21,7 @@ import lombok.NoArgsConstructor;
 @ContentRowHeight(45)
 public class ProductDetailExcelExportDTO {
 
+    private String productId;
     /**
      * 图片路径
      */
@@ -27,10 +30,10 @@ public class ProductDetailExcelExportDTO {
     /**
      * 图片
      */
-    @ExcelProperty("图片")
-    @ColumnWidth(12)
-    @MenuCode("plm:product:detail:listProinfo")
-    private byte[] image;
+//    @ExcelProperty("图片")
+//    @ColumnWidth(12)
+//    @MenuCode("plm:product:detail:listProinfo")
+//    private byte[] image;
 
     /**
      * spuNo
@@ -127,12 +130,18 @@ public class ProductDetailExcelExportDTO {
     private String brandName;
 
     /**
-     * 研发团队
+     * 研发团队（产线）
      */
-    @ExcelProperty("研发团队")
+    @ExcelProperty("研发团队（产线）")
     @MenuCode("plm:product:detail:listProinfo")
     private String rdtTeamName;
 
+    /**
+     * BU线
+     */
+    @ExcelProperty("BU线")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String buName;
     /**
      * 产品开发状态
      */
@@ -357,19 +366,19 @@ public class ProductDetailExcelExportDTO {
     @MenuCode("plm:product:detail:listProductPurchase")
     private String arrivalState;
 
-    /**
-     * 一级供应商
-     */
-    @ExcelProperty("一级供应商")
-    @MenuCode("plm:product:detail:listProductPurchase")
-    private String mainSupplier;
-
-    /**
-     * 二级供应商
-     */
-    @ExcelProperty("二级供应商")
-    @MenuCode("plm:product:detail:listProductPurchase")
-    private String secondSupplier;
+//    /**
+//     * 一级供应商
+//     */
+//    @ExcelProperty("一级供应商")
+//    @MenuCode("plm:product:detail:listProductPurchase")
+//    private String mainSupplier;
+//
+//    /**
+//     * 二级供应商
+//     */
+//    @ExcelProperty("二级供应商")
+//    @MenuCode("plm:product:detail:listProductPurchase")
+//    private String secondSupplier;
 
     /**
      * 年目标销量
@@ -474,6 +483,12 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("保险属性")
     @MenuCode("plm:product:detail:listLogistics")
     private String insuranceProperty;
+    /**
+     * 电池重量（g）
+     */
+    @ExcelProperty("电池重量（g）")
+    @MenuCode("plm:product:detail:listSale")
+    private BigDecimal batteryWeight;
 
     /**
      * 报关申报价（$）

@@ -167,6 +167,19 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("tel_number")
     private String telNumber;
 
+    /**
+     * 发货单id
+     */
+    @TableField("so_delivery_id")
+    private String soDeliveryId;
+
+    /**
+     * 发货单号
+     */
+    @TableField("so_delivery_code")
+    private String soDeliveryCode;
+
+
     public static final String SALES_PLATFORM = "sales_platform";
 
     public static final String SHOP_ID = "shop_id";

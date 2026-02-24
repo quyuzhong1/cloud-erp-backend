@@ -84,7 +84,7 @@ public class DataPermissionAspect {
             userInfo.setUid("1549948476757303297");
         }
         if(ObjectUtil.isEmpty(userInfo) || StringUtils.isBlank(userInfo.getUid())){
-            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+            throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
         }
         dataScopeFilter(joinPoint, userInfo, controllerDataScope);
     }

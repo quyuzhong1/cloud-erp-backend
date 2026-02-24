@@ -999,7 +999,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         //删除发送金蝶
         sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
-        this.removeByIds(removeList);
+        this.removeByIds(removeIdList);
         return resultDTOList;
     }
 
@@ -1492,6 +1492,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
 	}
+
+    @Override
+    public List<WarehouseDTO.UpdateDTO> listWarehouseNameByIds(List<String> warehouseIds) {
+        return baseMapper.listWarehouseNameByIds(warehouseIds);
+    }
 
     private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
 		if(this.checkOpenCloseTime(warehouseEntity)) {

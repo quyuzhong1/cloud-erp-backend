@@ -10,6 +10,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -624,4 +625,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void deleteSoOutstock(String id, String deliveryId);
 
     void updateRemarkById(String outstockId, String remark);
+
+    void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto);
 }

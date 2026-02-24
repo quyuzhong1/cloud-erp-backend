@@ -296,4 +296,15 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @param addTrackList
      */
     void updateImport(List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList);
+    /**
+     * 查询物流单信息
+     * @author will
+     * @date 2026/1/9 15:29
+     * @param platformCodeList
+     * @param soCodeList
+     * @param soDeliveryCodeList
+     * @param trackNoList
+     * @return List<LogisticsBillVo>
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData( List<String> platformCodeList, List<String> soCodeList, List<String> soDeliveryCodeList, List<String> trackNoList);
 }

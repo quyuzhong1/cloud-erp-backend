@@ -7,6 +7,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
@@ -168,6 +169,99 @@ public class FbaShipmentDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewAwdDTO extends ViewDTO {
+        /**
+         * 入库计划单号
+         */
+        private String planCode;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
+         * 发货单ID
+         */
+        private String deliveryId;
+        /**
+         * 地区偏好
+         */
+        private String preferredRegion;
+        /**
+         * 发货人
+         */
+        private String deliveryFromName;
+        /**
+         * 发货手机号
+         */
+        private String deliveryFromMobile;
+        /**
+         * 发货城市
+         */
+        private String deliveryFromCity;
+        /**
+         * 发货州/省
+         */
+        private String deliveryFromProvince;
+        /**
+         * 发货地区
+         */
+        private String deliveryFromArea;
+        /**
+         * 发货邮编
+         */
+        private String deliveryFromPostCode;
+        /**
+         * 发货目的仓（取值店铺绑定的AWD仓）
+         */
+        private String deliveryToWarehouseId;
+        /**
+         * 平台货件发货时间（拉取数据的日期）
+         */
+        private LocalDateTime shipmentDeliveryTime;
+        /**
+         * 收货电话号码
+         */
+        private String deliveryToMobile;
+        /**
+         * 收货人
+         */
+        private String deliveryToName;
+        /**
+         * 收货邮编
+         */
+        private String deliveryToPostCode;
+        /**
+         * 收货地区
+         */
+        private String deliveryToArea;
+        /**
+         * 收货州/省
+         */
+        private String deliveryToProvince;
+        /**
+         * 收货城市
+         */
+        private String deliveryToCity;
+        /**
+         * 收货国家
+         */
+        private String deliveryToCountryId;
+        /**
+         * 收货国家名称
+         */
+        private String deliveryToCountryName;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 目的仓名称
+         */
+        private String deliveryToWarehouseName;
+
+    }
         /**
      * 详情
      */
@@ -465,6 +559,11 @@ public class FbaShipmentDTO implements Serializable {
          * 明细ids
          */
         private List<String> detailIds;
+        /**
+         * 单据类型
+         * ShipmentSourceTypeEnum
+         */
+        private String sourceType;
     }
 
     /**
@@ -511,6 +610,12 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String requisitionId;
         private String shopId;
+
+        /**
+         * 单据类型
+         * ShipmentSourceTypeEnum
+         */
+        private String sourceType;
     }
 
     /**
@@ -629,7 +734,51 @@ public class FbaShipmentDTO implements Serializable {
          * 装箱清单下载状态
          */
         private String packingDownload;
+        /**
+         * 是否sta
+         */
+        private Boolean isSta;
     }
+    /**
+     * 列表查询返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AwdListDTO extends ListDTO{
+        /**
+         * 入库计划单号
+         */
+        private String planCode;
+        /**
+         * Reference ID
+         */
+        private String referenceId;
+        /**
+         * 目的仓id
+         */
+        private String deliveryToWarehouseId;
+        /**
+         * 目的仓名称
+         */
+        private String deliveryToWarehouseName;
+        /**
+         * 创建人用户名
+         */
+        private String createUserName;
+        /**
+         * 箱数
+         */
+        private Integer boxQty;
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+        /**
+         * 平台发货时间
+         */
+        private LocalDateTime shipmentDeliveryTime;
+    }
+
 
     /**
      * 货件状态记录
@@ -797,6 +946,10 @@ public class FbaShipmentDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * FBA类型
+         */
+        private String fbaType;
 
         /**
          * 来源类型中文
@@ -935,11 +1088,22 @@ public class FbaShipmentDTO implements Serializable {
         @NotNull(message = "请求ID列表不能为空")
         @Size(min = 1, message = "请求ID至少有一个")
         private List<@NotBlank(message = "请求ID不能为空") String> requestIdList;
+
+        /**
+         * 单据类型
+         * ShipmentSourceTypeEnum
+         */
+        private String sourceType;
     }
 
     @Data
     @NoArgsConstructor
     public static class ReceivedDTO {
+        /**
+         * 货件id
+         */
+        @NotBlank(message = "货件id不能为空")
+        private String id;
         /**
          * 详情detailId
          */
@@ -961,5 +1125,28 @@ public class FbaShipmentDTO implements Serializable {
          * 发货单号
          */
         private String deliveryCode;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintLabelDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 货件号
+         */
+        private String fbaShipmentCode;
+        /**
+         * 打印类型
+         * FbaPageTypeEnum
+         * 字典下拉接口 http://172.16.100.11:3002/project/92/interface/api/13147  type=fbaPageType FBA标签类型,awdPageType AWD标签类型
+         */
+        private String pageType;
+        /**
+         * 打印条数
+         */
+        private Integer pageSize;
     }
 }

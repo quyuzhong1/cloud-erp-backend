@@ -351,6 +351,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.MOLD_INFO.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
+
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
     }
@@ -1018,6 +1019,22 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public MoldInfoDTO.SupplierInfoByCodeDTO getSupplierInfoByCode(String code) {
+        if (StrUtil.isBlank(code)) {
+            throw new ServiceException("模具编码不能为空");
+        }
+        MoldInfoEntity moldInfo = lambdaQuery().eq(MoldInfoEntity::getCode, code).one();
+        if (moldInfo == null) {
+            throw new ServiceException("未找到编码为【" + code + "】的模具档案");
+        }
+        return new MoldInfoDTO.SupplierInfoByCodeDTO(
+                moldInfo.getSupplierId(),
+                moldInfo.getSupplierCode(),
+                moldInfo.getSupplierName()
+        );
     }
 
 }

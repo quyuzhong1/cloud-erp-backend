@@ -24,6 +24,7 @@ import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.JasperHelperUtil;
@@ -306,6 +307,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryDTO.PagingParamDTO searchParam = new SoB2cDeliveryDTO.PagingParamDTO();
         String permissionSql = param.getPermissionSql();
         searchParam.setPermissionSql(permissionSql);
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        searchParam.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         List<SoB2cDeliveryDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = SoB2cDeliveryStatusEnum.getStatusList();
@@ -332,8 +338,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     private String getPermissionSql() {
-        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sbdid.warehouse_id");
-        String shopPermissionSql = authDataFeign.getShopPermissionSql("sbd.shop_id");
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if(dynamicDataSourceTypeEnum != null) {
+            dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSqlByDynamicDataSource("sbdid.warehouse_id",dynamicDataSource);
+        String shopPermissionSql = authDataFeign.getShopPermissionSqlByDynamicDataSource("sbd.shop_id",dynamicDataSource);
         if (CharSequenceUtil.isAllBlank(warehousePermissionSql, shopPermissionSql)) {
             return null;
         }
@@ -342,6 +353,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public PagingVO<SoB2cDeliveryDTO.ListDTO> paging(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> pagingParamDTO) {
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        pagingParamDTO.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoB2cDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
@@ -821,11 +837,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
+    public String printLogisticsBillConfirm(String printType, LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList, HttpServletResponse response){
         //打印类型
-        String printType = dto.getPrintType();
+//        String printType = dto.getPrintType();
         //明细信息
-        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = dto.getDetailList();
+//        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = dto.getDetailList();
         List<String> logisticsChannelIdList = detailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
         List<String> base64UrlList = Collections.synchronizedList(new ArrayList<>());
         //查询打印类型
@@ -841,7 +857,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         });
         detailList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
         //明细取值为拣货单
-        if(!SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(dto.getPrintType())){
+        if(!SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(printType)){
             this.allocateCargoDetail(allPrintWayBillPdfResultList);
         }
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listBySourceIds(allSoIds);
@@ -1122,9 +1138,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public String printLogisticsBillConfirmById(String id, HttpServletResponse response) {
-        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
-        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
-        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
+//        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
+//        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
+        LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new LinkedList<>();
         //发货单
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
@@ -1141,8 +1157,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         detailDTO.setSoB2cId(soB2cDeliveryEntity.getSourceId());
         detailDTO.setLogisticType(soB2cLogisticsList.get(0).getLogisticType());
         detailList.add(detailDTO);
-        dto.setDetailList(detailList);
-        return printLogisticsBillConfirm(dto,response);
+//        dto.setDetailList(detailList);
+        return printLogisticsBillConfirm(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode(),detailList,response);
     }
 
     @Override
@@ -1606,7 +1622,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         SoB2cEntity soB2cEntity = generateDeliveryAndOutStockDTO.getEntity();
         SoB2cDTO.DeliveryWithNotOutboundDTO dto = generateDeliveryAndOutStockDTO.getDto();
@@ -1750,6 +1765,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         this.removeById(id);
         //删除配送明细
         soB2cDeliveryDetailService.removeByMainIds(Collections.singletonList(id));
+    }
+
+    @Override
+    public PagingVO<String> printLogisticsBillConfirmPaging(PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response) {
+        Integer currentPage = dto.getCurrPage();
+        Integer pageSize = dto.getPageSize();
+        int totalItems = dto.getParams().getDetailList().size();
+        int totalPage = (int) Math.ceil((double) totalItems / pageSize); // 计算总页数
+        // 如果页码超出范围，返回空列表
+        if (currentPage < 1 || currentPage > totalPage) {
+            throw new ServiceException("页码超出范围");
+        }
+        // 计算起始索引和结束索引
+        int startIndex = (currentPage - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, totalItems);
+        // 使用 subList 截取对应范围的数据
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> list = dto.getParams().getDetailList().subList(startIndex, endIndex);
+        String printUrl = this.printLogisticsBillConfirm(dto.getParams().getPrintType(), new LinkedList<>(list), response);
+        return new PagingVO<>(Collections.singletonList(printUrl),totalItems,pageSize,currentPage);
     }
 
     @Override
@@ -2546,6 +2580,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        dto.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
@@ -2854,8 +2893,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<WaveListDTO.WaveDeliveryDTO> deliveryList = waveListService.listByDeliverIds(ids);
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = FeignQuery.create(SoB2cLogisticsEntity.class).in(SoB2cLogisticsEntity::getMainId, soIds).list();
         //中转仓map
-        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
-
+        List<String> warehouseIds = records.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getTransferWarehouseIds()))
+                .flatMap(req -> Arrays.stream(req.getTransferWarehouseIds().split(",")))
+                .collect(Collectors.toList());
+        Map<String, String> warehouseMap =  CollUtil.isNotEmpty(warehouseIds) ? warehouseService.listWarehouseNameByIds(warehouseIds).stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName)) : new HashMap<>();
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);

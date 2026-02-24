@@ -153,8 +153,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             return;
         }
         InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
-        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
-        inventoryUnApproveDTO.setBillId(purchaseOrderId);
+        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+        inventoryUnApproveDTO.setBillId(instockForcastEntity.getId());
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         // 更新入库预报为已删除
         instockForcastMapper.updateDeletedById(instockForcastEntity.getId());
@@ -367,6 +367,16 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             throw new ServiceException("库存交易数据不能为空");
         }
         dataList.stream().forEach(this::poChange);
+    }
+
+    @Override
+    public void fixData(List<String> ids) {
+        for (String id : ids) {
+            InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
+            inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+            inventoryUnApproveDTO.setBillId(id);
+            inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
+        }
     }
 
 

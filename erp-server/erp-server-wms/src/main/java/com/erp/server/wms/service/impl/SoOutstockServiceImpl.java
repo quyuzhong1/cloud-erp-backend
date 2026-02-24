@@ -230,7 +230,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private InventoryClosedRecordService inventoryClosedRecordService;
 
     @Resource
-    private StocktakingProfitLossService stocktakingProfitLossService;
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
@@ -2544,6 +2544,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.SO_OUTBOUND_NOT_FOUND);
         }
+
         List<String> channelIds = dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getLogisticsChannelId).collect(Collectors.toList());
         //物流供应商信息
         List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(channelIds);
@@ -2566,6 +2567,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     batchResultDTOList.add(batchResultDTO);
                     continue;
                 }
+                if(BillTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
+                    BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),soOutstock.getCode(),"只允许B2B订单更新跟踪号");
+                    batchResultDTOList.add(batchResultDTO);
+                    continue;
+                }
+                if (CollectionUtils.isNotEmpty(pagingUpdateDTO.getTrackNoList())){
+
+                    boolean hasTrackNoError = false;
+                    //跟踪号只能是数字或英文
+                    for (String trackNo : pagingUpdateDTO.getTrackNoList()) {
+                        if (!trackNo.matches("^[a-zA-Z0-9]+$")) {
+                            hasTrackNoError = true;
+                            BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),soOutstock.getCode(),"跟踪号只能是数字或英文");
+                            batchResultDTOList.add(batchResultDTO);
+                        }
+                    }
+                    if(hasTrackNoError){
+                        continue;
+                    }
+                }
+
                 LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
                 batchUpdateTrackNoDTO.setTrackNoList(pagingUpdateDTO.getTrackNoList());
                 batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
@@ -3125,6 +3147,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return soOutstockService.handleCreateB2cSoOutstock(dto);
             }
         } catch (Exception e) {
+            Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format("so_b2c_not_outbound:{}", dto.getSoId()));
+            Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
+            if (isNotOutbound){
+                throw new ServiceException(e.getMessage());
+            }
             String soB2cId = dto.getSoId();
             String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
             String paramJson = JSONUtil.toJsonStr(dto);
@@ -3156,7 +3183,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             this.submitAndApprove(id);
         }
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 
     @Override
@@ -3175,7 +3202,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> warehourseLocationList = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).distinct().collect(Collectors.toList());
             // SKU信息
             List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-            boolean closed = stocktakingProfitLossService.checkClosed(
+            boolean closed = stocktakingTaskDetailService.checkClosed(
                     Collections.singletonList(dto.getWarehouseId()),
                     warehourseLocationList,
                     Collections.singletonList(dto.getWarehouseOrgId()),
@@ -3184,7 +3211,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (closed){
                 // 已有盘盈盘亏单不提交
                 // 记录明细(事务分开)
-                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘盈盘亏单据时间停止提交",false);
+                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘点任务单据时间停止提交",false);
                 return true;
             }
         }
@@ -3205,6 +3232,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
         if(Objects.nonNull(soOutstock)
@@ -3248,7 +3276,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }
         }
-        return false;
+        return true;
     }
 
 
@@ -3321,11 +3349,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     if(Objects.isNull(deliveryTime)){
                        throw new ServiceException("发货日期不能为空");
                     }
-                    // 速卖通GMT时区转北京时区
-                    LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
-                            ZoneId.of("America/Los_Angeles"),
-                            ZoneId.of("Asia/Shanghai"));
-                    billDate = targetDeliveryTime.toLocalDate();
+                    if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(dto.getDictPlatform())){
+                        // 速卖通GMT时区转北京时区
+                        LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
+                                ZoneId.of("America/Los_Angeles"),
+                                ZoneId.of("Asia/Shanghai"));
+                        billDate = targetDeliveryTime.toLocalDate();
+                    } else {
+                        billDate = deliveryTime.toLocalDate();
+                    }
                 }
             }
         }
@@ -4002,6 +4034,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.generateB2cSoOutstock(generateB2cDTO);
         } catch (Exception e) {
             log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
+            throw new ServiceException(e.getMessage());
         }
     }
 
@@ -4738,6 +4771,36 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if(Objects.nonNull(skuVO)){
                 v.setProductName(skuVO.getSkuName());
                 v.setSkuUnit(skuVO.getUnitName());
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto) {
+        List<SoOutstockEntity> soOutstockEntityList = this.listBySoIds(Collections.singletonList(dto.getId()));
+        if(CollectionUtils.isEmpty(soOutstockEntityList)){
+            return;
+        }
+        List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(Collections.singletonList(dto.getChannelId()));
+        LogisticsChannelDTO.BaseDTO logisticsInfo = logisticsInfoList.get(0);
+        List<SoOutstockEntity> updateList = new ArrayList<>();
+        for (SoOutstockEntity soOutstock : soOutstockEntityList) {
+            soOutstock.setCarrierId(logisticsInfo.getSupplierId());
+            soOutstock.setTrackNo(dto.getTransportNo());
+            soOutstock.setLogisticsChannelId(dto.getChannelId());
+            soOutstock.setLogisticsChannelName(logisticsInfo.getName());
+            updateList.add(soOutstock);
+        }
+
+        if(CollectionUtils.isNotEmpty(updateList)){
+            boolean update = this.updateBatchById(updateList);
+            //只批量同步更新审核通过的销售出库单
+            updateList = updateList.stream().filter(v -> v.getApproveStatus().getCode().equalsIgnoreCase(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            if(update && CollectionUtils.isNotEmpty(updateList)){
+                //推送金蝶同步任务
+                sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
     }

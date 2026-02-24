@@ -93,10 +93,21 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
                 .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
                 .list();
 
+        List<String> changeOrderPlatformCodeList = changeIds.stream()
+        		.map(dmpSoLogisticsEntityMap::get).filter(c -> c != null && DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(c.getPlatformType()))
+        		.map(DmpSoLogisticsEntity::getOrderPlatformCode)
+        		.collect(Collectors.toList());
+        Map<String, LocalDateTime> aliexpressOrderTimeMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(changeOrderPlatformCodeList)) {
+        	aliexpressOrderTimeMap = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, changeOrderPlatformCodeList)
+        		.isNotNull(DmpSoOutstockDetailEntity::getEstimateInvestmentTime).list()
+        		.stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getThirdOrderCode, DmpSoOutstockDetailEntity::getEstimateInvestmentTime , (d1 , d2) -> d1));
+        }
+        
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoLogisticsEntityMap.get(changId), dmpSoLogisticsDetailEntityMap.get(changId), dictList, cfgOutputId);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoLogisticsEntityMap.get(changId), dmpSoLogisticsDetailEntityMap.get(changId), dictList, cfgOutputId , aliexpressOrderTimeMap);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -106,7 +117,8 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoLogisticsEntity dmpSoLogisticsEntity , List<DmpSoLogisticsDetailEntity> dmpSoLogisticsDetailEntityList , List<DictBasicEntity> dictList, String cfgOutputId){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoLogisticsEntity dmpSoLogisticsEntity , List<DmpSoLogisticsDetailEntity> dmpSoLogisticsDetailEntityList , List<DictBasicEntity> dictList
+    		, String cfgOutputId , Map<String, LocalDateTime> aliexpressOrderTimeMap){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpSoLogisticsEntity != null && CollUtil.isNotEmpty(dmpSoLogisticsDetailEntityList)) {
     		if(validateDataBlack(dmpSoLogisticsEntity, cfgOutputId)) {
@@ -146,8 +158,6 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     	        
     	        shudiyunB2cOrderDTO.setStatus(dmpSoLogisticsDetailEntity.getDataStatus());
 
-    	        shudiyunB2cOrderDTO.setLogistics_delivery_time(signTimeFormat);
-
     	        shudiyunB2cOrderDTO.setDelivery_number(dmpSoLogisticsEntity.getOutstockCode());
 
     	        shudiyunB2cOrderDTO.setLogistic_company_code(dmpSoLogisticsEntity.getLogisticCompanyCode());
@@ -171,6 +181,16 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
                         shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
                         shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                     }
+                }
+                if(DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platformType)) {
+                	LocalDateTime estimateInvestmentTime = aliexpressOrderTimeMap.get(dmpSoLogisticsEntity.getOrderPlatformCode());
+                	if(estimateInvestmentTime != null) {
+                		shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(estimateInvestmentTime));
+                	}
+                	shudiyunB2cOrderDTO.setSigned_mode("平台签收");
+                }else {
+                	shudiyunB2cOrderDTO.setLogistics_delivery_time(signTimeFormat);
+                	shudiyunB2cOrderDTO.setSigned_mode("物流签收");
                 }
 
                 shudiyunB2cOrderDTO.setParent_node_no(dmpSoLogisticsEntity.getOutstockCode());

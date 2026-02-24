@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import cn.hutool.core.lang.Tuple;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformAwdShipmentReceiveDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -13,7 +14,9 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.entity.FbaShipmentExtendEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
@@ -101,21 +104,24 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
 
     /**
      * 下推发货单保存
+     *
+     * @param list
+     * @param sourceType
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/10/31 14:35
-     * @param list
-     * @return java.lang.Boolean
      **/
-    Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list);
+    Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list, String sourceType);
 
     /**
      * 下推发货单保存并提交
      * @Author Luo_WG
      * @Date 2023/11/6 14:35
      * @param list
+     * @param sourceType
      * @return java.lang.Boolean
      **/
-    Boolean generateDeliverSaveAndSubmit(List<FbaShipmentDTO.GenerateDeliverView> list);
+    Boolean generateDeliverSaveAndSubmit(List<FbaShipmentDTO.GenerateDeliverView> list, String sourceType);
 
     /**
      * sku映射
@@ -285,4 +291,60 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return
      */
     List<BatchResultDTO> changeReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList);
+
+    /**
+     * 打印标签
+     * @param dto
+     * @return
+     */
+    WmsAttachmentDTO.UpdateDTO printLabel(FbaShipmentDTO.PrintLabelDTO dto);
+
+    /**
+     * 异步打印标签
+     * @param sourceCode 要货申请编码
+     * @param shipmentCode FBA货件编码
+     * @return
+     */
+    void asyncPrintLabel(String sourceCode, String shipmentCode);
+
+    /**
+     * 校验并创建
+     * @param entity
+     * @param extendEntity
+     * @param listingInfoWithSkuMappingDTOMap
+     * @param hasChildrenSkuIds
+     * @param platformAwdShipmentReceiveDTOS
+     */
+    void awdCheckAndSaveAll(FbaShipmentEntity entity, FbaShipmentExtendEntity extendEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, List<String> hasChildrenSkuIds, List<PlatformAwdShipmentReceiveDTO> platformAwdShipmentReceiveDTOS);
+
+    /**
+     * 更新
+     * @param oldEntity
+     * @param entity
+     * @param extendEntity
+     * @param listingInfoWithSkuMappingDTOMap
+     * @param hasChildrenSkuIds
+     * @param platformAwdShipmentReceiveDTOS
+     */
+    void awdCheckAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, FbaShipmentExtendEntity extendEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, List<String> hasChildrenSkuIds, List<PlatformAwdShipmentReceiveDTO> platformAwdShipmentReceiveDTOS);
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<FbaShipmentDTO.AwdListDTO> awdPaging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    FbaShipmentDTO.ViewAwdDTO awdView(String id);
+
+    void awdExport(FbaShipmentDTO.PagingParamDTO dto);
+
+    List<FbaShipmentDTO.AwdListDTO> viewAwdList(FbaShipmentDTO.ViewListReqDTO dto);
+
+    BatchResultDTO manualAwdReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList, FbaShipmentEntity entity);
 }

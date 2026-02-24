@@ -501,7 +501,7 @@ public class SoMultiChannelDTO implements Serializable {
         /**
          * 州/省
          */
-        @NotBlank(message = "州/省不能为空")
+//        @NotBlank(message = "州/省不能为空")
 //        @Size(max = 100,message = "州/省最大长度不能超过100位")
         private String provinceName;
 
@@ -770,7 +770,7 @@ public class SoMultiChannelDTO implements Serializable {
         /**
          * 州/省
          */
-        @NotBlank(message = "州/省不能为空")
+//        @NotBlank(message = "州/省不能为空")
 //        @Size(max = 100,message = "州/省最大长度不能超过100位")
         private String provinceName;
 

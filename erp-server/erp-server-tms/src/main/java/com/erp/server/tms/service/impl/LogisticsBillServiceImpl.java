@@ -13,7 +13,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -38,11 +37,10 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cLabelSourceTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.tms.dto.*;
@@ -256,8 +254,22 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         if(CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())){
-            List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
-            logisticsBillEntity.setBusinessCode(CollectionUtils.isNotEmpty(businessDTOList) ? businessDTOList.get(0).getBusinessCode() : "");
+
+            if (CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.FIRST_MILE.getCode())) {
+                List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
+                if (CollUtil.isNotEmpty(businessDTOList)) {
+                    FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.get(0);
+                    logisticsBillEntity.setBusinessCode(businessDTO.getBusinessCode());
+                    logisticsBillEntity.setSoDeliveryId(businessDTO.getId());
+                    logisticsBillEntity.setSoDeliveryCode(businessDTO.getCode());
+                }
+            } else  {
+                SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
+                if (ObjectUtil.isNotEmpty(soOutstockEntity) && Arrays.asList(SourceTypeEnum.SO_B2C_DELIVERY.getCode(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()).contains(soOutstockEntity.getSourceType())) {
+                    logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
+                    logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
+                }
+            }
         }
         if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getChannelId()) && CharSequenceUtil.isBlank(logisticsBillEntity.getChannelName())){
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
@@ -1253,6 +1265,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 String shipmentId = String.valueOf(jsonObject.getLong("shipmentId"));
                 getLabelVO.setDeliveryNo(shipmentId);
             }
+        }else if (logisticsPlatform.equals(LogisticsPlatformEnum.WILDBERRIES.getCode())){
+            if (Objects.nonNull(soB2cEntity)){
+                getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
+            }
         }
 
         // 设置物流跟踪信息
@@ -1601,5 +1617,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             });
             logisticsTrackService.saveOrUpdateBatch(addTrackList);
         }
+    }
+
+    @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData( List<String> platformCodeList, List<String> soCodeList, List<String> soDeliveryCodeList, List<String> trackNoList) {
+        return baseMapper.listLogisticsBillVoByData(platformCodeList,soCodeList,soDeliveryCodeList,trackNoList);
     }
 }

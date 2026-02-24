@@ -5,6 +5,8 @@ import com.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +108,11 @@ public class ProductSkuExcelDTO extends PermissionsDTO {
      * 研发团队
      */
     private List<String> rdtTeamList;
+
+    /**
+     * BU线
+     */
+    private List<String> buIdList;
 
     /**
      * 产品 经理
@@ -214,4 +221,31 @@ public class ProductSkuExcelDTO extends PermissionsDTO {
      * sqlMap 默认key default
      */
     private Map<String, String> sqlMap;
+
+    /**
+     * 选中导出字段
+     */
+    @Valid
+    private List<ExportField> fieldList;
+
+
+    /**
+     * 导出字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段
+         */
+        @NotBlank(message = "导出字段编码不能为空")
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        @NotBlank(message = "导出字段名称不能为空")
+        private String fieldName;
+    }
 }

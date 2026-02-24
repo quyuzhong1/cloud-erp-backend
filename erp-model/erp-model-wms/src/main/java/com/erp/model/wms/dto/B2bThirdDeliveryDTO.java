@@ -5,7 +5,10 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.AttachDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
+import io.seata.common.util.StringUtils;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +16,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -111,16 +115,9 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String virtualWarehouseId;
 
         /**
-        * 仓库操作类型
-         * WarehouseOperationTypeEnum
-        */
-        private String warehouseOperationType;
-        private String warehouseOperationTypeName;
-
-        /**
-        * 仓库操作描述
-        */
-        private String operationDesc;
+         * 仓库操作类型
+         */
+        private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
 
         /**
         * 备注
@@ -189,7 +186,15 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 详细地址
          */
         private String receiveAddress;
+        /**
+         * 地址2
+         */
+        private String address2;
 
+        /**
+         * 地址3
+         */
+        private String address3;
         /**
         * 是否API发货
         */
@@ -312,20 +317,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 
         private String virtualWarehouseId;
 
-        /**
-        * 仓库操作类型
-        */
-        @NotBlank(message = "仓库操作类型不能为空")
-        @Size(max = 50,message = "仓库操作类型最大长度不能超过50位")
-        private String warehouseOperationType;
-
-        /**
-        * 仓库操作描述
-        */
-        @NotBlank(message = "仓库操作描述不能为空")
-        @Size(max = 255,message = "仓库操作描述最大长度不能超过255位")
-        private String operationDesc;
-
+        private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
         /**
         * 备注
         */
@@ -402,6 +394,15 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 详细地址
          */
         private String receiveAddress;
+        /**
+         * 地址2
+         */
+        private String address2;
+
+        /**
+         * 地址3
+         */
+        private String address3;
         private String customerId;
         private String customerName;
 
@@ -605,6 +606,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -632,7 +637,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewQueryDTO {
+    public static class ViewQueryDTO extends BaseIdDTO {
         /**
          * 订单id
          */
@@ -645,5 +650,37 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 销售订单明细id
          */
         private List<String> soDetailIds;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WarehouseOperationTypeDTO {
+
+        private String warehouseOperationType;
+
+        private String warehouseOperationTypeName;
+
+        private String operationDesc;
+
+        public static WarehouseOperationTypeDTO getDefault(){
+            return new WarehouseOperationTypeDTO(WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getCode(),WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getName(),"");
+        }
+
+        public static List<WarehouseOperationTypeDTO> convert(String warehouseOperationType,String operationDesc){
+            if(StringUtils.isBlank(warehouseOperationType)){
+                return new ArrayList<>();
+            }
+            List<String> splitWarehouseOperationType =  Arrays.asList(warehouseOperationType.split(","));
+            List<String> splitOperationDesc =  Arrays.asList(operationDesc.split(","));
+            List<WarehouseOperationTypeDTO> list = new ArrayList<>();
+            for (int i = 0; i < splitWarehouseOperationType.size(); i++) {
+                String type = splitWarehouseOperationType.get(i);
+                String name = WarehouseOperationTypeEnum.getName(type);
+                String desc = splitOperationDesc.size()<= i ? "" : splitOperationDesc.get(i);
+                list.add(new WarehouseOperationTypeDTO(type,name,desc));
+            }
+            return list;
+        }
     }
 }

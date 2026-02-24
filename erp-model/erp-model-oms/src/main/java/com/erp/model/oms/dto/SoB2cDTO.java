@@ -308,6 +308,11 @@ public class SoB2cDTO implements Serializable {
          * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
          */
         private Integer onlyQueryId;
+        
+        /**
+         * 需要二次查询pg库
+         */
+        private Boolean secondQuery;
     }
 
     @Data
@@ -1183,7 +1188,10 @@ public class SoB2cDTO implements Serializable {
          */
         private List<SoB2cDetailEntity> soB2cDetailList;
 
-
+        /**
+         * 店铺费率配置
+         */
+        private Map<String , DictBasicEntity> shopCostMap;
     }
 
     /**
@@ -1449,6 +1457,44 @@ public class SoB2cDTO implements Serializable {
         private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
+    @Data
+    public static class ListCountDto{
+    	/**
+         * 单据状态
+         */
+        private String billStatus;
+        
+        /**
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
+        
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+        
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        
+        /**
+         * 付款状态
+         */
+        private String payStatus;
+        
+        /**
+         * 订单异常的标示
+         */
+        private String signOrderError;
+        
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+    
     @Data
     @Builder
     @NoArgsConstructor
@@ -3519,6 +3565,14 @@ public class SoB2cDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        private OperateLogDTO.AddModuleOperateLogDTO operateLogDTO;
+
+        public RemarkDTO(String soB2cId, String remark) {
+            this.id = soB2cId;
+            this.remark = remark;
+
+        }
     }
 
     /**
@@ -4019,5 +4073,49 @@ public class SoB2cDTO implements Serializable {
          */
         @Size(message = "备注长度不能超过200", max = 200)
         private String remark;
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class B2cByPlatformOutboundDTO{
+        private String soB2cId;
+
+        private LocalDate soOutstockDate;
+
+        private String warehouseId;
+
+        private String warehouseName;
+
+        /**
+         * 库存组织id
+         */
+        private String warehouseOrgId;
+        /**
+         * 库存组织名称
+         */
+        private String warehouseOrgName;
+
+        private String virtualWarehouseId;
+
+        private String billStatus;
+
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 是否记录日志
+         */
+        private boolean addOperationLog = false ;
+
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
     }
 }

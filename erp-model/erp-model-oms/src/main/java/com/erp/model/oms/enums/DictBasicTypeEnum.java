@@ -31,6 +31,10 @@ public enum DictBasicTypeEnum {
     TRADE_TERM("tradeTerm",  "贸易条款"),
     INVOICE_TAX_NFE_ORIGIN("invoiceTaxNfeOrigin",  "发票税务信息Nfe原产地"),
 
+    DICT_COMPANY_TYPE("companyType", "公司类型"),
+
+    TAX_TYPE("taxType", "发票设置税务类型"),
+
     CFG_SETTING("cfgSetting", "系统配置"),
     ORDER_SOURCE_TYPE("orderSourceType", "订单来源类型"),
     MINI_PROGRAM_SALES_PLATFORM_INTERNAL("miniProgramSalesPlatform" , "微信小程序国内销售平台"),

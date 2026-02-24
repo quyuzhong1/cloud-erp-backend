@@ -153,11 +153,11 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         param.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
         param.setIds(deliveryIds);
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillDTOList = soB2cDeliveryService.printLogisticsWaybillPreview(param);
-        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> printDetailDTOList = printLogisticsWaybillDTOList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDTO::getDetailList).flatMap(Collection::stream).collect(Collectors.toList());
-        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
-        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
-        dto.setDetailList(printDetailDTOList);
-        return soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
+        LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> printDetailDTOList = printLogisticsWaybillDTOList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDTO::getDetailList).flatMap(Collection::stream).collect(Collectors.toCollection(LinkedList::new));
+//        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
+//        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
+//        dto.setDetailList(printDetailDTOList);
+        return soB2cDeliveryService.printLogisticsBillConfirm(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode(),printDetailDTOList,response);
     }
 
     @Override

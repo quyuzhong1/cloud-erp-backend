@@ -1,12 +1,13 @@
 package com.erp.server.fms.service;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.fms.entity.AssetAcceptEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -137,7 +138,7 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     * @param id
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
 
     /**
@@ -229,4 +230,13 @@ public interface AssetAcceptService extends SuperService<AssetAcceptEntity> {
     Map<String, Object> getVariablesMap(AssetAcceptEntity entity);
 
     List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> getAcceptByPurchaseOrderId(String id);
+    /**
+     * 更新主表金蝶id
+     * @author will
+     * @date 2025/12/30 16:37
+     * @param businessId
+     * @param syncKingdeeId
+     * @return void
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 }

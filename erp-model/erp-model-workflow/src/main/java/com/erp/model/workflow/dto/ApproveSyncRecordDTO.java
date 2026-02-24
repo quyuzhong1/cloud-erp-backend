@@ -205,6 +205,9 @@ public class ApproveSyncRecordDTO implements Serializable {
         //业务主表实体类全路径
         @NotBlank(message = "classPath不能为空")
         private String classPath;
+        //业务主表实体类全路径
+        @NotNull(message = "isSend不能为空")
+        private Boolean isSend = false;
 
     }
 

@@ -108,4 +108,15 @@ public class SysUserDTO implements Serializable {
          */
         private String authType;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class RoleDTO {
+        //用户id
+        private String userId;
+        //角色Id
+        private String roleId;
+        private String roleName;
+    }
 }

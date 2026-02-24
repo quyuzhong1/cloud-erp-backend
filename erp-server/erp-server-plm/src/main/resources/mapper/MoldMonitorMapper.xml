@@ -91,10 +91,10 @@ mm.remark AS remark
 
     <select id="tabList" resultType="com.erp.model.plm.dto.MoldMonitorDTO$TabListDTO">
         SELECT
-        <if test="params != null and params.sourceType == 'cfgMoldReturnAlertrRule'">
+        <if test="params != null and params.sourceType == 'cfgMoldReturnAlertRule'">
             mm.return_status
         </if>
-        <if test="params != null and params.sourceType == 'cfgMoldAlertrRule'">
+        <if test="params != null and params.sourceType == 'cfgMoldAlertRule'">
             mm.life_status
         </if>
         AS tabFlag,
@@ -109,10 +109,10 @@ mm.remark AS remark
         </if>
         <if test="params != null">
             <choose>
-                <when test="params.sourceType == 'cfgMoldReturnAlertrRule'">
+                <when test="params.sourceType == 'cfgMoldReturnAlertRule'">
                     GROUP BY mm.return_status
                 </when>
-                <when test="params.sourceType == 'cfgMoldAlertrRule'">
+                <when test="params.sourceType == 'cfgMoldAlertRule'">
                     GROUP BY mm.life_status
                 </when>
             </choose>

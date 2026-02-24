@@ -1,17 +1,31 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.MultiErrorExcelData;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -20,6 +34,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -30,6 +45,7 @@ import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -39,51 +55,34 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.oms.listener.KolB2cApplicationAddressExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationDetailExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationExcelListener;
+import com.erp.server.oms.mapper.KolB2cApplicationMapper;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.server.oms.mapper.KolB2cApplicationMapper;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
 
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_B2C_APPLICATION;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_B2C_APPLICATION;
 
 /**
  * <p>
@@ -139,7 +138,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Resource
     private SyncWangDianSoB2cService syncWangDianSoB2cService;
     @Resource
-    private OrderCategoryService orderCategoryService;
+    private OrderCategoryDetailService orderCategoryDetailService;
     @Resource
     private DmpMqFeign dmpMqFeign;
 
@@ -375,6 +374,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
+        }
+        if(old.getInvalidStatus()){
+            throw new ServiceException(ApiError.BILL_VOID_EDIT_FORBIDDEN);
         }
         handleUpdateData(addOrUpdateDTO);
 
@@ -726,6 +728,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException("只有待提交数据支持删除");
         }
+        if (entity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
+        }
 
         //删除明细
         kolB2cApplicationDetailService.lambdaUpdate()
@@ -788,7 +793,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
@@ -807,6 +813,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -907,7 +914,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String,String> resultMap = new HashMap<>();
 
         String orderCategoryId ="";
-        List<OrderCategoryEntity> orderCategoryEntityList = orderCategoryService.lambdaQuery().eq(OrderCategoryEntity::getGroupName, "网红财务审核").list();
+        List<OrderCategoryDetailEntity> orderCategoryEntityList = orderCategoryDetailService.lambdaQuery().eq(OrderCategoryDetailEntity::getName, "网红财务审核").list();
         if(CollUtil.isNotEmpty(orderCategoryEntityList)){
             orderCategoryId = orderCategoryEntityList.get(0).getId();
         }
@@ -954,10 +961,11 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             receiverDTO.setProvinceName(kolB2cApplicationAddressEntity.getProvince());
             receiverDTO.setCityName(kolB2cApplicationAddressEntity.getCity());
             receiverDTO.setDistrictName(kolB2cApplicationAddressEntity.getDistrict());
-            receiverDTO.setFullAddress(kolB2cApplicationAddressEntity.getDetailAddress());
+            receiverDTO.setFirstAddress(kolB2cApplicationAddressEntity.getDetailAddress());
             receiverDTO.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
             receiverDTO.setReceiverTelNumber(kolB2cApplicationAddressEntity.getReceiverPhone());
             receiverDTO.setPostCode(kolB2cApplicationAddressEntity.getZipCode());
+            receiverDTO.setReceiverTaxNo(kolB2cApplicationAddressEntity.getReceiverTaxNo());
             b2cDto.setReceiverDTO(receiverDTO);
 
             //------------根据生成拆分单明细，以及生成B2C明细------------

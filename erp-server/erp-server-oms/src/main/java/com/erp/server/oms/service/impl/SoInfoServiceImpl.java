@@ -682,13 +682,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public SoInfoDTO.ViewDTO view(String id) {
-        SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
-
-        BeanMapper.copy(soInfo, view);
+        SoInfoDTO.ViewDTO view = SoInfoConverter.INSTANCE.entityToViewDTO(soInfo);
         String customerId = soInfo.getCustomerId();
         String customerName = "";
         if (StringUtils.isNotBlank(customerId)) {
@@ -3868,6 +3866,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setCurrency(dto.getCurrency());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
@@ -3931,7 +3931,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
             addDTO.setShippingFee(dto.getShippingFee());
             addDTO.setIsCollectShippingFee(dto.getIsCollectShippingFee());
-            addDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            if(StringUtils.isBlank(addDTO.getPlatformOrderCode())){
+                addDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            }
             addDTO.setThirdCode(dto.getThirdCode());
             addDTO.setCustomerOrderNo(dto.getCustomerOrderNo());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -3948,11 +3950,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
                 detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
                 detailDTO.setCurrency(dto.getCurrency());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
@@ -4214,6 +4218,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         paramDTO.setIsExpire(Boolean.FALSE);
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         B2bThirdDeliveryDTO.ViewDTO viewDTO = SoInfoConverter.INSTANCE.toB2bThirdDeliveryViewDTO(soInfoEntity,soDetailEntityList);
+        List<B2bThirdDeliveryDTO.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = Arrays.asList(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO.getDefault());
+        viewDTO.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         if (CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseName())){
             viewDTO.setDeliveryWarehouseName(updateDTOList.get(0).getName());
         }
@@ -4222,8 +4228,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewDTO.setCustomerName(Objects.nonNull(customerInfo) ? customerInfo.getName() : "");
         }
         if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(viewDTO.getReceiveAddress())){
-            CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+            CustomerAddressDTO.ViewDTO customerAddressEntity = customerAddressService.getCustomerAddressById(soInfoEntity.getReceiveAddressId());
             viewDTO.setReceiveAddress(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress() : "");
+            viewDTO.setAddress2(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress2() : "");
+            viewDTO.setAddress3(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress3() : "");
             viewDTO.setCountryId(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryId() : "");
             viewDTO.setCountryName(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryName() : "");
         }
@@ -4243,6 +4251,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 e.setWarehousePlatformSku(p.getPlatformSkuNo());
             });
         });
+        viewDTO.setRemark("Customer PO: " + soInfoEntity.getCustomerOrderNo());
         return viewDTO;
     }
 

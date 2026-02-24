@@ -108,6 +108,7 @@ public class WdtSoB2bDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
             try {
                 boolean locked = lock.tryLock(10, TimeUnit.SECONDS);
                 if (locked) {
+                    log.warn("推送旺店通B2B发货单开始:{}", request.getThirdCode());
                     StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
                     SalesStockoutRequest salesStockoutRequest = new SalesStockoutRequest();
                     salesStockoutRequest.setSrcOrderNo(request.getThirdCode());
@@ -119,7 +120,7 @@ public class WdtSoB2bDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
                     if(CollectionUtils.isEmpty(sales.getOrderList())){
                         return ApiResult.error(0, "未找到对应的旺店通销售订单");
                     }
-                    String outCode = sales.getOrderList().get(0).getOrderNo();
+                    String outCode = sales.getOrderList().get(sales.getOrderList().size()-1).getOrderNo();
 
                     Map<String, Object> weightingReq = new HashMap<>();
                     weightingReq.put("order_no", outCode);

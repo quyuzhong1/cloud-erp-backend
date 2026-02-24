@@ -59,4 +59,12 @@ public interface VirtualInventoryDetailHisService extends SuperService<VirtualIn
      * @param oldTransFlowEntity
      */
      void addVirtualInventoryDetailHis (VirtualTransFlowEntity oldTransFlowEntity);
+
+    /**
+     * 历史库存任务保存
+     * @author will
+     * @date 2024/12/9 19:23
+     */
+    void hisVirtualInventoryDetailJob(LocalDate date);
+
 }

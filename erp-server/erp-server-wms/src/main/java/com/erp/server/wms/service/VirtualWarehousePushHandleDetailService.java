@@ -1,10 +1,13 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -33,7 +36,66 @@ public interface VirtualWarehousePushHandleDetailService extends SuperService<Vi
     * @return
     */
     Boolean update(VirtualWarehousePushHandleDetailDTO.UpdateDTO dto);
-
-
-    void handleDetail(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
+    /**
+     * 设置
+     * @author will
+     * @date 2026/1/8 10:42
+     * @param syncStatus
+     * @param ids
+     * @return void
+     */
+    void updateSyncStatus(String syncStatus, List<String> ids);
+    /**
+     * 更新三方信息
+     * @author will
+     * @date 2026/1/8 10:50
+     * @param dto
+     * @param handelDetailId
+     * @return void
+     */
+    void updateThirdData(VirtualWarehouseAllocationDTO.SyncUpdateDto dto, String handelDetailId);
+    /**
+     * 查询三方数据
+     * @author will
+     * @date 2026/1/8 11:46
+     * @param detailIdList
+     * @return List<ThirdDataDTO>
+     */
+    List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> listThirdDataByDetailIdList(List<String> detailIdList);
+    /**
+     * 手动完结
+     * @author will
+     * @date 2026/1/16 11:28
+     * @param dto
+     * @param code
+     * @param hanleDetailIdList
+     * @return void
+     */
+    void batchManualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto, String code, List<String> hanleDetailIdList);
+    /**
+     * 新增分货单推送明细
+     * @author will
+     * @date 2026/1/27 15:22
+     * @param allocationEntity
+     * @param pushHandleEntity
+     * @return void
+     */
+    List<VirtualWarehousePushHandleDetailEntity> addAllocationDetailPush(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
+    /**
+     * 取消分货推送明细
+     * @author will
+     * @date 2026/1/27 15:43
+     * @param allocationEntity
+     * @param pushHandleEntity
+     * @return List<VirtualWarehousePushHandleDetailEntity>
+     */
+    List<VirtualWarehousePushHandleDetailEntity> cancelAllocationDetailPush(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2026/1/27 18:28
+     * @param sourceId
+     * @return List<VirtualWarehousePushHandleDetailEntity>
+     */
+    List<VirtualWarehousePushHandleDetailEntity> listBySourceId(String sourceId);
 }

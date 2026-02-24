@@ -354,4 +354,36 @@ public class FastDFSClientUtil {
 			throw new RuntimeException(e);
 		}
 	}
+
+	/**
+	 * 批量获取文件大小
+	 * @param fileUrlList 文件URL列表
+	 * @return Map，key为文件URL，value为文件大小（字节），如果文件不存在或获取失败，value为null
+	 */
+	public static Map<String, Long> getBatchFileSize(List<String> fileUrlList) {
+		Map<String, Long> result = new HashMap<>();
+		if (CollectionUtils.isEmpty(fileUrlList)) {
+			return result;
+		}
+		
+		for (String fileUrl : fileUrlList) {
+			if (StringUtils.isBlank(fileUrl)) {
+				continue;
+			}
+			try {
+				FileInfo fileInfo = getStorageClient().query_file_info1(fileUrl);
+				if (fileInfo != null) {
+					// FileInfo对象包含文件大小信息，通过getFileSize()方法获取
+					long fileSize = fileInfo.getFileSize();
+					result.put(fileUrl, fileSize);
+				} else {
+					result.put(fileUrl, null);
+				}
+			} catch (Exception e) {
+				log.warn("获取文件大小失败，url={}, 错误信息={}", fileUrl, e.getMessage());
+				result.put(fileUrl, null);
+			}
+		}
+		return result;
+	}
 }

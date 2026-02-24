@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.entity.InstockForcastEntity;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -74,4 +75,5 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      */
     void poChangeBatch(List<InstockForcastDTO.PoChangeDTO> dataList);
 
+    void fixData(List<String> ids);
 }

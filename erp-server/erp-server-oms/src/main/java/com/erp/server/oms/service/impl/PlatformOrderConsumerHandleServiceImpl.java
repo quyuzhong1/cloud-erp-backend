@@ -187,6 +187,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 取消订单不走规则
         if ( (!mainEntity.hasPlatformWarehouseOrder()
                 && !mainEntity.getIsCancel()
+                && (Objects.isNull(mainEntity.getIsFrozen()) || !mainEntity.getIsFrozen())
                 && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())) || Boolean.TRUE.equals(retryFlag)
         ) {
             // 已审核过的订单不走规则
@@ -199,7 +200,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cHandler.handleRule(mainEntity);
             }
         }
-        SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+        if(!SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(mainEntity.getSignOrderError())){
+            SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+        }
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
@@ -335,6 +338,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> countryIds;
         if (Objects.nonNull(dto.getReceiver())){
             countryIds = Stream.of(shopInfo.getDictCountryCode(), dto.getReceiver().getCountry()).distinct().collect(Collectors.toList());
+            if(StringUtils.isBlank(dto.getReceiver().getCountry()) && PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform())){
+                dto.getReceiver().setCountry(shopInfo.getDictCountryCode());
+            }
         }else {
             countryIds = Stream.of(shopInfo.getDictCountryCode()).collect(Collectors.toList());
         }

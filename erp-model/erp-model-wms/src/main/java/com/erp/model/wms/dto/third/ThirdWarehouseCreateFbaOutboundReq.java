@@ -1,9 +1,14 @@
 package com.erp.model.wms.dto.third;
 
 import com.common.business.dto.ReceiverDTO;
+import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
+import io.seata.common.util.StringUtils;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -165,24 +170,48 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          */
         private String boxSpecNo;
     }
-    /**
-     * 指令信息
-     */
-    /**
-     * 仓库操作类型
-     * WarehouseOperationTypeEnum
-     * 操作指令类型，取发货通知仓库操作类型
-     * NO_OPEN_RELABLE：不开箱换SKU标
-     * OPEN_RELABLE：开箱换SKU标
-     * PASTE_LABEL：贴板标
-     * PASTE_PACKAGE：贴箱唛
-     * OTHER：其他
-     */
-    private String warehouseOperationType;
-    /**
-     * 仓库操作描述
-     * 指令描述，例如需开箱换标，请填写：开箱换标，更换标签为：xx
-     * 取发货通知仓库操作描述
-     */
-    private String operationDesc;
+
+    private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WarehouseOperationTypeDTO {
+        /**
+         * 指令信息
+         */
+        /**
+         * 仓库操作类型
+         * WarehouseOperationTypeEnum
+         * 操作指令类型，取发货通知仓库操作类型
+         * NO_OPEN_RELABLE：不开箱换SKU标
+         * OPEN_RELABLE：开箱换SKU标
+         * PASTE_LABEL：贴板标
+         * PASTE_PACKAGE：贴箱唛
+         * OTHER：其他
+         */
+        private String warehouseOperationType;
+        /**
+         * 仓库操作描述
+         * 指令描述，例如需开箱换标，请填写：开箱换标，更换标签为：xx
+         * 取发货通知仓库操作描述
+         */
+        private String operationDesc;
+
+        public static List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> convert(String warehouseOperationType, String operationDesc){
+            if(StringUtils.isBlank(warehouseOperationType)){
+                return new ArrayList<>();
+            }
+            List<String> splitWarehouseOperationType =  Arrays.asList(warehouseOperationType.split(","));
+            List<String> splitOperationDesc =  Arrays.asList(operationDesc.split(","));
+            List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> list = new ArrayList<>();
+            for (int i = 0; i < splitWarehouseOperationType.size(); i++) {
+                String type = splitWarehouseOperationType.get(i);
+                String desc = splitOperationDesc.size()<= i ? "" : splitOperationDesc.get(i);
+                list.add(new ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO(type,desc));
+            }
+            return list;
+        }
+    }
 }

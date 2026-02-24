@@ -29,6 +29,7 @@ public enum FieldFormatPatternTypeEnum  {
     ENUM__DATETIME_("date_time_", "时间（横杠）","\\d{4}-([1-9]|0[1-9]|1[012])-([1-9]|0[1-9]|[12][0-9]|3[01] [0-9]{2}:[0-9]{2}:[0-9]{2})"),
     ENUM_YEAR_MONTH("year_month", "年-月","^\\d{4}-((0([1-9]))|(1(0|1|2)))$"),
     ENUM_MOBILE("mobile", "手机","^1\\d{10}$"),
+    ENUM_NUMBER_SPECIAL_CHARS("number_special_chars", "数字,空格，空字符及特殊字符(+,-,括号)", "^[0-9\\s()+\\-]+$"),
     ENUM_TELEPHONE("telephone", "电话","0\\d{2,3}-\\d{7,8}"),
     ENUM_QQ("QQ", "QQ","[1-9][0-9]{4,}"),
     ENUM_MAILBOX("mailbox", "邮箱","^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]{1,253}\\.[a-zA-Z]{2,63}$"),
@@ -41,7 +42,6 @@ public enum FieldFormatPatternTypeEnum  {
     ENUM_YEAR_DAYS("year_days", "365天","^([1-9]|([1-9][0-9])|([1-2][0-9][0-9])|([3][0-6][0-5])|([0]{1}))$"),
     ENUM_NUMBER_99("number_99", "0-99（保留两位小数）","^([1-9]|([1-9]{1}[0-9]{1}))(\\.(\\d){0,2})?$"),
     ENUM_NAME("name", "名称","^[a-zA-Z0-9\\u4e00-\\u9fa5]+$");
-
 
     public static final String BANK_CARD_NO = "bankCardNo";
     public static final String URL = "url";
@@ -64,6 +64,7 @@ public enum FieldFormatPatternTypeEnum  {
     public static final String DATETIME_ = "date_time_";
     public static final String YEARMONTH = "year_month";
     public static final String MOBILE = "mobile";
+    public static final String NUMBER_SPECIAL_CHARS = "number_special_chars";
     public static final String TELEPHONE = "telephone";
     public static final String QQ = "QQ";
     public static final String MAILBOX = "mailbox";

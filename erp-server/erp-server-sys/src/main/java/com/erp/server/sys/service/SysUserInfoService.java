@@ -8,6 +8,7 @@ import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
@@ -15,6 +16,7 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +76,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     List<UserDTO> findList(SysSearchUserDTO dto);
 
-    PagingVO<UserManageDTO> paging(PagingDTO<SysUserPagingSearchDTO> dto);
+    PagingVO<UserManageDTO> paging(PagingDTO<SysUserInfoDTO.PagingParamDTO> dto);
 
     void bindingThirdParty(SysUserThirdDTO dto);
 
@@ -310,5 +312,11 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return 用户UnionId
      */
     String getFsUserUnionIdByAppId(String appId, FindThirdUserDTO dto);
+
+    List<SysUserInfoDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    void exportList(SysUserInfoDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    void batchRefUserIdByType(SysUserInfoDTO.RefParamseDTO refParamseDTO);
 }
 

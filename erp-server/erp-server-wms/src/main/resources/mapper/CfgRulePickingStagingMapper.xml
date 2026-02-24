@@ -25,7 +25,7 @@
                       FROM cfg_rule_picking_staging where is_deleted = false
                       ORDER BY 1, 2',
                      'SELECT DISTINCT bill_type FROM cfg_rule_picking_staging ORDER BY 1'
-             ) AS ct (warehouseId text, "b2bWarehouseLocationId" text, "fbaWarehouseLocationId" text, "thirdWarehouseLocationId" text)
+             ) AS ct (warehouseId text, "awdWarehouseLocationId" text,"b2bWarehouseLocationId" text, "fbaWarehouseLocationId" text, "thirdWarehouseLocationId" text)
     </select>
 
 </mapper>
