@@ -2,6 +2,8 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.server.tms.service.ImportHistoryRecordService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +16,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/feign/importHistoryRecord")
-public class ImportHistoryRecordFeignController {
+public class ImportHistoryRecordFeignController extends BaseController {
 
     @Resource
     private ImportHistoryRecordService importHistoryRecordService;
@@ -27,17 +29,17 @@ public class ImportHistoryRecordFeignController {
      * @return ApiResult<Object>
      */
     @PostMapping(value = "/preprocessingImportExcel")
-    public List<BatchResultDTO> preprocessingImportExcel(@RequestBody @Validated ImportHistoryRecordDTO.ImportDTO dto) {
+    public ApiResult<List<BatchResultDTO>> preprocessingImportExcel(@RequestBody @Validated ImportHistoryRecordDTO.ImportDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getList().size());
         for (BaseDTO.ImportDTO importDTO : dto.getList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = importHistoryRecordService.preprocessingImportExcel(new ImportHistoryRecordDTO.ImportSyncDTO(dto,importDTO) );
+                resultDTO = importHistoryRecordService.importFile(new ImportHistoryRecordDTO.ImportSyncDTO(dto,importDTO));
             }catch (Exception e){
                 resultDTO = BatchResultDTO.fail(importDTO.getTaskId(), importDTO.getFileUrl(), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
-        return resultDTOS;
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
