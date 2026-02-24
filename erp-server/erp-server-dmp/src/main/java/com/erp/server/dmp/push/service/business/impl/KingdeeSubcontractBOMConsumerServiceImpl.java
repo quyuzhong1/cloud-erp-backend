@@ -453,6 +453,14 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             entry.put("FDenominator", parentDetail.getRepairQty() / chilDetail.getQty());
         }
 
+        if (chilDetail.getQty() == 1) {
+            entry.put("FDenominator", parentDetail.getRepairQty());
+        }
+
+        if (parentDetail.getRepairQty() == 1) {
+            entry.put("FNumerator", parentDetail.getRepairQty());
+        }
+
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
         return entries;
