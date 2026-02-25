@@ -1640,6 +1640,14 @@ public class TikTokSdkClientService {
      * @return 响应数据Map
      */
     public Map<String, Object> searchFbtInventoryRecord(TikTokShopInfoDTO shopInfoDTO, List<String> goodsIds, List<String> fbtWarehouseIds) {
+        return searchFbtInventoryRecord(shopInfoDTO, goodsIds, fbtWarehouseIds, null, null);
+    }
+
+    public Map<String, Object> searchFbtInventoryRecord(TikTokShopInfoDTO shopInfoDTO,
+                                                        List<String> goodsIds,
+                                                        List<String> fbtWarehouseIds,
+                                                        Long createTimeGe,
+                                                        Long createTimeLe) {
         String url = TikTokConstant.URL;
         String path = "/fbt/" + TikTokConstant.FBT_INVENTORY_RECORD_VERSION + "/inventory_records/search";
         String secret = shopInfoDTO.getClientSecret();
@@ -1666,6 +1674,14 @@ public class TikTokSdkClientService {
 
         //请求body，包含时间范围参数和过滤条件，不包含分页参数
         Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("create_time_ge", createTimeGe == null || createTimeGe <= 0 ? oneMonthAgo : createTimeGe);
+        bodyMap.put("create_time_le", createTimeLe == null || createTimeLe <= 0 ? currentTime : createTimeLe);
+        if (CollectionUtil.isNotEmpty(goodsIds)) {
+            bodyMap.put("goods_ids", goodsIds);
+        }
+        if (CollectionUtil.isNotEmpty(fbtWarehouseIds)) {
+            bodyMap.put("fbt_warehouse_ids", fbtWarehouseIds);
+        }
         
         String bodyJson = JSONUtil.toJsonStr(bodyMap);
         

@@ -16,6 +16,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -29,6 +30,7 @@ import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.enums.FbaReceiveHandleStatusEnum;
+import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.mapper.FbaShipmentReceiveMapper;
 import com.erp.server.wms.service.*;
@@ -144,6 +146,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         }
         // 单据日期
         LocalDate billDate = saveList.get(0).getReceiveDate().toLocalDate();
+        String sourcePlatform = ShipmentSourceTypeEnum.FBT.getCode().equals(fbaShipmentEntity.getSourceType())
+                ? PlatformEnum.FBT.getName()
+                : PlatformEnum.LINGXING.getName();
+        saveList.forEach(item -> item.setSourcePlatform(sourcePlatform));
 
         for (FbaShipmentReceiveEntity entity : saveList) {
             if (CharSequenceUtil.isBlank(entity.getUniqueMd5()) ||
@@ -160,7 +166,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         // 查询记录是否已存在
         List<String> uniqueMd5List = saveList.stream().map(FbaShipmentReceiveEntity::getUniqueMd5).distinct().collect(Collectors.toList());
-        List<FbaShipmentReceiveEntity> oldEntityList =  this.listByUniqueMd5AndReceivedDate(uniqueMd5List, fbaShipmentEntity.getFbaShipmentId(), billDate);
+        List<FbaShipmentReceiveEntity> oldEntityList = this.listByUniqueMd5AndReceivedDate(uniqueMd5List, fbaShipmentEntity.getFbaShipmentId(), billDate, sourcePlatform);
         if (!CollectionUtils.isEmpty(oldEntityList)){
             // 查询数量变成的记录并反审核删除之前的的记录
             // 校验是否有变更签收记录或数量
@@ -451,10 +457,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     }
 
     @Override
-    public List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate) {
+    public List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate, String sourcePlatform) {
         return this.lambdaQuery()
                 .eq(FbaShipmentReceiveEntity::getFbaShipmentId, fbaShipmentId)
-                .eq(FbaShipmentReceiveEntity::getSourcePlatform, "lingxing")
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, sourcePlatform)
                 .and( st -> st.in(FbaShipmentReceiveEntity::getUniqueMd5, md5List)
                     .or(i-> i.eq(FbaShipmentReceiveEntity::getReceiveDate, LocalDateTime.of(billDate, LocalTime.MIN))
                     ))
