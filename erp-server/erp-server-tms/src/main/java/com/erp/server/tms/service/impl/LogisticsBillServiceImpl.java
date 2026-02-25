@@ -292,7 +292,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (ObjectUtil.isNotEmpty(cfgSetting) && ObjectUtil.isNotEmpty(cfgSetting.getDataJson())) {
             CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
             if (CollUtil.isNotEmpty(allocationSettingDTO.getPackageBillTypeList())) {
-                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.OTHER.getCode())) {
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.OTHER.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.OTHER.getCode())) {
                     logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
                 }
                 if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.SO_B2C.getCode())
