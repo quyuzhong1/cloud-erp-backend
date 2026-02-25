@@ -420,6 +420,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         for (ProductChangeEntity productChangeEntity : mainList) {
             List<ProductChangeDetailEntity> productChangeDetailEntities = productChangeEntity.getDetailEntityList();
             productChangeDetailEntities.forEach(v->v.setMainId(productChangeEntity.getId()));
+            productChangeDetailService.checkData(productChangeEntity, productChangeDetailEntities);
             detailEntityList.addAll(productChangeDetailEntities);
         }
         operateLogService.addSysLogByBatchSave(operateLogEntities);
@@ -1091,6 +1092,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     public ProductChangeDTO.ViewDTO view(String id) {
         ProductChangeEntity productChangeEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
         ProductChangeDTO.ViewDTO data = BeanMapperUtils.map(ProductChangeDTO.ViewDTO.class, productChangeEntity);
+        data.setApproveStatus(productChangeEntity.getApproveStatus().getStatus());
         List<ProductChangeDetailEntity> detailList = productChangeDetailService.listByMains(Arrays.asList(id));
         List<ProductChangeDetailDTO.ViewDTO> detailDTOList = BeanMapperUtils.copyList(ProductChangeDetailDTO.ViewDTO.class, detailList);
         data.setDetailDTOList(detailDTOList);

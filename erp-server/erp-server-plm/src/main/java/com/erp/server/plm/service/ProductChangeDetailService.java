@@ -38,4 +38,6 @@ public interface ProductChangeDetailService extends SuperService<ProductChangeDe
     List<ProductChangeDetailEntity> listByMains(List<String> mainIds);
 
     void deleteByMainId(String mainId);
+
+    void checkData(ProductChangeEntity productChangeEntity, List<ProductChangeDetailEntity> detailEntityList);
 }

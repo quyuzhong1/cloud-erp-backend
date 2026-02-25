@@ -669,6 +669,8 @@ public enum ApiError implements Serializable {
     PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
     PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
     PRODUCT_CHANGE_SKU_NOT_APPROVE(5115, "【{0}】只有已审核SKU可以变更"),
+    PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE(5115, "产品尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
+    PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
 
     /**
      * BOM 错误信息 6000 - 6499
