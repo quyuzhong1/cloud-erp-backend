@@ -3134,7 +3134,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderView(PurchaseReturnOrderDTO.detailIdsDTO detailIdsDTO) {
         PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO();
         List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO> pushDownSubcontractOrderDetailViewDTOS = new ArrayList<>();
-        List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO> childPushDownSubcontractOrderDetailViewDTOS = new ArrayList<>();
 
         List<String> detailIds = detailIdsDTO.getDetailIds();
         List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByIds(detailIds);
@@ -3189,6 +3188,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
             PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO pushDownSubcontractOrderDetailViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO();
+            List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO> childPushDownSubcontractOrderDetailViewDTOS = new ArrayList<>();
             PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO childPushDownSubcontractOrderDetailViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO();
             //父行信息
             //sku信息
