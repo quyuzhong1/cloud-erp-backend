@@ -105,9 +105,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	public void handle(String data) {
 		PlatformReturnInstockDTO dto = JSONUtil.toBean(data, PlatformReturnInstockDTO.class);
 		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) || PlatformDictEnum.NASDAQ_JD.getCode().equalsIgnoreCase(dto.getPlatform())){
-			String thisPlatform = PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) ? PlatformDictEnum.AMAZON.getCode() : PlatformDictEnum.NASDAQ_JD.getCode();
+			String thisPlatform = PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) ?  PlatformDictEnum.AMAZON.getCode() : PlatformDictEnum.NASDAQ_JD.getCode();
+			dto.setPlatform(thisPlatform);
 			// 平台仓入库处理
-			platformWarehouseHandle(dto,thisPlatform);
+			platformWarehouseHandle(dto);
 		} else {
 			// 海外仓入库处理
 			overseasWarehouseHandle(dto);
@@ -336,7 +337,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	/**
 	 * 平台仓入库平台处理
 	 */
-	public void platformWarehouseHandle(PlatformReturnInstockDTO dto,String thisPlatform) {
+	public void platformWarehouseHandle(PlatformReturnInstockDTO dto) {
 		// 根据
 		List<SoReturnInstockEntity> soReturnList = soReturnInstockService.lambdaQuery()
 				.in(SoReturnInstockEntity::getSourceCode, dto.getUniqueId())
@@ -347,10 +348,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		// 查询对应店铺
 		String platformShopCode = dto.getAuthId();
-		List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(),thisPlatform, null));
+		List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(),dto.getPlatform(), null));
 		List<String> shopIds ;
 		//京东取的是店铺ID
-		if (CharSequenceUtil.equals(thisPlatform,PlatformDictEnum.NASDAQ_JD.getCode()) ) {
+		if (CharSequenceUtil.equals(dto.getPlatform(),PlatformDictEnum.NASDAQ_JD.getCode()) ) {
 			shopIds = shopList.stream()
 					.map(BaseEntity::getId)
 					.filter(id -> id.equals(platformShopCode))
@@ -565,7 +566,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuList = dto.getProductDetailList().stream().map(PlatformReturnInstockDTO.Detail::getProductSku).distinct().collect(Collectors.toList());
 		// 查询店铺映射:
 		ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-		paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+		paramDTO.setPlatform(dto.getPlatform());
 		paramDTO.setPlatformSkuNoList(platformSkuList);
 		paramDTO.setShopIdList(shopIds);
 		paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
