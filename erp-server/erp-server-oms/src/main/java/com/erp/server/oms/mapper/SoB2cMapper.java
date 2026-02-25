@@ -274,6 +274,4 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(@Param("soIds") List<String> soIds);
-
-    IPage<SoB2cDTO.PagingDTO> newPaging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params,  @Param("isOutStock") Boolean isOutStock);
 }

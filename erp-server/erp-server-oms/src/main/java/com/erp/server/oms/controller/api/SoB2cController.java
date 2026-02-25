@@ -157,21 +157,6 @@ public class SoB2cController extends BaseController {
         dto.getParams().setIsFullyManaged(Boolean.FALSE);
         return success(soB2cService.paging(dto));
     }
-
-    /**
-     * 列表查询
-     *
-     * @param dto
-     * @return ApiResult<PagingVO < SoB2cDTO.ListDTO>>
-     * @author Will
-     * @date: 2023-08-18
-     */
-    @PostMapping("/newPaging")
-    @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    public ApiResult<PagingVO<SoB2cDTO.PagingDTO>> newPaging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
-        dto.getParams().setIsFullyManaged(Boolean.FALSE);
-        return success(soB2cService.newPaging(dto));
-    }
     /**
      * 新增
      *
