@@ -1017,7 +1017,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
             StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
             //盘点日期
-            insertTask.setBillDate(entity.getStocktakingDate());
+            insertTask.setBillDate(LocalDate.now());
             this.save(insertTask);
             List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
             // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
