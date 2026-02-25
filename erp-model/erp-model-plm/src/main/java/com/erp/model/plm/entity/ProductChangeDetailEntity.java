@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -54,8 +53,8 @@ public class ProductChangeDetailEntity extends BaseEntity<ProductChangeDetailEnt
     /**
     * 分组信息
     */
-    @TableField("group")
-    private String group;
+    @TableField("group_name")
+    private String groupName;
 
 
     public static final String MAIN_ID = "main_id";

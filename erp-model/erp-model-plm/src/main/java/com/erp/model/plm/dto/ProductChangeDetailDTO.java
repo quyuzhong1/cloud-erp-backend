@@ -8,10 +8,9 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -110,7 +109,7 @@ public class ProductChangeDetailDTO implements Serializable {
         /**
         * 分组信息
         */
-        private String group;
+        private String groupName;
 
 
         /**
@@ -184,7 +183,7 @@ public class ProductChangeDetailDTO implements Serializable {
         /**
         * 分组信息
         */
-        private String group;
+        private String groupName;
 
 
     }
@@ -258,7 +257,7 @@ public class ProductChangeDetailDTO implements Serializable {
         */
         @NotBlank(message = "分组信息不能为空")
         @Size(max = 255,message = "分组信息最大长度不能超过255位")
-        private String group;
+        private String groupName;
 
 
     }
