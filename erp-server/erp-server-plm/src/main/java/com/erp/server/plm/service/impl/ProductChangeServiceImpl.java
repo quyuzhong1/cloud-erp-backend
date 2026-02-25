@@ -210,7 +210,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         List<ProductChangeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         List<ProductChangeDTO.TabListDTO> resultList = new ArrayList<>();
         // 计算合计数量
-        resultList.add(new ProductChangeDTO.TabListDTO("all","全部", list.stream().mapToInt(ProductChangeDTO.TabListDTO::getCount).sum()));
+        resultList.add(new ProductChangeDTO.TabListDTO("","全部", list.stream().mapToInt(ProductChangeDTO.TabListDTO::getCount).sum()));
 
         // 获取状态列表
         List<ApproveStatusEnum> statusList = new ArrayList<>(Arrays.asList(ApproveStatusEnum.values()));
