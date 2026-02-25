@@ -58,7 +58,7 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(ProductChangeEntity productChangeEntity, List<ProductChangeDetailDTO.AddDTO> detailDTOList) {
-        detailDTOList.forEach(v->v.setMainId(productChangeEntity.getSkuId()));
+        detailDTOList.forEach(v->v.setMainId(productChangeEntity.getId()));
         List<ProductChangeDetailEntity> detailEntityList = BeanMapperUtils.copyList(ProductChangeDetailEntity.class, detailDTOList);
         boolean save = super.saveBatch(detailEntityList);
         if(!save) {
