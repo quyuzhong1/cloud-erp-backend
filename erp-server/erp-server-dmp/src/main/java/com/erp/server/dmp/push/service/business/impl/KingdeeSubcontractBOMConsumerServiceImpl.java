@@ -12,8 +12,10 @@ import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -26,7 +28,7 @@ import com.erp.server.dmp.push.service.business.KingdeeSubcontractBOMConsumerSer
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
@@ -134,7 +136,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 kingdeeCommonService.audit(null,bomChangeApiUtils,saveOld.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
 
                 //新增新单
-                JSONObject convertNewData = convertNewData(view,list,syncKingdeeId,query.get("FBillNo").toString());
+                JSONObject convertNewData = convertNewData(view,syncKingdeeId,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveNewParam = new KingdeeParamDTO.SaveParamDTO(convertNewData);
                 saveNewParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -192,7 +194,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    public JSONObject convertNewData(JSONObject view,List<JSONObject> list,String syncKingdeeId,String bomBillNo){
+    public JSONObject convertNewData(JSONObject view,String syncKingdeeId,String bomBillNo){
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
         SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
@@ -201,44 +203,48 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
 
-        //添加新行
-//        if (Objects.nonNull(subcontractOrder)) {
-//            String mainId = subcontractOrder.getId();
-//            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
-//
-//            List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
-//                    .filter(item -> StringUtils.isNotBlank(item.getParentId()))
-//                    .collect(Collectors.toList());
-//
-//            List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
-//                    .filter(item -> StringUtils.isBlank(item.getParentId()))
-//                    .collect(Collectors.toList());
-//
-//            if (!parentList.isEmpty() && !childList.isEmpty()) {
-//                List<JSONObject> childJsonList = list.stream()
-//                        .filter(item -> StringUtils.isNotBlank(item.get("parentId").toString()))
-//                        .collect(Collectors.toList());
-//
-//                for (SubcontractOrderDetailEntity subcontractOrderDetail : childList) {
-//                    SubcontractOrderDetailEntity parentDetail = parentList.stream()
-//                            .filter(item -> Objects.equals(item.getId(), subcontractOrderDetail.getParentId()))
-//                            .findFirst()
-//                            .orElse(null);
-//
-//                    SubcontractOrderDetailEntity finalParentDetail = parentDetail;
-//                    List<JSONObject> filterChildJsonList = childJsonList.stream()
-//                            .filter(item -> Objects.equals(item.get("parentId"), finalParentDetail.getParentId()))
-//                            .collect(Collectors.toList());
-//                    if (!filterChildJsonList.isEmpty()) {
-//                        for (JSONObject jsonObject : filterChildJsonList) {
-//                            if (Objects.equals(jsonObject.get("detailId"), subcontractOrderDetail.getId())) {
-//                                entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
+        if (Objects.nonNull(subcontractOrder)){
+            String mainId = subcontractOrder.getId();
+            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
+            
+            List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
+                    .filter(item -> StringUtils.isBlank(item.getParentId()))
+                    .collect(Collectors.toList());
+
+            List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
+                    .filter(item -> StringUtils.isNotBlank(item.getParentId()))
+                    .collect(Collectors.toList());
+
+            if (!parentList.isEmpty()) {
+                for (SubcontractOrderDetailEntity parentDetail : parentList) {
+                    SupplierEntity supplier = scmTaskFeign.getSupplierById(parentDetail.getSupplierId());
+                    List<ProductDetailEntity> productDetails = plmTaskFeign.getByIdList(Collections.singletonList(parentDetail.getSkuId()));
+                    //委外用料清单单头供应商,sku,数量相等,测试返回的id不一样，所以用名称
+                    if (Objects.nonNull(supplier) && !productDetails.isEmpty()) {
+                        JSONObject materialId = view.getJSONObject("MaterialID");
+                        String skuNo = materialId.get("Number").toString();
+
+                        JSONObject supplierId = view.getJSONObject("SupplierId");
+                        JSONArray valueArray = supplierId.getJSONArray("Name");
+                        JSONObject firstElement = valueArray.getJSONObject(0);
+                        String supplierName = firstElement.get("Value").toString();
+
+                        String intStr = view.get("Qty").toString().split("\\.")[0]; // 按小数点分割，取整数部分
+
+                        if (Objects.equals(skuNo,productDetails.get(0).getSkuNo())
+                                && Objects.equals(supplierName,supplier.getName())
+                                && Integer.parseInt(intStr) == parentDetail.getRepairQty()) {
+                            List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
+                                    .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
+                                    .collect(Collectors.toList());
+                            for (SubcontractOrderDetailEntity subcontractOrderDetail : filterChildList) {
+                                entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         //单据类型
         JSONObject typeJson = new JSONObject();
@@ -308,8 +314,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FDenominator",srcEntry.get("Denominator"));
         //应发数量
         entry.put("FMustQty",srcEntry.get("MustQty"));
-        //生产数量
-        //entry.put("FProduceQty",srcEntry.get("ProduceQty"));
         //未领数量
         entry.put("FNoPickedQty",srcEntry.get("NoPickedQty"));
         //用量类型
@@ -418,8 +422,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FDenominator",srcEntry.get("Denominator"));
         //应发数量
         entry.put("FMustQty",0);
-        //生产数量
-        //entry.put("FProduceQty",0);
         //未领数量
         entry.put("FNoPickedQty",1);
         //用量类型
