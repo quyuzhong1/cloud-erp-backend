@@ -899,16 +899,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * 处理单个渠道的面单获取逻辑
      */
     private void processLogisticsChannel(String logisticsChannel,
-                                         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList,
+                                         LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList,
                                          List<PrintWayBillPdfDTO> allPrintWayBillPdfResultList,
                                          List<LogisticsPrintTypeDTO.ViewDTO> logisticsPrintTypeEntities,
                                          String printType,
                                          List<String> base64UrlList, List<SoB2cDeliveryEntity> deliveryEntityList) {
 
         //查询b2c订单信息
-        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList = detailList.stream()
+        LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList = detailList.stream()
                 .filter(req -> req.getLogisticsChannelId().equals(logisticsChannel))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(LinkedList::new));
 
         //匹配订单字段，用于打印
         List<String> soIds = waybillDetailDTOList.stream()
@@ -922,7 +922,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //根据篮号排序，为空放最后
         waybillDetailDTOList = waybillDetailDTOList.stream()
                 .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO::getIndex))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(LinkedList::new));
 
         List<SoB2cDTO.WaybillDTO> platformWaybill = new ArrayList<>();
 
@@ -2793,7 +2793,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @Author Luo_WG
      * @Date 2023/12/20 15:00
      **/
-    private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList, List<PrintWayBillPdfDTO> printWayBillPdfResultList) {
+    private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList, List<PrintWayBillPdfDTO> printWayBillPdfResultList) {
         List<LogisticsBillDTO.PrintLogisticsWaybillDTO> logisticsWaybillDTOList = new ArrayList<>();
 //        List<SoB2cEntity> soB2cEntityList = soB2cEntities.stream()
 //                .filter(req -> CharSequenceUtil.isBlank(req.getLogisticsWaybill()))
