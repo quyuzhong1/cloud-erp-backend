@@ -102,19 +102,27 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //判断金蝶系统是否已存在该数据
         LinkedList<String> queryFilters = new LinkedList<>();
 
-        JSONArray jsonArray = (JSONArray) map.get("list");
-        List<JSONObject> list = new ArrayList<>();
-        for (Object obj : jsonArray) {
-            if (obj instanceof JSONObject) {
-                list.add((JSONObject) obj);
-            }
-        }
-
         String syncKingdeeId = map.get("syncKingdeeId").toString();
         queryFilters.add(String.format("FSubReqId = '%s'", syncKingdeeId));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FId,FBillNo";
-        List<Map<String, Object>> queryList = bomApiUtils.queryList(filterStr, fieldKeys, 1000, 1, 1000);
+
+        int pageIndex = 1;
+        int pageSize = 1000;
+        boolean hasNextPage = Boolean.TRUE;
+        List<Map<String, Object>> queryList = bomApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, pageSize);
+        while (hasNextPage) {
+            if (queryList.size() == pageSize) {
+                pageIndex++;
+                // 查询下一页
+                queryList = bomApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, pageSize);
+                queryList.addAll(queryList);
+            } else {
+                // 如果返回的记录数小于pageSize，说明没有更多数据了
+                hasNextPage = false;
+            }
+        }
+
         if (!queryList.isEmpty()) {
             Map<String, Object> bomMap = queryList.get(0);
             KingdeeUtils.makeFieldJson(json,"Ids",".", bomMap.get("FId"));
