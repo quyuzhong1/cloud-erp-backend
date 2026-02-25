@@ -149,6 +149,7 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
         for (SubcontractOrderDetailEntity subcontractOrderDetailEntity : subcontractOrderDetailList) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("detailId",subcontractOrderDetailEntity.getId());
+            jsonObject.set("parentId",subcontractOrderDetailEntity.getParentId());
             //产品编码
             jsonObject.set("FMaterialID", subcontractOrderDetailEntity.getSkuNo());
             list.add(jsonObject);
