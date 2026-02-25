@@ -460,6 +460,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
+
+        //返修委外订单不允许反审
+        if(Objects.equals(entity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+            throw new ServiceException(ApiError.PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE);
+        }
+
         //委外变更单
         List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(id));
         //采购订单
