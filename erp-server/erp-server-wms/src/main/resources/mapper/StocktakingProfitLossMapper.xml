@@ -46,7 +46,8 @@
         spl.approve_time AS approveTime,
         spl.approve_user_name AS approveUserName,
         spl.approve_status AS approveStatus,
-        spld.id as detailId
+        spld.id as detailId,
+        st.create_time as stocktakingDate
         --,spld.sku_no AS skuNo,
         --spld.sku_id AS skuId,
         --spld.warehouse_id AS warehouseId,
@@ -63,6 +64,7 @@
         LEFT JOIN warehouse w
         ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
         left join  warehouse_location wl on spld.warehouse_location = wl.code and spld.warehouse_id = wl.warehouse_id  and wl.is_deleted = false
+        left join stocktaking_task st on st.id = spl.source_id
         WHERE
             ${params.sqlMap.default}
             and  spl.is_deleted = false
