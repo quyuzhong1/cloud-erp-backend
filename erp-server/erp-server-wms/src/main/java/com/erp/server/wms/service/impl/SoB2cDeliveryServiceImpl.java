@@ -1782,6 +1782,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         int endIndex = Math.min(startIndex + pageSize, totalItems);
         // 使用 subList 截取对应范围的数据
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> list = dto.getParams().getDetailList().subList(startIndex, endIndex);
+        //将集合倒排，打印时，从后往前打印
+        Collections.reverse(list);
         String printUrl = this.printLogisticsBillConfirm(dto.getParams().getPrintType(), new LinkedList<>(list), response);
         return new PagingVO<>(Collections.singletonList(printUrl),totalItems,pageSize,currentPage);
     }
@@ -1986,9 +1988,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.SO_LOGISTICS_WAYBILL_NOT_OBTAINED, CharSequenceUtil.join(",", notPrintCodes));
         }
         //查询物流商信息
-        List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
+        List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
-        List<String> paperSizeList = channelInfoList.stream().map(req -> req.getPaperSize()).distinct().collect(Collectors.toList());
+        List<String> paperSizeList = channelInfoList.stream().map(LogisticsChannelDTO.BaseDTO::getPaperSize).distinct().collect(Collectors.toList());
         //打印配货单默认100*100不校验
         if (paperSizeList.size() > 1 && !SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(param.getPrintType())) {
             throw new ServiceException(ApiError.COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT);
@@ -2002,7 +2004,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<LogisticsPrintTypeDTO.ViewDTO> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(logisticsChannelIds);
 
         //根据渠道分组
-        Map<String, List<SoB2cDeliveryEntity>> logisticsChannelMap = soB2cDeliveryEntities.stream().collect(Collectors.groupingBy(req -> req.getLogisticsChannelId()));
+        Map<String, List<SoB2cDeliveryEntity>> logisticsChannelMap = soB2cDeliveryEntities.stream().collect(Collectors.groupingBy(SoB2cDeliveryEntity::getLogisticsChannelId));
         for (Map.Entry<String, List<SoB2cDeliveryEntity>> stringListEntry : logisticsChannelMap.entrySet()) {
             String logisticsChannelId = stringListEntry.getKey();
             List<SoB2cDeliveryEntity> deliveryEntities = stringListEntry.getValue();
@@ -2049,7 +2051,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 switch (SoB2cDeliveryPrintTypeEnum.getByCode(param.getPrintType())){
                     case LOGISTICS_BILL :
                         //打印面单预览
-                        if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
+                        if (logisticsPlatformEnum != null && "N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
                             waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_PRINT_WAYBILL_NOT_SUPPORTED, logisticsPlatformEnum.getName()));
                             waybillDTO.setDisabled(Boolean.TRUE);
                         }
@@ -2057,7 +2059,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     case ALLOCATE_CARGO_BILL :
                         //打印配货单预览
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity) && LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
-                            if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
+                            if (logisticsPlatformEnum != null && "N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
                                 waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_PRINT_ALLOCATE_CARGO_NOT_SUPPORTED, logisticsPlatformEnum.getName()));
                                 waybillDTO.setDisabled(Boolean.TRUE);
                             }
@@ -2087,6 +2089,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 LogisticsChannelDTO.BaseDTO baseDTO = channelInfoList.stream().filter(req -> req.getId().equals(logisticsChannelId)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(baseDTO)) {
                     waybillDetailDTO.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+                    waybillDetailDTO.setPaperSize(baseDTO.getPaperSize());
                 }
 
                 //匹配订单
