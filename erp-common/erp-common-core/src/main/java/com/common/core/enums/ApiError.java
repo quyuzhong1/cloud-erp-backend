@@ -1004,6 +1004,7 @@ public enum ApiError implements Serializable {
     PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行下推"),
     PO_RETURN_DETAIL_NOT_EXISTS(9666,"未找到采购退货单明细"),
     PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
+    PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE(9668,"返修委外订单不允许反审核"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
