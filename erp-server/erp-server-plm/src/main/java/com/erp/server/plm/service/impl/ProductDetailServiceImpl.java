@@ -6850,7 +6850,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @param entity
      * @param operate
      */
-    private void sendSinglePushTask (ProductDetailEntity entity, String operate) {
+    @Override
+    public void sendSinglePushTask (ProductDetailEntity entity, String operate) {
         //审核通过发送金蝶
         DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(entity, operate);
         syncKingdeeProductDetailService.syncDataToSdy(entity, operate);

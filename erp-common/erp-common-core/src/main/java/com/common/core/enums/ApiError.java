@@ -201,6 +201,7 @@ public enum ApiError implements Serializable {
     COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
     COMMON_FILE_EMPTY(1111, "文件为空{0}"),
     COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
+    COMMON_NO_SKU(98128,"SKU不存在"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -673,6 +674,9 @@ public enum ApiError implements Serializable {
     PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED(5112, "请至少选择一张图片"),
     PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
     PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
+    PRODUCT_CHANGE_SKU_NOT_APPROVE(5115, "【{0}】只有已审核SKU可以变更"),
+    PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE(5115, "产品尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
+    PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
 
     /**
      * BOM 错误信息 6000 - 6499

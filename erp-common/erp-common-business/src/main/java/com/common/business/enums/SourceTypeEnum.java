@@ -186,6 +186,8 @@ public enum SourceTypeEnum {
     CFG_MOLD_ALERT_RULE("cfgMoldAlertRule","资产采购变更单","cfg_mold_alert_rule"),
     MOLD_MONITOR("moldMonitor", "模具监控","mold_monitor"),
 
+    PRODUCT_CHANGE("productChange", "产品变更单","product_change"),
+
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
     SYS_USER_INFO("sysUserInfo", "用户","sys_user_info"),
