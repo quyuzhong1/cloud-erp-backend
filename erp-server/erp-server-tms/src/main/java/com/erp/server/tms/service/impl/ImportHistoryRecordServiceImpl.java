@@ -1181,6 +1181,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
             //操作人名称
             data.setOperationUserName(userMap.get(data.getOperationUserId()));
+
+            //来源
+            data.setTypeName(ImportHistoryRecordTypeEnum.getName(data.getType()));
         }
     }
 
