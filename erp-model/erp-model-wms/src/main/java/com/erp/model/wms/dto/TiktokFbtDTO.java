@@ -94,6 +94,22 @@ public class TiktokFbtDTO {
 
     @Data
     @NoArgsConstructor
+    public static class InventorySnapshotDTO {
+        private String shopId;
+        private String warehouseCode;
+        private String warehouseName;
+        private String skuCode;
+        private String goodsId;
+        private String goodsName;
+        private Integer availableQty;
+        private Integer reservedQty;
+        private Integer unfulfillableQty;
+        private Integer inTransitQty;
+        private LocalDateTime updatedTime;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PageResultDTO<T> {
         private List<T> records = new ArrayList<>();
         private String nextPageToken;

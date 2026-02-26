@@ -40,8 +40,9 @@ public class FbtInboundSyncJob {
             }
         }
         long start = System.currentTimeMillis();
+        fbtInboundService.syncRecentInventorySnapshots();
         fbtInboundService.syncRecentInboundOrders(startTime, endTime);
-        XxlJobHelper.log("FBT库存流水定时同步结束(Search FBT Inventory Record), startTime={}, endTime={}, costMs={}",
+        XxlJobHelper.log("FBT库存快照+流水定时同步结束(Search FBT Inventory + Record), startTime={}, endTime={}, costMs={}",
                 startTime, endTime, System.currentTimeMillis() - start);
     }
 

@@ -14,4 +14,8 @@ public interface TiktokFbtApiService {
                                                                 List<String> warehouseIds,
                                                                 Long startTime,
                                                                 Long endTime);
+
+    List<TiktokFbtDTO.InventorySnapshotDTO> queryInventorySnapshots(String shopId,
+                                                                    List<String> goodsIds,
+                                                                    List<String> warehouseIds);
 }

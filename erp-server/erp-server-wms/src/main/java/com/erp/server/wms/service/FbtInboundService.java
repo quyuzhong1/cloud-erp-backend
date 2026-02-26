@@ -9,4 +9,6 @@ public interface FbtInboundService {
     void syncRecentInboundOrders();
 
     void syncRecentInboundOrders(Long startTime, Long endTime);
+
+    void syncRecentInventorySnapshots();
 }

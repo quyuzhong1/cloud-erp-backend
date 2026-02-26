@@ -116,6 +116,61 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
         return result;
     }
 
+    @Override
+    public List<TiktokFbtDTO.InventorySnapshotDTO> queryInventorySnapshots(String shopId,
+                                                                           List<String> goodsIds,
+                                                                           List<String> warehouseIds) {
+        TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(shopId);
+        if (shopInfoDTO == null) {
+            return Collections.emptyList();
+        }
+        Map<String, Object> resultMap = executeWithRetry(
+                () -> tikTokSdkClientService.searchFbtInventory(shopInfoDTO, goodsIds, warehouseIds),
+                "queryInventorySnapshots");
+        Object rows = resultMap.get("inventory_list");
+        if (!(rows instanceof List)) {
+            return Collections.emptyList();
+        }
+        List<Map<String, Object>> inventoryList = (List<Map<String, Object>>) rows;
+        List<TiktokFbtDTO.InventorySnapshotDTO> result = new ArrayList<>();
+        for (Map<String, Object> item : inventoryList) {
+            Map<String, Object> warehouseObj = mapVal(item.get("warehouse"));
+            if (warehouseObj == null) {
+                warehouseObj = mapVal(item.get("fbt_warehouse"));
+            }
+            Map<String, Object> skuObj = mapVal(item.get("sku"));
+            TiktokFbtDTO.InventorySnapshotDTO dto = new TiktokFbtDTO.InventorySnapshotDTO();
+            dto.setShopId(shopId);
+            dto.setWarehouseCode(firstNotBlank(
+                    item.get("fbt_warehouse_id"),
+                    item.get("warehouse_id"),
+                    warehouseObj == null ? null : warehouseObj.get("fbt_warehouse_id"),
+                    warehouseObj == null ? null : warehouseObj.get("warehouse_id"),
+                    warehouseObj == null ? null : warehouseObj.get("id")));
+            dto.setWarehouseName(firstNotBlank(
+                    item.get("fbt_warehouse_name"),
+                    item.get("warehouse_name"),
+                    warehouseObj == null ? null : warehouseObj.get("name"),
+                    warehouseObj == null ? null : warehouseObj.get("warehouse_name"),
+                    dto.getWarehouseCode()));
+            dto.setSkuCode(firstNotBlank(
+                    item.get("seller_sku"),
+                    item.get("sku"),
+                    skuObj == null ? null : skuObj.get("seller_sku"),
+                    skuObj == null ? null : skuObj.get("sku"),
+                    skuObj == null ? null : skuObj.get("code")));
+            dto.setGoodsId(firstNotBlank(item.get("goods_id"), item.get("id")));
+            dto.setGoodsName(firstNotBlank(item.get("goods_name"), item.get("name")));
+            dto.setAvailableQty(intVal(firstNotBlank(item.get("available_quantity"), item.get("sellable_quantity"))));
+            dto.setReservedQty(intVal(item.get("reserved_quantity")));
+            dto.setUnfulfillableQty(intVal(firstNotBlank(item.get("unfulfillable_quantity"), item.get("unsellable_quantity"))));
+            dto.setInTransitQty(intVal(firstNotBlank(item.get("in_transit_quantity"), item.get("deliver_onway_quantity"))));
+            dto.setUpdatedTime(parseTime(firstNotBlank(item.get("update_time"), item.get("updated_time"), item.get("event_time"))));
+            result.add(dto);
+        }
+        return result;
+    }
+
     private <T> T executeWithRetry(java.util.concurrent.Callable<T> callable, String action) {
         int maxRetry = 3;
         long backoffMs = 500L;
@@ -296,7 +351,7 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
         }
         try {
             long epoch = Long.parseLong(value);
-            return LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC);
+            return LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.ofHours(8));
         } catch (Exception ignore) {
         }
         return null;

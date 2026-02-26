@@ -1551,6 +1551,12 @@ public class TikTokSdkClientService {
 
         //请求body - 只包含过滤条件，不包含分页参数
         Map<String, Object> bodyMap = new HashMap<>();
+        if (CollectionUtil.isNotEmpty(goodsIds)) {
+            bodyMap.put("goods_ids", goodsIds);
+        }
+        if (CollectionUtil.isNotEmpty(fbtWarehouseIds)) {
+            bodyMap.put("fbt_warehouse_ids", fbtWarehouseIds);
+        }
         
         String bodyJson = JSONUtil.toJsonStr(bodyMap);
         
@@ -1569,6 +1575,8 @@ public class TikTokSdkClientService {
             // 如果有分页token，添加到URL参数中
             if (pageToken != null) {
                 params.put("page_token", pageToken);
+            } else {
+                params.remove("page_token");
             }
             
             // 更新时间戳（每次请求都需要新的时间戳）

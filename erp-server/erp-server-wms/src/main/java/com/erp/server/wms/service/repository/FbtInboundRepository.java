@@ -67,10 +67,21 @@ public class FbtInboundRepository {
     }
 
     public OverseasInventoryEntity findOverseasInventory(String warehouseCode, String platformSku) {
+        return findOverseasInventory(warehouseCode, platformSku, null);
+    }
+
+    public OverseasInventoryEntity findOverseasInventory(String warehouseCode, String platformSku, String overseasProviderId) {
         LambdaQueryWrapper<OverseasInventoryEntity> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(OverseasInventoryEntity::getWarehouseCode, warehouseCode)
-                .eq(OverseasInventoryEntity::getPlatformSku, platformSku)
-                .last("limit 1");
+                .eq(OverseasInventoryEntity::getPlatformSku, platformSku);
+        if (overseasProviderId == null) {
+            wrapper.and(w -> w.isNull(OverseasInventoryEntity::getOverseasProviderId)
+                    .or()
+                    .eq(OverseasInventoryEntity::getOverseasProviderId, ""));
+        } else {
+            wrapper.eq(OverseasInventoryEntity::getOverseasProviderId, overseasProviderId);
+        }
+        wrapper.last("limit 1");
         return overseasInventoryMapper.selectOne(wrapper);
     }
 
