@@ -111,6 +111,16 @@ public class AdsErpInventoryDiffDTO implements Serializable {
         private String sourceSystem;
 
         /**
+         * 核对平台
+         */
+        private String checkPlatform;
+
+        /**
+         * 核对平台名称
+         */
+        private String checkPlatformName;
+
+        /**
          * 平台账号编码
          */
         private String accountCode;

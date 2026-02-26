@@ -64,7 +64,7 @@ public enum ApiModuleTypeEnum {
     ASSET_PURCHASE_CHANGE(51, "assetPurchaseChange", "资产采购变更单","scm"),
     WDT_SO_B2C(52, "wdtSoB2c", "旺店通B2C销售订单", "oms"),
     ASSET_ACCEPT(53, "assetAccept", "资产验收单", "fms"),
-
+    SUBCONTRACT_BOM(54, "subcontractOrder", "委外用料清单","scm"),
     ;
     private Integer code;
 

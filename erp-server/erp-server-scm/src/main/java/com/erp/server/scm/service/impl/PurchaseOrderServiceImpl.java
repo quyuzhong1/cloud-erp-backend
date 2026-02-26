@@ -1465,13 +1465,25 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     && e.getWarehouseId().equals(item.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseLocationEntity());
             item.setWarehouseLocationName(warehouseLocationEntity.getName());
             //相同采购单号清空后面数据的采购单号和供应商
-            List<String> poIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
-            boolean contains = poIds.contains(item.getPurchaseOrderId());
-            if (contains) {
-                item.setPurchaseOrderCode(null);
-                item.setSupplierName(null);
-                continue;
+            List<String> poIds = list.stream()
+                    .map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId)
+                    .collect(Collectors.toList());
+
+            Map<String, Long> poIdCountMap = poIds.stream()
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+            if (poIdCountMap.getOrDefault(item.getPurchaseOrderId(), 0L) > 1) {
+                // 检查是否是第一次出现
+                long firstIndex = poIds.indexOf(item.getPurchaseOrderId());
+                long currentIndex = list.indexOf(item);
+
+                // 如果不是第一次出现，则清空采购单号和供应商信息
+                if (currentIndex > firstIndex) {
+                    item.setPurchaseOrderCode(null);
+                    item.setSupplierName(null);
+                }
             }
+
         }
 
         return list;

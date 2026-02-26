@@ -45,6 +45,16 @@ public class AdsErpInventoryDiffEntity extends BaseEntity<AdsErpInventoryDiffEnt
     @TableField("source_system")
     private String sourceSystem;
     /**
+     * 核对平台
+     */
+    @TableField("check_platform")
+    private String checkPlatform;
+    /**
+     * 核对平台名称
+     */
+    @TableField("check_platform_name")
+    private String checkPlatformName;
+    /**
     * 平台账号编码
     */
     @TableField("account_code")

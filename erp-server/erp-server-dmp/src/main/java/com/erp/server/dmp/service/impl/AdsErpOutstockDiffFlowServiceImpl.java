@@ -143,7 +143,7 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_antu/ods_flow_antu_excel_outstock" , "ods_antu/ods_flow_antu_excel_inventory_flow");
+		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_flow_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpOutstockDiffFlowEntity::getCheckMonth, checkMonth)
 			.set(AdsErpOutstockDiffFlowEntity::getExecStatus, "doing")

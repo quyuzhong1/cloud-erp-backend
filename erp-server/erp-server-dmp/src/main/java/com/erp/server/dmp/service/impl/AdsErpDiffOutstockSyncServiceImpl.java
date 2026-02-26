@@ -240,7 +240,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_antu/ods_flow_antu_excel_outstock");
+		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
 			.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")
@@ -266,7 +266,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 			if(count != null && count > 0) {
 				throw new ServiceException(list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
 			}
-			boolean reCreate = RestCloudApiUtil.reCreate("", "dbtodb/check_month_diff_so_outstock");
+			boolean reCreate = RestCloudApiUtil.reCreate("", "ods_erp/ods_flow_outstock_diff_update");
 			if(reCreate) {
 				lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
 				.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")

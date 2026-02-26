@@ -850,4 +850,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> listByApprovePropertyNotAsset(List<String> skuNos);
 
     PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
+
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
 }
