@@ -4,6 +4,18 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
@@ -564,7 +576,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         ProductChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -576,6 +589,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

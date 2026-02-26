@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.PlatformFulfillOrderDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
@@ -469,7 +470,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -487,6 +489,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
         revokeDTO.setBusinessKey(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
@@ -674,7 +677,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             }
         }
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
-            this.cancelProcess(entity.getId());
+            this.cancelProcess(new ApproveDTO.CancelProcessDTO(entity.getId()));
         }
         //作废数据
         if (!entity.getInvalidStatus() && isValidate) {

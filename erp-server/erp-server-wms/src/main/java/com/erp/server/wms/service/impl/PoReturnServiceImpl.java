@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.UserStateConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -1477,14 +1478,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 取消流程
      *
-     * @param ids ids
+     * @param dto ids
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<PoReturnEntity> poReturnEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -3016,7 +3018,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto, HttpServletResponse response) {
         // 设置权限SQL
         dto.setPermissionSql(dto.getPermissionSql());
-        
+
         //查询登录信息
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
@@ -3045,7 +3047,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollUtil.isEmpty(allRecords)) {
             return;
         }
-        
+
         //根据ids查询sku信息
         List<String> skuIdList = allRecords.stream().map(PurchaseReturnOrderDTO.SupplierPagingViewDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
@@ -3084,7 +3086,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     public PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        
+
         //查询登录信息
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
@@ -3105,7 +3107,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollUtil.isEmpty(records)) {
             return new PagingVO<>(pageData);
         }
-        
+
         //根据ids查询sku信息
         List<String> skuIdList = records.stream().map(PurchaseReturnOrderDTO.SupplierPagingViewDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
@@ -3476,7 +3478,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //供应商联系人信息
         List<String> supplierContactIds = pushDownPurchaseViews.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSupplierContactId())).map(PurchasePriceDTO.PushDownPurchaseView::getSupplierContactId).collect(Collectors.toList());
         List<SupplierContactEntity> supplierContactList = scmTaskFeign.listSupplierContactByIds(supplierContactIds);
-        
+
         //供应商账户信息
         List<SupplierAccountEntity> supplierAccountList = scmTaskFeign.listSupplierAccount();
 
@@ -3699,7 +3701,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (!returnOrderSourceEnum.equals(ReturnOrderSourceEnum.OTHER)) {
             return;
         }
-        
+
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }

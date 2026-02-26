@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -363,7 +364,8 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         TmsB2cDeclareReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到b2c报关对账单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -379,6 +381,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "b2c报关对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

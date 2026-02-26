@@ -1,6 +1,10 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.*;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -75,7 +79,7 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 删除分布是调入单
