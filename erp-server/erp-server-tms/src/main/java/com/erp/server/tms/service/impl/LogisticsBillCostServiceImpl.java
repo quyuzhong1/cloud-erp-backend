@@ -1171,6 +1171,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
+
+        //订单类型默认其他
+        if (CharSequenceUtil.isBlank(addDTO.getOrderType())) {
+            addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
+        }
+
         addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
         addDTO.setSourceCode(excelDTO.getSoCode());
         addDTO.setPlatformCode(excelDTO.getPlatformCode());
