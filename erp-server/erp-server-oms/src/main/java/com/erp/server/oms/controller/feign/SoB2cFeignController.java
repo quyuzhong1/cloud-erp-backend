@@ -598,17 +598,6 @@ public class SoB2cFeignController extends BaseController {
     Boolean updateShippingOrderNoBySoId(@RequestBody TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO){
         return soB2cService.updateShippingOrderNoBySoId(shippingOrderDTO);
     }
-    /**
-     * 根据销售订单拆分sku
-     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
-     *
-     * @param soIds
-     * @return
-     */
-    @PostMapping("/getTransferDeclareProductBySoIds")
-    public List<SplitSkuDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
-        return soB2cService.getTransferDeclareProductBySoIds(soIds);
-    }
 
     /**
      * 修改速卖通订单仓库

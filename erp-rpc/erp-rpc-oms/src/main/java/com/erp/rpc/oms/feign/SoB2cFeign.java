@@ -429,14 +429,6 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateShippingOrderNoBySoId")
     Boolean updateShippingOrderNoBySoId(@RequestBody TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
-    /**
-     * 根据销售订单拆分sku
-     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
-     * @param soIds
-     * @return
-     */
-    @PostMapping("/feign/soB2c/getTransferDeclareProductBySoIds")
-    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) ;
 
     /**
      * 修改速卖通订单仓库
