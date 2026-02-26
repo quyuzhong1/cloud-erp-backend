@@ -450,6 +450,11 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
+        //订单类型默认其他
+        if (CharSequenceUtil.isBlank(addDTO.getOrderType())) {
+            addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
+        }
+
         addDTO.setSourceCode(excelDTO.getSoCode());
         addDTO.setPlatformCode(excelDTO.getPlatformCode());
         addDTO.setSoDeliveryCode(excelDTO.getSoDeliveryCode());
