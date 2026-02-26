@@ -146,6 +146,31 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean handleInventoryRecordFromDmp(TiktokFbtDTO.InventoryRecordDTO record) {
+        if (record == null || StrUtil.isBlank(record.getInboundOrderId())) {
+            return false;
+        }
+        return handleInventoryRecord(record.getShopId(), record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean upsertInventorySnapshotFromDmp(TiktokFbtDTO.InventorySnapshotDTO snapshot, String authId) {
+        if (snapshot == null || StrUtil.isBlank(snapshot.getWarehouseCode()) || StrUtil.isBlank(snapshot.getSkuCode())) {
+            return false;
+        }
+        OverseasProviderEntity provider = null;
+        if (StrUtil.isNotBlank(authId)) {
+            provider = findAuthorizedFbtProviderById(authId);
+        }
+        if (provider == null && StrUtil.isNotBlank(snapshot.getShopId())) {
+            provider = listAuthorizedFbtProviderMapByShopId().get(snapshot.getShopId());
+        }
+        return upsertInventorySnapshot(snapshot, provider);
+    }
+
     private Long normalizeEpochSeconds(Long rawTime) {
         if (rawTime == null || rawTime <= 0) {
             return null;
@@ -185,6 +210,18 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             result.putIfAbsent(shopId, provider);
         }
         return result;
+    }
+
+    private OverseasProviderEntity findAuthorizedFbtProviderById(String authId) {
+        List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
+                .eq(OverseasProviderEntity::getId, authId)
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.FBT.getCode())
+                .list();
+        if (providerList == null || providerList.isEmpty()) {
+            return null;
+        }
+        return providerList.get(0);
     }
 
     @Transactional(rollbackFor = Exception.class)
