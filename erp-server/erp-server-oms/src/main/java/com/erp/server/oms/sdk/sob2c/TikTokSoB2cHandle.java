@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,13 @@ public class TikTokSoB2cHandle extends AbstractSoB2cHandle  {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
+                LocalDate soOutstockDate = dto == null ? null : dto.getBillDate();
+                if (soOutstockDate == null) {
+                    soOutstockDate = mainEntity.getBillDate();
+                }
+                if (soOutstockDate != null) {
+                    generateB2cDTO.setBillDate(soOutstockDate);
+                }
                 return soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
 
             } catch (Exception e) {

@@ -541,6 +541,21 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 return "fulfillment".equalsIgnoreCase(labelJsonDTO.getLogisticType());
             }
         }
+        //TikTok
+        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(this.dictPlatform)) {
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                if (Objects.nonNull(labelJsonDTO.getIsPlatformWarehouseOrder())) {
+                    return labelJsonDTO.getIsPlatformWarehouseOrder();
+                }
+                if (isTikTokPlatformWarehouseByFulfillmentType(labelJsonDTO.getFulfillmentType())) {
+                    return true;
+                }
+                if (isTikTokPlatformWarehouseByShippingType(labelJsonDTO.getShippingType())) {
+                    return true;
+                }
+            }
+        }
         if(PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(this.dictPlatform)
         ||PlatformDictEnum.RAKUTEN.getCode().equalsIgnoreCase(this.dictPlatform)
         ||PlatformDictEnum.EBAY.getCode().equalsIgnoreCase(this.dictPlatform)){
@@ -554,6 +569,17 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
             }
         }
         return false;
+    }
+
+    private boolean isTikTokPlatformWarehouseByFulfillmentType(String fulfillmentType) {
+        return StrUtil.isNotBlank(fulfillmentType)
+                && "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(fulfillmentType);
+    }
+
+    private boolean isTikTokPlatformWarehouseByShippingType(String shippingType) {
+        return StrUtil.isNotBlank(shippingType)
+                && ("TIKTOK".equalsIgnoreCase(shippingType)
+                || "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(shippingType));
     }
 
     /**

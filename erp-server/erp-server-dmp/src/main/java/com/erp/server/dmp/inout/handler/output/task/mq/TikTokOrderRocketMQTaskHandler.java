@@ -205,6 +205,12 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
+        //订单日期：优先取订单发货时间（TikTok orders.ts_time 映射），没有则回落到平台创建时间
+        if (ObjectUtil.isNotEmpty(dmpSoInfoEntity.getDeliveryTime())) {
+            orderDTO.setBillDate(dmpSoInfoEntity.getDeliveryTime().toLocalDate());
+        } else if (ObjectUtil.isNotEmpty(dmpSoInfoEntity.getPlatformCreateTime())) {
+            orderDTO.setBillDate(dmpSoInfoEntity.getPlatformCreateTime().toLocalDate());
+        }
 
         //优惠金额
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());

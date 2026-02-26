@@ -992,6 +992,16 @@ public class SoB2cDTO implements Serializable {
         private String logisticType;
 
         /**
+         * TikTok履约类型（FULFILLMENT_BY_SELLER=自发货，FULFILLMENT_BY_TIKTOK=平台仓）
+         */
+        private String fulfillmentType;
+
+        /**
+         * TikTok发货类型（SELLER=自发货，TIKTOK=平台仓，兼容历史）
+         */
+        private String shippingType;
+
+        /**
          * 是否平台仓订单 true 是 fasle 不是
          */
         private Boolean isPlatformWarehouseOrder;
