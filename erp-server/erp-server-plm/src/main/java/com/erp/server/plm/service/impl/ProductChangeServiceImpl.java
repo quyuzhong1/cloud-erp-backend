@@ -14,10 +14,13 @@ import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductChangeFieldEnum;
+import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductChangeExcelListener;
 import com.erp.server.plm.service.*;
@@ -129,6 +132,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
     @Resource
     private ProductBrandService productBrandService;
+
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
+    @Resource
+    private SysFeign sysFeign;
 
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
@@ -1116,10 +1125,99 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         if(CollUtil.isEmpty(list)) {
             return;
         }
+        List<BasicDictEntity> basicDictList = basicDictService.list();
+
+       List<BasicCategoryEntity> basicCategoryEntities = basicCategoryService.list();
+
+       List<ProductRDTTeamEntity> productRDTTeamEntities = productRDTTeamService.list();
+
+       List<ProductBrandEntity> productBrandEntities = productBrandService.list();
+
+       List<ApplicationCategoryEntity> applicationCategoryEntities = applicationCategoryService.list();
+
+       List<BasicProductBuEntity> basicProductBuEntities = basicProductBuService.list();
+
+       List<DictCountryDTO.ListDTO> countryList = sysFeign.countryList().getData();
+
         // 属性赋值
         for(ProductChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            //映射字段
+            String newValue = data.getNewValue();
+
+            ProductChangeFieldEnum productChangeFieldEnum = ProductChangeFieldEnum.getByEntityField(data.getField());
+
+            switch (productChangeFieldEnum) {
+                case PRODUCT_ATTRIBUTE:
+                    BasicDictEntity basicDictEntity = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(basicDictEntity)){
+                        data.setNewValue(basicDictEntity.getName());
+                    }
+                    break;
+                case PRODUCT_CATEGORY:
+                    BasicCategoryEntity basicCategoryEntity = basicCategoryEntities.stream().filter(e -> Objects.equals(e.getId(),  newValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(basicCategoryEntity)){
+                        data.setNewValue(basicCategoryEntity.getName());
+                    }
+                    break;
+                case APPLICATION_CATEGORY:
+                    List<String> applicationCategoryNameList = new ArrayList<>();
+                    String[] applicationCategoryIdList = newValue.split(",");
+                    for (String applicationCategoryId : applicationCategoryIdList) {
+                        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), applicationCategoryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(applicationCategoryEntity)){
+                            applicationCategoryNameList.add(applicationCategoryEntity.getName());
+                        }
+                    }
+                    data.setNewValue(String.join(",", applicationCategoryNameList));
+                    break;
+                case R_D_TEAM:
+                    ProductRDTTeamEntity productRDTTeamEntity = productRDTTeamEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(productRDTTeamEntity)){
+                        data.setNewValue(productRDTTeamEntity.getName());
+                    }
+                    break;
+                case BRAND:
+                    ProductBrandEntity productBrandEntity = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(productBrandEntity)){
+                        data.setNewValue(productBrandEntity.getName());
+                    }
+                    break;
+                case PRODUCT_GRADE:
+                    BasicDictEntity gradeDict = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(gradeDict)){
+                        data.setNewValue(gradeDict.getName());
+                    }
+                    break;
+                case BU_LINE:
+                    BasicProductBuEntity basicProductBuEntity = basicProductBuEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(basicProductBuEntity)){
+                        data.setNewValue(basicProductBuEntity.getName());
+                    }
+                    break;
+
+                case SALE_COUNTRY:
+                    //可能是多选用逗号隔开的，校验每个名称是否存在
+                    List<String> countryNames = new ArrayList<>();
+                    String[] countryIdList = newValue.split(",");
+                    for (String countryId : countryIdList) {
+                        DictCountryDTO.ListDTO country = countryList.stream().filter(e -> Objects.equals(e.getId(), countryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(country)){
+                            countryNames.add(country.getId());
+                        }
+                    }
+                    data.setNewValue(String.join(",", countryNames));
+                    break;
+                case SALE_PLATFORM:
+                    ProductSalesPlatformEnum productSalesPlatformEnum = ProductSalesPlatformEnum.getByCode(newValue);
+                    if(Objects.nonNull(productSalesPlatformEnum)) {
+                        data.setNewValue(productSalesPlatformEnum.getName());
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
    }
 
