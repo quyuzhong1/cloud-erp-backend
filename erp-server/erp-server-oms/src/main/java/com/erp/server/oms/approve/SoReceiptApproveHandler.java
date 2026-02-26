@@ -29,7 +29,7 @@ public class SoReceiptApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return soReceiptService.cancelProcess(dto.getId());
+        return soReceiptService.cancelProcess(dto);
     }
 
     @Override

@@ -1,10 +1,12 @@
 package com.erp.server.wms.service;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.VirtualAdjustDTO;
 import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
 import com.erp.model.wms.entity.VirtualAdjustEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.VirtualAdjustDTO;
-import com.common.business.vo.PagingVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -132,10 +134,10 @@ public interface VirtualAdjustService extends SuperService<VirtualAdjustEntity> 
     * 撤销
     * @author zdy
     * @date: 2025-06-09
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

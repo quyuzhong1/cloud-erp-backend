@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -347,7 +348,7 @@ public class SubcontractOrderController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(subcontractOrderService.cancelProcess(entity));
+                resultDTOS.add(subcontractOrderService.cancelProcess(new ApproveDTO.CancelProcessDTO(id),entity));
             }catch (Exception e){
                 log.error("委外订单撤销失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

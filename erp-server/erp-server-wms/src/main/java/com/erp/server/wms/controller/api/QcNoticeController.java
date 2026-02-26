@@ -1,7 +1,12 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.core.utils.ExcelUtil;
 import com.erp.server.wms.query.QcNoticeQueryHandler;
@@ -10,29 +15,35 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.QcNoticeService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.entity.QcNoticeEntity;
+import com.erp.server.wms.query.QcNoticeQueryHandler;
+import com.erp.server.wms.service.QcNoticeService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import com.erp.model.wms.entity.QcNoticeEntity;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 质检通知单
@@ -321,7 +332,7 @@ public class QcNoticeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = qcNoticeService.cancelProcess(id);
+                cancelResult = qcNoticeService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("质检通知单撤回流程失败",e);
                 QcNoticeEntity entity = idEntityMap.get(id);
@@ -339,7 +350,7 @@ public class QcNoticeController extends BaseController {
 
     /**
     * 作废
-    * @author jack  
+    * @author jack
     * @date:  2025-11-10
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -357,7 +368,7 @@ public class QcNoticeController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<QcNoticeEntity> list = qcNoticeService.lambdaQuery().in(QcNoticeEntity::getId, ids).list();
         Map<String, QcNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcNoticeEntity::getId, w -> w));
-        
+
         for (String id : ids) {
             BatchResultDTO invalidResult;
             try {

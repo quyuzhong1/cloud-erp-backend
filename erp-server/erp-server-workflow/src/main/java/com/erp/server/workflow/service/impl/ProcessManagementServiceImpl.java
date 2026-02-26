@@ -907,7 +907,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         //判断是否走飞书流程
         Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
-        if (isFsApprove && ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getSourcePlatform())) {
+        if (isFsApprove && ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getExecuteSystem())) {
             throw new ServiceException(ApiError.WF_FS_APPROVE_REQUIRED);
         }
 

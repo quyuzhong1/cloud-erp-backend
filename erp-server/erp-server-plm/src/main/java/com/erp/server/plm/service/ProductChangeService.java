@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -97,10 +98,10 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      * 取消流程
      * @author will
      * @date 2025/5/19 09:20
-     * @param id
+     * @param dto
      * @return BatchResultDTO
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
     /**
      * 提交
      * @author will
