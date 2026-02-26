@@ -7,12 +7,9 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.ContractInfoEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.server.scm.service.ContractInfoService;
-import com.erp.server.scm.service.PurchaseOrderService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -35,7 +32,7 @@ public class ContractInfoApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到合同管理单数据");
         }
-        BatchResultDTO resultDTO = contractInfoService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = contractInfoService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

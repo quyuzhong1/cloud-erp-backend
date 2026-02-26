@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -299,7 +300,7 @@ public class SoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnInstockService.cancelProcess(dto.getIds());
+        Boolean flag = soReturnInstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 

@@ -39,7 +39,7 @@ public class BomChangeApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = bomChangeService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = bomChangeService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

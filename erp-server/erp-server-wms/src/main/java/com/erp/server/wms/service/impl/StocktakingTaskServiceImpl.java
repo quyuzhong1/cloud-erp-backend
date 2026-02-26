@@ -12,6 +12,11 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.*;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -39,6 +44,7 @@ import com.erp.server.wms.listener.StocktakingTaskExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.rtfparserkit.rtf.Command;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -794,7 +800,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /**
      * 撤销流程
      *
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-08 18:08
@@ -802,8 +808,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcess(String id) {
-        StocktakingTaskEntity taskEntity = this.getById(id);
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
+        StocktakingTaskEntity taskEntity = this.getById(Command.id);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未找到盘点任务单");
         }
@@ -813,7 +820,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
-        handleCancelProcess(taskEntity, userId);
+        handleCancelProcess(dto,taskEntity, userId);
         List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(taskEntity.getSourceId());
         // 全部审核完成 修改盘点计划单据状态
         StocktakingStatusEnum stocktakingStatus = isAllMatchStocktakingStatus(stocktakingTaskEntities);
@@ -834,8 +841,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      */
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public void handleCancelProcess(StocktakingTaskEntity taskEntity, String userId) {
+    public void handleCancelProcess(ApproveDTO.CancelProcessDTO dto,StocktakingTaskEntity taskEntity, String userId) {
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(taskEntity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
         revokeDTO.setUserId(userId);

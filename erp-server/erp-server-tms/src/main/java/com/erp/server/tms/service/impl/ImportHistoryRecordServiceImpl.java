@@ -35,6 +35,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.dto.*;
@@ -854,7 +855,29 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         dto.setBusinessType(entity.getBusinessType());
         dto.setProcessingType(ImportHistoryRecordProcessingTypeEnum.IMPORT.getCode());
         dto.setReconciliationMonth(entity.getReconciliationMonth());
-        return preprocessingImportExcel(new ImportHistoryRecordDTO.ImportSyncDTO(dto,importDTO));
+
+        //查询配置主表信息
+        List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList = cfgLogisticsCostImportService.listByImport(entity.getFileName(), entity.getBusinessType(), CfgLogisticsCostImportCostTypeEnum.EXCEL.getCode());
+        if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
+            return BatchResultDTO.fail(importDTO.getTaskId(),entity.getFileName(),"无法识别导入模板，请检查配置是否正确");
+        }
+        //查询配置明细信息
+        List<String> mainIdList = cfgLogisticsCostImportList.stream().map(CfgLogisticsCostImportEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailEntity> importDetailList =  cfgLogisticsCostImportDetailService.listByMainIdList(mainIdList);
+        if (CollUtil.isEmpty(importDetailList)) {
+            return BatchResultDTO.fail(importDTO.getTaskId(),entity.getFileName(),ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND.getMsg());
+        }
+
+        List<FileDTO.FileTaskDTO> fileTaskDTOS = fileFeign.listLatestFileTask(Collections.singletonList(entity.getFileUrl()));
+        if (CollUtil.isEmpty(fileTaskDTOS)) {
+            throw new ServiceException("未找到对应的文件信息，请检查文件是否正确上传");
+        }
+        ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO = new ImportHistoryRecordDTO.ImportSyncDTO(dto, importDTO);
+        importSyncDTO.setTaskId(fileTaskDTOS.get(0).getTaskId());
+        importSyncDTO.setCfgLogisticsCostImportList(cfgLogisticsCostImportList);
+        importSyncDTO.setImportDetailList(importDetailList);
+        importSyncDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        return preprocessingImportExcel(importSyncDTO);
     }
 
     /**
@@ -1181,6 +1204,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
             //操作人名称
             data.setOperationUserName(userMap.get(data.getOperationUserId()));
+
+            //来源
+            data.setTypeName(ImportHistoryRecordTypeEnum.getName(data.getType()));
         }
     }
 

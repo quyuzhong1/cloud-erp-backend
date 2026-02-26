@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -58,7 +59,7 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
 
     List<BatchResultDTO> batchDelete(List<String> ids);
 
-    List<BatchResultDTO> batchCancel(List<String> ids);
+    List<BatchResultDTO> batchCancel(ApproveDTO.BatchCancelProcessDTO dto);
 
     BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,CustomerB2bSellerChangeEntity entity,CustomerInfoEntity customerInfo);
 

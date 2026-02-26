@@ -1,9 +1,14 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -192,10 +197,10 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
     * 撤销
     * @author Luo_WG
     * @date: 2023-08-24
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 撤销
@@ -206,7 +211,6 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
      * @date 2024/4/19 10:37
      */
     BatchResultDTO pcCancelProcess(String id);
-
     /**
     * 审核通过回调方法
     * @param dto

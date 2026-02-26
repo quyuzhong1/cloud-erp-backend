@@ -296,12 +296,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.OTHER.getCode())) {
                     logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
                 }
-                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.SO_B2C.getCode())
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2C.getCode())
                         && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_B2C.getCode())) {
                     logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
                 }
-                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.SO_INFO.getCode())
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2B.getCode())
                         && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_INFO.getCode())) {
+                    logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                }
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.AFTER_SALE.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.AFTER_SALE.getCode())) {
                     logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
                 }
             }
@@ -1700,7 +1704,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         } else {
             msg = CharSequenceUtil.format("是否分摊状态变更为否,不分摊备注：{},", notAllocateRemark);
         }
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "取消分货操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "分摊设置");
         return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"更新成功");
     }
 }
