@@ -489,6 +489,11 @@ public enum RocketMqTagEnum {
      */
     SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4003,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
 
+    /**
+     *委外用料清单同步金蝶
+     */
+    KINGDEE_SUBCONTRACT_BOM_TAG(4006, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_subcontract_bom_tag"),
+
 
     //---------------------------------WMS 数据更新从6001开始---------------------------------------------------------------------------------
 
