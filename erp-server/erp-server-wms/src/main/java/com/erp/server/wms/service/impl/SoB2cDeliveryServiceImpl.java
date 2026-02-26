@@ -1782,8 +1782,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         int endIndex = Math.min(startIndex + pageSize, totalItems);
         // 使用 subList 截取对应范围的数据
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> list = dto.getParams().getDetailList().subList(startIndex, endIndex);
-        //将集合倒排，打印时，从后往前打印
-        Collections.reverse(list);
         String printUrl = this.printLogisticsBillConfirm(dto.getParams().getPrintType(), new LinkedList<>(list), response);
         return new PagingVO<>(Collections.singletonList(printUrl),totalItems,pageSize,currentPage);
     }
