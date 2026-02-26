@@ -1,46 +1,54 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.function.Function;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -48,49 +56,41 @@ import com.erp.rpc.fms.feign.AssetAceptFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
 import com.erp.server.scm.listener.AssetPurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.AssetPurchaseOrderMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
-import java.util.stream.Collectors;
-import java.util.*;
-import java.util.stream.Stream;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_SCM_ASSET_PURCHASE_ORDER;
 
 /**
  * <p>
@@ -572,7 +572,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         AssetPurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -589,6 +590,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购订单【%s】取消流程", ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), pairList, "取消流程");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
