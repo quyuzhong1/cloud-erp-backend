@@ -383,6 +383,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 logisticsBillCostEntity = logisticsBillCost.get(0);
 
                 LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO,updateList, errorList, jsonObject, errorIndex, cfgCostList);
+                //对账月份
+                updateDataDTO.setReconciliationMonth(reconciliationMonth);
                 updateDataDTO.setCostDetailList(updateList);
                 BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE);
                 pairList.add(new Pair<>(update.getId(),confirmTime));
