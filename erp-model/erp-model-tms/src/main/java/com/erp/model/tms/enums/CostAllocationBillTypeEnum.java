@@ -10,9 +10,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Created jack
  */
 public enum CostAllocationBillTypeEnum implements EnumMessage {
-    SO_B2C( "soB2c", "B2C销售订单"),
-    SO_INFO("soInfo", "B2B销售订单"),
-    AFTER_SALE("afterSale", "售后申请"),
+    B2C( "B2C", "B2C销售订单"),
+    B2B("B2B", "B2B销售订单"),
+    AFTER_SALE("AfterSale", "售后订单-补/换/赠"),
     OTHER("other", "其他"),
     ;
 
