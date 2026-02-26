@@ -145,6 +145,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      */
     private LinkedList<String> getHeaderNameList() {
         LinkedList<String> headerNameList = new LinkedList<>();
+        headerNameList.add("物流商");
         headerNameList.add("平台订单号");
         headerNameList.add("销售订单号");
         headerNameList.add("发货订单号");
@@ -168,6 +169,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      */
     private JSONObject getHeaderNameJsonObject() {
         JSONObject jsonObject = new JSONObject();
+        jsonObject.set("物流商","logisticsSupplierName");
         jsonObject.set("平台订单号","platformCode");
         jsonObject.set("销售订单号","soCode");
         jsonObject.set("发货订单号","soDeliveryCode");
