@@ -1088,6 +1088,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Map<String, LogisticsProductDTO.ProductDTO> skuMap = skuInfoList.stream().collect(Collectors.toMap(LogisticsProductDTO.ProductDTO::getSkuId, Function.identity()));
         //sku 父子 map
         Map<String, List<BomChildrenSkuDTO>> skuChildMap = bomChildrenSkuDTOS.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
+        //获取SKU成本
+        List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList = new ArrayList<>();
+        soB2cDetailEntities.forEach(detailEntity -> {
+            SoB2cEntity entity = soB2cEntityList.stream().filter(e -> e.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
+            queryDetailDTOList.add(InventorySkuCostDTO.QueryDetailDTO.builder()
+                    .skuId(detailEntity.getSkuId()).warehouseId(detailEntity.getWarehouseId()).shopId(entity.getShopId()).billDate(entity.getBillDate())
+                    .build());
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(detailEntity.getSkuId());
+            if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS1)){
+                bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
+                    queryDetailDTOList.add(InventorySkuCostDTO.QueryDetailDTO.builder()
+                            .skuId(bomChildrenSkuDTO.getSkuId()).warehouseId(detailEntity.getWarehouseId()).shopId(entity.getShopId()).billDate(entity.getBillDate())
+                            .build());
+                });
+            }
+        });
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetailList(queryDetailDTOList);
         soB2cDetailEntities.forEach(soB2cDetailEntity -> {
             BomChildrenSkuDTO skuDTO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId())
                             && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(soB2cDetailEntity.getSkuId()))
@@ -1103,15 +1120,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //申报类型
                 isCombination = Boolean.TRUE;
             }
+            String warehouseId = soB2cDetailEntity.getWarehouseId();
             if (Objects.nonNull(skuDTO) && BomTypeEnum.COMBINATION.getType().equals(skuDTO.getType()) && ( isCombination||!judgeCombinationFlag)){
                 if (StrUtil.isNotEmpty(soB2cDetailEntity.getSkuId()) && CollectionUtils.isNotEmpty(skuChildMap.get(soB2cDetailEntity.getSkuId()))){
                     List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
                     //计算比例 汇总 子件 比例数量*实际含税成本 之和
                     BigDecimal totalPrice = bomChildrenSkuDTOS1.stream().map(e ->{
-                        LogisticsProductDTO.ProductDTO productDTO1 = skuMap.get(e.getSkuId());
+                        InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(f -> CharSequenceUtil.isNotBlank(warehouseId) && CharSequenceUtil.isNotBlank(e.getSkuId()) && f.getSkuId().equals(e.getSkuId()) && Objects.equals(f.getWarehouseId(), warehouseId)).findFirst().orElse(null);
                         Integer quantity = Objects.nonNull(e.getQuantity()) ? e.getQuantity() : 0;
-                        BigDecimal actualTaxCost = Objects.nonNull(productDTO1.getActualTaxCost()) ? productDTO1.getActualTaxCost() : BigDecimal.ZERO;
-                        return MathUtil.multiplyWithTwo(actualTaxCost,quantity);
+                        if (Objects.nonNull(skuCostDTO)){
+                            BigDecimal productCost = Objects.nonNull(skuCostDTO.getProductCost()) ? skuCostDTO.getProductCost() : BigDecimal.ZERO;
+                            BigDecimal firstMileShippingCost = Objects.nonNull(skuCostDTO.getFirstMileShippingCost()) ? skuCostDTO.getFirstMileShippingCost() : BigDecimal.ZERO;
+                            BigDecimal clearanceCustomsTax = Objects.nonNull(skuCostDTO.getClearanceCustomsTax()) ? skuCostDTO.getClearanceCustomsTax() : BigDecimal.ZERO;
+                            BigDecimal actualTaxCost = MathUtil.add(productCost, firstMileShippingCost).add(clearanceCustomsTax);
+                            return MathUtil.multiplyWithTwo(actualTaxCost,quantity);
+                        }else {
+                            LogisticsProductDTO.ProductDTO productDTO1 = skuMap.get(e.getSkuId());
+                            BigDecimal actualTaxCost = Objects.nonNull(productDTO1.getActualTaxCost()) ? productDTO1.getActualTaxCost() : BigDecimal.ZERO;
+                            return MathUtil.multiplyWithTwo(actualTaxCost,quantity);
+                        }
                     }).reduce(BigDecimal.ZERO,BigDecimal::add);
                     bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
                         LogisticsProductDTO.ProductDTO bomProduct = skuMap.get(bomChildrenSkuDTO.getSkuId());
@@ -1123,7 +1150,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             price1 = viewDTO.getPrice();
                         }else {
                             Integer quantity = Objects.nonNull(bomChildrenSkuDTO.getQuantity()) ? bomChildrenSkuDTO.getQuantity() : 0;
-                            BigDecimal actualTaxCost = Objects.nonNull(bomProduct.getActualTaxCost()) ? bomProduct.getActualTaxCost() : BigDecimal.ZERO;
+                            InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(f -> CharSequenceUtil.isNotBlank(warehouseId) && CharSequenceUtil.isNotBlank(bomChildrenSkuDTO.getSkuId()) && f.getSkuId().equals(bomChildrenSkuDTO.getSkuId()) && Objects.equals(f.getWarehouseId(), warehouseId)).findFirst().orElse(null);
+                            BigDecimal actualTaxCost = BigDecimal.ZERO;
+                            if (Objects.nonNull(skuCostDTO)){
+                                BigDecimal productCost = Objects.nonNull(skuCostDTO.getProductCost()) ? skuCostDTO.getProductCost() : BigDecimal.ZERO;
+                                BigDecimal firstMileShippingCost = Objects.nonNull(skuCostDTO.getFirstMileShippingCost()) ? skuCostDTO.getFirstMileShippingCost() : BigDecimal.ZERO;
+                                BigDecimal clearanceCustomsTax = Objects.nonNull(skuCostDTO.getClearanceCustomsTax()) ? skuCostDTO.getClearanceCustomsTax() : BigDecimal.ZERO;
+                                actualTaxCost = MathUtil.add(productCost, firstMileShippingCost).add(clearanceCustomsTax);
+                            }else {
+                                actualTaxCost = Objects.nonNull(bomProduct.getActualTaxCost()) ? bomProduct.getActualTaxCost() : BigDecimal.ZERO;
+                            }
                             BigDecimal price = Objects.nonNull(soB2cDetailEntity.getPrice()) ? soB2cDetailEntity.getPrice() : BigDecimal.ZERO;
                             price1 = MathUtil.divide(MathUtil.multiplyWithTwo(actualTaxCost,quantity), totalPrice).multiply(price);
                         }
