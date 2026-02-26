@@ -377,7 +377,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         List<SkuVO> skuVOList = productDetailService.getSkuBaseByIds(dto.getSkuIds());
         List<String> notApproveSku = skuVOList.stream().filter(v->!v.getStatus().equals(2)).map(v->v.getSkuNo()).collect(Collectors.toList());
         if(CollectionUtil.isNotEmpty(notApproveSku)){
-            throw new ServiceException(ApiError.PRODUCT_CHANGE_SKU_NOT_APPROVE + String.join(",", notApproveSku));
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_SKU_NOT_APPROVE,  String.join(",", notApproveSku));
         }
         List<ProductChangeEntity> mainList = new ArrayList<>();
         List<OperateLogEntity> operateLogEntities = new ArrayList<>();
