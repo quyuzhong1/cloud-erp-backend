@@ -38,34 +38,17 @@ public class ShopeeProductService {
         ShopeeProductService shopeeProductService = new ShopeeProductService();
         //产品列表
         ProductRequest productRequest = ProductRequest.builder()
-                .host(host)
+                .host("https://openplatform.shopee.cn")
                 .offset(0)
-                .token(shop_access_token)
-                .shopId(shop_id)
-                .partnerId(partner_id)
-                .tmpPartnerKey(tmp_partner_key)
-                .timeTo(null)
+                .token("eyJhbGciOiJIUzI1NiJ9.CLa8ehABGLHL7qgGIAEou_-lzAYw9vDz0gE4AUAB.6dq-QfoyEqwr6rP9bFQ2GwzXKsWNpzXqZiwq0OIGHis")
+                .shopId(Long.parseLong("1696310705"))
+                .partnerId(Long.parseLong("2006582"))
+                .tmpPartnerKey("446568575a4b52694578456c4c78645969735a6f716b4b6550496754705a7a63")
                 .timeFrom(null)
-                .itemId(1883822L)
+                .timeTo(null)
                 .build();
-//        List<ModelInfo> modelList = shopeeProductService.getModelList(productRequest);
-//        System.out.println(modelList);
-        List<ShopeeProductInfo> productList = new ArrayList<>(0);
-        shopeeProductService.getAllProduct(productRequest, productList);
-//        JSONObject response = productList.getResponse();
-//        JSONArray list = (JSONArray) response.get("item");
-//        List<Item> items = JSONObject.parseArray(list.toJSONString(), Item.class);
-//        ShopeeProduct shopeeProduct = ShopeeProduct.builder().build();
-//        int total_count = (int) response.get("total_count");
-//        Boolean has_next_page = (Boolean) response.get("has_next_page");
-//        String next = (String) response.get("next");
-        System.out.println(productList.size());
-//        System.out.println(total_count);
-//        System.out.println(has_next_page);
-//        System.out.println(next);
-
-//        ShopeeResponse productItemBaseInfo = shopeeProductService.getProductItemBaseInfo(host, shop_access_token, shop_id, partner_id, tmp_partner_key, "22982747521");
-//        ShopeeResponse productItemExtraInfo = shopeeProductService.getProductItemExtraInfo(host, shop_access_token, shop_id, partner_id, tmp_partner_key, "22982747521");
+        ShopeeResponse shopeeResponse = shopeeProductService.getProductList(productRequest);
+        System.out.println(shopeeResponse);
 
     }
 

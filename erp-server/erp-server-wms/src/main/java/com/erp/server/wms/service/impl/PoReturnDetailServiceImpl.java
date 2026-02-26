@@ -568,6 +568,14 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         return baseMapper.listReturnOrderDetailByReceiveIds(receiveIds);
     }
 
+    @Override
+    public List<PoReturnDetailEntity> listPoReturnDetailBySkuIdList(List<String> skuIdList) {
+        return this.lambdaQuery()
+                .in(PoReturnDetailEntity::getSkuId, skuIdList)
+                .orderByDesc(PoReturnDetailEntity::getCreateTime)
+                .list();
+    }
+
     /**
      * 更新组合产品标识
      * @author Will
