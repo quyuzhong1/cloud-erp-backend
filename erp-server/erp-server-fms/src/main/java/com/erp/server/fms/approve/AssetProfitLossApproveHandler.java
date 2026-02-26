@@ -33,7 +33,7 @@ public class AssetProfitLossApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = assetProfitLossService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = assetProfitLossService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

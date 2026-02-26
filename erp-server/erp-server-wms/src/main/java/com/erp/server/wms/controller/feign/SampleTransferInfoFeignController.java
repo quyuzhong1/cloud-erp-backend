@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.feign;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -351,7 +352,7 @@ public class SampleTransferInfoFeignController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleTransferInfoService.cancelProcess(id);
+                cancelResult = sampleTransferInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("样品转移单app端撤回流程失败",e);
                 SampleTransferInfoEntity entity = idEntityMap.get(id);

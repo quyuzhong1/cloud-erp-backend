@@ -1,33 +1,34 @@
 package com.erp.server.plm.controller.api;
 
 
-import com.common.business.annotation.WebAdvanceQuery;
-import com.common.core.utils.ExcelUtil;
-import com.erp.model.plm.dto.MoldInfoDTO;
-import com.erp.server.plm.query.MoldRefSkuQueryHandler;
-import com.erp.server.plm.service.MoldInfoService;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.plm.service.MoldRefSkuService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.dto.MoldRefSkuDTO;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
 import com.erp.model.plm.entity.MoldRefSkuEntity;
+import com.erp.server.plm.query.MoldRefSkuQueryHandler;
+import com.erp.server.plm.service.MoldRefSkuService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 模具关联sku
@@ -250,7 +251,7 @@ public class MoldRefSkuController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = moldRefSkuService.cancelProcess(id);
+                cancelResult = moldRefSkuService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("模具关联sku撤回流程失败",e);
                 MoldRefSkuEntity entity = idEntityMap.get(id);
