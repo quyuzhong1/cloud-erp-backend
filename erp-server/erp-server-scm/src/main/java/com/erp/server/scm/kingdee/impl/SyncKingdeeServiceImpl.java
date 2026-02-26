@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.scm.kingdee.SyncKingdeeService;
 import com.erp.server.scm.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -18,6 +19,7 @@ import java.util.Map;
  * @date 2023/3/10 14:43
  */
 @Service
+@Slf4j
 public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
     @Resource
@@ -68,7 +70,6 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         String syncKingdeeId = (String)params.get("kingdeeId");
         //明细数据
         Object details = params.get("details");
-
         //采购订单
         if (ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString().equals(code)) {
             if (ObjectUtils.isNotEmpty(details)) {
