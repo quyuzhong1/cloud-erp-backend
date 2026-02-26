@@ -72,7 +72,7 @@ public class ImportHistoryRecordDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
-         * 导入类型，最新导入：new，历史导入：history
+         * 导入类型，最新导入：new，历史导入：history,全部：all
          */
         @NotBlank(message = "导入类型不能为空")
         private String importType;
