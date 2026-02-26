@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -244,7 +245,7 @@ public class BomChangeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = bomChangeService.cancelProcess(id);
+                cancelResult = bomChangeService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("变更信息流程失败",e);
                 BomChangeEntity entity = bomChangeService.getById(id);

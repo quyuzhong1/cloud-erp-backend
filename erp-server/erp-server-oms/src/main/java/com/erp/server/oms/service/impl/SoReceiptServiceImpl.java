@@ -935,7 +935,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             if(dto.getIsInvalid()){
                 //如果是审核中，撤销审核
                 if(ApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
-                    this.cancelProcess(exist.getId());
+                    this.cancelProcess(new ApproveDTO.CancelProcessDTO(exist.getId()));
                 }
                 //如果是已审核，反审核
                 if(ApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
