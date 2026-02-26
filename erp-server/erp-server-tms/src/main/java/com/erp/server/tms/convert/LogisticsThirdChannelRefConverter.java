@@ -1,13 +1,8 @@
 package com.erp.server.tms.convert;
 
-import com.erp.model.oms.dto.SplitSkuDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
-import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDetailDTO;
 import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
-import com.erp.model.tms.entity.TransferDeclareProductEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
