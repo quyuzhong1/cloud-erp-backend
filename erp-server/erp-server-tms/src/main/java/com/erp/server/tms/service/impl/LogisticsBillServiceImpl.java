@@ -304,6 +304,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_INFO.getCode())) {
                     logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
                 }
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.AFTER_SALE.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.AFTER_SALE.getCode())) {
+                    logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                }
             }
         }
     }
