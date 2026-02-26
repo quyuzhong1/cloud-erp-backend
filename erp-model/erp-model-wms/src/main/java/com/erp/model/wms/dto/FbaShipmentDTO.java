@@ -7,7 +7,6 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
@@ -353,6 +352,16 @@ public class FbaShipmentDTO implements Serializable {
          * 详情
          */
         private List<FbaShipmentDetailDTO.ViewDTO> detailList;
+
+        /**
+         * 附件URL列表
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名称列表
+         */
+        private List<String> attachmentNameList;
     }
 
     /**

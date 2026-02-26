@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.enums.InventoryClosedRecordEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -21,18 +20,14 @@ import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.service.FbtInboundService;
-import com.erp.server.wms.service.FbaShipmentService;
-import com.erp.server.wms.service.InventoryClosedRecordService;
 import com.erp.server.wms.service.TiktokFbtApiService;
 import com.erp.server.wms.service.repository.FbtInboundRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -63,11 +58,6 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
-    @Lazy
-    @Resource
-    private FbaShipmentService fbaShipmentService;
-    @Resource
-    private InventoryClosedRecordService inventoryClosedRecordService;
 
     @Override
     public void syncInboundOrder(String inboundOrderId) {
@@ -491,9 +481,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
                 continue;
             }
             applyOverseasInventory(record);
-            FbaShipmentReceiveEntity receiveEntity = saveInventoryFlow(shipment, record, idempotentRecordId);
-            updateDetailReceiveQty(shipment, record);
-            triggerTransferIfNeeded(shipment, receiveEntity);
+            saveInventoryFlow(shipment, record, idempotentRecordId);
         }
     }
 
@@ -512,9 +500,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             return false;
         }
         applyOverseasInventory(record);
-        FbaShipmentReceiveEntity receiveEntity = saveInventoryFlow(shipment, record, idempotentRecordId);
+        saveInventoryFlow(shipment, record, idempotentRecordId);
         updateDetailReceiveQty(shipment, record);
-        triggerTransferIfNeeded(shipment, receiveEntity);
         return true;
     }
 
@@ -568,7 +555,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         fbtInboundRepository.updateOverseasInventory(inventory);
     }
 
-    private FbaShipmentReceiveEntity saveInventoryFlow(FbaShipmentEntity shipment, TiktokFbtDTO.InventoryRecordDTO record, String idempotentRecordId) {
+    private void saveInventoryFlow(FbaShipmentEntity shipment, TiktokFbtDTO.InventoryRecordDTO record, String idempotentRecordId) {
         FbaShipmentReceiveEntity entity = new FbaShipmentReceiveEntity();
         entity.setFbaShipmentId(shipment.getFbaShipmentId());
         entity.setMsku(record.getSkuCode());
@@ -584,32 +571,6 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         entity.setUniqueIndex(record.getRecordId());
         bindDetailIfMatch(shipment, entity, record);
         fbtInboundRepository.saveInventoryRecord(entity);
-        return entity;
-    }
-
-    private void triggerTransferIfNeeded(FbaShipmentEntity shipment, FbaShipmentReceiveEntity receiveEntity) {
-        if (shipment == null || receiveEntity == null) {
-            return;
-        }
-        if (StrUtil.isBlank(receiveEntity.getDetailId())) {
-            log.warn("FBT库存流水跳过调拨，签收记录未匹配到货件明细, shipmentCode={}, recordKey={}",
-                    shipment.getCode(), receiveEntity.getUniqueMd5());
-            return;
-        }
-        if (StrUtil.isBlank(receiveEntity.getSkuId()) || StrUtil.isBlank(receiveEntity.getSkuNo())) {
-            log.warn("FBT库存流水跳过调拨，签收记录缺少SKU映射, shipmentCode={}, detailId={}, recordKey={}",
-                    shipment.getCode(), receiveEntity.getDetailId(), receiveEntity.getUniqueMd5());
-            return;
-        }
-        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
-        LocalDate billDate = receiveEntity.getReceiveDate() == null ? LocalDate.now() : receiveEntity.getReceiveDate().toLocalDate();
-        try {
-            fbaShipmentService.handlerWarehouse(shipment, Collections.singletonList(receiveEntity), billDate, closedDateMap);
-        } catch (Exception e) {
-            log.error("FBT库存流水生成调拨失败, shipmentCode={}, detailId={}, receiveQty={}, billDate={}",
-                    shipment.getCode(), receiveEntity.getDetailId(), receiveEntity.getReceiveQty(), billDate, e);
-            throw e;
-        }
     }
 
     private void bindDetailIfMatch(FbaShipmentEntity shipment, FbaShipmentReceiveEntity entity, TiktokFbtDTO.InventoryRecordDTO record) {
