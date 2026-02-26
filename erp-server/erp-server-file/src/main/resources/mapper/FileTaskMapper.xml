@@ -45,6 +45,7 @@
             ft.meta_info::json ->>'fileUrl' as fileUrl,
             ft.file_url as errorUrl,
             ft.file_name as errorName,
+            ft.id as taskId,
             ft.type,
             ft.event,
             ft.create_time

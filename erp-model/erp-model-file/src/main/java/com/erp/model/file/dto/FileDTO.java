@@ -99,6 +99,10 @@ public class FileDTO {
     @AllArgsConstructor
     public static class FileTaskDTO {
         /**
+         * 任务ID
+         */
+        private String taskId;
+        /**
          * 文件URL（FastDFS路径）
          */
         private String fileUrl;
