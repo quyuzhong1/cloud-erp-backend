@@ -1,8 +1,14 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.AsyncTaskDetailRecordEntity;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
@@ -11,6 +17,7 @@ import com.erp.server.tms.mapper.AsyncTaskRecordMapper;
 import com.erp.server.tms.service.AsyncTaskDetailRecordService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
@@ -113,6 +120,51 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRec
     @Override
     public void updateStartTime(TmsAsyncTaskRecordDTO.UpdateDTO dto) {
 
+    }
+
+    @Override
+    public BatchResultDTO retry(String id) {
+        TmsAsyncTaskRecordEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("异步任务记录不存在");
+        }
+
+        Boolean isRetry = entity.getIsRetry();
+        if(isRetry){
+            throw new ServiceException("已有重试任务，无法再次重试");
+        }
+
+        Integer retryTimes = entity.getRetryTimes();
+        if(null == retryTimes || retryTimes == 0){
+            throw new ServiceException("已超过最大重试次数");
+        }
+
+        String status = entity.getStatus();
+        if(!Objects.equals(status, AsyncTaskRecordStatusEnum.FAILED.getCode())){
+            throw new ServiceException("仅支持失败任务重试");
+        }
+
+        Integer errorCount = entity.getErrorCount();
+        if(null == errorCount || errorCount == 0){
+            throw new ServiceException("不存在错误明细");
+        }
+
+        String dataJson = entity.getDataJson();
+        if(StringUtils.isBlank(dataJson) || Objects.equals(dataJson,"{}")){
+            throw new ServiceException("dataJson为空，无法重新创建任务重试");
+        }
+        TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
+        BeanMapper.copy(entity,newTask);
+        newTask.setId(null);
+        newTask.setErrorCount(entity.getErrorCount() - 1 );
+        newTask.setStartTime(LocalDateTime.now());
+
+        return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
+    }
+
+    @Override
+    public BatchResultDTO errorRetry(String id) {
+        return null;
     }
 
 

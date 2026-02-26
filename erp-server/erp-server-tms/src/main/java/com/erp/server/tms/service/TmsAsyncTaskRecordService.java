@@ -1,12 +1,15 @@
 package com.erp.server.tms.service;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -36,4 +39,8 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     void exportError(TmsAsyncTaskRecordDTO.PagingDetailParamDTO dto, HttpServletResponse response);
 
     void updateStartTime(TmsAsyncTaskRecordDTO.UpdateDTO dto);
+
+    BatchResultDTO retry(String id);
+
+    BatchResultDTO errorRetry(String id);
 }

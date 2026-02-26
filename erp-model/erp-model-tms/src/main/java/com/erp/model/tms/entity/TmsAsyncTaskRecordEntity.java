@@ -91,6 +91,11 @@ public class TmsAsyncTaskRecordEntity extends BaseEntity<TmsAsyncTaskRecordEntit
      */
     @TableField("exec_type")
     private String execType;
+    /**
+     * 是否已重试
+     */
+    @TableField("is_retry")
+    private Boolean isRetry;
 
     public static final String BUSINESS_TYPE = "business_type";
 
