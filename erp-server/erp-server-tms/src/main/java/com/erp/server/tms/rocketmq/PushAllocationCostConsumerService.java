@@ -2,55 +2,35 @@ package com.erp.server.tms.rocketmq;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ConfirmStatusEnum;
-import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
-import com.erp.model.tms.dto.ReportPeriodMonthDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
 import com.erp.server.tms.service.*;
-import com.erp.server.tms.service.impl.LogisticsBillCostServiceImpl;
-import com.xxl.job.core.biz.model.ReturnT;
-import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +41,7 @@ import java.util.stream.Collectors;
 @RocketMQMessageListener(topic = RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC,
         selectorExpression = RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG,
         consumerGroup = RocketMqConsumerGroup.TMS_PUSH_ALLOCATION_COST_CONSUMER)
-public class PushAllocationCostConsumerService implements RocketMQListener<AsyncTaskRecordDTO.TaskDTO> {
+public class PushAllocationCostConsumerService implements RocketMQListener<TmsAsyncTaskRecordDTO.TaskDTO> {
 
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
@@ -70,7 +50,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
     private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @Resource
-    private AsyncTaskRecordService asyncTaskRecordService;
+    private TmsAsyncTaskRecordService asyncTaskRecordService;
 
     @Resource
     private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
@@ -99,7 +79,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
     private ExecutorService costAllocationPool;
 
     @Override
-    public void onMessage(AsyncTaskRecordDTO.TaskDTO dto) {
+    public void onMessage(TmsAsyncTaskRecordDTO.TaskDTO dto) {
         String businessType = dto.getBusinessType();
         if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
             //下推费用分摊
@@ -111,7 +91,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
 
 
     }
-    private void pushFirstMileCostAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
+    private void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto) {
         String taskId = dto.getTaskId();
         String reportDate = dto.getReportDate();
         LocalDate reportPeriodMonth = LocalDate.parse(reportDate + "-01");
@@ -128,7 +108,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
             asyncTaskRecordService.updateTask(taskId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单关联记录为空");
             return;
         }else {
-            asyncTaskRecordService.lambdaUpdate().set(AsyncTaskRecordEntity::getDetailCount,deliveryIds.size()).eq(AsyncTaskRecordEntity::getId,taskId).update();
+            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,deliveryIds.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
         }
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
         if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
@@ -189,7 +169,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
     }
 
 
-    private void pushSmallBagCostAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
+    private void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto) {
         String taskId = dto.getTaskId();
 //        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByCanPushAllocation(dto.getType() ,dto.getReportDate());
         List<String> ids = logisticsBillCostService.listByCanPushAllocation(dto);
@@ -199,7 +179,7 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
             asyncTaskRecordService.updateTask(taskId,AsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
             return;
         }else {
-            asyncTaskRecordService.lambdaUpdate().set(AsyncTaskRecordEntity::getDetailCount,list.size()).eq(AsyncTaskRecordEntity::getId,taskId).update();
+            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
         }
         LocalDateTime now = LocalDateTime.now();
         for(LogisticsBillCostEntity logisticsBillCostEntity : list) {

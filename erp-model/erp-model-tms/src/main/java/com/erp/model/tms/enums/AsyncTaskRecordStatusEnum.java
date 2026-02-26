@@ -13,9 +13,11 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2026-01-28 12:16:20
  */
 public enum AsyncTaskRecordStatusEnum implements EnumMessage {
+    FINISH("finish", "已完成"),
 	SUCCESS("success", "成功"),
 	PART_SUCCESS("part_success", "部分成功"),
     ING("ing", "进行中"),
+    PENDING("pending", "待执行"),
 	FAILED("failed", "失败"),
     ;
     /**

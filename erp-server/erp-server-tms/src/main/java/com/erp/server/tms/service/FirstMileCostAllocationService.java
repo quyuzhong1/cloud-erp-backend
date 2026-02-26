@@ -1,6 +1,5 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -10,7 +9,6 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 

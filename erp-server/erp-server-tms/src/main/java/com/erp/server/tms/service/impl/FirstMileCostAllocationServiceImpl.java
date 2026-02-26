@@ -169,7 +169,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
     @Resource
-    private AsyncTaskRecordService asyncTaskRecordService;
+    private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
     private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
     @Resource
@@ -2164,7 +2164,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
+        TmsAsyncTaskRecordDTO.TaskDTO taskDTO = new TmsAsyncTaskRecordDTO.TaskDTO();
         taskDTO.setIds(idsDTO.getIds());
         taskDTO.setReportDate(idsDTO.getReportDate());
         taskDTO.setTaskId(taskId);

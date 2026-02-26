@@ -1,17 +1,24 @@
 package com.erp.server.tms.service.impl;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.AsyncTaskDetailRecordEntity;
-import com.erp.model.tms.entity.AsyncTaskRecordEntity;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.enums.AsyncTaskRecordStatusEnum;
 import com.erp.server.tms.mapper.AsyncTaskRecordMapper;
 import com.erp.server.tms.service.AsyncTaskDetailRecordService;
-import com.erp.server.tms.service.AsyncTaskRecordService;
+import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -24,7 +31,7 @@ import java.util.Objects;
  */
 @Slf4j
 @Service
-public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecordMapper, AsyncTaskRecordEntity> implements AsyncTaskRecordService {
+public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecordMapper, TmsAsyncTaskRecordEntity> implements TmsAsyncTaskRecordService {
 
     @Resource
     private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
@@ -32,15 +39,15 @@ public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecord
     @Override
     public String addTask(String businessType, String json){
         Integer count = lambdaQuery()
-                .eq(AsyncTaskRecordEntity::getBusinessType, businessType)
-                .eq(AsyncTaskRecordEntity::getDataJson, json)
-                .eq(AsyncTaskRecordEntity::getStatus, AsyncTaskRecordStatusEnum.ING.getCode())
+                .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
+                .eq(TmsAsyncTaskRecordEntity::getDataJson, json)
+                .eq(TmsAsyncTaskRecordEntity::getStatus, AsyncTaskRecordStatusEnum.ING.getCode())
                 .count();
         if(count > 0){
             return null;
         }
 
-        AsyncTaskRecordEntity entity = new AsyncTaskRecordEntity();
+        TmsAsyncTaskRecordEntity entity = new TmsAsyncTaskRecordEntity();
         entity.setBusinessType(businessType);
         entity.setDataJson(json);
         entity.setStartTime(LocalDateTime.now());
@@ -51,16 +58,17 @@ public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecord
     @Override
     public void updateTask(String taskId,String status, String errorMsg) {
         lambdaUpdate()
-                .set(AsyncTaskRecordEntity::getStatus, status)
-                .set(AsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .set(AsyncTaskRecordEntity::getErrorData, errorMsg)
-                .eq(AsyncTaskRecordEntity::getId, taskId)
+                .set(TmsAsyncTaskRecordEntity::getStatus, status)
+                .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, errorMsg)
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+
                 .update();
     }
 
     @Override
     public void updateTaskFinally(String taskId) {
-        AsyncTaskRecordEntity mainEntity = getById(taskId);
+        TmsAsyncTaskRecordEntity mainEntity = getById(taskId);
         if(Objects.nonNull(mainEntity)){
             Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(AsyncTaskDetailRecordEntity::getMainId, taskId).ne(AsyncTaskDetailRecordEntity::getStatus,AsyncTaskRecordStatusEnum.ING.getCode()).count();
             if(Objects.equals(mainEntity.getDetailCount(), count)){
@@ -76,4 +84,36 @@ public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecord
             }
         }
     }
+
+    @Override
+    public List<TmsAsyncTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public PagingVO<TmsAsyncTaskRecordDTO.ListDTO> paging(PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public void exportList(TmsAsyncTaskRecordDTO.PagingParamDTO dto, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public PagingVO<TmsAsyncTaskRecordDTO.DetailListDTO> pagingError(PagingDTO<TmsAsyncTaskRecordDTO.PagingDetailParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public void exportError(TmsAsyncTaskRecordDTO.PagingDetailParamDTO dto, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public void updateStartTime(TmsAsyncTaskRecordDTO.UpdateDTO dto) {
+
+    }
+
+
 }
