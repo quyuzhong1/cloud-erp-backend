@@ -2200,7 +2200,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
                     }
                     if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
-                        addDetailDTO.setIssueQty(childSubDetail.getQty() );
+                        addDetailDTO.setIssueQty(detailEntity.getStockInQty());
                         addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
                         addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
                     } else {
@@ -2211,7 +2211,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         if (ObjectUtils.isEmpty(quantity)) {
                             throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
                         }
-                        addDetailDTO.setIssueQty(childSubDetail.getQty() * quantity);
+                        addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
                         addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
                         addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
                     }
