@@ -633,11 +633,11 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         ProductPackEntity productPackEntity = productPackService.getBySkuId(skuId);
 
         ProductDetailEntity oldDetailEntity = new ProductDetailEntity();
-        ProductDetailEntity oldProductInfoEntity = new ProductDetailEntity();
-        ProductDetailEntity oldProductCostEntity = new ProductDetailEntity();
-        ProductDetailEntity oldProductPurchaseEntity = new ProductDetailEntity();
-        ProductDetailEntity oldProductSaleEntity = new ProductDetailEntity();
-        ProductDetailEntity oldProductPackEntity = new ProductDetailEntity();
+        ProductInfoEntity oldProductInfoEntity = new ProductInfoEntity();
+        ProductCostEntity oldProductCostEntity = new ProductCostEntity();
+        ProductPurchaseEntity oldProductPurchaseEntity = new ProductPurchaseEntity();
+        ProductSaleEntity oldProductSaleEntity = new ProductSaleEntity();
+        ProductPackEntity oldProductPackEntity = new ProductPackEntity();
 
         BeanMapperUtils.copy(productDetailEntity, oldDetailEntity);
         BeanMapperUtils.copy(productInfoEntity, oldProductInfoEntity);
@@ -1147,7 +1147,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             String newValue = data.getNewValue();
 
             ProductChangeFieldEnum productChangeFieldEnum = ProductChangeFieldEnum.getByEntityField(data.getField());
-
+            assert productChangeFieldEnum != null;
+            data.setFieldName(productChangeFieldEnum.getFieldLabel());
             switch (productChangeFieldEnum) {
                 case PRODUCT_ATTRIBUTE:
                     BasicDictEntity basicDictEntity = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);

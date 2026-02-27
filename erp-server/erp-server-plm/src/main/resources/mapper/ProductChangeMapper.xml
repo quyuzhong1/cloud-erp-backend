@@ -65,6 +65,13 @@
         where ${params.sqlMap.default}
           and  pc.is_deleted = false
           and pcd.is_deleted = false
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pc.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
