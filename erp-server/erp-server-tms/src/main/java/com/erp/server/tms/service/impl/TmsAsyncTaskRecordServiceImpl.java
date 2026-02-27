@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -9,7 +11,6 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -36,7 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -68,12 +72,16 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+
+    /**
+     * 新增手动任务
+     */
     @Override
-    public String addTask(String businessType, String json){
+    public String addManualTask(String businessType, String json){
         Integer count = lambdaQuery()
                 .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
                 .eq(TmsAsyncTaskRecordEntity::getDataJson, json)
-                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
                 .count();
         if(count > 0){
             return null;
@@ -87,6 +95,67 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setDataJson(json);
         entity.setStartTime(LocalDateTime.now());
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+        entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
+        return save(entity) ? entity.getId() : null;
+    }
+
+    /**
+     * 新增自动任务
+     */
+    @Override
+    public String addAutoTask(String businessType, String json){
+        Integer count = lambdaQuery()
+                .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
+                .eq(TmsAsyncTaskRecordEntity::getDataJson, json)
+                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .count();
+        if(count > 0){
+            return null;
+        }
+        //默认8小时
+        Integer execTimeout = null;
+        Integer errorCount = null;
+        //获取分摊配置--任务超时时间
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
+        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
+            CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
+            //头程对账单
+            if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
+            }
+            //报关对账
+            if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
+            }
+            //头程分摊
+            if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
+            }
+            //小包分摊
+            if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
+            }
+            //中转分摊
+            if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
+            }
+        }
+
+        TmsAsyncTaskRecordEntity entity = new TmsAsyncTaskRecordEntity();
+        //重置任务ID
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_Z);
+        entity.setCode(code);
+        entity.setBusinessType(businessType);
+        entity.setDataJson(json);
+        entity.setStartTime(LocalDateTime.now());
+        entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+        entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
+        if(Objects.nonNull(execTimeout)){
+            entity.setExecTimeout(execTimeout);
+        }
+        if(Objects.nonNull(errorCount)){
+            entity.setErrorCount(errorCount);
+        }
         return save(entity) ? entity.getId() : null;
     }
 
@@ -175,9 +244,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     public PagingVO<TmsAsyncTaskRecordDTO.DetailListDTO> pagingError(PagingDTO<TmsAsyncTaskRecordDTO.PagingDetailParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<TmsAsyncTaskRecordDTO.DetailListDTO> pageData = this.baseMapper.pagingError(query, pagingParamDTO.getParams());
+        String id = pagingParamDTO.getParams().getId();
+        IPage<TmsAsyncTaskRecordDTO.DetailListDTO> pageData = this.baseMapper.pagingError(query, id);
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
@@ -202,13 +271,19 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("异步任务记录不存在");
         }
+        //时间戳转LocalDateTime
+        LocalDateTime startTime = LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(dto.getStartTime()),
+                ZoneId.systemDefault()
+        );
+
         //判断dto的startTime是否比entity的startTime大
-        if (entity.getStartTime().isAfter(dto.getStartTime())) {
+        if (entity.getStartTime().isAfter(startTime)) {
             throw new ServiceException("不能早于当前的任务执行时间");
         }
 
         lambdaUpdate()
-                .set(TmsAsyncTaskRecordEntity::getStartTime, dto.getStartTime())
+                .set(TmsAsyncTaskRecordEntity::getStartTime, startTime)
                 .eq(TmsAsyncTaskRecordEntity::getId, dto.getId())
                 .update();
     }
@@ -221,7 +296,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         checkData(entity);
 
         //默认8小时
-        int execTimeout = 28800;
+        Integer execTimeout = null;
         //获取分摊配置--任务超时时间
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
         if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
@@ -259,7 +334,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         newTask.setDataJson(entity.getDataJson());
         newTask.setBusinessType(entity.getBusinessType());
         newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-        newTask.setExecTimeout(execTimeout);
+        if(Objects.nonNull(execTimeout)){
+            newTask.setExecTimeout(execTimeout);
+        }
         newTask.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
         boolean save = save(newTask);
         if(!save){
@@ -316,7 +393,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             throw new ServiceException("未找到错误明细");
         }
         //默认8小时
-        int execTimeout = 28800;
+        Integer execTimeout = null;
         //获取分摊配置--任务超时时间
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
         if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
@@ -358,7 +435,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         newTask.setDataJson(JSONUtil.toJsonStr(pushDTO));
         newTask.setBusinessType(entity.getBusinessType());
         newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-        newTask.setExecTimeout(execTimeout);
+        if(Objects.nonNull(execTimeout)){
+            newTask.setExecTimeout(execTimeout);
+        }
         newTask.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
         boolean save = save(newTask);
         if(!save){

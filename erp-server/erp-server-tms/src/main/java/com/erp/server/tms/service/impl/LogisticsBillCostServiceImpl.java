@@ -2092,7 +2092,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(StringUtils.isBlank(businesType)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-        String taskId = asyncTaskRecordService.addTask(businesType, jsonStr);
+        String taskId = asyncTaskRecordService.addManualTask(businesType, jsonStr);
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
