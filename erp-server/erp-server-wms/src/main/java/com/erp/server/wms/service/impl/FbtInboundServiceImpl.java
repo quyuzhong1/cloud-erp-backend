@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -194,22 +195,56 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         if (providerList == null || providerList.isEmpty()) {
             return Collections.emptyMap();
         }
+        Map<String, String> accountToShopIdMap = listAuthorizedTiktokShops().stream()
+                .filter(Objects::nonNull)
+                .filter(shop -> !Boolean.TRUE.equals(shop.getDisabled()))
+                .filter(shop -> StrUtil.isNotBlank(shop.getAccount()) && StrUtil.isNotBlank(shop.getId()))
+                .collect(Collectors.toMap(
+                        shop -> shop.getAccount().toLowerCase(Locale.ROOT),
+                        ShopInfoEntity::getId,
+                        (left, right) -> left,
+                        LinkedHashMap::new));
         Map<String, OverseasProviderEntity> result = new LinkedHashMap<>();
         for (OverseasProviderEntity provider : providerList) {
-            if (provider == null || provider.getAuthJson() == null) {
+            if (provider == null) {
                 continue;
             }
-            Object shopIdObj = provider.getAuthJson().get("shopId");
-            if (shopIdObj == null) {
-                continue;
-            }
-            String shopId = String.valueOf(shopIdObj);
+            String shopId = resolveProviderShopId(provider, accountToShopIdMap);
             if (StrUtil.isBlank(shopId)) {
                 continue;
             }
             result.putIfAbsent(shopId, provider);
         }
         return result;
+    }
+
+    private String resolveProviderShopId(OverseasProviderEntity provider, Map<String, String> accountToShopIdMap) {
+        String shopId = firstMeaningful(
+                provider.getAuthJson() == null ? null : provider.getAuthJson().get("shopId"));
+        if (StrUtil.isNotBlank(shopId)) {
+            return shopId;
+        }
+
+        String shopAccount = firstMeaningful(
+                provider.getAuthJson() == null ? null : provider.getAuthJson().get("shopAccount"),
+                provider.getPlatformAccount());
+        if (StrUtil.isBlank(shopAccount)) {
+            return null;
+        }
+        return accountToShopIdMap.get(shopAccount.toLowerCase(Locale.ROOT));
+    }
+
+    private String firstMeaningful(Object... values) {
+        for (Object value : values) {
+            if (value == null) {
+                continue;
+            }
+            String text = String.valueOf(value);
+            if (StrUtil.isNotBlank(text) && !"null".equalsIgnoreCase(text)) {
+                return text;
+            }
+        }
+        return null;
     }
 
     private OverseasProviderEntity findAuthorizedFbtProviderById(String authId) {

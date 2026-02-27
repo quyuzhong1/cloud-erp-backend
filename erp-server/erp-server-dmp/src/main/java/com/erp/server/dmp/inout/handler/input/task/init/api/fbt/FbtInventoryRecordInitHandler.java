@@ -4,10 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -58,31 +55,18 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
     private static final String KEY_CHANGE_QUANTITY = "change_quantity";
     private static final String KEY_EVENT_TIME = "eventTime";
     private static final String KEY_EVENT_TIME_UNDERLINE = "event_time";
-    private static final String AUTH_JSON_SHOP_ID = "shopId";
 
     @Resource
     private TikTokSdkClientService tikTokSdkClientService;
+    @Resource
+    private FbtAuthorizedShopResolver fbtAuthorizedShopResolver;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
-                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.FBT.getCode())
-                .list();
-        if (CollUtil.isEmpty(providerList)) {
-            log.warn("未找到已授权FBT仓配置");
-            return Collections.emptyList();
-        }
-
-        OverseasProviderEntity provider = providerList.stream()
-                .filter(e -> StrUtil.equalsIgnoreCase(e.getId(), dmpInputTaskEntity.getNextLevelId()))
-                .findFirst()
-                .orElse(null);
-        if (provider == null) {
-            throw new ServiceException("FBT授权信息不存在,nextLevelId:" + dmpInputTaskEntity.getNextLevelId());
-        }
-
-        String shopId = getAuthShopId(provider);
+        FbtAuthorizedShopResolver.ResolvedAuthContext resolvedAuthContext =
+                fbtAuthorizedShopResolver.resolveByAuthId(dmpInputTaskEntity.getNextLevelId());
+        OverseasProviderEntity provider = resolvedAuthContext.getProvider();
+        String shopId = resolvedAuthContext.getShopId();
         TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(shopId);
         if (shopInfoDTO == null) {
             throw new ServiceException("TikTok店铺授权信息为空, shopId:" + shopId);
@@ -116,22 +100,6 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
         DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
         dto.setMsg(rows.toJSONString());
         return Collections.singletonList(dto);
-    }
-
-    private String getAuthShopId(OverseasProviderEntity provider) {
-        Map<String, Object> authJson = provider.getAuthJson();
-        String shopId = authJson == null ? null : String.valueOf(authJson.get(AUTH_JSON_SHOP_ID));
-        if (StrUtil.isBlank(shopId) || "null".equalsIgnoreCase(shopId)) {
-            throw new ServiceException("FBT授权信息缺少shopId, authId:" + provider.getId());
-        }
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class)
-                .eq(ShopInfoEntity::getId, shopId)
-                .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                .list();
-        if (CollUtil.isEmpty(shopInfoList)) {
-            throw new ServiceException("TikTok店铺不存在或未授权, shopId:" + shopId);
-        }
-        return shopId;
     }
 
     private Map<String, Object> normalizeRecord(Map<String, Object> source, String authId, String shopId) {

@@ -1,16 +1,9 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.fbt;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
-import com.common.business.enums.OmsPlatformEnum;
-import com.erp.model.oms.enums.AuthStatusEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -21,7 +14,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * FBT产品API初始化Handler
@@ -46,10 +42,7 @@ public class FbtProductApiInitHandler implements DmpInputApiInitHandler {
     private TikTokSdkClientService tikTokSdkClientService;
 
     @Resource
-    private ShopInfoFeign shopInfoFeign;
-
-    @Resource
-    private OverseasProviderFeign overseasProviderFeign;
+    private FbtAuthorizedShopResolver fbtAuthorizedShopResolver;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -58,46 +51,18 @@ public class FbtProductApiInitHandler implements DmpInputApiInitHandler {
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
         log.info("开始拉取FBT商品列表，nextLevelId: {}", nextLevelId);
 
-        // 查询FBT仓授权信息（从overseas_provider表）
-        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
-                .eq(OverseasProviderEntity::getId, nextLevelId)
-                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.FBT.getCode())
-                .list();
-
-        if (CollUtil.isEmpty(overseasProviderEntityList)) {
-            log.warn("未找到已授权的FBT仓信息，nextLevelId: {}", nextLevelId);
-            throw new ServiceException("未找到已授权的FBT仓信息，nextLevelId: " + nextLevelId);
-        }
-
-        OverseasProviderEntity overseasProvider = overseasProviderEntityList.get(0);
+        FbtAuthorizedShopResolver.ResolvedAuthContext resolvedAuthContext =
+                fbtAuthorizedShopResolver.resolveByAuthId(nextLevelId);
+        OverseasProviderEntity overseasProvider = resolvedAuthContext.getProvider();
+        String shopId = resolvedAuthContext.getShopId();
         log.info("FBT仓信息：ID={}, 简称={}, 名称={}", overseasProvider.getId(), 
                 overseasProvider.getShortName(), overseasProvider.getName());
 
         try {
-            // 从authJson中获取关联的TikTok店铺ID
-            Map<String, Object> authJson = overseasProvider.getAuthJson();
-            if (authJson == null || !authJson.containsKey("shopId")) {
-                throw new ServiceException("FBT仓授权信息中未找到关联的TikTok店铺ID");
-            }
-
-            String shopId = (String) authJson.get("shopId");
             log.info("关联的TikTok店铺ID: {}", shopId);
 
-            // 查询TikTok店铺信息
-            List<ShopInfoEntity> shopInfoEntityList = FeignQuery.create(ShopInfoEntity.class)
-                    .eq(ShopInfoEntity::getId, shopId)
-                    .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                    .list();
-
-            if (shopInfoEntityList.isEmpty()) {
-                throw new ServiceException("未找到关联的TikTok店铺或店铺未授权，shopId: " + shopId);
-            }
-
-            ShopInfoEntity shopInfo = shopInfoEntityList.get(0);
-
             // 获取店铺授权信息
-            TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(shopInfo.getId());
+            TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(shopId);
             if (shopInfoDTO == null) {
                 throw new ServiceException("TikTok店铺授权信息为空，shopId: " + shopId);
             }
@@ -125,7 +90,7 @@ public class FbtProductApiInitHandler implements DmpInputApiInitHandler {
             for (Map<String, Object> goods : goodsList) {
                 // 添加FBT仓授权ID和店铺ID
                 goods.put("authId", overseasProvider.getId());
-                goods.put("shopId", shopInfo.getId());
+                goods.put("shopId", shopId);
                 goods.put("warehouseName", overseasProvider.getName());
                 goods.put("warehouseShortName", overseasProvider.getShortName());
                 goods.put("serviceProvider", "FBT仓");
