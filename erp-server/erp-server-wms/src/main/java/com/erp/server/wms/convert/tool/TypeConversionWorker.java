@@ -73,7 +73,7 @@ public class TypeConversionWorker {
         if (CharSequenceUtil.isBlank(sourceType)){
             return sourceType;
         }
-        if (ShipmentSourceTypeEnum.FBA.getCode().equals(sourceType)){
+        if (ShipmentSourceTypeEnum.FBA.getCode().equals(sourceType) || ShipmentSourceTypeEnum.FBT.getCode().equals(sourceType)){
             return FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode();
         }
         if (ShipmentSourceTypeEnum.AWD.getCode().equals(sourceType)){
@@ -82,3 +82,4 @@ public class TypeConversionWorker {
         return sourceType;
     }
 }
+

@@ -7453,6 +7453,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
+            boolean tikTokPlatformWarehouseOrder = oldEntity.hasPlatformWarehouseOrder();
+            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())
+                    && !tikTokPlatformWarehouseOrder
+                    && StringUtils.isNotBlank(dto.getLabelJson())) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+                if (Objects.nonNull(labelJsonDTO.getIsPlatformWarehouseOrder())) {
+                    tikTokPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
+                } else if (isTikTokPlatformWarehouseByFulfillmentType(labelJsonDTO.getFulfillmentType())) {
+                    tikTokPlatformWarehouseOrder = true;
+                } else if (isTikTokPlatformWarehouseByShippingType(labelJsonDTO.getShippingType())) {
+                    tikTokPlatformWarehouseOrder = true;
+                }
+            }
             //TikTok
             if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                 if ("AWAITING_COLLECTION".equalsIgnoreCase(platformOrderStatus)
@@ -7463,7 +7476,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
-                    dto.setBillStatus(oldEntity.getBillStatus());
+                    if (!tikTokPlatformWarehouseOrder) {
+                        dto.setBillStatus(oldEntity.getBillStatus());
+                    }
                     if ("平台作废".equals(oldEntity.getRemark())) {
                         oldEntity.setRemark("");
                     }
@@ -7471,12 +7486,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if ("CANCELLED".equalsIgnoreCase(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
-                    dto.setBillStatus(oldEntity.getBillStatus());
+                    if (!tikTokPlatformWarehouseOrder) {
+                        dto.setBillStatus(oldEntity.getBillStatus());
+                    }
                     dto.setIsCancel(Boolean.TRUE);
                 }
             }
             // 自发货订单状态不更新(由ERP系统决定)
-            if (!oldEntity.hasPlatformWarehouseOrder()) {
+            boolean platformWarehouseOrder = oldEntity.hasPlatformWarehouseOrder();
+            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                platformWarehouseOrder = tikTokPlatformWarehouseOrder;
+            }
+            if (!platformWarehouseOrder) {
                 //1、当ERP订单状态是待配货 或者 配货中  推过来冻结中的状态 就直接改订单状态为冻结中，增加冻结标识；
                 //2、当ERP订单状态是除了待配货和配货中  就不改为冻结中的状态
                 String oldStatus = oldEntity.getBillStatus();
@@ -7530,6 +7551,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             return resultDTO;
         }
+    }
+
+    private boolean isTikTokPlatformWarehouseByFulfillmentType(String fulfillmentType) {
+        return StringUtils.isNotBlank(fulfillmentType)
+                && "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(fulfillmentType);
+    }
+
+    private boolean isTikTokPlatformWarehouseByShippingType(String shippingType) {
+        return StringUtils.isNotBlank(shippingType)
+                && ("TIKTOK".equalsIgnoreCase(shippingType)
+                || "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(shippingType));
     }
 
     private void checkExchangeRate(SoB2cEntity entity) {
