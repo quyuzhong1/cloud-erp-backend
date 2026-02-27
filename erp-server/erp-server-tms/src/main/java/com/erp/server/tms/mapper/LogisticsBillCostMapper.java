@@ -3,8 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -107,5 +106,5 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      */
     List<LogisticsBillCostDTO.ListDTO> listTotalCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
 
-    List<String> listByCanPushAllocation(@Param("params") AsyncTaskRecordDTO.TaskDTO params);
+    List<String> listByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.TaskDTO params);
 }

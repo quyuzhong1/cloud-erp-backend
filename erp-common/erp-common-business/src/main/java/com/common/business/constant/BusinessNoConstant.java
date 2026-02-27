@@ -270,4 +270,6 @@ public interface BusinessNoConstant {
 
     String BG = "BG";
 
+    //tms异步任务记录
+    String Z="Z";
 }

@@ -1,11 +1,9 @@
 package com.erp.server.tms.service;
 
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
@@ -13,7 +11,6 @@ import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
-import org.springframework.scheduling.annotation.Async;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -255,9 +252,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+    List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto);
 
-    void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
+    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 

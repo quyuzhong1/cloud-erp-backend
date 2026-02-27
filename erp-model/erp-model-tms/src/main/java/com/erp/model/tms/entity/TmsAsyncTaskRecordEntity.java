@@ -9,12 +9,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
  * <p>
- * 异步任务记录明细
+ * 异步任务记录
  * </p>
  *
  * @author jack
@@ -24,26 +23,21 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
-@TableName("async_task_detail_record")
-public class AsyncTaskDetailRecordEntity extends BaseEntity<AsyncTaskDetailRecordEntity> {
+@TableName("tms_async_task_record")
+public class TmsAsyncTaskRecordEntity extends BaseEntity<TmsAsyncTaskRecordEntity> {
 
     /**
-    * 主表id
+    * 任务id
     */
-    @TableField("main_id")
-    private String mainId;
+    @TableField("code")
+    private String code;
     /**
-    * 单据id
+    * 执行系统
     */
-    @TableField("business_id")
-    private String businessId;
+    @TableField("sys_module")
+    private String sysModule;
     /**
-    * 单据编码
-    */
-    @TableField("business_code")
-    private String businessCode;
-    /**
-    * 单据类型
+    * 单据名称
     */
     @TableField("business_type")
     private String businessType;
@@ -58,22 +52,50 @@ public class AsyncTaskDetailRecordEntity extends BaseEntity<AsyncTaskDetailRecor
     @TableField("end_time")
     private LocalDateTime endTime;
     /**
-    * 状态：success=成功,  failed=失败  枚举：AsyncTaskDetailRecordStatusEnum
+    * 任务超时时间 单位：秒
+    */
+    @TableField("exec_timeout")
+    private Integer execTimeout;
+    /**
+    * 任务超时时间 单位：秒
+    */
+    @TableField("retry_times")
+    private Integer retryTimes;
+    /**
+    * 状态：pending=待执行,ing=进行中,finish=已完成,  failed=失败  枚举：AsyncTaskRecordStatusEnum
     */
     @TableField("status")
     private String status;
     /**
     * json
     */
+    @TableField("data_json")
+    private String dataJson;
+    /**
+     *错误信息
+     */
     @TableField("error_data")
     private String errorData;
-
-
-    public static final String MAIN_ID = "main_id";
-
-    public static final String BUSINESS_ID = "business_id";
-
-    public static final String BUSINESS_CODE = "business_code";
+    /**
+     *明细任务数量
+     */
+    @TableField("detail_count")
+    private Integer detailCount;
+    /**
+     *错误数量
+     */
+    @TableField("error_count")
+    private Integer errorCount;
+    /**
+     *执行类型：auto=自动, manual=手动
+     */
+    @TableField("exec_type")
+    private String execType;
+    /**
+     * 是否已重试
+     */
+    @TableField("is_retry")
+    private Boolean isRetry;
 
     public static final String BUSINESS_TYPE = "business_type";
 
@@ -83,7 +105,7 @@ public class AsyncTaskDetailRecordEntity extends BaseEntity<AsyncTaskDetailRecor
 
     public static final String STATUS = "status";
 
-    public static final String ERROR_DATA = "error_data";
+    public static final String DATA_JSON = "data_json";
 
     @Override
     public Serializable pkVal() {

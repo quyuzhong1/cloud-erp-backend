@@ -174,9 +174,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Lazy
     private LogisticsBillCostServiceImpl service;
     @Resource
-    private AsyncTaskRecordService asyncTaskRecordService;
+    private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
-    private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
+    private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
     @Resource
     private MQProducerService mQProducerService;
 
@@ -2044,7 +2044,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Override
     public LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto) {
 //        List<LogisticsBillCostEntity> list = listByCanPushAllocation(dto.getType() ,dto.getReportDate());
-        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
+        TmsAsyncTaskRecordDTO.TaskDTO taskDTO = new TmsAsyncTaskRecordDTO.TaskDTO();
         taskDTO.setIds(dto.getIds());
         taskDTO.setReportDate(dto.getReportDate());
         taskDTO.setType(dto.getType());
@@ -2055,7 +2055,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
+    public List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto) {
 //        String type = dto.getType();
 //        String reportDate = dto.getReportDate();
 //        LocalDate reportMonth = LocalDate.parse(reportDate + "-01");
@@ -2086,7 +2086,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
     @Override
-    public void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto) {
+    public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushDTO dto) {
         String businesType ="";
         if(dto.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())){
             businesType = SourceTypeEnum.LOGISTICS_BILL_COST.getCode(); //自发货
@@ -2102,7 +2102,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
+        TmsAsyncTaskRecordDTO.TaskDTO taskDTO = new TmsAsyncTaskRecordDTO.TaskDTO();
         taskDTO.setIds(dto.getIds());
         taskDTO.setReportDate(dto.getReportDate());
         taskDTO.setTaskId(taskId);
