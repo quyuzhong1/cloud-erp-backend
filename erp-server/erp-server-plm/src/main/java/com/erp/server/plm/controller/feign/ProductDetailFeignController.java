@@ -32,4 +32,9 @@ public class ProductDetailFeignController {
     ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(@RequestParam String skuId){
         return productPurchaseService.getProductInfoBySkuId(skuId);
     }
+
+    @PostMapping("/getSkuBySyncKingdeeId")
+    ProductDetailEntity getSkuBySyncKingdeeId(@RequestBody String syncKingdeeId){
+        return productDetailService.getSkuBySyncKingdeeId(syncKingdeeId);
+    }
 }

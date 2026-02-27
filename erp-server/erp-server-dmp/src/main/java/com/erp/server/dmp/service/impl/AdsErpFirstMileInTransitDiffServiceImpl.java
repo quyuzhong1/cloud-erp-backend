@@ -142,7 +142,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
         }
         AdsErpFirstMileInTransitDiffDTO.FirstMileShipmentChangeFDTO newEntity = buildChangeEntity("firstMileAdjust", entity, adjustDTO.getAdjustQty(), entity.getAdjustReason(), entity.getCheckMonth(), reportMonth);
 
-        int afterAdjustQty = entity.getEndPeriodTransitQty() + adjustDTO.getAdjustQty();
+        int afterAdjustQty = entity.getAfterEndPeriodTransitQty() + adjustDTO.getAdjustQty();
         if (afterAdjustQty < 0) {
             throw new ServiceException("期末在途(调整后)不能小于0");
         }

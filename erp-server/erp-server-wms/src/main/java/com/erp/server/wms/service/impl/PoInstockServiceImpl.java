@@ -2169,21 +2169,42 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (CollectionUtils.isEmpty(subDetailList)) {
                     throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
                 }
+                //获取委外订单
+                List<String> subIdList = subDetailList.stream().map(item -> item.getMainId()).collect(Collectors.toList());
+                List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(subIdList);
+                if (subcontractOrderList.isEmpty()) {
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+                }
+
                 List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (SubcontractOrderDetailEntity childSubDetail : subDetailList) {
                     SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
                     addDetailDTO.setSubcontractOrderDetailId(childSubDetail.getId());
                     addDetailDTO.setSourceDetailId(detailEntity.getId());
-                    //父级SKU和子级SKU之间的用量
-                    Integer quantity = bomList.stream()
-                            .filter(obj -> childSubDetail.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(childSubDetail.getSkuId()) && obj.getParentSkuId().equals(detailEntity.getSkuId()))
-                            .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(quantity)) {
-                        throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
+
+                    SubcontractOrderEntity subcontractOrder = subcontractOrderList.stream()
+                            .filter(item -> Objects.equals(item.getId(), childSubDetail.getMainId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.isNull(subcontractOrder)) {
+                        throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
                     }
-                    addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
-                    addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
-                    addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
+                    if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+                        addDetailDTO.setIssueQty(detailEntity.getStockInQty());
+                        addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
+                        addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
+                    } else {
+                        //父级SKU和子级SKU之间的用量
+                        Integer quantity = bomList.stream()
+                                .filter(obj -> childSubDetail.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(childSubDetail.getSkuId()) && obj.getParentSkuId().equals(detailEntity.getSkuId()))
+                                .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
+                        if (ObjectUtils.isEmpty(quantity)) {
+                            throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
+                        }
+                        addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
+                        addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
+                        addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
+                    }
                     detailList.add(addDetailDTO);
                 }
                 addDTO.setDetailList(detailList);
