@@ -176,7 +176,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
-    private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
+    private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
     @Resource
     private MQProducerService mQProducerService;
 
@@ -2080,7 +2080,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
     @Override
-    public void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto) {
+    public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushDTO dto) {
         String businesType ="";
         if(dto.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())){
             businesType = SourceTypeEnum.LOGISTICS_BILL_COST.getCode(); //自发货

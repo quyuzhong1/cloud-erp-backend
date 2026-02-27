@@ -267,4 +267,6 @@ public interface BusinessNoConstant {
     String DZ="DZ";
     //费用配置
     String FYPZ="FYPZ";
+    //tms异步任务记录
+    String Z="Z";
 }

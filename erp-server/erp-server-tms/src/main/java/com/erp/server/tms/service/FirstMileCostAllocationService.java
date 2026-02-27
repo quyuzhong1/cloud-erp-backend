@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -160,7 +161,7 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
 
-    void asyncBatchPushAllocatedCost(FirstMileCostAllocationDTO.IdsDTO idsDTO);
+    void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushDTO idsDTO);
 
     FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto);
 }

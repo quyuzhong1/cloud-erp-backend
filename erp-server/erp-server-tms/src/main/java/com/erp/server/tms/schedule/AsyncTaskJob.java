@@ -3,7 +3,7 @@ package com.erp.server.tms.schedule;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
-import com.erp.model.tms.enums.AsyncTaskRecordStatusEnum;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -41,7 +41,7 @@ public class AsyncTaskJob {
         XxlJobHelper.log("任务参数={}", JSONUtil.toJsonStr(jobParam));
 
         List<TmsAsyncTaskRecordEntity> list = asyncTaskRecordService.lambdaQuery()
-                .eq(TmsAsyncTaskRecordEntity::getStatus, AsyncTaskRecordStatusEnum.ING.getCode())
+                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
                 .list();
         if(CollUtil.isNotEmpty(list)){
             for (TmsAsyncTaskRecordEntity asyncTaskRecordEntity : list) {

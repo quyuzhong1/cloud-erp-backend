@@ -18,9 +18,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.ReportPeriodMonthDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
@@ -262,7 +264,9 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
         if(CollUtil.isEmpty(dto.getIds())){
-            firstMileCostAllocationService.asyncBatchPushAllocatedCost(dto);
+            TmsAsyncTaskRecordDTO.PushDTO pushDTO = new TmsAsyncTaskRecordDTO.PushDTO();
+            BeanMapper.copy(dto,pushDTO);
+            firstMileCostAllocationService.asyncBatchPushAllocatedCost(pushDTO);
             return success();
         }else {
             List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());

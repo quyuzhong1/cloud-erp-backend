@@ -168,7 +168,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private Integer retryTimes;
 
         /**
-         * 状态：pending=待执行,ing=进行中, finish=已完成, failed=失败
+         * 状态：pending=待执行,ing=进行中, finish=已完成, failed=失败 AsyncTaskRecordStatusEnum
          */
         private String status;
         private String statusName;
@@ -189,7 +189,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private Integer errorCount;
 
         /**
-         * 执行类型：auto=自动, manual=手动
+         * 执行类型：auto=自动, manual=手动 AsyncTaskRecordExecTypeEnum
          */
         private String execType;
         private String execTypeName;
@@ -238,11 +238,10 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 主键id
          */
         private String id;
-
         /**
-         * mainId
+         * 明细id
          */
-        private String mainId;
+        private String detailId;
         /**
          * 单据id
          */
@@ -275,6 +274,36 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          */
         @NotNull(message = "开始时间不能为空")
         private LocalDateTime startTime;
+
+    }
+
+    /**
+     * 手动创建任务
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDTO {
+
+        /**
+         * ids
+         */
+        private List<String> ids;
+        /**
+         *核算日期
+         */
+        @NotBlank(message = "核算日期不能为空")
+        private String reportDate;
+
+        /**
+         *物流标签类型
+         */
+        private String type;
+
+        /**
+         *核算日期
+         */
+        private String reportPeriodId;
+
 
     }
 

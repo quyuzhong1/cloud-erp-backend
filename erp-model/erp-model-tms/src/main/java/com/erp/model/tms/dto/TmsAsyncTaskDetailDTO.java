@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
-import java.time.LocalDateTime;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -26,7 +26,7 @@ import java.util.Map;
 */
 @Data
 @NoArgsConstructor
-public class AsyncTaskDetailRecordDTO implements Serializable {
+public class TmsAsyncTaskDetailDTO implements Serializable {
 
 
 

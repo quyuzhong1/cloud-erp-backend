@@ -1,32 +1,48 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
-import com.erp.model.tms.entity.AsyncTaskDetailRecordEntity;
+import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
+import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
-import com.erp.model.tms.enums.AsyncTaskRecordStatusEnum;
-import com.erp.server.tms.mapper.AsyncTaskRecordMapper;
-import com.erp.server.tms.service.AsyncTaskDetailRecordService;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordExecTypeEnum;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
+import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.tms.mapper.TmsAsyncTaskRecordMapper;
+import com.erp.server.tms.service.TmsAsyncTaskDetailService;
+import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -38,27 +54,39 @@ import java.util.Objects;
  */
 @Slf4j
 @Service
-public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecordMapper, TmsAsyncTaskRecordEntity> implements TmsAsyncTaskRecordService {
+public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTaskRecordMapper, TmsAsyncTaskRecordEntity> implements TmsAsyncTaskRecordService {
 
     @Resource
-    private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
+    private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public String addTask(String businessType, String json){
         Integer count = lambdaQuery()
                 .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
                 .eq(TmsAsyncTaskRecordEntity::getDataJson, json)
-                .eq(TmsAsyncTaskRecordEntity::getStatus, AsyncTaskRecordStatusEnum.ING.getCode())
+                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
                 .count();
         if(count > 0){
             return null;
         }
 
         TmsAsyncTaskRecordEntity entity = new TmsAsyncTaskRecordEntity();
+        //重置任务ID
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_Z);
+        entity.setCode(code);
         entity.setBusinessType(businessType);
         entity.setDataJson(json);
         entity.setStartTime(LocalDateTime.now());
-        entity.setStatus(AsyncTaskRecordStatusEnum.ING.getCode());
+        entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         return save(entity) ? entity.getId() : null;
     }
 
@@ -69,7 +97,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRec
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
                 .set(TmsAsyncTaskRecordEntity::getErrorData, errorMsg)
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-
                 .update();
     }
 
@@ -77,54 +104,174 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRec
     public void updateTaskFinally(String taskId) {
         TmsAsyncTaskRecordEntity mainEntity = getById(taskId);
         if(Objects.nonNull(mainEntity)){
-            Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(AsyncTaskDetailRecordEntity::getMainId, taskId).ne(AsyncTaskDetailRecordEntity::getStatus,AsyncTaskRecordStatusEnum.ING.getCode()).count();
+            Integer count = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).ne(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode()).count();
             if(Objects.equals(mainEntity.getDetailCount(), count)){
-                Integer failedCount = asyncTaskDetailRecordService.lambdaQuery().eq(AsyncTaskDetailRecordEntity::getMainId, taskId).eq(AsyncTaskDetailRecordEntity::getStatus, AsyncTaskRecordStatusEnum.FAILED.getCode()).count();
-
-                if(failedCount == 0){
-                    this.updateTask(taskId,AsyncTaskRecordStatusEnum.SUCCESS.getCode(),"");
-                }else if(failedCount > 0 && failedCount == count){
-                    this.updateTask(taskId,AsyncTaskRecordStatusEnum.FAILED.getCode(),"");
-                }else if(failedCount > 0 && failedCount != count){
-                    this.updateTask(taskId,AsyncTaskRecordStatusEnum.PART_SUCCESS.getCode(),"");
+                Integer failedCount = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode()).count();
+                if(failedCount > 0){
+                    this.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"");
+                }else {
+                    this.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"");
                 }
             }
         }
     }
 
     @Override
-    public List<TmsAsyncTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return Collections.emptyList();
+    public List<TmsAsyncTaskRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
+        TmsAsyncTaskRecordDTO.PagingParamDTO searchParam = new TmsAsyncTaskRecordDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<TmsAsyncTaskRecordDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+
+        // 获取状态列表
+        List<String> statusList = TmsAsyncTaskRecordStatusEnum.getStatusList();
+        // 不存在的状态赋值为0
+        List<String> existStatusList = list.stream().map(TmsAsyncTaskRecordDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        statusList.parallelStream().forEach(status -> {
+            if (!existStatusList.contains(status)) {
+                list.add(new TmsAsyncTaskRecordDTO.TabListDTO(status, "", 0));
+            }
+        });
+
+        list.stream().forEach(e ->{
+            e.setTabFlagName(TmsAsyncTaskRecordStatusEnum.getName(e.getTabFlag()));
+        });
+
+        // 修改为按照 TmsAsyncTaskRecordStatusEnum 枚举声明顺序排序
+        list.sort(Comparator.comparingInt(tabDto -> {
+            TmsAsyncTaskRecordStatusEnum statusEnum = TmsAsyncTaskRecordStatusEnum.getByCode(tabDto.getTabFlag());
+            return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
+        }));
+
+        // 在列表开头添加"全部"统计
+        list.add(0, new TmsAsyncTaskRecordDTO.TabListDTO("all","全部", 0));
+        return list;
     }
 
     @Override
-    public PagingVO<TmsAsyncTaskRecordDTO.ListDTO> paging(PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<TmsAsyncTaskRecordDTO.ListDTO> paging(PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<TmsAsyncTaskRecordDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<TmsAsyncTaskRecordDTO.ListDTO> list) {
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (TmsAsyncTaskRecordDTO.ListDTO data : list) {
+            data.setSysModuleName("TMS系统");
+            data.setBusinessTypeName(SourceTypeEnum.getName(data.getBusinessType()));
+            data.setStatusName(TmsAsyncTaskRecordStatusEnum.getName(data.getStatus()));
+            data.setExecTypeName(TmsAsyncTaskRecordExecTypeEnum.getName(data.getExecType()));
+        }
+    }
+
+
+    @Override
+    public PagingVO<TmsAsyncTaskRecordDTO.DetailListDTO> pagingError(PagingDTO<TmsAsyncTaskRecordDTO.PagingDetailParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<TmsAsyncTaskRecordDTO.DetailListDTO> pageData = this.baseMapper.pagingError(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        return new PagingVO(pageData);
     }
 
     @Override
-    public void exportList(TmsAsyncTaskRecordDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public void exportList(TmsAsyncTaskRecordDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("异步任务导出", EXPORT_TMS_ASYNC_TASK_RECORD.getCode(), param);
+    }
 
+
+    @Override
+    public void exportError(TmsAsyncTaskRecordDTO.PagingDetailParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("异步任务错误导出", EXPORT_TMS_ASYNC_TASK_DETAIL.getCode(), param);
     }
 
     @Override
-    public PagingVO<TmsAsyncTaskRecordDTO.DetailListDTO> pagingError(PagingDTO<TmsAsyncTaskRecordDTO.PagingDetailParamDTO> dto) {
-        return null;
-    }
-
-    @Override
-    public void exportError(TmsAsyncTaskRecordDTO.PagingDetailParamDTO dto, HttpServletResponse response) {
-
-    }
-
-    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStartTime(TmsAsyncTaskRecordDTO.UpdateDTO dto) {
+        TmsAsyncTaskRecordEntity entity = getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("异步任务记录不存在");
+        }
+        //判断dto的startTime是否比entity的startTime大
+        if (entity.getStartTime().isAfter(dto.getStartTime())) {
+            throw new ServiceException("不能早于当前的任务执行时间");
+        }
 
+        lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStartTime, dto.getStartTime())
+                .eq(TmsAsyncTaskRecordEntity::getId, dto.getId())
+                .update();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO retry(String id) {
         TmsAsyncTaskRecordEntity entity = getById(id);
+        //数据校验
+        checkData(entity);
+
+        //默认8小时
+        int execTimeout = 28800;
+        //获取分摊配置--任务超时时间
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
+        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
+            CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
+            String businessType = entity.getBusinessType();
+            //头程对账单
+            if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
+            }
+            //报关对账
+            if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
+            }
+            //头程分摊
+            if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
+            }
+            //小包分摊
+            if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
+            }
+            //中转分摊
+            if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
+            }
+        }
+
+        TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
+        //重置任务ID
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_Z);
+        newTask.setCode(code);
+        //减少可以重试的次数
+        newTask.setErrorCount(entity.getErrorCount() - 1 );
+        newTask.setStartTime(LocalDateTime.now());
+        newTask.setDataJson(entity.getDataJson());
+        newTask.setBusinessType(entity.getBusinessType());
+        newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+        newTask.setExecTimeout(execTimeout);
+        newTask.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
+        boolean save = save(newTask);
+        if(!save){
+            throw new ServiceException("保存失败");
+        }
+        //表示任务已重试过
+        entity.setIsRetry(Boolean.TRUE);
+        updateById(entity);
+        return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
+    }
+
+    private static void checkData(TmsAsyncTaskRecordEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("异步任务记录不存在");
         }
@@ -140,31 +287,87 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRec
         }
 
         String status = entity.getStatus();
-        if(!Objects.equals(status, AsyncTaskRecordStatusEnum.FAILED.getCode())){
+        if(Objects.equals(status, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())){
             throw new ServiceException("仅支持失败任务重试");
         }
 
-        Integer errorCount = entity.getErrorCount();
-        if(null == errorCount || errorCount == 0){
-            throw new ServiceException("不存在错误明细");
+        String execType = entity.getExecType();
+        if(StringUtils.isBlank(execType) && !Objects.equals(execType, TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode())){
+            throw new ServiceException("仅支持执行类型为自动的任务重试");
         }
-
         String dataJson = entity.getDataJson();
         if(StringUtils.isBlank(dataJson) || Objects.equals(dataJson,"{}")){
             throw new ServiceException("dataJson为空，无法重新创建任务重试");
         }
-        TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
-        BeanMapper.copy(entity,newTask);
-        newTask.setId(null);
-        newTask.setErrorCount(entity.getErrorCount() - 1 );
-        newTask.setStartTime(LocalDateTime.now());
-
-        return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
     }
 
     @Override
     public BatchResultDTO errorRetry(String id) {
-        return null;
+        TmsAsyncTaskRecordEntity entity = getById(id);
+        //数据校验
+        checkData(entity);
+        Integer errorCount = entity.getErrorCount();
+        if(null == errorCount || errorCount == 0){
+            throw new ServiceException("未找到错误明细");
+        }
+        //失败明细业务id集合
+        List<String> businessIds = tmsAsyncTaskDetailService.listErrorDetail(id).stream().map(TmsAsyncTaskDetailEntity::getBusinessId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollUtil.isEmpty(businessIds)){
+            throw new ServiceException("未找到错误明细");
+        }
+        //默认8小时
+        int execTimeout = 28800;
+        //获取分摊配置--任务超时时间
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
+        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
+            CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
+            String businessType = entity.getBusinessType();
+            //头程对账单
+            if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
+            }
+            //报关对账
+            if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
+            }
+            //头程分摊
+            if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
+            }
+            //小包分摊
+            if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
+            }
+            //中转分摊
+            if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
+                execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
+            }
+        }
+
+        //entity.getDataJson()转TmsAsyncTaskRecordDTO.PushDTO实体类
+        TmsAsyncTaskRecordDTO.PushDTO pushDTO = JSONUtil.toBean(entity.getDataJson(),TmsAsyncTaskRecordDTO.PushDTO.class);
+        pushDTO.setIds(businessIds);
+
+        TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
+        //重置任务ID
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_Z);
+        newTask.setCode(code);
+        //减少可以重试的次数
+        newTask.setErrorCount(entity.getErrorCount() - 1 );
+        newTask.setStartTime(LocalDateTime.now());
+        newTask.setDataJson(JSONUtil.toJsonStr(pushDTO));
+        newTask.setBusinessType(entity.getBusinessType());
+        newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+        newTask.setExecTimeout(execTimeout);
+        newTask.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
+        boolean save = save(newTask);
+        if(!save){
+            throw new ServiceException("保存失败");
+        }
+        //表示任务已重试过
+        entity.setIsRetry(Boolean.TRUE);
+        updateById(entity);
+        return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
     }
 
 

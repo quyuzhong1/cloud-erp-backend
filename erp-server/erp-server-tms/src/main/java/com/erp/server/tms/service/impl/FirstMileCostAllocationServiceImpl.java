@@ -171,7 +171,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
-    private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
+    private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
     @Resource
     private MQProducerService mQProducerService;
 
@@ -2157,7 +2157,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public void asyncBatchPushAllocatedCost(FirstMileCostAllocationDTO.IdsDTO idsDTO){
+    public void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushDTO idsDTO){
         //新建一个任务
         String jsonStr = JSONUtil.toJsonStr(idsDTO);
         String taskId = asyncTaskRecordService.addTask(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(), jsonStr);
