@@ -182,7 +182,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.STOCKTAKING_PLAN.getCode(), obj.getId()));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.STOCKTAKING_TASK.getCode(), obj.getId()));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
