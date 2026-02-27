@@ -69,6 +69,7 @@ public enum PlatformDictEnum implements EnumMessage {
     IML("iml", "艾姆勒", "艾姆勒", "50"),
     WDT("wdt", "旺店通", "旺店通", "51"),
     DHT("dht", "订货通", "订货通", "57"),
+    FBT("fbt", "FBT仓", "FBT仓", "58"),
     QI_MEN("qimen", "奇门", "奇门", "52"),
     TONG_YOU_WAREHOUSE("tongyou", "通邮", "通邮", "62"),
 

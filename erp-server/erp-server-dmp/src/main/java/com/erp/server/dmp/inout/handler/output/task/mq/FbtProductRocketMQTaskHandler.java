@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformProductDTO;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpProductInfoEntity;
@@ -122,13 +122,14 @@ public class FbtProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler 
 
         PlatformProductDTO product = new PlatformProductDTO();
 
-        // 平台代码 - FBT作为仓库，使用TikTok平台代码
-        product.setPlatform(PlatformDictEnum.TIK_TOK.getCode());
+        // 平台代码 - FBT仓库商品
+        product.setPlatform(OmsPlatformEnum.FBT.getCode());
         
         // 库存SKU (goods/id) -> 通过DMP配置映射到skuId字段
         String skuId = dmpSkuInfoEntity.getSkuId();
         product.setPlatformSkuNo(StringUtils.isBlank(skuId) ? "" : skuId);
-        product.setPlatformSkuId(skuId);
+        // 需求“库存产品ID为-”，这里保持空值
+        product.setPlatformSkuId("");
         
         // 库存产品名称 (goods/name) -> 通过DMP配置映射到name字段
         String skuName = dmpSkuInfoEntity.getName();
