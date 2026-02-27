@@ -1915,7 +1915,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(keyName = "detailId")
     public BatchResultDTO batchUnLockVirtualInventorys(String detailId) {
-        SoDetailEntity old =  this.getById(detailId);
+        SoDetailEntity old =  lambdaQuery().eq(SoDetailEntity::getId,detailId) .last("for update limit 1").one();
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
@@ -1931,8 +1931,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (MathUtil.compareTo(old.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
             return new BatchResultDTO(old.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
         }
-        SoDetailEntity soDetailEntity = new SoDetailEntity();
-        BeanMapperUtils.copy(old,soDetailEntity);
 
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
         stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,old));
@@ -1940,14 +1938,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         virtualInventoryFeign.approveByType(stockParamDTO);
 
         //更新库存锁定数量
-        soDetailEntity.setFrozenQty(MathUtil.ZERO);
-        soDetailEntity.setFrozenTime(LocalDateTime.now());
-        this.updateById(soDetailEntity);
+       lambdaUpdate().eq(SoDetailEntity::getId,old.getId())
+               .set(SoDetailEntity::getFrozenTime,LocalDateTime.now())
+               .setSql(" frozen_qty = frozen_qty - " + old.getFrozenQty())
+               .update();
 
         //添加日志
-        String content = StrUtil.format("SKU【{}】操作了释放锁定库存",soDetailEntity.getSkuNo());
+        String content = StrUtil.format("SKU【{}】操作了释放锁定库存",old.getSkuNo());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), soInfoEntity.getId(), "释放库存操作");
-        return new BatchResultDTO(soDetailEntity.getId(), CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"释放库存成功",Boolean.TRUE);
+        return new BatchResultDTO(old.getId(), CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),old.getSkuNo()),"释放库存成功",Boolean.TRUE);
     }
 
     @Override
