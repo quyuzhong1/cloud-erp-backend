@@ -895,11 +895,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cEntity> soB2cList = this.lambdaQuery()
                 .lt(SoB2cEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
                 .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
-                .eq(SoB2cEntity::getPayStatus,SoB2cPayStatusEnum.ENUM_PAYMENT.getCode())
+                .eq(SoB2cEntity::getPayStatus,SoB2cPayStatusEnum.ENUM_PAYMENT.getCode()) //待付款
+                .eq(SoB2cEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus()) //未作废
+                .eq(SoB2cEntity::getBillStatus,SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) //待配货
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
-        //过滤出需要删除的记录（flag == false 的）
+        //非货到付款
         List<String> soB2cIdList = soB2cList.stream()
                 .filter(entity -> !Boolean.TRUE.equals(soB2cCoreService.listPayMethodSetting(entity)))
                 .map(SoB2cEntity::getId)
