@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -71,28 +72,30 @@ public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
                     List<Map<String, Object>> districtInfoList = (List<Map<String, Object>>) recipientAddressMap.get("districtInfo");
 
                     String district = "";
-                    for (Map<String, Object> map : districtInfoList) {
-                        Object addressLevelName = map.get("addressLevelName");
-                        if ("JP".equalsIgnoreCase(regionCode)){
-                            if (String.valueOf(addressLevelName).equalsIgnoreCase("Prefecture")) {
-                                detail.put("province", map.get("addressName"));
+                    if (CollectionUtil.isNotEmpty(districtInfoList)) {
+                        for (Map<String, Object> map : districtInfoList) {
+                            Object addressLevelName = map.get("addressLevelName");
+                            if ("JP".equalsIgnoreCase(regionCode)){
+                                if (String.valueOf(addressLevelName).equalsIgnoreCase("Prefecture")) {
+                                    detail.put("province", map.get("addressName"));
+                                }
+                                if (String.valueOf(addressLevelName).equalsIgnoreCase("City, Town, Village")) {
+                                    detail.put("city", map.get("addressName"));
+                                }
+                            } else {
+                                if (String.valueOf(addressLevelName).equalsIgnoreCase("state")) {
+                                    detail.put("province", map.get("addressName"));
+                                }
+                                if (String.valueOf(addressLevelName).equalsIgnoreCase("city")) {
+                                    detail.put("city", map.get("addressName"));
+                                }
                             }
-                            if (String.valueOf(addressLevelName).equalsIgnoreCase("City, Town, Village")) {
-                                detail.put("city", map.get("addressName"));
+                            if (String.valueOf(addressLevelName).equalsIgnoreCase("Sub-district")) {
+                                district = district + " " + map.get("addressName");
                             }
-                        } else {
-                            if (String.valueOf(addressLevelName).equalsIgnoreCase("state")) {
-                                detail.put("province", map.get("addressName"));
+                            if (String.valueOf(addressLevelName).equalsIgnoreCase("Urban Community")) {
+                                district = district + " " + map.get("addressName");
                             }
-                            if (String.valueOf(addressLevelName).equalsIgnoreCase("city")) {
-                                detail.put("city", map.get("addressName"));
-                            }
-                        }
-                        if (String.valueOf(addressLevelName).equalsIgnoreCase("Sub-district")) {
-                            district = district + " " + map.get("addressName");
-                        }
-                        if (String.valueOf(addressLevelName).equalsIgnoreCase("Urban Community")) {
-                            district = district + " " + map.get("addressName");
                         }
                     }
                     detail.put("district", district);
