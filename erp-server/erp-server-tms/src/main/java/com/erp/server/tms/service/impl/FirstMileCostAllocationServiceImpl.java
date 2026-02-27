@@ -2160,7 +2160,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     public void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushDTO idsDTO){
         //新建一个任务
         String jsonStr = JSONUtil.toJsonStr(idsDTO);
-        String taskId = asyncTaskRecordService.addTask(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(), jsonStr);
+        String taskId = asyncTaskRecordService.addManualTask(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(), jsonStr);
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }

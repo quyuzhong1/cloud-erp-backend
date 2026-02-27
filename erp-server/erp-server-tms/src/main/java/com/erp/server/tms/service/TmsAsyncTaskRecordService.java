@@ -3,13 +3,11 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -22,9 +20,11 @@ import java.util.List;
  */
 public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskRecordEntity> {
 
-    String addTask(String businessType, String json);
+    String addManualTask(String businessType, String json);
 
-    void updateTask(String taskId,String status, String errorMsg);
+    String addAutoTask(String businessType, String json);
+
+    void updateTask(String taskId, String status, String errorMsg);
 
     void updateTaskFinally(String taskId);
 

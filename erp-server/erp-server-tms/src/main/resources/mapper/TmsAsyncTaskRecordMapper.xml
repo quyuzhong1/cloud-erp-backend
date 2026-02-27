@@ -100,17 +100,9 @@ tatr.exec_type AS execType
         tms_async_task_record as tatr
         left join tms_async_task_detail as tatd on tatd.main_id = tatr.id and tatd.is_deleted = FALSE
         WHERE
-        ${params.sqlMap.default}
-        AND tatr.is_deleted = FALSE
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
+        tatr.is_deleted = FALSE
+        and tatr.id = #{id}
         ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
         tatd.create_time desc
     </select>
 

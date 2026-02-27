@@ -84,6 +84,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         /**
          * 勾选的id
          */
+        @NotNull(message = "id不能为空")
         private String id;
 
     }
@@ -273,7 +274,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 开始时间
          */
         @NotNull(message = "开始时间不能为空")
-        private LocalDateTime startTime;
+        private Long startTime;
 
     }
 
