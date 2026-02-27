@@ -407,6 +407,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             for (ProductChangeDetailDTO.AddDTO addDTO : dto.getDetailList()) {
                 ProductChangeDetailEntity productChangeDetailEntity = new ProductChangeDetailEntity();
                 productChangeDetailEntity.setField(addDTO.getField());
+                if(Objects.nonNull(addDTO.getOldValue())){
+                    productChangeDetailEntity.setOldValue(addDTO.getOldValue().toString());
+                }
                 productChangeDetailEntity.setNewValue(addDTO.getNewValue().toString());
                 productChangeDetailEntity.setRemark(addDTO.getRemark());
                 detailEntityList.add(productChangeDetailEntity);
