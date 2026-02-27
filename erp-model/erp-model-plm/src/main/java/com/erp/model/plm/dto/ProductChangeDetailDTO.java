@@ -220,7 +220,6 @@ public class ProductChangeDetailDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
         @Size(max = 255,message = "主表id最大长度不能超过255位")
         private String mainId;
 
@@ -234,28 +233,24 @@ public class ProductChangeDetailDTO implements Serializable {
         /**
         * 变更原值
         */
-        @NotBlank(message = "变更原值不能为空")
         @Size(max = 255,message = "变更原值最大长度不能超过255位")
         private Object oldValue;
 
         /**
         * 变更新值
         */
-        @NotBlank(message = "变更新值不能为空")
         @Size(max = 255,message = "变更新值最大长度不能超过255位")
         private Object newValue;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
         * 分组信息
         */
-        @NotBlank(message = "分组信息不能为空")
         @Size(max = 255,message = "分组信息最大长度不能超过255位")
         private String groupName;
 

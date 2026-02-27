@@ -297,7 +297,7 @@ public class ProductChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BatchAddDTO {
-        @NotEmpty
+        @NotEmpty(message = "skuid不能为空")
         private List<String> skuIds;
 
         @NotEmpty
