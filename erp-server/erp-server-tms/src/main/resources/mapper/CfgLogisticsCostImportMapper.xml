@@ -90,14 +90,14 @@ clci.remark AS remark
 
     <select id="tabList" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportDTO$TabListDTO">
         SELECT
-        disabled AS tabFlag,
+        clci.disabled AS tabFlag,
         count(*)  AS count
-        FROM  cfg_logistics_cost_import
-        WHERE is_deleted=FALSE
+        FROM  cfg_logistics_cost_import AS clci
+        WHERE clci.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY disabled
+        GROUP BY clci.disabled
     </select>
 
 </mapper>
