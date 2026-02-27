@@ -179,7 +179,19 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(idList);
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
-
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.STOCKTAKING_PLAN.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+            }
+        }
         // 先按 code 分组，记录哪些 code 有关联的 GENERATED 状态
         Map<String, Boolean> codePushStatusMap = new HashMap<>();
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
@@ -246,6 +258,13 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             //根据 codePushStatusMap 设置 IsPushStocktakingProfitLoss
             if (codePushStatusMap.getOrDefault(item.getCode(), false)) {
                 item.setIsPushStocktakingProfitLoss(true);
+            }
+
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApprove)) {
+                    item.setApproveUserName(curApprove);
+                }
             }
         }
     }
