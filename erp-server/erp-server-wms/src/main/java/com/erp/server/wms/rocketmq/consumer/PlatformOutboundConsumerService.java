@@ -166,10 +166,15 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             referenceNo = referenceNo.split("_")[0];
         }
 
+        //是否需要走标发业务
+        Boolean isSignShipped = true;
         if(!referenceNo.contains(BusinessNoConstant.WFHD)
                 && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())
                 && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))){
             map = checkAndBuildMap(dto);
+
+            //不标发
+            isSignShipped = false;
         }else if(referenceNo.contains(BusinessNoConstant.WFHD)){
             //查询三方仓发货单
             ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(referenceNo);
@@ -268,19 +273,21 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     }
                 }
 
-                // 明细的存在没有标发的情况触发
-                List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
-                if(detailList.stream().anyMatch(v->!v.getIsSignShipped())){
-                    // 校验平台来源明细
-                    if (soB2cFeign.checkPlatformShipOrder(mainEntity.getId())) {
-                        // 调用第三方平台SDK标记发货(独立事务)
-                        String businessDesc = "第三方仓出库";
-                        asyncService.asyncShipOrder(mainEntity.getId(),
-                                mainEntity.getCode(),
-                                mainEntity.getDictPlatform(),
-                                mainEntity.convertSubmitPlatformUniqueKey(),
-                                JSONUtil.toJsonStr(dto),
-                                businessDesc, false, false);
+                if(isSignShipped){
+                    // 明细的存在没有标发的情况触发
+                    List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
+                    if(detailList.stream().anyMatch(v->!v.getIsSignShipped())){
+                        // 校验平台来源明细
+                        if (soB2cFeign.checkPlatformShipOrder(mainEntity.getId())) {
+                            // 调用第三方平台SDK标记发货(独立事务)
+                            String businessDesc = "第三方仓出库";
+                            asyncService.asyncShipOrder(mainEntity.getId(),
+                                    mainEntity.getCode(),
+                                    mainEntity.getDictPlatform(),
+                                    mainEntity.convertSubmitPlatformUniqueKey(),
+                                    JSONUtil.toJsonStr(dto),
+                                    businessDesc, false, false);
+                        }
                     }
                 }
                 //清除三方仓异常
