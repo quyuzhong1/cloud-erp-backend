@@ -45,6 +45,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.xpath.operations.Bool;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -186,30 +187,39 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
-        // 先按 code 分组，记录哪些 code 有关联的 GENERATED 状态
-        Map<String, Boolean> codePushStatusMap = new HashMap<>();
-        for (StocktakingTaskDTO.PagingViewDTO item : list) {
-            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(item.getDetailId());
-            if (stocktakingProfitLossDetailList.isEmpty()) {
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
-            } else {
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
-                // 如果状态是 GENERATED，则标记该 code 需要设置为 true
-                codePushStatusMap.put(item.getCode(), true);
-            }
 
-            StocktakingTaskDetailEntity stocktakingTaskDetail = taskDetailList.stream()
-                    .filter(obj -> obj.getId().equals(item.getDetailId()))
-                    .findFirst()
-                    .orElse(null);
-            if (Objects.nonNull(stocktakingTaskDetail)) {
-                if (stocktakingTaskDetail.getDiffQty() == 0) {
-                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+        for (StocktakingTaskDTO.PagingViewDTO item : list) {
+
+            List<StocktakingTaskDetailDTO.ViewDTO> viewDTOS = stocktakingTaskDetailService.listByMainId(item.getId());
+            List<StocktakingTaskDetailDTO.ViewDTO> filterList = viewDTOS.stream()
+                    .filter(obj -> obj.getDiffQty() > 0)
+                    .collect(Collectors.toList());
+            if (filterList.isEmpty()) {
+                //允许编辑，不允许下推
+                item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+            } else {
+                int count = 0;
+                for (StocktakingTaskDetailDTO.ViewDTO viewDTO : filterList) {
+                    List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(viewDTO.getId());
+                    if (!stocktakingProfitLossDetailList.isEmpty()) {
+                        count ++;
+                    }
+                }
+                if (count == 0) {
+                    //允许编辑，允许下推
+                    item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+                } else if (count == filterList.size()){
+                    //不允许编辑，不允许下推
+                    item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                } else {
+                    //不允许编辑，允许下推
+                    item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_ALL_GENERATE.getCode());
                 }
             }
-
-            // 先默认设置为 false，后续统一处理
-            item.setIsPushStocktakingProfitLoss(false);
         }
 
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
@@ -248,11 +258,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     map(StocktakingTaskDetailEntity::getSkuId).distinct().count());
 
             item.setSkuCount(skuCount);
-
-            //根据 codePushStatusMap 设置 IsPushStocktakingProfitLoss
-            if (codePushStatusMap.getOrDefault(item.getCode(), false)) {
-                item.setIsPushStocktakingProfitLoss(true);
-            }
 
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));

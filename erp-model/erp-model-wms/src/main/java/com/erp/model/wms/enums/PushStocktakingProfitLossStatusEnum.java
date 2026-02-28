@@ -17,6 +17,7 @@ public enum PushStocktakingProfitLossStatusEnum implements EnumMessage {
 
 
     NOT_GENERATE("notGenerate", "未生成"),
+    NOT_ALL_GENERATE("notAllGenerate", "未完全生成"),
     GENERATED("generated", "已生成"),
     NOT_NEED_GENERATE("notNeedGenerate", "无需生成");
 
