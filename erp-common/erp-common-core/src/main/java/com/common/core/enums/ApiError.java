@@ -1409,6 +1409,7 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY(11134,"盘点日期不能小于当前日期，请修改后重新审核"),
     WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE(11135,"下推生成的盘盈盘亏单不允许修改"),
     WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
+    WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"盘点日期不能小于当前日期,请修改后重新审核"),
 
     /**
      * 头程发货单 错误 信息 11500-12000

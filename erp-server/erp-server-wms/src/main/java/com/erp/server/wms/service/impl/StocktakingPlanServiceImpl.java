@@ -308,6 +308,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
+        //盘点日期不能小于当前日期
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE);
+        }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
