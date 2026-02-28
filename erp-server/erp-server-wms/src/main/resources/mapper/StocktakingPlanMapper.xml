@@ -155,6 +155,7 @@
             AND st.is_deleted = FALSE
         WHERE
             sp.is_deleted = FALSE
+            and sp.approve_status = 'approve'
             AND st.ID IS NULL
             AND now( ) >= sp.plan_task_time
             AND sp.end_time >= now( )

@@ -178,7 +178,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(idList);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(idList);
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
+        //List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
@@ -233,9 +233,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             String approveStatusName = approveStatus.getName();
             item.setApproveStatusName(approveStatusName);
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-            String waitApproveUserName = StringUtils.join(curApproveName, ",");
-            item.setWaitApproveUserName(waitApproveUserName);
+//            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+//            String waitApproveUserName = StringUtils.join(curApproveName, ",");
+//            item.setWaitApproveUserName(waitApproveUserName);
             //分担规则
             SeparateRuleEnum separateRule = item.getSeparateRule();
             item.setSeparateRuleName(Objects.nonNull(separateRule) ? separateRule.getName() : "");
