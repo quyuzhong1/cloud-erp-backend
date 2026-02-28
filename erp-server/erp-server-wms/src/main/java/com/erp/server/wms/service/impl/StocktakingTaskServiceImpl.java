@@ -44,7 +44,6 @@ import com.erp.server.wms.listener.StocktakingTaskExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
-import com.rtfparserkit.rtf.Command;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -840,7 +839,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
-        StocktakingTaskEntity taskEntity = this.getById(Command.id);
+        StocktakingTaskEntity taskEntity = this.getById(id);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未找到盘点任务单");
         }
