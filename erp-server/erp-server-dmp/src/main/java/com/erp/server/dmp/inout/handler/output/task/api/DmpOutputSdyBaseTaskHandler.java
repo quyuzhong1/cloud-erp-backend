@@ -163,7 +163,7 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 			Map<String, ShudiyunB2cOrderDTO> newWdtMap = new HashMap<>();
 			
 			Collection<String> values = tidRawMaps.values();
-			if(CollUtil.isNotEmpty(values)) {
+			if(CollUtil.isEmpty(values)) {
 				dbPlatformCodeSet = new HashSet<>();
 			}else {
 				dbPlatformCodeSet = dmpSoOriginalInfoService.lambdaQuery().in(DmpSoOriginalInfoEntity::getPlatformCode, values)
