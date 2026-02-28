@@ -22,6 +22,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -49,6 +50,7 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -375,12 +377,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             }).collect(Collectors.toList());
             addDTO.setDetailDTOList(detailDTOList);
             try {
-                addList.forEach(v->productChangeService.add(v));
+                productChangeService.add(addDTO);
             }catch (Exception e){
                 log.error("新增失败", e);
                 entry.getValue().forEach(v->v.setErrorMsg("新增失败："+e.getMessage()));
                 errorList.addAll(entry.getValue());
-             }
+            }
         }
     }
 
@@ -570,7 +572,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         ProductChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
 
         // 删除主单数据
@@ -1023,6 +1025,27 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
     }
 
+    @Override
+    public BatchResultDTO invalid(ProductChangeEntity productChangeEntity,String remark) {
+        if(Objects.isNull(productChangeEntity)){
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品变更信息单");
+        }
+        // 只有待提交数据允许作废
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), productChangeEntity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), productChangeEntity.getApproveStatus())) {
+            throw new ServiceException("只有待提交或审核不通过数据支持作废");
+        }
+        if(productChangeEntity.getInvalidStatus()){
+            throw new ServiceException("该数据已作废");
+        }
+        // 删除主单数据
+        productChangeEntity.setInvalidStatus(true);
+        super.updateById(productChangeEntity);
+        // 删除日志数据
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ，备注：{}", UserContext.getDefaultLoginUser().getUserName(), productChangeEntity.getCode(), "产品信息变更单",remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "作废操作");
+        return BatchResultDTO.success(productChangeEntity.getId(), productChangeEntity.getCode(), OperationTypeEnum.INVALID);
+    }
+
     /**
     * 启动流程
     *
@@ -1095,7 +1118,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
-        return;
+        if(entity.getInvalidStatus()){
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
+        }
     }
 
     /**
@@ -1162,6 +1187,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             //映射字段
             String newValue = data.getNewValue();
+            String oldValue = data.getOldValue();
 
             ProductChangeFieldEnum productChangeFieldEnum = ProductChangeFieldEnum.getByEntityField(data.getField());
             assert productChangeFieldEnum != null;
@@ -1172,11 +1198,19 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     if(Objects.nonNull(basicDictEntity)){
                         data.setNewValue(basicDictEntity.getName());
                     }
+                    BasicDictEntity oldBasicDictEntity = basicDictList.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(oldBasicDictEntity)){
+                        data.setOldValue(oldBasicDictEntity.getName());
+                    }
                     break;
                 case PRODUCT_CATEGORY:
                     BasicCategoryEntity basicCategoryEntity = basicCategoryEntities.stream().filter(e -> Objects.equals(e.getId(),  newValue)).findFirst().orElse(null);
                     if(Objects.nonNull(basicCategoryEntity)){
                         data.setNewValue(basicCategoryEntity.getName());
+                    }
+                    BasicCategoryEntity oldBasicCategoryEntity = basicCategoryEntities.stream().filter(e -> Objects.equals(e.getId(),  oldValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(oldBasicCategoryEntity)){
+                        data.setOldValue(oldBasicCategoryEntity.getName());
                     }
                     break;
                 case APPLICATION_CATEGORY:
@@ -1189,11 +1223,25 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                         }
                     }
                     data.setNewValue(String.join(",", applicationCategoryNameList));
+
+                    List<String> oldApplicationCategoryNameList = new ArrayList<>();
+                    String[] oldApplicationCategoryIdList = oldValue.split(",");
+                    for (String applicationCategoryId : oldApplicationCategoryIdList) {
+                        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), applicationCategoryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(applicationCategoryEntity)){
+                            oldApplicationCategoryNameList.add(applicationCategoryEntity.getName());
+                        }
+                    }
+                    data.setOldValue(String.join(",", oldApplicationCategoryNameList));
                     break;
                 case R_D_TEAM:
                     ProductRDTTeamEntity productRDTTeamEntity = productRDTTeamEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
                     if(Objects.nonNull(productRDTTeamEntity)){
                         data.setNewValue(productRDTTeamEntity.getName());
+                    }
+                    ProductRDTTeamEntity oldProductRDTTeamEntity = productRDTTeamEntities.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(oldProductRDTTeamEntity)){
+                        data.setOldValue(oldProductRDTTeamEntity.getName());
                     }
                     break;
                 case BRAND:
@@ -1201,17 +1249,29 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     if(Objects.nonNull(productBrandEntity)){
                         data.setNewValue(productBrandEntity.getName());
                     }
+                    ProductBrandEntity oldProductBrandEntity = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(oldProductBrandEntity)){
+                        data.setOldValue(oldProductBrandEntity.getName());
+                    }
                     break;
                 case PRODUCT_GRADE:
                     BasicDictEntity gradeDict = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
                     if(Objects.nonNull(gradeDict)){
                         data.setNewValue(gradeDict.getName());
                     }
+                    BasicDictEntity oldGradeDict = basicDictList.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(oldGradeDict)){
+                        data.setOldValue(oldGradeDict.getName());
+                    }
                     break;
                 case BU_LINE:
                     BasicProductBuEntity basicProductBuEntity = basicProductBuEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
                     if(Objects.nonNull(basicProductBuEntity)){
                         data.setNewValue(basicProductBuEntity.getName());
+                    }
+                    BasicProductBuEntity oldBasicProductBuEntity = basicProductBuEntities.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst().orElse(null);
+                    if(Objects.nonNull(oldBasicProductBuEntity)){
+                        data.setOldValue(oldBasicProductBuEntity.getName());
                     }
                     break;
 
@@ -1226,11 +1286,25 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                         }
                     }
                     data.setNewValue(String.join(",", countryNames));
+
+                    List<String> oldCountryNames = new ArrayList<>();
+                    String[] oldCountryIdList = oldValue.split(",");
+                    for (String countryId : oldCountryIdList) {
+                        DictCountryDTO.ListDTO country = countryList.stream().filter(e -> Objects.equals(e.getId(), countryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(country)){
+                            oldCountryNames.add(country.getId());
+                        }
+                    }
+                    data.setNewValue(String.join(",", oldCountryNames));
                     break;
                 case SALE_PLATFORM:
                     ProductSalesPlatformEnum productSalesPlatformEnum = ProductSalesPlatformEnum.getByCode(newValue);
                     if(Objects.nonNull(productSalesPlatformEnum)) {
                         data.setNewValue(productSalesPlatformEnum.getName());
+                    }
+                    ProductSalesPlatformEnum oldProductSalesPlatformEnum = ProductSalesPlatformEnum.getByCode(oldValue);
+                    if(Objects.nonNull(oldProductSalesPlatformEnum)) {
+                        data.setOldValue(oldProductSalesPlatformEnum.getName());
                     }
                     break;
                 default:

@@ -166,4 +166,6 @@ public interface ProductChangeService extends SuperService<ProductChangeEntity> 
     Object convertValue(Class<?> targetType, String valueStr);
 
     List<ProductChangeDTO.ProductChangeFieldDTO> getProductChangeFieldEnum();
+
+    BatchResultDTO invalid(ProductChangeEntity productChangeEntity,String remark);
 }
