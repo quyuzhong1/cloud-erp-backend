@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.ProductChangeFieldEnum;
+import com.erp.server.plm.service.ProductChangeService;
 import com.erp.server.plm.service.ProductPackService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -62,12 +63,16 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
     @Resource
     private ProductPackService productPackService;
 
+    @Resource
+    private ProductChangeService productChangeService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(ProductChangeEntity productChangeEntity, List<ProductChangeDetailDTO.AddDTO> detailDTOList) {
         detailDTOList.forEach(v->v.setMainId(productChangeEntity.getId()));
         List<ProductChangeDetailEntity> detailEntityList = BeanMapperUtils.copyList(ProductChangeDetailEntity.class, detailDTOList);
         this.checkData(productChangeEntity,detailEntityList);
+        productChangeService.buildOldValue(Collections.singletonList(productChangeEntity),detailEntityList);
         boolean save = super.saveBatch(detailEntityList);
         if(!save) {
             throw new ServiceException("产品变更信息明细单保存失败");
