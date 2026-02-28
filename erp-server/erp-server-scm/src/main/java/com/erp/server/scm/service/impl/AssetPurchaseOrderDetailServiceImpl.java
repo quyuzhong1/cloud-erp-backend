@@ -288,6 +288,15 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             // 补充关联关系
             fillDetaillList(newList,assetPurchaseOrderId);
 
+            // 从价表取价
+            List<PurchasePriceDTO.PriceDTO> priceDTOS = getPurchasePrices(updateDTO, detailList);
+
+            // 构建明细实体
+            List<AssetPurchaseOrderDetailEntity> detailEntityList = buildDetailEntities(updateDTO, detailList, priceDTOS);
+
+            // 检查总金额是否为 0
+            checkTotalAmount(detailEntityList);
+
             this.saveOrUpdateBatch(newList);
         }
     }
