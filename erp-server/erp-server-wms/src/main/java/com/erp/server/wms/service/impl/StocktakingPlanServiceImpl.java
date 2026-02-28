@@ -370,6 +370,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         stocktakingTaskService.removeBySourceId(id);
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //清空计划下推时间
+        removePlanTaskTime(id);
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "反审核操作");
@@ -608,6 +610,16 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             .set(StocktakingPlanEntity::getApproveTime, null)
             .update();
         }
+
+    /**
+     *
+      * @param id
+     */
+    public void removePlanTaskTime(String id){
+        this.lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
+                .set(StocktakingPlanEntity::getPlanTaskTime, null)
+                .update();
+    }
 
     /**
     * 更新审核状态
