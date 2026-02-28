@@ -197,7 +197,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
             List<StocktakingTaskDetailDTO.ViewDTO> viewDTOS = stocktakingTaskDetailService.listByMainId(item.getId());
             List<StocktakingTaskDetailDTO.ViewDTO> filterList = viewDTOS.stream()
-                    .filter(obj -> obj.getDiffQty() > 0)
+                    .filter(obj -> obj.getDiffQty() != 0)
                     .collect(Collectors.toList());
             if (filterList.isEmpty()) {
                 //允许编辑，不允许下推
@@ -554,6 +554,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         List<StocktakingTaskDetailEntity> stocktakingTaskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Collections.singletonList(taskId));
         if (CollectionUtils.isEmpty(stocktakingTaskDetailList)) {
             return Collections.emptyList();
+        }
+
+        long count = stocktakingTaskDetailList.stream().filter(item -> item.getDiffQty() == 0).count();
+        if (count == stocktakingTaskDetailList.size()) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_NEED_PUSH,taskCode);
         }
 
         // 遍历 taskDetailIdList，检查是否有对应的盈亏明细
