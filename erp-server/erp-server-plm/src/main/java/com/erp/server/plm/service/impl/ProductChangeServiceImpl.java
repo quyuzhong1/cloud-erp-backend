@@ -1436,7 +1436,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             String oldValue = data.getOldValue();
 
             ProductChangeFieldEnum productChangeFieldEnum = ProductChangeFieldEnum.getByEntityField(data.getField());
-            assert productChangeFieldEnum != null;
+            if(Objects.isNull(productChangeFieldEnum)){
+                continue;
+            }
             data.setFieldName(productChangeFieldEnum.getFieldLabel());
             switch (productChangeFieldEnum) {
                 case PRODUCT_ATTRIBUTE:
