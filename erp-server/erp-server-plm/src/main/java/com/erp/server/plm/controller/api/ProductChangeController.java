@@ -292,6 +292,43 @@ public class ProductChangeController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    /**
+     * 作废
+     * @author lrp
+     * @date:  2026-02-03
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:invalid",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "产品变更信息表作废")
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
+        Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = productChangeService.invalid(idEntityMap.get(id),dto.getRemark());
+            }catch (Exception e){
+                log.error("产品变更信息单作废失败",e);
+                ProductChangeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "产品变更信息单不存在, 作废失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
     * 撤销
