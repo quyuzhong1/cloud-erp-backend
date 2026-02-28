@@ -310,7 +310,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         //盘点日期不能小于当前日期
         if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
-            throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE);
+            throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE,entity.getCode());
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -556,6 +556,13 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
         }
 
+        for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+                throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE,entity.getCode());
+            }
+        }
+
+
         for (String id : ids) {
             List<StocktakingTaskEntity> stocktakingTaskList = stocktakingTaskService.listBySourceId(id);
             if (!stocktakingTaskList.isEmpty()) {
@@ -761,6 +768,14 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             if (CollUtil.isEmpty(detailEntityList)) {
                 log.warn("盘点计划【{}】无明细数据，跳过处理", entity.getId());
                 removedIds.put(planId, "无明细数据");
+                idIterator.remove();
+                continue;
+            }
+
+            //盘点日期不能小于当前日期
+            if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+                log.warn("【{}】盘点日期不能小于当前日期,请修改后重新审核", entity.getId());
+                removedIds.put(planId, "盘点日期小于当前日期");
                 idIterator.remove();
                 continue;
             }
