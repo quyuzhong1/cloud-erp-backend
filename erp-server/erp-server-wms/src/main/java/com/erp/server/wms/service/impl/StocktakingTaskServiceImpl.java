@@ -195,7 +195,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
 
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
-
             List<StocktakingTaskDetailDTO.ViewDTO> viewDTOS = stocktakingTaskDetailService.listByMainId(item.getId());
             List<StocktakingTaskDetailDTO.ViewDTO> filterList = viewDTOS.stream()
                     .filter(obj -> obj.getDiffQty() > 0)
@@ -206,9 +205,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
             } else {
                 int count = 0;
+                List<String> stocktakingTaskDetailIdList = filterList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+                List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceIds(stocktakingTaskDetailIdList);
                 for (StocktakingTaskDetailDTO.ViewDTO viewDTO : filterList) {
-                    List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(viewDTO.getId());
-                    if (!stocktakingProfitLossDetailList.isEmpty()) {
+                    List<StocktakingProfitLossDetailEntity> detailList = stocktakingProfitLossDetailList.stream().filter(o -> Objects.equals(viewDTO.getId(), o.getSourceDetailId())).collect(Collectors.toList());
+                    if (!detailList.isEmpty()) {
                         count ++;
                     }
                 }

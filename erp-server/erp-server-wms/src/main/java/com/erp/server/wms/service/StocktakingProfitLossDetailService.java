@@ -49,4 +49,12 @@ public interface StocktakingProfitLossDetailService extends SuperService<Stockta
      * @return
      */
     List<StocktakingProfitLossDetailEntity> listBySourceId(String sourceId);
+
+    /**
+     *
+     * @param sourceIds
+     * @return
+     */
+    List<StocktakingProfitLossDetailEntity> listBySourceIds(List<String> sourceIds);
+
 }
