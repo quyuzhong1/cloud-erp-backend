@@ -4853,11 +4853,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             authChannelViewDTOList = logisticsAuthFeign.listAuthChannelView(channelIds);
         }
         List<LogisticsBillDTO.LogisticsBillVo> billVos = list.stream()
-                .filter(bill -> StringUtils.isNotBlank(bill.getLogisticsCode()))
+                .filter(bill -> StringUtils.isNotBlank(bill.getTrackCode()))
                 .map(bill -> {
                     LogisticsBillDTO.LogisticsBillVo logisticsBillVo = new LogisticsBillDTO.LogisticsBillVo();
                     logisticsBillVo.setSourceId(bill.getId());
-                    logisticsBillVo.setTrackNo(bill.getLogisticsCode());
+                    logisticsBillVo.setTrackNo(bill.getTrackCode());
                     return logisticsBillVo;
                 }).collect(Collectors.toList());
         //获取运输状态
@@ -4923,13 +4923,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
             }
-            if (StringUtils.isNotBlank(data.getLogisticsCode()) && Objects.nonNull(logisticsBillMap)) {
-                List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(data.getLogisticsCode());
+            if (StringUtils.isNotBlank(data.getTrackCode()) && Objects.nonNull(logisticsBillMap)) {
+                List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(data.getTrackCode());
                 if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
-                    LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.get(0);
                     //运输状态
-                    data.setTrackStatus(logisticsBillVo.getTrackStatus());
-                    data.setTrackStatusName(logisticsBillVo.getTrackStatusName());
+                    data.setTrackStatus(logisticsBillVos.get(0).getTrackStatus());
+                    data.setTrackStatusName(logisticsBillVos.get(0).getTrackStatusName());
                 }
             }
             data.setVatInvoiceStatusName(SoB2cVatStatusEnum.getName(data.getVatInvoiceStatus()));
