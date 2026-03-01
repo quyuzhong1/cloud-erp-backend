@@ -2157,16 +2157,61 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushDTO idsDTO){
+//    @Transactional(rollbackFor = Exception.class)
+    public void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushDTO dto){
         //新建一个任务
-        String jsonStr = JSONUtil.toJsonStr(idsDTO);
+        String jsonStr = JSONUtil.toJsonStr(dto);
         String taskId = asyncTaskRecordService.addManualTask(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(), jsonStr);
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
+
+        // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
+        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(null, null);
+
+        if (CollectionUtils.isEmpty(list)) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"重量分摊记录不存在");
+            return;
+        }
+        List<String> deliveryIds = list.stream().map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliveryIds)) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单关联记录为空");
+            return;
+        }else {
+            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,deliveryIds.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
+        }
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单记录不存在");
+            return;
+        }else {
+            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,firstMileDeliveryEntityList.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
+        }
+        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
+        if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单明细记录不存在");
+            return;
+        }
+
+        List<TmsAsyncTaskDetailEntity> detailList = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        for (FirstMileDeliveryEntity firstMileDeliveryEntity : firstMileDeliveryEntityList) {
+            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+            detail.setMainId(taskId);
+            detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
+            detail.setBusinessId(firstMileDeliveryEntity.getId());
+            detail.setBusinessCode(firstMileDeliveryEntity.getCode());
+            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+            detail.setCreateTime(now);
+            detailList.add(detail);
+        }
+        asyncTaskDetailRecordService.saveBatch(detailList);
+
+        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,detailList.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
+
         TmsAsyncTaskRecordDTO.TaskDTO taskDTO = new TmsAsyncTaskRecordDTO.TaskDTO();
-        taskDTO.setIds(idsDTO.getIds());
-        taskDTO.setReportDate(idsDTO.getReportDate());
+        taskDTO.setIds(dto.getIds());
+        taskDTO.setReportDate(dto.getReportDate());
         taskDTO.setTaskId(taskId);
         taskDTO.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
         SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, taskDTO, taskId);

@@ -1,8 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -165,6 +163,32 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .set(TmsAsyncTaskRecordEntity::getStatus, status)
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
                 .set(TmsAsyncTaskRecordEntity::getErrorData, errorMsg)
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                .update();
+    }
+
+    /**
+     * 任务超时中止
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void terminateTaskTimeout(String taskId, String errorMsg) {
+        List<TmsAsyncTaskDetailEntity> detailEntityList = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
+        int detailCount = detailEntityList.size();
+        long finishCount = detailEntityList.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.FINISH.getCode())).count();
+        tmsAsyncTaskDetailService.lambdaUpdate().set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .set(TmsAsyncTaskDetailEntity::getEndTime, LocalDateTime.now())
+                .set(TmsAsyncTaskDetailEntity::getErrorData, errorMsg)
+                .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+                .ne(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
+                .update();
+
+        lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus,  TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, errorMsg)
+                .set(TmsAsyncTaskRecordEntity::getDetailCount, detailCount)
+                .set(TmsAsyncTaskRecordEntity::getErrorCount, detailCount - finishCount)
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
     }

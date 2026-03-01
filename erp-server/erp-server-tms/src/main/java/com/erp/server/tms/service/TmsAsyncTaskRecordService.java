@@ -26,6 +26,8 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     void updateTask(String taskId, String status, String errorMsg);
 
+    void terminateTaskTimeout(String taskId, String errorMsg);
+
     void updateTaskFinally(String taskId);
 
     PagingVO<TmsAsyncTaskRecordDTO.ListDTO> paging(PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> dto);

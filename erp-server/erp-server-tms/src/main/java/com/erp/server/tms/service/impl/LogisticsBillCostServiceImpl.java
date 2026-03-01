@@ -90,6 +90,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -2096,12 +2097,44 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
+
         TmsAsyncTaskRecordDTO.TaskDTO taskDTO = new TmsAsyncTaskRecordDTO.TaskDTO();
         taskDTO.setIds(dto.getIds());
         taskDTO.setReportDate(dto.getReportDate());
         taskDTO.setTaskId(taskId);
         taskDTO.setBusinessType(businesType);
         taskDTO.setType(dto.getType());
+
+        List<String> ids = listByCanPushAllocation(taskDTO);
+        List<LogisticsBillCostEntity> list = listByIds(ids);
+
+        if(CollUtil.isEmpty(list)) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+            return;
+        }else {
+            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
+        }
+        List<String> logisticsBillIds = list.stream().map(LogisticsBillCostEntity::getLogisticsBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+
+        Map<String, String> logisticsBillMap = logisticsBillService.listByIds(logisticsBillIds).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(LogisticsBillEntity::getId, LogisticsBillEntity::getBusinessCode,(o1,o2)->o1));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<TmsAsyncTaskDetailEntity> detailList = new ArrayList<>();
+        for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
+            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+            detail.setMainId(taskId);
+            detail.setBusinessType(businesType);
+            detail.setBusinessId(logisticsBillCostEntity.getId());
+            detail.setBusinessCode(logisticsBillMap.getOrDefault(logisticsBillCostEntity.getLogisticsBillId(),""));
+            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+            detail.setStartTime(now);
+            detailList.add(detail);
+        }
+        asyncTaskDetailRecordService.saveBatch(detailList);
+
         SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, taskDTO, taskId);
         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
             log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
