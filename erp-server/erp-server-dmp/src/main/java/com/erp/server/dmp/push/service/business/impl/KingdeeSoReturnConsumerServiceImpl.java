@@ -124,6 +124,8 @@ public class KingdeeSoReturnConsumerServiceImpl implements KingdeeSoReturnConsum
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         JSONObject model;
         try {
+            //改为用code查询
+            map.remove("syncKingdeeId");
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //更新数据
