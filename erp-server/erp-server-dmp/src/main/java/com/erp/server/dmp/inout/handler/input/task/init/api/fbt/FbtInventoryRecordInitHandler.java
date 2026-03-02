@@ -44,6 +44,8 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
     private static final String KEY_INBOUND_ORDER_ID = "inboundOrderId";
     private static final String KEY_INBOUND_ORDER_ID_UNDERLINE = "inbound_order_id";
     private static final String KEY_ORDER = "order";
+    private static final String KEY_ORDER_TYPE = "orderType";
+    private static final String KEY_ORDER_TYPE_UNDERLINE = "order_type";
     private static final String KEY_PLATFORM_WAREHOUSE_CODE = "platformWarehouseCode";
     private static final String KEY_FBT_WAREHOUSE_ID = "fbt_warehouse_id";
     private static final String KEY_WAREHOUSE_CODE = "warehouse_code";
@@ -139,6 +141,11 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
                 source.get(KEY_WAREHOUSE_CODE),
                 source.get(KEY_WAREHOUSE_CODE_CAMEL)
         );
+        String orderType = firstNotBlank(
+                source.get(KEY_ORDER_TYPE_UNDERLINE),
+                source.get(KEY_ORDER_TYPE),
+                getMapValue(source.get(KEY_ORDER), "type")
+        );
         row.put(KEY_RECORD_ID, recordId);
         String uniqueId = firstNotBlank(recordId, buildFallbackId(source, authId, shopId));
         row.put(KEY_UNIQUE_ID, normalizeUniqueId(uniqueId));
@@ -147,6 +154,7 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
         row.put(KEY_AUTH_ID, authId);
         row.put(KEY_SHOP_ID, shopId);
         row.put(KEY_INBOUND_ORDER_ID, inboundOrderId);
+        row.put(KEY_ORDER_TYPE, orderType);
         row.put(KEY_PLATFORM_WAREHOUSE_CODE, platformWarehouseCode);
         row.put(KEY_PRODUCT_SKU, productSku);
         row.put(KEY_GOODS_ID, goodsId);
