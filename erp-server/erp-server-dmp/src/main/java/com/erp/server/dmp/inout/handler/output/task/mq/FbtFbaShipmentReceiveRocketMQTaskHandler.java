@@ -51,6 +51,9 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
     private static final String KEY_INBOUND_ORDER_ID = "inboundOrderId";
     private static final String KEY_INBOUND_ORDER_ID_UNDERLINE = "inbound_order_id";
     private static final String KEY_ORDER = "order";
+    private static final String KEY_ORDER_TYPE = "orderType";
+    private static final String KEY_ORDER_TYPE_UNDERLINE = "order_type";
+    private static final String ORDER_TYPE_INBOUND = "INBOUND_ORDER";
     private static final String KEY_PLATFORM_WAREHOUSE_CODE = "platformWarehouseCode";
     private static final String KEY_WAREHOUSE_CODE_UNDERLINE = "warehouse_code";
     private static final String KEY_FBT_WAREHOUSE_ID = "fbt_warehouse_id";
@@ -80,6 +83,7 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
         long skipMissingFnSku = 0;
         long skipMissingMsku = 0;
         long skipQtyZero = 0;
+        long skipOrderType = 0;
         int printedSkipSample = 0;
 
         Map<DmpCfgInputConvertEntity, List<Map<String, Object>>> changeMongoMap = dmpRequest.getChangeConvertInputMongoEntityListMaps();
@@ -114,6 +118,27 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
                 );
                 if (StrUtil.isBlank(inboundOrderId)) {
                     inboundOrderId = getMapValue(row.get(KEY_ORDER), KEY_ID);
+                }
+                String orderType = firstNotBlank(row, KEY_ORDER_TYPE, KEY_ORDER_TYPE_UNDERLINE);
+                if (StrUtil.isBlank(orderType)) {
+                    orderType = getMapValue(row.get(KEY_ORDER), "type");
+                }
+                if (StrUtil.isNotBlank(orderType) && !ORDER_TYPE_INBOUND.equalsIgnoreCase(orderType)) {
+                    skipOrderType++;
+                    if (printedSkipSample < 5) {
+                        log.warn("FBT签收过滤: unsupported orderType={}, row={}", orderType, JSON.toJSONString(row));
+                        printedSkipSample++;
+                    }
+                    continue;
+                }
+                // 兜底：历史数据无orderType时，过滤明显的CONSIGN单号
+                if (StrUtil.isBlank(orderType) && StrUtil.startWithIgnoreCase(inboundOrderId, "OBF")) {
+                    skipOrderType++;
+                    if (printedSkipSample < 5) {
+                        log.warn("FBT签收过滤: inferred non-inbound order by id={}, row={}", inboundOrderId, JSON.toJSONString(row));
+                        printedSkipSample++;
+                    }
+                    continue;
                 }
                 String shopId = firstNotBlank(row, KEY_SHOP_ID, KEY_SHOP_ID_UNDERLINE);
                 String fnSku = firstNotBlank(row, KEY_GOODS_ID, KEY_GOODS_ID_UNDERLINE);
@@ -192,8 +217,8 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
         for (Map.Entry<String, FbaReceiveGroupEntity> entry : groupedMap.entrySet()) {
             result.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
         }
-        log.info("FBT签收输出结束: cfgOutputId={}, totalRows={}, resultGroups={}, resultMessages={}, skipBlack={}, skipInboundOrder={}, skipShopId={}, skipFnSku={}, skipMsku={}, skipQtyZero={}",
-                cfgOutputId, totalRows, groupedMap.size(), result.size(), skipBlack, skipMissingInboundOrder, skipMissingShopId, skipMissingFnSku, skipMissingMsku, skipQtyZero);
+        log.info("FBT签收输出结束: cfgOutputId={}, totalRows={}, resultGroups={}, resultMessages={}, skipBlack={}, skipOrderType={}, skipInboundOrder={}, skipShopId={}, skipFnSku={}, skipMsku={}, skipQtyZero={}",
+                cfgOutputId, totalRows, groupedMap.size(), result.size(), skipBlack, skipOrderType, skipMissingInboundOrder, skipMissingShopId, skipMissingFnSku, skipMissingMsku, skipQtyZero);
         return result;
     }
 
