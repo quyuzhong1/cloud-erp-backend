@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.common.business.utils.MD5Util;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -69,10 +70,11 @@ public class FbtInventoryRecordRocketMQTaskHandler extends DmpOutputRocketMQTask
                 if (this.validateDataBlack(payload, cfgOutputId)) {
                     continue;
                 }
-                String uniqueId = stringVal(payload.get(KEY_UNIQUE_ID));
+                String uniqueId = normalizeUniqueId(stringVal(payload.get(KEY_UNIQUE_ID)));
                 if (StrUtil.isBlank(uniqueId)) {
                     continue;
                 }
+                payload.put(KEY_UNIQUE_ID, uniqueId);
                 result.put(uniqueId, JSON.toJSONString(payload));
             }
         }
@@ -129,6 +131,16 @@ public class FbtInventoryRecordRocketMQTaskHandler extends DmpOutputRocketMQTask
 
     private String stringVal(Object obj) {
         return obj == null ? null : String.valueOf(obj);
+    }
+
+    private String normalizeUniqueId(String uniqueId) {
+        if (StrUtil.isBlank(uniqueId)) {
+            return null;
+        }
+        if (uniqueId.length() <= 50) {
+            return uniqueId;
+        }
+        return "fbtir_" + MD5Util.toMD5(uniqueId);
     }
 
     @Override
