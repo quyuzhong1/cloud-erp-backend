@@ -1402,8 +1402,14 @@ public class TikTokSdkClientService {
         // Get Inbound Order接口可能是GET请求，参数放在URL中
         // 如果提供了入库订单ID列表，则查询指定订单；否则查询时间范围内的所有订单
         if (inboundOrderIds != null && CollectionUtil.isNotEmpty(inboundOrderIds)) {
-            // 查询指定订单，使用inbound_order_ids参数
-            params.put("inbound_order_ids", inboundOrderIds);
+            // 查询指定订单，使用ids参数（官方示例）
+            // 注意：签名字符串与实际URL参数必须完全一致，这里统一使用逗号分隔字符串
+            String inboundOrderIdsParam = inboundOrderIds.stream()
+                    .filter(StrUtil::isNotBlank)
+                    .collect(Collectors.joining(","));
+            if (StrUtil.isNotBlank(inboundOrderIdsParam)) {
+                params.put("ids", inboundOrderIdsParam);
+            }
         } else {
             // 查询时间范围内的所有订单
             params.put("create_time_start", oneMonthAgo);
@@ -1445,14 +1451,8 @@ public class TikTokSdkClientService {
             if (params.containsKey("create_time_end")) {
                 sb.append("&create_time_end=" + params.get("create_time_end") + "");
             }
-            if (params.containsKey("inbound_order_ids")) {
-                // inbound_order_ids 可能是数组，需要特殊处理
-                List<String> orderIds = (List<String>) params.get("inbound_order_ids");
-                if (CollectionUtil.isNotEmpty(orderIds)) {
-                    // 对于数组参数，可能需要以 JSON 数组格式传递，或者以逗号分隔
-                    // 根据 TikTok API 文档，这里使用逗号分隔的字符串
-                    sb.append("&inbound_order_ids=" + String.join(",", orderIds));
-                }
+            if (params.containsKey("ids")) {
+                sb.append("&ids=" + params.get("ids"));
             }
             sb.append("&page_size=" + params.get("page_size") + "");
             if (params.containsKey("page_token")) {

@@ -960,8 +960,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         		.collect(Collectors.toList());
         Map<String, Object> wdtSoReturnMap = new HashMap<>();
         if(CollUtil.isNotEmpty(wdtPlatformCodeList)) {
-        	wdtSoReturnMap = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getTid, wdtPlatformCodeList).eq(DmpSoReturnDetailEntity::getReturnOriginalType, "1").list()
-    		.stream().filter(d -> StringUtils.isNotBlank(d.getSkuNo())).collect(Collectors.toMap(d -> d.getTid() + "_" + d.getSkuNo(), d -> null , (d1 , d2) -> d1));
+        	wdtSoReturnMap = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getTid, wdtPlatformCodeList).eq(DmpSoReturnDetailEntity::getReturnOriginalType, "1")
+        			.ne(DmpSoReturnDetailEntity::getSkuNo, "").list()
+    		.stream().collect(Collectors.toMap(d -> d.getTid() + "_" + d.getSkuNo(), d -> "d" , (d1 , d2) -> d1));
         }
         cacheMap.put("wdtSoReturnMap", wdtSoReturnMap);
         

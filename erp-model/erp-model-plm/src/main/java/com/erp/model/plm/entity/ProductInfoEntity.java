@@ -266,4 +266,7 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
      */
     @TableField(value = "application_category_id")
     private String applicationCategoryId;
+
+    @TableField(exist = false)
+    private String applicationCategoryName;
 }

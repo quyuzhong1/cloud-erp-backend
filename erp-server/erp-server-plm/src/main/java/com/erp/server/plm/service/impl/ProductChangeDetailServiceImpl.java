@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.ProductChangeFieldEnum;
+import com.erp.server.plm.service.ProductChangeService;
 import com.erp.server.plm.service.ProductPackService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -62,12 +63,16 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
     @Resource
     private ProductPackService productPackService;
 
+    @Resource
+    private ProductChangeService productChangeService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(ProductChangeEntity productChangeEntity, List<ProductChangeDetailDTO.AddDTO> detailDTOList) {
         detailDTOList.forEach(v->v.setMainId(productChangeEntity.getId()));
         List<ProductChangeDetailEntity> detailEntityList = BeanMapperUtils.copyList(ProductChangeDetailEntity.class, detailDTOList);
         this.checkData(productChangeEntity,detailEntityList);
+        productChangeService.buildOldValue(Collections.singletonList(productChangeEntity),detailEntityList);
         boolean save = super.saveBatch(detailEntityList);
         if(!save) {
             throw new ServiceException("产品变更信息明细单保存失败");
@@ -117,7 +122,7 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
     @Override
     public Boolean update(ProductChangeEntity productChangeEntity ,List<ProductChangeDetailDTO.UpdateDTO> updateDTOList) {
         //查询数据库数据
-        List<ProductChangeDetailEntity> dbList = this.listByMains(Lists.newArrayList(productChangeEntity.getSkuId()));
+        List<ProductChangeDetailEntity> dbList = this.listByMains(Lists.newArrayList(productChangeEntity.getId()));
         List<String> dbIdList = dbList.stream().map(ProductChangeDetailEntity::getId).collect(Collectors.toList());
         List<ProductChangeDetailEntity> addOrUpdateList = new ArrayList<>();
         //删除
@@ -132,7 +137,7 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         //新增
         List<ProductChangeDetailDTO.AddDTO> addDTOList = updateDTOList.stream().filter(v-> ObjectUtil.isEmpty(v.getId())).map(v->{
             ProductChangeDetailDTO.AddDTO addDTO = BeanUtil.toBean(v, ProductChangeDetailDTO.AddDTO.class);
-            addDTO.setMainId(productChangeEntity.getSkuId());
+            addDTO.setMainId(productChangeEntity.getId());
             return addDTO;
         }).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(addDTOList)){

@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.plm.entity.ProductCostEntity;
+import com.erp.model.plm.enums.ProductChangeFieldEnum;
 import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
@@ -12,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,17 +42,28 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-        String classPath = String.valueOf(StocktakingProfitLossDetailEntity.class);
-        List<CfgOperateLogFieldEntity> logFields = Arrays.asList(
-                new CfgOperateLogFieldEntity().setField("code").setFieldName("单号").setClassPath(classPath).setType(0).setEnumClass("")
-                ,new CfgOperateLogFieldEntity().setField("warehouseName").setFieldName("仓库").setClassPath(classPath).setType(0).setEnumClass("")
-                ,new CfgOperateLogFieldEntity().setField("warehouseLocation").setFieldName("库位").setClassPath(classPath).setType(0).setEnumClass("")
-                ,new CfgOperateLogFieldEntity().setField("skuNo").setFieldName("SKU").setClassPath(classPath).setType(0).setEnumClass("")
-                ,new CfgOperateLogFieldEntity().setField("qty").setFieldName("盘点数量").setClassPath(classPath).setType(0).setEnumClass("")
-                ,new CfgOperateLogFieldEntity().setField("diffQty").setFieldName("差异数量").setClassPath(classPath).setType(0).setEnumClass("")
-                ,new CfgOperateLogFieldEntity().setField("usableQty").setFieldName("可用数量").setClassPath(classPath).setType(0).setEnumClass("")
-                ,new CfgOperateLogFieldEntity().setField("frozenQty").setFieldName("冻结数量").setClassPath(classPath).setType(0).setEnumClass("")
-        );
+        List<CfgOperateLogFieldEntity> logFields = new ArrayList<>();
+        ProductChangeFieldEnum[] productChangeFieldEnums = ProductChangeFieldEnum.values();
+        for (ProductChangeFieldEnum productChangeFieldEnum : productChangeFieldEnums) {
+            String classPath = "";
+            String table = productChangeFieldEnum.getTableName();
+            if(table.equals("product_cost")){
+                classPath = String.valueOf(ProductCostEntity.class);
+            }
+            if(table.equals("product_cost")){
+                classPath = String.valueOf(ProductCostEntity.class);
+            }
+            if(table.equals("product_cost")){
+                classPath = String.valueOf(ProductCostEntity.class);
+            }
+            if(table.equals("product_cost")){
+                classPath = String.valueOf(ProductCostEntity.class);
+            }
+            if(table.equals("product_cost")){
+                classPath = String.valueOf(ProductCostEntity.class);
+            }
+            logFields.add(new CfgOperateLogFieldEntity().setField(productChangeFieldEnum.getEntityField()).setFieldName(productChangeFieldEnum.getFieldLabel()).setClassPath(classPath).setType(0).setEnumClass(""));
+        }
         return service.saveBatch(logFields);
     }
 }

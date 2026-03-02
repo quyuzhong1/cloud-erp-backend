@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductChangeDetailEntity;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -168,4 +169,6 @@ public interface ProductChangeService extends SuperService<ProductChangeEntity> 
     List<ProductChangeDTO.ProductChangeFieldDTO> getProductChangeFieldEnum();
 
     BatchResultDTO invalid(ProductChangeEntity productChangeEntity,String remark);
+
+    void buildOldValue(List<ProductChangeEntity> mainList, List<ProductChangeDetailEntity> detailEntityList);
 }
