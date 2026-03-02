@@ -52,13 +52,7 @@ public class RestCloudApiUtil {
             Map<String, Object> map = new HashMap<>();
             map.put("data", Arrays.asList());
             map.put("yearMonth", checkMonth);
-            CompletableFuture.runAsync(() -> {
-                try {
-                    requestRestCloud(url, map, true);
-                } catch (Exception e) {
-                    log.error("异步调用谷云接口异常，url: {}，异常: {}", url, e.getMessage(), e);
-                }
-            });
+            syncRequestRestCloud(url, map);
         }
         return true;
     }
