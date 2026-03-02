@@ -740,4 +740,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/moldRefSkuApprove")
     void moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto);
+
+    /**
+     * 根据金蝶id查询sku
+     */
+    @PostMapping("feign/productDetail/getSkuBySyncKingdeeId")
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
 }

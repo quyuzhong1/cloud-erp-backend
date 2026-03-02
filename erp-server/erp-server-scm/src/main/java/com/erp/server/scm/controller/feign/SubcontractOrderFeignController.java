@@ -123,4 +123,15 @@ public class SubcontractOrderFeignController {
     public void updateApproveStatus(@RequestBody SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         subcontractOrderService.updateApproveStatus(updateApprovalStatusDTO);
     }
+
+    @PostMapping("/pushDownSubcontractOrder")
+    Boolean pushDownSubcontractOrder(@RequestBody SubcontractOrderDTO.AddDTO dto){
+        SubcontractOrderEntity add = subcontractOrderService.add(dto);
+        return Boolean.TRUE;
+    }
+
+    @PostMapping("/listSubcontractOrderByKingdeeId")
+    SubcontractOrderEntity listSubcontractOrderByKingdeeId(@RequestBody String kingdeeId){
+        return subcontractOrderService.listSubcontractOrderByKingdeeId(kingdeeId);
+    }
 }

@@ -173,7 +173,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             referenceNo = referenceNo.split("_")[0];
         }
 
-
         // 3. 获取分布式锁（阻塞等待）
         String lockKey = "lock:third:outbound:" + referenceNo;
         RLock lock = redissonClient.getLock(lockKey);
@@ -184,28 +183,33 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 log.error("订单 {} 等待锁超时，系统繁忙", referenceNo);
                 return ApiResult.error("系统繁忙，请稍后重试");
             }
-            if(!referenceNo.contains(BusinessNoConstant.WFHD)
+            //是否需要走标发业务
+            Boolean isSignShipped = true;
+            if (!referenceNo.contains(BusinessNoConstant.WFHD)
                     && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())
-                    && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))){
+                    && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))) {
                 map = checkAndBuildMap(dto);
-            }else if(referenceNo.contains(BusinessNoConstant.WFHD)){
+
+                //不标发
+                isSignShipped = false;
+            } else if (referenceNo.contains(BusinessNoConstant.WFHD)) {
                 //查询三方仓发货单
                 ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(referenceNo);
-                if(Objects.isNull(thirdWarehouseDeliveryEntity)){
-                    log.error("第三方出库单: 未找到三方仓发货单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                if (Objects.isNull(thirdWarehouseDeliveryEntity)) {
+                    log.error("第三方出库单: 未找到三方仓发货单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
                     return ApiResult.success();
-                }else {
-                    if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus())){
+                } else {
+                    if (Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus())) {
                         return ApiResult.success();
                     }
                     String soCode = thirdWarehouseDeliveryEntity.getSoCode();
                     SoB2cEntity mainEntity = soB2cFeign.getSoCode(soCode);
-                    if(Objects.isNull(mainEntity)){
-                        log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                    if (Objects.isNull(mainEntity)) {
+                        log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
                         return ApiResult.success();
                     }
-                    if( Objects.equals(mainEntity.getInvalidStatus(),true)){
-                        log.error("第三方出库单: B2C销售订单已作废 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                    if (Objects.equals(mainEntity.getInvalidStatus(), true)) {
+                        log.error("第三方出库单: B2C销售订单已作废 >>>>>>>{}", JSONUtil.toJsonStr(dto));
                         return ApiResult.success();
                     }
 
@@ -217,34 +221,34 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         updateStatus.setBillStatus(billStatus);
 
                         //防止同一个单多次来取重复记录日志，只有一开始订单状态不是已发货才记录日志
-                        if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
+                        if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())) {
                             updateStatus.setAddOperationLog(true);
                         }
                     }
                     updateStatus.setTrackNo(dto.getTrackNo());
                     soB2cFeign.updateSoB2cStatusByParams(updateStatus);
 
-                    map.put(mainEntity ,thirdWarehouseDeliveryEntity);
+                    map.put(mainEntity, thirdWarehouseDeliveryEntity);
                 }
-            }else {
+            } else {
                 SoB2cEntity mainEntity = soB2cFeign.getSoCode(referenceNo);
-                if(null == mainEntity){
-                    if (CharSequenceUtil.isBlank(referenceNo)){
+                if (null == mainEntity) {
+                    if (CharSequenceUtil.isBlank(referenceNo)) {
                         return ApiResult.success();
                     }
                     // 非ERP单号前缀
-                    if (!referenceNo.startsWith(BusinessNoConstant.XSDS) && !referenceNo.startsWith(BusinessNoConstant.XSDD)){
+                    if (!referenceNo.startsWith(BusinessNoConstant.XSDS) && !referenceNo.startsWith(BusinessNoConstant.XSDD)) {
                         return ApiResult.success();
                     }
-                    log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                    log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
                     return ApiResult.success();
                 }
-                if( Objects.equals(mainEntity.getInvalidStatus(),true)){
-                    log.error("第三方出库单: B2C销售订单已作废 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                if (Objects.equals(mainEntity.getInvalidStatus(), true)) {
+                    log.error("第三方出库单: B2C销售订单已作废 >>>>>>>{}", JSONUtil.toJsonStr(dto));
                     return ApiResult.success();
                 }
-                ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getByCodeAndSoId(mainEntity.getShippingOrderNo(),mainEntity.getId());
-                if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus())){
+                ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getByCodeAndSoId(mainEntity.getShippingOrderNo(), mainEntity.getId());
+                if (Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus())) {
                     return ApiResult.success();
                 }
 
@@ -255,19 +259,19 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     //只有已发货才更新
                     updateStatus.setBillStatus(billStatus);
                     //防止同一个单多次来取重复记录日志，只有一开始订单状态不是已发货才记录日志
-                    if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())){
+                    if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())) {
                         updateStatus.setAddOperationLog(true);
                     }
                 }
                 updateStatus.setTrackNo(dto.getTrackNo());
                 soB2cFeign.updateSoB2cStatusByParams(updateStatus);
 
-                map.put(mainEntity ,thirdWarehouseDeliveryEntity);
+                map.put(mainEntity, thirdWarehouseDeliveryEntity);
             }
 
             //校验map不为null并且不为空
-            if(Objects.isNull(map) || map.isEmpty()){
-                log.error("第三方出库单: 未找到B2C销售订单或三方仓发货单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+            if (Objects.isNull(map) || map.isEmpty()) {
+                log.error("第三方出库单: 未找到B2C销售订单或三方仓发货单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
                 return ApiResult.success();
             }
 
@@ -278,7 +282,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
                 if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
                     //通邮仓跟踪号取订单跟踪号
-                    if (CharSequenceUtil.equals(PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode(),dto.getPlatform())) {
+                    if (CharSequenceUtil.equals(PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode(), dto.getPlatform())) {
                         List<SoB2cLogisticsEntity> list = FeignQuery.create(SoB2cLogisticsEntity.class).eq(SoB2cLogisticsEntity::getMainId, mainEntity.getId()).list();
                         if (CollUtil.isNotEmpty(list)) {
                             String trackNo = list.get(0).getTrackNo();
@@ -286,23 +290,25 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         }
                     }
 
-                    // 明细的存在没有标发的情况触发
-                    List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
-                    if(detailList.stream().anyMatch(v->!v.getIsSignShipped())){
-                        // 校验平台来源明细
-                        if (soB2cFeign.checkPlatformShipOrder(mainEntity.getId())) {
-                            // 调用第三方平台SDK标记发货(独立事务)
-                            String businessDesc = "第三方仓出库";
-                            asyncService.asyncShipOrder(mainEntity.getId(),
-                                    mainEntity.getCode(),
-                                    mainEntity.getDictPlatform(),
-                                    mainEntity.convertSubmitPlatformUniqueKey(),
-                                    JSONUtil.toJsonStr(dto),
-                                    businessDesc, false, false);
+                    if (isSignShipped) {
+                        // 明细的存在没有标发的情况触发
+                        List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
+                        if (detailList.stream().anyMatch(v -> !v.getIsSignShipped())) {
+                            // 校验平台来源明细
+                            if (soB2cFeign.checkPlatformShipOrder(mainEntity.getId())) {
+                                // 调用第三方平台SDK标记发货(独立事务)
+                                String businessDesc = "第三方仓出库";
+                                asyncService.asyncShipOrder(mainEntity.getId(),
+                                        mainEntity.getCode(),
+                                        mainEntity.getDictPlatform(),
+                                        mainEntity.convertSubmitPlatformUniqueKey(),
+                                        JSONUtil.toJsonStr(dto),
+                                        businessDesc, false, false);
+                            }
                         }
                     }
                     //清除三方仓异常
-                    if(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode().equals(mainEntity.getSignOrderError())){
+                    if (SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode().equals(mainEntity.getSignOrderError())) {
                         String type = SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode();
                         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
                         deleteDTO.setMainId(mainEntity.getId());
@@ -310,14 +316,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         soB2cFeign.deleteError(deleteDTO);
                     }
                     //拦截中清除拦截状态
-                    if(mainEntity.getIsIntercept()){
+                    if (mainEntity.getIsIntercept()) {
                         mainEntity.setBillStatus(billStatus);
                         mainEntity.setIsIntercept(false);
                         mainEntity.setIsFrozen(false);
                         soB2cFeign.updateStatus(mainEntity);
                     }
 
-                    platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto,"");
+                    platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto, "");
                 }
 
                 if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {
@@ -332,10 +338,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     );
                     soB2cFeign.addSoB2cError(addError);
                     //异步取消海外仓订单
-                    asyncService.asyncCancelThirdWarehouseOrder(mainEntity,dto.getAbnormalProblemReason());
+                    asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason());
                 }
                 if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
-                    if(mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())){
+                    if (mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())) {
                         OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
                         operateLogDTO.setOperation("三方仓出库单废弃");
                         operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
@@ -347,16 +353,16 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         mainEntity.setIsFrozen(false);
                         mainEntity.setShippingOrderNo("");
                         mainEntity.setRemark("三方仓出库单废弃,拦截成功");
-                        if(mainEntity.getIsCancel()){
+                        if (mainEntity.getIsCancel()) {
                             mainEntity.setInvalidStatus(Boolean.TRUE);
                             mainEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
                         }
                         soB2cFeign.updateStatus(mainEntity);
                         operateLogDTO.setContent("三方仓出库单废弃");
                         soB2cFeign.addModuleOperateLog(operateLogDTO);
-                        if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                        if (Objects.nonNull(thirdWarehouseDeliveryEntity)) {
                             thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                            operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
+                            operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
 
                             thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
                         }

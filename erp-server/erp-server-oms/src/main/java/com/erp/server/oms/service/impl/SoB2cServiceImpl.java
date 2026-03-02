@@ -6113,6 +6113,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode(),
                         SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode(),
                         SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode(),
+                        SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode(),
                         SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode()
                 ))
                 .last(SqlConstants.LIMIT_1)
