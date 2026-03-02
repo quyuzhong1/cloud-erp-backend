@@ -449,9 +449,249 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             productChangeDetailService.checkData(productChangeEntity, productChangeDetailEntities);
             detailEntityList.addAll(productChangeDetailEntities);
         }
+        this.buildOldValue(mainList,detailEntityList);
         operateLogService.addSysLogByBatchSave(operateLogEntities);
         productChangeDetailService.saveBatch(detailEntityList);
         return new BaseResultDTO.AddDTO();
+    }
+
+    @Override
+    public void buildOldValue(List<ProductChangeEntity> mainList, List<ProductChangeDetailEntity> detailEntityList) {
+        List<String> skuIds = mainList.stream().map(ProductChangeEntity::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIds);
+        List<String> productIds = productDetailEntityList.stream().map(ProductDetailEntity::getProductId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductInfoEntity> productInfoEntityList = productInfoService.listByIds(productIds);
+        List<ProductCostEntity> productCostEntityList = productCostService.listBySkuIds(skuIds);
+        List<ProductPurchaseEntity> productPurchaseEntityList = productPurchaseService.listBySkuIds(skuIds);
+        List<ProductSaleEntity> productSaleEntityList = productSaleService.listBySkuIds(skuIds);
+        List<ProductPackEntity> productPackEntityList = productPackService.listBySkuIdList(skuIds);
+        List<ProductRefBuEntity> productRefBuEntityList = productRefBuService.listByProductIds(productIds);
+        for (ProductChangeEntity productChangeEntity : mainList) {
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(v -> Objects.equals(v.getId(), productChangeEntity.getSkuId())).findFirst().orElse(null);
+            if(Objects.isNull(productDetailEntity)){
+                continue;
+            }
+            ProductInfoEntity productInfoEntity = productInfoEntityList.stream().filter(v -> Objects.equals(v.getId(), productDetailEntity.getProductId())).findFirst().orElse(null);
+            if(Objects.isNull(productInfoEntity)){
+                continue;
+            }
+            ProductCostEntity productCostEntity = productCostEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductCostEntity());
+            ProductPurchaseEntity productPurchaseEntity = productPurchaseEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductPurchaseEntity());
+            ProductSaleEntity productSaleEntity = productSaleEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductSaleEntity());
+            ProductPackEntity productPackEntity = productPackEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductPackEntity());
+            List<ProductChangeDetailEntity> currentDetailList = detailEntityList.stream().filter(v -> Objects.equals(v.getMainId(), productChangeEntity.getId())).collect(Collectors.toList());
+            for (ProductChangeDetailEntity productChangeDetailEntity : currentDetailList) {
+                String field = productChangeDetailEntity.getField();
+                if (StringUtils.isBlank(field)) {
+                    continue;
+                }
+                // 匹配字段枚举
+                ProductChangeFieldEnum fieldEnum = ProductChangeFieldEnum.getByEntityField(field);
+                if (fieldEnum == null) {
+                    continue;
+                }
+                Object oldValue = null;
+                switch (fieldEnum) {
+                    // product_cost
+                    case EXPECTED_PROJECT_APPROVAL_COST:
+                        oldValue = productCostEntity.getProjectApprovalCost();
+                        break;
+                    case ACTUAL_MASS_PRODUCTION_COST:
+                        oldValue = productCostEntity.getMassCost();
+                        break;
+                    case EXPECTED_PROJECT_COST:
+                        oldValue = productCostEntity.getProjectCost();
+                        break;
+                    case TAX_RATE:
+                        oldValue = productCostEntity.getTaxRate();
+                        break;
+                    case TARGET_TAX_INCLUDED_COST:
+                        oldValue = productCostEntity.getTargetTaxCost();
+                        break;
+                    case STANDARD_RETAIL_PRICE:
+                        oldValue = productCostEntity.getRetailPrice();
+                        break;
+                    case ACTUAL_GROSS_PROFIT_MARGIN:
+                        oldValue = productCostEntity.getActualGpmUsd();
+                        break;
+                    // product_detail
+                    case EXPECTED_ON_SHELF_TIME:
+                        oldValue = productDetailEntity.getPlanListingTime();
+                        break;
+
+                    // product_info
+                    case SALE_MODE:
+                        oldValue = productInfoEntity.getSaleMethod();
+                        break;
+                    case PRODUCT_NAME_CN:
+                        oldValue = productInfoEntity.getName();
+                        break;
+                    case PRODUCT_SELLING_POINT:
+                        oldValue = productInfoEntity.getSellSpot();
+                        break;
+                    case PRODUCT_USAGE:
+                        oldValue = productInfoEntity.getUsageDesc();
+                        break;
+                    case MAIN_MATERIAL:
+                        oldValue = productInfoEntity.getMaterials();
+                        break;
+                    case PRODUCT_ATTRIBUTE:
+                        oldValue = productInfoEntity.getPropertyId();
+                        break;
+                    case ENTRUSTED_DEVELOPMENT_COST:
+                        oldValue = productInfoEntity.getEntrustedDevelopCost();
+                        break;
+                    case SAMPLE_FEE:
+                        oldValue = productInfoEntity.getSampleFee();
+                        break;
+                    case PRODUCT_NAME_EN:
+                        oldValue = productInfoEntity.getNameEn();
+                        break;
+                    case PRODUCT_CATEGORY:
+                        oldValue = productInfoEntity.getCategoryId();
+                        break;
+                    case APPLICATION_CATEGORY:
+                        oldValue = productInfoEntity.getApplicationCategoryId();
+                        break;
+                    case R_D_TEAM:
+                        oldValue = productInfoEntity.getRdtTeamId();
+                        break;
+                    case BRAND:
+                        oldValue = productInfoEntity.getBrandId();
+                        break;
+                    case PRODUCT_GRADE:
+                        oldValue = productInfoEntity.getGradeId();
+                        break;
+                    case SALE_CHANNEL:
+                        oldValue = productInfoEntity.getSalesChannel();
+
+                        break;
+                    case IS_CUSTOMIZED:
+                        oldValue = productInfoEntity.getIsCustomized();
+
+                        break;
+                    case HAS_INFRINGEMENT_RISK:
+                        oldValue = productInfoEntity.getPirateRisk();
+                        break;
+
+                    // product_pack
+                    case PRODUCT_LENGTH:
+                        oldValue = productPackEntity.getProductLength();
+                        break;
+                    case PRODUCT_WIDTH:
+                        oldValue = productPackEntity.getProductWidth();
+                        break;
+                    case PRODUCT_HEIGHT:
+                        oldValue = productPackEntity.getProductHeight();
+                        break;
+                    case GROSS_WEIGHT:
+                        oldValue = productPackEntity.getGrossWeight();
+                        break;
+                    case NET_WEIGHT:
+                        oldValue = productPackEntity.getNetWeight();
+                        break;
+                    case BOX_LENGTH:
+                        oldValue = productPackEntity.getBoxLength();
+                        break;
+                    case BOX_WIDTH:
+                        oldValue = productPackEntity.getBoxWidth();
+                        break;
+                    case BOX_HEIGHT:
+                        oldValue = productPackEntity.getBoxHeight();
+                        break;
+                    case BOX_WEIGHT:
+                        oldValue = productPackEntity.getBoxWeight();
+                        break;
+                    case BOX_QUANTITY:
+                        oldValue = productPackEntity.getBoxQty();
+                        break;
+
+                    // product_purchase
+                    case EAN_CODE:
+                        oldValue = productPurchaseEntity.getEan();
+                        break;
+                    case TRIAL_PRODUCTION_QUANTITY:
+                        oldValue = productPurchaseEntity.getTrialProductionQty();
+                        break;
+                    case FIRST_BATCH_MASS_PRODUCTION_QUANTITY:
+                        oldValue = productPurchaseEntity.getFirstMassQty();
+                        break;
+                    case PLANNED_FIRST_BATCH_ORDER_QUANTITY:
+                        oldValue = productPurchaseEntity.getPlanOrderQty();
+                        break;
+                    case EXPECTED_FIRST_BATCH_ARRIVAL_TIME:
+                        oldValue = productPurchaseEntity.getPlanArrivalTime();
+                        break;
+                    case MOQ:
+                        oldValue = productPurchaseEntity.getMoq();
+                        break;
+                    case DELIVERY_CYCLE:
+                        oldValue = productPurchaseEntity.getDeliveryCycle();
+                        break;
+                    case FIRST_BATCH_ORDER_TIME:
+                        oldValue = productPurchaseEntity.getPlaceOrderTime();
+                        break;
+                    case ACTUAL_FIRST_BATCH_ARRIVAL_QUANTITY:
+                        oldValue = productPurchaseEntity.getActualArrivalQty();
+                        break;
+                    case ACTUAL_FIRST_BATCH_ARRIVAL_TIME:
+                        oldValue = productPurchaseEntity.getActualArrivalTime();
+                        break;
+                    case FIRST_BATCH_ARRIVAL_STATUS:
+                        oldValue = productPurchaseEntity.getArrivalState();
+                        break;
+
+                    // product_ref_bu
+                    case BU_LINE:
+                        ProductRefBuEntity productRefBuEntity = productRefBuEntityList.stream().filter(v -> Objects.equals(v.getProductId(), productInfoEntity.getId())).findFirst().orElse(null);
+                        if(Objects.nonNull(productRefBuEntity)){
+                            oldValue = productRefBuEntity.getBuId();
+                        }
+                        break;
+
+                    // product_sale
+                    case ANNUAL_TARGET_SALES_VOLUME:
+                        oldValue = productSaleEntity.getYearSaleQty();
+                        break;
+                    case ANNUAL_TARGET_SALES_AMOUNT:
+                        oldValue = productSaleEntity.getYearSaleAmount();
+                        break;
+                    case MONTHLY_TARGET_SALES_VOLUME:
+                        oldValue = productSaleEntity.getMonthSaleQty();
+                        break;
+                    case MONTHLY_TARGET_SALES_AMOUNT:
+                        oldValue = productSaleEntity.getMonthSaleAmount();
+                        break;
+                    case COLLECTION_DEGREE_TARGET_SALES_VOLUME:
+                        oldValue = productSaleEntity.getTargetSalesQty();
+                        break;
+                    case SALE_COUNTRY:
+                        oldValue = productSaleEntity.getSaleCountry();
+                        break;
+                    case ON_SHELF_TIME:
+                        oldValue = productSaleEntity.getListingTime();
+                        break;
+                    case OFF_SHELF_TIME:
+                        oldValue = productSaleEntity.getDelistingTime();
+                        break;
+                    case SALE_PLATFORM:
+                        oldValue = productSaleEntity.getSalesPlatform();
+                        break;
+                    case IS_IMAGE_COMPLETED:
+                        oldValue = productSaleEntity.getIsFinishedImg();
+                        break;
+                    case IS_VIDEO_COMPLETED:
+                        oldValue = productSaleEntity.getIsFinishedVideo();
+                        break;
+
+                    default:
+                        log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getFieldLabel());
+                }
+                if(Objects.nonNull(oldValue)){
+                    productChangeDetailEntity.setOldValue(oldValue.toString());
+                }
+            }
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -783,7 +1023,27 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     infoChanged = true;
                     break;
                 case APPLICATION_CATEGORY:
+                    String oldValue = productInfoEntity.getApplicationCategoryId();
                     productInfoEntity.setApplicationCategoryId((String) newValue);
+                    List<String> applicationCategoryNameList = new ArrayList<>();
+                    String[] applicationCategoryIdList = newValue.toString().split(",");
+                    List<ApplicationCategoryEntity> applicationCategoryEntities = applicationCategoryService.list();
+                    for (String applicationCategoryId : applicationCategoryIdList) {
+                        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), applicationCategoryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(applicationCategoryEntity)){
+                            applicationCategoryNameList.add(applicationCategoryEntity.getName());
+                        }
+                    }
+                    productInfoEntity.setApplicationCategoryName(String.join(",", applicationCategoryNameList));
+                    List<String> oldApplicationCategoryNameList = new ArrayList<>();
+                    String[] oldApplicationCategoryIdList = oldValue.split(",");
+                    for (String applicationCategoryId : oldApplicationCategoryIdList) {
+                        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), applicationCategoryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(applicationCategoryEntity)){
+                            oldApplicationCategoryNameList.add(applicationCategoryEntity.getName());
+                        }
+                    }
+                    oldProductInfoEntity.setApplicationCategoryName(String.join(",", oldApplicationCategoryNameList));
                     infoChanged = true;
                     break;
                 case R_D_TEAM:
@@ -910,7 +1170,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
                 // product_ref_bu
                 case BU_LINE:
-                    productRefBuService.addOrUpdate(productInfoEntity.getId(), (String) newValue);
+                    productRefBuService.addOrUpdate(skuId,productInfoEntity.getId(), (String) newValue);
                     // 不涉及上面几个实体的变更，所以无需设置标志
                     break;
 
@@ -1190,7 +1450,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             String oldValue = data.getOldValue();
 
             ProductChangeFieldEnum productChangeFieldEnum = ProductChangeFieldEnum.getByEntityField(data.getField());
-            assert productChangeFieldEnum != null;
+            if(Objects.isNull(productChangeFieldEnum)){
+                continue;
+            }
             data.setFieldName(productChangeFieldEnum.getFieldLabel());
             switch (productChangeFieldEnum) {
                 case PRODUCT_ATTRIBUTE:

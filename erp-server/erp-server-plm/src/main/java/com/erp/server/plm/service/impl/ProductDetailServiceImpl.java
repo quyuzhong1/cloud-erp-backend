@@ -1382,7 +1382,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(basicProductBuEntity)) {
                 productSpuBaseInfoDTO.setBuName(basicProductBuEntity.getName());
             }
-            productRefBuService.addOrUpdate(id,basicProductBuEntity.getId());
+            productRefBuService.addOrUpdate(productSkuBaseInfoDTO.getId(),id,basicProductBuEntity.getId());
         }
 
         //2.修改/新增 sku信息
@@ -1809,7 +1809,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(basicProductBuEntity)) {
                 productInfoDTO.setBuName(basicProductBuEntity.getName());
             }
-            productRefBuService.addOrUpdate(id,basicProductBuEntity.getId());
+            productRefBuService.addOrUpdate("",id,basicProductBuEntity.getId());
         }
 
         //2.修改/新增 sku信息
@@ -2518,7 +2518,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         // 导入时保存产品与BU线关联（product_ref_bu）
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getBuId())) {
-            productRefBuService.addOrUpdate(id, productSpuBaseInfoDTO.getBuId());
+            productRefBuService.addOrUpdate(productSkuBaseInfoDTO.getId(),id, productSpuBaseInfoDTO.getBuId());
         }
 
         //2.修改/新增 sku信息
