@@ -153,7 +153,14 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
         // 数据处理
         handleData(productChangeEntity);
-
+        List<ProductChangeEntity> dbList = this.lambdaQuery()
+                .eq(ProductChangeEntity::getSkuNo, addDTO.getSkuNo())
+                .eq(ProductChangeEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .list();
+        if(CollectionUtil.isNotEmpty(dbList)){
+            throw new ServiceException("已存在未审核的变更单");
+        }
         log.info("开始新增产品变更信息单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BG);
@@ -324,7 +331,6 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
             .list();
         Map<String,List<ProductChangeImportExcelDTO>> groupMap = successList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(e.getSkuNo())).collect(Collectors.groupingBy(ProductChangeImportExcelDTO::getSkuNo));
-        List<ProductChangeDTO.AddDTO> addList = new ArrayList<>();
 
         for (Map.Entry<String, List<ProductChangeImportExcelDTO>> entry : groupMap.entrySet()) {
             List<String> errorMsgList = new ArrayList<>();
@@ -505,6 +511,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     // product_detail
                     case EXPECTED_ON_SHELF_TIME:
                         oldValue = productDetailEntity.getPlanListingTime();
+                        break;
+                    case PRODUCT_DETAIL_NAME_CN:
+                        oldValue = productDetailEntity.getName();
+                        break;
+                    case PRODUCT_DETAIL_NAME_EN:
+                        oldValue = productDetailEntity.getNameEn();
                         break;
 
                     // product_info
@@ -960,6 +972,15 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     productDetailEntity.setPlanListingTime((LocalDate) newValue);
                     detailChanged = true;
                     break;
+                case PRODUCT_DETAIL_NAME_CN:
+                    productDetailEntity.setName((String) newValue);
+                    detailChanged = true;
+                    break;
+                case PRODUCT_DETAIL_NAME_EN:
+                    productDetailEntity.setNameEn((String) newValue);
+                    detailChanged = true;
+                    break;
+
 
                 // product_info
                 case SALE_MODE:
@@ -1277,7 +1298,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品变更信息单");
         }
         // 只有待提交数据允许作废
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), productChangeEntity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), productChangeEntity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, productChangeEntity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT, productChangeEntity.getApproveStatus())) {
             throw new ServiceException("只有待提交或审核不通过数据支持作废");
         }
         if(productChangeEntity.getInvalidStatus()){

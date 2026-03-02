@@ -122,7 +122,7 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
     @Override
     public Boolean update(ProductChangeEntity productChangeEntity ,List<ProductChangeDetailDTO.UpdateDTO> updateDTOList) {
         //查询数据库数据
-        List<ProductChangeDetailEntity> dbList = this.listByMains(Lists.newArrayList(productChangeEntity.getSkuId()));
+        List<ProductChangeDetailEntity> dbList = this.listByMains(Lists.newArrayList(productChangeEntity.getId()));
         List<String> dbIdList = dbList.stream().map(ProductChangeDetailEntity::getId).collect(Collectors.toList());
         List<ProductChangeDetailEntity> addOrUpdateList = new ArrayList<>();
         //删除
@@ -137,7 +137,7 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         //新增
         List<ProductChangeDetailDTO.AddDTO> addDTOList = updateDTOList.stream().filter(v-> ObjectUtil.isEmpty(v.getId())).map(v->{
             ProductChangeDetailDTO.AddDTO addDTO = BeanUtil.toBean(v, ProductChangeDetailDTO.AddDTO.class);
-            addDTO.setMainId(productChangeEntity.getSkuId());
+            addDTO.setMainId(productChangeEntity.getId());
             return addDTO;
         }).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(addDTOList)){
