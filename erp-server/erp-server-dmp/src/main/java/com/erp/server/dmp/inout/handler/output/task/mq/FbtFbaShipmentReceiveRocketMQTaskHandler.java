@@ -38,6 +38,7 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
     private static final String KEY_UNIQUE_ID = "uniqueId";
     private static final String KEY_RECORD_ID = "recordId";
     private static final String KEY_RECORD_ID_UNDERLINE = "record_id";
+    private static final String KEY_ID = "id";
     private static final String KEY_PLATFORM = "platform";
     private static final String KEY_SOURCE_PLATFORM = "sourcePlatform";
     private static final String KEY_SOURCE_PLATFORM_UNDERLINE = "source_platform";
@@ -47,18 +48,23 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
     private static final String KEY_SHOP_ID_UNDERLINE = "shop_id";
     private static final String KEY_INBOUND_ORDER_ID = "inboundOrderId";
     private static final String KEY_INBOUND_ORDER_ID_UNDERLINE = "inbound_order_id";
+    private static final String KEY_ORDER = "order";
     private static final String KEY_PLATFORM_WAREHOUSE_CODE = "platformWarehouseCode";
     private static final String KEY_WAREHOUSE_CODE_UNDERLINE = "warehouse_code";
     private static final String KEY_FBT_WAREHOUSE_ID = "fbt_warehouse_id";
     private static final String KEY_PRODUCT_SKU = "productSku";
     private static final String KEY_SELLER_SKU = "seller_sku";
     private static final String KEY_SKU_CODE = "sku_code";
+    private static final String KEY_REFERENCE_CODE = "reference_code";
     private static final String KEY_GOODS_ID = "goodsId";
     private static final String KEY_GOODS_ID_UNDERLINE = "goods_id";
+    private static final String KEY_GOODS = "goods";
     private static final String KEY_DELTA_QTY = "deltaQty";
     private static final String KEY_CHANGE_QUANTITY = "change_quantity";
+    private static final String KEY_CHANGED_QUANTITY = "changed_quantity";
     private static final String KEY_EVENT_TIME = "eventTime";
     private static final String KEY_EVENT_TIME_UNDERLINE = "event_time";
+    private static final String KEY_CREATE_TIME = "create_time";
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     @Override
@@ -84,11 +90,24 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
                 if (row == null || this.validateDataBlack(row, cfgOutputId)) {
                     continue;
                 }
-                String inboundOrderId = firstNotBlank(row, KEY_INBOUND_ORDER_ID, KEY_INBOUND_ORDER_ID_UNDERLINE);
+                String inboundOrderId = firstNotBlank(
+                        row,
+                        KEY_INBOUND_ORDER_ID,
+                        KEY_INBOUND_ORDER_ID_UNDERLINE
+                );
+                if (StrUtil.isBlank(inboundOrderId)) {
+                    inboundOrderId = getMapValue(row.get(KEY_ORDER), KEY_ID);
+                }
                 String shopId = firstNotBlank(row, KEY_SHOP_ID, KEY_SHOP_ID_UNDERLINE);
                 String fnSku = firstNotBlank(row, KEY_GOODS_ID, KEY_GOODS_ID_UNDERLINE);
-                String msku = firstNotBlank(row, KEY_PRODUCT_SKU, KEY_SELLER_SKU, KEY_SKU_CODE);
-                Integer qty = parseInt(firstNotBlank(row, KEY_DELTA_QTY, KEY_CHANGE_QUANTITY));
+                if (StrUtil.isBlank(fnSku)) {
+                    fnSku = getMapValue(row.get(KEY_GOODS), KEY_ID);
+                }
+                String msku = firstNotBlank(row, KEY_PRODUCT_SKU, KEY_SELLER_SKU, KEY_SKU_CODE, KEY_REFERENCE_CODE);
+                if (StrUtil.isBlank(msku)) {
+                    msku = getMapValue(row.get(KEY_GOODS), KEY_REFERENCE_CODE);
+                }
+                Integer qty = parseInt(firstNotBlank(row, KEY_DELTA_QTY, KEY_CHANGED_QUANTITY, KEY_CHANGE_QUANTITY));
                 if (StrUtil.isBlank(inboundOrderId) || StrUtil.isBlank(shopId)
                         || StrUtil.isBlank(fnSku) || StrUtil.isBlank(msku)
                         || qty == null || qty == 0) {
@@ -97,6 +116,9 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
                 OffsetDateTime eventTime = parseEventTime(row.get(KEY_EVENT_TIME));
                 if (eventTime == null) {
                     eventTime = parseEventTime(row.get(KEY_EVENT_TIME_UNDERLINE));
+                }
+                if (eventTime == null) {
+                    eventTime = parseEventTime(row.get(KEY_CREATE_TIME));
                 }
                 if (eventTime == null) {
                     eventTime = OffsetDateTime.now(ZONE_OFFSET_8);
@@ -149,7 +171,7 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
                                                      Integer qty,
                                                      String fnSku,
                                                      String msku) {
-        String uniqueId = normalizeUniqueId(firstNotBlank(row, KEY_UNIQUE_ID, KEY_RECORD_ID, KEY_RECORD_ID_UNDERLINE));
+        String uniqueId = normalizeUniqueId(firstNotBlank(row, KEY_UNIQUE_ID, KEY_RECORD_ID, KEY_RECORD_ID_UNDERLINE, KEY_ID));
         if (StrUtil.isBlank(uniqueId)) {
             String recordSeed = StrUtil.join("|",
                     inboundOrderId,
@@ -272,6 +294,21 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
             }
         }
         return null;
+    }
+
+    private String getMapValue(Object source, String key) {
+        if (!(source instanceof Map) || StrUtil.isBlank(key)) {
+            return null;
+        }
+        Object value = ((Map<?, ?>) source).get(key);
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value);
+        if (StrUtil.isBlank(text) || "null".equalsIgnoreCase(text)) {
+            return null;
+        }
+        return text;
     }
 
     private String normalizeUniqueId(String uniqueId) {

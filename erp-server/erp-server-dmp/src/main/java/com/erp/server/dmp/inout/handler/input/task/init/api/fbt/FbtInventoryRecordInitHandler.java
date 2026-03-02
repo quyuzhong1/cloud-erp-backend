@@ -126,7 +126,8 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
                 source.get(KEY_SELLER_SKU),
                 source.get(KEY_SKU_CODE),
                 source.get(KEY_SKU_CODE_CAMEL),
-                source.get(KEY_REFERENCE_CODE)
+                source.get(KEY_REFERENCE_CODE),
+                getMapValue(source.get(KEY_GOODS), KEY_REFERENCE_CODE)
         );
         Object eventTime = firstNotBlankObject(
                 source.get(KEY_EVENT_TIME_UNDERLINE),
@@ -167,7 +168,8 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
                         source.get(KEY_SELLER_SKU),
                         source.get(KEY_SKU_CODE),
                         source.get(KEY_SKU_CODE_CAMEL),
-                        source.get(KEY_REFERENCE_CODE)
+                        source.get(KEY_REFERENCE_CODE),
+                        getMapValue(source.get(KEY_GOODS), KEY_REFERENCE_CODE)
                 )),
                 safeVal(firstNotBlank(
                         source.get(KEY_FBT_WAREHOUSE_ID),
