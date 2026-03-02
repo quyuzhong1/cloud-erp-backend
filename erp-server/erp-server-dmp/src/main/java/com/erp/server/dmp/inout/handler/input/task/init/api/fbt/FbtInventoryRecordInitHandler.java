@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -106,7 +107,8 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
         Map<String, Object> row = new LinkedHashMap<>();
         String recordId = firstNotBlank(source.get(KEY_RECORD_ID_UNDERLINE), source.get(KEY_RECORD_ID));
         row.put(KEY_RECORD_ID, recordId);
-        row.put(KEY_UNIQUE_ID, firstNotBlank(recordId, buildFallbackId(source, authId, shopId)));
+        String uniqueId = firstNotBlank(recordId, buildFallbackId(source, authId, shopId));
+        row.put(KEY_UNIQUE_ID, normalizeUniqueId(uniqueId));
         row.put(KEY_PLATFORM, OmsPlatformEnum.FBT.getCode());
         row.put(KEY_SOURCE_PLATFORM, OmsPlatformEnum.FBT.getCode());
         row.put(KEY_AUTH_ID, authId);
@@ -121,12 +123,31 @@ public class FbtInventoryRecordInitHandler extends DmpInputInitHandler {
     }
 
     private String buildFallbackId(Map<String, Object> source, String authId, String shopId) {
-        return StrUtil.format("{}:{}:{}:{}:{}",
-                authId,
-                shopId,
-                firstNotBlank(source.get(KEY_INBOUND_ORDER_ID_UNDERLINE), source.get(KEY_INBOUND_ORDER_ID)),
-                firstNotBlank(source.get(KEY_SELLER_SKU), source.get(KEY_SKU_CODE), source.get(KEY_SKU_CODE_CAMEL)),
-                source.get(KEY_EVENT_TIME_UNDERLINE));
+        String raw = StrUtil.join("|",
+                safeVal(authId),
+                safeVal(shopId),
+                safeVal(firstNotBlank(source.get(KEY_INBOUND_ORDER_ID_UNDERLINE), source.get(KEY_INBOUND_ORDER_ID))),
+                safeVal(firstNotBlank(source.get(KEY_SELLER_SKU), source.get(KEY_SKU_CODE), source.get(KEY_SKU_CODE_CAMEL))),
+                safeVal(firstNotBlank(source.get(KEY_FBT_WAREHOUSE_ID), source.get(KEY_WAREHOUSE_CODE), source.get(KEY_WAREHOUSE_CODE_CAMEL))),
+                safeVal(firstNotBlank(source.get(KEY_GOODS_ID_UNDERLINE), source.get(KEY_GOODS_ID))),
+                safeVal(firstNotBlank(source.get(KEY_EVENT_TIME_UNDERLINE), source.get(KEY_EVENT_TIME))),
+                String.valueOf(parseInt(source.get(KEY_CHANGE_QUANTITY), source.get(KEY_DELTA_QTY)))
+        );
+        return "fbtir_" + MD5Util.toMD5(raw);
+    }
+
+    private String normalizeUniqueId(String uniqueId) {
+        if (StrUtil.isBlank(uniqueId)) {
+            return null;
+        }
+        if (uniqueId.length() <= 50) {
+            return uniqueId;
+        }
+        return "fbtir_" + MD5Util.toMD5(uniqueId);
+    }
+
+    private String safeVal(String value) {
+        return StrUtil.blankToDefault(value, "");
     }
 
     private Long toEpochSecond(LocalDateTime time) {
