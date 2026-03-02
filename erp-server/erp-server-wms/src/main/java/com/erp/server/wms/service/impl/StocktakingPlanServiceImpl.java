@@ -308,6 +308,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
+        //盘点日期不能小于当前日期
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE,entity.getCode());
+        }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -370,6 +374,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         stocktakingTaskService.removeBySourceId(id);
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //清空计划下推时间
+        removePlanTaskTime(id);
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "反审核操作");
@@ -552,6 +558,13 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
         }
 
+        for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+                throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE,entity.getCode());
+            }
+        }
+
+
         for (String id : ids) {
             List<StocktakingTaskEntity> stocktakingTaskList = stocktakingTaskService.listBySourceId(id);
             if (!stocktakingTaskList.isEmpty()) {
@@ -610,6 +623,16 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             .set(StocktakingPlanEntity::getApproveTime, null)
             .update();
         }
+
+    /**
+     *
+      * @param id
+     */
+    public void removePlanTaskTime(String id){
+        this.lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
+                .set(StocktakingPlanEntity::getPlanTaskTime, null)
+                .update();
+    }
 
     /**
     * 更新审核状态
@@ -747,6 +770,14 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             if (CollUtil.isEmpty(detailEntityList)) {
                 log.warn("盘点计划【{}】无明细数据，跳过处理", entity.getId());
                 removedIds.put(planId, "无明细数据");
+                idIterator.remove();
+                continue;
+            }
+
+            //盘点日期不能小于当前日期
+            if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+                log.warn("【{}】盘点日期不能小于当前日期,请修改后重新审核", entity.getId());
+                removedIds.put(planId, "盘点日期小于当前日期");
                 idIterator.remove();
                 continue;
             }

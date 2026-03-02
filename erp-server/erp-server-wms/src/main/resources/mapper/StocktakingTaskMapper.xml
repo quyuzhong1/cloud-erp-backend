@@ -46,12 +46,9 @@
           sp.separate_rule AS separateRule,
           st.status AS stocktakingStatus,
           st.approve_user_name AS approveUserName,
-          st.bill_date as billDate,
-          std.id as detailId,
-          std.first_qty as firstQty
+          st.bill_date as billDate
           FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp ON st.source_id=sp.id AND sp.is_deleted=FALSE
-        LEFT JOIN stocktaking_task_detail std on std.main_id = st.id and std.is_deleted = FALSE
           WHERE ${params.sqlMap.default} and st.is_deleted=FALSE
         <!--权限 -->
         <if test="params.permissionSql!=null and params.permissionSql!=''">

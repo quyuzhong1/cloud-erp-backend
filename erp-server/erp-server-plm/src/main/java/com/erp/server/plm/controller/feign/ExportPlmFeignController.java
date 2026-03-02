@@ -206,7 +206,8 @@ public class ExportPlmFeignController {
         return refProductImgAttachmentService.buildProductImagesFolderStructure(dto);
     }
 
-    @PostMapping("/feign/export/productChange")
+    @PostMapping("/productChange")
+    @WebAdvanceQuery(handler = ProductChangeQueryHandler.class)
     public PagingVO<ProductChangeDTO.ListDTO> productChange(@RequestBody @Validated PagingDTO<ProductChangeDTO.PagingParamDTO> dto) {
         return productChangeService.paging(dto);
     }

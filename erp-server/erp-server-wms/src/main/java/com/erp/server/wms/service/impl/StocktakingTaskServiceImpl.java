@@ -44,13 +44,13 @@ import com.erp.server.wms.listener.StocktakingTaskExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
-import com.rtfparserkit.rtf.Command;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.xpath.operations.Bool;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -178,7 +178,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(idList);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(idList);
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
+        //List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
@@ -192,30 +192,40 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
-        // 先按 code 分组，记录哪些 code 有关联的 GENERATED 状态
-        Map<String, Boolean> codePushStatusMap = new HashMap<>();
-        for (StocktakingTaskDTO.PagingViewDTO item : list) {
-            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(item.getDetailId());
-            if (stocktakingProfitLossDetailList.isEmpty()) {
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
-            } else {
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
-                // 如果状态是 GENERATED，则标记该 code 需要设置为 true
-                codePushStatusMap.put(item.getCode(), true);
-            }
 
-            StocktakingTaskDetailEntity stocktakingTaskDetail = taskDetailList.stream()
-                    .filter(obj -> obj.getId().equals(item.getDetailId()))
-                    .findFirst()
-                    .orElse(null);
-            if (Objects.nonNull(stocktakingTaskDetail)) {
-                if (stocktakingTaskDetail.getDiffQty() == 0) {
-                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+        for (StocktakingTaskDTO.PagingViewDTO item : list) {
+            List<StocktakingTaskDetailDTO.ViewDTO> viewDTOS = stocktakingTaskDetailService.listByMainId(item.getId());
+            List<StocktakingTaskDetailDTO.ViewDTO> filterList = viewDTOS.stream()
+                    .filter(obj -> obj.getDiffQty() != 0)
+                    .collect(Collectors.toList());
+            if (filterList.isEmpty()) {
+                //允许编辑，不允许下推
+                item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+            } else {
+                int count = 0;
+                List<String> stocktakingTaskDetailIdList = filterList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+                List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceIds(stocktakingTaskDetailIdList);
+                for (StocktakingTaskDetailDTO.ViewDTO viewDTO : filterList) {
+                    List<StocktakingProfitLossDetailEntity> detailList = stocktakingProfitLossDetailList.stream().filter(o -> Objects.equals(viewDTO.getId(), o.getSourceDetailId())).collect(Collectors.toList());
+                    if (!detailList.isEmpty()) {
+                        count ++;
+                    }
+                }
+                if (count == 0) {
+                    //允许编辑，允许下推
+                    item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+                } else if (count == filterList.size()){
+                    //不允许编辑，不允许下推
+                    item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                } else {
+                    //不允许编辑，允许下推
+                    item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_ALL_GENERATE.getCode());
                 }
             }
-
-            // 先默认设置为 false，后续统一处理
-            item.setIsPushStocktakingProfitLoss(false);
         }
 
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
@@ -223,9 +233,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             String approveStatusName = approveStatus.getName();
             item.setApproveStatusName(approveStatusName);
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-            String waitApproveUserName = StringUtils.join(curApproveName, ",");
-            item.setWaitApproveUserName(waitApproveUserName);
+//            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+//            String waitApproveUserName = StringUtils.join(curApproveName, ",");
+//            item.setWaitApproveUserName(waitApproveUserName);
             //分担规则
             SeparateRuleEnum separateRule = item.getSeparateRule();
             item.setSeparateRuleName(Objects.nonNull(separateRule) ? separateRule.getName() : "");
@@ -254,11 +264,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     map(StocktakingTaskDetailEntity::getSkuId).distinct().count());
 
             item.setSkuCount(skuCount);
-
-            //根据 codePushStatusMap 设置 IsPushStocktakingProfitLoss
-            if (codePushStatusMap.getOrDefault(item.getCode(), false)) {
-                item.setIsPushStocktakingProfitLoss(true);
-            }
 
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
@@ -550,6 +555,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return Collections.emptyList();
         }
 
+        long count = stocktakingTaskDetailList.stream().filter(item -> item.getDiffQty() == 0).count();
+        if (count == stocktakingTaskDetailList.size()) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_NEED_PUSH,taskCode);
+        }
+
         // 遍历 taskDetailIdList，检查是否有对应的盈亏明细
         Iterator<StocktakingTaskDetailEntity> iterator = stocktakingTaskDetailList.iterator();
         List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = new ArrayList<>();
@@ -829,7 +839,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
-        StocktakingTaskEntity taskEntity = this.getById(Command.id);
+        StocktakingTaskEntity taskEntity = this.getById(id);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未找到盘点任务单");
         }

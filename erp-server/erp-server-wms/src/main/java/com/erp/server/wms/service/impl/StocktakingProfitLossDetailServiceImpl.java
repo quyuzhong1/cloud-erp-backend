@@ -151,6 +151,13 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
                 .list();
     }
 
+    @Override
+    public List<StocktakingProfitLossDetailEntity> listBySourceIds(List<String> sourceIds) {
+        return this.lambdaQuery()
+                .in(StocktakingProfitLossDetailEntity::getSourceDetailId, sourceIds)
+                .list();
+    }
+
     /**
      * 获取删除ids
      *

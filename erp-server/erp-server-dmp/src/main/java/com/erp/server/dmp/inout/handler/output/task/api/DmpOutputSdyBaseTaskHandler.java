@@ -126,7 +126,6 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 			return;
 		}
 		
-		Set<String> root_node_no_initialSet = new HashSet<>();
 		Map<String, ShudiyunB2cOrderDTO> wdtMap = new HashMap<>();
 		for(Map.Entry<String, String>  m : map.entrySet()) {
 			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(m.getValue(), ShudiyunB2cOrderDTO.class);
@@ -134,7 +133,6 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 			String root_node_no_initial = shudiyunB2cOrderDTO.getRoot_node_no_initial();
 			if(wdtPlatformSet.contains(platform_id) && StringUtils.isNotBlank(root_node_no_initial)) {
 				wdtMap.put(m.getKey(), shudiyunB2cOrderDTO);
-				root_node_no_initialSet.add(root_node_no_initial);
 			}
     	}
 		
@@ -142,28 +140,30 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 			return;
 		}
 		
-		Set<String> dbPlatformCodeSet = dmpSoOriginalInfoService.lambdaQuery().in(DmpSoOriginalInfoEntity::getPlatformCode, root_node_no_initialSet)
+		Set<String> dbPlatformCodeSet = dmpSoOriginalInfoService.lambdaQuery().in(DmpSoOriginalInfoEntity::getPlatformCode, 
+				wdtMap.values().stream().map(ShudiyunB2cOrderDTO::getRoot_node_no_initial).collect(Collectors.toSet()))
 				.select(DmpSoOriginalInfoEntity::getPlatformCode).list()
 				.stream().map(DmpSoOriginalInfoEntity::getPlatformCode).collect(Collectors.toSet());
-		root_node_no_initialSet = new HashSet<>();
 		Map<String, ShudiyunB2cOrderDTO> firstWdtMap = new HashMap<>();
 		for(Map.Entry<String, ShudiyunB2cOrderDTO> wdt : wdtMap.entrySet()) {
 			String root_node_no_initial = wdt.getValue().getRoot_node_no_initial();
 			if(!dbPlatformCodeSet.contains(root_node_no_initial)) {
 				firstWdtMap.put(wdt.getKey(), wdt.getValue());
-				root_node_no_initialSet.add(root_node_no_initial);
 			}
 		}
 		
 		while(CollUtil.isNotEmpty(firstWdtMap)) {
-			root_node_no_initialSet = firstWdtMap.values().stream().map(ShudiyunB2cOrderDTO::getRoot_node_no_initial).collect(Collectors.toSet());
-			Map<String, String> tidRawMaps = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getTid, root_node_no_initialSet)
+			Map<String, String> tidRawMaps = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getTid, 
+					firstWdtMap.values().stream().map(ShudiyunB2cOrderDTO::getRoot_node_no_initial).collect(Collectors.toSet()))
 				.isNotNull(DmpSoReturnDetailEntity::getRawRefundNos)
+				.ne(DmpSoReturnDetailEntity::getRawRefundNos, "")
+				.isNotNull(DmpSoReturnDetailEntity::getTid)
+				.ne(DmpSoReturnDetailEntity::getTid, "")
 				.list().stream().collect(Collectors.toMap(DmpSoReturnDetailEntity::getTid, DmpSoReturnDetailEntity::getRawRefundNos , (m1 , m2) -> m1));
 			Map<String, ShudiyunB2cOrderDTO> newWdtMap = new HashMap<>();
 			
 			Collection<String> values = tidRawMaps.values();
-			if(CollUtil.isNotEmpty(values)) {
+			if(CollUtil.isEmpty(values)) {
 				dbPlatformCodeSet = new HashSet<>();
 			}else {
 				dbPlatformCodeSet = dmpSoOriginalInfoService.lambdaQuery().in(DmpSoOriginalInfoEntity::getPlatformCode, values)
