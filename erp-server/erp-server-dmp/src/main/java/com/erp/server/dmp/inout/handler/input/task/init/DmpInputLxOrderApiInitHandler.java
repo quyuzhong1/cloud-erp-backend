@@ -61,6 +61,8 @@ public class DmpInputLxOrderApiInitHandler extends DmpInputInitHandler {
             // end_time 结束时间，时间戳格式【单位：秒】，双开区间	是	[int]	1713430791
             long endEpochSecond = dmpInputTaskEntity.getEndTime().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
             requestMap.put("end_time", endEpochSecond);
+        }else {
+        	requestMap.put("platform_order_nos", orderIdListObject);
         }
         
         // 结果
