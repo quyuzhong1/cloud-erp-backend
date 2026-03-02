@@ -312,12 +312,12 @@ public class TikTokFullService {
         // Get Inbound Order接口可能是GET请求，参数放在URL中
         // 如果提供了入库订单ID列表，则查询指定订单；否则查询时间范围内的所有订单
         if (inboundOrderIds != null && CollectionUtil.isNotEmpty(inboundOrderIds)) {
-            // 查询指定订单，使用ids参数（官方示例）
+            // 查询指定订单，使用order_ids参数（以接口实际返回校验为准）
             String inboundOrderIdsParam = inboundOrderIds.stream()
                     .filter(StrUtil::isNotBlank)
                     .collect(Collectors.joining(","));
             if (StrUtil.isNotBlank(inboundOrderIdsParam)) {
-                params.put("ids", inboundOrderIdsParam);
+                params.put("order_ids", inboundOrderIdsParam);
             }
         } else {
             // 查询时间范围内的所有订单
@@ -360,8 +360,8 @@ public class TikTokFullService {
             if (params.containsKey("create_time_end")) {
                 sb.append("&create_time_end=" + params.get("create_time_end") + "");
             }
-            if (params.containsKey("ids")) {
-                sb.append("&ids=" + params.get("ids"));
+            if (params.containsKey("order_ids")) {
+                sb.append("&order_ids=" + params.get("order_ids"));
             }
             sb.append("&page_size=" + params.get("page_size") + "");
             if (params.containsKey("page_token")) {
