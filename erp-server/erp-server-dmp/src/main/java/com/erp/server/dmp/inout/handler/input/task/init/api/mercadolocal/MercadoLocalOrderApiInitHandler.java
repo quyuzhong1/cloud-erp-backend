@@ -36,7 +36,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -75,7 +74,15 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         Integer pageNo = 0;
 
         Boolean nexflag = true;
-
+        
+        String platformOrderCreateTime = "";
+        String taskExtendJson = dmpInputApiInitRequest.getTaskExtendJson();
+        if(StringUtils.isNotBlank(taskExtendJson)) {
+        	JSONObject parseObject = JSON.parseObject(taskExtendJson);
+            if(parseObject != null) {
+            	platformOrderCreateTime = parseObject.getString(DmpInputConstant.PLATFORM_ORDER_CREATE_TIME);
+            }
+        }
         while (nexflag) {
             int offset = pageSize * pageNo;
 
@@ -88,10 +95,17 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             sb.append(pageSize);
             sb.append("&offset=");
             sb.append(offset);
-            sb.append("&order.date_last_updated.from=");
-            sb.append(this.dateToStr(dmpInputApiInitRequest.getStartTime()));
-            sb.append("&order.date_last_updated.to=");
-            sb.append(this.dateToStr(dmpInputApiInitRequest.getEndTime()));
+            if(StringUtils.isNotBlank(platformOrderCreateTime)) {
+            	sb.append("&order.date_created.from=");
+                sb.append(OffsetDateTime.parse(platformOrderCreateTime).plusSeconds(-5));
+                sb.append("&order.date_created.to=");
+                sb.append(OffsetDateTime.parse(platformOrderCreateTime).plusSeconds(5));
+            }else {
+            	sb.append("&order.date_last_updated.from=");
+                sb.append(this.dateToStr(dmpInputApiInitRequest.getStartTime()));
+                sb.append("&order.date_last_updated.to=");
+                sb.append(this.dateToStr(dmpInputApiInitRequest.getEndTime()));
+            }
             sb.append("&order.status=");
             sb.append("cancelled,paid,invalid");
             //入参
@@ -193,7 +207,6 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             .map(Object::toString)
             .collect(Collectors.toList());
      	parseObject.remove(DmpInputConstant.ORDER_ID_LIST);
-     	dmpInputApiInitRequest.setTaskExtendJson(parseObject.toJSONString());
      	
      	String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
@@ -220,10 +233,11 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             JSONObject resultJson = JSON.parseObject(jsonStr);
             String date_created = resultJson.getString("date_created");
             if(StringUtils.isNotBlank(date_created)) {
-            	
+            	parseObject.put(DmpInputConstant.PLATFORM_ORDER_CREATE_TIME, date_created);
+            	dmpInputApiInitRequest.setTaskExtendJson(parseObject.toJSONString());
             	dmpInputTaskInitDTOList.addAll(this.getApiData(dmpInputApiInitRequest));
             }else {
-            	log.warn("{}返回报文：{}" , orderId , jsonStr);
+            	log.warn("{}未查询到数据，返回报文：{}" , orderId , jsonStr);
             }
         }
         
