@@ -48,12 +48,18 @@ public class RestCloudApiUtil {
      * @return 是否成功，true表示至少有一个接口调用成功，false表示任意接口调用失败
      */
     public static boolean syncReCreate(String checkMonth, String... urls) {
-        Arrays.stream(urls).parallel().forEach(url ->{
+        for (String url : urls) {
             Map<String, Object> map = new HashMap<>();
             map.put("data", Arrays.asList());
             map.put("yearMonth", checkMonth);
-            requestRestCloud(url, map, true);
-        });
+            CompletableFuture.runAsync(() -> {
+                try {
+                    requestRestCloud(url, map, true);
+                } catch (Exception e) {
+                    log.error("异步调用谷云接口异常，url: {}，异常: {}", url, e.getMessage(), e);
+                }
+            });
+        }
         return true;
     }
 
