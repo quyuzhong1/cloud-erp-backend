@@ -20,6 +20,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.service.FbtInboundService;
+import com.erp.server.wms.service.FbaShipmentReceiveService;
 import com.erp.server.wms.service.TiktokFbtApiService;
 import com.erp.server.wms.service.repository.FbtInboundRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -581,12 +584,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             if (!StrUtil.equals(inboundOrder.getInboundOrderId(), record.getInboundOrderId())) {
                 continue;
             }
-            String idempotentRecordId = buildRecordId(record);
-            if (fbtInboundRepository.existsInventoryRecord(idempotentRecordId)) {
-                continue;
-            }
-            applyOverseasInventory(record);
-            saveInventoryFlow(shipment, record, idempotentRecordId);
+            handleInventoryRecord(inboundOrder.getShopId(), record);
         }
     }
 
@@ -605,36 +603,13 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             return false;
         }
         applyOverseasInventory(record);
-        saveInventoryFlow(shipment, record, idempotentRecordId);
-        updateDetailReceiveQty(shipment, record);
-        return true;
-    }
-
-    private void updateDetailReceiveQty(FbaShipmentEntity shipment, TiktokFbtDTO.InventoryRecordDTO record) {
-        if (shipment == null || StrUtil.isBlank(shipment.getId()) || record == null) {
-            return;
+        FbaShipmentReceiveEntity receiveEntity = buildReceiveEntity(shipment, record, idempotentRecordId);
+        if (StrUtil.isBlank(receiveEntity.getFnSku()) || StrUtil.isBlank(receiveEntity.getMsku())) {
+            log.warn("FBT库存流水跳过，未匹配到货件明细, inboundOrderId={}, recordId={}, skuCode={}, goodsId={}",
+                    record.getInboundOrderId(), record.getRecordId(), record.getSkuCode(), record.getGoodsId());
+            return false;
         }
-        List<FbaShipmentDetailEntity> details = fbtInboundRepository.listShipmentDetails(shipment.getId());
-        if (details == null || details.isEmpty()) {
-            return;
-        }
-        for (FbaShipmentDetailEntity detail : details) {
-            if (detail == null) {
-                continue;
-            }
-            boolean match = (StrUtil.isNotBlank(record.getSkuCode()) && StrUtil.equals(record.getSkuCode(), detail.getMsku()))
-                    || (StrUtil.isNotBlank(record.getGoodsId()) && StrUtil.equals(record.getGoodsId(), detail.getFnSku()));
-            if (!match) {
-                continue;
-            }
-            int oldReceive = detail.getReceiveQty() == null ? 0 : detail.getReceiveQty();
-            int delta = record.getDeltaQty() == null ? 0 : record.getDeltaQty();
-            int newReceive = Math.max(oldReceive + delta, 0);
-            detail.setReceiveQty(newReceive);
-            detail.setReceiveDate(record.getEventTime() == null ? LocalDateTime.now() : record.getEventTime());
-            detail.setDiffQty(calcDiffQty(detail.getReceiveQty(), detail.getDeliveryQty()));
-            fbtInboundRepository.updateShipmentDetail(detail);
-        }
+        return Boolean.TRUE.equals(fbaShipmentReceiveService.saveAndCheckTransfer(Collections.singletonList(receiveEntity), shipment));
     }
 
     private void applyOverseasInventory(TiktokFbtDTO.InventoryRecordDTO record) {
@@ -714,7 +689,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         return value == null ? 0 : value;
     }
 
-    private void saveInventoryFlow(FbaShipmentEntity shipment, TiktokFbtDTO.InventoryRecordDTO record, String idempotentRecordId) {
+    private FbaShipmentReceiveEntity buildReceiveEntity(FbaShipmentEntity shipment, TiktokFbtDTO.InventoryRecordDTO record, String idempotentRecordId) {
         FbaShipmentReceiveEntity entity = new FbaShipmentReceiveEntity();
         entity.setFbaShipmentId(shipment.getFbaShipmentId());
         entity.setMsku(record.getSkuCode());
@@ -729,7 +704,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         entity.setUniqueMd5(idempotentRecordId);
         entity.setUniqueIndex(record.getRecordId());
         bindDetailIfMatch(shipment, entity, record);
-        fbtInboundRepository.saveInventoryRecord(entity);
+        return entity;
     }
 
     private void bindDetailIfMatch(FbaShipmentEntity shipment, FbaShipmentReceiveEntity entity, TiktokFbtDTO.InventoryRecordDTO record) {
@@ -745,6 +720,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             boolean match = (StrUtil.isNotBlank(record.getSkuCode()) && StrUtil.equals(record.getSkuCode(), detail.getMsku()))
                     || (StrUtil.isNotBlank(record.getGoodsId()) && StrUtil.equals(record.getGoodsId(), detail.getFnSku()));
             if (match) {
+                entity.setMsku(detail.getMsku());
+                entity.setFnSku(detail.getFnSku());
                 entity.setDetailId(detail.getId());
                 entity.setSkuNo(detail.getSkuNo());
                 entity.setSkuId(detail.getSkuId());
