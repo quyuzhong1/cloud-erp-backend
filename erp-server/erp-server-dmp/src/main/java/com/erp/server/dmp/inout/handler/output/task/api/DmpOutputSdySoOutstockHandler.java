@@ -54,6 +54,7 @@ import com.common.core.utils.Tools;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -556,6 +557,30 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	        		shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNo);
     	        		}
     				}
+    	        }
+    	        
+    	        String thirdOrderCode = dmpSoOutstockDetailEntity.getThirdOrderCode();
+    	        if(!thirdBillNo.startsWith("CK") && thirdOrderCode.contains(",")) {
+    	        	String thirdDetailId = dmpSoOutstockDetailEntity.getThirdDetailId();
+    	        	SoOutstockDetailEntity soOutstockDetailEntity = FeignQuery.getById(SoOutstockDetailEntity.class, thirdDetailId);
+    	        	if(soOutstockDetailEntity != null) {
+    	        		String soDetailId = soOutstockDetailEntity.getSoDetailId();
+    	        		while(StringUtils.isNotBlank(thirdOrderCode) && thirdOrderCode.contains(",") && StringUtils.isNotBlank(soDetailId)) {
+    		            	List<SoB2cRefEntity> soB2cRefEntityList = FeignQuery.create(SoB2cRefEntity.class).eq(SoB2cRefEntity::getTargetDetailId, soDetailId).list();
+    		            	if(CollUtil.isEmpty(soB2cRefEntityList)) {
+    		            		break;
+    		            	}
+    		            	SoB2cRefEntity soB2cRefEntity = soB2cRefEntityList.get(0);
+    		            	soDetailId = soB2cRefEntity.getSourceDetailId();
+    		            	SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, soB2cRefEntity.getSourceId());
+    		            	if(soB2cEntity == null) {
+    		            		break;
+    		            	}
+    		            	thirdOrderCode = soB2cEntity.getPlatformCode();
+    		            }
+    	        	}
+    	        	shudiyunB2cOrderDTO.setRoot_node_no(thirdOrderCode);
+	        		shudiyunB2cOrderDTO.setRoot_node_no_initial(thirdOrderCode);
     	        }
     	        
     	        Map<String, String> platformCodeSkuMSkuMap = cfgMaps.get("platformCodeSkuMSkuMap");
