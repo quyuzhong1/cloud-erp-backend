@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -80,46 +81,37 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PackingInspectionDTO.ViewDTO scan(PackingInspectionDTO.ScanDTO dto) {
-        if(PackingInspectionOperationEnum.BY_ORDER.getCode().equals(dto.getOperationType())){
+        if (PackingInspectionOperationEnum.BY_ORDER.getCode().equals(dto.getOperationType())) {
             throw new ServiceException("不支持该操作类型");
         }
+
         SoB2cDeliveryEntity entity = soB2cDeliveryService.getByBusinessCode(dto.getBusinessCode());
-        if(Objects.isNull(entity)){
+        if (Objects.isNull(entity)) {
             throw new ServiceException("查询不到发货单，请确认扫描单号");
         }
 
-        TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(entity.getSourceId());
-        if (ObjectUtil.isEmpty(declareDetailEntity)) {
-            declareDetailEntity = new TransferDeclareDetailEntity();
-        }
+        // 并行获取关联数据
+        CompletableFuture<TransferDeclareDetailEntity> declareDetailFuture = CompletableFuture.supplyAsync(
+                () -> transferDeclareFeign.getBySoId(entity.getSourceId())
+        );
 
-        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
-        if(ObjectUtil.isEmpty(soB2cEntity)) {
+        CompletableFuture<SoB2cEntity> soB2cFuture = CompletableFuture.supplyAsync(
+                () -> soB2cFeign.getById(entity.getSourceId())
+        );
+
+        // 等待并行任务完成
+        TransferDeclareDetailEntity declareDetailEntity = declareDetailFuture.join();
+        SoB2cEntity soB2cEntity = soB2cFuture.join();
+
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
-        //验证订单平台是否取消
+
+        // 验证订单状态
         if (soB2cEntity.getIsCancel()) {
-            //订单拦截
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
             return null;
         }
-        //请求接口过慢，暂时取消 TODO
-        /*else {
-            if (soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
-                //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
-                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
-                deliveryInterceptDTO.setSoB2cId(soB2cEntity.getId());
-                deliveryInterceptDTO.setDictPlatform(soB2cEntity.getDictPlatform());
-                deliveryInterceptDTO.setOldIsCancel(soB2cEntity.getIsCancel());
-                deliveryInterceptDTO.setPlatformCode(soB2cEntity.getPlatformCode());
-                deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
-                Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
-                if (flag) {
-                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
-                    return null;
-                }
-            }
-        }*/
 
         if (soB2cEntity.getIsIntercept()) {
             throw new ServiceException(ApiError.LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE);
@@ -128,140 +120,179 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             throw new ServiceException(ApiError.LOGISTICS_ORDER_VOIDED_NOT_PACKAGE);
         }
 
-        //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库
         PackingInspectionDTO.ViewDTO viewDTO = this.getViewDTO(entity.getId());
-        //redis没有值，说明可能是开始扫描，或者过期
-        if(Objects.isNull(viewDTO)){
-            List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-            if(CollectionUtils.isEmpty(detailEntityList)){
-                throw new ServiceException("发货单详情为空");
-            }
-            //组合产品，按最新BOM拆分为子产品和销售数量显示
-            //根据SKU查询BOM判断是否是组合SKU
-            List<String> skuIdList = detailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-            //查询sku基础信息
-            List<SkuVO> skuVOList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
-            Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity()));
-            PackingInspectionDTO.ViewDTO addViewDTO;
-            addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,detailEntityList);
-            addViewDTO.setScannedSkuList(new ArrayList<>());
-            //设置sku信息
-            for (PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo: addViewDTO.getWaitScanSkuList()){
+        boolean isNewViewDTO = false;
+
+        if (Objects.isNull(viewDTO)) {
+            // 并行获取明细和SKU信息
+            CompletableFuture<List<SoB2cDeliveryDetailEntity>> detailFuture = CompletableFuture.supplyAsync(
+                    () -> soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()))
+            );
+
+            CompletableFuture<List<SkuVO>> skuFuture = CompletableFuture.supplyAsync(() -> {
+                List<SoB2cDeliveryDetailEntity> details = detailFuture.join();
+                if (CollectionUtils.isEmpty(details)) {
+                    throw new ServiceException("发货单详情为空");
+                }
+
+                List<String> skuIdList = details.stream()
+                        .map(SoB2cDeliveryDetailEntity::getSkuId)
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                return plmTaskFeign.listSkuPurchaseByIds(skuIdList);
+            });
+
+            // 构建ViewDTO
+            List<SoB2cDeliveryDetailEntity> detailEntityList = detailFuture.join();
+            List<SkuVO> skuVOList = skuFuture.join();
+            Map<String, SkuVO> skuVOMap = skuVOList.stream()
+                    .collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+
+            viewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity, detailEntityList);
+            viewDTO.setScannedSkuList(new ArrayList<>());
+
+            // 设置SKU信息
+            viewDTO.getWaitScanSkuList().forEach(scanSkuInfo -> {
                 SkuVO skuVO = skuVOMap.get(scanSkuInfo.getSkuId());
-                if(Objects.nonNull(skuVO)){
+                if (Objects.nonNull(skuVO)) {
                     scanSkuInfo.setProductName(skuVO.getSkuName());
                     scanSkuInfo.setSkuImageUrl(skuVO.getSkuImagesUrl());
                     scanSkuInfo.setSkuNo(skuVO.getSkuNo());
                     scanSkuInfo.setWarehouseLocation(skuVO.getWarehouseLocation());
                     scanSkuInfo.setEan(skuVO.getEan());
                 }
-            }
-            addViewDTO.setSkuSpeciesQty(addViewDTO.getWaitScanSkuList().size()+addViewDTO.getScannedSkuList().size());
-            addViewDTO.setSkuTotalQty(addViewDTO.getWaitScanSkuList().stream().mapToInt(PackingInspectionDTO.ViewDTO.ScanSkuInfo::getSaleQty).sum()+addViewDTO.getScannedSkuList().stream().mapToInt(PackingInspectionDTO.ViewDTO.ScanSkuInfo::getSaleQty).sum());
-            Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = addViewDTO.getWaitScanSkuList().iterator();
+            });
+
+            // 计算总数
+            viewDTO.setSkuSpeciesQty(viewDTO.getWaitScanSkuList().size());
+            viewDTO.setSkuTotalQty(viewDTO.getWaitScanSkuList().stream()
+                    .mapToInt(PackingInspectionDTO.ViewDTO.ScanSkuInfo::getSaleQty).sum());
+
+            // 处理已扫描项
+            Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = viewDTO.getWaitScanSkuList().iterator();
             while (it.hasNext()) {
                 PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = it.next();
-                if(scanSkuInfo.getScannedQty() > 0){
-                    addViewDTO.getScannedSkuList().add(scanSkuInfo);
+                if (scanSkuInfo.getScannedQty() > 0) {
+                    viewDTO.getScannedSkuList().add(scanSkuInfo);
                 }
-                if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
+                if (scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())) {
                     it.remove();
                 }
             }
-            viewDTO = addViewDTO;
-            //跟踪号赋值
-            if(viewDTO.getTrackNo() == null || null == viewDTO.getPaperSize()){
-                List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId()));
-                if(CollectionUtils.isNotEmpty(soB2cLogisticsEntityList)){
-                    SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.get(0);
-                    viewDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
-                    LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
-                    if(Objects.nonNull(logisticsChannelEntity)){
-                        viewDTO.setPaperSize(logisticsChannelEntity.getPaperSize());
-                        viewDTO.setPrinterName(cfgSettingService.getPrinterNameByPaperSize(logisticsChannelEntity.getPaperSize()));
-                    }
+
+            isNewViewDTO = true;
+        }
+
+        if (isNewViewDTO && (viewDTO.getTrackNo() == null || viewDTO.getPaperSize() == null)) {
+            List<SoB2cLogisticsEntity> logisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(
+                    Collections.singletonList(soB2cEntity.getId()));
+
+            if (CollectionUtils.isNotEmpty(logisticsList)) {
+                SoB2cLogisticsEntity logistics = logisticsList.get(0);
+                viewDTO.setTrackNo(logistics.getTrackNo());
+
+                LogisticsChannelEntity channel = logisticsFeign.getChannelById(logistics.getLogisticsChannelId());
+                if (channel != null) {
+                    viewDTO.setPaperSize(channel.getPaperSize());
+                    viewDTO.setPrinterName(cfgSettingService.getPrinterNameByPaperSize(channel.getPaperSize()));
                 }
             }
         }
-        if(CharSequenceUtil.isNotBlank(dto.getSkuNo())){
-            //可能扫描sku编号或ean码
+
+        if (CharSequenceUtil.isNotBlank(dto.getSkuNo())) {
+            // 参数校验
+            if (dto.getScanQty() == null || dto.getScanQty() <= 0) {
+                throw new ServiceException(dto.getScanQty() == null ? "扫描数量不能为空" : "扫描数量必须大于0");
+            }
+
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> waitScanList = viewDTO.getWaitScanSkuList();
-            PackingInspectionDTO.ViewDTO.ScanSkuInfo skuInfo = waitScanList.stream().filter(v->v.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(null);
-            PackingInspectionDTO.ViewDTO.ScanSkuInfo eanInfo = waitScanList.stream().filter(v->dto.getSkuNo().equals(v.getEan())).findFirst().orElse(null);
-            if(Objects.nonNull(skuInfo) && Objects.nonNull(eanInfo) && !skuInfo.getSkuId().equals(eanInfo.getSkuId())){
-                throw new ServiceException("有超过一个sku编号或ean码匹配，请确认");
-            }
-            if(Objects.isNull(dto.getScanQty())){
-                throw new ServiceException("扫描数量不能为空");
-            }
-            if(dto.getScanQty() <= 0){
-                throw new ServiceException("扫描数量必须大于0");
-            }
-            //修改对应SKU扫描数量
-            Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = waitScanList.iterator();
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> scannedList = viewDTO.getScannedSkuList();
-            boolean matchFlag = false;
-            while (it.hasNext()) {
-                PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = it.next();
-                if(dto.getSkuNo().equals(scanSkuInfo.getSkuNo()) || dto.getSkuNo().equals(scanSkuInfo.getEan())){
-                    matchFlag = true;
-                    if(scanSkuInfo.getWaitScanQty() <= 0){
-                        throw new ServiceException("SKU已验货完成，无需再次验货");
-                    }
-                    //更新已扫描的数据
-                    PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->(v.getSkuNo().equals(dto.getSkuNo()) || dto.getSkuNo().equals(v.getEan())) && !v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
-                    if(Objects.isNull(scanned)){
-                        viewDTO.getScannedSkuList().add(scanSkuInfo);
-                    }else{
-                        scanned.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
-                    }
-                    if(dto.getScanQty() > scanSkuInfo.getWaitScanQty()){
-                        throw new ServiceException("扫描数量大于待扫描数量");
-                    }
-                    scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-dto.getScanQty());
-                    scanSkuInfo.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
-                    //如果已扫描数等于销售数，放到已扫描队列
-                    if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
-                        it.remove();
-                    }
-                    break;
-                }
-            }
-            if(!matchFlag){
-                PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->(v.getSkuNo().equals(dto.getSkuNo())||dto.getSkuNo().equals(v.getEan())) && v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
-                if(Objects.nonNull(scanned)){
+
+            // 使用流式处理提高效率
+            Optional<PackingInspectionDTO.ViewDTO.ScanSkuInfo> matchedSku = waitScanList.stream()
+                    .filter(v -> dto.getSkuNo().equals(v.getSkuNo()) || dto.getSkuNo().equals(v.getEan()))
+                    .findFirst();
+
+            if (!matchedSku.isPresent()) {
+                // 检查是否已扫描完成
+                boolean alreadyScanned = scannedList.stream()
+                        .anyMatch(v -> (v.getSkuNo().equals(dto.getSkuNo()) || dto.getSkuNo().equals(v.getEan()))
+                                && v.getScannedQty().equals(v.getSaleQty()));
+
+                if (alreadyScanned) {
                     throw new ServiceException("SKU已验货完成，无需再次验货");
                 }
                 throw new ServiceException("SKU或EAN不匹配，验货失败");
             }
-        }else{
-            if(entity.getIsInspection()){
-                throw new ServiceException("订单已验货，无法重复验货");
+
+            PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = matchedSku.get();
+            if (scanSkuInfo.getWaitScanQty() <= 0) {
+                throw new ServiceException("SKU已验货完成，无需再次验货");
+            }
+
+            if (dto.getScanQty() > scanSkuInfo.getWaitScanQty()) {
+                throw new ServiceException("扫描数量大于待扫描数量");
+            }
+
+            // 更新扫描数量
+            scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty() - dto.getScanQty());
+            scanSkuInfo.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
+
+            // 更新已扫描列表
+            Optional<PackingInspectionDTO.ViewDTO.ScanSkuInfo> existingScanned = scannedList.stream()
+                    .filter(v -> (v.getSkuNo().equals(dto.getSkuNo()) || dto.getSkuNo().equals(v.getEan()))
+                            && !v.getScannedQty().equals(v.getSaleQty()))
+                    .findFirst();
+
+            if (existingScanned.isPresent()) {
+                existingScanned.get().setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
+            } else {
+                scannedList.add(scanSkuInfo);
+            }
+
+            // 如果扫描完成，从待扫描列表移除
+            if (scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())) {
+                waitScanList.remove(scanSkuInfo);
+            }
+        } else if (!entity.getIsInspection()) {
+            // 只有未验货的订单才能进行整体验货
+            // 判断是否全部扫描完成
+            if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())) {
+                // 批量更新
+                List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(
+                        Collections.singletonList(entity.getId()));
+
+                detailEntityList.forEach(v -> v.setWaitScanQty(0));
+                entity.setIsInspection(true);
+                entity.setInspectionTime(LocalDateTime.now());
+                entity.setIsAutoOut(dto.getIsAutoOut());
+                viewDTO.setStatus(true);
+
+                // 批量更新操作
+                boolean updateSuccess = soB2cDeliveryService.updateById(entity)
+                        && soB2cDeliveryDetailService.updateBatchById(detailEntityList);
+
+                if (!updateSuccess) {
+                    throw new ServiceException("发货单更新失败");
+                }
+
+                // 记录日志
+                String msg = CharSequenceUtil.format(
+                        "用户【{}】更新【{}】单据单号为【{}】包装验货完成",
+                        UserContext.getDefaultLoginUser().getUserName(),
+                        "b2c发货单",
+                        entity.getCode());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
             }
         }
-        //判断是否全部扫描完成
-        if(CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())){
-            //更新数据
-            List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-            detailEntityList.forEach(v-> v.setWaitScanQty(0));
-            entity.setIsInspection(true);
-            entity.setInspectionTime(LocalDateTime.now());
-            entity.setIsAutoOut(dto.getIsAutoOut());
-            viewDTO.setStatus(true);
-            if(!soB2cDeliveryService.updateById(entity)){
-                throw new ServiceException("发货单更新失败");
-            }
-            if(!soB2cDeliveryDetailService.updateBatchById(detailEntityList)){
-                throw new ServiceException("发货单明细更新失败");
-            }
-            String msg = CharSequenceUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
-        }
+
         //数据存redis
-        this.saveViewDTO(entity.getId(),viewDTO);
+        this.saveViewDTO(entity.getId(), viewDTO);
 
         viewDTO.setTransferStatus(soB2cEntity.getTransferStatus());
-        viewDTO.setOrderUploadStatus(declareDetailEntity.getOrderUploadStatus());
+        viewDTO.setOrderUploadStatus(declareDetailEntity != null ? declareDetailEntity.getOrderUploadStatus() : null);
+        long endTime = System.currentTimeMillis();
         return viewDTO;
     }
 
