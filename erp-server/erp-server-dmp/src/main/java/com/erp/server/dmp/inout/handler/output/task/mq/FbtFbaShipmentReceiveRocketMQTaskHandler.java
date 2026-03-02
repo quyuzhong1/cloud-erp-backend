@@ -10,6 +10,7 @@ import com.erp.model.dmp.lingxing.FbaReceiveDetailEntity;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ import java.util.Map;
  */
 @Service
 @Scope("prototype")
+@Slf4j
 public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     private static final ZoneOffset ZONE_OFFSET_8 = ZoneOffset.ofHours(8);
@@ -71,14 +73,24 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<String, String> result = new LinkedHashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+        long totalRows = 0;
+        long skipBlack = 0;
+        long skipMissingInboundOrder = 0;
+        long skipMissingShopId = 0;
+        long skipMissingFnSku = 0;
+        long skipMissingMsku = 0;
+        long skipQtyZero = 0;
+        int printedSkipSample = 0;
 
         Map<DmpCfgInputConvertEntity, List<Map<String, Object>>> changeMongoMap = dmpRequest.getChangeConvertInputMongoEntityListMaps();
         if (CollUtil.isEmpty(changeMongoMap)) {
             changeMongoMap = dmpRequest.getConvertInputMongoEntityListMaps();
         }
         if (CollUtil.isEmpty(changeMongoMap)) {
+            log.warn("FBT签收输出为空: cfgOutputId={}, reason=changeMongoMap empty", cfgOutputId);
             return result;
         }
+        log.info("FBT签收输出开始: cfgOutputId={}, convertNodes={}", cfgOutputId, changeMongoMap.size());
 
         Map<String, FbaReceiveGroupEntity> groupedMap = new LinkedHashMap<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<Map<String, Object>>> entry : changeMongoMap.entrySet()) {
@@ -87,7 +99,12 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
                 continue;
             }
             for (Map<String, Object> row : rows) {
-                if (row == null || this.validateDataBlack(row, cfgOutputId)) {
+                totalRows++;
+                if (row == null) {
+                    continue;
+                }
+                if (this.validateDataBlack(row, cfgOutputId)) {
+                    skipBlack++;
                     continue;
                 }
                 String inboundOrderId = firstNotBlank(
@@ -108,9 +125,44 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
                     msku = getMapValue(row.get(KEY_GOODS), KEY_REFERENCE_CODE);
                 }
                 Integer qty = parseInt(firstNotBlank(row, KEY_DELTA_QTY, KEY_CHANGED_QUANTITY, KEY_CHANGE_QUANTITY));
-                if (StrUtil.isBlank(inboundOrderId) || StrUtil.isBlank(shopId)
-                        || StrUtil.isBlank(fnSku) || StrUtil.isBlank(msku)
-                        || qty == null || qty == 0) {
+                if (StrUtil.isBlank(inboundOrderId)) {
+                    skipMissingInboundOrder++;
+                    if (printedSkipSample < 5) {
+                        log.warn("FBT签收过滤: missing inboundOrderId, row={}", JSON.toJSONString(row));
+                        printedSkipSample++;
+                    }
+                    continue;
+                }
+                if (StrUtil.isBlank(shopId)) {
+                    skipMissingShopId++;
+                    if (printedSkipSample < 5) {
+                        log.warn("FBT签收过滤: missing shopId, row={}", JSON.toJSONString(row));
+                        printedSkipSample++;
+                    }
+                    continue;
+                }
+                if (StrUtil.isBlank(fnSku)) {
+                    skipMissingFnSku++;
+                    if (printedSkipSample < 5) {
+                        log.warn("FBT签收过滤: missing fnSku(goodsId), row={}", JSON.toJSONString(row));
+                        printedSkipSample++;
+                    }
+                    continue;
+                }
+                if (StrUtil.isBlank(msku)) {
+                    skipMissingMsku++;
+                    if (printedSkipSample < 5) {
+                        log.warn("FBT签收过滤: missing msku(reference_code), row={}", JSON.toJSONString(row));
+                        printedSkipSample++;
+                    }
+                    continue;
+                }
+                if (qty == null || qty == 0) {
+                    skipQtyZero++;
+                    if (printedSkipSample < 5) {
+                        log.warn("FBT签收过滤: qty is zero/null, row={}", JSON.toJSONString(row));
+                        printedSkipSample++;
+                    }
                     continue;
                 }
                 OffsetDateTime eventTime = parseEventTime(row.get(KEY_EVENT_TIME));
@@ -130,8 +182,9 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
                 String dataId = normalizeUniqueId("fbtrcvd_" + MD5Util.toMD5(groupSeed));
 
                 OffsetDateTime finalEventTime = eventTime;
+                String finalInboundOrderId = inboundOrderId;
                 FbaReceiveGroupEntity groupEntity = groupedMap.computeIfAbsent(dataId, key -> buildGroupEntity(
-                        inboundOrderId, shopId, authId, finalEventTime.toLocalDate(), groupUniqueId, row));
+                        finalInboundOrderId, shopId, authId, finalEventTime.toLocalDate(), groupUniqueId, row));
                 groupEntity.getDetailList().add(buildDetailEntity(row, inboundOrderId, shopId, authId, eventTime, qty, fnSku, msku));
             }
         }
@@ -139,6 +192,8 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
         for (Map.Entry<String, FbaReceiveGroupEntity> entry : groupedMap.entrySet()) {
             result.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
         }
+        log.info("FBT签收输出结束: cfgOutputId={}, totalRows={}, resultGroups={}, resultMessages={}, skipBlack={}, skipInboundOrder={}, skipShopId={}, skipFnSku={}, skipMsku={}, skipQtyZero={}",
+                cfgOutputId, totalRows, groupedMap.size(), result.size(), skipBlack, skipMissingInboundOrder, skipMissingShopId, skipMissingFnSku, skipMissingMsku, skipQtyZero);
         return result;
     }
 
