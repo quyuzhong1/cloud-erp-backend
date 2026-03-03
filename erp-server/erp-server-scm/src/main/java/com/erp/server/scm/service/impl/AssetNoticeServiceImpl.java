@@ -216,6 +216,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 if (CollUtil.isNotEmpty(remove)) {
                     attachmentService.deleteByUrlList(remove.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
                 }
+                //记录删除的附件
+                if (CollUtil.isNotEmpty(remove)) {
+                    String msg = StrUtil.format("用户【{}】编辑【{}】单据单号为【{}】，删除附件：【{}】", UserContext.getDefaultLoginUser().getUserName(), "开模通知单" , assetNoticeEntity.getCode(),
+                            remove.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.joining(",")));
+                    moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "修改操作");
+                }
             }
 
             // 处理需要新增的数据
@@ -233,6 +239,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                         addNames.add(attachmentNameList.get(i));
                     }
                 }
+                //记录新增的附件
+                String msg = StrUtil.format("用户【{}】编辑【{}】单据单号为【{}】，新增附件：【{}】", UserContext.getDefaultLoginUser().getUserName(), "开模通知单" , assetNoticeEntity.getCode(),
+                        addNames.stream().collect(Collectors.joining(",")));
+                moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "修改操作");
                 attachmentService.batchSave(addUrls, addNames, type, assetNoticeEntity.getId());
             }
         }
