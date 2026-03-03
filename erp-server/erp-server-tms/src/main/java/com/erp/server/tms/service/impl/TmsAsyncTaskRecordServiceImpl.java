@@ -519,7 +519,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void generateAutoTaskALL() {
+    public void genAutoTask() {
         long startTime = System.currentTimeMillis();
         log.error("====开始自动生成tms异步任务====");
         // 查询系统配置

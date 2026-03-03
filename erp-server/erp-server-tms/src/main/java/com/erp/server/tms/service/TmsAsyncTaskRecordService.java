@@ -50,5 +50,5 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     void updateTaskDetailFailure(String taskDetailId, Exception e);
 
-    void generateAutoTaskALL();
+    void genAutoTask();
 }

@@ -176,7 +176,7 @@ public class TmsAsyncTaskRecordController extends BaseController {
     }
 
     /**
-     * 批量重试
+     * 错误重试
      * @author jack
      * @date: 2026-02-26
      * @param dto
@@ -209,9 +209,9 @@ public class TmsAsyncTaskRecordController extends BaseController {
     /**
      * 测试 - 创建所有的自动任务
      */
-    @GetMapping("/generateAutoTaskALL")
-    public void generateAutoTaskALL() {
-        tmsAsyncTaskRecordService.generateAutoTaskALL();
+    @GetMapping("/genAutoTask")
+    public void genAutoTask() {
+        tmsAsyncTaskRecordService.genAutoTask();
     }
 
 
