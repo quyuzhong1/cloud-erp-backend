@@ -196,7 +196,7 @@ public class StocktakingProfitLossDTO implements Serializable {
         /**
          * 明细id
          */
-        private String detailId;
+        //private String detailId;
 
         private String mainId;
         /**

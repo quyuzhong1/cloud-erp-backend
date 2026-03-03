@@ -37,7 +37,6 @@ import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.StocktakingTaskExcelListener;
@@ -50,13 +49,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.xpath.operations.Bool;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
@@ -65,6 +62,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -173,106 +171,162 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * @param list
      */
     private void fillDb(List<StocktakingTaskDTO.PagingViewDTO> list) {
-        List<String> idList = list.stream().map(StocktakingTaskDTO.PagingViewDTO::getId).collect(Collectors.toList());
-        //获取到详情
-        List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(idList);
-        //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(idList);
-        //List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
-        //最新审核人
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        list.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.STOCKTAKING_TASK.getCode(), obj.getId()));
-        });
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-        if (CollectionUtils.isNotEmpty(dtoList)) {
-            listApiResult = workflowFeign.curApprover(dtoList);
-            Integer code = listApiResult.getCode();
-            if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
-            }
+        if (CollectionUtils.isEmpty(list)) {
+            return;
         }
 
-        for (StocktakingTaskDTO.PagingViewDTO item : list) {
-            List<StocktakingTaskDetailDTO.ViewDTO> viewDTOS = stocktakingTaskDetailService.listByMainId(item.getId());
-            List<StocktakingTaskDetailDTO.ViewDTO> filterList = viewDTOS.stream()
-                    .filter(obj -> obj.getDiffQty() != 0)
-                    .collect(Collectors.toList());
-            if (filterList.isEmpty()) {
-                //允许编辑，不允许下推
-                item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
-            } else {
-                int count = 0;
-                List<String> stocktakingTaskDetailIdList = filterList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
-                List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceIds(stocktakingTaskDetailIdList);
-                for (StocktakingTaskDetailDTO.ViewDTO viewDTO : filterList) {
-                    List<StocktakingProfitLossDetailEntity> detailList = stocktakingProfitLossDetailList.stream().filter(o -> Objects.equals(viewDTO.getId(), o.getSourceDetailId())).collect(Collectors.toList());
-                    if (!detailList.isEmpty()) {
-                        count ++;
+        // 一次性获取所有需要的ID
+        List<String> idList = list.stream()
+                .map(StocktakingTaskDTO.PagingViewDTO::getId)
+                .collect(Collectors.toList());
+
+        // 并行查询所有需要的数据
+        CompletableFuture<List<StocktakingTaskDetailEntity>> detailFuture = CompletableFuture.supplyAsync(
+                () -> stocktakingTaskDetailService.listBaseByMainIds(idList));
+
+        CompletableFuture<List<StocktakingTaskUserEntity>> userFuture = CompletableFuture.supplyAsync(
+                () -> stocktakingTaskUserService.listBaseBySourceIdList(idList));
+
+        CompletableFuture<ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>>> apiResultFuture =
+                CompletableFuture.supplyAsync(() -> {
+                    ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+                    list.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(
+                            SourceTypeEnum.STOCKTAKING_TASK.getCode(), obj.getId())));
+
+                    if (CollectionUtils.isNotEmpty(dtoList)) {
+                        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> result = workflowFeign.curApprover(dtoList);
+                        if (200 != result.getCode()) {
+                            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), result.getMsg()));
+                        }
+                        return result;
                     }
-                }
-                if (count == 0) {
-                    //允许编辑，允许下推
-                    item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
-                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
-                } else if (count == filterList.size()){
-                    //不允许编辑，不允许下推
-                    item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
-                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
-                } else {
-                    //不允许编辑，允许下推
-                    item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
-                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_ALL_GENERATE.getCode());
-                }
-            }
+                    return null;
+                });
+
+        // 等待所有查询完成
+        CompletableFuture.allOf(detailFuture, userFuture, apiResultFuture).join();
+
+        List<StocktakingTaskDetailEntity> taskDetailList = detailFuture.join();
+        List<StocktakingTaskUserEntity> taskUserList = userFuture.join();
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = apiResultFuture.join();
+
+        // 预处理数据 - 按主ID分组
+        Map<String, List<StocktakingTaskDetailEntity>> detailByMainId = taskDetailList.stream()
+                .collect(Collectors.groupingBy(StocktakingTaskDetailEntity::getMainId));
+
+        Map<String, List<StocktakingTaskUserEntity>> userBySourceId = taskUserList.stream()
+                .collect(Collectors.groupingBy(StocktakingTaskUserEntity::getSourceId));
+
+        Map<String, List<ProcessManagementDTO.CurApproveInfoDTO>> approveInfoByBusinessId =
+                listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())
+                        ? listApiResult.getData().stream()
+                        .collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId))
+                        : Collections.emptyMap();
+
+        // 预加载所有详情数据
+        Map<String, List<StocktakingTaskDetailDTO.ViewDTO>> viewDtoByMainId = new HashMap<>();
+        Map<String, List<String>> stocktakingTaskDetailIdListByMainId = new HashMap<>();
+        for (String mainId : idList) {
+            List<StocktakingTaskDetailDTO.ViewDTO> viewDTOS = stocktakingTaskDetailService.listByMainId(mainId);
+            viewDtoByMainId.put(mainId, viewDTOS);
+
+            List<String> detailIds = viewDTOS.stream()
+                    .map(StocktakingTaskDetailDTO.ViewDTO::getId)
+                    .collect(Collectors.toList());
+            stocktakingTaskDetailIdListByMainId.put(mainId, detailIds);
+        }
+
+        // 预加载所有盈亏详情数据
+        Map<String, List<StocktakingProfitLossDetailEntity>> profitLossBySourceDetailId = new HashMap<>();
+        Set<String> allDetailIds = stocktakingTaskDetailIdListByMainId.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+
+        if (!allDetailIds.isEmpty()) {
+            List<StocktakingProfitLossDetailEntity> profitLossDetails = stocktakingProfitLossDetailService.listBySourceIds(new ArrayList<>(allDetailIds));
+            profitLossBySourceDetailId = profitLossDetails.stream()
+                    .collect(Collectors.groupingBy(StocktakingProfitLossDetailEntity::getSourceDetailId));
         }
 
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
             String id = item.getId();
-            ApproveStatusEnum approveStatus = item.getApproveStatus();
-            String approveStatusName = approveStatus.getName();
-            item.setApproveStatusName(approveStatusName);
-//            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-//            String waitApproveUserName = StringUtils.join(curApproveName, ",");
-//            item.setWaitApproveUserName(waitApproveUserName);
-            //分担规则
-            SeparateRuleEnum separateRule = item.getSeparateRule();
-            item.setSeparateRuleName(Objects.nonNull(separateRule) ? separateRule.getName() : "");
-            //盘点方式
-            StocktakingModeEnum stocktakingMode = item.getStocktakingMode();
-            item.setStocktakingModeName(Objects.nonNull(stocktakingMode) ? stocktakingMode.getName() : "");
-            //盘点类型
-            StocktakingTypeEnum itemStocktakingType = item.getStocktakingType();
-            item.setStocktakingTypeName(Objects.nonNull(itemStocktakingType) ? itemStocktakingType.getName() : "");
-            //盘点状态
-            StocktakingStatusEnum stocktakingStatus = item.getStocktakingStatus();
-            item.setStocktakingStatusName(Objects.nonNull(stocktakingStatus) ? stocktakingStatus.getName() : "");
-            //盘点人
-            String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getSourceId())).
-                    map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
-            item.setStocktakingUserName(stocktakingUserName);
 
+            // 处理盘点盈亏状态
+            List<StocktakingTaskDetailDTO.ViewDTO> viewDTOS = viewDtoByMainId.get(id);
+            if (viewDTOS != null) {
+                List<StocktakingTaskDetailDTO.ViewDTO> filterList = viewDTOS.stream()
+                        .filter(obj -> obj.getDiffQty() != 0)
+                        .collect(Collectors.toList());
 
-            //仓库
-            String warehouseName = taskDetailList.stream().filter(d -> id.equals(d.getMainId())).
-                    map(StocktakingTaskDetailEntity::getWarehouseName).distinct().collect(Collectors.joining(","));
-            item.setWarehouseName(warehouseName);
+                if (filterList.isEmpty()) {
+                    item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
+                    item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+                } else {
+                    List<String> detailIds = stocktakingTaskDetailIdListByMainId.get(id);
+                    Map<String, List<StocktakingProfitLossDetailEntity>> finalProfitLossBySourceDetailId = profitLossBySourceDetailId;
+                    long count = detailIds.stream()
+                            .filter(detailId -> !finalProfitLossBySourceDetailId.getOrDefault(detailId, Collections.emptyList()).isEmpty())
+                            .count();
 
-            //sku 统计数
-            Integer skuCount = Math.toIntExact(taskDetailList.stream().filter(d -> id.equals(d.getMainId())).
-                    map(StocktakingTaskDetailEntity::getSkuId).distinct().count());
+                    if (count == 0) {
+                        item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
+                        item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+                    } else if (count == filterList.size()) {
+                        item.setIsPushStocktakingProfitLoss(Boolean.FALSE);
+                        item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                    } else {
+                        item.setIsPushStocktakingProfitLoss(Boolean.TRUE);
+                        item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_ALL_GENERATE.getCode());
+                    }
+                }
+            }
 
-            item.setSkuCount(skuCount);
+            // 设置各种名称
+            item.setApproveStatusName(item.getApproveStatus().getName());
+            item.setSeparateRuleName(Objects.nonNull(item.getSeparateRule()) ? item.getSeparateRule().getName() : "");
+            item.setStocktakingModeName(Objects.nonNull(item.getStocktakingMode()) ? item.getStocktakingMode().getName() : "");
+            item.setStocktakingTypeName(Objects.nonNull(item.getStocktakingType()) ? item.getStocktakingType().getName() : "");
+            item.setStocktakingStatusName(Objects.nonNull(item.getStocktakingStatus()) ? item.getStocktakingStatus().getName() : "");
 
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                if (StringUtils.isNotBlank(curApprove)) {
-                    item.setApproveUserName(curApprove);
+            // 设置盘点人
+            List<StocktakingTaskUserEntity> users = userBySourceId.get(id);
+            if (users != null) {
+                item.setStocktakingUserName(users.stream()
+                        .map(StocktakingTaskUserEntity::getUserName)
+                        .collect(Collectors.joining(",")));
+            }
+
+            // 设置仓库名称
+            List<StocktakingTaskDetailEntity> details = detailByMainId.get(id);
+            if (details != null) {
+                item.setWarehouseName(details.stream()
+                        .map(StocktakingTaskDetailEntity::getWarehouseName)
+                        .distinct()
+                        .collect(Collectors.joining(",")));
+
+                // SKU统计数
+                item.setSkuCount(Math.toIntExact(details.stream()
+                        .map(StocktakingTaskDetailEntity::getSkuId)
+                        .distinct()
+                        .count()));
+            }
+
+            // 设置当前审批人
+            if (listApiResult != null) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> approveInfos = approveInfoByBusinessId.get(id);
+                if (approveInfos != null) {
+                    String curApprove = approveInfos.stream()
+                            .filter(e -> StringUtils.isNotBlank(e.getCurApproveName()))
+                            .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                            .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApprove)) {
+                        item.setApproveUserName(curApprove);
+                    }
                 }
             }
         }
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
