@@ -16,14 +16,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.*;
+import com.erp.server.tms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.internal.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,43 +76,10 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
-import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
-import com.erp.model.tms.entity.InventorySkuCostEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
-import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
-import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
-import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
-import com.erp.model.tms.entity.TransferDeclareDetailEntity;
-import com.erp.model.tms.entity.TransferDeclareEntity;
-import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
-import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
-import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
-import com.erp.model.tms.enums.AllocationFeeTypeEnum;
-import com.erp.model.tms.enums.CfgSettingEnum;
-import com.erp.model.tms.enums.CostAllocationEnum;
-import com.erp.model.tms.enums.InstockForecastStatusEnum;
-import com.erp.model.tms.enums.TransferDeclareCostAllocationMainBigTableStatusEnum;
-import com.erp.model.tms.enums.TransferDeclareCostAllocationMainReportStatusEnum;
-import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
-import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
-import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
-import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
@@ -119,28 +95,6 @@ import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
-import com.erp.server.tms.service.CfgSettingService;
-import com.erp.server.tms.service.InventorySkuCostDetailService;
-import com.erp.server.tms.service.InventorySkuCostService;
-import com.erp.server.tms.service.LogisticsAuthService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsSupplierService;
-import com.erp.server.tms.service.MultipleOptionService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
-import com.erp.server.tms.service.TmsCostDetailService;
-import com.erp.server.tms.service.TransferDeclareCostAllocationDetailService;
-import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
-import com.erp.server.tms.service.TransferDeclareCostAllocationService;
-import com.erp.server.tms.service.TransferDeclareDeadlineSettingService;
-import com.erp.server.tms.service.TransferDeclareDetailService;
-import com.erp.server.tms.service.TransferDeclareGenerationSettingService;
-import com.erp.server.tms.service.TransferDeclareService;
-import com.erp.server.tms.service.TransferLogisticsAuthService;
-import com.erp.server.tms.service.TransferLogisticsChannelService;
-import com.erp.server.tms.service.TransferLogisticsService;
-import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import com.xxl.job.core.context.XxlJobHelper;
 
 import cn.hutool.core.collection.CollUtil;
@@ -228,6 +182,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private InventorySkuCostDetailService inventorySkuCostDetailService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private TmsAsyncTaskRecordService asyncTaskRecordService;
+    @Resource
+    private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
+    @Autowired
+    @Qualifier("costAllocationPool")
+    private ExecutorService costAllocationPool;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -1348,4 +1309,92 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 			transferDeclareCostAllocationDetailService.saveBatch(addTransferDeclareCostAllocationDetailEntityList);
 		}
 	}
+
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean addTaskDetailByTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        String taskId = dto.getTaskId();
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        List<String> logisticsSupplierIds = dto.getIds();
+        if (null == startTime || null == endTime) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"开始时间或结束时间为空");
+            return true;
+        }
+        List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
+        if(CollUtil.isNotEmpty(logisticsSupplierIds)){
+            list = list.stream().filter(e -> logisticsSupplierIds.contains(e.getLogisticsSupplierId())).collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(list)) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"b2c报关对账单明细为空");
+            return true;
+        }
+        //记录本次任务数量
+        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
+
+        List<TmsAsyncTaskDetailEntity> taskDetailList = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        for(TmsB2cDeclareReconciliationDetailEntity l : list) {
+            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+            detail.setMainId(taskId);
+            detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
+            detail.setBusinessId(l.getId());
+//            detail.setBusinessCode(l.getSourceCode());
+            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+            detail.setCreateTime(now);
+            taskDetailList.add(detail);
+        }
+        asyncTaskDetailRecordService.saveBatch(taskDetailList);
+        return false;
+    }
+
+
+
+    @Override
+    public void pushTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        String taskId = dto.getTaskId();
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+
+        TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
+        if(Objects.isNull(tmsAsyncTaskRecordEntity)){
+            log.error("任务记录不存在，taskId: {}", taskId);
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+            return;
+        }
+
+        List<TmsAsyncTaskDetailEntity> taskDetailList = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
+        CountDownLatch latch = new CountDownLatch(taskDetailList.size());
+
+        List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
+        Map<String, TmsB2cDeclareReconciliationDetailEntity> map = list.stream().collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, Function.identity(), (o1, o2) -> o1));
+        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
+            String taskDetailId = detail.getId();
+            String businessId = detail.getBusinessId();
+            costAllocationPool.execute(() -> {
+                try {
+                    TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
+                    singPushAllocation(entity.getSourceId() , entity.getApproveDate().format(formatter) , Arrays.asList(entity));
+                } catch (Exception e) {
+                    log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
+                    // 统一处理任务失败状态更新
+                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+        try {
+            boolean await = latch.await(tmsAsyncTaskRecordEntity.getExecTimeout(), TimeUnit.SECONDS);// 等待所有任务完成
+            if(await){
+                asyncTaskRecordService.updateTaskFinally(taskId);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("任务等待中断", e);
+        }
+    }
 }

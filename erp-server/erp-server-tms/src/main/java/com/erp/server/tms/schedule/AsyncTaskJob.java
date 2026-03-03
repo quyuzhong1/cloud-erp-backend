@@ -54,7 +54,7 @@ public class AsyncTaskJob {
         List<TmsAsyncTaskRecordEntity> list = asyncTaskRecordService.lambdaQuery()
                 .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
 //                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                .eq(TmsAsyncTaskRecordEntity::getExecType, TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode())
+//                .eq(TmsAsyncTaskRecordEntity::getExecType, TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode())
                 .list();
         if(CollUtil.isEmpty(list)){
             log.error("TmsAsyncTaskRecord不存在待执行或者执行中的任务");
@@ -77,7 +77,9 @@ public class AsyncTaskJob {
         }
 
         //待执行
-        List<TmsAsyncTaskRecordEntity> pendingList = list.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.PENDING.getCode())).collect(Collectors.toList());
+        List<TmsAsyncTaskRecordEntity> pendingList = list.stream()
+                .filter(e -> e.getExecType().equals(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode()) && e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .collect(Collectors.toList());
         if(CollUtil.isNotEmpty(pendingList)){
             for (TmsAsyncTaskRecordEntity entity : pendingList) {
                 String dataJson = entity.getDataJson();
@@ -86,8 +88,9 @@ public class AsyncTaskJob {
                     continue;
                 }
 
-                TmsAsyncTaskRecordDTO.TaskDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.TaskDTO.class);
-                SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, taskDTO, taskDTO.getTaskId());
+                TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+                taskDTO.setTaskId(entity.getId());
+                SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
                 if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
                     log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
                 }else {

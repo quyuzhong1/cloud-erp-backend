@@ -223,6 +223,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
 
+    boolean addTaskDetailByLogisticsBillCost(TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO);
+
+    void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
     BatchResultDTO pushAllocation(String id , String reportDate);
 
     /**
@@ -252,9 +256,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto);
+    List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
-    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushDTO dto);
+    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 

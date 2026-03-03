@@ -8,6 +8,7 @@ import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     String addManualTask(String businessType, String json);
 
-    String addAutoTask(String businessType, String json);
+    String addAutoTask(String businessType, String json,String startTimeStr);
 
     void updateTask(String taskId, String status, String errorMsg);
 
@@ -45,4 +46,8 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     BatchResultDTO retry(String id);
 
     BatchResultDTO errorRetry(String id);
+
+    Boolean isExist(String businessType,  String startTimeStr);
+
+    void updateTaskDetailFailure(String taskDetailId, Exception e);
 }

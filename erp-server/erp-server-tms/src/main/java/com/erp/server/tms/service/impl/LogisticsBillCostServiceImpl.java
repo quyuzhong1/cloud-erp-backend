@@ -70,6 +70,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -90,7 +91,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -180,6 +183,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
     @Resource
     private MQProducerService mQProducerService;
+    @Autowired
+    @Qualifier("costAllocationPool")
+    private ExecutorService costAllocationPool;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -2039,7 +2045,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Override
     public LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto) {
 //        List<LogisticsBillCostEntity> list = listByCanPushAllocation(dto.getType() ,dto.getReportDate());
-        TmsAsyncTaskRecordDTO.TaskDTO taskDTO = new TmsAsyncTaskRecordDTO.TaskDTO();
+        TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
         taskDTO.setIds(dto.getIds());
         taskDTO.setReportDate(dto.getReportDate());
         taskDTO.setType(dto.getType());
@@ -2050,69 +2056,57 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto) {
-//        String type = dto.getType();
-//        String reportDate = dto.getReportDate();
-//        LocalDate reportMonth = LocalDate.parse(reportDate + "-01");
-//        LocalDateTime currentDateTime = reportMonth.atStartOfDay();
-//
-//        // startTime 设置为当月第一天的 00:00:00
-//        LocalDateTime startTime = currentDateTime.withDayOfMonth(1)
-//                .withHour(0)
-//                .withMinute(0)
-//                .withSecond(0)
-//                .withNano(0);
-//
-//        // endTime 设置为当月最后一天的 23:59:59
-//        LocalDateTime endTime = currentDateTime.withDayOfMonth(reportMonth.lengthOfMonth())
-//                .withHour(23)
-//                .withMinute(59)
-//                .withSecond(59)
-//                .withNano(999_999_999);
-//        List<LogisticsBillCostEntity> list = lambdaQuery()
-//                .ge(LogisticsBillCostEntity::getReconciliationMonth, startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
-//                .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
-//                .eq(LogisticsBillCostEntity::getType, type)
-//                .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
-//                .list();
-//        return list;
+    public List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         return baseMapper.listByCanPushAllocation(dto);
     }
 
 
     @Override
-    public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushDTO dto) {
-        String businesType ="";
+    public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        String businessType ="";
         if(dto.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())){
-            businesType = SourceTypeEnum.LOGISTICS_BILL_COST.getCode(); //自发货
+            businessType = SourceTypeEnum.LOGISTICS_BILL_COST.getCode(); //自发货
         }else if(dto.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())){
-            businesType = SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode();//尾程
+            businessType = SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode();//尾程
         }
         //新建一个任务
+        dto.setBusinessType(businessType);
         String jsonStr = JSONUtil.toJsonStr(dto);
-        if(StringUtils.isBlank(businesType)){
+        if(StringUtils.isBlank(businessType)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-        String taskId = asyncTaskRecordService.addManualTask(businesType, jsonStr);
+        String taskId = asyncTaskRecordService.addManualTask(businessType, jsonStr);
         if(StringUtils.isBlank(taskId)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
 
-        TmsAsyncTaskRecordDTO.TaskDTO taskDTO = new TmsAsyncTaskRecordDTO.TaskDTO();
-        taskDTO.setIds(dto.getIds());
-        taskDTO.setReportDate(dto.getReportDate());
-        taskDTO.setTaskId(taskId);
-        taskDTO.setBusinessType(businesType);
-        taskDTO.setType(dto.getType());
+        dto.setTaskId(taskId);
 
-        List<String> ids = listByCanPushAllocation(taskDTO);
+        if (addTaskDetailByLogisticsBillCost(dto)) return;
+
+        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+        }else {
+            log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+        }
+    }
+
+    @Override
+    public boolean addTaskDetailByLogisticsBillCost(TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO) {
+        String taskId = taskDTO.getTaskId();
+        String businessType = taskDTO.getBusinessType();
+        List<String> ids = taskDTO.getIds();
+        if(CollUtil.isEmpty(ids)){
+            ids = listByCanPushAllocation(taskDTO);
+        }
         List<LogisticsBillCostEntity> list = listByIds(ids);
 
         if(CollUtil.isEmpty(list)) {
             asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
-            return;
+            return true;
         }else {
-            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
+            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
         }
         List<String> logisticsBillIds = list.stream().map(LogisticsBillCostEntity::getLogisticsBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 
@@ -2126,7 +2120,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
             TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
             detail.setMainId(taskId);
-            detail.setBusinessType(businesType);
+            detail.setBusinessType(businessType);
             detail.setBusinessId(logisticsBillCostEntity.getId());
             detail.setBusinessCode(logisticsBillMap.getOrDefault(logisticsBillCostEntity.getLogisticsBillId(),""));
             detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
@@ -2134,12 +2128,59 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             detailList.add(detail);
         }
         asyncTaskDetailRecordService.saveBatch(detailList);
+        return false;
+    }
 
-        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, taskDTO, taskId);
-        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-            log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
-        }else {
-            log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+    @Override
+    public void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        String taskId = dto.getTaskId();
+        TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
+        if(Objects.isNull(tmsAsyncTaskRecordEntity)){
+            log.error("任务记录不存在，taskId: {}", taskId);
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+            return;
+        }
+
+        List<TmsAsyncTaskDetailEntity> detailList = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
+        CountDownLatch latch = new CountDownLatch(detailList.size());
+
+        for (TmsAsyncTaskDetailEntity detail : detailList) {
+            String taskDetailId = detail.getId();
+            String businessId = detail.getBusinessId();
+
+            costAllocationPool.execute(() -> {
+                try {
+                    asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                            TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+
+                    BatchResultDTO result = pushAllocation(businessId, dto.getReportDate());
+
+                    if (!result.getSuccess()) {
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                                org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000)); // 限制错误信息长度
+                    } else {
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                    }
+                } catch (Exception e) {
+                    log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
+                    // 统一处理任务失败状态更新
+                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        try {
+            boolean await = latch.await(tmsAsyncTaskRecordEntity.getExecTimeout(), TimeUnit.SECONDS);// 等待所有任务完成
+            if(await){
+                asyncTaskRecordService.updateTaskFinally(taskId);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("任务等待中断", e);
         }
     }
 

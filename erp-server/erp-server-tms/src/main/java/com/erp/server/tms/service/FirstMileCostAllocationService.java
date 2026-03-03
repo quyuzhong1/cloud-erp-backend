@@ -161,7 +161,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
 
-    void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushDTO idsDTO);
+    void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushParamsDTO idsDTO);
 
     FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto);
+
+    boolean addTaskDetailByFirstMileCost(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 }
