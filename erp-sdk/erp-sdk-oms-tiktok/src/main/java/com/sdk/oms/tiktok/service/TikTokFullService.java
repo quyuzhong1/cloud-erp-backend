@@ -578,8 +578,13 @@ public class TikTokFullService {
             
             if (responseMap != null && responseMap.containsKey("data")) {
                 Map<String, Object> dataMap = (Map<String, Object>) responseMap.get("data");
-                if (dataMap.containsKey("inventory_list")) {
-                    List<Map<String, Object>> inventoryList = (List<Map<String, Object>>) dataMap.get("inventory_list");
+                Object inventoryObj = dataMap.get("inventory_list");
+                if (!(inventoryObj instanceof List)) {
+                    // 兼容新版返回字段：inventory
+                    inventoryObj = dataMap.get("inventory");
+                }
+                if (inventoryObj instanceof List) {
+                    List<Map<String, Object>> inventoryList = (List<Map<String, Object>>) inventoryObj;
                     if (CollectionUtil.isNotEmpty(inventoryList)) {
                         allInventory.addAll(inventoryList);
                     }
