@@ -141,7 +141,9 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
             if (warehouseObj == null) {
                 warehouseObj = mapVal(item.get("fbt_warehouse"));
             }
+            Map<String, Object> goodsObj = mapVal(item.get("goods"));
             Map<String, Object> skuObj = mapVal(item.get("sku"));
+            Map<String, Object> onHandObj = mapVal(item.get("on_hand_detail"));
             TiktokFbtDTO.InventorySnapshotDTO dto = new TiktokFbtDTO.InventorySnapshotDTO();
             dto.setShopId(shopId);
             dto.setWarehouseCode(firstNotBlank(
@@ -159,14 +161,30 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
             dto.setSkuCode(firstNotBlank(
                     item.get("seller_sku"),
                     item.get("sku"),
+                    item.get("reference_code"),
+                    goodsObj == null ? null : goodsObj.get("reference_code"),
                     skuObj == null ? null : skuObj.get("seller_sku"),
                     skuObj == null ? null : skuObj.get("sku"),
                     skuObj == null ? null : skuObj.get("code")));
-            dto.setGoodsId(firstNotBlank(item.get("goods_id"), item.get("id")));
-            dto.setGoodsName(firstNotBlank(item.get("goods_name"), item.get("name")));
-            dto.setAvailableQty(intVal(firstNotBlank(item.get("available_quantity"), item.get("sellable_quantity"))));
-            dto.setReservedQty(intVal(item.get("reserved_quantity")));
-            dto.setUnfulfillableQty(intVal(firstNotBlank(item.get("unfulfillable_quantity"), item.get("unsellable_quantity"))));
+            dto.setGoodsId(firstNotBlank(
+                    item.get("goods_id"),
+                    item.get("id"),
+                    goodsObj == null ? null : goodsObj.get("id")));
+            dto.setGoodsName(firstNotBlank(
+                    item.get("goods_name"),
+                    item.get("name"),
+                    goodsObj == null ? null : goodsObj.get("name")));
+            dto.setAvailableQty(intVal(firstNotBlank(
+                    item.get("available_quantity"),
+                    item.get("sellable_quantity"),
+                    onHandObj == null ? null : onHandObj.get("available_quantity"))));
+            dto.setReservedQty(intVal(firstNotBlank(
+                    item.get("reserved_quantity"),
+                    onHandObj == null ? null : onHandObj.get("reserved_quantity"))));
+            dto.setUnfulfillableQty(intVal(firstNotBlank(
+                    item.get("unfulfillable_quantity"),
+                    item.get("unsellable_quantity"),
+                    onHandObj == null ? null : onHandObj.get("unfulfillable_quantity"))));
             dto.setInTransitQty(intVal(firstNotBlank(item.get("in_transit_quantity"), item.get("deliver_onway_quantity"))));
             dto.setUpdatedTime(parseTime(firstNotBlank(item.get("update_time"), item.get("updated_time"), item.get("event_time"))));
             result.add(dto);
