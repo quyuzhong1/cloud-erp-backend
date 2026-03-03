@@ -21,7 +21,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -50,9 +53,15 @@ public class AsyncTaskJob {
      */
     @XxlJob("TmsAsyncTaskJob")
     public ReturnT<String> TmsAsyncTaskJob() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime taskStartTime = today.atStartOfDay(); // 00:00:00
+        LocalDateTime taskEndTime = today.atTime(LocalTime.MAX); // 23:59:59.999999999
+
         //查询所有
         List<TmsAsyncTaskRecordEntity> list = asyncTaskRecordService.lambdaQuery()
                 .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .ge(TmsAsyncTaskRecordEntity::getCreateTime, taskStartTime)
+                .le(TmsAsyncTaskRecordEntity::getCreateTime, taskEndTime)
 //                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
 //                .eq(TmsAsyncTaskRecordEntity::getExecType, TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode())
                 .list();
