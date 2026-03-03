@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -29,5 +30,5 @@ public interface TmsAsyncTaskRecordMapper extends BaseMapper<TmsAsyncTaskRecordE
 
     IPage<TmsAsyncTaskRecordDTO.DetailListDTO> pagingError(Page query, @Param("id") String id);
 
-    List<TmsAsyncTaskRecordEntity> isExist(@Param("businessType")String businessType, @Param("startTimeStr") String startTimeStr);
+    Integer isExist(@Param("businessType")String businessType, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 }

@@ -206,4 +206,14 @@ public class TmsAsyncTaskRecordController extends BaseController {
     }
 
 
+    /**
+     * 测试 - 创建所有的自动任务
+     */
+    @GetMapping("/generateAutoTaskALL")
+    public void generateAutoTaskALL() {
+        tmsAsyncTaskRecordService.generateAutoTaskALL();
+    }
+
+
+
 }
