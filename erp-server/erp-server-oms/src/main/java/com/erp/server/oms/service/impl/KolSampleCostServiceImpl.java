@@ -364,12 +364,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
 
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
-                long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
+           /*     long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
                 if (count > 1) {
                     importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】在导入数据中存在重复");
                     errorList.add(importExcelDTO);
                     continue;
-                }
+                }*/
                 List<KolSampleCostEntity> costList = kolSampleCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).collect(Collectors.toList());
                 if (CollUtil.isEmpty(costList)) {
                     importExcelDTO.setErrorMsg("未找到对应的销售订单号：" + importExcelDTO.getSoCode());
