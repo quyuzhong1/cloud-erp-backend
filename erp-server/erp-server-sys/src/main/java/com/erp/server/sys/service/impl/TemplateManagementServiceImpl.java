@@ -315,6 +315,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     public List<TemplateManagementDTO.TemplateResultDTO> getTemplateByType(TemplateManagementDTO.TemplateParamsDTO dto) {
         List<TemplateManagementEntity> list = this.lambdaQuery().eq(TemplateManagementEntity::getBizType, dto.getBizType())
                 .eq(TemplateManagementEntity::getType, dto.getType())
+                .eq(TemplateManagementEntity::getStatus,TemplateManagementStatusEnum.FINISHED.getCode())
                 .list();
         List<TemplateManagementDTO.TemplateResultDTO> templateResultDTOS = new ArrayList<>();
         for (TemplateManagementEntity templateManagementEntity : list) {
