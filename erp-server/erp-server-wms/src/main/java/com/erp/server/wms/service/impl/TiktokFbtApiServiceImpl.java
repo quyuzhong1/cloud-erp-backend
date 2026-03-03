@@ -354,6 +354,10 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
         }
         try {
             long epoch = Long.parseLong(value);
+            // 兼容毫秒时间戳
+            if (epoch > 99999999999L) {
+                epoch = epoch / 1000;
+            }
             return LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.ofHours(8));
         } catch (Exception ignore) {
         }

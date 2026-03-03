@@ -430,6 +430,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             String fnSku = plannedGood.getGoodsId();
             String msku = resolveMsku(plannedGood);
             SkuMappingDTO.MappingSkuViewDTO mappingDTO = findMappingByFnSkuAndMsku(skuMapping, fnSku, msku);
+            String resolvedSkuNo = resolveDetailSkuNo(mappingDTO, msku, fnSku, plannedGood.getGoodsId());
             if (detailKeys.contains(detailKey)) {
                 FbaShipmentDetailEntity detail = existsMap.get(detailKey);
                 if (detail != null) {
@@ -446,7 +447,9 @@ public class FbtInboundServiceImpl implements FbtInboundService {
                     }
                     if (mappingDTO != null) {
                         detail.setSkuId(mappingDTO.getProductSkuId());
-                        detail.setSkuNo(mappingDTO.getProductSkuNo());
+                    }
+                    if (StrUtil.isBlank(detail.getSkuNo())) {
+                        detail.setSkuNo(resolvedSkuNo);
                     }
                     detail.setPlatformProductName(plannedGood.getName());
                     detail.setIsCombination(false);
@@ -466,8 +469,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             detail.setFnSku(fnSku);
             if (mappingDTO != null) {
                 detail.setSkuId(mappingDTO.getProductSkuId());
-                detail.setSkuNo(mappingDTO.getProductSkuNo());
             }
+            detail.setSkuNo(resolvedSkuNo);
             detail.setDeclareQty(plannedGood.getQuantity());
             detail.setDeliveryQty(plannedGood.getQuantity());
             detail.setPlatformProductName(plannedGood.getName());
@@ -557,6 +560,14 @@ public class FbtInboundServiceImpl implements FbtInboundService {
                 .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        if (inboundOrder.getReceivedBatches() != null && !inboundOrder.getReceivedBatches().isEmpty()) {
+            inboundOrder.getReceivedBatches().stream()
+                    .filter(Objects::nonNull)
+                    .map(TiktokFbtDTO.ReceivedBatchDTO::getGoodsId)
+                    .filter(StrUtil::isNotBlank)
+                    .forEach(platformSkuNoList::add);
+            platformSkuNoList = platformSkuNoList.stream().distinct().collect(Collectors.toList());
+        }
         if (platformSkuNoList.isEmpty()) {
             return result;
         }
@@ -592,6 +603,22 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             return mappingMap.get(fnSku);
         }
         return null;
+    }
+
+    private String resolveDetailSkuNo(SkuMappingDTO.MappingSkuViewDTO mappingDTO,
+                                      String msku,
+                                      String fnSku,
+                                      String goodsId) {
+        if (mappingDTO != null && StrUtil.isNotBlank(mappingDTO.getProductSkuNo())) {
+            return mappingDTO.getProductSkuNo();
+        }
+        if (StrUtil.isNotBlank(msku)) {
+            return msku;
+        }
+        if (StrUtil.isNotBlank(fnSku)) {
+            return fnSku;
+        }
+        return StrUtil.blankToDefault(goodsId, "");
     }
 
     private void syncInventoryRecord(FbaShipmentEntity shipment, TiktokFbtDTO.InboundOrderDTO inboundOrder) {
