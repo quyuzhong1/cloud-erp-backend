@@ -244,7 +244,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         // 记录主单操作日志
             log.info("编辑 开始记录日志数据，单号：【{}】", assetNoticeEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeEntity.getCode(), "开模通知单");
+            String msg = StrUtil.format("用户【{}】编辑【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(),  "开模通知单");
         moduleOperateLogService.addModuleOperateLogByObj(old, assetNoticeEntity, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
