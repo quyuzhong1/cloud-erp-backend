@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -49,6 +50,9 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     Boolean isExist(String businessType,  String startTimeStr);
 
     void updateTaskDetailFailure(String taskDetailId, Exception e);
+
+    @Transactional(rollbackFor = Exception.class)
+    void startTask();
 
     void genAutoTask();
 }

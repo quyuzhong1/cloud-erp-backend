@@ -2879,7 +2879,17 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             String businessId = detail.getBusinessId();
             costAllocationPool.execute(() -> {
                 try {
-                    processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
+                    //判断是否超时中止
+                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                    if(count >0){
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+
+                        processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
+
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                    }
                 } catch (Exception e) {
                     log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
                     // 统一处理任务失败状态更新

@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -17,6 +18,9 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
@@ -34,6 +38,9 @@ import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,8 +55,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
@@ -78,10 +83,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    /**
-     * 并行执行任务的线程池
-     */
-    private final Executor executor = Executors.newFixedThreadPool(5);
+    @Resource
+    private MQProducerService mQProducerService;
+
+    @Lazy
+    @Resource
+    private TmsAsyncTaskRecordService selfServer;
+
 
     /**
      * 新增手动任务
@@ -516,7 +524,73 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 StringUtils.substring(errorMsg, 0, 1000));
     }
 
+    /**
+     * 启动任务
+     * 中止超时任务
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void startTask(){
+        LocalDate today = LocalDate.now();
+        LocalDateTime taskStartTime = today.atStartOfDay(); // 00:00:00
+        LocalDateTime taskEndTime = today.atTime(LocalTime.MAX); // 23:59:59.999999999
 
+        //查询所有
+        List<TmsAsyncTaskRecordEntity> list = lambdaQuery()
+                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .ge(TmsAsyncTaskRecordEntity::getStartTime, taskStartTime)
+                .le(TmsAsyncTaskRecordEntity::getStartTime, taskEndTime)
+                .list();
+        if(CollUtil.isEmpty(list)){
+            log.error("TmsAsyncTaskRecord不存在待执行或者执行中的任务");
+            return;
+        }
+
+        //执行中（手动 + 自动）
+        LocalDateTime now = LocalDateTime.now();
+        List<TmsAsyncTaskRecordEntity> ingList = list.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.ING.getCode())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(ingList)){
+            for (TmsAsyncTaskRecordEntity entity : ingList) {
+                Integer execTimeout = entity.getExecTimeout();
+                LocalDateTime startTime = entity.getStartTime();
+                if(Objects.nonNull(startTime) && Objects.nonNull(execTimeout) && execTimeout > 0 ){
+                    if(now.isAfter(startTime.plusSeconds(execTimeout))){
+                        selfServer.terminateTaskTimeout(entity.getId(),"任务执行超时");
+                    }
+                }
+            }
+        }
+
+        // 1.开始时间小于等于当前时间则继续执行后续业务代码
+        // 2.自动类型
+        // 3.待执行
+        List<TmsAsyncTaskRecordEntity> pendingList = list.stream()
+                .filter(e ->e.getStartTime().isBefore(now) && e.getExecType().equals(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode()) && e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(pendingList)){
+            for (TmsAsyncTaskRecordEntity entity : pendingList) {
+                String dataJson = entity.getDataJson();
+                if(StringUtils.isBlank(dataJson) || Objects.equals(dataJson,"{}")){
+                    selfServer.updateTask(entity.getId(),TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"dataJson为空直接结束任务");
+                    continue;
+                }
+
+                TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+                taskDTO.setTaskId(entity.getId());
+                SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
+                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                    log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                }else {
+                    log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                }
+            }
+        }
+    }
+
+
+    /**
+     * 根据tms生成配置生成异步任务
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void genAutoTask() {
@@ -587,7 +661,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 pushDTO.setEndTime(endTime);
                 pushDTO.setBusinessType(businessType);
                 String jsonStr = JSONUtil.toJsonStr(pushDTO);
-                addAutoTask(businessType, jsonStr, startTimeStr);
+                selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
             }
         }else {
             log.error("[生成中转费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
@@ -605,7 +679,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             YearMonth yearMonth = YearMonth.from(now);
             int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
             int day = Math.min(packageAllocationDate, maxDay); // 取较小值
-            String startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate localDate = now.withDayOfMonth(day);
+            String startTimeStr = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             //根据任务执行时间，推算出当时的时间范围
             LocalDateTime taskStartTime = DateUtil.parse(startTimeStr).toLocalDateTime();
             startTime = taskStartTime.minus(1, ChronoUnit.MONTHS)
@@ -630,8 +705,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 pushDTO.setStartTime(startTime);
                 pushDTO.setEndTime(endTime);
                 pushDTO.setBusinessType(businessType);
+                pushDTO.setReportDate(localDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
                 String jsonStr = JSONUtil.toJsonStr(pushDTO);
-                addAutoTask(businessType, jsonStr, startTimeStr);
+                selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
             }
         }else {
             log.error("[生成小包费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getPackageAllocationType());
@@ -684,7 +760,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             pushDTO.setEndDate(endDate);
             pushDTO.setBusinessType(businessType);
             String jsonStr = JSONUtil.toJsonStr(pushDTO);
-            addAutoTask(businessType, jsonStr, startTimeStr);
+            selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
         }
     }
 
@@ -735,7 +811,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             pushDTO.setEndDate(endDate);
             pushDTO.setBusinessType(businessType);
             String jsonStr = JSONUtil.toJsonStr(pushDTO);
-            addAutoTask(businessType, jsonStr, startTimeStr);
+            selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
         }
     }
 
@@ -763,7 +839,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 pushDTO.setReportDate(reportPeriodMonth.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM")));
                 pushDTO.setBusinessType(businessType);
                 String jsonStr = JSONUtil.toJsonStr(pushDTO);
-                addAutoTask(businessType, jsonStr, startTimeStr);
+                selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
             }
         } else {
             log.error("[生成头程费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());

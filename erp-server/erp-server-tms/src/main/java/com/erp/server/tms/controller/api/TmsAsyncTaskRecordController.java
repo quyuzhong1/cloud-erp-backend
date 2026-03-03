@@ -213,6 +213,13 @@ public class TmsAsyncTaskRecordController extends BaseController {
     public void genAutoTask() {
         tmsAsyncTaskRecordService.genAutoTask();
     }
+    /**
+     * 测试 - 启动所有符合条件自动任务
+     */
+    @GetMapping("/startTask")
+    public void startTask() {
+        tmsAsyncTaskRecordService.startTask();
+    }
 
 
 

@@ -504,15 +504,27 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             String businessId = detail.getBusinessId();
             costAllocationPool.execute(() -> {
                 try {
-                    List<TmsB2cDeclareReconciliationDetailEntity> value = map.get(businessId);
-                    TmsB2cDeclareReconciliationDTO.AddDTO addDTO = new TmsB2cDeclareReconciliationDTO.AddDTO();
-                    addDTO.setStartDate(startDate);
-                    addDTO.setEndDate(endDate);
-                    addDTO.setLogisticsSupplierId(businessId);
-                    addDTO.setLogisticsSupplierName(value.get(0).getLogisticsSupplierName());
-                    List<TmsB2cDeclareReconciliationDetailDTO.UpdateDTO> detailList = BeanMapperUtils.copyList(TmsB2cDeclareReconciliationDetailDTO.UpdateDTO.class, value);
-                    addDTO.setDetailList(detailList);
-                    tmsB2cDeclareReconciliationService.add(addDTO);
+                    //判断是否超时中止
+                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                    if(count >0){
+                        List<TmsB2cDeclareReconciliationDetailEntity> value = map.get(businessId);
+                        TmsB2cDeclareReconciliationDTO.AddDTO addDTO = new TmsB2cDeclareReconciliationDTO.AddDTO();
+                        addDTO.setStartDate(startDate);
+                        addDTO.setEndDate(endDate);
+                        addDTO.setLogisticsSupplierId(businessId);
+                        addDTO.setLogisticsSupplierName(value.get(0).getLogisticsSupplierName());
+                        List<TmsB2cDeclareReconciliationDetailDTO.UpdateDTO> detailList = BeanMapperUtils.copyList(TmsB2cDeclareReconciliationDetailDTO.UpdateDTO.class, value);
+                        addDTO.setDetailList(detailList);
+
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+
+                        tmsB2cDeclareReconciliationService.add(addDTO);
+
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                    }
+
                 } catch (Exception e) {
                     log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
                     // 统一处理任务失败状态更新

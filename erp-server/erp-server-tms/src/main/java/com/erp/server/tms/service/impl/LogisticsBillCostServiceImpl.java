@@ -2150,19 +2150,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             costAllocationPool.execute(() -> {
                 try {
-                    asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                            TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
-
-                    BatchResultDTO result = pushAllocation(businessId, dto.getReportDate());
-
-                    if (!result.getSuccess()) {
+                    //判断是否超时中止
+                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                    if(count >0){
                         asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
-                                org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000)); // 限制错误信息长度
-                    } else {
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+
+                        BatchResultDTO result = pushAllocation(businessId, dto.getReportDate());
+
+                        if (!result.getSuccess()) {
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                                    org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000)); // 限制错误信息长度
+                        } else {
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                    TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        }
                     }
+
                 } catch (Exception e) {
                     log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
                     // 统一处理任务失败状态更新
