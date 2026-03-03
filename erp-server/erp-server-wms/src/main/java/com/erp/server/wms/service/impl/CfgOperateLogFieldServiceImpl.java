@@ -5,9 +5,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.enums.ProductChangeFieldEnum;
 import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
-import com.erp.model.wms.entity.MachineSubComponentsEntity;
-import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
-import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.server.wms.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.wms.service.CfgOperateLogFieldService;
 import org.springframework.context.annotation.Lazy;
@@ -15,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -62,7 +58,7 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
             if(table.equals("product_cost")){
                 classPath = String.valueOf(ProductCostEntity.class);
             }
-            logFields.add(new CfgOperateLogFieldEntity().setField(productChangeFieldEnum.getEntityField()).setFieldName(productChangeFieldEnum.getFieldLabel()).setClassPath(classPath).setType(0).setEnumClass(""));
+            logFields.add(new CfgOperateLogFieldEntity().setField(productChangeFieldEnum.getCode()).setFieldName(productChangeFieldEnum.getName()).setClassPath(classPath).setType(0).setEnumClass(""));
         }
         return service.saveBatch(logFields);
     }

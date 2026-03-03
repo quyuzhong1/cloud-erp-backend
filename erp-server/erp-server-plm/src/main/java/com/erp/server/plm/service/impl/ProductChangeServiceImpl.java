@@ -21,8 +21,6 @@ import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.dmp.dto.DmpOutputTaskDTO;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -48,9 +46,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +58,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -376,7 +373,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             addDTO.setSkuNo(skuNo);
             List<ProductChangeDetailDTO.AddDTO> detailDTOList = entry.getValue().stream().map(v -> {
                 ProductChangeDetailDTO.AddDTO detailDTO = new ProductChangeDetailDTO.AddDTO();
-                detailDTO.setField(Objects.requireNonNull(ProductChangeFieldEnum.getByFieldLabel(v.getField())).getEntityField());
+                detailDTO.setField(Objects.requireNonNull(ProductChangeFieldEnum.getByFieldLabel(v.getField())).getCode());
                 detailDTO.setNewValue(v.getNewValueObj());
                 detailDTO.setRemark(v.getRemark());
                 return detailDTO;
@@ -697,7 +694,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                         break;
 
                     default:
-                        log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getFieldLabel());
+                        log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getName());
                 }
                 if(Objects.nonNull(oldValue)){
                     productChangeDetailEntity.setOldValue(oldValue.toString());
@@ -925,6 +922,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         boolean purchaseChanged = false;
         boolean saleChanged = false;
 
+        boolean isChangeTax = false;
+
         List<BasicDictEntity> basicDictList = basicDictService.list();
         List<BasicCategoryEntity> basicCategoryEntities = basicCategoryService.list();
         List<ProductRDTTeamEntity> productRDTTeamEntities = productRDTTeamService.list();
@@ -946,7 +945,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             // 转换新值为对应数据类型
             Object newValue = convertValue(fieldEnum.getDataType(), newValueStr);
             if (newValue == null) {
-                throw new ServiceException("新值转换失败，字段：" + fieldEnum.getFieldLabel() + "，值：" + newValueStr);
+                throw new ServiceException("新值转换失败，字段：" + fieldEnum.getName() + "，值：" + newValueStr);
             }
 
             // 根据枚举匹配业务表，执行更新
@@ -966,10 +965,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     break;
                 case TAX_RATE:
                     productCostEntity.setTaxRate((BigDecimal) newValue);
+                    isChangeTax = true;
                     costChanged = true;
                     break;
                 case TARGET_TAX_INCLUDED_COST:
                     productCostEntity.setTargetTaxCost((BigDecimal) newValue);
+                    isChangeTax = true;
                     costChanged = true;
                     break;
                 case STANDARD_RETAIL_PRICE:
@@ -1242,8 +1243,16 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     break;
 
                 default:
-                    log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getFieldLabel());
+                    log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getName());
             }
+        }
+
+        // 如果有变更税率或者目标含税成本，需要自动算出目标不含税成本
+        if(isChangeTax){
+            BigDecimal taxRate = productCostEntity.getTaxRate() == null ? BigDecimal.ZERO : productCostEntity.getTaxRate();
+            BigDecimal targetTaxCost = productCostEntity.getTargetTaxCost() == null ? BigDecimal.ZERO : productCostEntity.getTargetTaxCost();
+            BigDecimal targetCost = targetTaxCost.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.HALF_UP);
+            productCostEntity.setTargetNoTaxCost(targetCost);
         }
 
         // 仅对有变更的实体执行更新
@@ -1298,8 +1307,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         List<ProductChangeDTO.ProductChangeFieldDTO> fieldList = new ArrayList<>();
         for (ProductChangeFieldEnum fieldEnum : ProductChangeFieldEnum.values()) {
             ProductChangeDTO.ProductChangeFieldDTO fieldDTO = new ProductChangeDTO.ProductChangeFieldDTO();
-            fieldDTO.setCode(fieldEnum.getEntityField());
-            fieldDTO.setName(fieldEnum.getFieldLabel());
+            fieldDTO.setCode(fieldEnum.getCode());
+            fieldDTO.setName(fieldEnum.getName());
             fieldList.add(fieldDTO);
         }
         return fieldList;
@@ -1474,7 +1483,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             if(Objects.isNull(productChangeFieldEnum)){
                 continue;
             }
-            data.setFieldName(productChangeFieldEnum.getFieldLabel());
+            data.setFieldName(productChangeFieldEnum.getName());
             switch (productChangeFieldEnum) {
                 case PRODUCT_ATTRIBUTE:
                     BasicDictEntity basicDictEntity = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst().orElse(null);
@@ -1589,6 +1598,21 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     if(Objects.nonNull(oldProductSalesPlatformEnum)) {
                         data.setOldValue(oldProductSalesPlatformEnum.getName());
                     }
+                    break;
+                case IS_IMAGE_COMPLETED:
+                case IS_VIDEO_COMPLETED:
+                    String convertNewVal = StringUtils.isBlank(newValue)?"":"1".equals(newValue)?"是":"否";
+                    data.setNewValue(convertNewVal);
+                    String convertOldVal = StringUtils.isBlank(oldValue)?"":"1".equals(oldValue)?"是":"否";
+                    data.setOldValue(convertOldVal);
+                    break;
+                case HAS_INFRINGEMENT_RISK:
+                    data.setNewValue(StringUtils.isBlank(newValue)?"":"1".equals(newValue)?"有风险":"无风险");
+                    data.setOldValue(StringUtils.isBlank(oldValue)?"":"1".equals(oldValue)?"有风险":"无风险");
+                    break;
+                case FIRST_BATCH_ARRIVAL_STATUS:
+                    data.setNewValue(StringUtils.isBlank(newValue)?"":"1".equals(newValue)?"未到货":"2".equals(newValue)?"已到货":"部分到货");
+                    data.setOldValue(StringUtils.isBlank(oldValue)?"":"1".equals(oldValue)?"未到货":"2".equals(oldValue)?"已到货":"部分到货");
                     break;
                 default:
                     break;

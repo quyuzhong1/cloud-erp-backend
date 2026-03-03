@@ -35,33 +35,17 @@ public class CfgOperateLogFieldServiceImpl extends ServiceImpl<CfgOperateLogFiel
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
         List<CfgOperateLogFieldEntity> logFields = new ArrayList<>();
-        ProductChangeFieldEnum[] productChangeFieldEnums = ProductChangeFieldEnum.values();
-        for (ProductChangeFieldEnum productChangeFieldEnum : productChangeFieldEnums) {
-            String classPath = "";
-            String table = productChangeFieldEnum.getTableName();
-            if(table.equals("product_cost")){
-                classPath = String.valueOf(ProductCostEntity.class);
-            }
-            if(table.equals("product_detail")){
-                classPath = String.valueOf(ProductDetailEntity.class);
-            }
-            if(table.equals("product_info")){
-                classPath = String.valueOf(ProductInfoEntity.class);
-            }
-            if(table.equals("product_pack")){
-                classPath = String.valueOf(ProductPackEntity.class);
-            }
-            if(table.equals("product_purchase")){
-                classPath = String.valueOf(ProductPurchaseEntity.class);
-            }
+        String classPath = String.valueOf(ProductChangeEntity.class);;
+        logFields.add(new CfgOperateLogFieldEntity().setField("skuNo").setFieldName("sku编号").setClassPath(classPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("reason").setFieldName("变更原因").setClassPath(classPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("billDate").setFieldName("变更日期").setClassPath(classPath).setType(0).setEnumClass(""));
 
-            if(table.equals("product_sale")){
-                classPath = String.valueOf(ProductSaleEntity.class);
-            }
-            if(StringUtils.isNotBlank(classPath)){
-                logFields.add(new CfgOperateLogFieldEntity().setField(productChangeFieldEnum.getEntityField()).setFieldName(productChangeFieldEnum.getFieldLabel()).setClassPath(classPath).setType(0).setEnumClass(""));
-            }
-        }
+        String detailClassPath = String.valueOf(ProductChangeDetailEntity.class);;
+        logFields.add(new CfgOperateLogFieldEntity().setField("field").setFieldName("变更字段").setClassPath(detailClassPath).setType(1).setEnumClass("com.erp.model.plm.enums.ProductChangeFieldEnum"));
+        logFields.add(new CfgOperateLogFieldEntity().setField("oldValue").setFieldName("变更原值").setClassPath(detailClassPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("newValue").setFieldName("变更新值").setClassPath(detailClassPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(detailClassPath).setType(0).setEnumClass(""));
+
         return this.saveBatch(logFields);
     }
 

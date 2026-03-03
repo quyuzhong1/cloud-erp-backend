@@ -2,18 +2,14 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.ProductChangeFieldEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.plm.service.ProductChangeService;
 import com.erp.server.plm.service.ProductPackService;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.entity.ProductChangeDetailEntity;
 import com.erp.server.plm.mapper.ProductChangeDetailMapper;
 import com.erp.server.plm.service.ProductChangeDetailService;
@@ -32,19 +28,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -87,13 +72,13 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         ProductPackEntity productPackEntity = productPackService.getBySkuId(productChangeEntity.getSkuId());
         boolean checkProductSize;
         checkProductSize = detailEntityList.stream().anyMatch(v->
-                ProductChangeFieldEnum.PRODUCT_LENGTH.getEntityField().equals(v.getField())
-        || ProductChangeFieldEnum.PRODUCT_WIDTH.getEntityField().equals(v.getField())
-        ||  ProductChangeFieldEnum.PRODUCT_HEIGHT.getEntityField().equals(v.getField()));
+                ProductChangeFieldEnum.PRODUCT_LENGTH.getCode().equals(v.getField())
+        || ProductChangeFieldEnum.PRODUCT_WIDTH.getCode().equals(v.getField())
+        ||  ProductChangeFieldEnum.PRODUCT_HEIGHT.getCode().equals(v.getField()));
         if(checkProductSize){
-            BigDecimal newProductLength = detailEntityList.stream().filter(v->ProductChangeFieldEnum.PRODUCT_LENGTH.getEntityField().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getProductLength());
-            BigDecimal newProductWidth = detailEntityList.stream().filter(v->ProductChangeFieldEnum.PRODUCT_WIDTH.getEntityField().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getProductWidth());
-            BigDecimal newProductHeight = detailEntityList.stream().filter(v->ProductChangeFieldEnum.PRODUCT_HEIGHT.getEntityField().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getProductHeight());
+            BigDecimal newProductLength = detailEntityList.stream().filter(v->ProductChangeFieldEnum.PRODUCT_LENGTH.getCode().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getProductLength());
+            BigDecimal newProductWidth = detailEntityList.stream().filter(v->ProductChangeFieldEnum.PRODUCT_WIDTH.getCode().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getProductWidth());
+            BigDecimal newProductHeight = detailEntityList.stream().filter(v->ProductChangeFieldEnum.PRODUCT_HEIGHT.getCode().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getProductHeight());
             if(newProductLength.compareTo(newProductWidth)<0 || newProductWidth.compareTo(newProductHeight)<0){
                 throw new ServiceException(ApiError.PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE);
             }
@@ -101,13 +86,13 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         }
         boolean checkBoxSize;
         checkBoxSize = detailEntityList.stream().anyMatch(v->
-                ProductChangeFieldEnum.BOX_LENGTH.getEntityField().equals(v.getField())
-                        || ProductChangeFieldEnum.BOX_WIDTH.getEntityField().equals(v.getField())
-                        ||  ProductChangeFieldEnum.BOX_HEIGHT.getEntityField().equals(v.getField()));
+                ProductChangeFieldEnum.BOX_LENGTH.getCode().equals(v.getField())
+                        || ProductChangeFieldEnum.BOX_WIDTH.getCode().equals(v.getField())
+                        ||  ProductChangeFieldEnum.BOX_HEIGHT.getCode().equals(v.getField()));
         if(checkBoxSize){
-            BigDecimal newBoxLength = detailEntityList.stream().filter(v->ProductChangeFieldEnum.BOX_LENGTH.getEntityField().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getBoxLength());
-            BigDecimal newBoxWidth = detailEntityList.stream().filter(v->ProductChangeFieldEnum.BOX_WIDTH.getEntityField().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getBoxWidth());
-            BigDecimal newBoxHeight = detailEntityList.stream().filter(v->ProductChangeFieldEnum.BOX_HEIGHT.getEntityField().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getBoxHeight());
+            BigDecimal newBoxLength = detailEntityList.stream().filter(v->ProductChangeFieldEnum.BOX_LENGTH.getCode().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getBoxLength());
+            BigDecimal newBoxWidth = detailEntityList.stream().filter(v->ProductChangeFieldEnum.BOX_WIDTH.getCode().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getBoxWidth());
+            BigDecimal newBoxHeight = detailEntityList.stream().filter(v->ProductChangeFieldEnum.BOX_HEIGHT.getCode().equals(v.getField())).map(ProductChangeDetailEntity::getNewValue).filter(ObjectUtil::isNotEmpty).map(BigDecimal::new).findFirst().orElse(productPackEntity.getBoxHeight());
             if(newBoxLength.compareTo(newBoxWidth)<0 || newBoxWidth.compareTo(newBoxHeight)<0){
                 throw new ServiceException(ApiError.PRODUCT_CHANGE_BOX_SIZE_CHANGE);
             }
@@ -129,6 +114,10 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         List<String> updateIdList = updateDTOList.stream().filter(v-> ObjectUtil.isNotEmpty(v.getId())).map(ProductChangeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> delIdList = dbIdList.stream().filter(v->!updateIdList.contains(v)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(delIdList)){
+            //记录日志
+            String msg = StrUtil.format("用户【{}】删除了id为【{}】的【{}】 ", UserContext.getDefaultLoginUser().getUserName(),delIdList, "产品变更信息单明细");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "删除明细");
+
             boolean remove = this.removeByIds(delIdList);
             if(!remove) {
                 throw new ServiceException("产品变更信息明细单删除失败");
@@ -142,6 +131,11 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         }).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(addDTOList)){
             List<ProductChangeDetailEntity> addEntityList = BeanMapperUtils.copyList(ProductChangeDetailEntity.class, addDTOList);
+            for (ProductChangeDetailEntity productChangeDetailEntity : addEntityList) {
+                //记录日志
+                String msg = StrUtil.format("用户【{}】新增了字段为【{}】的【{}】", UserContext.getDefaultLoginUser().getUserName(), Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(productChangeDetailEntity.getField())).getName(), "产品变更信息单明细");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "新增明细");
+            }
             addOrUpdateList.addAll(addEntityList);
         }
         //更新
