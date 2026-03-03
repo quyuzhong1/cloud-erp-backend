@@ -362,10 +362,13 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         FbaShipmentEntity entity = new FbaShipmentEntity();
         entity.setShopId(inboundOrder.getShopId());
         fillShopCountryInfo(entity, inboundOrder.getShopId());
-        entity.setCode(inboundOrder.getInboundOrderId());
+        entity.setCode(StrUtil.blankToDefault(inboundOrder.getInboundOrderId(), ""));
         entity.setName(StrUtil.blankToDefault(inboundOrder.getShipmentName(), "FBT-" + inboundOrder.getInboundOrderId()));
-        entity.setFbaShipmentId(inboundOrder.getInboundOrderId());
-        entity.setFulfillmentCenter(inboundOrder.getWarehouseCode());
+        entity.setFbaShipmentId(StrUtil.blankToDefault(inboundOrder.getInboundOrderId(), ""));
+        entity.setFulfillmentCenter(StrUtil.blankToDefault(inboundOrder.getWarehouseCode(), ""));
+        // FBT接口当前未返回发货/配送地址，先兜底空串以满足fba_shipment非空约束
+        entity.setDeliveryFromAddress("");
+        entity.setDeliveryToAddress("");
         entity.setSourceType(ShipmentSourceTypeEnum.FBT.getCode());
         entity.setShipmentCreateTime(LocalDateTime.now());
         entity.setPlatformShipmentStatus(inboundOrder.getStatus());
