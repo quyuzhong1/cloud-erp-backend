@@ -85,34 +85,38 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             throw new ServiceException("不支持该操作类型");
         }
 
-        SoB2cDeliveryEntity entity = soB2cDeliveryService.getByBusinessCode(dto.getBusinessCode());
-        if (Objects.isNull(entity)) {
-            throw new ServiceException("查询不到发货单，请确认扫描单号");
-        }
-
-        // 并行获取关联数据
-        CompletableFuture<TransferDeclareDetailEntity> declareDetailFuture = CompletableFuture.supplyAsync(
-                () -> transferDeclareFeign.getBySoId(entity.getSourceId())
+        //并行获取基础数据
+        CompletableFuture<SoB2cDeliveryEntity> deliveryFuture = CompletableFuture.supplyAsync(
+                () -> soB2cDeliveryService.getByBusinessCode(dto.getBusinessCode())
         );
 
-        CompletableFuture<SoB2cEntity> soB2cFuture = CompletableFuture.supplyAsync(
-                () -> soB2cFeign.getById(entity.getSourceId())
+        CompletableFuture<TransferDeclareDetailEntity> declareFuture = deliveryFuture.thenCompose(entity -> {
+            if (entity == null) {
+                throw new ServiceException("查询不到发货单，请确认扫描单号");
+            }
+            return CompletableFuture.supplyAsync(() -> transferDeclareFeign.getBySoId(entity.getSourceId()));
+        });
+
+        CompletableFuture<SoB2cEntity> soB2cFuture = deliveryFuture.thenCompose(entity ->
+                CompletableFuture.supplyAsync(() -> soB2cFeign.getById(entity.getSourceId()))
         );
 
-        // 等待并行任务完成
-        TransferDeclareDetailEntity declareDetailEntity = declareDetailFuture.join();
-        SoB2cEntity soB2cEntity = soB2cFuture.join();
+        //等待所有并行任务完成
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(deliveryFuture, declareFuture, soB2cFuture);
+        allFutures.join();
 
-        if (ObjectUtil.isEmpty(soB2cEntity)) {
+        SoB2cDeliveryEntity entity = deliveryFuture.getNow(null);
+        TransferDeclareDetailEntity declareDetailEntity = declareFuture.getNow(null);
+        SoB2cEntity soB2cEntity = soB2cFuture.getNow(null);
+
+        //快速失败检查
+        if (soB2cEntity == null) {
             throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
-
-        // 验证订单状态
         if (soB2cEntity.getIsCancel()) {
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
             return null;
         }
-
         if (soB2cEntity.getIsIntercept()) {
             throw new ServiceException(ApiError.LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE);
         }
@@ -120,47 +124,46 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             throw new ServiceException(ApiError.LOGISTICS_ORDER_VOIDED_NOT_PACKAGE);
         }
 
+        //获取或创建ViewDTO
         PackingInspectionDTO.ViewDTO viewDTO = this.getViewDTO(entity.getId());
         boolean isNewViewDTO = false;
 
-        if (Objects.isNull(viewDTO)) {
+        if (viewDTO == null) {
             // 并行获取明细和SKU信息
             CompletableFuture<List<SoB2cDeliveryDetailEntity>> detailFuture = CompletableFuture.supplyAsync(
                     () -> soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()))
             );
 
-            CompletableFuture<List<SkuVO>> skuFuture = CompletableFuture.supplyAsync(() -> {
-                List<SoB2cDeliveryDetailEntity> details = detailFuture.join();
+            CompletableFuture<Map<String, SkuVO>> skuFuture = detailFuture.thenCompose(details -> {
                 if (CollectionUtils.isEmpty(details)) {
                     throw new ServiceException("发货单详情为空");
                 }
 
-                List<String> skuIdList = details.stream()
-                        .map(SoB2cDeliveryDetailEntity::getSkuId)
-                        .distinct()
-                        .collect(Collectors.toList());
+                Set<String> skuIdSet = new HashSet<>();
+                details.forEach(d -> skuIdSet.add(d.getSkuId()));
 
-                return plmTaskFeign.listSkuPurchaseByIds(skuIdList);
+                return CompletableFuture.supplyAsync(() -> {
+                    List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(new ArrayList<>(skuIdSet));
+                    return skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+                });
             });
 
-            // 构建ViewDTO
-            List<SoB2cDeliveryDetailEntity> detailEntityList = detailFuture.join();
-            List<SkuVO> skuVOList = skuFuture.join();
-            Map<String, SkuVO> skuVOMap = skuVOList.stream()
-                    .collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+            // 等待并构建ViewDTO
+            List<SoB2cDeliveryDetailEntity> details = detailFuture.join();
+            Map<String, SkuVO> skuMap = skuFuture.join();
 
-            viewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity, detailEntityList);
+            viewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity, details);
             viewDTO.setScannedSkuList(new ArrayList<>());
 
             // 设置SKU信息
-            viewDTO.getWaitScanSkuList().forEach(scanSkuInfo -> {
-                SkuVO skuVO = skuVOMap.get(scanSkuInfo.getSkuId());
-                if (Objects.nonNull(skuVO)) {
-                    scanSkuInfo.setProductName(skuVO.getSkuName());
-                    scanSkuInfo.setSkuImageUrl(skuVO.getSkuImagesUrl());
-                    scanSkuInfo.setSkuNo(skuVO.getSkuNo());
-                    scanSkuInfo.setWarehouseLocation(skuVO.getWarehouseLocation());
-                    scanSkuInfo.setEan(skuVO.getEan());
+            viewDTO.getWaitScanSkuList().forEach(scanInfo -> {
+                SkuVO sku = skuMap.get(scanInfo.getSkuId());
+                if (sku != null) {
+                    scanInfo.setProductName(sku.getSkuName());
+                    scanInfo.setSkuImageUrl(sku.getSkuImagesUrl());
+                    scanInfo.setSkuNo(sku.getSkuNo());
+                    scanInfo.setWarehouseLocation(sku.getWarehouseLocation());
+                    scanInfo.setEan(sku.getEan());
                 }
             });
 
@@ -172,11 +175,11 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             // 处理已扫描项
             Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = viewDTO.getWaitScanSkuList().iterator();
             while (it.hasNext()) {
-                PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = it.next();
-                if (scanSkuInfo.getScannedQty() > 0) {
-                    viewDTO.getScannedSkuList().add(scanSkuInfo);
+                PackingInspectionDTO.ViewDTO.ScanSkuInfo info = it.next();
+                if (info.getScannedQty() > 0) {
+                    viewDTO.getScannedSkuList().add(info);
                 }
-                if (scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())) {
+                if (info.getScannedQty().equals(info.getSaleQty())) {
                     it.remove();
                 }
             }
@@ -209,7 +212,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> waitScanList = viewDTO.getWaitScanSkuList();
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> scannedList = viewDTO.getScannedSkuList();
 
-            // 使用流式处理提高效率
             Optional<PackingInspectionDTO.ViewDTO.ScanSkuInfo> matchedSku = waitScanList.stream()
                     .filter(v -> dto.getSkuNo().equals(v.getSkuNo()) || dto.getSkuNo().equals(v.getEan()))
                     .findFirst();
@@ -292,7 +294,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
         viewDTO.setTransferStatus(soB2cEntity.getTransferStatus());
         viewDTO.setOrderUploadStatus(declareDetailEntity != null ? declareDetailEntity.getOrderUploadStatus() : null);
-        long endTime = System.currentTimeMillis();
         return viewDTO;
     }
 
