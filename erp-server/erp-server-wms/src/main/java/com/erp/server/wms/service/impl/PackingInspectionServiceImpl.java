@@ -126,7 +126,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
         //获取或创建ViewDTO
         PackingInspectionDTO.ViewDTO viewDTO = this.getViewDTO(entity.getId());
-        boolean isNewViewDTO = false;
 
         if (viewDTO == null) {
             // 并行获取明细和SKU信息
@@ -181,24 +180,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 }
                 if (info.getScannedQty().equals(info.getSaleQty())) {
                     it.remove();
-                }
-            }
-
-            isNewViewDTO = true;
-        }
-
-        if (isNewViewDTO && (viewDTO.getTrackNo() == null || viewDTO.getPaperSize() == null)) {
-            List<SoB2cLogisticsEntity> logisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(
-                    Collections.singletonList(soB2cEntity.getId()));
-
-            if (CollectionUtils.isNotEmpty(logisticsList)) {
-                SoB2cLogisticsEntity logistics = logisticsList.get(0);
-                viewDTO.setTrackNo(logistics.getTrackNo());
-
-                LogisticsChannelEntity channel = logisticsFeign.getChannelById(logistics.getLogisticsChannelId());
-                if (channel != null) {
-                    viewDTO.setPaperSize(channel.getPaperSize());
-                    viewDTO.setPrinterName(cfgSettingService.getPrinterNameByPaperSize(channel.getPaperSize()));
                 }
             }
         }
@@ -261,6 +242,23 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             // 只有未验货的订单才能进行整体验货
             // 判断是否全部扫描完成
             if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())) {
+
+                if (dto.getIsPrint() && (viewDTO.getTrackNo() == null || viewDTO.getPaperSize() == null)) {
+                    List<SoB2cLogisticsEntity> logisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(
+                            Collections.singletonList(soB2cEntity.getId()));
+
+                    if (CollectionUtils.isNotEmpty(logisticsList)) {
+                        SoB2cLogisticsEntity logistics = logisticsList.get(0);
+                        viewDTO.setTrackNo(logistics.getTrackNo());
+
+                        LogisticsChannelEntity channel = logisticsFeign.getChannelById(logistics.getLogisticsChannelId());
+                        if (channel != null) {
+                            viewDTO.setPaperSize(channel.getPaperSize());
+                            viewDTO.setPrinterName(cfgSettingService.getPrinterNameByPaperSize(channel.getPaperSize()));
+                        }
+                    }
+                }
+
                 // 批量更新
                 List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(
                         Collections.singletonList(entity.getId()));
