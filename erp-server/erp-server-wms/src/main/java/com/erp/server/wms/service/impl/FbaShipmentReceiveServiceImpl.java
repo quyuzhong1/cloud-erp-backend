@@ -482,15 +482,18 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     private void checkSkuMapping(List<FbaShipmentReceiveEntity> saveList) {
         List<String> skuMsgList = new LinkedList<>();
         saveList.stream()
-                .filter(e-> StringUtils.isBlank(e.getSkuId()))
-                .forEach(e-> {
-                    String msg = CharSequenceUtil.format("FBA签收记录数据异常:未找到平台sku映射数据, msku={}, fnSku={}", e.getMsku(), e.getFnSku());
+                .filter(e -> StringUtils.isBlank(e.getSkuId()))
+                .forEach(e -> {
+                    // 需求变更：映射缺失不阻断流程，兜底空串继续执行后续签收与调拨逻辑
+                    if (StringUtils.isBlank(e.getSkuNo())) {
+                        e.setSkuNo("");
+                    }
+                    e.setSkuId("");
+                    String msg = CharSequenceUtil.format("FBA签收记录映射缺失(已降级为空串继续): msku={}, fnSku={}", e.getMsku(), e.getFnSku());
                     skuMsgList.add(msg);
                 });
         if (!skuMsgList.isEmpty()) {
-            String msg = String.join(",", skuMsgList);
-            log.warn(msg);
-            throw new ServiceException(msg);
+            log.warn(String.join(",", skuMsgList));
         }
     }
 }
