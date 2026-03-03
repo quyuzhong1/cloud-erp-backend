@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -197,36 +198,36 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
 
     }
 
-     /**
-     * 状态统计
-     */
-     @Data
-     @NoArgsConstructor
-     @AllArgsConstructor
-     public static class TaskDTO {
-
-         /**
-         *
-         */
-         private List<String> ids;
-
-         /**
-          *核算日期
-          */
-         private String reportDate;
-         /**
-          * 主任务id
-          */
-         private String taskId;
-         /**
-          * 单据类型
-          */
-         private String businessType;
-         /**
-          *物流标签类型
-          */
-         private String type;
-     }
+//     /**
+//     * 状态统计
+//     */
+//     @Data
+//     @NoArgsConstructor
+//     @AllArgsConstructor
+//     public static class TaskDTO {
+//
+//         /**
+//         *
+//         */
+//         private List<String> ids;
+//
+//         /**
+//          *核算日期
+//          */
+//         private String reportDate;
+//         /**
+//          * 主任务id
+//          */
+//         private String taskId;
+//         /**
+//          * 单据类型
+//          */
+//         private String businessType;
+//         /**
+//          *物流标签类型
+//          */
+//         private String type;
+//     }
 
 
     /**
@@ -283,7 +284,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PushDTO {
+    public static class PushParamsDTO {
 
         /**
          * ids
@@ -292,22 +293,39 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         /**
          *核算日期
          */
-        @NotBlank(message = "核算日期不能为空")
         private String reportDate;
-
+        /**
+         * 主任务id
+         */
+        private String taskId;
+        /**
+         * 单据类型
+         */
+        private String businessType;
         /**
          *物流标签类型
          */
         private String type;
 
         /**
-         *核算日期
+         *开始日期
          */
-        private String reportPeriodId;
+        private LocalDate startDate;
+        /**
+         *结束日期
+         */
+        private LocalDate endDate;
 
+        /**
+         *开始日期
+         */
+        private LocalDateTime startTime;
+        /**
+         *结束日期
+         */
+        private LocalDateTime endTime;
 
     }
-
 
     @Data
     @NoArgsConstructor
@@ -387,6 +405,24 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 执行类型：auto=自动, manual=手动
          */
         private String execType;
+    }
+
+
+    /**
+     * 任务执行结果
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskResult {
+        private String name;
+        private boolean success;
+        private String errorMsg;
+        private long duration;
+
+        public boolean isSuccess() {
+            return success;
+        }
     }
 
 

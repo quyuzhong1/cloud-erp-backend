@@ -19,6 +19,7 @@ import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.concurrent.CountDownLatch;
 
 /**
  *
@@ -41,176 +45,26 @@ import java.util.stream.Collectors;
 @RocketMQMessageListener(topic = RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC,
         selectorExpression = RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG,
         consumerGroup = RocketMqConsumerGroup.TMS_PUSH_ALLOCATION_COST_CONSUMER)
-public class PushAllocationCostConsumerService implements RocketMQListener<TmsAsyncTaskRecordDTO.TaskDTO> {
-
-    @Resource
-    private FirstMileWeightAllocationService firstMileWeightAllocationService;
+public class PushAllocationCostConsumerService implements RocketMQListener<TmsAsyncTaskRecordDTO.PushParamsDTO> {
 
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @Resource
-    private TmsAsyncTaskRecordService asyncTaskRecordService;
-
-    @Resource
-    private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
-
-    @Resource
-    private ReportPeriodMonthMapper reportPeriodMonthMapper;
-
-    //发货单
-    @Resource
-    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
-
-    @Resource
-    private WmsTaskFeign wmsTaskFeign;
-
-    @Resource
-    private LogisticsBillService logisticsBillService;
-    @Resource
     private LogisticsBillCostService logisticsBillCostService;
-    @Resource
-    private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
-    @Resource
-    private CfgSettingService cfgSettingService;
-
-    @Autowired
-    @Qualifier("costAllocationPool")
-    private ExecutorService costAllocationPool;
 
     @Override
-    public void onMessage(TmsAsyncTaskRecordDTO.TaskDTO dto) {
+    public void onMessage(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         String businessType = dto.getBusinessType();
         if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
             //下推费用分摊
-            pushFirstMileCostAllocation(dto);
+            firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
         }else {
             //下推小包费用分摊
-            pushSmallBagCostAllocation(dto);
+            logisticsBillCostService.pushSmallBagCostAllocation(dto);
         }
     }
 
-    private void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto) {
-        String taskId = dto.getTaskId();
-        String reportDate = dto.getReportDate();
-        LocalDate reportPeriodMonth = LocalDate.parse(reportDate + "-01");
-
-        // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
-        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(null, null);
-
-        if (CollectionUtils.isEmpty(list)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"重量分摊记录不存在");
-            return;
-        }
-        List<String> deliveryIds = list.stream().map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(deliveryIds)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单关联记录为空");
-            return;
-        }else {
-            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,deliveryIds.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
-        }
-        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
-        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单记录不存在");
-            return;
-        }
-        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
-        if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单明细记录不存在");
-            return;
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        for (String id : deliveryIds) {
-            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
-            detail.setMainId(taskId);
-            detail.setBusinessType(dto.getBusinessType());
-            detail.setBusinessId(id);
-            detail.setStatus(TmsAsyncTaskRecordStatusEnum.ING.getCode());
-            detail.setStartTime(now);
-            asyncTaskDetailRecordService.save(detail);
-
-            String taskDetailId = detail.getId();
-
-            FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(id)).findFirst().orElse(null);
-            if (Objects.isNull(deliveryEntity)) {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单记录不存在");
-                continue;
-            }
-            List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList1 = deliveryDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(id)).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(deliveryDetailEntityList1)) {
-                asyncTaskDetailRecordService.updateDetail(taskDetailId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"发货单明细记录不存在");
-                continue;
-            }
-
-            costAllocationPool.execute(() -> {
-                try {
-                    //构造数据
-                    FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
-                            .setSourceId(deliveryEntity.getId()).setSourceCode(deliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth);
-                    BatchResultDTO result = firstMileCostAllocationService.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
-                    if(!result.getSuccess()){
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),result.getMsg());
-                    }else {
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"");
-                    }
-                } catch (Exception e) {
-                    log.error("asyncPushAllocatedCost id: 【{}】, 异常: 【{}】",id,e);
-                    //把Exception e 转字符串
-                    String errorMsg = ExceptionUtils.getStackTrace(e);
-                    asyncTaskDetailRecordService.updateDetail(taskDetailId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),errorMsg);
-                } finally {
-                    asyncTaskRecordService.updateTaskFinally(taskId);
-                }
-            });
-
-        }
-    }
-
-
-    private void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.TaskDTO dto) {
-        String taskId = dto.getTaskId();
-//        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByCanPushAllocation(dto.getType() ,dto.getReportDate());
-        List<String> ids = logisticsBillCostService.listByCanPushAllocation(dto);
-        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByIds(ids);
-
-        if(CollUtil.isEmpty(list)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
-            return;
-        }else {
-            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId,taskId).update();
-        }
-        LocalDateTime now = LocalDateTime.now();
-        for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
-            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
-            detail.setMainId(taskId);
-            detail.setBusinessType(dto.getBusinessType());
-            detail.setBusinessId(logisticsBillCostEntity.getId());
-            detail.setStatus(TmsAsyncTaskRecordStatusEnum.ING.getCode());
-            detail.setStartTime(now);
-            asyncTaskDetailRecordService.save(detail);
-
-            String id = detail.getId();
-
-            costAllocationPool.execute(() -> {
-                try {
-                    BatchResultDTO result = logisticsBillCostService.pushAllocation(logisticsBillCostEntity.getId(), dto.getReportDate());
-                    if(result.getSuccess()){
-                        asyncTaskDetailRecordService.updateDetail(id, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"");
-                    }else {
-                        asyncTaskDetailRecordService.updateDetail(id, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),result.getMsg());
-                    }
-                } catch (Exception e) {
-                    log.error("asyncPushAllocation id: 【{}】, 异常: 【{}】",logisticsBillCostEntity.getId(),e);
-                    //把Exception e 转字符串
-                    String errorMsg = ExceptionUtils.getStackTrace(e);
-                    asyncTaskDetailRecordService.updateDetail(id, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),errorMsg);
-                } finally {
-                    asyncTaskRecordService.updateTaskFinally(taskId);
-                }
-            });
-        }
-    }
 
 
 }

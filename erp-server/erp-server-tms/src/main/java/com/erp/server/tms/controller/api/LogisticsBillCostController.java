@@ -371,7 +371,7 @@ public class LogisticsBillCostController extends BaseController {
          if(CollUtil.isEmpty(dto.getIds())){
              dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
 
-             TmsAsyncTaskRecordDTO.PushDTO pushDTO = new TmsAsyncTaskRecordDTO.PushDTO();
+             TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
              BeanMapper.copy(dto,pushDTO);
              logisticsBillCostService.batchAsyncPushAllocation(pushDTO);
              return success();

@@ -30,6 +30,7 @@ import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -103,15 +105,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * 新增自动任务
      */
     @Override
-    public String addAutoTask(String businessType, String json){
-        Integer count = lambdaQuery()
-                .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
-                .eq(TmsAsyncTaskRecordEntity::getDataJson, json)
-                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
-                .count();
-        if(count > 0){
-            return null;
-        }
+    public String addAutoTask(String businessType, String json,String startTimeStr){
         //默认8小时
         Integer execTimeout = null;
         Integer errorCount = null;
@@ -147,7 +141,18 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setCode(code);
         entity.setBusinessType(businessType);
         entity.setDataJson(json);
-        entity.setStartTime(LocalDateTime.now());
+        //startTimeStr转时间戳LocalDateTime
+        LocalDateTime startTime = null;
+        if (StringUtils.isNotBlank(startTimeStr)) {
+            // 将 yyyy-MM-dd 格式的字符串转换为 LocalDate
+            LocalDate localDate = LocalDate.parse(startTimeStr);
+            // 转换为 LocalDateTime，时分秒默认为 00:00:00
+            startTime = localDate.atStartOfDay();
+        } else {
+            // 如果 startTimeStr 为空，则使用当前时间
+            startTime = LocalDateTime.now();
+        }
+        entity.setStartTime(startTime);
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
         if(Objects.nonNull(execTimeout)){
@@ -169,20 +174,30 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .update();
     }
 
+    /**
+     * 任务超时中止
+     */
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateTaskFinally(String taskId) {
-        TmsAsyncTaskRecordEntity mainEntity = getById(taskId);
-        if(Objects.nonNull(mainEntity)){
-            Integer count = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).ne(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode()).count();
-            if(Objects.equals(mainEntity.getDetailCount(), count)){
-                Integer failedCount = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode()).count();
-                if(failedCount > 0){
-                    this.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"");
-                }else {
-                    this.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"");
-                }
-            }
-        }
+    public void terminateTaskTimeout(String taskId, String errorMsg) {
+        List<TmsAsyncTaskDetailEntity> detailEntityList = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
+        int detailCount = detailEntityList.size();
+        long finishCount = detailEntityList.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.FINISH.getCode())).count();
+        tmsAsyncTaskDetailService.lambdaUpdate().set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .set(TmsAsyncTaskDetailEntity::getEndTime, LocalDateTime.now())
+                .set(TmsAsyncTaskDetailEntity::getErrorData, errorMsg)
+                .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+                .ne(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
+                .update();
+
+        lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus,  TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, errorMsg)
+                .set(TmsAsyncTaskRecordEntity::getDetailCount, detailCount)
+                .set(TmsAsyncTaskRecordEntity::getErrorCount, detailCount - finishCount)
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                .update();
     }
 
     @Override
@@ -422,7 +437,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         }
 
         //entity.getDataJson()转TmsAsyncTaskRecordDTO.PushDTO实体类
-        TmsAsyncTaskRecordDTO.PushDTO pushDTO = JSONUtil.toBean(entity.getDataJson(),TmsAsyncTaskRecordDTO.PushDTO.class);
+        TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
         pushDTO.setIds(businessIds);
 
         TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
@@ -447,6 +462,45 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setIsRetry(Boolean.TRUE);
         updateById(entity);
         return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
+    }
+
+    @Override
+    public Boolean isExist(String businessType, String startTimeStr) {
+        List<TmsAsyncTaskRecordEntity> list = baseMapper.isExist(businessType,startTimeStr);
+        return null;
+    }
+
+
+    /**
+     * 任务结束，记录错误数量
+     */
+    @Override
+    public void updateTaskFinally(String taskId) {
+        Integer errorCount = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode()).count();
+
+        lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
+                .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, "")
+                .set(TmsAsyncTaskRecordEntity::getErrorCount,errorCount)
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                .update();
+    }
+
+    /**
+     * 统一处理任务详情失败状态更新
+     */
+    @Override
+    public void updateTaskDetailFailure(String taskDetailId, Exception e) {
+        //把Exception e 转字符串
+        String errorMsg = ExceptionUtils.getStackTrace(e);
+        if (StringUtils.isBlank(errorMsg)) {
+            errorMsg = "未知错误";
+        }
+        // 限制错误信息长度，避免数据库字段超限
+        tmsAsyncTaskDetailService.updateDetail(taskDetailId,
+                TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                StringUtils.substring(errorMsg, 0, 1000));
     }
 
 

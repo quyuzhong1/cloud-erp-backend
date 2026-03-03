@@ -356,7 +356,9 @@
         WHERE
             lbc.is_deleted = FALSE
           AND lbc.reconciliation_status = 'confirmed'
-          and lbc.type = #{params.type}
+          <if test="params.type!=null and params.type!=''">
+            and lbc.type = #{params.type}
+          </if>
           and lbc.reconciliation_month = #{params.reportDate}
           AND lbc.id NOT IN ( SELECT DISTINCT cost_id FROM small_bag_cost_allocation_main WHERE is_deleted = FALSE AND ( report_date = #{params.reportDate} OR report_status = 'confirmed' or fee_source ='confirmed' ))
         UNION All
@@ -367,7 +369,9 @@
         WHERE
             lbc.is_deleted = FALSE
           AND lbc.reconciliation_status ='estimateConfirm'
-          and lbc.type = #{params.type}
+          <if test="params.type!=null and params.type!=''">
+            and lbc.type = #{params.type}
+          </if>
           and lbc.reconciliation_month = #{params.reportDate}
           AND lbc.id NOT IN ( SELECT DISTINCT cost_id FROM small_bag_cost_allocation_main WHERE is_deleted = FALSE AND ( report_date = #{params.reportDate} OR report_status = 'confirmed' ))
     </select>

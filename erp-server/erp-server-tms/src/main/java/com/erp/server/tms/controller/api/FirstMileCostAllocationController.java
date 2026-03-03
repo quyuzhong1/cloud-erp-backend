@@ -17,7 +17,6 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
@@ -264,7 +263,7 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
         if(CollUtil.isEmpty(dto.getIds())){
-            TmsAsyncTaskRecordDTO.PushDTO pushDTO = new TmsAsyncTaskRecordDTO.PushDTO();
+            TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
             BeanMapper.copy(dto,pushDTO);
             firstMileCostAllocationService.asyncBatchPushAllocatedCost(pushDTO);
             return success();

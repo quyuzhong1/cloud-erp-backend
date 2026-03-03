@@ -28,4 +28,6 @@ public interface TmsAsyncTaskRecordMapper extends BaseMapper<TmsAsyncTaskRecordE
     IPage<TmsAsyncTaskRecordDTO.ListDTO> paging(Page query,@Param("params") TmsAsyncTaskRecordDTO.PagingParamDTO params);
 
     IPage<TmsAsyncTaskRecordDTO.DetailListDTO> pagingError(Page query, @Param("id") String id);
+
+    List<TmsAsyncTaskRecordEntity> isExist(@Param("businessType")String businessType, @Param("startTimeStr") String startTimeStr);
 }
