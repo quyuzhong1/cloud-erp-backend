@@ -1400,6 +1400,7 @@ public class TikTokSdkClientService {
             // 查询指定订单：兼容不同网关口径，同时传 ids 和 order_ids
             // 注意：签名字符串与实际URL参数必须完全一致，这里统一使用逗号分隔字符串
             String inboundOrderIdsParam = inboundOrderIds.stream()
+                    .map(this::normalizeInboundOrderId)
                     .filter(StrUtil::isNotBlank)
                     .collect(Collectors.joining(","));
             if (StrUtil.isNotBlank(inboundOrderIdsParam)) {
@@ -1495,22 +1496,38 @@ public class TikTokSdkClientService {
 
             String responseData = apiResult.getData() != null ? apiResult.getData().toString() : "{}";
             Map<String, Object> responseMap = JSONUtil.toBean(responseData, Map.class);
-            
-            if (responseMap != null && responseMap.containsKey("data")) {
-                Map<String, Object> dataMap = (Map<String, Object>) responseMap.get("data");
-                if (dataMap.containsKey("inbound_orders")) {
-                    List<Map<String, Object>> inboundOrders = (List<Map<String, Object>>) dataMap.get("inbound_orders");
-                    if (CollectionUtil.isNotEmpty(inboundOrders)) {
-                        allInboundOrders.addAll(inboundOrders);
-                    }
+
+            if (responseMap == null) {
+                throw new RuntimeException(StrUtil.format("TikTok获取入库订单失败，返回值为空，url={}", sb.toString()));
+            }
+            if (!isSuccessResponseCode(responseMap.get("code"))) {
+                throw new RuntimeException(StrUtil.format(
+                        "TikTok获取入库订单失败，code={}, message={}, request_id={}, response={}",
+                        responseMap.get("code"),
+                        responseMap.get("message"),
+                        responseMap.get("request_id"),
+                        responseData));
+            }
+            Object dataObj = responseMap.get("data");
+            if (!(dataObj instanceof Map)) {
+                throw new RuntimeException(StrUtil.format(
+                        "TikTok获取入库订单失败，data为空或格式错误，code={}, message={}, request_id={}, response={}",
+                        responseMap.get("code"),
+                        responseMap.get("message"),
+                        responseMap.get("request_id"),
+                        responseData));
+            }
+            Map<String, Object> dataMap = (Map<String, Object>) dataObj;
+            if (dataMap.containsKey("inbound_orders")) {
+                List<Map<String, Object>> inboundOrders = (List<Map<String, Object>>) dataMap.get("inbound_orders");
+                if (CollectionUtil.isNotEmpty(inboundOrders)) {
+                    allInboundOrders.addAll(inboundOrders);
                 }
-                pageToken = (String) dataMap.get("next_page_token");
-                // 移除page_token参数，为下次循环准备
-                if (pageToken == null) {
-                    params.remove("page_token");
-                }
-            } else {
-                break;
+            }
+            pageToken = (String) dataMap.get("next_page_token");
+            // 移除page_token参数，为下次循环准备
+            if (pageToken == null) {
+                params.remove("page_token");
             }
         } while (CharSequenceUtil.isNotBlank(pageToken));
 
@@ -1521,6 +1538,35 @@ public class TikTokSdkClientService {
         result.put("inbound_orders", allInboundOrders);
         result.put("total", allInboundOrders.size());
         return result;
+    }
+
+    private String normalizeInboundOrderId(String inboundOrderId) {
+        if (StrUtil.isBlank(inboundOrderId)) {
+            return null;
+        }
+        String value = inboundOrderId.trim();
+        if (StrUtil.startWithIgnoreCase(value, "IBR") && value.length() > 3) {
+            value = value.substring(3);
+        }
+        return StrUtil.blankToDefault(value,null);
+    }
+
+    private boolean isSuccessResponseCode(Object codeObj) {
+        if (codeObj == null) {
+            return true;
+        }
+        String code = String.valueOf(codeObj);
+        if (StrUtil.isBlank(code)) {
+            return true;
+        }
+        if ("0".equals(code) || "success".equalsIgnoreCase(code)) {
+            return true;
+        }
+        try {
+            return Integer.parseInt(code) == 0;
+        } catch (Exception ignore) {
+            return false;
+        }
     }
 
     /**
