@@ -308,7 +308,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             //设置小包费用
             smallBagCostDTOS.stream().filter(obj ->CharSequenceUtil.equals(obj.getFeeAllocationType(), CostAllocationEnum.COST_ALLOCATION.getCode()) &&  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
                     .forEach(obj -> {
-                        BigDecimal cost = MathUtil.multiplyWithFour(obj.getAllocatedAmount(), obj.getAllocatedAmountExchange());
+                        BigDecimal cost =  obj.getAllocatedAmountExchange();
 
                         if (CharSequenceUtil.equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode(),obj.getFeeType())) {
                            kolSampleCostEntity.setShippingCost(cost);
