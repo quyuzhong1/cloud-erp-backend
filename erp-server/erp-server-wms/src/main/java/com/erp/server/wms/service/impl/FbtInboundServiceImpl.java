@@ -751,9 +751,18 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         entity.setSourceType(SignSourceTypeEnum.API.getCode());
         entity.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode());
         entity.setUniqueMd5(idempotentRecordId);
-        entity.setUniqueIndex(record.getRecordId());
+        entity.setUniqueIndex(calculateUniqueIndex(record.getRecordId(), idempotentRecordId));
         bindDetailIfMatch(shipment, entity, record);
         return entity;
+    }
+
+    private String calculateUniqueIndex(String recordId, String uniqueMd5) {
+        String seed = StrUtil.blankToDefault(recordId, uniqueMd5);
+        if (StrUtil.isBlank(seed)) {
+            return "0";
+        }
+        // fba_shipment_receive.unique_index 是 smallint，范围必须控制在 [0, 32767]
+        return String.valueOf(seed.hashCode() & 0x7FFF);
     }
 
     private void bindDetailIfMatch(FbaShipmentEntity shipment, FbaShipmentReceiveEntity entity, TiktokFbtDTO.InventoryRecordDTO record) {

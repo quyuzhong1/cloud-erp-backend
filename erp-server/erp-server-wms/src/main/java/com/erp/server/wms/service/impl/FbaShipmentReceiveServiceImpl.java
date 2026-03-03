@@ -66,6 +66,12 @@ import java.util.stream.Collectors;
 @Service
 public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentReceiveMapper, FbaShipmentReceiveEntity> implements FbaShipmentReceiveService {
 
+    private static final int MAX_LEN_ID_19 = 19;
+    private static final int MAX_LEN_16 = 16;
+    private static final int MAX_LEN_30 = 30;
+    private static final int MAX_LEN_64 = 64;
+    private static final int MAX_LEN_255 = 255;
+
     @Resource
     private DictBasicService dictBasicService;
     @Resource
@@ -139,6 +145,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> saveList, FbaShipmentEntity fbaShipmentEntity) {
+        normalizeForPersistence(saveList);
         // 检查数据
         long count = saveList.stream().map(FbaShipmentReceiveEntity::getFbaShipmentId).distinct().count();
         if (1 != count){
@@ -494,6 +501,53 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
                 });
         if (!skuMsgList.isEmpty()) {
             log.warn(String.join(",", skuMsgList));
+        }
+    }
+
+    private void normalizeForPersistence(List<FbaShipmentReceiveEntity> saveList) {
+        if (CollectionUtils.isEmpty(saveList)) {
+            return;
+        }
+        for (FbaShipmentReceiveEntity entity : saveList) {
+            if (entity == null) {
+                continue;
+            }
+            entity.setDetailId(normalizeText(entity.getDetailId(), MAX_LEN_ID_19, ""));
+            entity.setFbaShipmentId(normalizeText(entity.getFbaShipmentId(), MAX_LEN_64, ""));
+            entity.setAsin(normalizeText(entity.getAsin(), MAX_LEN_64, ""));
+            entity.setMsku(normalizeText(entity.getMsku(), MAX_LEN_64, ""));
+            entity.setFnSku(normalizeText(entity.getFnSku(), MAX_LEN_64, ""));
+            entity.setSkuNo(normalizeText(entity.getSkuNo(), MAX_LEN_64, ""));
+            entity.setSkuId(normalizeText(entity.getSkuId(), MAX_LEN_255, ""));
+            entity.setReceiveLocaleDate(normalizeText(entity.getReceiveLocaleDate(), MAX_LEN_64, ""));
+            entity.setReceiveUTCDate(normalizeText(entity.getReceiveUTCDate(), MAX_LEN_64, ""));
+            entity.setFulfillmentCenter(normalizeText(entity.getFulfillmentCenter(), MAX_LEN_16, ""));
+            entity.setUniqueMd5(normalizeText(entity.getUniqueMd5(), MAX_LEN_64, ""));
+            entity.setHandleStatus(normalizeText(entity.getHandleStatus(), MAX_LEN_64, FbaReceiveHandleStatusEnum.NONE.getCode()));
+            entity.setSourcePlatform(normalizeText(entity.getSourcePlatform(), MAX_LEN_64, ""));
+            entity.setSourceType(normalizeText(entity.getSourceType(), MAX_LEN_30, ""));
+            entity.setUniqueIndex(normalizeUniqueIndex(entity.getUniqueIndex()));
+        }
+    }
+
+    private String normalizeText(String value, int maxLen, String defaultValue) {
+        String normalized = CharSequenceUtil.blankToDefault(value, defaultValue);
+        if (normalized.length() > maxLen) {
+            return normalized.substring(0, maxLen);
+        }
+        return normalized;
+    }
+
+    private String normalizeUniqueIndex(String uniqueIndex) {
+        if (CharSequenceUtil.isBlank(uniqueIndex)) {
+            return "0";
+        }
+        try {
+            int value = Integer.parseInt(uniqueIndex);
+            value = Math.abs(value) & 0x7FFF;
+            return String.valueOf(value);
+        } catch (Exception ex) {
+            return String.valueOf(uniqueIndex.hashCode() & 0x7FFF);
         }
     }
 }

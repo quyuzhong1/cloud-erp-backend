@@ -285,8 +285,8 @@ public class FbtFbaShipmentReceiveRocketMQTaskHandler extends DmpOutputRocketMQT
         if (StrUtil.isBlank(uniqueId)) {
             return 0;
         }
-        int hash = uniqueId.hashCode();
-        return hash == Integer.MIN_VALUE ? 0 : Math.abs(hash);
+        // fba_shipment_receive.unique_index 是 smallint，范围必须控制在 [0, 32767]
+        return uniqueId.hashCode() & 0x7FFF;
     }
 
     private OffsetDateTime parseEventTime(Object eventTimeObj) {
