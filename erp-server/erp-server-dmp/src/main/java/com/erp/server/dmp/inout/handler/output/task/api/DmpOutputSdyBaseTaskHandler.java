@@ -153,13 +153,13 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 		}
 		
 		while(CollUtil.isNotEmpty(firstWdtMap)) {
-			Map<String, String> tidRawMaps = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getTid, 
+			Map<String, String> tidRawMaps = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getRawRefundNos, 
 					firstWdtMap.values().stream().map(ShudiyunB2cOrderDTO::getRoot_node_no_initial).collect(Collectors.toSet()))
 				.isNotNull(DmpSoReturnDetailEntity::getRawRefundNos)
 				.ne(DmpSoReturnDetailEntity::getRawRefundNos, "")
 				.isNotNull(DmpSoReturnDetailEntity::getTid)
 				.ne(DmpSoReturnDetailEntity::getTid, "")
-				.list().stream().collect(Collectors.toMap(DmpSoReturnDetailEntity::getTid, DmpSoReturnDetailEntity::getRawRefundNos , (m1 , m2) -> m1));
+				.list().stream().collect(Collectors.toMap(DmpSoReturnDetailEntity::getRawRefundNos, DmpSoReturnDetailEntity::getTid , (m1 , m2) -> m1));
 			Map<String, ShudiyunB2cOrderDTO> newWdtMap = new HashMap<>();
 			
 			Collection<String> values = tidRawMaps.values();
