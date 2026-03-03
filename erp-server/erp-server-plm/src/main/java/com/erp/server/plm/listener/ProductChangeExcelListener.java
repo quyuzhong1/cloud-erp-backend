@@ -5,11 +5,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.ConvertUtil;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
-import com.erp.model.plm.dto.excel.BomCombinationImportExcelDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductChangeFieldEnum;
@@ -22,8 +18,6 @@ import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -143,13 +137,13 @@ public class ProductChangeExcelListener extends AnalysisEventListener<ProductCha
         try {
             newValue = productChangeFieldEnum.convert(newValueStr);
         }catch (Exception e) {
-            errorMsgList.add("新值类型转换失败，字段：" + productChangeFieldEnum.getFieldLabel() + "，值：" + newValueStr + "，错误信息：" + e.getMessage());
+            errorMsgList.add("新值类型转换失败，字段：" + productChangeFieldEnum.getName() + "，值：" + newValueStr + "，错误信息：" + e.getMessage());
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
         if (newValue == null) {
-            errorMsgList.add("新值类型转换失败，字段：" + productChangeFieldEnum.getFieldLabel() + "，值：" + newValueStr);
+            errorMsgList.add("新值类型转换失败，字段：" + productChangeFieldEnum.getName() + "，值：" + newValueStr);
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;

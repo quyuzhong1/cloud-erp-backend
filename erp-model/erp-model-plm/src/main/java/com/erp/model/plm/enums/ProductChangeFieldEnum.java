@@ -1,5 +1,7 @@
 package com.erp.model.plm.enums;
 
+import com.common.core.constant.EnumMessage;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.function.Function;
@@ -8,7 +10,7 @@ import java.util.function.Function;
  * 产品变更字段映射枚举
  * 映射：前端显示的变更字段名 -> 业务表/字段/数据类型
  */
-public enum ProductChangeFieldEnum {
+public enum ProductChangeFieldEnum implements EnumMessage {
     // product_cost 分类
     EXPECTED_PROJECT_APPROVAL_COST("预计立项成本(¥)", "product_cost", "projectApprovalCost", BigDecimal.class),
     ACTUAL_MASS_PRODUCTION_COST("实际量产成本(¥)", "product_cost", "massCost", BigDecimal.class),
@@ -85,34 +87,34 @@ public enum ProductChangeFieldEnum {
     ;
 
     // 前端下拉框显示的字段名
-    private final String fieldLabel;
+    private final String name;
 
     private final String tableName;
     // 业务表的字段名（实体类属性名）
-    private final String entityField;
+    private final String code;
     // 字段数据类型
     private final Class<?> dataType;
 
     private final Function<String, Object> converter;  // 第五个参数：自定义转换器
 
     // 四个参数的构造函数，调用五个参数的构造函数并传入 null 转换器（表示使用默认转换逻辑）
-    ProductChangeFieldEnum(String fieldLabel, String tableName, String entityField, Class<?> dataType) {
-        this(fieldLabel, tableName, entityField, dataType, null);
+    ProductChangeFieldEnum(String name, String tableName, String code, Class<?> dataType) {
+        this(name, tableName, code, dataType, null);
     }
 
     // 五个参数的构造函数，允许传入自定义转换器
-    ProductChangeFieldEnum(String fieldLabel, String tableName, String entityField, Class<?> dataType,
+    ProductChangeFieldEnum(String name, String tableName, String code, Class<?> dataType,
                            Function<String, Object> converter) {
-        this.fieldLabel = fieldLabel;
+        this.name = name;
         this.tableName = tableName;
-        this.entityField = entityField;
+        this.code = code;
         this.dataType = dataType;
         this.converter = converter;
     }
     // 根据前端显示的字段名获取枚举
     public static ProductChangeFieldEnum getByFieldLabel(String fieldLabel) {
         for (ProductChangeFieldEnum e : values()) {
-            if (e.fieldLabel.equals(fieldLabel)) {
+            if (e.name.equals(fieldLabel)) {
                 return e;
             }
         }
@@ -121,7 +123,7 @@ public enum ProductChangeFieldEnum {
 
     public static ProductChangeFieldEnum getByEntityField(String entityField) {
         for (ProductChangeFieldEnum e : values()) {
-            if (e.entityField.equals(entityField)) {
+            if (e.code.equals(entityField)) {
                 return e;
             }
         }
@@ -170,8 +172,8 @@ public enum ProductChangeFieldEnum {
     }
 
     // getter
-    public String getFieldLabel() { return fieldLabel; }
+    public String getName() { return name; }
     public String getTableName() { return tableName; }
-    public String getEntityField() { return entityField; }
+    public String getCode() { return code; }
     public Class<?> getDataType() { return dataType; }
 }
