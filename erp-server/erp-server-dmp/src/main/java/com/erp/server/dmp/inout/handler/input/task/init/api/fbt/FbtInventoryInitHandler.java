@@ -77,6 +77,9 @@ public class FbtInventoryInitHandler extends DmpInputInitHandler {
             warehouse = asMap(source.get("fbt_warehouse"));
         }
         Map<String, Object> sku = asMap(source.get("sku"));
+        Map<String, Object> goods = asMap(source.get("goods"));
+        Map<String, Object> onHandDetail = asMap(source.get("on_hand_detail"));
+        Map<String, Object> skuOnHandDetail = firstSkuOnHandDetail(goods);
 
         row.put("authId", authId);
         row.put("shopId", shopId);
@@ -93,20 +96,58 @@ public class FbtInventoryInitHandler extends DmpInputInitHandler {
                 source.get("fbt_warehouse_name"),
                 source.get("warehouse_name"),
                 getMapValue(warehouse, "name")));
-        row.put("goods_id", firstNotBlank(source.get("goods_id"), source.get("id")));
-        row.put("goods_name", firstNotBlank(source.get("goods_name"), source.get("name")));
+        row.put("goods_id", firstNotBlank(
+                source.get("goods_id"),
+                source.get("id"),
+                getMapValue(goods, "id")));
+        row.put("goods_name", firstNotBlank(
+                source.get("goods_name"),
+                source.get("name"),
+                getMapValue(goods, "name")));
         row.put("seller_sku", firstNotBlank(
+                source.get("goods_id"),
+                source.get("id"),
+                getMapValue(goods, "id"),
                 source.get("seller_sku"),
                 source.get("sku"),
+                source.get("reference_code"),
                 getMapValue(sku, "seller_sku"),
                 getMapValue(sku, "sku"),
-                getMapValue(sku, "code")));
-        row.put("available_quantity", firstNotBlank(source.get("available_quantity"), source.get("sellable_quantity")));
-        row.put("reserved_quantity", source.get("reserved_quantity"));
-        row.put("unfulfillable_quantity", firstNotBlank(source.get("unfulfillable_quantity"), source.get("unsellable_quantity")));
+                getMapValue(sku, "code"),
+                getMapValue(goods, "reference_code")));
+        row.put("available_quantity", firstNotBlank(
+                source.get("available_quantity"),
+                source.get("sellable_quantity"),
+                getMapValue(onHandDetail, "available_quantity"),
+                getMapValue(skuOnHandDetail, "available_quantity")));
+        row.put("reserved_quantity", firstNotBlank(
+                source.get("reserved_quantity"),
+                getMapValue(onHandDetail, "reserved_quantity"),
+                getMapValue(skuOnHandDetail, "reserved_quantity")));
+        row.put("unfulfillable_quantity", firstNotBlank(
+                source.get("unfulfillable_quantity"),
+                source.get("unsellable_quantity"),
+                getMapValue(onHandDetail, "unfulfillable_quantity"),
+                getMapValue(skuOnHandDetail, "unfulfillable_quantity")));
         row.put("in_transit_quantity", firstNotBlank(source.get("in_transit_quantity"), source.get("deliver_onway_quantity")));
         row.put("update_time", firstNotBlank(source.get("update_time"), source.get("updated_time"), source.get("event_time")));
         return row;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> firstSkuOnHandDetail(Map<String, Object> goods) {
+        if (goods == null) {
+            return null;
+        }
+        Object skusObj = goods.get("skus");
+        if (!(skusObj instanceof List) || CollUtil.isEmpty((List<?>) skusObj)) {
+            return null;
+        }
+        Object firstSku = ((List<?>) skusObj).get(0);
+        if (!(firstSku instanceof Map)) {
+            return null;
+        }
+        return asMap(((Map<String, Object>) firstSku).get("on_hand_detail"));
     }
 
     private Map<String, Object> asMap(Object value) {
