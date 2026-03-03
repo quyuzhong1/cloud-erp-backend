@@ -31,7 +31,10 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
         if (shopInfoDTO == null) {
             return Collections.emptyList();
         }
-        Map<String, Object> resultMap = executeWithRetry(() -> tikTokSdkClientService.getInboundOrder(shopInfoDTO, inboundOrderIds), "queryInboundOrders");
+        List<String> normalizedInboundOrderIds = normalizeInboundOrderIds(inboundOrderIds);
+        Map<String, Object> resultMap = executeWithRetry(
+                () -> tikTokSdkClientService.getInboundOrder(shopInfoDTO, normalizedInboundOrderIds),
+                "queryInboundOrders");
         Object rows = resultMap.get("inbound_orders");
         if (!(rows instanceof List)) {
             return Collections.emptyList();
@@ -355,5 +358,27 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
         } catch (Exception ignore) {
         }
         return null;
+    }
+
+    private List<String> normalizeInboundOrderIds(List<String> inboundOrderIds) {
+        if (CollUtil.isEmpty(inboundOrderIds)) {
+            return inboundOrderIds;
+        }
+        return inboundOrderIds.stream()
+                .map(this::normalizeInboundOrderId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private String normalizeInboundOrderId(String inboundOrderId) {
+        if (StrUtil.isBlank(inboundOrderId)) {
+            return null;
+        }
+        String value = inboundOrderId.trim();
+        if (StrUtil.startWithIgnoreCase(value, "IBR") && value.length() > 3) {
+            value = value.substring(3);
+        }
+        return StrUtil.blankToDefault(value, null);
     }
 }

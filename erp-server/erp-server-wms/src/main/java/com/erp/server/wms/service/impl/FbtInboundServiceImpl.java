@@ -361,6 +361,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private FbaShipmentEntity createFbtInbound(TiktokFbtDTO.InboundOrderDTO inboundOrder) {
         FbaShipmentEntity entity = new FbaShipmentEntity();
         entity.setShopId(inboundOrder.getShopId());
+        fillShopCountryInfo(entity, inboundOrder.getShopId());
         entity.setCode(inboundOrder.getInboundOrderId());
         entity.setName(StrUtil.blankToDefault(inboundOrder.getShipmentName(), "FBT-" + inboundOrder.getInboundOrderId()));
         entity.setFbaShipmentId(inboundOrder.getInboundOrderId());
@@ -372,6 +373,24 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         fbtInboundRepository.saveShipment(entity);
         syncShipmentDetails(entity, inboundOrder);
         return entity;
+    }
+
+    private void fillShopCountryInfo(FbaShipmentEntity entity, String shopId) {
+        ShopInfoEntity shopInfo = null;
+        try {
+            shopInfo = shopInfoFeign.getShopInfoById(shopId);
+        } catch (Exception e) {
+            log.warn("查询店铺信息失败, shopId={}, err={}", shopId, e.getMessage());
+        }
+        if (shopInfo != null) {
+            entity.setShopName(StrUtil.blankToDefault(shopInfo.getName(), ""));
+            entity.setCountryId(StrUtil.blankToDefault(shopInfo.getDictCountryCode(), ""));
+            entity.setCountryName(StrUtil.blankToDefault(shopInfo.getCountryName(), ""));
+            return;
+        }
+        entity.setShopName("");
+        entity.setCountryId("");
+        entity.setCountryName("");
     }
 
     private void updateFbtStatus(FbaShipmentEntity entity, TiktokFbtDTO.InboundOrderDTO inboundOrder) {
