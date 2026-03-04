@@ -2120,6 +2120,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillMap.get(logisticsBillCostEntity.getLogisticsBillId());
             if(Objects.isNull(logisticsBillEntity) || Objects.isNull(logisticsBillEntity.getIsAllocateCostRequired()) || Objects.equals(logisticsBillEntity.getIsAllocateCostRequired(),Boolean.FALSE)){
+                log.error("asyncPushAllocation id: 【{}】, 异常: 【{}】",logisticsBillCostEntity.getId(),"费用分摊设置为不分摊，不能生成小包费用分摊");
                 continue;
             }
 
