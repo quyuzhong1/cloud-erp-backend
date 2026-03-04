@@ -12,9 +12,9 @@
        <result column="update_user_id" property="updateUserId" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="platform_code" property="platformCode" />
-       <result column="platform_name" property="platformName" />
-       <result column="shop_json" property="shopJson" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="platform_name" property="platformName" typeHandler="com.erp.server.dmp.handler.ObjectJsonHandler"/>
+       <result column="shop_json" property="shopJson" typeHandler="com.erp.server.dmp.handler.ObjectJsonHandler"/>
        <result column="cs_agent_json" property="csAgentJson" />
        <result column="sort" property="sort" />
     </resultMap>
@@ -30,7 +30,7 @@
         update_user_id,
         version,
         is_deleted,
-        platform_code, platform_name, shop_json, cs_agent_json, sort
+        dict_platform, platform_name, shop_json, cs_agent_json, sort
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.CfgAfterPlatformShopDTO$ListDTO">

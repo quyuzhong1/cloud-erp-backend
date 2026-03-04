@@ -1,5 +1,6 @@
 package com.erp.model.dmp.entity;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -9,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
 import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
 
 
 /**
@@ -29,8 +31,8 @@ public class CfgAfterPlatformShopEntity extends BaseEntity<CfgAfterPlatformShopE
     /**
     * 平台编码
     */
-    @TableField("platform_code")
-    private String platformCode;
+    @TableField("dict_platform")
+    private String dictPlatform;
     /**
     * 平台名称
     */
@@ -39,13 +41,13 @@ public class CfgAfterPlatformShopEntity extends BaseEntity<CfgAfterPlatformShopE
     /**
     * 店铺id json
     */
-    @TableField("shop_json")
-    private String shopJson;
+    @TableField(value = "shop_json", jdbcType = JdbcType.OTHER)
+    private JSONObject shopJson;
     /**
     * 售后人员id json
     */
-    @TableField("cs_agent_json")
-    private String csAgentJson;
+    @TableField(value = "cs_agent_json", jdbcType = JdbcType.OTHER)
+    private JSONObject csAgentJson;
     /**
     * 优先级
     */

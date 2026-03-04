@@ -177,6 +177,7 @@ public enum ModuleTypeEnum {
     SO_B2C_REFUND("146", "售后订单"),
     AWD_OUTSTOCK("156", "AWD出库"),
     AWD_INVENTORY("157","AWD库存"),
+    CFG_AFTER_PLATFORM_SHOP("164","售后平台店铺配置"),
     // ==================== 资产相关模块 ====================
     ASSET_LOCATION("146", "资产位置"),
     ASSET_ACCEPTANCE("147", "资产验收单"),

@@ -1,28 +1,32 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.annotation.DistributeLocker;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.druid.support.json.JSONUtils;
+import com.common.business.dto.FindUserDTO;
 import com.erp.model.dmp.entity.CfgAfterPlatformShopEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.mapper.CfgAfterPlatformShopMapper;
 import com.erp.server.dmp.service.CfgAfterPlatformShopService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.CfgAfterPlatformShopDTO;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
+import java.util.stream.Collectors;
 import com.common.core.enums.ApiError;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
+
+import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 
 /**
  * <p>
@@ -37,66 +41,170 @@ import com.common.business.dto.base.*;
 public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPlatformShopMapper, CfgAfterPlatformShopEntity> implements CfgAfterPlatformShopService {
 
     @Resource
-    private OperateLogService operateLogService;
+    private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
-    * 修改
+    * 保存
     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<CfgAfterPlatformShopDTO.SaveDTO> save(CfgAfterPlatformShopDTO.SaveDTO addOrUpdateDTO)  {
-        CfgAfterPlatformShopEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
-        CfgAfterPlatformShopEntity cfgAfterPlatformShopEntity =  BeanMapperUtils.map(CfgAfterPlatformShopEntity.class, addOrUpdateDTO);
+    public List<CfgAfterPlatformShopDTO.SaveDTO> save(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
 
-        // 数据处理
-        handleData(cfgAfterPlatformShopEntity);
-        log.info("编辑 开始修改数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgAfterPlatformShopEntity);
-        if(!save) {
+        // 检查平台是否重复
+        checkPlatformDuplicateWithDB(saveDTOList);
+
+        // 数据转换 & 唯一性校验
+        List<CfgAfterPlatformShopEntity> cfgAfterPlatformShopEntities = handleData(saveDTOList);
+
+        // 保存或更新数据
+        boolean saveResult = super.saveOrUpdateBatch(cfgAfterPlatformShopEntities);
+        if (!saveResult) {
             throw new ServiceException("保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", cfgAfterPlatformShopEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgAfterPlatformShopEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgAfterPlatformShopEntity, null, cfgAfterPlatformShopEntity.getId(), msg);
-        return null;
-    }
-
-    @Override
-    public PagingVO<CfgAfterPlatformShopDTO.ListDTO> paging(PagingDTO<CfgAfterPlatformShopDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<CfgAfterPlatformShopDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
-        }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        return saveDTOList;
     }
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(CfgAfterPlatformShopEntity cfgAfterPlatformShopEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 检查平台是否重复
+     */
+    private void checkPlatformDuplicateWithDB(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
+        // 提取所有平台编码
+        List<String> platforms = saveDTOList.stream()
+                .filter(saveDTO -> saveDTO.getId() == null) // 仅校验新增数据
+                .map(CfgAfterPlatformShopDTO.SaveDTO::getDictPlatform)
+                .collect(Collectors.toList());
+
+        if (!platforms.isEmpty()) {
+            // 查询数据库中已存在的平台
+            List<CfgAfterPlatformShopEntity> list = this.lambdaQuery()
+                    .in(CfgAfterPlatformShopEntity::getDictPlatform, platforms)
+                    .list();
+            List<String> existingPlatforms = list.stream().map(item -> item.getDictPlatform()).collect(Collectors.toList());
+
+            // 检查是否有重复
+            Set<String> existingPlatformSet = new HashSet<>(existingPlatforms);
+            for (CfgAfterPlatformShopDTO.SaveDTO saveDTO : saveDTOList) {
+                if (saveDTO.getId() == null) {
+                    String platform = saveDTO.getDictPlatform();
+                    if (existingPlatformSet.contains(platform)) {
+                        throw new ServiceException(ApiError.COMMON_PLATFORM_EXSIT, platform);
+                    }
+                }
+            }
+        }
     }
 
-   /**
-    * 分页查询、导出 数据处理
-   */
-   private void fillList(List<CfgAfterPlatformShopDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-            return;
+    /**
+     * 处理数据转换
+     */
+    private List<CfgAfterPlatformShopEntity> handleData(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
+        List<CfgAfterPlatformShopEntity> cfgAfterPlatformShopList = new ArrayList<>();
+        for (CfgAfterPlatformShopDTO.SaveDTO saveDTO : saveDTOList) {
+            CfgAfterPlatformShopEntity entity = new CfgAfterPlatformShopEntity();
+            BeanUtils.copyProperties(saveDTO, entity);
+
+            // 处理店铺
+            if (saveDTO.getShopInfoDtoList() != null && !saveDTO.getShopInfoDtoList().isEmpty()) {
+                List<CfgAfterPlatformShopDTO.ShopInfoDTO> shopInfoDtoList = saveDTO.getShopInfoDtoList();
+                List<String> ids = shopInfoDtoList.stream().map(item -> item.getId()).collect(Collectors.toList());
+                List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(ids);
+                // 构建 JSON 数据
+                JSONArray shopArray = new JSONArray();
+                for (CfgAfterPlatformShopDTO.ShopInfoDTO shopInfoDTO : saveDTO.getShopInfoDtoList()) {
+                    JSONObject shopInfoObj = new JSONObject();
+                    shopInfoObj.set("id", shopInfoDTO.getId());
+
+                    ShopInfoEntity shopInfoEntity = shopInfoList.stream()
+                            .filter(item -> Objects.equals(shopInfoDTO.getId(), item.getId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.nonNull(shopInfoEntity)) {
+                        shopInfoObj.set("name", shopInfoDTO.getName());
+                    }
+                    shopArray.add(shopInfoObj);
+                }
+
+                JSONObject shopJson = new JSONObject();
+                shopJson.putOpt("shops", shopArray);
+                entity.setShopJson(shopJson);
+            }
+
+            // 处理售后人员
+            if (saveDTO.getCsAgentDTOList() != null && !saveDTO.getCsAgentDTOList().isEmpty()) {
+                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = saveDTO.getCsAgentDTOList();
+                List<String> ids = csAgentDTOList.stream().map(item -> item.getId()).collect(Collectors.toList());
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(ids);
+
+                // 构建 JSON 数据
+                JSONArray csAgentArray = new JSONArray();
+                for (CfgAfterPlatformShopDTO.CsAgentDTO csAgent : saveDTO.getCsAgentDTOList()) {
+                    JSONObject csAgentObj = new JSONObject();
+                    csAgentObj.set("id", csAgent.getId());
+
+
+                    FindUserDTO userDTO = userList.stream()
+                            .filter(item -> Objects.equals(csAgent.getId(), item.getUserId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.nonNull(userDTO)) {
+                        csAgentObj.set("name", userDTO.getUserName());
+                    }
+                    csAgentArray.add(csAgentObj);
+                }
+
+                JSONObject csAgentJson = new JSONObject();
+                csAgentJson.putOpt("csAgents", csAgentArray);
+                entity.setCsAgentJson(csAgentJson);
+            }
+
+            cfgAfterPlatformShopList.add(entity);
         }
-        // 属性赋值
-        for(CfgAfterPlatformShopDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
+
+        return cfgAfterPlatformShopList;
+    }
+
+
+    @Override
+    public List<CfgAfterPlatformShopDTO.ListDTO> view() {
+        List<CfgAfterPlatformShopDTO.ListDTO> resultList = new ArrayList<>();
+        List<CfgAfterPlatformShopEntity> list = this.list();
+        if (!list.isEmpty()) {
+            for (CfgAfterPlatformShopEntity cfgAfterPlatformShopEntity : list) {
+                CfgAfterPlatformShopDTO.ListDTO listDTO = new CfgAfterPlatformShopDTO.ListDTO();
+                List<CfgAfterPlatformShopDTO.ShopInfoDTO> shopInfoDTOS = new ArrayList<>();
+                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOS = new ArrayList<>();
+                BeanUtils.copyProperties(cfgAfterPlatformShopEntity,listDTO);
+
+                // 反序列化 JSON 到 POJO
+                CfgAfterPlatformShopDTO.ShopJsonDTO shopJsonDTO = JSONUtil.toBean(cfgAfterPlatformShopEntity.getShopJson(), CfgAfterPlatformShopDTO.ShopJsonDTO.class);
+                CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(cfgAfterPlatformShopEntity.getCsAgentJson(), CfgAfterPlatformShopDTO.CsAgentJsonDTO.class);
+
+                shopJsonDTO.getShops().forEach(shop -> {
+                    CfgAfterPlatformShopDTO.ShopInfoDTO shopInfoDTO = new CfgAfterPlatformShopDTO.ShopInfoDTO();
+
+                    shopInfoDTO.setId(shop.getId());
+                    shopInfoDTO.setName(shop.getName());
+                    shopInfoDTOS.add(shopInfoDTO);
+                });
+
+                csAgentJsonDTO.getCsAgents().forEach(csAgent -> {
+                    CfgAfterPlatformShopDTO.CsAgentDTO csAgentDTO = new CfgAfterPlatformShopDTO.CsAgentDTO();
+
+                    csAgentDTO.setId(csAgent.getId());
+                    csAgentDTO.setName(csAgent.getName());
+                    csAgentDTOS.add(csAgentDTO);
+                });
+                listDTO.setShopInfoDtoList(shopInfoDTOS);
+                listDTO.setCsAgentDTOList(csAgentDTOS);
+                resultList.add(listDTO);
+            }
         }
-   }
+
+        return resultList;
+    }
+
 }

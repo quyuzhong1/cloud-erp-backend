@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.core.anno.LogViewService;
+import com.erp.model.scm.dto.AssetNoticeDTO;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -8,15 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 import com.erp.server.dmp.service.CfgAfterPlatformShopService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.CfgAfterPlatformShopDTO;
+
+import java.util.List;
 
 /**
  * 
@@ -37,7 +39,7 @@ public class CfgAfterPlatformShopController extends BaseController {
     * 保存
     * @author wtr
     * @date:  2026-03-03
-    * @param dto
+    * @param dtoList
     * @return ApiResult
     */
     @PostMapping("/save")
@@ -47,27 +49,24 @@ public class CfgAfterPlatformShopController extends BaseController {
         menuCode = "dmp:cfgAfterPlatformShop:update",
         serviceClass = CfgAfterPlatformShopService.class,
         keyIdName = "id")
-    public ApiResult<CfgAfterPlatformShopDTO.SaveDTO> save(@RequestBody @Validated CfgAfterPlatformShopDTO.SaveDTO dto) {
-        cfgAfterPlatformShopService.save(dto);
-        return success();
+    public ApiResult<List<CfgAfterPlatformShopDTO.SaveDTO>> save(@RequestBody @Validated List<CfgAfterPlatformShopDTO.SaveDTO> dtoList) {
+        return success(cfgAfterPlatformShopService.save(dtoList));
     }
 
 
     /**
-    * 列表查询
-    * @author wtr
-    * @date: 2026-03-03
-    * @param dto
-    * @return ApiResult<PagingVO<CfgAfterPlatformShopDTO.ListDTO>>
-    */
-    @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "dmp:cfgAfterPlatformShop:paging",
-            tableAlias = ""
-    )
-    public ApiResult<PagingVO<CfgAfterPlatformShopDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgAfterPlatformShopDTO.PagingParamDTO> dto) {
-        return success(cfgAfterPlatformShopService.paging(dto));
+     *
+     * @return
+     */
+    @GetMapping("/view")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "dmp:cfgAfterPlatformShop:paging",
+//            serviceClass = CfgAfterPlatformShopService.class,
+//            keyIdName = "id")
+    public ApiResult<List<CfgAfterPlatformShopDTO.ListDTO>> view() {
+        return success(cfgAfterPlatformShopService.view());
     }
+
 
 }

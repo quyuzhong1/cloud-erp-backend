@@ -84,7 +84,7 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         /**
         * 平台编码
         */
-        private String platformCode;
+        private String dictPlatform;
 
         /**
         * 平台名称
@@ -100,18 +100,6 @@ public class CfgAfterPlatformShopDTO implements Serializable {
          * 售后人员list
          */
         private List<CsAgentDTO> csAgentDTOList;
-
-        /**
-        * 优先级
-        */
-        private Integer sort;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
 
         /**
         * 创建时间
@@ -153,7 +141,7 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         /**
         * 平台编码
         */
-        private String platformCode;
+        private String dictPlatform;
 
         /**
         * 平台名称
@@ -221,11 +209,13 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         /**
          * 店铺list
          */
+        @NotBlank(message = "店铺不能为空")
         private List<ShopInfoDTO> shopInfoDtoList;
 
         /**
          * 售后人员list
          */
+        @NotBlank(message = "售后人员不能为空")
         private List<CsAgentDTO> csAgentDTOList;
 
     }
@@ -239,7 +229,7 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         */
         @NotBlank(message = "平台编码不能为空")
         @Size(max = 255,message = "平台编码最大长度不能超过255位")
-        private String platformCode;
+        private String dictPlatform;
 
         /**
         * 平台名称
@@ -248,14 +238,37 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         @Size(max = 255,message = "平台名称最大长度不能超过255位")
         private String platformName;
 
-        /**
-        * 优先级
-        */
-        @NotNull(message = "优先级不能为空")
-        private Integer sort;
-
-
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ShopJsonDTO {
 
+        private List<Shop> shops;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class Shop {
+
+        private String id;
+
+        private String name;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CsAgentJsonDTO {
+
+        private List<CsAgent> csAgents;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CsAgent {
+
+        private String id;
+
+        private String name;
+    }
 }
