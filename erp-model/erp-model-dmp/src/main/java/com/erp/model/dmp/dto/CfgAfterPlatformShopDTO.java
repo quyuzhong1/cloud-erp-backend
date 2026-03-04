@@ -178,24 +178,6 @@ public class CfgAfterPlatformShopDTO implements Serializable {
 
     }
 
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-        /**
-         * 店铺list
-         */
-        private List<ShopInfoDTO> shopInfoDtoList;
-
-        /**
-         * 售后人员list
-         */
-        private List<CsAgentDTO> csAgentDTOList;
-    }
-
     @Data
     @NoArgsConstructor
     public static class ShopInfoDTO{
@@ -225,16 +207,15 @@ public class CfgAfterPlatformShopDTO implements Serializable {
     }
 
     /**
-    * 修改
+    * 保存
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class SaveDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**

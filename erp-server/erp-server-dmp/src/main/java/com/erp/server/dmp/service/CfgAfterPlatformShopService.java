@@ -19,22 +19,13 @@ import java.util.List;
 public interface CfgAfterPlatformShopService extends SuperService<CfgAfterPlatformShopEntity> {
 
     /**
-    * 新增
+    * 保存
     * @author wtr
     * @date: 2026-03-03
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgAfterPlatformShopDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author wtr
-    * @date: 2026-03-03
-    * @param dto
-    * @return
-    */
-    Boolean update(CfgAfterPlatformShopDTO.UpdateDTO dto);
+    List<CfgAfterPlatformShopDTO.SaveDTO> save(CfgAfterPlatformShopDTO.SaveDTO dto);
 
 
     /**
@@ -46,32 +37,4 @@ public interface CfgAfterPlatformShopService extends SuperService<CfgAfterPlatfo
     */
     PagingVO<CfgAfterPlatformShopDTO.ListDTO> paging(PagingDTO<CfgAfterPlatformShopDTO.PagingParamDTO> pagingParamDTO);
 
-    /**
-    * 状态统计
-    * @author wtr
-    * @date: 2026-03-03
-    * @param dto
-    * @return List<CfgAfterPlatformShopDTO.TabListDTO>>
-    */
-    List<CfgAfterPlatformShopDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
-    * 详情
-    * @author wtr
-    * @date: 2026-03-03
-    * @param id
-    * @return
-    */
-    CfgAfterPlatformShopDTO.ViewDTO view(String id);
-
-
-    /**
-    * 导出Excel
-    * @author wtr
-    * @date: 2026-03-03
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(CfgAfterPlatformShopDTO.ExportDTO dto, HttpServletResponse response);
 }

@@ -34,34 +34,21 @@ public class CfgAfterPlatformShopController extends BaseController {
     private CfgAfterPlatformShopService cfgAfterPlatformShopService;
 
     /**
-    * 新增
-    * @author wtr
-    * @date:  2026-03-03
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgAfterPlatformShopDTO.AddDTO dto) {
-        return success(cfgAfterPlatformShopService.add(dto));
-    }
-
-    /**
-    * 修改
+    * 保存
     * @author wtr
     * @date:  2026-03-03
     * @param dto
     * @return ApiResult
     */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
+    @PostMapping("/save")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "保存")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "dmp:cfgAfterPlatformShop:update",
         serviceClass = CfgAfterPlatformShopService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgAfterPlatformShopDTO.UpdateDTO dto) {
-        cfgAfterPlatformShopService.update(dto);
+    public ApiResult<CfgAfterPlatformShopDTO.SaveDTO> save(@RequestBody @Validated CfgAfterPlatformShopDTO.SaveDTO dto) {
+        cfgAfterPlatformShopService.save(dto);
         return success();
     }
 
