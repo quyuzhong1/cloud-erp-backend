@@ -38,4 +38,25 @@
         </if>
         id desc
     </select>
+
+    <!-- 查询最新的文件任务 -->
+    <select id="listLatestFileTask" resultType="com.erp.model.file.dto.FileDTO$FileTaskDTO">
+        select distinct on (ft.meta_info::json ->>'fileUrl')
+            ft.meta_info::json ->>'fileUrl' as fileUrl,
+            ft.file_url as errorUrl,
+            ft.file_name as errorName,
+            ft.id as taskId,
+            ft.type,
+            ft.event,
+            ft.create_time
+        from file_task ft
+        <where>
+            ft.is_deleted = false
+            and
+            <foreach collection="fileUrlList" item="fileUrl" open="(" separator="OR" close=")">
+                ft.meta_info LIKE CONCAT('%', #{fileUrl}, '%')
+            </foreach>
+        </where>
+        order by ft.meta_info::json ->>'fileUrl', ft.create_time desc
+    </select>
 </mapper>

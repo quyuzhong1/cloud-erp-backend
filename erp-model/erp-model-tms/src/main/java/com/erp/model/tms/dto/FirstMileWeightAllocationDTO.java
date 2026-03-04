@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
@@ -283,6 +284,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 物流单ID
          */
         private String logisticsBillId;
+
     }
 
     /**

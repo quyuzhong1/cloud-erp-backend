@@ -197,7 +197,7 @@
                 #{id}
             </foreach>
         </where>
-        group by wa.logistics_bill_id, ca.status, ca.report_period_id, sca.bill_source_type, scad.end_period_transit_cost
+        group by wa.logistics_bill_id, ca.status, ca.report_period_id,sca.bill_source_type, scad.end_period_transit_cost
     </select>
     <select id="listBySourceIdsAndReportPeriodId"
             resultType="com.erp.model.tms.entity.FirstMileCostAllocationEntity">

@@ -8,7 +8,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 import java.util.List;
 
 @FeignClient(name = "erp-file", contextId = "fileFeign",configuration = {FeignErrorDecoder.class})
@@ -101,4 +100,13 @@ public interface FileFeign {
      */
     @PostMapping("/feign/file/getBatchFileSize")
     List<FileDTO.FileSizeInfo> getBatchFileSize(@RequestBody List<String> fileUrlList);
+    /**
+     * 查询最新的文件任务信息
+     * @author will
+     * @date 2026/1/26 11:29
+     * @param fileUrlList
+     * @return List<FileTaskDTO>
+     */
+    @PostMapping("/feign/file/listLatestFileTask")
+    List<FileDTO.FileTaskDTO> listLatestFileTask(@RequestBody List<String> fileUrlList);
 }

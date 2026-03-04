@@ -161,6 +161,8 @@ public enum BusinessNoTypeEnum {
 
     CODE_DR(120 ,"DR","企业达人库",BusinessNoConstant.DR),
     CODE_KOLC(121 ,"KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
+    CODE_DZ(122 ,"DZ","物流费用导入",BusinessNoConstant.DZ),
+    CODE_FYPZ(123 ,"FYPZ","费用配置",BusinessNoConstant.FYPZ),
 
 
 
