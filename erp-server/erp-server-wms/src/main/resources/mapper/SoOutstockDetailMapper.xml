@@ -157,8 +157,8 @@
             sod.sku_id as skuId,
             sod.sku_no as skuNo,
             sod.actual_qty as actualQty,
-            sod.warehouse_id as warehouseId,
-            sod.warehouse_name as warehouseName
+            so.warehouse_id as warehouseId,
+            so.warehouse_name as warehouseName
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
         where so.is_deleted = false and so.approve_status = 'approve'

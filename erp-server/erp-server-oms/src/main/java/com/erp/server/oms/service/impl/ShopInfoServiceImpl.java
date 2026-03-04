@@ -1259,6 +1259,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setAccessToken(accessToken);
         shopAuth.setRefreshToken(refreshToken);
         shopAuth.setExpiresIn(Math.toIntExact(expireIn));
+        shopAuth.setRefreshStatus(0);
+        shopAuth.setRefreshErrorMsg("");
         shopAuth.setShopId(dto.getId());
         shopAuth.setAppClientId(cfgAppClient.getId());
         LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));

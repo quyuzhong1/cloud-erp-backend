@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -417,19 +418,36 @@ public class FirstMileCostAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class IdsDTO extends PermissionsDTO {
-        /**
-         * 核算期间id
-         */
-        @NotBlank(message = "核算期间id不能为空")
-        private String reportPeriodId;
 
+        /**
+         *核算日期
+         */
+        @NotBlank(message = "核算日期不能为空")
+        private String reportDate;
+
+        /**
+         *核算日期
+         */
+        private String reportPeriodId;
         /**
          * 表 ids
          */
-        @NotEmpty(message = "ids不能为空")
+//        @NotEmpty(message = "ids不能为空")
         private List<String> ids;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PushAllocatedCostCountDTO {
+        /**
+         *
+         */
+        private Integer count =0;
+
+    }
+
+
     @Data
     @NoArgsConstructor
     public static class ResetIdsDTO extends PermissionsDTO {

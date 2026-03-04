@@ -571,7 +571,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public List<FirstMileWeightAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds) {
-        if (logisticsBillIds.isEmpty()){
+        if (CollUtil.isNotEmpty(logisticsBillIds)){
             return this.lambdaQuery().in(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillIds).list();
         }
         return Collections.emptyList();
@@ -595,6 +595,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         Integer count = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).count();
         if(count > 0){
             return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "已下推重量分摊，不能再次下推");
+        }
+
+        if (!logisticsBillEntity.getIsAllocateWeightRequired()) {
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "头程物流单设置的不分摊重量，不能下推重量分摊");
         }
 
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
@@ -657,7 +661,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 weightAllocationDTO.setBusinessCode(warehouseInboundEntity.get(0).getCode());
             }
         }
-        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode()) || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode())){
+        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())
+                || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode())
+                || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode())){
             //备货FBA仓：取FBA货件单号
             String fbaShipmentCode = firstMileDeliveryDetailList.get(0).getFbaShipmentCode();
             weightAllocationDTO.setBusinessCode(fbaShipmentCode);
@@ -672,6 +678,11 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         weightAllocationDTO.setFromWarehouseId(firstMileDeliveryEntity.getDeliveryWarehouseId());
         List<FirstMileWeightAllocationEntity> saveList = new ArrayList<>();
         for (WmsCartonDTO.DetailDTO cartonDetail : cartonDetailList) {
+            //箱子明细设置的取消分摊
+            if (cartonDetail.getIsCancelRequired()) {
+                log.warn("物流单【{}】的装箱内容物【{}】设置了取消分摊，跳过该箱子重量分摊计算", logisticsBillEntity.getTransportNo(), cartonDetail.getBoxNo());
+               continue;
+            }
             FirstMileWeightAllocationEntity entity = new FirstMileWeightAllocationEntity();
             BeanMapper.copy(weightAllocationDTO, entity);
             entity.setSkuId(cartonDetail.getSkuId());
