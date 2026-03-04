@@ -285,6 +285,14 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         private String outstockCode;
 
         /**
+        * ERP_SKU
+        */
+        private String skuNo;
+        /**
+        * ERP_SKU数量
+        */
+        private String qty;
+        /**
         * ERP_SKU数量
         */
         private String skuQty;
