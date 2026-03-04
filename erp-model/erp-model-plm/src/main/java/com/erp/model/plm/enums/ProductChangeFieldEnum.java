@@ -22,19 +22,19 @@ public enum ProductChangeFieldEnum implements EnumMessage {
 
     // product_detail 分类
     EXPECTED_ON_SHELF_TIME("预计上市时间", "product_detail", "planListingTime", LocalDate.class),
-    PRODUCT_DETAIL_NAME_CN("产品品名（中文）", "product_detail", "detailName", String.class),
-    PRODUCT_DETAIL_NAME_EN("产品品名（英文）", "product_detail", "detailNameEn", String.class),
+    PRODUCT_DETAIL_NAME_CN("产品品名（中文）", "product_detail", "name", String.class),
+    PRODUCT_DETAIL_NAME_EN("产品品名（英文）", "product_detail", "nameEn", String.class),
 
     // product_info 分类
     SALE_MODE("销售方式", "product_info", "saleMethod", String.class),
-    PRODUCT_NAME_CN("产品款名（中文）", "product_info", "name", String.class),
+    PRODUCT_NAME_CN("产品款名（中文）", "product_info", "spuName", String.class),
     PRODUCT_SELLING_POINT("产品卖点", "product_info", "sellSpot", String.class),
     PRODUCT_USAGE("产品用途", "product_info", "usageDesc", String.class),
     MAIN_MATERIAL("主要材质", "product_info", "materials", String.class),
     PRODUCT_ATTRIBUTE("产品属性", "product_info", "propertyId", String.class),
     ENTRUSTED_DEVELOPMENT_COST("委托开发成本（¥）", "product_info", "entrustedDevelopCost", BigDecimal.class),
     SAMPLE_FEE("样品费用", "product_info", "sampleFee", BigDecimal.class),
-    PRODUCT_NAME_EN("产品款名（英文）", "product_info", "nameEn", String.class),
+    PRODUCT_NAME_EN("产品款名（英文）", "product_info", "spuNameEn", String.class),
     PRODUCT_CATEGORY("产品分类", "product_info", "categoryId", String.class),
     APPLICATION_CATEGORY("应用分类", "product_info", "applicationCategoryId", String.class),
     R_D_TEAM("研发团队（产线）", "product_info", "rdtTeamId", String.class),
@@ -82,8 +82,8 @@ public enum ProductChangeFieldEnum implements EnumMessage {
     ON_SHELF_TIME("上市时间", "product_sale", "listingTime", LocalDate.class),
     OFF_SHELF_TIME("退市时间", "product_sale", "delistingTime", LocalDate.class),
     SALE_PLATFORM("销售平台", "product_sale", "salesPlatform", String.class),
-    IS_IMAGE_COMPLETED("图片是否完成", "product_sale", "isFinishedImg", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 0 : Integer.parseInt(s))),
-    IS_VIDEO_COMPLETED("视频是否完成", "product_sale", "isFinishedVideo", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 0 : Integer.parseInt(s))),
+    IS_IMAGE_COMPLETED("图片是否完成", "product_sale", "isFinishedImg", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 2 : Integer.parseInt(s))),
+    IS_VIDEO_COMPLETED("视频是否完成", "product_sale", "isFinishedVideo", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 2 : Integer.parseInt(s))),
     ;
 
     // 前端下拉框显示的字段名
