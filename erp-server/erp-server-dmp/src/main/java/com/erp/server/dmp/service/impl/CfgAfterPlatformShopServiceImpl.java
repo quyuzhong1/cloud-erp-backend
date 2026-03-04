@@ -152,7 +152,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                 }
 
                 JSONObject csAgentJson = new JSONObject();
-                csAgentJson.putOpt("shops", csAgentArray);
+                csAgentJson.putOpt("csAgents", csAgentArray);
                 entity.setCsAgentJson(csAgentJson);
             }
 
@@ -178,21 +178,26 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                 CfgAfterPlatformShopDTO.ShopJsonDTO shopJsonDTO = JSONUtil.toBean(cfgAfterPlatformShopEntity.getShopJson(), CfgAfterPlatformShopDTO.ShopJsonDTO.class);
                 CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(cfgAfterPlatformShopEntity.getCsAgentJson(), CfgAfterPlatformShopDTO.CsAgentJsonDTO.class);
 
-                shopJsonDTO.getShops().forEach(shop -> {
-                    CfgAfterPlatformShopDTO.ShopInfoDTO shopInfoDTO = new CfgAfterPlatformShopDTO.ShopInfoDTO();
+                if (Objects.nonNull(shopJsonDTO)) {
+                    shopJsonDTO.getShops().forEach(shop -> {
+                        CfgAfterPlatformShopDTO.ShopInfoDTO shopInfoDTO = new CfgAfterPlatformShopDTO.ShopInfoDTO();
 
-                    shopInfoDTO.setId(shop.getId());
-                    shopInfoDTO.setName(shop.getName());
-                    shopInfoDTOS.add(shopInfoDTO);
-                });
+                        shopInfoDTO.setId(shop.getId());
+                        shopInfoDTO.setName(shop.getName());
+                        shopInfoDTOS.add(shopInfoDTO);
+                    });
+                }
 
-                csAgentJsonDTO.getCsAgents().forEach(csAgent -> {
-                    CfgAfterPlatformShopDTO.CsAgentDTO csAgentDTO = new CfgAfterPlatformShopDTO.CsAgentDTO();
+                if (Objects.nonNull(csAgentJsonDTO)) {
+                    csAgentJsonDTO.getCsAgents().forEach(csAgent -> {
+                        CfgAfterPlatformShopDTO.CsAgentDTO csAgentDTO = new CfgAfterPlatformShopDTO.CsAgentDTO();
 
-                    csAgentDTO.setId(csAgent.getId());
-                    csAgentDTO.setName(csAgent.getName());
-                    csAgentDTOS.add(csAgentDTO);
-                });
+                        csAgentDTO.setId(csAgent.getId());
+                        csAgentDTO.setName(csAgent.getName());
+                        csAgentDTOS.add(csAgentDTO);
+                    });
+                }
+
                 listDTO.setShopInfoDTOList(shopInfoDTOS);
                 listDTO.setCsAgentDTOList(csAgentDTOS);
                 resultList.add(listDTO);
