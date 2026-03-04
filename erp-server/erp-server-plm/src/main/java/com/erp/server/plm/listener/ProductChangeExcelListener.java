@@ -16,8 +16,11 @@ import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.server.plm.service.*;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -131,6 +134,31 @@ public class ProductChangeExcelListener extends AnalysisEventListener<ProductCha
             errorList.add(excelDTO);
             return;
         }
+
+        // 单据日期
+        String billDateStr = excelDTO.getBillDateStr();
+        if (StringUtils.isNotBlank(billDateStr)) {
+            try {
+                // 支持两种日期格式：yyyy-MM-dd 和 yyyy/M/d
+                LocalDate billDate = null;
+                try {
+                    billDate = LocalDate.parse(billDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                } catch (Exception e1) {
+                    try {
+                        billDate = LocalDate.parse(billDateStr, DateTimeFormatter.ofPattern("yyyy/M/d"));
+                    } catch (Exception e2) {
+                        throw new IllegalArgumentException("日期格式错误");
+                    }
+                }
+                excelDTO.setBillDate(billDate);
+            } catch (Exception e) {
+                errorMsgList.add("单据日期格式错误，请使用yyyy-MM-dd或yyyy/M/d格式");
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                return;
+            }
+        }
+
         //校验输入的值
         String newValueStr = excelDTO.getNewValue();
         Object newValue;

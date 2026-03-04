@@ -168,7 +168,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                 .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
                 .list();
         if(CollectionUtil.isNotEmpty(dbList)){
-            throw new ServiceException("已存在未审核的变更单");
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_EXIST, dbList.get(0).getSkuNo());
         }
         log.info("开始新增产品变更信息单");
         // 生成单号
@@ -347,7 +347,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             //判断数据库是否已存在
             List<ProductChangeEntity> existList = dbList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).collect(Collectors.toList());
             if(CollectionUtil.isNotEmpty(existList)){
-                errorMsgList.add("SKU编号已存在未审核的变更单");
+                throw new ServiceException(ApiError.PRODUCT_CHANGE_EXIST, existList.get(0).getSkuNo());
             }
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).findFirst().orElse(null);
             if(Objects.isNull(productDetailEntity)){
@@ -398,7 +398,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
             .list();
         if (CollectionUtil.isNotEmpty(dbList)) {
-            throw new ServiceException("已存在未审核的变更单");
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_EXIST, dbList.get(0).getSkuNo());
         }
         List<SkuVO> skuVOList = productDetailService.getSkuBaseByIds(dto.getSkuIds());
         List<String> notApproveSku = skuVOList.stream().filter(v->!v.getStatus().equals(2)).map(v->v.getSkuNo()).collect(Collectors.toList());
