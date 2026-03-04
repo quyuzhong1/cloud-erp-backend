@@ -11,10 +11,14 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeDetailEntity;
 import com.erp.model.plm.entity.ProductChangeEntity;
+import com.erp.model.plm.entity.*;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.ProductChangeDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.enums.ProductChangeFieldEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -171,4 +175,24 @@ public interface ProductChangeService extends SuperService<ProductChangeEntity> 
     BatchResultDTO invalid(ProductChangeEntity productChangeEntity,String remark);
 
     void buildOldValue(List<ProductChangeEntity> mainList, List<ProductChangeDetailEntity> detailEntityList);
+
+    Object getOldValueByFieldEnum(ProductChangeFieldEnum fieldEnum,
+                                  ProductCostEntity productCostEntity,
+                                  ProductDetailEntity productDetailEntity,
+                                  ProductInfoEntity productInfoEntity,
+                                  ProductPackEntity productPackEntity,
+                                  ProductPurchaseEntity productPurchaseEntity,
+                                  ProductSaleEntity productSaleEntity,
+                                  List<ProductRefBuEntity> productRefBuEntityList);
+
+    String[] convertFieldValue(ProductChangeFieldEnum fieldEnum,
+                                      String oldValue,
+                                      String newValue,
+                                      List<BasicDictEntity> basicDictList,
+                                      List<BasicCategoryEntity> basicCategoryEntities,
+                                      List<ProductRDTTeamEntity> productRDTTeamEntities,
+                                      List<ProductBrandEntity> productBrandEntities,
+                                      List<ApplicationCategoryEntity> applicationCategoryEntities,
+                                      List<BasicProductBuEntity> basicProductBuEntities,
+                                      List<DictCountryDTO.ListDTO> countryList);
 }

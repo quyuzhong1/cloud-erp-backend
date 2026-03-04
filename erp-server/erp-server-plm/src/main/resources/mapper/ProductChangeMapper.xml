@@ -65,6 +65,9 @@
         where ${params.sqlMap.default}
           and  pc.is_deleted = false
           and pcd.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -85,7 +88,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  product_change
+        FROM  product_change pc
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

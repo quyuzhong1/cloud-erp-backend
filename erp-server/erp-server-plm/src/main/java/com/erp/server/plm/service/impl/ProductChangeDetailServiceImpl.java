@@ -4,18 +4,19 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.plm.entity.ProductChangeEntity;
-import com.erp.model.plm.entity.ProductPackEntity;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductChangeFieldEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.server.plm.service.ProductChangeService;
-import com.erp.server.plm.service.ProductPackService;
-import com.erp.model.plm.entity.ProductChangeDetailEntity;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.service.*;
 import com.erp.server.plm.mapper.ProductChangeDetailMapper;
-import com.erp.server.plm.service.ProductChangeDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,27 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
 
     @Resource
     private ProductChangeService productChangeService;
+
+    @Resource
+    private BasicProductBuService basicProductBuService;
+
+    @Resource
+    private BasicDictService basicDictService;
+
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
+    @Resource
+    private ProductRDTTeamService productRDTTeamService;
+
+    @Resource
+    private ProductBrandService productBrandService;
+
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
+    @Resource
+    private SysFeign sysFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -114,8 +136,10 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         List<String> updateIdList = updateDTOList.stream().filter(v-> ObjectUtil.isNotEmpty(v.getId())).map(ProductChangeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> delIdList = dbIdList.stream().filter(v->!updateIdList.contains(v)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(delIdList)){
+            List<ProductChangeDetailEntity> delList = dbList.stream().filter(v->delIdList.contains(v.getId())).collect(Collectors.toList());
+            List<String> delFieldList = delList.stream().map(v-> Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(v.getField())).getName()).collect(Collectors.toList());
             //记录日志
-            String msg = StrUtil.format("用户【{}】删除了id为【{}】的【{}】 ", UserContext.getDefaultLoginUser().getUserName(),delIdList, "产品变更信息单明细");
+            String msg = StrUtil.format("用户【{}】删除了字段为【{}】的【{}】 ", UserContext.getDefaultLoginUser().getUserName(),delFieldList, "产品变更信息单明细");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "删除明细");
 
             boolean remove = this.removeByIds(delIdList);
@@ -140,13 +164,49 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
         }
         //更新
         List<ProductChangeDetailDTO.UpdateDTO> needUpdateList = updateDTOList.stream().filter(v-> ObjectUtil.isNotEmpty(v.getId())).collect(Collectors.toList());
-        for (ProductChangeDetailDTO.UpdateDTO updateDTO : needUpdateList) {
-            ProductChangeDetailEntity productChangeDetailEntity = BeanUtil.toBean(updateDTO, ProductChangeDetailEntity.class);
-            ProductChangeDetailEntity old = dbList.stream().filter(v->v.getId().equals(productChangeDetailEntity.getId())).findFirst().orElse(null);
-            addOrUpdateList.add(productChangeDetailEntity);
-            // 记录子单操作日志
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), productChangeDetailEntity.getId(), "产品变更信息单明细");
-            operateLogService.addSysLogByUpdate(old, productChangeDetailEntity, String.valueOf(ProductChangeDetailEntity.class), productChangeEntity.getId(),productChangeDetailEntity.getId(), msg);
+        if(CollectionUtil.isNotEmpty(needUpdateList)){
+            List<BasicDictEntity> basicDictList = basicDictService.list();
+            List<BasicCategoryEntity> basicCategoryEntities = basicCategoryService.list();
+            List<ProductRDTTeamEntity> productRDTTeamEntities = productRDTTeamService.list();
+            List<ProductBrandEntity> productBrandEntities = productBrandService.list();
+            List<ApplicationCategoryEntity> applicationCategoryEntities = applicationCategoryService.list();
+            List<BasicProductBuEntity> basicProductBuEntities = basicProductBuService.list();
+            List<DictCountryDTO.ListDTO> countryList = sysFeign.countryList().getData();
+
+
+            StringBuilder msg = new StringBuilder();
+            for (ProductChangeDetailDTO.UpdateDTO updateDTO : needUpdateList) {
+                ProductChangeDetailEntity productChangeDetailEntity = BeanUtil.toBean(updateDTO, ProductChangeDetailEntity.class);
+                ProductChangeDetailEntity old = dbList.stream().filter(v->v.getId().equals(productChangeDetailEntity.getId())).findFirst().orElse(new ProductChangeDetailEntity());
+                addOrUpdateList.add(productChangeDetailEntity);
+                if(!productChangeDetailEntity.getField().equals(old.getField())){
+                    String fieldName = Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(productChangeDetailEntity.getField())).getName();
+                    String oldFieldName = Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(old.getField())).getName();
+                    msg.append("编辑了变更字段由【").append(oldFieldName).append("】改为【").append(fieldName).append("】。");
+                }else if (!productChangeDetailEntity.getNewValue().equals(old.getNewValue())){
+                    ProductChangeFieldEnum productChangeFieldEnum = Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(productChangeDetailEntity.getField()));
+                    String[] convertedValues = productChangeService.convertFieldValue(
+                            productChangeFieldEnum,
+                            old.getNewValue(),
+                            productChangeDetailEntity.getNewValue(),
+                            basicDictList,
+                            basicCategoryEntities,
+                            productRDTTeamEntities,
+                            productBrandEntities,
+                            applicationCategoryEntities,
+                            basicProductBuEntities,
+                            countryList
+                    );
+                    msg.append("编辑了变更新值由【").append(convertedValues[0]).append("】改为【").append(convertedValues[1]).append("】。");
+                }
+                if(!productChangeDetailEntity.getRemark().equals(old.getRemark())){
+                    msg.append("编辑了备注由【").append(productChangeDetailEntity.getRemark()).append("】改为【").append(old.getRemark()).append("】。");
+                }
+
+            }
+            if(StringUtils.isNotBlank(msg)){
+                operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "编辑明细");
+            }
         }
         if(CollectionUtil.isNotEmpty(addOrUpdateList)){
             this.checkData(productChangeEntity,addOrUpdateList);
