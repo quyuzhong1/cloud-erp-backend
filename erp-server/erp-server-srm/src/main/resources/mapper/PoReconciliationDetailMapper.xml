@@ -70,7 +70,7 @@
         left join foreign_purchase_order po on prd.po_id = po.id and po.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and prd.is_deleted = false
+            and prd.is_deleted = false and prd.status in ('waitReconciliation','partReconciliation','notNeedReconciliation')
             <if test="params.supplierId != null and params.supplierId != ''">
                 and prd.supplier_id = #{params.supplierId}
             </if>
