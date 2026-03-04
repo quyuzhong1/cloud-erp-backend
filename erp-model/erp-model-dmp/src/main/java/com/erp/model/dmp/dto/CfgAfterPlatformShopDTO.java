@@ -94,7 +94,7 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         /**
          * 店铺list
          */
-        private List<ShopInfoDTO> shopInfoDtoList;
+        private List<ShopInfoDTO> shopInfoDTOList;
 
         /**
          * 售后人员list
@@ -209,14 +209,13 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         /**
          * 店铺list
          */
-        @NotBlank(message = "店铺不能为空")
-        private List<ShopInfoDTO> shopInfoDtoList;
+        private List<String> shopIdList;
 
         /**
          * 售后人员list
          */
-        @NotBlank(message = "售后人员不能为空")
-        private List<CsAgentDTO> csAgentDTOList;
+        @NotBlank(message = "售后人员idList不能为空")
+        private List<String> csAgentIdList;
 
     }
 

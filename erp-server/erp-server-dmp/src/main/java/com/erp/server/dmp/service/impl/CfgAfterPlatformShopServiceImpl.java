@@ -108,22 +108,21 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
             BeanUtils.copyProperties(saveDTO, entity);
 
             // 处理店铺
-            if (saveDTO.getShopInfoDtoList() != null && !saveDTO.getShopInfoDtoList().isEmpty()) {
-                List<CfgAfterPlatformShopDTO.ShopInfoDTO> shopInfoDtoList = saveDTO.getShopInfoDtoList();
-                List<String> ids = shopInfoDtoList.stream().map(item -> item.getId()).collect(Collectors.toList());
-                List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(ids);
+            if (saveDTO.getShopIdList() != null && !saveDTO.getShopIdList().isEmpty()) {
+                List<String> shopIdList = saveDTO.getShopIdList();
+                List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIdList);
                 // 构建 JSON 数据
                 JSONArray shopArray = new JSONArray();
-                for (CfgAfterPlatformShopDTO.ShopInfoDTO shopInfoDTO : saveDTO.getShopInfoDtoList()) {
+                for (String id : saveDTO.getShopIdList()) {
                     JSONObject shopInfoObj = new JSONObject();
-                    shopInfoObj.set("id", shopInfoDTO.getId());
+                    shopInfoObj.set("id", id);
 
                     ShopInfoEntity shopInfoEntity = shopInfoList.stream()
-                            .filter(item -> Objects.equals(shopInfoDTO.getId(), item.getId()))
+                            .filter(item -> Objects.equals(id, item.getId()))
                             .findFirst()
                             .orElse(null);
                     if (Objects.nonNull(shopInfoEntity)) {
-                        shopInfoObj.set("name", shopInfoDTO.getName());
+                        shopInfoObj.set("name", shopInfoEntity.getName());
                     }
                     shopArray.add(shopInfoObj);
                 }
@@ -133,21 +132,17 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                 entity.setShopJson(shopJson);
             }
 
-            // 处理售后人员
-            if (saveDTO.getCsAgentDTOList() != null && !saveDTO.getCsAgentDTOList().isEmpty()) {
-                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = saveDTO.getCsAgentDTOList();
-                List<String> ids = csAgentDTOList.stream().map(item -> item.getId()).collect(Collectors.toList());
-                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(ids);
-
+            if (saveDTO.getCsAgentIdList() != null && !saveDTO.getCsAgentIdList().isEmpty()) {
+                List<String> csAgentIdList = saveDTO.getCsAgentIdList();
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(csAgentIdList);
                 // 构建 JSON 数据
                 JSONArray csAgentArray = new JSONArray();
-                for (CfgAfterPlatformShopDTO.CsAgentDTO csAgent : saveDTO.getCsAgentDTOList()) {
+                for (String id : saveDTO.getCsAgentIdList()) {
                     JSONObject csAgentObj = new JSONObject();
-                    csAgentObj.set("id", csAgent.getId());
-
+                    csAgentObj.set("id", id);
 
                     FindUserDTO userDTO = userList.stream()
-                            .filter(item -> Objects.equals(csAgent.getId(), item.getUserId()))
+                            .filter(item -> Objects.equals(id, item.getUserId()))
                             .findFirst()
                             .orElse(null);
                     if (Objects.nonNull(userDTO)) {
@@ -157,7 +152,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                 }
 
                 JSONObject csAgentJson = new JSONObject();
-                csAgentJson.putOpt("csAgents", csAgentArray);
+                csAgentJson.putOpt("shops", csAgentArray);
                 entity.setCsAgentJson(csAgentJson);
             }
 
@@ -198,7 +193,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                     csAgentDTO.setName(csAgent.getName());
                     csAgentDTOS.add(csAgentDTO);
                 });
-                listDTO.setShopInfoDtoList(shopInfoDTOS);
+                listDTO.setShopInfoDTOList(shopInfoDTOS);
                 listDTO.setCsAgentDTOList(csAgentDTOS);
                 resultList.add(listDTO);
             }

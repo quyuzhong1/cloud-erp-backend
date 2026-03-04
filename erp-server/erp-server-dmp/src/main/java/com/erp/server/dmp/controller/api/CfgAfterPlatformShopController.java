@@ -1,8 +1,5 @@
 package com.erp.server.dmp.controller.api;
 
-
-import com.common.core.anno.LogViewService;
-import com.erp.model.scm.dto.AssetNoticeDTO;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -55,15 +52,13 @@ public class CfgAfterPlatformShopController extends BaseController {
 
 
     /**
-     *
-     * @return
+     * 详情
+     * @author wtr
+     * @date:  2026-03-03
+     * @param
+     * @return ApiResult
      */
     @GetMapping("/view")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:cfgAfterPlatformShop:paging",
-//            serviceClass = CfgAfterPlatformShopService.class,
-//            keyIdName = "id")
     public ApiResult<List<CfgAfterPlatformShopDTO.ListDTO>> view() {
         return success(cfgAfterPlatformShopService.view());
     }
