@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ConfirmStatusEnum;
@@ -201,8 +202,20 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
         }else {
             asyncTaskRecordService.lambdaUpdate().set(AsyncTaskRecordEntity::getDetailCount,list.size()).eq(AsyncTaskRecordEntity::getId,taskId).update();
         }
+
+        List<String> logisticsBillIds = list.stream().map(LogisticsBillCostEntity::getLogisticsBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+
+        Map<String, LogisticsBillEntity> logisticsBillMap = logisticsBillService.listByIds(logisticsBillIds).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(LogisticsBillEntity::getId, Function.identity(),(o1,o2)->o1));
+
         LocalDateTime now = LocalDateTime.now();
         for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
+            LogisticsBillEntity logisticsBillEntity = logisticsBillMap.get(logisticsBillCostEntity.getLogisticsBillId());
+            if(Objects.isNull(logisticsBillEntity) || Objects.isNull(logisticsBillEntity.getIsAllocateCostRequired()) || Objects.equals(logisticsBillEntity.getIsAllocateCostRequired(),Boolean.FALSE)){
+                continue;
+            }
+
             AsyncTaskDetailRecordEntity detail = new AsyncTaskDetailRecordEntity();
             detail.setMainId(taskId);
             detail.setBusinessType(dto.getBusinessType());
