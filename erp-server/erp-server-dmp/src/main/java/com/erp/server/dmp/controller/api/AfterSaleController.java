@@ -418,4 +418,14 @@ public class AfterSaleController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据平台编码和店铺id获取售后人员
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getCsAgentByPlatformAndShop")
+    public ApiResult<List<AfterSaleDTO.CsAgentResultDTO>> getCsAgentByPlatformAndShop(@RequestBody @Validated AfterSaleDTO.CsAgentDTO dto) {
+        return success(afterSaleService.getCsAgentByPlatformAndShop(dto));
+    }
+
 }

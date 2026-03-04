@@ -788,6 +788,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         return BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), OperationTypeEnum.INVALID);
     }
 
+    @Override
+    public List<AfterSaleDTO.CsAgentResultDTO> getCsAgentByPlatformAndShop(AfterSaleDTO.CsAgentDTO dto) {
+        return null;
+    }
+
     /**
      * 撤销
      */
