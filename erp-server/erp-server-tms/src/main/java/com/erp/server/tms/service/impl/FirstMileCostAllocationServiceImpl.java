@@ -2266,7 +2266,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
             costAllocationPool.execute(() -> {
                 try {
-                    processSingleTask(detail, deliveryMap, detailMap, reportPeriodMonth, taskDetailId, businessId);
+                    //判断是否超时中止
+                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                    if(count >0){
+                        processSingleTask(detail, deliveryMap, detailMap, reportPeriodMonth, taskDetailId, businessId);
+                    }
                 } catch (Exception e) {
                     log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
                     // 统一处理任务失败状态更新
@@ -2311,6 +2315,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setSourceId(deliveryEntity.getId())
                 .setSourceCode(deliveryEntity.getCode())
                 .setReportPeriodMonth(reportPeriodMonth);
+
 
         asyncTaskDetailRecordService.updateDetail(taskDetailId,
                 TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");

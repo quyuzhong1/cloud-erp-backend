@@ -105,16 +105,15 @@ tatr.exec_type AS execType
         ORDER BY
         tatd.create_time desc
     </select>
-    <select id="isExist" resultType="com.erp.model.tms.entity.TmsAsyncTaskRecordEntity">
+    <select id="isExist" resultType="java.lang.Integer">
         SELECT
-        <include refid="Base_Column_List"></include>
+        count(1)
         FROM
         tms_async_task_record as tatr
         WHERE
         tatr.is_deleted = FALSE
-        <if test="startTimeStr != null and startTimeStr != ''">
-            AND DATE(tatr.start_time) = STR_TO_DATE(#{startTimeStr}, '%Y-%m-%d')
-        </if>
+        AND tatr.start_time >= #{startTime}
+        AND tatr.start_time <![CDATA[ < ]]> #{endTime}
         <if test="businessType != null and businessType != ''">
             AND tatr.business_type = #{businessType}
         </if>

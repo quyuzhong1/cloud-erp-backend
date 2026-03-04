@@ -1,10 +1,11 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -16,6 +17,10 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
@@ -24,6 +29,7 @@ import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.enums.TmsAsyncTaskRecordExecTypeEnum;
 import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.TmsAsyncTaskRecordMapper;
 import com.erp.server.tms.service.TmsAsyncTaskDetailService;
@@ -32,16 +38,19 @@ import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -73,6 +82,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private MQProducerService mQProducerService;
+
+    @Lazy
+    @Resource
+    private TmsAsyncTaskRecordService selfServer;
 
 
     /**
@@ -111,7 +127,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         Integer errorCount = null;
         //获取分摊配置--任务超时时间
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
-        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
+        if(Objects.nonNull(cfgSettingEntity) && Objects.nonNull(cfgSettingEntity.getDataJson())){
             CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
             //头程对账单
             if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
@@ -466,8 +482,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     public Boolean isExist(String businessType, String startTimeStr) {
-        List<TmsAsyncTaskRecordEntity> list = baseMapper.isExist(businessType,startTimeStr);
-        return null;
+        LocalDateTime startTime = DateUtil.parse(startTimeStr).toLocalDateTime();
+        LocalDateTime endTime = startTime.plusDays(1).withHour(0).withMinute(0).withSecond(0);
+        Integer exist = baseMapper.isExist(businessType, startTime, endTime);
+        if(exist >0 ){
+            return true;
+        }
+        return false;
     }
 
 
@@ -501,6 +522,328 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         tmsAsyncTaskDetailService.updateDetail(taskDetailId,
                 TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
                 StringUtils.substring(errorMsg, 0, 1000));
+    }
+
+    /**
+     * 启动任务
+     * 中止超时任务
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void startTask(){
+        LocalDate today = LocalDate.now();
+        LocalDateTime taskStartTime = today.atStartOfDay(); // 00:00:00
+        LocalDateTime taskEndTime = today.atTime(LocalTime.MAX); // 23:59:59.999999999
+
+        //查询所有
+        List<TmsAsyncTaskRecordEntity> list = lambdaQuery()
+                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .ge(TmsAsyncTaskRecordEntity::getStartTime, taskStartTime)
+                .le(TmsAsyncTaskRecordEntity::getStartTime, taskEndTime)
+                .list();
+        if(CollUtil.isEmpty(list)){
+            log.error("TmsAsyncTaskRecord不存在待执行或者执行中的任务");
+            return;
+        }
+
+        //执行中（手动 + 自动）
+        LocalDateTime now = LocalDateTime.now();
+        List<TmsAsyncTaskRecordEntity> ingList = list.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.ING.getCode())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(ingList)){
+            for (TmsAsyncTaskRecordEntity entity : ingList) {
+                Integer execTimeout = entity.getExecTimeout();
+                LocalDateTime startTime = entity.getStartTime();
+                if(Objects.nonNull(startTime) && Objects.nonNull(execTimeout) && execTimeout > 0 ){
+                    if(now.isAfter(startTime.plusSeconds(execTimeout))){
+                        selfServer.terminateTaskTimeout(entity.getId(),"任务执行超时");
+                    }
+                }
+            }
+        }
+
+        // 1.开始时间小于等于当前时间则继续执行后续业务代码
+        // 2.自动类型
+        // 3.待执行
+        List<TmsAsyncTaskRecordEntity> pendingList = list.stream()
+                .filter(e ->e.getStartTime().isBefore(now) && e.getExecType().equals(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode()) && e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(pendingList)){
+            for (TmsAsyncTaskRecordEntity entity : pendingList) {
+                String dataJson = entity.getDataJson();
+                if(StringUtils.isBlank(dataJson) || Objects.equals(dataJson,"{}")){
+                    selfServer.updateTask(entity.getId(),TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"dataJson为空直接结束任务");
+                    continue;
+                }
+
+                TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+                taskDTO.setTaskId(entity.getId());
+                SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
+                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                    log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                }else {
+                    log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                }
+            }
+        }
+    }
+
+
+    /**
+     * 根据tms生成配置生成异步任务
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void genAutoTask() {
+        long startTime = System.currentTimeMillis();
+        log.error("====开始自动生成tms异步任务====");
+        // 查询系统配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
+        if(Objects.isNull(cfgSettingEntity) || Objects.isNull(cfgSettingEntity.getDataJson())){
+            log.error("====无生成系统配置数据====");
+            return;
+        }
+
+        CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(
+                cfgSettingEntity.getDataJson(),
+                CfgSettingValueDTO.ReconciliationCycleDTO.class
+        );
+        if(Objects.isNull(dto)){
+            log.error("====CfgSettingValueDTO.ReconciliationCycleDTO为空====");
+            return;
+        }
+
+        generateFirstMileReconciliation(dto);
+        generateTmsB2cDeclareReconciliation(dto);
+        generateFirstMileCostAllocation(dto);
+        generateSmallBagCostAllocation(dto);
+        generateTransferDeclareCostAllocation(dto);
+
+        // 统计执行结果
+        long totalDuration = System.currentTimeMillis() - startTime;
+        log.error("====结束自动生成tms异步任务  执行时间：【{}】====", totalDuration);
+    }
+
+
+    //中转分摊
+    private void generateTransferDeclareCostAllocation(CfgSettingValueDTO.ReconciliationCycleDTO dto) {
+        LocalDateTime startTime = null;
+        LocalDateTime endTime = null;
+        if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getPackageAllocationType())) {
+            Integer transferAllocationDate = dto.getTransferAllocationDate();
+            //根据生成日期作为任务的开始时间
+            LocalDate now = LocalDate.now();
+            YearMonth yearMonth = YearMonth.from(now);
+            int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
+            int day = Math.min(transferAllocationDate, maxDay); // 取较小值
+            String startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            //根据任务执行时间，推算出当时的时间范围
+            LocalDateTime taskStartTime = DateUtil.parse(startTimeStr).toLocalDateTime();
+            startTime = taskStartTime.minus(1, ChronoUnit.MONTHS)
+                    .withDayOfMonth(1)
+                    .withHour(0)
+                    .withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
+            endTime = taskStartTime.minus(0, ChronoUnit.MONTHS)
+                    .withDayOfMonth(1)
+                    .withHour(0)
+                    .withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
+
+            String businessType = SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode();
+
+            Boolean isExist = isExist(businessType, startTimeStr);
+            if (!isExist) {
+                //创建当月的自动任务
+                TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+                pushDTO.setStartTime(startTime);
+                pushDTO.setEndTime(endTime);
+                pushDTO.setBusinessType(businessType);
+                String jsonStr = JSONUtil.toJsonStr(pushDTO);
+                selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
+            }
+        }else {
+            log.error("[生成中转费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+        }
+    }
+
+    //小包分摊
+    private void generateSmallBagCostAllocation(CfgSettingValueDTO.ReconciliationCycleDTO dto) {
+        LocalDateTime startTime = null;
+        LocalDateTime endTime = null;
+        if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getPackageAllocationType())) {
+            Integer packageAllocationDate = dto.getPackageAllocationDate();
+            //根据生成日期作为任务的开始时间
+            LocalDate now = LocalDate.now();
+            YearMonth yearMonth = YearMonth.from(now);
+            int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
+            int day = Math.min(packageAllocationDate, maxDay); // 取较小值
+            LocalDate localDate = now.withDayOfMonth(day);
+            String startTimeStr = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            //根据任务执行时间，推算出当时的时间范围
+            LocalDateTime taskStartTime = DateUtil.parse(startTimeStr).toLocalDateTime();
+            startTime = taskStartTime.minus(1, ChronoUnit.MONTHS)
+                    .withDayOfMonth(1)
+                    .withHour(0)
+                    .withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
+            endTime = taskStartTime.minus(0, ChronoUnit.MONTHS)
+                    .withDayOfMonth(1)
+                    .withHour(0)
+                    .withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
+
+            String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
+
+            Boolean isExist = isExist(businessType, startTimeStr);
+            if (!isExist) {
+                //创建当月的自动任务
+                TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+                pushDTO.setStartTime(startTime);
+                pushDTO.setEndTime(endTime);
+                pushDTO.setBusinessType(businessType);
+                pushDTO.setReportDate(localDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+                String jsonStr = JSONUtil.toJsonStr(pushDTO);
+                selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
+            }
+        }else {
+            log.error("[生成小包费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getPackageAllocationType());
+        }
+    }
+
+    //报关对账单
+    private void generateTmsB2cDeclareReconciliation(CfgSettingValueDTO.ReconciliationCycleDTO dto) {
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+        String startTimeStr ="";
+        //生成日期1-31
+        Integer declareReconciliationDate = MathUtil.ONE;
+        //自然月生成
+        if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getDeclareReconciliationType())) {
+            //根据生成日期作为任务的开始时间
+            LocalDate now = LocalDate.now();
+            YearMonth yearMonth = YearMonth.from(now);
+            int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
+            int day = Math.min(declareReconciliationDate, maxDay); // 取较小值
+            startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate taskStartDate = LocalDate.parse(startTimeStr);
+            //根据任务执行时间，推算出当时的时间范围
+            startDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+            endDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
+        } else if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getFirstMileReconciliationType())) {
+            declareReconciliationDate = dto.getDeclareReconciliationDate().intValue();
+
+            //根据生成日期作为任务的开始时间
+            LocalDate now = LocalDate.now();
+            YearMonth yearMonth = YearMonth.from(now);
+            int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
+            int day = Math.min(declareReconciliationDate, maxDay); // 取较小值
+            startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate taskStartDate = LocalDate.parse(startTimeStr);
+            //根据任务执行时间，推算出当时的时间范围
+            startDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+            endDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
+        }else {
+            log.error("[生成头程对账单] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getDeclareReconciliationType());
+            return;
+        }
+        String businessType = SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();
+        //根据生成日期作为任务的开始时间
+        Boolean isExist = isExist(businessType, startTimeStr);
+        if (!isExist) {
+            //创建当月的自动任务
+            TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+            pushDTO.setStartDate(startDate);
+            pushDTO.setEndDate(endDate);
+            pushDTO.setBusinessType(businessType);
+            String jsonStr = JSONUtil.toJsonStr(pushDTO);
+            selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
+        }
+    }
+
+    //头程对账单
+    private void generateFirstMileReconciliation(CfgSettingValueDTO.ReconciliationCycleDTO dto) {
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+        String startTimeStr ="";
+        //生成日期1-31
+        Integer firstMileReconciliationDate = MathUtil.ONE;
+        //自然月生成
+        if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getFirstMileReconciliationType())) {
+            //根据生成日期作为任务的开始时间
+            LocalDate now = LocalDate.now();
+            YearMonth yearMonth = YearMonth.from(now);
+            int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
+            int day = Math.min(firstMileReconciliationDate, maxDay); // 取较小值
+            startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate taskStartDate = LocalDate.parse(startTimeStr);
+
+            startDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+            endDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
+        } else if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getFirstMileReconciliationType())) {
+            firstMileReconciliationDate = dto.getFirstMileReconciliationDate();
+
+            //根据生成日期作为任务的开始时间
+            LocalDate now = LocalDate.now();
+            YearMonth yearMonth = YearMonth.from(now);
+            int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
+            int day = Math.min(firstMileReconciliationDate, maxDay); // 取较小值
+            startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate taskStartDate = LocalDate.parse(startTimeStr);
+
+            endDate = taskStartDate.minusDays(1);
+            startDate = taskStartDate.minusMonths(1);
+        }else {
+            log.error("[生成头程对账单] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getFirstMileReconciliationType());
+            return;
+        }
+        String businessType = SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode();
+
+        //根据生成日期作为任务的开始时间
+        Boolean isExist = isExist(businessType, startTimeStr);
+        if (!isExist) {
+            //创建当月的自动任务
+            TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+            pushDTO.setStartDate(startDate);
+            pushDTO.setEndDate(endDate);
+            pushDTO.setBusinessType(businessType);
+            String jsonStr = JSONUtil.toJsonStr(pushDTO);
+            selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
+        }
+    }
+
+    //头程分摊
+    private void generateFirstMileCostAllocation(CfgSettingValueDTO.ReconciliationCycleDTO dto) {
+        LocalDate reportPeriodMonth = null;
+        //自然月生成
+        if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getFirstMileAllocationType())) {
+            String businessType = SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode();
+            //生成日期1-31
+            Integer firstMileAllocationDate = dto.getFirstMileAllocationDate();
+            //根据生成日期作为任务的开始时间
+            LocalDate now = LocalDate.now();
+            YearMonth yearMonth = YearMonth.from(now);
+            int maxDay = yearMonth.lengthOfMonth(); // 获取当月最大天数
+            int day = Math.min(firstMileAllocationDate, maxDay); // 取较小值
+            String startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            Boolean isExist = isExist(businessType, startTimeStr);
+            if (!isExist) {
+                //根据任务执行时间，推算出当时的时间
+                LocalDate taskStartDate = LocalDate.parse(startTimeStr);
+                //创建当月的自动任务
+                TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+                reportPeriodMonth = taskStartDate.minusMonths(1).withDayOfMonth(1);
+                pushDTO.setReportDate(reportPeriodMonth.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM")));
+                pushDTO.setBusinessType(businessType);
+                String jsonStr = JSONUtil.toJsonStr(pushDTO);
+                selfServer.addAutoTask(businessType, jsonStr, startTimeStr);
+            }
+        } else {
+            log.error("[生成头程费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+        }
     }
 
 

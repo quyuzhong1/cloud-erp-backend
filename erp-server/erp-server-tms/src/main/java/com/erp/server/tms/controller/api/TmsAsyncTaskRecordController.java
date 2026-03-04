@@ -176,7 +176,7 @@ public class TmsAsyncTaskRecordController extends BaseController {
     }
 
     /**
-     * 批量重试
+     * 错误重试
      * @author jack
      * @date: 2026-02-26
      * @param dto
@@ -204,6 +204,23 @@ public class TmsAsyncTaskRecordController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 测试 - 创建所有的自动任务
+     */
+    @GetMapping("/genAutoTask")
+    public void genAutoTask() {
+        tmsAsyncTaskRecordService.genAutoTask();
+    }
+    /**
+     * 测试 - 启动所有符合条件自动任务
+     */
+    @GetMapping("/startTask")
+    public void startTask() {
+        tmsAsyncTaskRecordService.startTask();
+    }
+
 
 
 }

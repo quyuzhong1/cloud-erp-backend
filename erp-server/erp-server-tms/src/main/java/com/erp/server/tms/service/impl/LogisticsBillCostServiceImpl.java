@@ -94,6 +94,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -2111,29 +2112,36 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(CollUtil.isEmpty(list)) {
             asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
             return true;
-        }else {
-            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
         }
+
         List<String> logisticsBillIds = list.stream().map(LogisticsBillCostEntity::getLogisticsBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 
-        Map<String, String> logisticsBillMap = logisticsBillService.listByIds(logisticsBillIds).stream()
+        Map<String, LogisticsBillEntity> logisticsBillMap = logisticsBillService.listByIds(logisticsBillIds).stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(LogisticsBillEntity::getId, LogisticsBillEntity::getBusinessCode,(o1,o2)->o1));
+                .collect(Collectors.toMap(LogisticsBillEntity::getId, Function.identity(),(o1, o2)->o1));
 
         LocalDateTime now = LocalDateTime.now();
 
         List<TmsAsyncTaskDetailEntity> detailList = new ArrayList<>();
         for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
+            LogisticsBillEntity logisticsBillEntity = logisticsBillMap.get(logisticsBillCostEntity.getLogisticsBillId());
+            if(Objects.isNull(logisticsBillEntity) || Objects.isNull(logisticsBillEntity.getIsAllocateCostRequired()) || Objects.equals(logisticsBillEntity.getIsAllocateCostRequired(),Boolean.FALSE)){
+                log.error("asyncPushAllocation id: 【{}】, 异常: 【{}】",logisticsBillCostEntity.getId(),"费用分摊设置为不分摊，不能生成小包费用分摊");
+                continue;
+            }
+
             TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
             detail.setMainId(taskId);
             detail.setBusinessType(businessType);
             detail.setBusinessId(logisticsBillCostEntity.getId());
-            detail.setBusinessCode(logisticsBillMap.getOrDefault(logisticsBillCostEntity.getLogisticsBillId(),""));
+            detail.setBusinessCode(logisticsBillEntity.getBusinessCode());
             detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
             detail.setStartTime(now);
             detailList.add(detail);
         }
         asyncTaskDetailRecordService.saveBatch(detailList);
+
+        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,detailList.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
         return false;
     }
 
@@ -2156,19 +2164,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             costAllocationPool.execute(() -> {
                 try {
-                    asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                            TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
-
-                    BatchResultDTO result = pushAllocation(businessId, dto.getReportDate());
-
-                    if (!result.getSuccess()) {
+                    //判断是否超时中止
+                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                    if(count >0){
                         asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
-                                org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000)); // 限制错误信息长度
-                    } else {
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+
+                        BatchResultDTO result = pushAllocation(businessId, dto.getReportDate());
+
+                        if (!result.getSuccess()) {
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                                    org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000)); // 限制错误信息长度
+                        } else {
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                    TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        }
                     }
+
                 } catch (Exception e) {
                     log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
                     // 统一处理任务失败状态更新

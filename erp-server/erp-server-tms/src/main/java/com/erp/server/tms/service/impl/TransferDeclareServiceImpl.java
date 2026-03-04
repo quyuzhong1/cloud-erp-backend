@@ -1376,8 +1376,18 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             String businessId = detail.getBusinessId();
             costAllocationPool.execute(() -> {
                 try {
-                    TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
-                    singPushAllocation(entity.getSourceId() , entity.getApproveDate().format(formatter) , Arrays.asList(entity));
+                    //判断是否超时中止
+                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                    if(count >0){
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+
+                        TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
+                        singPushAllocation(entity.getSourceId() , entity.getApproveDate().format(formatter) , Arrays.asList(entity));
+
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                    }
                 } catch (Exception e) {
                     log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
                     // 统一处理任务失败状态更新
