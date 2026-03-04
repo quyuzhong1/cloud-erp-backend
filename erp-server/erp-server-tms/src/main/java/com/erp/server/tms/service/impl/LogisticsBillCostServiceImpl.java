@@ -94,6 +94,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -2105,29 +2106,35 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(CollUtil.isEmpty(list)) {
             asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
             return true;
-        }else {
-            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
         }
+
         List<String> logisticsBillIds = list.stream().map(LogisticsBillCostEntity::getLogisticsBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 
-        Map<String, String> logisticsBillMap = logisticsBillService.listByIds(logisticsBillIds).stream()
+        Map<String, LogisticsBillEntity> logisticsBillMap = logisticsBillService.listByIds(logisticsBillIds).stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(LogisticsBillEntity::getId, LogisticsBillEntity::getBusinessCode,(o1,o2)->o1));
+                .collect(Collectors.toMap(LogisticsBillEntity::getId, Function.identity(),(o1, o2)->o1));
 
         LocalDateTime now = LocalDateTime.now();
 
         List<TmsAsyncTaskDetailEntity> detailList = new ArrayList<>();
         for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
+            LogisticsBillEntity logisticsBillEntity = logisticsBillMap.get(logisticsBillCostEntity.getLogisticsBillId());
+            if(Objects.isNull(logisticsBillEntity) || Objects.isNull(logisticsBillEntity.getIsAllocateCostRequired()) || Objects.equals(logisticsBillEntity.getIsAllocateCostRequired(),Boolean.FALSE)){
+                continue;
+            }
+
             TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
             detail.setMainId(taskId);
             detail.setBusinessType(businessType);
             detail.setBusinessId(logisticsBillCostEntity.getId());
-            detail.setBusinessCode(logisticsBillMap.getOrDefault(logisticsBillCostEntity.getLogisticsBillId(),""));
+            detail.setBusinessCode(logisticsBillEntity.getBusinessCode());
             detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
             detail.setStartTime(now);
             detailList.add(detail);
         }
         asyncTaskDetailRecordService.saveBatch(detailList);
+
+        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,detailList.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
         return false;
     }
 
