@@ -85,7 +85,7 @@ public class ProductChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:productChange:paging",
-            tableAlias = ""
+            tableAlias = "pc"
     )
     public ApiResult<List<ProductChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(productChangeService.tabList(dto));
@@ -102,7 +102,7 @@ public class ProductChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:productChange:paging",
-            tableAlias = ""
+            tableAlias = "pc"
     )
     @WebAdvanceQuery(handler = ProductChangeQueryHandler.class)
     public ApiResult<PagingVO<ProductChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ProductChangeDTO.PagingParamDTO> dto) {

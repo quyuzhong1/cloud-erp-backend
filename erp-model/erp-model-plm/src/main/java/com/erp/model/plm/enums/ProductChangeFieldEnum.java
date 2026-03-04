@@ -4,6 +4,7 @@ import com.common.core.constant.EnumMessage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.function.Function;
 
 /**
@@ -165,8 +166,16 @@ public enum ProductChangeFieldEnum implements EnumMessage {
         } else if (dataType == BigDecimal.class) {
             return new BigDecimal(value);
         } else if (dataType == LocalDate.class) {
-            return LocalDate.parse(value); // 假设格式为 yyyy-MM-dd
-        } else {
+            // 兼容：yyyy-MM-dd、yyyy/M/d、yyyy/MM/dd、2026-3-4、2026/3/4
+            if (value.contains("-")) {
+                return LocalDate.parse(value); // 默认 yyyy-MM-dd
+            } else if (value.contains("/")) {
+                return LocalDate.parse(value, DateTimeFormatter.ofPattern("yyyy/M/d"));
+            } else {
+                // 兜底防止报错
+                return null;
+            }
+        }else {
             throw new IllegalArgumentException("不支持的数据类型: " + dataType);
         }
     }

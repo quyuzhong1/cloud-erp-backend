@@ -62,6 +62,8 @@ public class ProductChangeImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*变更新值", index = 4)
     @FieldValid(fieldName = "*变更新值",isNotBlank = true)
     private String newValue;
+
+    @ExcelIgnore
     private Object newValueObj;
     /**
      * 备注
