@@ -93,4 +93,34 @@ public class FileDTO {
         private Long fileSize;
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FileTaskDTO {
+        /**
+         * 任务ID
+         */
+        private String taskId;
+        /**
+         * 文件URL（FastDFS路径）
+         */
+        private String fileUrl;
+        /**
+         * 错误文件
+         */
+        private String errorUrl;
+        /**
+         * 错误文件名称
+         */
+        private String errorName;
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 事件名称
+         */
+        private String event;
+    }
 }

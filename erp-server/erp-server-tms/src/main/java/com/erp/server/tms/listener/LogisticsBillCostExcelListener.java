@@ -9,6 +9,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.enums.logisticsPayTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.Getter;
@@ -81,7 +82,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
             errorList.add(excelDTO);
             return;
         }
-        excelDTO.setPayType(excelDTO.getPayTypeName().equals("付款") ? "pay" : "refund");
+        excelDTO.setPayType(logisticsPayTypeEnum.getByName(excelDTO.getPayTypeName()));
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
             try {

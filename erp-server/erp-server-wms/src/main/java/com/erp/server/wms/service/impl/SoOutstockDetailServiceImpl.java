@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.OrderTypeEnum;
@@ -39,6 +40,8 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import io.seata.tm.api.transaction.Propagation;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.bcel.generic.LADD;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -49,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -244,10 +248,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(mainIdList)) {
             return;
         }
-        LambdaQueryWrapper<SoOutstockDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        LambdaUpdateWrapper<SoOutstockDetailEntity> queryWrapper = new LambdaUpdateWrapper<>();
         queryWrapper.in(SoOutstockDetailEntity::getMainId, mainIdList);
-        this.remove(queryWrapper);
-
+        queryWrapper.set(SoOutstockDetailEntity::getIsDeleted, true);
+        queryWrapper.set(SoOutstockDetailEntity::getUpdateTime, LocalDateTime.now());
+        this.update(queryWrapper);
     }
 
 

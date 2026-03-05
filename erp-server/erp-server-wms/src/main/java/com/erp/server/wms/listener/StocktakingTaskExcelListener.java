@@ -8,13 +8,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.enums.StocktakingStatusEnum;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
-import com.erp.server.wms.service.StocktakingTaskService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.*;
@@ -33,6 +30,8 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
 
     private StocktakingTaskService stocktakingTaskService;
 
+    private StocktakingProfitLossService stocktakingProfitLossService;
+
     private WarehouseService warehouseService;
 
     private OperateLogService operateLogService;
@@ -46,10 +45,12 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
 
     public StocktakingTaskExcelListener(StocktakingTaskService stocktakingTaskService,
                                         StocktakingTaskDetailService stocktakingTaskDetailService,
+                                        StocktakingProfitLossService stocktakingProfitLossService,
                                         WarehouseService warehouseService,
                                         OperateLogService operateLogService) {
         this.stocktakingTaskDetailService = stocktakingTaskDetailService;
         this.stocktakingTaskService = stocktakingTaskService;
+        this.stocktakingProfitLossService = stocktakingProfitLossService;
         this.warehouseService = warehouseService;
         this.operateLogService = operateLogService;
     }
@@ -114,11 +115,17 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
         //旧盘点数量
         Integer oldQty = taskDetail.getQty();
         //状态
-        StocktakingStatusEnum status = taskEntity.getStatus();
-        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
-        if(!statusList.contains(status)){
-            errorMsgList.add("只有复盘中,未开始的盘点任务才能修改盘点库存");
+//        StocktakingStatusEnum status = taskEntity.getStatus();
+//        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
+//        if(!statusList.contains(status)){
+//            errorMsgList.add("只有复盘中,未开始的盘点任务才能修改盘点库存");
+//        }
+
+        List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(taskEntity.getId());
+        if (!stocktakingProfitLossList.isEmpty()) {
+            errorMsgList.add("已生成盘盈盘亏单的盘点任务不允许修改");
         }
+
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);

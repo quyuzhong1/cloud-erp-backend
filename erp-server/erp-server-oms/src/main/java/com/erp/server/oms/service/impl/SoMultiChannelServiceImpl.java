@@ -650,6 +650,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
             try {
                 ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderResponseApiResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
+                log.warn("亚马逊发货拦截取消订单，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelFulfillmentOrderResponseApiResponse));
                 this.lambdaUpdate()
                         .set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
                         .set(SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)

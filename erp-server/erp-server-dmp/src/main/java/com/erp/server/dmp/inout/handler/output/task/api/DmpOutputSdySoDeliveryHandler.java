@@ -11,6 +11,9 @@ import javax.annotation.Resource;
 
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -253,7 +256,21 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	            shudiyunB2cOrderDTO.setSubplatform_no(subplatformNo);
 	            shudiyunB2cOrderDTO.setSubplatform_name(subplatformName);
 	            
-    	        shudiyunB2cOrderDTO.setRoot_node_no(platformCode);
+	            String soDetailId = dmpSoDeliveryDetailEntity.getSoDetailId();
+	            while(StringUtils.isNotBlank(platformCode) && platformCode.contains(",") && StringUtils.isNotBlank(soDetailId)) {
+	            	List<SoB2cRefEntity> soB2cRefEntityList = FeignQuery.create(SoB2cRefEntity.class).eq(SoB2cRefEntity::getTargetDetailId, soDetailId).list();
+	            	if(CollUtil.isEmpty(soB2cRefEntityList)) {
+	            		break;
+	            	}
+	            	SoB2cRefEntity soB2cRefEntity = soB2cRefEntityList.get(0);
+	            	soDetailId = soB2cRefEntity.getSourceDetailId();
+	            	SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, soB2cRefEntity.getSourceId());
+	            	if(soB2cEntity == null) {
+	            		break;
+	            	}
+	            	platformCode = soB2cEntity.getPlatformCode();
+	            }
+	            shudiyunB2cOrderDTO.setRoot_node_no(platformCode);
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(platformCode);
     	        
     	        String skuNo = dmpSoDeliveryDetailEntity.getSkuNo();

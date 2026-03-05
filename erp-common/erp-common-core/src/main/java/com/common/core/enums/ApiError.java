@@ -200,6 +200,7 @@ public enum ApiError implements Serializable {
     COMMON_FILE_EMPTY(1111, "文件为空{0}"),
     COMMON_FS_USER_NOT_BIND(98130,"飞书【{0}】事件,用户【{1}】未绑定飞书账号"),
     COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
+    COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -1371,7 +1372,7 @@ public enum ApiError implements Serializable {
     WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR(11089,"关联的直接调拨单【{0}】撤销或删除失败，无法撤销"),
     WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST(11090,"入库预报订单明细不能为空"),
     WH_THIRD_WAREHOUSE_NAME_EXIST(11091,"平台【{0}】下第三方仓【{1}】不能重复绑定多个仓库"),
-    WH_STOCKTAKING_PROFIT_LOSS_CLOSED(11092,"已存在盘盈/盘亏单【{0}】，不允许操作【{1}】之前的单据"),
+    WH_STOCKTAKING_PROFIT_LOSS_CLOSED(11092,"已存在盘盈/盘亏单【{0}】，不允许操作【{1}】及之前的单据"),
     WH_TRANSFER_WAREHOUSE_REQUIRED(11093,"中转出库配置的中转仓库不能为空，请检查配置"),
     WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN(11094,"存在已审核的调拨单【{0}】，不允许修改中转仓配置"),
     WH_PARAM_NOT_FOUND(11095,"未找到仓库【{0}】"),
@@ -1409,6 +1410,15 @@ public enum ApiError implements Serializable {
     WH_BOX_RULE_SKU_DUPLICATE(11127,"箱规SKU【{0}】重复"),
     WH_BOX_RULE_PER_BOX_QTY_DUPLICATE(11128,"箱规单箱数量【{0}】重复"),
     WH_BOX_PER_QTY_FORBIDDEN_ONE(11129,"单箱数量必须大>1"),
+    WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY(11130,"盘点日期需要大于等于今天"),
+    WH_STOCKPLAN_NOT_FOUND(11131,"盘点计划不存在"),
+    WH_STOCKPLAN_ALREADY_PUSH(11132,"盘点计划【{0}】已下推盘点任务"),
+    WH_STOCKTAKING_PUSH_OVER(11133,"【{0}】已生成盘盈/亏单{1}，不允许再次生成"),
+    WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY(11134,"盘点日期不能小于当前日期，请修改后重新审核"),
+    WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE(11135,"下推生成的盘盈盘亏单不允许修改"),
+    WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
+    WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
+
     /**
      * 头程发货单 错误 信息 11500-12000
      */
@@ -1445,6 +1455,7 @@ public enum ApiError implements Serializable {
     FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE(11530,"出库货件【{0}】没有发货时间，不支持生成头程发货单"),
     LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH(11528,"物流费用导入对账月份不能为空"),
     LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL(11529,"平台订单号、发货单号、销售单号、物流跟踪单号必须至少填一个"),
+    FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED(11531,"分摊组织id为空"),
 
     /**
      * 样品管理 错误 信息 12000-12500
@@ -1658,7 +1669,21 @@ public enum ApiError implements Serializable {
     LOGISTICS_SELF_SHIP_FEE_NOT_FOUND(13612,"自发货费用不存在"),
     LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH(13613,"已存在实际账单，不能再下推实际账单"),
     LOGISTICS_MAPPING_NOT_NULL(13614,"【{0}】所属的平台【{1}】没有配置【{2}】的标发信息，不允许提交发货"),
-
+    LOGISTICS_SUPPLIER_NOT_FOUND(13615,"头程费用分摊物流商为空"),
+    LOGISTICS_SUPPLIER_NOT_EXIST(13616,"头程费用分摊物流商不存在"),
+    LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND(13617,"导入文件名称不能为空"),
+    LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND(13618,"导入的物流配置明细不能为空"),
+    LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND(13619,"文件【{0}】导入的物流配置明细唯一键未找到"),
+    LOGISTICS_SUPPLIER_NAME_NOT_FOUND(13620,"物流商名称【{0}】未找到"),
+    LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR(13621,"导入唯一识别单号查询失败，请检查识别单号配置"),
+    LOGISTICS_ASYNC_TASK_CREATE_ERROR(13622,"异步任务创建失败参数【{0}】"),
+    LOGISTICS_PENDING_COST_NOT_FOUND(13623,"待确认费用分摊记录不存在"),
+    LOGISTICS_SELECT_AT_LEAST_ONE(13624,"明细至少勾选一个识别单号"),
+    LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED(13625,"数大臣单据字段【{0}】不允许重复"),
+    LOGISTICS_BILL_DETAIL_FIELD_REQUIRED(13626,"数大臣单据明细字段不允许为空"),
+    LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
+    LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND(13628,"导入未匹配到表头字段，请检查费用配置"),
+    LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED(13629,"【{0}】不能作为识别单号字段"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

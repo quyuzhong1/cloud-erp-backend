@@ -37,7 +37,8 @@
             std.usable_qty,
             std.qty,
             std.frozen_qty,
-            std.diff_qty
+            std.diff_qty,
+            std.first_qty as firstQty
         FROM stocktaking_task_detail std
         INNER JOIN stocktaking_task st
         ON st.id=std.main_id AND st.is_deleted=FALSE
