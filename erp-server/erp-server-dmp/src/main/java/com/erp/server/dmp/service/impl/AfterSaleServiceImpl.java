@@ -1086,6 +1086,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         ApiResult<List<BaseDropDownDTO.CommonDTO>> listApiResult = omsDropDownFeign.listInternalSalesPlatform(DictBasicTypeEnum.MINI_PROGRAM_SALES_PLATFORM_INTERNAL.getType());
 
+        List<String> shopIdList = list.stream().map(item -> item.getShopId()).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIdList);
         // 属性赋值
         for (AfterSaleDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -1097,6 +1099,18 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 BaseDropDownDTO.CommonDTO commonDTO = listApiResult.getData().stream().filter(e -> e.getCode().equals(data.getDictPlatform())).findFirst().orElse(null);
                 if (Objects.nonNull(commonDTO)) {
                     data.setDictPlatformName(commonDTO.getValue());
+                }
+            }
+
+            if (!shopInfoList.isEmpty()) {
+                if (StringUtils.isNotBlank(data.getShopId())) {
+                    ShopInfoEntity shopInfoEntity = shopInfoList.stream()
+                            .filter(item -> Objects.equals(item.getId(), data.getShopId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.nonNull(shopInfoEntity)) {
+                        data.setShopName(shopInfoEntity.getName());
+                    }
                 }
             }
         }
