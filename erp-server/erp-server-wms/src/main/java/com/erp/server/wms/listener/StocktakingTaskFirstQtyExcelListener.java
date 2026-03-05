@@ -1,30 +1,30 @@
 package com.erp.server.wms.listener;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
+import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * @author Lambda
- * @Classname StocktakingTaskDetailExcelListener
- * @Description TODO
- * @Date 2023-08-09 17:55
- * @Created by yl
- */
-public class StocktakingTaskExcelListener extends AnalysisEventListener<StocktakingTaskDetailExcelDTO> {
-
+ * @Author: wtr
+ * @Date: 2026/2/2 10:08
+ * @Param:
+ * @Return:
+ * @Description:
+ **/
+public class StocktakingTaskFirstQtyExcelListener extends AnalysisEventListener<StocktakingTaskFirstQtyExcelDTO> {
 
     private StocktakingTaskDetailService stocktakingTaskDetailService;
 
@@ -36,14 +36,12 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
 
     private OperateLogService operateLogService;
 
-    private List<StocktakingTaskDetailExcelDTO> errorList = new ArrayList<>();
+    private List<StocktakingTaskFirstQtyExcelDTO> errorList = new ArrayList<>();
 
     private List<StocktakingTaskDetailEntity> updateList = new ArrayList<>();
 
-    List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
 
-
-    public StocktakingTaskExcelListener(StocktakingTaskService stocktakingTaskService,
+    public StocktakingTaskFirstQtyExcelListener(StocktakingTaskService stocktakingTaskService,
                                         StocktakingTaskDetailService stocktakingTaskDetailService,
                                         StocktakingProfitLossService stocktakingProfitLossService,
                                         WarehouseService warehouseService,
@@ -56,31 +54,27 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
     }
 
     /**
-     * 每解析一行执行一次
      *
      * @param excelDTO
      * @param analysisContext
-     * @return void
-     * @author yl
-     * @date 2023-08-09 17:56
      */
     @Override
-    public void invoke(StocktakingTaskDetailExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(StocktakingTaskFirstQtyExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //盘点数量
+        //初盘数量
         Integer qty = 0;
         try {
-            qty = Integer.valueOf(excelDTO.getQty());
+            qty = Integer.valueOf(excelDTO.getFirstQty());
             if (qty < 0) {
-                errorMsgList.add("盘点数量不能为负数");
+                errorMsgList.add("初盘数量不能为负数");
             }
         }catch (Exception e){
-            errorMsgList.add("盘点数量不能为非整数");
+            errorMsgList.add("初盘数量不能为非整数");
         }
         //任务盘点单号
         String taskCode = excelDTO.getCode();
@@ -112,14 +106,6 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
             errorList.add(excelDTO);
             return;
         }
-        //旧盘点数量
-        Integer oldQty = taskDetail.getQty();
-        //状态
-//        StocktakingStatusEnum status = taskEntity.getStatus();
-//        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
-//        if(!statusList.contains(status)){
-//            errorMsgList.add("只有复盘中,未开始的盘点任务才能修改盘点库存");
-//        }
 
         List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(taskEntity.getId());
         if (!stocktakingProfitLossList.isEmpty()) {
@@ -131,52 +117,26 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
             errorList.add(excelDTO);
             return;
         }
-
-        OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLog = new OperateLogDTO.AddModuleOperateLogDTO();
-        StringBuffer sb = new StringBuffer("盘点任务单");
-        sb.append(taskCode).append(" 修改");
-        sb.append(skuNo);
-        sb.append("盘点库存由原来的:");
-        sb.append(oldQty).append("修改为:").append(qty);
-        addModuleOperateLog.setContent(sb.toString());
-        addModuleOperateLog.setBusinessId(mainId);
-        addModuleOperateLog.setModuleType(ModuleTypeEnum.STOCKTAKING_TASK.getCode());
-        addModuleOperateLog.setOperation("修改操作");
-        operateLogList.add(addModuleOperateLog);
-        //可用库存
-        Integer usableQty = taskDetail.getUsableQty();
-        //冻结数量
-        Integer frozenQty = taskDetail.getFrozenQty();
-        //差异数量 等于盘点库存-可用库存-冻结库存
-        Integer diffQty = qty - usableQty - frozenQty;
-        taskDetail.setDiffQty(diffQty);
-        taskDetail.setQty(qty);
+        taskDetail.setFirstQty(Integer.parseInt(excelDTO.getFirstQty()));
         updateList.add(taskDetail);
-
-
+        String msg = StrUtil.format("用户【{}】 【{}】导入初盘库存", UserContext.getDefaultLoginUser().getUserName() , LocalDateTime.now());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), mainId, "初盘库存导入");
     }
 
 
     /**
      * 全部解析完成后执行
-     *
      * @param analysisContext
-     * @return void
-     * @author yl
-     * @date 2023-08-09 17:57
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (CollectionUtils.isNotEmpty(updateList)) {
             stocktakingTaskDetailService.updateBatchById(updateList);
         }
-        if (CollectionUtils.isNotEmpty(operateLogList)) {
-            operateLogService.batchAddModuleOperateLog(operateLogList);
-        }
 
     }
 
-    public List<StocktakingTaskDetailExcelDTO> getErrorList() {
+    public List<StocktakingTaskFirstQtyExcelDTO> getErrorList() {
         return errorList;
     }
 
