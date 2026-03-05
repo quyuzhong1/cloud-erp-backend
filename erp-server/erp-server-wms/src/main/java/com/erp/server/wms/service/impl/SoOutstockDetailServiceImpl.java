@@ -40,6 +40,8 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import io.seata.tm.api.transaction.Propagation;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.bcel.generic.LADD;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -49,6 +51,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
@@ -247,8 +251,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
         LambdaUpdateWrapper<SoOutstockDetailEntity> queryWrapper = new LambdaUpdateWrapper<>();
         queryWrapper.in(SoOutstockDetailEntity::getMainId, mainIdList);
-        this.remove(queryWrapper);
-
+        queryWrapper.set(SoOutstockDetailEntity::getIsDeleted, true);
+        queryWrapper.set(SoOutstockDetailEntity::getUpdateTime, LocalDateTime.now());
+        this.update(queryWrapper);
     }
 
 
