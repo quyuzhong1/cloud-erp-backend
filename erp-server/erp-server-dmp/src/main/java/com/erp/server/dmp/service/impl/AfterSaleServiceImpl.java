@@ -34,6 +34,7 @@ import com.erp.model.dmp.dto.CfgAfterPlatformShopDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.enums.ThirdMappingTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -126,6 +127,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private CfgAfterPlatformShopService cfgAfterPlatformShopService;
 
     @Resource
+    private ThirdMappingService thirdMappingService;
+
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
+
+    @Resource
     private OmsDropDownFeign omsDropDownFeign;
 
     @Resource
@@ -187,13 +194,30 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         afterSaleEntity.setUsername(addDTO.getThridUserName());
         afterSaleEntity.setPhoneNumber(addDTO.getPhoneNumber());
 
-        DmpSoInfoEntity dmpSoInfo = dmpSoInfoService.lambdaQuery()
-                .eq(DmpSoInfoEntity::getPlatformCode, addDTO.getPlatformCode())
-                .eq(DmpSoInfoEntity::getSourcePlatform,addDTO.getDictPlatform())
+        //平台映射
+        DmpBasicSystemEntity dmpBasicSystem = dmpBasicSystemService.lambdaQuery()
+                .eq(DmpBasicSystemEntity::getCode, addDTO.getDictPlatform())
                 .one();
-        if (Objects.nonNull(dmpSoInfo) && StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
-            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
-            afterSaleEntity.setShopId(shopInfo.getId());
+
+        if (Objects.nonNull(dmpBasicSystem)) {
+            List<ThirdMappingEntity> list = thirdMappingService.lambdaQuery()
+                    .eq(ThirdMappingEntity::getType, ThirdMappingTypeEnum.PLATFORM.getCode())
+                    .eq(ThirdMappingEntity::getSysId, dmpBasicSystem.getId())
+                    .list();
+
+            List<String> thirdCode = list.stream()
+                    .map(item -> item.getThirdCode())
+                    .collect(Collectors.toList());
+
+            DmpSoInfoEntity dmpSoInfo = dmpSoInfoService.lambdaQuery()
+                    .eq(DmpSoInfoEntity::getPlatformCode, addDTO.getPlatformCode())
+                    .in(DmpSoInfoEntity::getSourcePlatform,thirdCode)
+                    .one();
+
+            if (Objects.nonNull(dmpSoInfo) && StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
+                ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
+                afterSaleEntity.setShopId(shopInfo.getId());
+            }
         }
 
         if (StringUtils.isNotBlank(afterSaleEntity.getShopId())) {
