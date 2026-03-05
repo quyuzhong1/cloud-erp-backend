@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.OrderTypeEnum;
@@ -244,7 +245,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(mainIdList)) {
             return;
         }
-        LambdaQueryWrapper<SoOutstockDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        LambdaUpdateWrapper<SoOutstockDetailEntity> queryWrapper = new LambdaUpdateWrapper<>();
         queryWrapper.in(SoOutstockDetailEntity::getMainId, mainIdList);
         this.remove(queryWrapper);
 
