@@ -620,7 +620,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
 
         if(StringUtils.isBlank(orgId)){
-            return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED.getMsg());
+            throw new RuntimeException(ApiError.FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED.getMsg());
         }
         String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
