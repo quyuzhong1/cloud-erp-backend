@@ -356,11 +356,6 @@ public class StocktakingPlanController extends BaseController {
      * @return
      */
     @PostMapping("/pushStocktakingTask")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingPlan:pushStockingTask",
-            serviceClass = StocktakingPlanService.class,
-            keyIdName = "id")
     public ApiResult<?> pushStockingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         boolean flag = stocktakingPlanService.pushStockingTask(dto);
         return flag == true ? success() : failure();
