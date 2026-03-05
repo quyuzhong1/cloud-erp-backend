@@ -628,6 +628,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }else {
             orgId = allocationSettingDTO.getFirstOrgId();
         }
+
+        if(StringUtils.isBlank(orgId)){
+            return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED.getMsg());
+        }
         String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
         List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(orgId, skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth(),toWarehouseId);
