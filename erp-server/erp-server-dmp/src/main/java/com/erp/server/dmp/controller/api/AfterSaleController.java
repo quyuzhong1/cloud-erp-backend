@@ -415,4 +415,13 @@ public class AfterSaleController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据单据idList获取售后人员
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listCsAgent")
+    public ApiResult<Map<String, String>> listCsAgent(@RequestBody AfterSaleDTO.ListCsAgentDTO dto ) {
+        return success(afterSaleService.listCsAgent(dto));
+    }
 }

@@ -10,6 +10,7 @@ import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -177,6 +178,5 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
 
     BatchResultDTO invalidByCode(String code);
 
-    List<AfterSaleDTO.CsAgentResultDTO> getCsAgentByPlatformAndShop(AfterSaleDTO.CsAgentDTO dto);
-
+    Map<String, String> listCsAgent(AfterSaleDTO.ListCsAgentDTO dto);
 }

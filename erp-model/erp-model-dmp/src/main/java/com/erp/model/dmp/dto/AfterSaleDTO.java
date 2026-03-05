@@ -849,4 +849,14 @@ public class AfterSaleDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListCsAgentDTO {
+        /**
+         * 售后申请单id
+         */
+        private List<String> afterSaleIds;
+
+    }
+
 }

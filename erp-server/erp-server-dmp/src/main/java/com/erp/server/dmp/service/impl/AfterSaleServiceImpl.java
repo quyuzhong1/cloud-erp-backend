@@ -835,8 +835,18 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     @Override
-    public List<AfterSaleDTO.CsAgentResultDTO> getCsAgentByPlatformAndShop(AfterSaleDTO.CsAgentDTO dto) {
-        return null;
+    public Map<String, String> listCsAgent(AfterSaleDTO.ListCsAgentDTO dto) {
+        Map<String, String> resultMap = new HashMap<>();
+        List<String> afterSaleIds = dto.getAfterSaleIds();
+        if (!afterSaleIds.isEmpty()) {
+            List<AfterSaleEntity> afterSaleList = this.listByIds(afterSaleIds);
+            for (AfterSaleEntity afterSaleEntity : afterSaleList) {
+                if (StringUtils.isNotBlank(afterSaleEntity.getCsAgentId())) {
+                    resultMap.put("csAgent",afterSaleEntity.getCsAgentId());
+                }
+            }
+        }
+        return resultMap;
     }
 
     /**
