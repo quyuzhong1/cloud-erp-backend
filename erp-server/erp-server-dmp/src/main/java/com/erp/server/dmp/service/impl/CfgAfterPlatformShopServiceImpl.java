@@ -49,8 +49,9 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<CfgAfterPlatformShopDTO.SaveDTO> save(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
-        // 检查平台+店铺是否重复
-        checkPlatformShopDuplicateWithDB(saveDTOList);
+
+        // 检查是否有重复的平台+店铺组合
+        checkPlatformShopDuplicate(saveDTOList);
 
         // 数据转换 & 唯一性校验
         List<CfgAfterPlatformShopEntity> cfgAfterPlatformShopEntities = handleData(saveDTOList);
@@ -65,46 +66,66 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     }
 
     /**
-     * 检查平台+店铺是否重复
+     * 检查平台+店铺组合的唯一性
      */
-    private void checkPlatformShopDuplicateWithDB(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
-        // 收集所有平台+店铺组合（仅新增数据）
-        List<Map<String, String>> platformShopCombinations = new ArrayList<>();
+    private void checkPlatformShopDuplicate(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
+        // 收集所有需要检查的平台+店铺组合
+        Map<String, Set<String>> inputCombinations = new HashMap<>();
+        List<Map<String, String>> dbCheckCombinations = new ArrayList<>();
 
         for (CfgAfterPlatformShopDTO.SaveDTO saveDTO : saveDTOList) {
-            if (StringUtils.isBlank(saveDTO.getId()) && !saveDTO.getShopIdList().isEmpty()) {
+            if (saveDTO.getShopIdList() != null) {
+                String platform = saveDTO.getDictPlatform();
+                inputCombinations.putIfAbsent(platform, new HashSet<>());
+
                 for (String shopId : saveDTO.getShopIdList()) {
+                    //检查入参内部是否重复
+                    if (!inputCombinations.get(platform).add(shopId)) {
+                        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+                        throw new ServiceException(
+                                ApiError.COMMON_PLATFORM_SHOP_EXSIT,
+                                platform,
+                                shopInfo.getName()
+                        );
+                    }
+
+                    //记录需要查询数据库的组合
                     Map<String, String> combination = new HashMap<>();
-                    combination.put("platform", saveDTO.getDictPlatform());
+                    combination.put("platform", platform);
                     combination.put("shopId", shopId);
-                    platformShopCombinations.add(combination);
+                    dbCheckCombinations.add(combination);
                 }
             }
         }
 
-        if (!platformShopCombinations.isEmpty()) {
-            // 查询数据库中已存在的平台+店铺组合
-            List<CfgAfterPlatformShopEntity> existingEntities = this.lambdaQuery()
-                    .in(CfgAfterPlatformShopEntity::getDictPlatform, platformShopCombinations.stream().map(c -> c.get("platform")).collect(Collectors.toSet()))
-                    .list();
+        if (dbCheckCombinations.isEmpty()) {
+            return;
+        }
 
-            // 检查是否有重复
-            for (CfgAfterPlatformShopDTO.SaveDTO saveDTO : saveDTOList) {
-                if (saveDTO.getId() == null && saveDTO.getShopIdList() != null) {
-                    for (String shopId : saveDTO.getShopIdList()) {
-                        boolean exists = existingEntities.stream().anyMatch(entity ->
-                                entity.getDictPlatform().equals(saveDTO.getDictPlatform()) &&
-                                        entity.getShopJson() != null &&
-                                        entity.getShopJson().getJSONArray("shops").stream()
-                                                .anyMatch(shop -> shopId.equals(((JSONObject)shop).getStr("id")))
-                        );
+        // 查询数据库中已存在的平台+店铺组合
+        List<CfgAfterPlatformShopEntity> existingEntities = this.lambdaQuery()
+                .in(CfgAfterPlatformShopEntity::getDictPlatform,
+                        dbCheckCombinations.stream().map(c -> c.get("platform")).distinct().collect(Collectors.toList()))
+                .list();
 
-                        if (exists) {
-                            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
-                            throw new ServiceException(ApiError.COMMON_PLATFORM_SHOP_EXSIT, saveDTO.getDictPlatform(),shopInfo.getName());
-                        }
-                    }
-                }
+        for (Map<String, String> combination : dbCheckCombinations) {
+            String platform = combination.get("platform");
+            String shopId = combination.get("shopId");
+
+            boolean exists = existingEntities.stream().anyMatch(entity ->
+                    entity.getDictPlatform().equals(platform) &&
+                            entity.getShopJson() != null &&
+                            entity.getShopJson().getJSONArray("shops").stream()
+                                    .anyMatch(shop -> shopId.equals(((JSONObject)shop).getStr("id")))
+            );
+
+            if (exists) {
+                ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+                throw new ServiceException(
+                        ApiError.COMMON_PLATFORM_SHOP_EXSIT,
+                        platform,
+                        shopInfo.getName()
+                );
             }
         }
     }
