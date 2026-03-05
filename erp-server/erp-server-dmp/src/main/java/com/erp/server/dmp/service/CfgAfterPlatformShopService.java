@@ -38,4 +38,6 @@ public interface CfgAfterPlatformShopService extends SuperService<CfgAfterPlatfo
     */
     List<CfgAfterPlatformShopDTO.ListDTO> view();
 
+    List<CfgAfterPlatformShopDTO.CsAgentDTO> matchCsAgent(String dictPlatform,String shopId);
+
 }

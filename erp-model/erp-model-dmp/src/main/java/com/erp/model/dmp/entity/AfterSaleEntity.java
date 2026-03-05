@@ -145,6 +145,24 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     private String phoneNumber;
 
     /**
+     * 售后人员id
+     */
+    @TableField("cs_agent_id")
+    private String csAgentId;
+
+    /**
+     * 售后人员名称
+     */
+    @TableField("cs_agent_name")
+    private String csAgentName;
+
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
      * 客服备注
      */
     @TableField("csr_remark")

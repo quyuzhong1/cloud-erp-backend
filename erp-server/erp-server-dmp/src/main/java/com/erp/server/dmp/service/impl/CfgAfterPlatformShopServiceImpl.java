@@ -3,18 +3,18 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.druid.support.json.JSONUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.CfgAfterPlatformShopEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.mapper.CfgAfterPlatformShopMapper;
 import com.erp.server.dmp.service.CfgAfterPlatformShopService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.record.DVALRecord;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +23,7 @@ import com.erp.model.dmp.dto.CfgAfterPlatformShopDTO;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.common.core.enums.ApiError;
-import cn.hutool.core.collection.CollUtil;
-
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
 
 /**
  * <p>
@@ -52,9 +49,8 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<CfgAfterPlatformShopDTO.SaveDTO> save(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
-
-        // 检查平台是否重复
-        checkPlatformDuplicateWithDB(saveDTOList);
+        // 检查平台+店铺是否重复
+        checkPlatformShopDuplicateWithDB(saveDTOList);
 
         // 数据转换 & 唯一性校验
         List<CfgAfterPlatformShopEntity> cfgAfterPlatformShopEntities = handleData(saveDTOList);
@@ -69,29 +65,44 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     }
 
     /**
-     * 检查平台是否重复
+     * 检查平台+店铺是否重复
      */
-    private void checkPlatformDuplicateWithDB(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
-        // 提取所有平台编码
-        List<String> platforms = saveDTOList.stream()
-                .filter(saveDTO -> saveDTO.getId() == null) // 仅校验新增数据
-                .map(CfgAfterPlatformShopDTO.SaveDTO::getDictPlatform)
-                .collect(Collectors.toList());
+    private void checkPlatformShopDuplicateWithDB(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList) {
+        // 收集所有平台+店铺组合（仅新增数据）
+        List<Map<String, String>> platformShopCombinations = new ArrayList<>();
 
-        if (!platforms.isEmpty()) {
-            // 查询数据库中已存在的平台
-            List<CfgAfterPlatformShopEntity> list = this.lambdaQuery()
-                    .in(CfgAfterPlatformShopEntity::getDictPlatform, platforms)
+        for (CfgAfterPlatformShopDTO.SaveDTO saveDTO : saveDTOList) {
+            if (StringUtils.isBlank(saveDTO.getId()) && !saveDTO.getShopIdList().isEmpty()) {
+                for (String shopId : saveDTO.getShopIdList()) {
+                    Map<String, String> combination = new HashMap<>();
+                    combination.put("platform", saveDTO.getDictPlatform());
+                    combination.put("shopId", shopId);
+                    platformShopCombinations.add(combination);
+                }
+            }
+        }
+
+        if (!platformShopCombinations.isEmpty()) {
+            // 查询数据库中已存在的平台+店铺组合
+            List<CfgAfterPlatformShopEntity> existingEntities = this.lambdaQuery()
+                    .in(CfgAfterPlatformShopEntity::getDictPlatform, platformShopCombinations.stream().map(c -> c.get("platform")).collect(Collectors.toSet()))
                     .list();
-            List<String> existingPlatforms = list.stream().map(item -> item.getDictPlatform()).collect(Collectors.toList());
 
             // 检查是否有重复
-            Set<String> existingPlatformSet = new HashSet<>(existingPlatforms);
             for (CfgAfterPlatformShopDTO.SaveDTO saveDTO : saveDTOList) {
-                if (saveDTO.getId() == null) {
-                    String platform = saveDTO.getDictPlatform();
-                    if (existingPlatformSet.contains(platform)) {
-                        throw new ServiceException(ApiError.COMMON_PLATFORM_EXSIT, platform);
+                if (saveDTO.getId() == null && saveDTO.getShopIdList() != null) {
+                    for (String shopId : saveDTO.getShopIdList()) {
+                        boolean exists = existingEntities.stream().anyMatch(entity ->
+                                entity.getDictPlatform().equals(saveDTO.getDictPlatform()) &&
+                                        entity.getShopJson() != null &&
+                                        entity.getShopJson().getJSONArray("shops").stream()
+                                                .anyMatch(shop -> shopId.equals(((JSONObject)shop).getStr("id")))
+                        );
+
+                        if (exists) {
+                            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+                            throw new ServiceException(ApiError.COMMON_PLATFORM_SHOP_EXSIT, saveDTO.getDictPlatform(),shopInfo.getName());
+                        }
                     }
                 }
             }
@@ -206,5 +217,44 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
 
         return resultList;
     }
+
+
+    public List<CfgAfterPlatformShopDTO.CsAgentDTO> matchCsAgent(String dictPlatform, String shopId) {
+        List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = new ArrayList<>();
+
+        CfgAfterPlatformShopEntity cfgAfterPlatformShop = this.lambdaQuery()
+                .eq(CfgAfterPlatformShopEntity::getDictPlatform, dictPlatform)
+                .one();
+
+        if (Objects.nonNull(cfgAfterPlatformShop)) {
+            // 先处理shopId不为空的情况（平台+店铺匹配）
+            if (Objects.nonNull(shopId)) {
+                JSONObject shopJson = cfgAfterPlatformShop.getShopJson();
+                CfgAfterPlatformShopDTO.ShopJsonDTO shopJsonDTO = JSONUtil.toBean(shopJson, CfgAfterPlatformShopDTO.ShopJsonDTO.class);
+
+                if (Objects.nonNull(shopJsonDTO.getShops()) && !shopJsonDTO.getShops().isEmpty()) {
+                    for (CfgAfterPlatformShopDTO.Shop shop : shopJsonDTO.getShops()) {
+                        if (Objects.equals(shop.getId(), shopId)) {
+                            // 找到匹配的店铺后，获取对应的售后
+                            CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(cfgAfterPlatformShop.getCsAgentJson(), CfgAfterPlatformShopDTO.CsAgentJsonDTO.class);
+                            if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
+                                csAgentDTOList = BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+                            }
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // 处理shopId为空的情况（仅按平台匹配）
+                JSONObject csAgentJson = cfgAfterPlatformShop.getCsAgentJson();
+                CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(csAgentJson, CfgAfterPlatformShopDTO.CsAgentJsonDTO.class);
+                if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
+                    csAgentDTOList = BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+                }
+            }
+        }
+        return csAgentDTOList;
+    }
+
 
 }
