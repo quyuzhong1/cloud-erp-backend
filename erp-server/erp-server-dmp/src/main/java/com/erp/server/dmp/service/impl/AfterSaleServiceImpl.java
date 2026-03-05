@@ -31,11 +31,13 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.AttachmentDTO;
+import com.erp.model.dmp.dto.CfgAfterPlatformShopDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -45,6 +47,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -121,7 +124,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private DmpPushMsgService dmpPushMsgService;
 
     @Resource
+    private CfgAfterPlatformShopService cfgAfterPlatformShopService;
+
+    @Resource
     private OmsDropDownFeign omsDropDownFeign;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -178,6 +187,43 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         afterSaleEntity.setUsername(addDTO.getThridUserName());
         afterSaleEntity.setPhoneNumber(addDTO.getPhoneNumber());
+
+        DmpSoInfoEntity dmpSoInfo = dmpSoInfoService.lambdaQuery()
+                .eq(DmpSoInfoEntity::getPlatformCode, addDTO.getPlatformCode())
+                .eq(DmpSoInfoEntity::getSourcePlatform,addDTO.getDictPlatform())
+                .one();
+        if (Objects.nonNull(dmpSoInfo) && StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
+            afterSaleEntity.setShopId(shopInfo.getId());
+        }
+
+        if (StringUtils.isNotBlank(afterSaleEntity.getShopId())) {
+            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), afterSaleEntity.getShopId());
+            if (!csAgentDTOList.isEmpty()) {
+                String ids = csAgentDTOList.stream()
+                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                        .collect(Collectors.joining(","));
+                String names = csAgentDTOList.stream()
+                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                        .collect(Collectors.joining(","));
+                afterSaleEntity.setCsAgentId(ids);
+                afterSaleEntity.setCsAgentName(names);
+            }
+
+        } else {
+            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
+            if (!csAgentDTOList.isEmpty()) {
+                String ids = csAgentDTOList.stream()
+                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                        .collect(Collectors.joining(","));
+                String names = csAgentDTOList.stream()
+                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                        .collect(Collectors.joining(","));
+                afterSaleEntity.setCsAgentId(ids);
+                afterSaleEntity.setCsAgentName(names);
+            }
+        }
+
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHSQ);
         afterSaleEntity.setCode(code);
@@ -787,6 +833,21 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         });
 
         return BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), OperationTypeEnum.INVALID);
+    }
+
+    @Override
+    public Map<String, String> listCsAgent(AfterSaleDTO.ListCsAgentDTO dto) {
+        Map<String, String> resultMap = new HashMap<>();
+        List<String> afterSaleIds = dto.getAfterSaleIds();
+        if (!afterSaleIds.isEmpty()) {
+            List<AfterSaleEntity> afterSaleList = this.listByIds(afterSaleIds);
+            for (AfterSaleEntity afterSaleEntity : afterSaleList) {
+                if (StringUtils.isNotBlank(afterSaleEntity.getCsAgentId())) {
+                    resultMap.put("csAgent",afterSaleEntity.getCsAgentId());
+                }
+            }
+        }
+        return resultMap;
     }
 
     /**

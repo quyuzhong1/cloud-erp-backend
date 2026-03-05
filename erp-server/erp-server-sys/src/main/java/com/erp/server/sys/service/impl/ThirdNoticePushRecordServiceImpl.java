@@ -37,6 +37,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
@@ -1135,6 +1136,21 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                                     QcResultDTO.QcItemRolePeopleDTO dto = new QcResultDTO.QcItemRolePeopleDTO();
                                     dto.setQcInfoIds(Arrays.asList(businessId));
                                     dto.setIsFirstMassProduct(isFirstMassProduct);
+                                    ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
+                                    if(Objects.nonNull(select) && select.getCode() == 200 && Objects.nonNull(select.getData())){
+                                        // 转换为 Map
+                                        Map<String, String> data = JSON.parseObject(JSON.toJSONString(select.getData()), Map.class);
+                                        if(CollUtil.isNotEmpty(data) && Objects.nonNull(data.get(field))){
+                                            Collections.addAll(resultList, data.get(field).split(","));
+                                        }
+                                    }
+                                } else if (classPath.contains("listCsAgent")) {
+                                    //售后申请获取售后人员
+                                    String[] split = classPath.split("#");
+                                    String controller = split[0];
+                                    String methodName = split[1];
+                                    AfterSaleDTO.ListCsAgentDTO dto = new AfterSaleDTO.ListCsAgentDTO();
+                                    dto.setAfterSaleIds(Arrays.asList(businessId));
                                     ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
                                     if(Objects.nonNull(select) && select.getCode() == 200 && Objects.nonNull(select.getData())){
                                         // 转换为 Map
