@@ -738,7 +738,7 @@ public class SoMultiChannelDTO implements Serializable {
         * 订单异常标示
         */
 //        @NotBlank(message = "订单异常标示不能为空")
-        @Size(max = 30,message = "订单异常标示最大长度不能超过30位")
+//        @Size(max = 30,message = "订单异常标示最大长度不能超过30位")
         private String signOrderError;
 
         /**
