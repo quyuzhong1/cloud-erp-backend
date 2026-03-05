@@ -229,6 +229,16 @@ public class AfterSaleDTO implements Serializable {
         private String createUserName;
 
         /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
          * 售后人员id
          */
         private String csAgentId;
