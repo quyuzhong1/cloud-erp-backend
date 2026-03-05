@@ -362,8 +362,18 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
         List<String> soCodeList = successList.stream().map(KolSampleCostImportExcelDTO::getSoCode).distinct().collect(Collectors.toList());
         List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
+        Map<String, BigDecimal> historyShippingCostMap = kolSampleCostList.stream()
+                .collect(Collectors.toMap(KolSampleCostEntity::getId,
+                        obj -> ObjUtil.defaultIfNull(obj.getShippingCost(), BigDecimal.ZERO),
+                        (v1, v2) -> v1));
 
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
+                if (!CharSequenceUtil.equals(importExcelDTO.getFeeType(), "物流费")
+                        && !CharSequenceUtil.equals(importExcelDTO.getFeeType(), "订单费用")) {
+                    importExcelDTO.setErrorMsg("费用项仅支持【物流费】或【订单费用】");
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
            /*     long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
                 if (count > 1) {
                     importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】在导入数据中存在重复");
@@ -378,17 +388,26 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 }
             //计算总数量
             Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (totalQty == null || totalQty <= 0) {
+                importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】对应实发数量总和必须大于0");
+                errorList.add(importExcelDTO);
+                continue;
+            }
+            BigDecimal importAmount = MathUtil.valueOf(importExcelDTO.getAmountStr());
+            BigDecimal exchangeRate = MathUtil.valueOf(importExcelDTO.getExchangeRateStr());
+            BigDecimal totalQtyDecimal = MathUtil.valueOf(totalQty);
             for (KolSampleCostEntity entity : costList) {
-                BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), MathUtil.valueOf(totalQty))
-                        .multiply(MathUtil.valueOf(importExcelDTO.getAmountStr()))
-                        .multiply(MathUtil.valueOf(importExcelDTO.getExchangeRateStr()));
+                BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), totalQtyDecimal)
+                        .multiply(importAmount)
+                        .multiply(exchangeRate);
+                BigDecimal historyShippingCost = historyShippingCostMap.getOrDefault(entity.getId(), BigDecimal.ZERO);
                 if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
-                    //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
-                    entity.setShippingCost(cost);
+                    //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史SKU“尾程-运费”
+                    entity.setShippingCost(historyShippingCost.add(cost));
                 }
                 if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
-                    //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
-                    entity.setOtherCost(cost);
+                    //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史“尾程-运费”
+                    entity.setOtherCost(historyShippingCost.add(cost));
                 }
                 BigDecimal totalCost = entity.getProductCost()
                         .add(entity.getFirstMileShippingCost())
