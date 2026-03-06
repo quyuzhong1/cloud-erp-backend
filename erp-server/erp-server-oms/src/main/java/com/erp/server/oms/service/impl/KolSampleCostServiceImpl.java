@@ -378,11 +378,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
         List<String> soCodeList = successList.stream().map(KolSampleCostImportExcelDTO::getSoCode).distinct().collect(Collectors.toList());
         List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
-        Map<String, BigDecimal> historyShippingCostMap = kolSampleCostList.stream()
-                .collect(Collectors.toMap(KolSampleCostEntity::getId,
-                        obj -> ObjUtil.defaultIfNull(obj.getShippingCost(), BigDecimal.ZERO),
-                        (v1, v2) -> v1));
-
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
                 if (!CharSequenceUtil.equals(importExcelDTO.getFeeType(), "物流费")
                         && !CharSequenceUtil.equals(importExcelDTO.getFeeType(), "订单费用")) {
@@ -416,14 +411,15 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), totalQtyDecimal)
                         .multiply(importAmount)
                         .multiply(exchangeRate);
-                BigDecimal historyShippingCost = historyShippingCostMap.getOrDefault(entity.getId(), BigDecimal.ZERO);
+                BigDecimal historyShippingCost = ObjUtil.defaultIfNull(entity.getShippingCost(), BigDecimal.ZERO);
+                BigDecimal historyOtherCost = ObjUtil.defaultIfNull(entity.getOtherCost(), BigDecimal.ZERO);
                 if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
                     //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史SKU“尾程-运费”
                     entity.setShippingCost(historyShippingCost.add(cost));
                 }
                 if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
-                    //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史“尾程-运费”
-                    entity.setOtherCost(historyShippingCost.add(cost));
+                    //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史“尾程-其他费用”
+                    entity.setOtherCost(historyOtherCost.add(cost));
                 }
                 BigDecimal totalCost = entity.getProductCost()
                         .add(entity.getFirstMileShippingCost())
