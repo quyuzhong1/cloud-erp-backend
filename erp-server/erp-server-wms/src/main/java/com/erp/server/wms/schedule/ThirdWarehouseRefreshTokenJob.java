@@ -127,6 +127,8 @@ public class ThirdWarehouseRefreshTokenJob {
             String tokenKey = CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, overseasProviderEntity.getCode(), overseasProviderEntity.getId());
             Map<String,Object> map = overseasProviderEntity.getAuthJson();
             map.put("ownerCode",overseasProviderEntity.getOwnerCode());
+            map.put("shortName",overseasProviderEntity.getShortName());
+            map.put("name",overseasProviderEntity.getName());
             redisUtil.set(tokenKey, map, 86400);
         }
         XxlJobHelper.log("[刷新三方仓token] 任务结束--------------------------------------->");

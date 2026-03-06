@@ -33,6 +33,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     YUN_TU("YunTu", "云途(新)", "云途(新)", "","Y","N"),
     TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", "","Y","Y"),
     GOOD_CANG(OmsPlatformEnum.OMS_GOOD_CANG.getCode(), OmsPlatformEnum.OMS_GOOD_CANG.getName(), "谷仓", "","",""),
+    ZHONG_BAO(OmsPlatformEnum.ZHONG_BAO.getCode(), OmsPlatformEnum.ZHONG_BAO.getName(), "众包", "","",""),
     AN_TU(OmsPlatformEnum.OMS_ANTU.getCode(), OmsPlatformEnum.OMS_ANTU.getName(), "安兔", "","",""),
     IML(OmsPlatformEnum.OMS_IML.getCode(), OmsPlatformEnum.OMS_IML.getName(), "艾姆勒", "","",""),
     BAO_HONG("BaoHong", "保宏", "保宏", "","Y","N"),
