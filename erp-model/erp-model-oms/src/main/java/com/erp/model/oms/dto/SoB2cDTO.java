@@ -915,6 +915,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String tikTokStatus;
         /**
+         *  订单类型
+         */
+        private String orderType;
+        /**
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
@@ -964,6 +968,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isManual;
 
+        /**
+         *  订单类型
+         */
+        private String orderType;
 
         /**
          * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
