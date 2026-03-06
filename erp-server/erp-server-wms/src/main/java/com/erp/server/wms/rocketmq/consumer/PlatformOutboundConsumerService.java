@@ -161,17 +161,20 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Override
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
-        log.warn("第三方出库单参数>>>>>>>{}",JSONUtil.toJsonStr(dto));
+        log.warn("第三方出库单参数>>>>>>>{}", JSONUtil.toJsonStr(dto));
         //这个是B2c销售订单code
         String referenceNo = dto.getReferenceNo();
         String billStatus = dto.getOrderStatus();
 
         // 查询已有订单
-        Map<SoB2cEntity ,ThirdWarehouseDeliveryEntity > map = new HashMap<>();
-        if(OmsPlatformEnum.WEI_SHI.getCode().equals(dto.getPlatform()) && referenceNo.contains("_")){
+        Map<SoB2cEntity, ThirdWarehouseDeliveryEntity> map = new HashMap<>();
+        if (OmsPlatformEnum.WEI_SHI.getCode().equals(dto.getPlatform()) && referenceNo.contains("_")) {
             //截取_前面的字符串
             referenceNo = referenceNo.split("_")[0];
         }
+        // 3. 获取分布式锁（阻塞等待）
+        String lockKey = "lock:third:outbound:" + referenceNo;
+        RLock lock = redissonClient.getLock(lockKey);
 
         // 3. 获取分布式锁（阻塞等待）
         String lockKey = "lock:third:outbound:" + referenceNo;
