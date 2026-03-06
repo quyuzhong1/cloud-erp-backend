@@ -4,6 +4,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -176,4 +177,6 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     void importKolB2cApplication(BaseDTO.ImportDTO dto);
 
     List<KolB2cApplicationImportExcelDTO> handleImportSuccessList(List<KolB2cApplicationImportExcelDTO> successList, List<KolB2cApplicationImportExcelDTO> errorList, List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList, List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList , String importType);
+
+    AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto);
 }

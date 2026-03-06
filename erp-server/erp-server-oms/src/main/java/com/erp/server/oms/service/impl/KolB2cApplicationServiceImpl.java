@@ -62,6 +62,7 @@ import com.erp.server.oms.listener.KolB2cApplicationDetailExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationExcelListener;
 import com.erp.server.oms.mapper.KolB2cApplicationMapper;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
+import com.erp.server.oms.service.address.AddressParseService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -141,6 +142,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private OrderCategoryDetailService orderCategoryDetailService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private AddressParseService addressParseService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1469,6 +1472,11 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto) {
+        return addressParseService.parse(dto);
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)

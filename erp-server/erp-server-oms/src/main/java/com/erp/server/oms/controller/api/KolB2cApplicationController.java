@@ -16,6 +16,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.entity.KolB2cApplicationEntity;
 import com.erp.server.oms.query.KolB2cApplicationQueryHandler;
@@ -498,6 +499,14 @@ public class KolB2cApplicationController extends BaseController {
     @LogViewService
     public ApiResult<List<KolB2cApplicationDTO.DetailViewDTO>> detailView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
         return success(kolB2cApplicationService.detailView(dto.getDetailIdList()));
+    }
+
+    /**
+     * 地址解析
+     */
+    @PostMapping("/addressParse")
+    public ApiResult<AddressParseDTO.ParseResultDTO> addressParse(@RequestBody @Validated AddressParseDTO.ParseRequestDTO dto) {
+        return success(kolB2cApplicationService.addressParse(dto));
     }
 
     /**
