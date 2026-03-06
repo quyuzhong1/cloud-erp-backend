@@ -176,9 +176,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         String lockKey = "lock:third:outbound:" + referenceNo;
         RLock lock = redissonClient.getLock(lockKey);
 
-        // 3. 获取分布式锁（阻塞等待）
-        String lockKey = "lock:third:outbound:" + referenceNo;
-        RLock lock = redissonClient.getLock(lockKey);
 
         try {
             // 尝试加锁，最多等待 30 秒；获取锁后租期自动续期（-1 表示看门狗自动续期）
