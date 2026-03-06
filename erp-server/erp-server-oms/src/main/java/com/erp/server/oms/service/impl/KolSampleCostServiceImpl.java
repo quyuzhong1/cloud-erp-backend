@@ -219,6 +219,11 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     private void updateKolSampleCostByDate(LocalDateTime startTime,LocalDateTime endTIme) {
         //查询月份内存在的寄样费用
         List<KolSampleCostEntity> oldList = this.baseMapper.listByTime(startTime,endTIme);
+        Map<String, KolSampleCostEntity> oldOutstockDetailCostMap = CollUtil.isEmpty(oldList)
+                ? new HashMap<>()
+                : oldList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSoOutstockDetailId()))
+                .collect(Collectors.toMap(KolSampleCostEntity::getSoOutstockDetailId, e -> e, (v1, v2) -> v1));
 
         //军区信息
         List<DictPartitionEntity> partitionList = FeignQuery.list(DictPartitionEntity.class);
@@ -249,9 +254,20 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     KolSampleCostEntity  costEntity = new KolSampleCostEntity();
                     BeanMapperUtils.copy(kolSoOutstockDTO, costEntity);
 
-                    KolSampleCostEntity oldEntity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSoOutstockDTO.getSoOutstockDetailId())).findFirst().orElse(null);
+                    KolSampleCostEntity oldEntity = oldOutstockDetailCostMap.get(kolSoOutstockDTO.getSoOutstockDetailId());
                     if (ObjUtil.isNotEmpty(oldEntity)) {
                         costEntity.setId(oldEntity.getId());
+                        // 更新费用时如果拿不到新的SKU成本/尾程分摊，保持历史费用不变
+                        costEntity.setProductCost(ObjUtil.defaultIfNull(oldEntity.getProductCost(), BigDecimal.ZERO));
+                        costEntity.setFirstMileShippingCost(ObjUtil.defaultIfNull(oldEntity.getFirstMileShippingCost(), BigDecimal.ZERO));
+                        costEntity.setClearanceCustomsTax(ObjUtil.defaultIfNull(oldEntity.getClearanceCustomsTax(), BigDecimal.ZERO));
+                        costEntity.setShippingCost(ObjUtil.defaultIfNull(oldEntity.getShippingCost(), BigDecimal.ZERO));
+                        costEntity.setCustomsTax(ObjUtil.defaultIfNull(oldEntity.getCustomsTax(), BigDecimal.ZERO));
+                        costEntity.setOtherCost(ObjUtil.defaultIfNull(oldEntity.getOtherCost(), BigDecimal.ZERO));
+                        costEntity.setTotalCost(ObjUtil.defaultIfNull(oldEntity.getTotalCost(), BigDecimal.ZERO));
+                        costEntity.setExchangeRate(oldEntity.getExchangeRate());
+                        costEntity.setCurrency(CharSequenceUtil.blankToDefault(oldEntity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode()));
+                        costEntity.setCurrencySymbol(CharSequenceUtil.blankToDefault(oldEntity.getCurrencySymbol(), CurrencyEnum.CNY.getCurrencySymbol()));
                     }
                     costEntity.setType(sampleCostEntity.getType());
                     costEntity.setSourceCode(sampleCostEntity.getSourceCode());
@@ -283,13 +299,13 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         paramDTO.setWarehouseIdList(warehouseIdList);
         paramDTO.setStartAccountingMonth(startTime);
         paramDTO.setEndAccountingMonth(endTIme);
-        List<InventorySkuCostDTO.InvSkuCostDTO> invSkuCostDTOS = tmsFirstMileLogisticFeign.listInventorySkuCost(paramDTO);
+        List<InventorySkuCostDTO.InvSkuCostDTO> invSkuCostDTOS = ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listInventorySkuCost(paramDTO), CollUtil.newArrayList());
         //小包费用分摊
         SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
         bagCostParamDTO.setSkuIdList(skuIdList);
         List<String> soOutstockDetailIdList = thisMonthList.stream().map(KolSampleCostEntity::getSoOutstockDetailId).distinct().collect(Collectors.toList());
         bagCostParamDTO.setSoOutstockDetailIdList(soOutstockDetailIdList);
-        List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS = tmsFirstMileLogisticFeign.listSmallBagCost(bagCostParamDTO);
+        List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS = ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listSmallBagCost(bagCostParamDTO), CollUtil.newArrayList());
 
         for ( KolSampleCostEntity kolSampleCostEntity : thisMonthList) {
             kolSampleCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
