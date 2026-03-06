@@ -103,10 +103,16 @@ public class KolB2cApplicationDTO implements Serializable {
         private String remark;
 
         /**
-        * 审批状态
-        */
+         * 审批状态
+         */
         private String approveStatus;
         private String approveStatusName;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
+        private String billStatusName;
 
         /**
         * 审批时间

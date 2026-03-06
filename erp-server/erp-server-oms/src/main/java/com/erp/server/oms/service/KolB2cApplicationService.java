@@ -134,8 +134,15 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     BatchResultDTO invalid(String id, String remark);
 
     /**
-    * 撤销
-    * @author jack
+     * 业务取消
+     * @param id 主键
+     * @return 结果
+     */
+    BatchResultDTO cancel(String id);
+
+    /**
+     * 撤销
+     * @author jack
     * @date: 2025-12-04
     * @param dto
     * @return

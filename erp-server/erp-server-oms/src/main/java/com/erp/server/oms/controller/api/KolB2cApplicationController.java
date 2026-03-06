@@ -340,8 +340,44 @@ public class KolB2cApplicationController extends BaseController {
     }
 
     /**
-    * 撤销
-    * @author jack
+     * 业务取消
+     * @param dto ids
+     * @return 取消结果
+     */
+    @PostMapping("/cancel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:kolB2cApplication:cancel",
+            serviceClass = KolB2cApplicationService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "B2C寄样申请单取消")
+    public ApiResult<List<BatchResultDTO>> batchCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<KolB2cApplicationEntity> list = kolB2cApplicationService.lambdaQuery().in(KolB2cApplicationEntity::getId, ids).list();
+        Map<String, KolB2cApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolB2cApplicationEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = kolB2cApplicationService.cancel(id);
+            }catch (Exception e){
+                log.error("B2C寄样申请单取消失败",e);
+                KolB2cApplicationEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "B2C寄样申请单不存在, 取消失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 撤销
+     * @author jack
     * @date:  2025-12-04
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
