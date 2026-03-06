@@ -87,9 +87,9 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
 
         // 查询数据库中已存在的数据（排除 deleteIdList）
         QueryWrapper<CfgAfterPlatformShopEntity> query = new QueryWrapper<>();
+        query.ne("shop_json","{}");
         if (deleteIdList != null && !deleteIdList.isEmpty()) {
-            query.notIn("id", deleteIdList)
-                    .ne("shop_json","{}");
+            query.notIn("id", deleteIdList);
         }
         List<CfgAfterPlatformShopEntity> existingEntities = this.list(query);
 
@@ -98,6 +98,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
             if (afterPlatfromShopDTO.getShopIdList() == null) continue;
 
             String platform = afterPlatfromShopDTO.getDictPlatform();
+            String currentId = afterPlatfromShopDTO.getId();
             inputCombinations.putIfAbsent(platform, new HashSet<>());
 
             for (String shopId : afterPlatfromShopDTO.getShopIdList()) {
@@ -117,7 +118,8 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                                 entity.getDictPlatform().equals(platform) &&
                                         entity.getShopJson() != null &&
                                         entity.getShopJson().getJSONArray("shops").stream()
-                                                .anyMatch(shop -> shopId.equals(((JSONObject) shop).getStr("id")))
+                                                .anyMatch(shop -> shopId.equals(((JSONObject) shop).getStr("id"))&&
+                                                        (currentId == null || !currentId.equals(entity.getId())))
                         );
 
                 if (existsInDb) {
