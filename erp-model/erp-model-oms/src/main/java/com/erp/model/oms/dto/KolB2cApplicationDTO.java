@@ -579,6 +579,32 @@ public class KolB2cApplicationDTO implements Serializable {
 
     }
 
+    /**
+     * 更新明细备注
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDetailRemarkDTO {
+
+        /**
+         * 主表id
+         */
+        @NotBlank(message = "主表id不能为空")
+        private String id;
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * 明细备注
+         */
+        @Size(max = 200, message = "明细备注最大长度不能超过200位")
+        private String remark;
+    }
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {

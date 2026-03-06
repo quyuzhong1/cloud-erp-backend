@@ -193,6 +193,35 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         return Boolean.TRUE;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateDetailRemark(String id, String detailId, String remark) {
+        KolB2bApplicationEntity entity = super.getById(id);
+        entity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B寄样申请主单"));
+
+        KolB2bApplicationDetailEntity detailEntity = kolB2bApplicationDetailService.lambdaQuery()
+                .eq(KolB2bApplicationDetailEntity::getId, detailId)
+                .eq(KolB2bApplicationDetailEntity::getMainId, id)
+                .one();
+        detailEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException("B2B寄样申请明细不存在"));
+
+        String newRemark = StrUtil.nullToEmpty(remark);
+        if (Objects.equals(detailEntity.getRemark(), newRemark)) {
+            return Boolean.TRUE;
+        }
+
+        KolB2bApplicationDetailEntity oldDetail = BeanMapperUtils.map(KolB2bApplicationDetailEntity.class, detailEntity);
+        detailEntity.setRemark(newRemark);
+        boolean update = kolB2bApplicationDetailService.updateById(detailEntity);
+        if (!update) {
+            throw new ServiceException("B2B寄样申请明细备注更新失败");
+        }
+
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的明细备注", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+        operateLogService.addModuleOperateLogByObj(oldDetail, detailEntity, ModuleTypeEnum.KOL_B2B_APPLICATION.getCode(), id, msg);
+        return Boolean.TRUE;
+    }
+
 
     @Override
     public PagingVO<KolB2bApplicationDTO.ListDTO> paging(PagingDTO<KolB2bApplicationDTO.PagingParamDTO> pagingParamDTO) {
