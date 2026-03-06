@@ -23,10 +23,10 @@ public interface CfgAfterPlatformShopService extends SuperService<CfgAfterPlatfo
     * 保存
     * @author wtr
     * @date: 2026-03-03
-    * @param saveDTOList
+    * @param saveDTO
     * @return
     */
-    List<CfgAfterPlatformShopDTO.SaveDTO> save(List<CfgAfterPlatformShopDTO.SaveDTO> saveDTOList);
+    boolean save(CfgAfterPlatformShopDTO.SaveDTO saveDTO);
 
 
     /**
