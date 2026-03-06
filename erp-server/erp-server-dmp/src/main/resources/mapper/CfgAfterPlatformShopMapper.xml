@@ -16,7 +16,6 @@
        <result column="platform_name" property="platformName" typeHandler="com.erp.server.dmp.handler.ObjectJsonHandler"/>
        <result column="shop_json" property="shopJson" typeHandler="com.erp.server.dmp.handler.ObjectJsonHandler"/>
        <result column="cs_agent_json" property="csAgentJson" />
-       <result column="sort" property="sort" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -30,7 +29,7 @@
         update_user_id,
         version,
         is_deleted,
-        dict_platform, platform_name, shop_json, cs_agent_json, sort
+        dict_platform, platform_name, shop_json, cs_agent_json
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.CfgAfterPlatformShopDTO$ListDTO">

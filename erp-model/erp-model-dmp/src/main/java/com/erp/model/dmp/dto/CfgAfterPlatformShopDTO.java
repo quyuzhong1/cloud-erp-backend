@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -157,11 +156,6 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         * 售后人员id json
         */
         private String csAgentJson;
-
-        /**
-        * 优先级
-        */
-        private Integer sort;
 
 
     }
