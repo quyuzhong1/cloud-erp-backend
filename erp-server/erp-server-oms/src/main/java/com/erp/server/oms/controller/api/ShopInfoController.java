@@ -623,7 +623,7 @@ public class ShopInfoController extends BaseController {
      * @param platformList 平台
      */
     @PostMapping("/listShopInfoByPlatformList")
-    public List<ShopDTO.ListShopInfoDTO> listShopInfoByPlatformList(@RequestBody List<String> platformList){
-        return shopInfoService.listShopInfoByPlatformList(platformList);
+    public ApiResult<List<ShopDTO.ListShopInfoDTO>> listShopInfoByPlatformList(@RequestBody List<String> platformList){
+        return success(shopInfoService.listShopInfoByPlatformList(platformList));
     }
 }
