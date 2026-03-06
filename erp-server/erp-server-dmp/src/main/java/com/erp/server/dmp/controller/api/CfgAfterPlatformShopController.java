@@ -36,7 +36,7 @@ public class CfgAfterPlatformShopController extends BaseController {
     * 保存
     * @author wtr
     * @date:  2026-03-03
-    * @param dtoList
+    * @param dto
     * @return ApiResult
     */
     @PostMapping("/save")
@@ -46,8 +46,8 @@ public class CfgAfterPlatformShopController extends BaseController {
         menuCode = "dmp:cfgAfterPlatformShop:update",
         serviceClass = CfgAfterPlatformShopService.class,
         keyIdName = "id")
-    public ApiResult<List<CfgAfterPlatformShopDTO.SaveDTO>> save(@RequestBody @Validated List<CfgAfterPlatformShopDTO.SaveDTO> dtoList) {
-        return success(cfgAfterPlatformShopService.save(dtoList));
+    public ApiResult<Boolean> save(@RequestBody @Validated CfgAfterPlatformShopDTO.SaveDTO dto) {
+        return success(cfgAfterPlatformShopService.save(dto));
     }
 
 
