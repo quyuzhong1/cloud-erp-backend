@@ -47,6 +47,11 @@ public class KolSocialMediaDTO implements Serializable {
          */
         private String permissionSql;
 
+        /**
+         * 正文内容
+         */
+        private String content;
+
     }
 
     /**
@@ -115,6 +120,11 @@ public class KolSocialMediaDTO implements Serializable {
         * 帖子标题
         */
         private String title;
+
+        /**
+         * 正文内容
+         */
+        private String content;
 
         /**
         * 入库时间，毫秒时间戳
@@ -240,6 +250,11 @@ public class KolSocialMediaDTO implements Serializable {
         * 帖子标题
         */
         private String title;
+
+        /**
+         * 正文内容
+         */
+        private String content;
 
         /**
         * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
@@ -407,6 +422,11 @@ public class KolSocialMediaDTO implements Serializable {
         @NotBlank(message = "帖子标题不能为空")
         @Size(max = 500,message = "帖子标题最大长度不能超过500位")
         private String title;
+
+        /**
+         * 正文内容
+         */
+        private String content;
 
         /**
         * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
