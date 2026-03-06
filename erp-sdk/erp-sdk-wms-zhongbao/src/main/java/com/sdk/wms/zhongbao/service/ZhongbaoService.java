@@ -4,9 +4,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.exception.ServiceException;
 import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.*;
+import com.sdk.wms.zhongbao.utils.AuthUtils;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.stereotype.Component;
@@ -44,15 +46,16 @@ public class ZhongbaoService {
      */
     public String getToken(String appKey, String appSecret) {
         String token = "";
-//        if (BusinessCommonConstants.hasProfile("prod")) {
-//            token = AuthUtils.getToken(appKey, appSecret);
-//        } else {
+        if (BusinessCommonConstants.hasProfile("prod")) {
+            token = AuthUtils.getToken(appKey, appSecret);
+        } else {
             token = getTestToken(appKey);
-//        }
+        }
         log.warn("token: {}", token);
         return token;
     }
-    public String getToken(Map<String, Object> authMap){
+
+    public String getToken(Map<String, Object> authMap) {
         String appKey = authMap.get("appKey").toString();
         String appSecret = authMap.get("appSecret").toString();
         return getToken(appKey, appSecret);
@@ -87,11 +90,11 @@ public class ZhongbaoService {
     }
 
     private String getPreUrl() {
-//        if (BusinessCommonConstants.hasProfile("prod")) {
-//            return "https://oms-api.zbao56.com";
-//        } else {
+        if (BusinessCommonConstants.hasProfile("prod")) {
+            return "https://oms-api.zbao56.com";
+        } else {
             return "https://oms-api-dev.zbao56.com";
-//        }
+        }
     }
 
     /**
@@ -164,7 +167,8 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<ProductResponse>>() {}.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<ProductResponse>>() {
+            }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -177,7 +181,7 @@ public class ZhongbaoService {
      * @param channelRequest
      * @return
      */
-    public List<ChannelResponse.Channel> chanelList(Map<String, Object> authMap,ChannelRequest channelRequest) {
+    public List<ChannelResponse.Channel> chanelList(Map<String, Object> authMap, ChannelRequest channelRequest) {
         log.warn("生成的 request: {}", JSONUtil.toJsonStr(channelRequest));
         List<ChannelResponse.Channel> list = new ArrayList<>();
         boolean hasNext = true;
@@ -201,15 +205,16 @@ public class ZhongbaoService {
                 Response response = client.newCall(request).execute();
                 String bodyStr = response.body().string();
                 log.warn("bodyStr: {}", bodyStr);
-                BaseResponse<ChannelResponse> channelResponseBaseResponse = JSON.parseObject(bodyStr,new TypeReference<BaseResponse<ChannelResponse>>() {}.getType());
-                if (channelResponseBaseResponse.getSuccess()){
+                BaseResponse<ChannelResponse> channelResponseBaseResponse = JSON.parseObject(bodyStr, new TypeReference<BaseResponse<ChannelResponse>>() {
+                }.getType());
+                if (channelResponseBaseResponse.getSuccess()) {
                     String pageNum1 = channelResponseBaseResponse.getData().getPageNum();
                     String totalPage1 = channelResponseBaseResponse.getData().getTotalPage();
-                    if (CollUtil.isNotEmpty(channelResponseBaseResponse.getData().getList())){
+                    if (CollUtil.isNotEmpty(channelResponseBaseResponse.getData().getList())) {
                         list.addAll(channelResponseBaseResponse.getData().getList());
                     }
                     hasNext = Integer.valueOf(pageNum1).compareTo(Integer.valueOf(totalPage1)) < 0;
-                }else {
+                } else {
                     hasNext = false;
                 }
             } catch (IOException e) {
@@ -242,7 +247,8 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundCreateResponse>>() {}.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasInboundCreateResponse>>() {
+            }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -271,7 +277,8 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundUpdateResponse>>() {}.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasInboundUpdateResponse>>() {
+            }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -300,7 +307,8 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundCancelResponse>>() {}.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasInboundCancelResponse>>() {
+            }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -329,7 +337,8 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundApproveResponse>>() {}.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasInboundApproveResponse>>() {
+            }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -358,7 +367,8 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundReceiveResponse>>() {}.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasInboundReceiveResponse>>() {
+            }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
