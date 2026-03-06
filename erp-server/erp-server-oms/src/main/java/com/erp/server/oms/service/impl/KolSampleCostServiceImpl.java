@@ -316,9 +316,14 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     && CharSequenceUtil.equals(obj.getWarehouseId(), kolSampleCostEntity.getWarehouseId()))
                     .findFirst().orElse(null);
             if (ObjUtil.isNotEmpty(invSkuCostDTO)) {
-                kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(invSkuCostDTO.getProductCost(),invSkuCostDTO.getExchangeRate()));
-                kolSampleCostEntity.setFirstMileShippingCost(MathUtil.multiplyWithFour(invSkuCostDTO.getFirstMileShippingCost(),invSkuCostDTO.getExchangeRate()));
-                kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(invSkuCostDTO.getClearanceCustomsTax(),invSkuCostDTO.getExchangeRate()));
+                // 材料成本/头程费用/清关税费 = 单位成本 * 汇率 * 实发数量
+                BigDecimal qty = MathUtil.valueOf(kolSampleCostEntity.getQty());
+                BigDecimal productCost = MathUtil.multiplyWithFour(invSkuCostDTO.getProductCost(), invSkuCostDTO.getExchangeRate());
+                BigDecimal firstMileShippingCost = MathUtil.multiplyWithFour(invSkuCostDTO.getFirstMileShippingCost(), invSkuCostDTO.getExchangeRate());
+                BigDecimal clearanceCustomsTax = MathUtil.multiplyWithFour(invSkuCostDTO.getClearanceCustomsTax(), invSkuCostDTO.getExchangeRate());
+                kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(productCost, qty));
+                kolSampleCostEntity.setFirstMileShippingCost(MathUtil.multiplyWithFour(firstMileShippingCost, qty));
+                kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(clearanceCustomsTax, qty));
             }
             //设置小包费用
             smallBagCostDTOS.stream().filter(obj ->  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
