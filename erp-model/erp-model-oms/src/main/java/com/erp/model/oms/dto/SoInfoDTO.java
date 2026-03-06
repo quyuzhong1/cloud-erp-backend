@@ -2428,11 +2428,20 @@ public class SoInfoDTO implements Serializable {
          * 已下推发货数量
          */
         private Integer alreadyDeliveryQty;
-
         /**
          * 发货数量
          */
         private Integer deliveryQty;
+
+        /**
+         * 锁定数量（冻结数量）
+         */
+        private Integer frozenQty;
+
+        /**
+         * 发货通知数量
+         */
+        private Integer effectiveNoticeQty;
 
         /**
          * 要货日期
