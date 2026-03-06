@@ -88,7 +88,8 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
         // 查询数据库中已存在的数据（排除 deleteIdList）
         QueryWrapper<CfgAfterPlatformShopEntity> query = new QueryWrapper<>();
         if (deleteIdList != null && !deleteIdList.isEmpty()) {
-            query.notIn("id", deleteIdList);
+            query.notIn("id", deleteIdList)
+                    .ne("shop_json","{}");
         }
         List<CfgAfterPlatformShopEntity> existingEntities = this.list(query);
 
@@ -138,7 +139,15 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     private List<CfgAfterPlatformShopEntity> handleData(CfgAfterPlatformShopDTO.SaveDTO dto) {
         List<CfgAfterPlatformShopEntity> cfgAfterPlatformShopList = new ArrayList<>();
         List<CfgAfterPlatformShopDTO.AfterPlatfromShopDTO> saveDTOList = dto.getAfterPlatfromShopDTOList();
+
+        List<String> deleteIdList = dto.getDeleteIdList();
+
         for (CfgAfterPlatformShopDTO.AfterPlatfromShopDTO saveDTO : saveDTOList) {
+            // 跳过deleteIdList中包含的ID
+            if (deleteIdList.contains(saveDTO.getId())) {
+                continue;
+            }
+
             CfgAfterPlatformShopEntity entity = new CfgAfterPlatformShopEntity();
             BeanUtils.copyProperties(saveDTO, entity);
 
