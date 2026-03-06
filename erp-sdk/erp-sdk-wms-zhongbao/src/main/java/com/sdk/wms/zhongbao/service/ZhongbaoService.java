@@ -1,6 +1,9 @@
 package com.sdk.wms.zhongbao.service;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
 import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.*;
@@ -9,6 +12,9 @@ import okhttp3.*;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -39,18 +45,22 @@ public class ZhongbaoService {
     public String getToken(String appKey, String appSecret) {
         String token = "";
 //        if (BusinessCommonConstants.hasProfile("prod")) {
-//        token = AuthUtils.getToken(appKey, appSecret);
-//        }else {
-        token = getTestToken(appKey);
+//            token = AuthUtils.getToken(appKey, appSecret);
+//        } else {
+            token = getTestToken(appKey);
 //        }
+        log.warn("token: {}", token);
         return token;
+    }
+    public String getToken(Map<String, Object> authMap){
+        String appKey = authMap.get("appKey").toString();
+        String appSecret = authMap.get("appSecret").toString();
+        return getToken(appKey, appSecret);
     }
 
     private String getTestToken(String appKey) {
         OkHttpClient client = new OkHttpClient().newBuilder()
                 .build();
-        MediaType mediaType = MediaType.parse("text/plain");
-        RequestBody body = RequestBody.create(mediaType, "");
         Request request = new Request.Builder()
                 .url(getPreUrl() + "/open/open/api-token?apiKey=" + appKey)
                 .method("GET", null)
@@ -58,7 +68,7 @@ public class ZhongbaoService {
         try {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
-            log.info("response: {}", bodyStr);
+            log.warn("response: {}", bodyStr);
             //{"code":"20000","success":true,"data":"QlppRkpwMXlWY3FhS2lCeVk0QmtqbGdmZmNrRDh2SmgtMTc3MjQyNDYyMTI3Ny00MmViNjkyMzRmOTY0ZDM2OWY2ZjBkNDNmYWM4ZmU5Zi1qVEE3WUNKbStSMElYVm83VXFHcEkybG01c1Vmcmd3QnVCT0dSQjhPS3ZzPQ==","message":"请求成功","errors":[],"timestamp":"1772424621280","duration":0.005,"requestId":"aafeda4e70e442c4b4ef5c8db258b21f"}
             BaseResponse<String> baseResponse = JSONUtil.toBean(bodyStr, BaseResponse.class);
             if (baseResponse.getSuccess()) {
@@ -80,7 +90,7 @@ public class ZhongbaoService {
 //        if (BusinessCommonConstants.hasProfile("prod")) {
 //            return "https://oms-api.zbao56.com";
 //        } else {
-        return "https://oms-api-dev.zbao56.com";
+            return "https://oms-api-dev.zbao56.com";
 //        }
     }
 
@@ -93,9 +103,6 @@ public class ZhongbaoService {
     public BaseResponse open(String token) {
         log.warn("生成的token: {}", token);
         OkHttpClient client = new OkHttpClient().newBuilder().build();
-        MediaType mediaType = MediaType.parse("text/plain");
-        RequestBody body = RequestBody.create(mediaType, "");
-
         Request request = new Request.Builder()
                 .url(getPreUrl() + "/open")
                 .method("GET", null)
@@ -157,7 +164,7 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSONUtil.toBean(bodyStr, BaseResponse.class);
+            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<ProductResponse>>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -167,35 +174,55 @@ public class ZhongbaoService {
     /**
      * 渠道列表
      *
-     * @param token
      * @param channelRequest
      * @return
      */
-    public BaseResponse<ChannelResponse> chanelList(String token, ChannelRequest channelRequest) {
-        log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(channelRequest));
-        OkHttpClient client = new OkHttpClient().newBuilder().build();
-        MediaType mediaType = MediaType.parse("application/json");
-
-        RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(channelRequest));
-        Request request = new Request.Builder()
-                .url(getPreUrl() + "/open/common-data/shipping-method-list")
-                .method("POST", body)
-                .addHeader("Authorization", token)
-                .addHeader("Content-Type", "application/json")
-                .build();
-        try {
-            Response response = client.newCall(request).execute();
-            String bodyStr = response.body().string();
-            log.warn("bodyStr: {}", bodyStr);
-            return JSONUtil.toBean(bodyStr, BaseResponse.class);
-        } catch (IOException e) {
-            log.error("请求失败,异常: {}", e);
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+    public List<ChannelResponse.Channel> chanelList(Map<String, Object> authMap,ChannelRequest channelRequest) {
+        log.warn("生成的 request: {}", JSONUtil.toJsonStr(channelRequest));
+        List<ChannelResponse.Channel> list = new ArrayList<>();
+        boolean hasNext = true;
+        Integer pageNum = Integer.valueOf(channelRequest.getCommonParam().getPageParam().getPageNum());
+        Integer pageSize = Integer.valueOf(channelRequest.getCommonParam().getPageParam().getPageSize());
+        while (hasNext) {
+            String token = getToken(authMap);
+            pageNum++;
+            channelRequest.getCommonParam().getPageParam().setPageNum(String.valueOf(pageNum));
+            channelRequest.getCommonParam().getPageParam().setPageSize(String.valueOf(pageSize));
+            OkHttpClient client = new OkHttpClient().newBuilder().build();
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(channelRequest));
+            Request request = new Request.Builder()
+                    .url(getPreUrl() + "/open/common-data/shipping-method-list")
+                    .method("POST", body)
+                    .addHeader("Authorization", token)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+            try {
+                Response response = client.newCall(request).execute();
+                String bodyStr = response.body().string();
+                log.warn("bodyStr: {}", bodyStr);
+                BaseResponse<ChannelResponse> channelResponseBaseResponse = JSON.parseObject(bodyStr,new TypeReference<BaseResponse<ChannelResponse>>() {}.getType());
+                if (channelResponseBaseResponse.getSuccess()){
+                    String pageNum1 = channelResponseBaseResponse.getData().getPageNum();
+                    String totalPage1 = channelResponseBaseResponse.getData().getTotalPage();
+                    if (CollUtil.isNotEmpty(channelResponseBaseResponse.getData().getList())){
+                        list.addAll(channelResponseBaseResponse.getData().getList());
+                    }
+                    hasNext = Integer.valueOf(pageNum1).compareTo(Integer.valueOf(totalPage1)) < 0;
+                }else {
+                    hasNext = false;
+                }
+            } catch (IOException e) {
+                log.error("请求失败,异常: {}", e);
+                throw new ServiceException("请求失败,异常: " + e.getMessage());
+            }
         }
+        return list;
     }
 
     /**
      * 海外入库单创建
+     *
      * @param token
      * @param overseasInboundCreateRequest
      * @return
@@ -215,7 +242,7 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSONUtil.toBean(bodyStr, BaseResponse.class);
+            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundCreateResponse>>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -224,6 +251,7 @@ public class ZhongbaoService {
 
     /**
      * 海外入库单更新
+     *
      * @param token
      * @param overseasInboundUpdateRequest
      * @return
@@ -243,14 +271,16 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSONUtil.toBean(bodyStr, BaseResponse.class);
+            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundUpdateResponse>>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
         }
     }
+
     /**
      * 海外入库单取消
+     *
      * @param token
      * @param overseasInboundCancelRequest
      * @return
@@ -270,14 +300,16 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSONUtil.toBean(bodyStr, BaseResponse.class);
+            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundCancelResponse>>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
         }
     }
+
     /**
      * 海外入库单审批
+     *
      * @param token
      * @param overseasInboundApproveRequest
      * @return
@@ -297,7 +329,7 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSONUtil.toBean(bodyStr, BaseResponse.class);
+            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundApproveResponse>>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -306,6 +338,7 @@ public class ZhongbaoService {
 
     /**
      * 库存流水列表
+     *
      * @param token
      * @param overseasInboundReceiveRequest
      * @return
@@ -325,7 +358,7 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSONUtil.toBean(bodyStr, BaseResponse.class);
+            return JSON.parseObject(bodyStr,new TypeReference<BaseResponse<OverseasInboundReceiveResponse>>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());

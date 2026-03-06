@@ -43,6 +43,7 @@ public class ChannelResponse extends PageResponse {
         private Integer isSplitOrder = -1;
         //备注
         private String remark;
+        private String erpWarehouseId;
         private Warehouse openWarehouse;
     }
 

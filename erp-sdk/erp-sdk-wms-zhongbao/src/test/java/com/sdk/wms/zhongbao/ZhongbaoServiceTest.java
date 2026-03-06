@@ -1,9 +1,7 @@
 package com.sdk.wms.zhongbao;
 
 import cn.hutool.json.JSONUtil;
-import com.sdk.wms.zhongbao.dto.request.ChannelRequest;
-import com.sdk.wms.zhongbao.dto.request.ProductRequest;
-import com.sdk.wms.zhongbao.dto.request.WarehouseRequest;
+import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.BaseResponse;
 import com.sdk.wms.zhongbao.dto.response.ChannelResponse;
 import com.sdk.wms.zhongbao.dto.response.ProductResponse;
@@ -16,6 +14,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RunWith(SpringRunner.class)
@@ -54,15 +53,15 @@ class ZhongbaoServiceTest {
     @Test
     public void productList() {
         String token = zhongbaoService.getToken(appKey, appSecret);
-        ProductRequest productRequest = ProductRequest.builder().status(3).build();
+        ProductRequest productRequest = ProductRequest.builder().build();
         BaseResponse<ProductResponse> response = zhongbaoService.productList(token, productRequest);
         System.out.println(JSONUtil.toJsonStr(response));
     }
     @Test
     public void chanelList() {
-        String token = zhongbaoService.getToken(appKey, appSecret);
-        ChannelRequest channelRequest = ChannelRequest.builder().build();
-        BaseResponse<ChannelResponse> response = zhongbaoService.chanelList(token, channelRequest);
-        System.out.println(JSONUtil.toJsonStr(response));
+//        String token = zhongbaoService.getToken(appKey, appSecret);
+        ChannelRequest channelRequest = ChannelRequest.builder().commonParam(CommonRequest.builder().pageParam(PageRequest.builder().pageNum("0").pageSize("10").build()).build()).build();
+        List<ChannelResponse.Channel> channels = zhongbaoService.chanelList(authMap, channelRequest);
+        System.out.println(JSONUtil.toJsonStr(channels));
     }
 }
