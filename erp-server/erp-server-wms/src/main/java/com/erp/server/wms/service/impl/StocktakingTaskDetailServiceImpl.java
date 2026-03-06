@@ -13,14 +13,13 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
-import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
-import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.entity.StocktakingTaskUserEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PushStocktakingProfitLossStatusEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
-import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
+import com.erp.server.wms.listener.StocktakingTaskFirstQtyExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
@@ -75,6 +74,13 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     private StocktakingTaskMapper stocktakingTaskMapper;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
+
+    @Resource
+    private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Override
@@ -98,15 +104,9 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (Objects.isNull(task)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
-        //状态
-        StocktakingStatusEnum status = task.getStatus();
-        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
-        if (!statusList.contains(status)) {
-            throw new ServiceException("只有复盘中,未开始的盘点任务才能修改盘点库存");
-        }
 
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseService, operateLogService);
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(stocktakingTaskService,this,stocktakingProfitLossService, task.getCode(), taskDetailList, warehouseService, operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -155,10 +155,12 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             }
             //这是修改的数量
             Integer updateQty = item.getQty();
+            Integer updateFirstQty = item.getFirstQty();
             //这是数控
             Integer dbQty = taskDetail.getQty();
+            Integer dbFirstQty = taskDetail.getFirstQty();
             //是否秀发i
-            Boolean isUpdate = !updateQty.equals(dbQty);
+            Boolean isUpdate = !updateQty.equals(dbQty) || !updateFirstQty.equals(dbFirstQty);
             if (isUpdate) {
                 OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
                 addModuleOperateLogDTO.setOperation("修改操作");
@@ -171,6 +173,10 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 sb.append(taskDetail.getQty());
                 Integer qty = item.getQty();
                 sb.append("修改为:").append(qty);
+                sb.append("初盘库存由原来的:");
+                sb.append(taskDetail.getFirstQty());
+                Integer firstQty = item.getFirstQty();
+                sb.append("修改为:").append(firstQty);
                 addModuleOperateLogDTO.setContent(sb.toString());
                 operateLogList.add(addModuleOperateLogDTO);
 
@@ -182,6 +188,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 //差异数量 等于盘点库存-可用库存-冻结库存
                 Integer diffQty = qty - usableQty - frozenQty;
                 taskDetail.setDiffQty(diffQty);
+                //初盘数量
+                taskDetail.setFirstQty(item.getFirstQty());
                 updateTaskDetailList.add(taskDetail);
             }
         }
@@ -247,6 +255,22 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             item.setProductName(skuName);
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(item.getWarehouseId()) && e.getCode().equals(item.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             item.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //下推盘盈盘亏状态
+            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(item.getId());
+            if (stocktakingProfitLossDetailList.isEmpty()) {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getName());
+            } else {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.GENERATED.getName());
+            }
+
+            if (item.getDiffQty() == 0) {
+                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getName());
+            }
+
         }
         return resultList;
     }
@@ -397,15 +421,57 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
-        // 最新盘盈盘亏单有效单据日期列表
+        // 查询最新盘点任务明细（根据盘点任务创建日期）
         List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
         if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
-            // 已有日期之前对应仓位已审核的盘盈盘亏单
+            // 业务规则：根据盘点任务创建日期判断，当业务单据日期 <= 盘点任务创建日期时，返回true（已关闭）
+            // 判断逻辑：!billDate.isAfter(盘点日期) 等价于 billDate <= 盘点日期
             return lastStocktakingProfitLossList.stream()
                     .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
-                            (billDate.isBefore(e.getBillDate()))
+                            (!billDate.isAfter(e.getBillDate()))
                     );
         }
         return false;
+    }
+
+    @Override
+    public Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response) {
+        StocktakingTaskFirstQtyExcelListener excelListener = new StocktakingTaskFirstQtyExcelListener(stocktakingTaskService, this,stocktakingProfitLossService, warehouseService,operateLogService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskFirstQtyExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("盘点任务初盘数量导入错误！>>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<StocktakingTaskFirstQtyExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "盘点任务初盘数量导入错误信息";
+            ExcelUtil.export(fileName, "error", errorList, StocktakingTaskFirstQtyExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadFirstQtyTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/StocktakingTaskFirstQtyTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        }
     }
 }

@@ -8,15 +8,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @author Lambda
- * @Classname StocktakingTaskDetailExcelDTO
- * @Description
- * @Date 2023-08-09 12:24
- * @Created by yl
- */
+ * @Author: wtr
+ * @Date: 2026/2/2 10:11
+ * @Param:
+ * @Return:
+ * @Description:
+ **/
 @Data
 @NoArgsConstructor
-public class StocktakingTaskDetailExcelDTO {
+public class StocktakingTaskFirstQtyExcelDTO {
 
     @ColumnWidth(30)
     @ExcelProperty(value = "盘点任务单号", index = 0)
@@ -61,12 +61,12 @@ public class StocktakingTaskDetailExcelDTO {
 
     @ColumnWidth(30)
     @ExcelProperty(value = "初盘数量", index = 8)
-    @FieldValid(fieldName = "初盘数量",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "初盘数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String firstQty;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "*盘点库存", index = 9)
-    @FieldValid(fieldName = "*盘点库存",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    @ExcelProperty(value = "盘点库存", index = 9)
+    @FieldValid(fieldName = "盘点库存",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String qty;
 
     @ColumnWidth(30)

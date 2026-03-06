@@ -275,10 +275,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
-        if(entity.getSourceId().equals("1782943774607937538")){
-            System.out.println("11");
-        }
-
         if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "核算状态已确认，不可重新分摊");
         }
@@ -621,6 +617,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             orgId = LogisticsSupplierEntity.getOrgId();
         }else {
             orgId = allocationSettingDTO.getFirstOrgId();
+        }
+
+        if(StringUtils.isBlank(orgId)){
+            throw new RuntimeException(ApiError.FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED.getMsg());
         }
         String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
