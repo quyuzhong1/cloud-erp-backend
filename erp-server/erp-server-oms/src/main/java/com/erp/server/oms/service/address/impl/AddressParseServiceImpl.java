@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 @Service
 public class AddressParseServiceImpl implements AddressParseService {
 
-    private static final Pattern CHINESE_TEXT_PATTERN = Pattern.compile(".*[\\u4e00-\\u9fa5].*");
+    private static final Pattern CHINESE_TEXT_PATTERN = Pattern.compile(".*[\\u4e00-\\u9fa5].*", Pattern.DOTALL);
 
     @Resource
     private SysUserFeign sysUserFeign;

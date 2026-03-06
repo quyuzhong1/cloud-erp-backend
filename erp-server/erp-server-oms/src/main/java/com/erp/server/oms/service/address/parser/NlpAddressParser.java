@@ -99,7 +99,10 @@ public class NlpAddressParser implements AddressParser {
     }
 
     private String buildDetailAddress(String textWithoutPhone, RegionMatchResult region, NameExtractor.ExtractedName extractedName) {
-        String detail = TextCleaner.removeLabelWords(textWithoutPhone);
+        String detail = TextCleaner.extractDetailAddress(textWithoutPhone);
+        if (StringUtils.isBlank(detail)) {
+            detail = TextCleaner.removeLabelWords(textWithoutPhone);
+        }
         detail = TextCleaner.removeToken(detail, region.getProvince());
         detail = TextCleaner.removeToken(detail, region.getCity());
         detail = TextCleaner.removeToken(detail, region.getDistrict());
@@ -111,7 +114,7 @@ public class NlpAddressParser implements AddressParser {
         }
         detail = detail.replaceAll("\\b\\d{6}\\b", " ");
         detail = detail.replace(",", " ").replace(";", " ").replace(":", " ");
-        detail = TextCleaner.normalize(detail);
+        detail = TextCleaner.cleanupDetailAddress(detail);
         return detail;
     }
 
