@@ -59,10 +59,10 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
             }
         }
 
-        // 检查是否有重复的平台+店铺组合
+        // 检查是否有重复的平台 + 店铺组合
         checkPlatformShopDuplicate(saveDTO);
 
-        // 数据转换 & 唯一性校验
+        // 数据转换
         List<CfgAfterPlatformShopEntity> cfgAfterPlatformShopEntities = handleData(saveDTO);
 
         // 保存或更新数据
@@ -84,6 +84,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
         Map<String, Set<String>> inputCombinations = new HashMap<>();
         List<CfgAfterPlatformShopDTO.AfterPlatfromShopDTO> afterPlatfromShopDTOList = saveDTO.getAfterPlatfromShopDTOList();
         List<String> deleteIdList = saveDTO.getDeleteIdList();
+        Set<String> deleteIdSet = deleteIdList != null ? new HashSet<>(deleteIdList) : Collections.emptySet();
 
         // 查询数据库中已存在的数据（排除 deleteIdList）
         QueryWrapper<CfgAfterPlatformShopEntity> query = new QueryWrapper<>();
@@ -91,7 +92,6 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
         if (deleteIdList != null && !deleteIdList.isEmpty()) {
             query.notIn("id", deleteIdList);
         }
-        List<CfgAfterPlatformShopEntity> existingEntities = this.list(query);
 
         // 检查入参内部重复 + 数据库重复
         for (CfgAfterPlatformShopDTO.AfterPlatfromShopDTO afterPlatfromShopDTO : afterPlatfromShopDTOList) {
@@ -99,30 +99,17 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
 
             String platform = afterPlatfromShopDTO.getDictPlatform();
             String currentId = afterPlatfromShopDTO.getId();
+
+            // 如果当前记录在deleteIdList中，则跳过校验
+            if (currentId != null && deleteIdSet.contains(currentId)) {
+                continue;
+            }
+
             inputCombinations.putIfAbsent(platform, new HashSet<>());
 
             for (String shopId : afterPlatfromShopDTO.getShopIdList()) {
                 // 检查入参内部重复
                 if (!inputCombinations.get(platform).add(shopId)) {
-                    ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
-                    throw new ServiceException(
-                            ApiError.COMMON_PLATFORM_SHOP_EXSIT,
-                            platform,
-                            shopInfo.getName()
-                    );
-                }
-
-                // 检查数据库重复（跳过 deleteIdList 中的数据）
-                boolean existsInDb = existingEntities.stream()
-                        .anyMatch(entity ->
-                                entity.getDictPlatform().equals(platform) &&
-                                        entity.getShopJson() != null &&
-                                        entity.getShopJson().getJSONArray("shops").stream()
-                                                .anyMatch(shop -> shopId.equals(((JSONObject) shop).getStr("id"))&&
-                                                        (currentId == null || !currentId.equals(entity.getId())))
-                        );
-
-                if (existsInDb) {
                     ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
                     throw new ServiceException(
                             ApiError.COMMON_PLATFORM_SHOP_EXSIT,
