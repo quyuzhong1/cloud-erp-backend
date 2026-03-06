@@ -454,6 +454,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
         SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(soDeliveryNotice.getId());
+        List<String> soDetailIds = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(soDetailIds);
         List<SoDeliveryNoticeChangeDetailEntity> sourceDetailList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> addList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> updateList = new ArrayList<>();
@@ -476,6 +478,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 sourceDetailList.add(detail);
             }else if (SoDeliveryNoticeChangeTypeEnum.UPDATE.getCode().equals(detail.getChangeType())){
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到发货通知单明细数据",detail.getSkuNo()));
+                if(StringUtils.isNotBlank(soDeliveryNotice.getVirtualWarehouseId()) ){
+                    SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(v -> v.getId().equals(detail.getSoDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到销售订单明细数据"));
+                    if(soDetailEntity.getFrozenQty() < detail.getNewQty() - soDeliveryNoticeDetailEntity.getDeliveryQty()){
+                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN);
+                    }
+                }
                 soDeliveryNoticeDetailEntity.setChangeBeforeSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
                 soDeliveryNoticeDetailEntity.setSkuId(detail.getSkuId());
                 soDeliveryNoticeDetailEntity.setSkuNo(detail.getSkuNo());
