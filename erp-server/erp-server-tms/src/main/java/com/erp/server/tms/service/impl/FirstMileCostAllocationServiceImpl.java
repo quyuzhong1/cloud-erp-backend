@@ -847,11 +847,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                                 && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
                         ).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(weightAllocationEntityList1)) {
-                    throw new ServiceException(CharSequenceUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在", entity.getSourceCode(), deliveryDetailEntity.getSkuNo()));
+                      //装箱任务明细存在是否取消发货字段， 若取消发货则不下推重量分摊，因此必然存在发货单明细sku存在但重量分摊不存在的情况
+                    //throw new ServiceException(CharSequenceUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在", entity.getSourceCode(), deliveryDetailEntity.getSkuNo()));
+                }else{
+                    firstMileSkuCostAllocationEntity.setAllocatedWeight(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add));
+                    firstMileSkuCostAllocationEntity.setWeightAllocationId(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getId).distinct().collect(Collectors.joining(",")));
                 }
-                firstMileSkuCostAllocationEntity.setAllocatedWeight(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add));
-                firstMileSkuCostAllocationEntity.setWeightAllocationId(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getId).distinct().collect(Collectors.joining(",")));
-
             }
         }
     }
