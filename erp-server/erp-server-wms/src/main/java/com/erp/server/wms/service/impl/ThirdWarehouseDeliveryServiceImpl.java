@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -227,7 +228,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         List<String> shopIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getShopId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> warehouseIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getWarehouseId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseEntityList = warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
+        List<WarehouseEntity> warehouseEntityList = CollectionUtil.isEmpty(warehouseIds)?new ArrayList<>():warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
         List<String> errorSoIds = list.stream()
                 .filter(v -> Objects.equals(v.getSignOrderError(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode()))
                 .map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId)

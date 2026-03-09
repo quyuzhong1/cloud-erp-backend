@@ -86,6 +86,11 @@ public class SmallBagCostAllocationJob {
             return ReturnT.SUCCESS;
         }
         CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
+        if (ReconciliationTypeEnum.NOT_GENERATE.getCode().equals(dto.getPackageAllocationType())) {
+            XxlJobHelper.log("[生成小包费用分摊] autoGenerateSmallBagCostAllocation 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+            return ReturnT.SUCCESS;
+        }
+
         Integer packageAllocationDate = dto.getPackageAllocationDate();
         int dayOfMonth = currentDateTime.getDayOfMonth();
         if(packageAllocationDate != null && dayOfMonth >= packageAllocationDate) {

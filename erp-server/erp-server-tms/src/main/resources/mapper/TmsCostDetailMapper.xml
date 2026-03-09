@@ -72,7 +72,8 @@
                 lbc.cost_value,
                 lbc.cfg_cost_id,
                 lbc.currency,
-                lbc.type
+                lbc.type,
+                lbc.exchange_rate
         from tms_cost_detail lbc
         inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
         where  lbc.is_deleted = false and lbc.main_id in

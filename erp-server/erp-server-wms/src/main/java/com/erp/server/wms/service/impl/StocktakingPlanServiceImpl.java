@@ -11,13 +11,12 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -28,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
@@ -42,11 +42,15 @@ import com.erp.server.wms.mapper.StocktakingPlanMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -76,6 +80,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private WarehouseService warehouseService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private InventoryService inventoryService;
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public PagingVO<StocktakingPlanDTO.ListDTO> paging(PagingDTO<StocktakingPlanDTO.PagingParamDTO> pagingParamDTO) {
@@ -300,6 +308,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
+        //盘点日期不能小于当前日期
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE,entity.getCode());
+        }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -362,6 +374,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         stocktakingTaskService.removeBySourceId(id);
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //清空计划下推时间
+        removePlanTaskTime(id);
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "反审核操作");
@@ -469,13 +483,56 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+
+        if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY);
+        }
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // 明细
-        List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
-        // 生成盘点任务
-        stocktakingTaskService.createTaskList(entity, detailEntityList);
+
+        // 计算计划任务时间
+        LocalDateTime planTaskTime = calculatePlanTaskTime(entity.getStocktakingDate());
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate stocktakingDate = entity.getStocktakingDate();
+        // 检查是否是当天盘点，或者审核时间是否在前一天23:50-23:59之间
+        boolean shouldCreateTaskImmediately = now.toLocalDate().isEqual(stocktakingDate) ||
+                (now.toLocalDate().isEqual(stocktakingDate.minusDays(1)) &&
+                        now.getHour() == 23 &&
+                        now.getMinute() >= 50);
+
+        // 如果是当天盘点，直接生成任务
+        if (shouldCreateTaskImmediately) {
+            updatePlanTaskTime(entity.getId(), now);
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            stocktakingTaskService.createTaskList(entity, detailEntityList,Boolean.TRUE);
+        } else {
+            updatePlanTaskTime(entity.getId(), planTaskTime);
+        }
+
         return Boolean.TRUE;
+    }
+
+    /**
+     * 计算计划任务时间
+     */
+    private LocalDateTime calculatePlanTaskTime(LocalDate stocktakingDate) {
+        if (stocktakingDate.isAfter(LocalDate.now())) {
+            // 盘点日期大于当天，生成时间为前一天23:50
+            return stocktakingDate.minusDays(1).atTime(23, 50);
+        }
+        return LocalDateTime.now();
+    }
+
+    /**
+     * 更新计划任务时间
+     */
+    public Boolean updatePlanTaskTime(String planId, LocalDateTime planTaskTime) {
+        return this.lambdaUpdate()
+                .eq(StocktakingPlanEntity::getId, planId)
+                .set(StocktakingPlanEntity::getPlanTaskTime, planTaskTime)
+                .update();
     }
 
     @Override
@@ -489,6 +546,49 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         this.lambdaUpdate().eq(StocktakingPlanEntity::getId, sourceId)
                 .set(StocktakingPlanEntity::getStatus, stocktakingStatus)
                 .update(new StocktakingPlanEntity());
+    }
+
+    @Override
+    public Boolean pushStockingTask(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<StocktakingPlanEntity> stocktakingPlanList = this.listByIds(ids);
+        if (stocktakingPlanList.isEmpty()) {
+            throw new ServiceException(ApiError.WH_STOCKPLAN_NOT_FOUND);
+        }
+
+        for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+                throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE,entity.getCode());
+            }
+        }
+
+
+        for (String id : ids) {
+            List<StocktakingTaskEntity> stocktakingTaskList = stocktakingTaskService.listBySourceId(id);
+            if (!stocktakingTaskList.isEmpty()) {
+                StocktakingPlanEntity stoctakingPlan = this.getById(id);
+                throw new ServiceException(ApiError.WH_STOCKPLAN_ALREADY_PUSH,stoctakingPlan.getCode());
+            }
+        }
+
+        for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            stocktakingTaskService.createTaskList(entity, detailEntityList,Boolean.FALSE);
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean pushStockingTaskByJob(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<StocktakingPlanEntity> stocktakingPlanList = this.listByIds(ids);
+        for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            stocktakingTaskService.createTaskListByJob(entity, detailEntityList);
+        }
+
+        return Boolean.TRUE;
     }
 
     /**
@@ -523,6 +623,16 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
 
     /**
+     *
+      * @param id
+     */
+    public void removePlanTaskTime(String id){
+        this.lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
+                .set(StocktakingPlanEntity::getPlanTaskTime, null)
+                .update();
+    }
+
+    /**
     * 更新审核状态
     */
     public void updateApproveStatus(List<String> ids, String approveStatus) {
@@ -552,6 +662,21 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if(CollUtil.isEmpty(list)) {
            return;
         }
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.STOCKTAKING_PLAN.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+            }
+        }
+
         // 属性赋值
         for(StocktakingPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(data.getApproveStatus().getName());
@@ -559,6 +684,12 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             data.setTypeName(data.getType().getName());
             data.setStatusName(data.getStatus().getName());
             data.setSeparateRuleName(data.getSeparateRule().getName());
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
+            }
         }
     }
 
@@ -566,6 +697,9 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     * 新增修改处理数据
     */
     private void handleData(StocktakingPlanDTO.CommonDTO dto) {
+        if (dto.getStocktakingDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY);
+        }
         // 按照仓库盘点和仓位盘点需要验证动销时间必填
         StocktakingTypeEnum type = dto.getType();
         if (StocktakingTypeEnum.BY_SKU.equals(type)) {
@@ -587,6 +721,135 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (CollUtil.isNotEmpty(disabledWarehouseList)){
             throw new ServiceException(ApiError.WH_DISABLED, JSONUtil.toJsonStr(disabledWarehouseList));
         }
+    }
+
+    /**
+     * 处理盘点计划，过滤掉不符合条件的计划，并返回被移除的ID及原因
+     * @param idList 盘点计划ID列表
+     * @return 被移除的ID及其原因（key: 计划ID, value: 移除原因）
+     */
+    public Map<String, String> filterStocktakingPlan(List<String> idList) {
+        //记录被移除的ID及其原因
+        Map<String, String> removedIds = new HashMap<>();
+        if (CollUtil.isEmpty(idList)) {
+            log.warn("输入盘点计划ID列表为空");
+            return removedIds;
+        }
+
+        //查询所有盘点计划
+        List<StocktakingPlanEntity> planList = this.listByIds(idList);
+        if (CollUtil.isEmpty(planList)) {
+            log.warn("未查询到任何盘点计划，移除所有ID");
+            idList.clear();
+            return removedIds;
+        }
+
+        //遍历处理每个计划
+        Iterator<String> idIterator = idList.iterator();
+        while (idIterator.hasNext()) {
+            String planId = idIterator.next();
+            log.info("开始处理盘点计划ID: {}", planId);
+
+            //获取当前计划实体
+            StocktakingPlanEntity entity = planList.stream()
+                    .filter(e -> e.getId().equals(planId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (entity == null) {
+                log.warn("未找到ID为{}的盘点计划，移除该ID", planId);
+                removedIds.put(planId, "计划不存在");
+                idIterator.remove();
+                continue;
+            }
+
+            //查询盘点明细
+            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+            if (CollUtil.isEmpty(detailEntityList)) {
+                log.warn("盘点计划【{}】无明细数据，跳过处理", entity.getId());
+                removedIds.put(planId, "无明细数据");
+                idIterator.remove();
+                continue;
+            }
+
+            //盘点日期不能小于当前日期
+            if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
+                log.warn("【{}】盘点日期不能小于当前日期,请修改后重新审核", entity.getId());
+                removedIds.put(planId, "盘点日期小于当前日期");
+                idIterator.remove();
+                continue;
+            }
+
+            //查询需要盘点的库存记录
+            List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);
+            if (CollUtil.isEmpty(inventoryList)) {
+                log.warn("盘点计划【{}】没有需要盘点的库存记录，跳过处理", entity.getId());
+                removedIds.put(planId, "无库存记录");
+                idIterator.remove();
+                continue;
+            }
+
+            //检查库存是否已被锁定
+            boolean hasConflict = false;
+            for (InventoryEntity item : inventoryList) {
+                String existKey = CharSequenceUtil.format(
+                        RedisKeyConstant.INVENTORY_LOCK,
+                        "*",
+                        item.getOrgId(),
+                        item.getWarehouseId(),
+                        item.getWarehouseLocation(),
+                        item.getSkuId(),
+                        item.getDictInventoryStatus()
+                );
+
+                Collection<String> keys = redisUtil.keys(existKey);
+                if (CollUtil.isNotEmpty(keys)) {
+                    WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
+                    String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
+                    log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存已存在盘点任务，跳过该计划",
+                            warehouseName,
+                            item.getWarehouseLocation(),
+                            item.getSkuNo(),
+                            item.getDictInventoryStatus()
+                    );
+                    removedIds.put(planId, "库存已锁定");
+                    hasConflict = true;
+                    break;
+                }
+            }
+
+            if (hasConflict) {
+                idIterator.remove();
+                continue;
+            }
+
+            //设置Redis锁
+            String planCode = entity.getCode();
+            inventoryList.forEach(item -> {
+                String redisKey = CharSequenceUtil.format(
+                        RedisKeyConstant.INVENTORY_LOCK,
+                        planCode,
+                        item.getOrgId(),
+                        item.getWarehouseId(),
+                        item.getWarehouseLocation(),
+                        item.getSkuId(),
+                        item.getDictInventoryStatus()
+                );
+                redisUtil.set(redisKey, planCode);
+                log.info("已设置库存锁定：key={}, value={}", redisKey, planCode);
+            });
+
+            log.info("盘点计划【{}】处理完成，共锁定{}条库存记录", entity.getId(), inventoryList.size());
+        }
+
+        //输出最终结果
+        log.info("盘点计划处理完成。输入ID列表: {}, 剩余有效ID: {}, 被移除ID: {}",
+                idList.size() + removedIds.size(),
+                idList,
+                removedIds
+        );
+
+        return removedIds;
     }
 
 }

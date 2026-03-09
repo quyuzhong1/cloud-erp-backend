@@ -6,10 +6,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.server.tms.query.*;
 import com.erp.server.tms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -84,6 +86,8 @@ public class ExportTmsFeignController {
 
     @Resource
     private TmsCfgSailingService tmsCfgSailingService;
+    @Resource
+    private CfgLogisticsCostImportService cfgLogisticsCostImportService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -412,5 +416,11 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
     PagingVO<TmsCfgSailingDTO.ListDTO> exportTmsCfgSailing(@RequestBody PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto){
         return tmsCfgSailingService.paging(dto);
+    }
+
+    @PostMapping("/exportTmsCfgLogisticsCost")
+    @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
+    public PagingVO<CfgLogisticsCostImportDTO.ListDTO> exportTmsCfgLogisticsCost(@RequestBody PagingDTO<CfgLogisticsCostImportDTO.PagingParamDTO> dto) {
+        return cfgLogisticsCostImportService.paging(dto);
     }
 }

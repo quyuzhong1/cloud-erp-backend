@@ -16,6 +16,7 @@ public enum ReconciliationTypeEnum implements EnumMessage {
 
     CREAT_BY_PERIOD("creatByPeriod", "按周期生成"),
     CREAT_BY_MONTH("creatByMonth", "自然月"),
+    NOT_GENERATE("notGenerate", "不自动生成"),
 
     ;
 
