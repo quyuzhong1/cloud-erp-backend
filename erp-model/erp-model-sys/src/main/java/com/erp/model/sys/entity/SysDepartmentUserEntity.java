@@ -34,7 +34,7 @@ public class SysDepartmentUserEntity {
     private Date updateTime;
 
     /**
-     * 用户删除状态 1:正常 0：已删除
+     * 用户删除状态 false:正常 true：已删除
      */
     @TableField(value = "is_deleted")
     @TableLogic

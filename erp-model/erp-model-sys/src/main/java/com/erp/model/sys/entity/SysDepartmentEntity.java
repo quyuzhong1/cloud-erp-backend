@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * 部门表
@@ -76,4 +74,11 @@ public class SysDepartmentEntity implements Serializable {
 	 */
 	@TableField("disabled")
 	private Boolean disabled;
+
+	/**
+	 * 用户删除状态 false:正常 true：已删除
+	 */
+	@TableField(value = "is_deleted")
+	@TableLogic
+	private Boolean isDeleted;
 }
