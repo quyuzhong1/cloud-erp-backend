@@ -1662,7 +1662,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(soB2cEntity.getId());
         if(Objects.nonNull(existEntity)){
             log.warn("订单【{}】已存在发货单，跳过生成发货单",soB2cEntity.getCode());
-            return;
+            throw new ServiceException("已生成B2C发货单，不允许操作手动发货");
         }
         soB2cDelivery.setIsMatchTransferRule(true);
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);

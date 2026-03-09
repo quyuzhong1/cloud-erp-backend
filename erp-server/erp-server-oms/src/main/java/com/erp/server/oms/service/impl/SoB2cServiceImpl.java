@@ -11279,6 +11279,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(restrictionMsg);
         }
         dto.setLogisticsChannelCode(baseDTO.getCode());
+        Boolean isThirdWarehouse = Objects.nonNull(overseasWarehouse);
         //生成发货单和出库单
         try {
             UserContext.setIsUserSystem(true);
