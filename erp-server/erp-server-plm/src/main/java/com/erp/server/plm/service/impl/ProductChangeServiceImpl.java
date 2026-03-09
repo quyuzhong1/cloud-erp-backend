@@ -34,6 +34,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -343,6 +344,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             }
             if(Objects.nonNull(productDetailEntity) && !productDetailEntity.getStatus().equals(2)){
                 errorMsgList.add("只有已审核的sku可以变更");
+            }
+            //判断field是否重复
+            List<String> fieldList = entry.getValue().stream().map(ProductChangeImportExcelDTO::getField).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<String> repeatFieldList = fieldList.stream().filter(i -> Collections.frequency(fieldList, i) > 1).distinct().collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(repeatFieldList)) {
+                errorMsgList.add(StrUtil.format("变更字段存在重复：{}", String.join(",", repeatFieldList)));
             }
 
             if(CollectionUtils.isNotEmpty(errorMsgList)){
@@ -1151,7 +1158,14 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
                 // product_purchase
                 case EAN_CODE:
-                    productPurchaseEntity.setEan((String) newValue);
+                    String newEan = String.valueOf(newValue);
+                    if(StringUtils.isNotBlank(newEan)){
+                        ProductPurchaseEntity productPurchaseEntity1 = productPurchaseService.getByEan(newEan);
+                        if(Objects.nonNull(productPurchaseEntity1)){
+                            throw new ServiceException("EAN码已存在，无法更新");
+                        }
+                    }
+                    productPurchaseEntity.setEan(newEan);
                     purchaseChanged = true;
                     break;
                 case TRIAL_PRODUCTION_QUANTITY:

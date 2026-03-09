@@ -165,19 +165,31 @@ public class ProductChangeExcelListener extends AnalysisEventListener<ProductCha
         try {
             newValue = productChangeFieldEnum.convert(newValueStr);
         }catch (Exception e) {
-            errorMsgList.add("新值类型转换失败，字段：" + productChangeFieldEnum.getName() + "，值：" + newValueStr + "，错误信息：" + e.getMessage());
+            errorMsgList.add("格式不正确，字段：" + productChangeFieldEnum.getName() + "，值：" + newValueStr);
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
         if (newValue == null) {
-            errorMsgList.add("新值类型转换失败，字段：" + productChangeFieldEnum.getName() + "，值：" + newValueStr);
+            errorMsgList.add("格式不正确，字段：" + productChangeFieldEnum.getName() + "，值：" + newValueStr);
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
         excelDTO.setNewValueObj(newValue);
         switch (productChangeFieldEnum) {
+            case SALE_MODE:
+                BasicDictEntity saleMode = basicDictList.stream().filter(e ->"saleMethod".equals(e.getType()) && Objects.equals(e.getName(), newValue)).findFirst().orElse(null);
+                if(Objects.isNull(saleMode)){
+                    errorMsgList.add("销售方式不存在，值：" + newValue);
+                }
+                break;
+            case SALE_CHANNEL:
+                BasicDictEntity saleChannel = basicDictList.stream().filter(e ->"salesChannel".equals(e.getType()) && Objects.equals(e.getName(), newValue)).findFirst().orElse(null);
+                if(Objects.isNull(saleChannel)){
+                    errorMsgList.add("销售渠道不存在，值：" + newValue);
+                }
+                break;
             case PRODUCT_ATTRIBUTE:
                 BasicDictEntity basicDictEntity = basicDictList.stream().filter(e -> Objects.equals(e.getName(), newValue)).findFirst().orElse(null);
                 if(Objects.isNull(basicDictEntity)){
