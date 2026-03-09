@@ -387,27 +387,34 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     }
 
     public static void main(String[] args) throws Exception{
-        String input = "2972340DEMO";
-        String base64 = Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
-        System.out.println("Base64 Encoded: " + base64);
+//        String input = "2972340DEMO";
+//        String base64 = Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+//        System.out.println("Base64 Encoded: " + base64);
         // Mjk3MjM0MERFTU8=
         // Mjk3MjM0MERFTU8=
         URLCodec codec = new URLCodec();
-        String newUrlState = codec.encode(base64, "UTF-8");
-        System.out.println(newUrlState);
-        // Mjk3MjM0MERFTU8%3D
-        SecureRandom secureRandom = new SecureRandom();
-        // 生成 256 字节的随机数据
-        byte[] randomBytes = new byte[256];
-        secureRandom.nextBytes(randomBytes);
-        // 进行 Base64 编码
-        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-        // 账号要求
-        String s = "75943424_" + state.substring(4);
-        System.out.println(s);
-        String s1 = base64AndUrlEncode(s);
-        System.out.println(s1);
-        String s2 = base64AndUrlEncode("2972340DEMO");
-        System.out.println(s2);
+//        String newUrlState = codec.encode(base64, "UTF-8");
+//        System.out.println(newUrlState);
+//        // Mjk3MjM0MERFTU8%3D
+//        SecureRandom secureRandom = new SecureRandom();
+//        // 生成 256 字节的随机数据
+//        byte[] randomBytes = new byte[256];
+//        secureRandom.nextBytes(randomBytes);
+//        // 进行 Base64 编码
+//        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+//        // 账号要求
+//        String s = "75943424_" + state.substring(4);
+//        System.out.println(s);
+//        String s1 = base64AndUrlEncode(s);
+//        System.out.println(s1);
+//        String s2 = base64AndUrlEncode("2972340DEMO");
+//        System.out.println(s2);
+        String ss = "NTA3Mzg1MThfVGlqbzFQWjVNS2FyS0JjTWwySmdlb2w1WUs3SUFIREc2LTUtR2NCbk52QUEwa3hJaF9kTVMyQUtFNUlRRExzanRDci1NdnppMS1fVkpLcWx6N0pLOTRHNWwxQ0tPY0lDODNhZUI2eE9lbGUzamxoTm9UeVRQUlZQaHpmbGNXWjNJMTNwYlNFZkdTNXJsSFdIU0x2LTQ5TlRBelozbEdWOWlicDF4X0d0ekM2eU56YXNMVXlJVVNmdUwyYXlWMFN3MjhHU204c1JpcTZHY2RpSVYwTHZ6M252ZjNhWnF6OEJzNVBLbVhaOUl1ZlMxN3RSY0VDQzVlUGM3MFZKNDVLdTNPY3l1aG40T3FVN25ERzhEejVhODVCR3lOZHFFZEctS2pMZXBpMEFIVUN0a3o2RUlIZkJmNTRHdEpCQmRKYl9yT3hPRnIyZUFxd3luQ0dPVVE%3D";
+        String decode = codec.decode(ss, "UTF-8");
+        System.out.println("反解析" + decode);
+        String lastDecode = new String(Base64.getDecoder().decode(decode), StandardCharsets.UTF_8);
+        System.out.println("最后反解析" + lastDecode);
+
+
     }
 }
