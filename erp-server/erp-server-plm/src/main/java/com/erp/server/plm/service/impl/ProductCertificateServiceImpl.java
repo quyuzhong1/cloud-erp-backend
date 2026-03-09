@@ -106,6 +106,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Transactional(rollbackFor = Exception.class)
     public void add(ProductCertificateDTO.AddDTO dto) {
         List<ProductCertificateEntity> resultList = handleAdd(dto);
+        // 新增场景必须保证每条证书都有有效文件，避免主表落库但无附件
+        checkAddFile(resultList);
 
         //数据验证
         checkProductCertificate(resultList);
@@ -120,6 +122,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             operateLogEntityList.add(
                     new OperateLogEntity().setContent("新增了一个【产品证书】")
                             .setBusinessId(obj.getSkuId())
+                            .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(obj.getId())
                             .setOperation("新增操作")
             );
@@ -177,6 +180,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setProductId(productDetailEntity.getProductId());
             resultList.add(entity);
         }
+        // 与证书管理上传保持一致：新增/编辑时都校验证书项目唯一性（编辑排除自身）
+        checkProductCertificateForProductAddOrUpdate(resultList, productDetailEntityList);
         //新增数据
         this.saveOrUpdateBatch(resultList);
         //绑定附件id
@@ -330,15 +335,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
         //删除附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(ids);
-        if (CollectionUtils.isEmpty(attachmentList)) {
-            throw new ServiceException("附件信息为空");
-        }
-        //删除附件表数据
-        List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
-        plmAttachmentService.removeByIds(attachmentIdList);
-        for (PlmAttachmentEntity entity : attachmentList) {
-            //fastdfs删除附件
-            fileFeign.deleteFile(entity.getAttachUrl());
+        if (CollectionUtils.isNotEmpty(attachmentList)) {
+            //删除附件表数据
+            List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
+            plmAttachmentService.removeByIds(attachmentIdList);
+            for (PlmAttachmentEntity entity : attachmentList) {
+                //fastdfs删除附件
+                fileFeign.deleteFile(entity.getAttachUrl());
+            }
+        } else {
+            log.warn("产品证书删除时未找到附件，按无附件脏数据兼容处理, certificateIds={}", ids);
         }
         Map<String, ProductDetailEntity> stringProductDetailEntityMap = productDetailService.getByIdList(entityList.stream().map(ProductCertificateEntity::getSkuId).collect(Collectors.toList())).stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(),(v1,v2)->v1));
         return entityList.stream()
@@ -469,6 +475,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             } catch (Exception e) {
                 errorMsgList.add("文件路径下未找到文件");
             }
+            if (ObjectUtil.isEmpty(multipartFile) || multipartFile.isEmpty()) {
+                errorMsgList.add("文件路径下未找到文件");
+            }
+            if (!ObjectUtil.isEmpty(multipartFile) && isBlank(multipartFile.getOriginalFilename())) {
+                errorMsgList.add("导入文件名称未找到");
+            }
             //存在错误信息则
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -498,12 +510,28 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 errorList.add(excelDTO);
                 continue;
             }
-            //新增数据
-            this.saveOrUpdate(entity);
-            resultList.add(excelDTO);
-
-            //上传附件
-            uploadFile (Arrays.asList(entity));
+            try {
+                //新增数据
+                this.saveOrUpdate(entity);
+                //上传附件
+                uploadFile(Arrays.asList(entity));
+                //操作日志
+                operateLogService.addSysLogByBatchSave(Collections.singletonList(
+                        new OperateLogEntity().setContent("新增了一个【产品证书】")
+                                .setBusinessId(entity.getSkuId())
+                                .setClassPath(String.valueOf(ProductCertificateEntity.class))
+                                .setPid(entity.getId())
+                                .setOperation("新增操作")
+                ));
+                resultList.add(excelDTO);
+            } catch (Exception e) {
+                if (!isBlank(entity.getId())) {
+                    this.removeById(entity.getId());
+                }
+                errorMsgList.add(e.getMessage());
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+            }
         }
     }
 
@@ -725,6 +753,25 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     /**
+     * 产品管理页面保存证书时的重复校验：
+     * 1. 校验请求内重复
+     * 2. 校验与库内重复（更新场景排除自身id）
+     */
+    private void checkProductCertificateForProductAddOrUpdate(List<ProductCertificateEntity> resultList, List<ProductDetailEntity> productDetailEntityList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        List<String> skuIdList = resultList.stream().map(ProductCertificateEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> dictProductList = resultList.stream().map(ProductCertificateEntity::getDictProject).distinct().collect(Collectors.toList());
+        List<ProductCertificateEntity> productCertificateList = listBySkuListAndDictProductList(skuIdList, dictProductList);
+        Set<String> currentIdSet = resultList.stream().map(ProductCertificateEntity::getId).filter(id -> !isBlank(id)).collect(Collectors.toSet());
+        if (CollectionUtils.isNotEmpty(productCertificateList) && CollectionUtils.isNotEmpty(currentIdSet)) {
+            productCertificateList = productCertificateList.stream().filter(obj -> !currentIdSet.contains(obj.getId())).collect(Collectors.toList());
+        }
+        checkProductCertificateParam(resultList, productDetailEntityList, productCertificateList);
+    }
+
+    /**
      * @description: 查询认证
      * @author Will
      * @date: 2024/2/27 18:27
@@ -736,7 +783,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         List<ProductCertificateEntity> list = lambdaQuery().in(CollectionUtils.isNotEmpty(skuIdList),ProductCertificateEntity::getSkuId, skuIdList)
                 .in(CollectionUtils.isNotEmpty(dictProductList),ProductCertificateEntity::getDictProject, dictProductList)
                 .list();
-        return list;
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        List<String> businessIds = list.stream().map(ProductCertificateEntity::getId).collect(Collectors.toList());
+        List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(businessIds);
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            return Collections.emptyList();
+        }
+        Set<String> validBusinessIdSet = attachmentList.stream().map(PlmAttachmentEntity::getBusinessId).collect(Collectors.toSet());
+        return list.stream().filter(obj -> validBusinessIdSet.contains(obj.getId())).collect(Collectors.toList());
     }
 
     /**
@@ -773,6 +829,21 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
         }
         return resultList;
+    }
+
+    /**
+     * 新增上传时，证书文件必填且不可为空文件
+     */
+    private void checkAddFile(List<ProductCertificateEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        for (ProductCertificateEntity entity : resultList) {
+            MultipartFile multipartFile = entity.getMultipartFile();
+            if (ObjectUtil.isEmpty(multipartFile) || multipartFile.isEmpty()) {
+                throw new ServiceException("证书文件不能为空");
+            }
+        }
     }
     public static String chineseToUnicode(String str) {
         String result = "";
