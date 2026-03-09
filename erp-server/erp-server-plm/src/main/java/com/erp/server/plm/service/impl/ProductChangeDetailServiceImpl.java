@@ -179,8 +179,8 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
                 ProductChangeDetailEntity productChangeDetailEntity = BeanUtil.toBean(updateDTO, ProductChangeDetailEntity.class);
                 ProductChangeDetailEntity old = dbList.stream().filter(v->v.getId().equals(productChangeDetailEntity.getId())).findFirst().orElse(new ProductChangeDetailEntity());
                 addOrUpdateList.add(productChangeDetailEntity);
+                String fieldName = Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(productChangeDetailEntity.getField())).getName();
                 if(!productChangeDetailEntity.getField().equals(old.getField())){
-                    String fieldName = Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(productChangeDetailEntity.getField())).getName();
                     String oldFieldName = Objects.requireNonNull(ProductChangeFieldEnum.getByEntityField(old.getField())).getName();
                     msg.append("编辑了变更字段由【").append(oldFieldName).append("】改为【").append(fieldName).append("】。");
                 }else if (!productChangeDetailEntity.getNewValue().equals(old.getNewValue())){
@@ -197,10 +197,10 @@ public class ProductChangeDetailServiceImpl extends SuperServiceImpl<ProductChan
                             basicProductBuEntities,
                             countryList
                     );
-                    msg.append("编辑了变更新值由【").append(convertedValues[0]).append("】改为【").append(convertedValues[1]).append("】。");
+                    msg.append("编辑了变更字段:").append(fieldName).append("，变更新值由【").append(convertedValues[0]).append("】改为【").append(convertedValues[1]).append("】。");
                 }
                 if(!productChangeDetailEntity.getRemark().equals(old.getRemark())){
-                    msg.append("编辑了备注由【").append(productChangeDetailEntity.getRemark()).append("】改为【").append(old.getRemark()).append("】。");
+                    msg.append("编辑了备注由【").append(old.getRemark()).append("】改为【").append(productChangeDetailEntity.getRemark()).append("】。");
                 }
 
             }
