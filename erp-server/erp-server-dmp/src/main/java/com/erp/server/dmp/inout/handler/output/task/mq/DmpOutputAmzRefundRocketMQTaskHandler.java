@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformRefundOrderDTO;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoRefundDetailEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -64,10 +63,10 @@ public class DmpOutputAmzRefundRocketMQTaskHandler extends DmpOutputRocketMQTask
                     for (BaseEntity v : value) {
                         changeIds.add(v.getId());
                     }
-                } else if ("dmp_so_detail".equals(storageName)) {
+                } else if ("dmp_so_refund_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
-                        DmpSoDetailEntity dmpSoReturnDetailEntity = (DmpSoDetailEntity) v;
-                        changeIds.add(dmpSoReturnDetailEntity.getMainId());
+                        DmpSoRefundDetailEntity dmpSoRefundDetailEntity = (DmpSoRefundDetailEntity) v;
+                        changeIds.add(dmpSoRefundDetailEntity.getMainId());
                     }
                 }
             }

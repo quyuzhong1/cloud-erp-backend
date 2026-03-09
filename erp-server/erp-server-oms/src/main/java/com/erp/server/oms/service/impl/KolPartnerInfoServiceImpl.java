@@ -26,6 +26,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.listener.KolPartnerInfoExcelListener;
+import com.erp.server.oms.service.address.AddressParseService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -99,6 +100,8 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     private KolB2cApplicationAddressService  kolB2cApplicationAddressService;
     @Resource
     private KolFeedbackService  kolFeedbackService;
+    @Resource
+    private AddressParseService addressParseService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -876,6 +879,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Override
     public List<KolPartnerInfoDTO.PartnerAddressDTO> partnerAddressList(KolPartnerInfoDTO.AddressSelectDTO dto) {
         return this.baseMapper.partnerAddressList(dto);
+    }
+
+    @Override
+    public AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto) {
+        return addressParseService.parse(dto);
     }
 
 }

@@ -1,0 +1,52 @@
+package com.erp.model.oms.enums;
+
+import org.apache.commons.lang3.StringUtils;
+
+/**
+ * B2C寄样单据状态
+ */
+public enum KolB2cApplicationDocumentStatusEnum {
+    CREATED("created", "已创建"),
+    CANCELED("canceled", "已取消"),
+    CANCEL_FAIL("cancelFail", "取消失败");
+
+    private final String code;
+    private final String name;
+
+    KolB2cApplicationDocumentStatusEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return CREATED.getName();
+        }
+        for (KolB2cApplicationDocumentStatusEnum statusEnum : values()) {
+            if (StringUtils.equals(code, statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return code;
+    }
+
+    public static String normalize(String code) {
+        if (StringUtils.isBlank(code)) {
+            return CREATED.getCode();
+        }
+        for (KolB2cApplicationDocumentStatusEnum statusEnum : values()) {
+            if (StringUtils.equals(code, statusEnum.getCode())) {
+                return statusEnum.getCode();
+            }
+        }
+        return CREATED.getCode();
+    }
+}

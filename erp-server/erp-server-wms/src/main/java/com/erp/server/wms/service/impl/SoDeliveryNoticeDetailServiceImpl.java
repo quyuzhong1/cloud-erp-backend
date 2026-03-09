@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -91,7 +92,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean add(SoDeliveryNoticeDTO.Add dto, String id) {
+    public Boolean add(SoDeliveryNoticeDTO.Add dto, String id,SoInfoEntity soInfoEntity) {
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
@@ -107,6 +108,11 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
                 throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES);
+            }
+            if(StringUtils.isNotBlank(soInfoEntity.getVirtualWarehouseId())){
+                if (soDetailEntity.getFrozenQty() < detailDto.getDeliveryQty() ) {
+                    throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN);
+                }
             }
             String idStr = IdWorker.getIdStr();
             soDeliveryNoticeDetailEntity.setId(idStr);
