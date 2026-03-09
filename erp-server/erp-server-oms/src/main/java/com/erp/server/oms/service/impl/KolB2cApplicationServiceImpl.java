@@ -80,6 +80,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_B2C_APPLICATION;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_B2C_APPLICATION;
@@ -1332,6 +1333,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap,provinceMap,cityMap,districtMap);
 
         List<MultiErrorExcelData> errList = new ArrayList<>();
+        List<KolB2cApplicationDetailImportExcelDTO> detailErrorList = new ArrayList<>();
+        List<KolB2cApplicationAddressImportExcelDTO> addressErrorList = new ArrayList<>();
+        List<KolB2cApplicationImportExcelDTO> errorList = new ArrayList<>();
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
 
@@ -1340,18 +1344,23 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             EasyExcel.read(new ByteArrayInputStream(bytes), KolB2cApplicationAddressImportExcelDTO.class, addressListenerUtil).sheet(2).doRead();
 
             List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList = detailExcelListenerUtil.getSuccessList();
-            List<KolB2cApplicationDetailImportExcelDTO> detailErrorList = detailExcelListenerUtil.getErrorList();
+            detailErrorList = detailExcelListenerUtil.getErrorList();
 
             List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList = addressListenerUtil.getSuccessList();
-            List<KolB2cApplicationAddressImportExcelDTO> addressErrorList = addressListenerUtil.getErrorList();
+            addressErrorList = addressListenerUtil.getErrorList();
 
             List<KolB2cApplicationImportExcelDTO> successList = excelListenerUtil.getSuccessList();
-            List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            errorList = excelListenerUtil.getErrorList();
 
             List<String> errorNoList = errorList.stream().map(KolB2cApplicationImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+            Set<String> allMainNoSet = Stream.concat(successList.stream(), errorList.stream())
+                    .map(KolB2cApplicationImportExcelDTO::getNo)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toSet());
 
             List<KolB2cApplicationDetailImportExcelDTO> error1 = detailSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(error1)){
+                error1.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、主表数据异常；")));
                 detailErrorList.addAll(error1);
 
                 detailSuccessList = detailSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
@@ -1359,9 +1368,29 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
             List<KolB2cApplicationAddressImportExcelDTO> error2 = addressSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(error2)){
+                error2.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、主表数据异常；")));
                 addressErrorList.addAll(error2);
 
                 addressSuccessList = addressSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            // 明细/地址中的序号在sheet1不存在，按错误处理，避免“仅导入地址明细也提示成功”
+            List<KolB2cApplicationDetailImportExcelDTO> detailNoNotExistList = detailSuccessList.stream()
+                    .filter(e -> !allMainNoSet.contains(e.getNo()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(detailNoNotExistList)) {
+                detailNoNotExistList.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、序号在sheet1中不存在；")));
+                detailErrorList.addAll(detailNoNotExistList);
+                detailSuccessList = detailSuccessList.stream().filter(e -> allMainNoSet.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            List<KolB2cApplicationAddressImportExcelDTO> addressNoNotExistList = addressSuccessList.stream()
+                    .filter(e -> !allMainNoSet.contains(e.getNo()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(addressNoNotExistList)) {
+                addressNoNotExistList.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、序号在sheet1中不存在；")));
+                addressErrorList.addAll(addressNoNotExistList);
+                addressSuccessList = addressSuccessList.stream().filter(e -> allMainNoSet.contains(e.getNo())).collect(Collectors.toList());
             }
 
             KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
@@ -1391,7 +1420,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(excelListenerUtil.getCount());
-        List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         MultiErrorExcelData sheet1 = new MultiErrorExcelData();
         sheet1.setSheetName("sheet1");
         sheet1.setSheetNo(0);
@@ -1399,7 +1427,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         sheet1.setDataResult(errorList);
         errList.add(0,sheet1);
         String url = "";
-        if (CollectionUtils.isNotEmpty(errorList)) {
+        int totalErrorCount = errorList.size() + detailErrorList.size() + addressErrorList.size();
+        if (totalErrorCount > 0) {
             String fileName = "B2C寄样申请错误信息.xlsx";
 //            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolB2cApplicationImportExcelDTO.class);
             File file = ExcelUtil.generateTemplateFile(fileName,errList);
@@ -1407,11 +1436,18 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setRemark("处理完成，失败" + totalErrorCount + "条");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    private String appendImportError(String sourceErrorMsg, String appendErrorMsg) {
+        if (StringUtils.isBlank(sourceErrorMsg)) {
+            return appendErrorMsg;
+        }
+        return sourceErrorMsg + appendErrorMsg;
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
