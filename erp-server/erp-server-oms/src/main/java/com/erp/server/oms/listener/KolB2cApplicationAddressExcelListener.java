@@ -146,7 +146,7 @@ public class KolB2cApplicationAddressExcelListener extends AnalysisEventListener
         if(StringUtils.isNotBlank(districtId)){
             excelDTO.setDistrictId(districtId);
         }else {
-            if(excelDTO.equals(DictValueEnum.CN.getCode())){
+            if(DictValueEnum.CN.getCode().equals(excelDTO.getCountryId())){
                 errorMsgList.add("区域不存在");
             }
         }

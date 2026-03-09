@@ -8,8 +8,8 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
@@ -158,11 +158,6 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         */
         private String csAgentJson;
 
-        /**
-        * 优先级
-        */
-        private Integer sort;
-
 
     }
 
@@ -199,11 +194,20 @@ public class CfgAfterPlatformShopDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class SaveDTO extends CommonDTO {
+    public static class SaveDTO  {
+
+        private List<AfterPlatfromShopDTO> afterPlatfromShopDTOList;
+
+        private List<String> deleteIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AfterPlatfromShopDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String id;
 
         /**
@@ -214,9 +218,8 @@ public class CfgAfterPlatformShopDTO implements Serializable {
         /**
          * 售后人员list
          */
-        @NotBlank(message = "售后人员idList不能为空")
+        @NotNull(message = "售后人员idList不能为空")
         private List<String> csAgentIdList;
-
     }
 
     @Data

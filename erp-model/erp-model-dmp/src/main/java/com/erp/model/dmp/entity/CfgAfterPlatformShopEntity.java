@@ -48,11 +48,6 @@ public class CfgAfterPlatformShopEntity extends BaseEntity<CfgAfterPlatformShopE
     */
     @TableField(value = "cs_agent_json", jdbcType = JdbcType.OTHER)
     private JSONObject csAgentJson;
-    /**
-    * 优先级
-    */
-    @TableField("sort")
-    private Integer sort;
 
 
     public static final String PLATFORM_CODE = "platform_code";

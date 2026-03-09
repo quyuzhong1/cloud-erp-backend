@@ -396,6 +396,9 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         
         // 标题
         entity.setTitle(dto.getTitle());
+
+        // 正文内容
+        entity.setContent(dto.getContent());
         
         // 入库时间戳（从字符串转换为Long）
         if (StrUtil.isNotBlank(dto.getInsertTimestamp())) {

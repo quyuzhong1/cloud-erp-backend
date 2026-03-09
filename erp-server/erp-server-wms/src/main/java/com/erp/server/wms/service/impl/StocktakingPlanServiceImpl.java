@@ -824,24 +824,6 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                 idIterator.remove();
                 continue;
             }
-
-            //设置Redis锁
-            String planCode = entity.getCode();
-            inventoryList.forEach(item -> {
-                String redisKey = CharSequenceUtil.format(
-                        RedisKeyConstant.INVENTORY_LOCK,
-                        planCode,
-                        item.getOrgId(),
-                        item.getWarehouseId(),
-                        item.getWarehouseLocation(),
-                        item.getSkuId(),
-                        item.getDictInventoryStatus()
-                );
-                redisUtil.set(redisKey, planCode);
-                log.info("已设置库存锁定：key={}, value={}", redisKey, planCode);
-            });
-
-            log.info("盘点计划【{}】处理完成，共锁定{}条库存记录", entity.getId(), inventoryList.size());
         }
 
         //输出最终结果

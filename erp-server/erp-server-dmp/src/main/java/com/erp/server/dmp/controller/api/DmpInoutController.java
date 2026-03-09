@@ -385,7 +385,7 @@ public class DmpInoutController extends BaseController {
 					}
 					values = map.values();
 					if(CollUtil.isNotEmpty(values)) {
-						List<String> warehouseNames = Arrays.asList("东莞塘厦仓" , "奥莱仓");
+						List<String> warehouseNames = values.stream().filter(v -> StringUtils.isNotBlank(v.getWarehouse())).map(WdtInsufficientInventoryDTO::getWarehouse).distinct().collect(Collectors.toList());
 						for(String warehouseName : warehouseNames) {
 							List<WdtInsufficientInventoryDTO> invertoryList = values.stream().filter(v -> v.getWarehouse().equals(warehouseName)).collect(Collectors.toList());
 							if(CollUtil.isNotEmpty(invertoryList)) {

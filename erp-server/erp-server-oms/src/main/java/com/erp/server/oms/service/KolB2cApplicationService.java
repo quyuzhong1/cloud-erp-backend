@@ -4,6 +4,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -40,6 +41,15 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     * @return
     */
     Boolean update(KolB2cApplicationDTO.UpdateDTO dto);
+
+    /**
+     * 更新明细备注
+     * @param id 主表id
+     * @param detailId 明细id
+     * @param remark 明细备注
+     * @return 是否成功
+     */
+    Boolean updateDetailRemark(String id, String detailId, String remark);
 
     /**
     * 分页列表查询
@@ -134,8 +144,15 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     BatchResultDTO invalid(String id, String remark);
 
     /**
-    * 撤销
-    * @author jack
+     * 业务取消
+     * @param id 主键
+     * @return 结果
+     */
+    BatchResultDTO cancel(String id);
+
+    /**
+     * 撤销
+     * @author jack
     * @date: 2025-12-04
     * @param dto
     * @return
@@ -169,4 +186,6 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     void importKolB2cApplication(BaseDTO.ImportDTO dto);
 
     List<KolB2cApplicationImportExcelDTO> handleImportSuccessList(List<KolB2cApplicationImportExcelDTO> successList, List<KolB2cApplicationImportExcelDTO> errorList, List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList, List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList , String importType);
+
+    AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto);
 }

@@ -18,6 +18,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -46,6 +47,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -355,6 +357,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             }
             if(Objects.nonNull(productDetailEntity) && !productDetailEntity.getStatus().equals(2)){
                 errorMsgList.add("只有已审核的sku可以变更");
+            }
+            //判断field是否重复
+            List<String> fieldList = entry.getValue().stream().map(ProductChangeImportExcelDTO::getField).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<String> repeatFieldList = fieldList.stream().filter(i -> Collections.frequency(fieldList, i) > 1).distinct().collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(repeatFieldList)) {
+                errorMsgList.add(StrUtil.format("变更字段存在重复：{}", String.join(",", repeatFieldList)));
             }
 
             if(CollectionUtils.isNotEmpty(errorMsgList)){
@@ -1165,7 +1173,14 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
                 // product_purchase
                 case EAN_CODE:
-                    productPurchaseEntity.setEan((String) newValue);
+                    String newEan = String.valueOf(newValue);
+                    if(StringUtils.isNotBlank(newEan)){
+                        ProductPurchaseEntity productPurchaseEntity1 = productPurchaseService.getByEan(newEan);
+                        if(Objects.nonNull(productPurchaseEntity1)){
+                            throw new ServiceException("EAN码已存在，无法更新");
+                        }
+                    }
+                    productPurchaseEntity.setEan(newEan);
                     purchaseChanged = true;
                     break;
                 case TRIAL_PRODUCTION_QUANTITY:
@@ -1495,7 +1510,22 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
        List<DictCountryDTO.ListDTO> countryList = sysFeign.countryList().getData();
 
-        // 属性赋值
+       //最新审核人
+       ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+       list.forEach(obj -> {
+           dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PRODUCT_CHANGE.getCode(), obj.getId()));
+       });
+       ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+       if (CollectionUtils.isNotEmpty(dtoList)) {
+           listApiResult = workflowFeign.curApprover(dtoList);
+           Integer code = listApiResult.getCode();
+           if (200 != code) {
+               throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+           }
+       }
+
+
+       // 属性赋值
         for(ProductChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
@@ -1523,6 +1553,21 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
             data.setOldValue(convertedValues[0]);
             data.setNewValue(convertedValues[1]);
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                        .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                            .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                            .collect(Collectors.joining(","));
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
+            }
         }
    }
 

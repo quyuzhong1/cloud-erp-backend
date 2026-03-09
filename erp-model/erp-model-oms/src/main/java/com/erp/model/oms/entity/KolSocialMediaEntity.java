@@ -71,6 +71,11 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     @TableField("title")
     private String title;
     /**
+    * 正文内容
+    */
+    @TableField("content")
+    private String content;
+    /**
     * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
     */
     @TableField("insert_timestamp")
@@ -139,6 +144,8 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     public static final String URL_HASH = "url_hash";
 
     public static final String TITLE = "title";
+
+    public static final String CONTENT = "content";
 
     public static final String INSERT_TIMESTAMP = "insert_timestamp";
 
