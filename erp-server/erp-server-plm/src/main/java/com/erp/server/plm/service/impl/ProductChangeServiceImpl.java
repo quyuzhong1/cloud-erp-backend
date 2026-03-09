@@ -6,6 +6,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -1495,7 +1496,22 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
        List<DictCountryDTO.ListDTO> countryList = sysFeign.countryList().getData();
 
-        // 属性赋值
+       //最新审核人
+       ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+       list.forEach(obj -> {
+           dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PRODUCT_CHANGE.getCode(), obj.getId()));
+       });
+       ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+       if (CollectionUtils.isNotEmpty(dtoList)) {
+           listApiResult = workflowFeign.curApprover(dtoList);
+           Integer code = listApiResult.getCode();
+           if (200 != code) {
+               throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+           }
+       }
+
+
+       // 属性赋值
         for(ProductChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
@@ -1523,6 +1539,21 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
             data.setOldValue(convertedValues[0]);
             data.setNewValue(convertedValues[1]);
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                        .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                            .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                            .collect(Collectors.joining(","));
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
+            }
         }
    }
 
