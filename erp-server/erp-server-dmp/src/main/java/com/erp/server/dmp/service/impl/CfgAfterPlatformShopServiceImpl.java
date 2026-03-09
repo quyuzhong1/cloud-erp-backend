@@ -82,6 +82,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
      */
     private void checkPlatformShopDuplicate(CfgAfterPlatformShopDTO.SaveDTO saveDTO) {
         Map<String, Set<String>> inputCombinations = new HashMap<>();
+        Map<String, Boolean> platformEmptyShopFlag = new HashMap<>();
         List<CfgAfterPlatformShopDTO.AfterPlatfromShopDTO> afterPlatfromShopDTOList = saveDTO.getAfterPlatfromShopDTOList();
         List<String> deleteIdList = saveDTO.getDeleteIdList();
         Set<String> deleteIdSet = deleteIdList != null ? new HashSet<>(deleteIdList) : Collections.emptySet();
@@ -95,7 +96,6 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
 
         // 检查入参内部重复 + 数据库重复
         for (CfgAfterPlatformShopDTO.AfterPlatfromShopDTO afterPlatfromShopDTO : afterPlatfromShopDTOList) {
-            if (afterPlatfromShopDTO.getShopIdList() == null) continue;
 
             String platform = afterPlatfromShopDTO.getDictPlatform();
             String currentId = afterPlatfromShopDTO.getId();
@@ -103,6 +103,21 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
             // 如果当前记录在deleteIdList中，则跳过校验
             if (currentId != null && deleteIdSet.contains(currentId)) {
                 continue;
+            }
+
+            boolean isShopIdListEmpty = afterPlatfromShopDTO.getShopIdList() == null || afterPlatfromShopDTO.getShopIdList().isEmpty();
+
+            // 1. 检查入参内部是否有相同平台且 shopIdList 为空的重复记录
+            if (isShopIdListEmpty) {
+                if (platformEmptyShopFlag.getOrDefault(platform, false)) {
+                    throw new ServiceException(
+                            ApiError.COMMON_PLATFORM_SHOP_EXSIT,
+                            platform,
+                            "（空店铺列表）"
+                    );
+                }
+                platformEmptyShopFlag.put(platform, true); // 标记该平台已有 shopIdList=null 的记录
+                continue; // 跳过后续检查
             }
 
             inputCombinations.putIfAbsent(platform, new HashSet<>());
@@ -162,6 +177,9 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
 
                 JSONObject shopJson = new JSONObject();
                 shopJson.putOpt("shops", shopArray);
+                entity.setShopJson(shopJson);
+            } else {
+                JSONObject shopJson = new JSONObject();
                 entity.setShopJson(shopJson);
             }
 
@@ -244,31 +262,42 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     public List<CfgAfterPlatformShopDTO.CsAgentDTO> matchCsAgent(String dictPlatform, String shopId) {
         List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = new ArrayList<>();
 
-        CfgAfterPlatformShopEntity cfgAfterPlatformShop = this.lambdaQuery()
+        List<CfgAfterPlatformShopEntity> list = this.lambdaQuery()
                 .eq(CfgAfterPlatformShopEntity::getDictPlatform, dictPlatform)
-                .one();
+                .list();
 
-        if (Objects.nonNull(cfgAfterPlatformShop)) {
+        if (!list.isEmpty()) {
             // 先处理shopId不为空的情况（平台+店铺匹配）
             if (Objects.nonNull(shopId)) {
-                JSONObject shopJson = cfgAfterPlatformShop.getShopJson();
-                CfgAfterPlatformShopDTO.ShopJsonDTO shopJsonDTO = JSONUtil.toBean(shopJson, CfgAfterPlatformShopDTO.ShopJsonDTO.class);
+                CfgAfterPlatformShopEntity cfgAfterPlatformShopEntity = list.stream()
+                        .filter(item -> !Objects.equals(item.getShopJson().toString(), "{}"))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(cfgAfterPlatformShopEntity)) {
+                    JSONObject shopJson = cfgAfterPlatformShopEntity.getShopJson();
+                    CfgAfterPlatformShopDTO.ShopJsonDTO shopJsonDTO = JSONUtil.toBean(shopJson, CfgAfterPlatformShopDTO.ShopJsonDTO.class);
 
-                if (Objects.nonNull(shopJsonDTO.getShops()) && !shopJsonDTO.getShops().isEmpty()) {
-                    for (CfgAfterPlatformShopDTO.Shop shop : shopJsonDTO.getShops()) {
-                        if (Objects.equals(shop.getId(), shopId)) {
-                            // 找到匹配的店铺后，获取对应的售后
-                            CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(cfgAfterPlatformShop.getCsAgentJson(), CfgAfterPlatformShopDTO.CsAgentJsonDTO.class);
-                            if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
-                                csAgentDTOList = BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+                    if (Objects.nonNull(shopJsonDTO.getShops()) && !shopJsonDTO.getShops().isEmpty()) {
+                        for (CfgAfterPlatformShopDTO.Shop shop : shopJsonDTO.getShops()) {
+                            if (Objects.equals(shop.getId(), shopId)) {
+                                // 找到匹配的店铺后，获取对应的售后
+                                CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(cfgAfterPlatformShopEntity.getCsAgentJson(), CfgAfterPlatformShopDTO.CsAgentJsonDTO.class);
+                                if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
+                                    csAgentDTOList = BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
+
             } else {
                 // 处理shopId为空的情况（仅按平台匹配）
-                JSONObject csAgentJson = cfgAfterPlatformShop.getCsAgentJson();
+                CfgAfterPlatformShopEntity cfgAfterPlatformShopEntity = list.stream()
+                        .filter(item -> Objects.equals(item.getShopJson().toString(), "{}"))
+                        .findFirst()
+                        .orElse(null);
+                JSONObject csAgentJson = cfgAfterPlatformShopEntity.getCsAgentJson();
                 CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(csAgentJson, CfgAfterPlatformShopDTO.CsAgentJsonDTO.class);
                 if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
                     csAgentDTOList = BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());

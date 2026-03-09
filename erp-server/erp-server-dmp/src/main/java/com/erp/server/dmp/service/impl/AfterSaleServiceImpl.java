@@ -214,37 +214,53 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     .in(DmpSoInfoEntity::getSourcePlatform,thirdCode)
                     .one();
 
-            if (Objects.nonNull(dmpSoInfo) && StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
-                ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
-                afterSaleEntity.setShopId(shopInfo.getId());
-            }
-        }
+            if (Objects.nonNull(dmpSoInfo)) {
+                if (StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
+                    ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
+                    if (Objects.nonNull(shopInfo)) {
+                        afterSaleEntity.setShopId(shopInfo.getId());
+                        if (StringUtils.isNotBlank(afterSaleEntity.getShopId())) {
+                            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), afterSaleEntity.getShopId());
+                            if (!csAgentDTOList.isEmpty()) {
+                                String ids = csAgentDTOList.stream()
+                                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                                        .collect(Collectors.joining(","));
+                                String names = csAgentDTOList.stream()
+                                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                                        .collect(Collectors.joining(","));
+                                afterSaleEntity.setCsAgentId(ids);
+                                afterSaleEntity.setCsAgentName(names);
+                            }
 
-        if (StringUtils.isNotBlank(afterSaleEntity.getShopId())) {
-            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), afterSaleEntity.getShopId());
-            if (!csAgentDTOList.isEmpty()) {
-                String ids = csAgentDTOList.stream()
-                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
-                        .collect(Collectors.joining(","));
-                String names = csAgentDTOList.stream()
-                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
-                        .collect(Collectors.joining(","));
-                afterSaleEntity.setCsAgentId(ids);
-                afterSaleEntity.setCsAgentName(names);
+                        }
+                    } else {
+                        List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
+                        if (!csAgentDTOList.isEmpty()) {
+                            String ids = csAgentDTOList.stream()
+                                    .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                                    .collect(Collectors.joining(","));
+                            String names = csAgentDTOList.stream()
+                                    .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                                    .collect(Collectors.joining(","));
+                            afterSaleEntity.setCsAgentId(ids);
+                            afterSaleEntity.setCsAgentName(names);
+                        }
+                    }
+                }
+            } else {
+                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
+                if (!csAgentDTOList.isEmpty()) {
+                    String ids = csAgentDTOList.stream()
+                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                            .collect(Collectors.joining(","));
+                    String names = csAgentDTOList.stream()
+                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                            .collect(Collectors.joining(","));
+                    afterSaleEntity.setCsAgentId(ids);
+                    afterSaleEntity.setCsAgentName(names);
+                }
             }
 
-        } else {
-            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
-            if (!csAgentDTOList.isEmpty()) {
-                String ids = csAgentDTOList.stream()
-                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
-                        .collect(Collectors.joining(","));
-                String names = csAgentDTOList.stream()
-                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
-                        .collect(Collectors.joining(","));
-                afterSaleEntity.setCsAgentId(ids);
-                afterSaleEntity.setCsAgentName(names);
-            }
         }
 
         // 生成单号
