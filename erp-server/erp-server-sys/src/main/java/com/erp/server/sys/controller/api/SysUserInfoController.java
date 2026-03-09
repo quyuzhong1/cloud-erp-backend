@@ -327,6 +327,18 @@ public class SysUserInfoController extends BaseController {
     }
 
     /**
+     * 根据用户id查询关联的全部部门信息
+     * 若部门已禁用，则不带出
+     * @param userId 用户id
+     * @return ApiResult
+     */
+    @GetMapping("/listDeptByUserId")
+    public ApiResult<List<SysDepartmentUserNumberDTO>> listDeptByUserId(@RequestParam("userId") String userId) {
+        List<SysDepartmentUserNumberDTO> dto = sysDepartmentUserService.listDeptByUserIdWithDisabledFilter(userId);
+        return success(dto);
+    }
+
+    /**
      * 导出Excel数据
      * @author jack
      * @date:  2026-01-08
