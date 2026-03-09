@@ -33,5 +33,10 @@ public class SysDepartmentUserEntity {
     @TableField(fill= FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
-
+    /**
+     * 用户删除状态 1:正常 0：已删除
+     */
+    @TableField(value = "is_deleted")
+    @TableLogic
+    private Boolean isDeleted;
 }
