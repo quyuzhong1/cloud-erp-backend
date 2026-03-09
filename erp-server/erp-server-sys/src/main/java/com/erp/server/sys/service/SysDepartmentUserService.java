@@ -110,4 +110,12 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
     List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(List<String> deptIdList);
 
     void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd);
+    /**
+     * 删除用户部门关联关系
+     * @author will
+     * @date 2026/3/9 16:32
+     * @param uids
+     * @return  void
+     */
+    void deleteByUserIds(List<String> uids);
 }
