@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO;
+import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpReceiveFlowDiffEntity;
 
 import java.util.List;
@@ -106,5 +107,36 @@ public interface AdsErpReceiveFlowDiffService extends SuperService<AdsErpReceive
      * @return Boolean
      */
     Boolean exportExcel(AdsErpReceiveFlowDiffDTO.ExportParamDTO dto);
-    
+    /**
+     * 获取来源单据信息
+     * @author will
+     * @date 2026/3/11 14:00
+     * @param dto
+     * @return PagingVO<SourceTransferInfoDTO>
+     */
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> transferInfoPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
+    /**
+     * 导出来源单据信息
+     * @author will
+     * @date 2026/3/11 14:30
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportTransferInfo(AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO dto);
+    /**
+     * 获取来源平台流水信息
+     * @author will
+     * @date 2026/3/11 15:00
+     * @param dto
+     * @return PagingVO<SourcePlatformFlowDTO>
+     */
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> sourcePlatformFlowPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
+    /**
+     * 导出来源平台流水信息
+     * @author will
+     * @date 2026/3/11 15:30
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportPlatformFlow(AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO dto);
 }

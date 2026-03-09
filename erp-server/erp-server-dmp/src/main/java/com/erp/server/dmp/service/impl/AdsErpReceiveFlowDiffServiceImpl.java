@@ -17,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO;
 import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO.*;
+import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpReceiveFlowDiffEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpReceiveFlowDiffMapper;
@@ -238,5 +239,25 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
 		downloadTaskFeign.saveDownloadTask("出库同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC.getCode(), dto);
 		return true;
 	}
+
+    @Override
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> transferInfoPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean exportTransferInfo(AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> sourcePlatformFlowPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean exportPlatformFlow(AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO dto) {
+        return null;
+    }
 
 }
