@@ -29,7 +29,7 @@ public enum SourceTypeEnum {
     CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
     CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
     SUPPLIER_PHASE("supplierPhase", "供应商阶段审核列表","supplier_phase"),
-
+    SUBCONTRACT_BOM("subcontractBOM", "委外用料清单",""),
 
 
     //WMS

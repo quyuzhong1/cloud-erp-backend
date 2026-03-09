@@ -71,6 +71,12 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
     @TableField("fn_sku")
     private String fnSku;
 
+    /**
+     * 是否取消重量分摊
+     */
+    @TableField("is_cancel_required")
+    private Boolean isCancelRequired;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

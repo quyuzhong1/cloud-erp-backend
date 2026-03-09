@@ -851,5 +851,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
 
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
+
     void sendSinglePushTask (ProductDetailEntity entity, String operate);
 }

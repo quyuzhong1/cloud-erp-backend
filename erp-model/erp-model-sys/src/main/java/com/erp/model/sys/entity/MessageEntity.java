@@ -49,6 +49,12 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
     */
     @TableField("application")
     private String application;
+    
+    /**
+     * 是否已读
+     */
+    @TableField(exist = false)
+    public Boolean isRead;
 
     public static final String CODE = "code";
 

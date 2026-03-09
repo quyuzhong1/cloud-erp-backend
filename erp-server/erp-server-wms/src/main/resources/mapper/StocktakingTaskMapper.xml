@@ -45,7 +45,8 @@
           sp.type AS stocktakingType,
           sp.separate_rule AS separateRule,
           st.status AS stocktakingStatus,
-          st.approve_user_name AS approveUserName
+          st.approve_user_name AS approveUserName,
+          st.bill_date as billDate
           FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp ON st.source_id=sp.id AND sp.is_deleted=FALSE
           WHERE ${params.sqlMap.default} and st.is_deleted=FALSE

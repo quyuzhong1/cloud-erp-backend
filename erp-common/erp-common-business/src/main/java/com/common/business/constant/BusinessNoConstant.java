@@ -263,6 +263,11 @@ public interface BusinessNoConstant {
     //AWD出库
     String AWD="AWD";
 
+    //物流费用导入
+    String DZ="DZ";
+    //费用配置
+    String FYPZ="FYPZ";
+
     String BG = "BG";
 
 }

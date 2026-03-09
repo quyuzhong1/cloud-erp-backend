@@ -127,7 +127,15 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @param detailEntityList
      * @return
      */
-    Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList);
+    Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList,Boolean isNowExecute);
+
+    /**
+     * 创建盘点任务
+     * @param entity
+     * @param detailEntityList
+     * @return
+     */
+    Boolean createTaskListByJob(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList);
 
     /**
      * 流程监听结束
@@ -154,4 +162,7 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDTO.CheckResultDTO>
      */
     List<StocktakingTaskDTO.CheckResultDTO> checkQty(List<String> ids);
+
+    Boolean pushStocktakingProfitLoss(BaseIdsDTO.IdsDTO dto);
+
 }

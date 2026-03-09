@@ -14,7 +14,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.SubcontractOrderTypeEnum;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
@@ -35,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -195,6 +198,10 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<String> parentIdList = childDetailList.stream().map(SubcontractOrderDetailEntity::getParentId).collect(Collectors.toList());
         List<SubcontractOrderDetailEntity> parentDetailList = scmTaskFeign.listSubcontractDetailByIds(parentIdList);
 
+        //委外订单id
+        List<String> subcontractOrderIdList = childDetailList.stream().map(SubcontractOrderDetailEntity::getMainId).collect(Collectors.toList());
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(subcontractOrderIdList);
+
         //bom信息
         List<String> parentSkuIdList = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIdList);
@@ -220,18 +227,35 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             if (ObjectUtils.isEmpty(parentDetailEntity)) {
                 throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_PARENT_SKU_NOT_FOUND);
             }
-            //bom信息
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
-                    .findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                throw new ServiceException(ApiError.BOM_NOT_FOUND);
+
+            if (subcontractOrderList.isEmpty()) {
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
             }
+
+            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderList.stream()
+                    .filter(item -> Objects.equals(item.getId(), parentDetailEntity.getMainId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (Objects.nonNull(subcontractOrderEntity)) {
+                if (Objects.equals(subcontractOrderEntity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+                    detailEntity.setQuantity(childDetailEntity.getQty());
+                } else {
+                    //bom信息
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
+                            .findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                        throw new ServiceException(ApiError.BOM_NOT_FOUND);
+                    }
+                    detailEntity.setQuantity(bomChildrenSkuDTO.getQuantity());
+                }
+            }
+
             detailEntity.setParentSkuId(parentDetailEntity.getSkuId());
             detailEntity.setParentSkuNo(parentDetailEntity.getSkuNo());
             detailEntity.setSkuId(childDetailEntity.getSkuId());
             detailEntity.setSkuNo(childDetailEntity.getSkuNo());
             detailEntity.setBomVersion(childDetailEntity.getBomVersion());
-            detailEntity.setQuantity(bomChildrenSkuDTO.getQuantity());
             detailEntity.setMainId(subcontractIssueEntity.getId());
             detailEntity.setReceiveQty(childDetailEntity.getDeliveryQty());
             detailEntity.setWarehouseLocation(detailEntity.getWarehouseLocation());

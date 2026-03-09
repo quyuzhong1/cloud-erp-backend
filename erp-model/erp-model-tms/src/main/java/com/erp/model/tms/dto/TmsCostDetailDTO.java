@@ -1,5 +1,8 @@
 package com.erp.model.tms.dto;
 
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -18,7 +21,7 @@ import java.math.BigDecimal;
  *
  * @author will
  * @since 2024-03-20
-*/
+ */
 @Data
 @NoArgsConstructor
 public class TmsCostDetailDTO implements Serializable {
@@ -63,12 +66,12 @@ public class TmsCostDetailDTO implements Serializable {
          * 预估费用
          */
         private BigDecimal estimatedFee = BigDecimal.ZERO;
-        
+
         /**
          * 预估转换人民币费用
          */
         private BigDecimal estimatedFeeExchange = BigDecimal.ZERO;
-        
+
         /**
          * 预估费用币种
          */
@@ -78,7 +81,7 @@ public class TmsCostDetailDTO implements Serializable {
          * 实际费用
          */
         private BigDecimal actualFee = BigDecimal.ZERO;
-        
+
         /**
          * 实际费用币种
          */
@@ -93,84 +96,84 @@ public class TmsCostDetailDTO implements Serializable {
 
 
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String  id;
 
         /**
-        * 主表id
-        */
+         * 主表id
+         */
         private String mainId;
 
         /**
-        * 费用编码
-        */
+         * 费用编码
+         */
         private String costCode;
 
         /**
-        * 费用名称
-        */
+         * 费用名称
+         */
         private String costName;
 
         /**
-        * 费用值
-        */
+         * 费用值
+         */
         private BigDecimal costValue;
 
         /**
-        * 币别
-        */
+         * 币别
+         */
         private String currency;
 
         /**
-        * 汇率
-        */
+         * 汇率
+         */
         private BigDecimal exchangeRate;
 
         /**
-        * 费用设置id
-        */
+         * 费用设置id
+         */
         private String cfgCostId;
 
 
     }
-    
+
     /**
      *  费用明细
      */
     @Data
     @NoArgsConstructor
     public static class DetailDTO {
-    	
-    	/**
-    	 * 费用类型id  http://172.16.100.11:3002/project/128/interface/api/34948  dictCostAttribution=selfDeliver
-    	 */
-    	@NotNull(message = "费用类型不能为空")
-    	private String cfgCostId;
-    	
-    	/**
-    	 * 预估金额
-    	 */
-    	private BigDecimal estimatedValue;
-    	
-    	/**
-    	 * 实际金额
-    	 */
-    	@NotNull(message = "实际金额不能为空")
-    	private BigDecimal costValue;
-    	
+
+        /**
+         * 费用类型id  http://172.16.100.11:3002/project/128/interface/api/34948  dictCostAttribution=selfDeliver
+         */
+        @NotNull(message = "费用类型不能为空")
+        private String cfgCostId;
+
+        /**
+         * 预估金额
+         */
+        private BigDecimal estimatedValue;
+
+        /**
+         * 实际金额
+         */
+        @NotNull(message = "实际金额不能为空")
+        private BigDecimal costValue;
+
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -179,16 +182,16 @@ public class TmsCostDetailDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = true)
     public static class UpdateDTO extends CommonDTO implements Serializable{
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String id;
 
         /**
@@ -223,15 +226,15 @@ public class TmsCostDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 费用值
-        */
+         * 费用值
+         */
         @NotNull(message = "费用值不能为空")
         @Digits(integer = 12, fraction = 4, message = "费用值整数位不能超过12位，小数位不能超过4位")
         private BigDecimal costValue;
 
         /**
-        * 费用设置id
-        */
+         * 费用设置id
+         */
         @NotBlank(message = "费用设置id不能为空")
         @Size(max = 19,message = "费用设置id最大长度不能超过19位")
         private String cfgCostId;
@@ -245,7 +248,7 @@ public class TmsCostDetailDTO implements Serializable {
          * 来源类型，SourceTypeEnum枚举
          */
         private String sourceType;
-        
+
         /**
          * 币别
          */
@@ -307,5 +310,45 @@ public class TmsCostDetailDTO implements Serializable {
          * 类型
          */
         private String type;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
     }
+
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CheckValueDTO {
+
+        /**
+         * 费用值
+         */
+        @FieldValid(fieldName = "费用值",formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
+        private String costValue;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CheckAmountDTO {
+
+        /**
+         * 实际金额
+         */
+        @FieldValid(fieldName = "实际金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
+        private String actualAmount;
+
+        /**
+         * 预估金额
+         */
+        @FieldValid(fieldName = "预估金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
+        private String estimatedAmount;
+
+    }
+
 }

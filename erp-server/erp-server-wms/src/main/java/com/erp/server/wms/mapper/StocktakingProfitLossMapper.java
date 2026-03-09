@@ -58,24 +58,4 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      */
     List<InOutStockDTO> listInventoryInOut(@Param("idList") List<String> idList);
 
-    /**
-     * 库存IDS
-     * 库存组织IDS
-     * SKUIdS
-     * @author Jim
-     * @date 2023-03-05
-     */
-    List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(@Param("warehouseIdList")List<String> warehouseIdList,
-                                                                 @Param("orgIdList") List<String> orgIdList,
-                                                                 @Param("skuIdList") List<String> skuIdList
-    );
-
-
-    /**
-     * 仓库ID和SkuId,单据时间查询最新的单号
-     *
-     * @author Jim
-     * @date 2023-03-05
-     */
-    List<String> findLastOneCode(@Param("warehouseId")String warehouseId, @Param("skuId")String skuId, @Param("billDate")LocalDate billDate);
 }

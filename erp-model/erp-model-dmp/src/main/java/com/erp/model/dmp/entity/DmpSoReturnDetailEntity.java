@@ -223,6 +223,12 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
      */
     @TableField("tid")
     private String tid;
+    
+    /**
+     * 原始退款单号
+     */
+    @TableField("raw_refund_nos")
+    private String rawRefundNos;
 
     public static final String MAIN_ID = "main_id";
 

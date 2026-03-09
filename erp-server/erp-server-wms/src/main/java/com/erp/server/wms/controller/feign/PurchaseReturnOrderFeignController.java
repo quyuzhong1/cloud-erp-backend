@@ -94,5 +94,36 @@ public class PurchaseReturnOrderFeignController extends BaseController {
 
     }
 
+    /**
+     * 根据skuid查询明细
+     * @param skuIdList
+     * @return
+     */
+    @PostMapping("/listPoReturnDetailBySkuIdList")
+    public List<PoReturnDetailEntity> listPoReturnDetailBySkuIdList(@RequestBody List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        List<PoReturnDetailEntity> list = poReturnDetailService.listPoReturnDetailBySkuIdList(skuIdList);
+        return list;
 
+    }
+
+    @PostMapping("/listPoReturnByMainIdList")
+    List<PoReturnDetailEntity> listPoReturnByMainIdList(@RequestBody List<String> poReturnMainIdList){
+        if (CollectionUtils.isEmpty(poReturnMainIdList)) {
+            return Collections.emptyList();
+        }
+        List<PoReturnDetailEntity> list = poReturnDetailService.listByMainIds(poReturnMainIdList);
+        return list;
+    }
+
+    @PostMapping("/listPoReturnDetailByIdList")
+    List<PoReturnDetailEntity> listPoReturnDetailByIdList(@RequestBody List<String> poReturnDetailIdList){
+        if (CollectionUtils.isEmpty(poReturnDetailIdList)) {
+            return Collections.emptyList();
+        }
+        List<PoReturnDetailEntity> list = poReturnDetailService.listByIds(poReturnDetailIdList);
+        return list;
+    }
 }

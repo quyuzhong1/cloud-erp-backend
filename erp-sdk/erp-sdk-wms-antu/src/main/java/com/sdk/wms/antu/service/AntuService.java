@@ -21,6 +21,7 @@ import javax.validation.constraints.NotEmpty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -116,9 +117,10 @@ public class AntuService {
      */
     public AntuResponse<List<AntuLogisticsProductsResp>> getShippingMethod(String warehouseCode,OmsPlatformEnum platformEnum){
         Map<String,Object> paramsMap = new HashMap<>();
-        if(StringUtils.isNotBlank(warehouseCode)){
-            paramsMap.put("warehouseCode",warehouseCode);
+        if(Objects.isNull(warehouseCode) || StringUtils.isBlank(warehouseCode)){
+            warehouseCode = "";
         }
+        paramsMap.put("warehouseCode",warehouseCode);
         String response = AntuUtils.callService(platformEnum,AntuConstants.GET_SHIPPING_METHOD,paramsMap);
         return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuLogisticsProductsResp>>>() {}.getType());
     }
