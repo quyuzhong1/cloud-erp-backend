@@ -179,9 +179,13 @@ public class ProductChangeExcelListener extends AnalysisEventListener<ProductCha
         excelDTO.setNewValueObj(newValue);
         switch (productChangeFieldEnum) {
             case SALE_MODE:
-                BasicDictEntity saleMode = basicDictList.stream().filter(e ->"saleMethod".equals(e.getType()) && Objects.equals(e.getName(), newValue)).findFirst().orElse(null);
-                if(Objects.isNull(saleMode)){
-                    errorMsgList.add("销售方式不存在，值：" + newValue);
+                //可能是多选用逗号隔开的，校验每个名称是否存在
+                String[] saleModes = ((String) newValue).split(",");
+                for (String saleMode : saleModes) {
+                    BasicDictEntity saleModeDict = basicDictList.stream().filter(e ->"saleMethod".equals(e.getType()) && Objects.equals(e.getName(), saleMode)).findFirst().orElse(null);
+                    if(Objects.isNull(saleModeDict)){
+                        errorMsgList.add("销售方式不存在，值：" + saleMode);
+                    }
                 }
                 break;
             case SALE_CHANNEL:
