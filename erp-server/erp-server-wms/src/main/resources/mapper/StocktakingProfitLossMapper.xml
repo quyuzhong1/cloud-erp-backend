@@ -34,7 +34,7 @@
     </select>
     <!--分页展示-->
     <select id="paging" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$PagingViewDTO">
-        SELECT
+        SELECT distinct
         spl.id,
         spl.id AS mainId,
         spl.code,
@@ -46,23 +46,11 @@
         spl.approve_time AS approveTime,
         spl.approve_user_name AS approveUserName,
         spl.approve_status AS approveStatus,
-        spld.id as detailId,
-        spld.sku_no AS skuNo,
-        spld.sku_id AS skuId,
-        spld.warehouse_id AS warehouseId,
-        spld.warehouse_location AS warehouseLocation,
-        spld.qty,
-        spld.usable_qty AS usableQty,
-        spld.frozen_qty AS frozenQty,
-        spld.diff_qty AS diffQty,
-        w.name AS warehouseName,
-        wl.name as warehouseLocationName
+        st.create_time as stocktakingDate
         FROM stocktaking_profit_loss spl
         INNER JOIN stocktaking_profit_loss_detail spld
         ON spl.id=spld.main_id AND spld.is_deleted=FALSE
-        LEFT JOIN warehouse w
-        ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
-        left join  warehouse_location wl on spld.warehouse_location = wl.code and spld.warehouse_id = wl.warehouse_id  and wl.is_deleted = false
+        left join stocktaking_task st on st.id = spl.source_id
         WHERE
             ${params.sqlMap.default}
             and  spl.is_deleted = false
@@ -75,7 +63,7 @@
                     ${item.field} ${item.sort}
                 </foreach>
             </if>
-            spl.id DESC,spld.id DESC
+            spl.id DESC
     </select>
     <!--导出数据-->
     <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$ExportViewDTO">
@@ -144,71 +132,4 @@
         </if>
     </select>
 
-    <select id="maxDateByParams" resultType="com.erp.model.wms.dto.StocktakingProfitLossDetailDTO$LastDTO">
-        SELECT
-        warehouseOrgId,
-        billDate,
-        skuId,
-        warehouseId,
-        warehouseLocation,
-        code
-        FROM
-        (
-        SELECT
-        wh.org_id AS warehouseOrgId,
-        spld.warehouse_id AS warehouseId,
-        spld.warehouse_location AS warehouseLocation,
-        spl.bill_date AS billDate,
-        spld.sku_id AS skuId,
-        spl.code,
-        ROW_NUMBER ( ) OVER ( PARTITION BY wh.org_id, spld.warehouse_id, spld.warehouse_location, spld.sku_id ORDER BY spl.bill_date DESC ) AS row_num
-        FROM
-        stocktaking_profit_loss_detail spld
-        LEFT JOIN stocktaking_profit_loss spl ON spld.main_id = spl.
-        ID LEFT JOIN warehouse wh ON spld.warehouse_id = wh.ID
-        WHERE
-        spld.is_deleted = FALSE
-        AND spl.is_deleted = FALSE
-        AND spl.approve_status = 'approve'
-        <if test="warehouseIdList!=null and warehouseIdList.size>0">
-            AND spld.warehouse_id IN
-            <foreach collection="warehouseIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <if test="orgIdList!=null and orgIdList.size>0">
-            AND wh.org_id IN
-            <foreach collection="orgIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <if test="skuIdList!=null and skuIdList.size>0">
-            AND spld.sku_id IN
-            <foreach collection="skuIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        ) subquery
-        WHERE
-        row_num = 1
-    </select>
-
-    <select id="findLastOneCode" resultType="java.lang.String">
-        SELECT
-            spl.code as maxCode
-        FROM stocktaking_profit_loss_detail spld
-        LEFT JOIN stocktaking_profit_loss spl
-        ON spld.main_id=spl.id
-        WHERE spld.is_deleted=FALSE AND spl.is_deleted=FALSE
-          AND spl.approve_status = 'approve'
-        <if test="billDate != null">
-            AND spl.bill_date = #{billDate}
-        </if>
-        <if test="warehouseId != null and warehouseId != ''">
-            AND spld.warehouse_id = #{warehouseId}
-        </if>
-        <if test="skuId != null and skuId != ''">
-            AND spld.sku_id = #{skuId}
-        </if>
-    </select>
 </mapper>

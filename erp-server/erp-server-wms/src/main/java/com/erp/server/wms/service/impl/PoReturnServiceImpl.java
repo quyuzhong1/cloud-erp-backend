@@ -474,12 +474,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setSupplierName(supplierEntity.getName());
             }
         }
-        poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
         if (CharSequenceUtil.isNotBlank(dto.getSupplierContactId())) {
+            poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             if (ObjectUtil.isNotEmpty(supplierContactById)) {
                 poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
             }
+        }else {
+            poReturnEntity.setSupplierContactId("");
+            poReturnEntity.setSupplierContactName("");
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
         //退货组织名称

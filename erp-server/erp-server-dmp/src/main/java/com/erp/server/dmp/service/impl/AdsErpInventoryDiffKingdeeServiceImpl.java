@@ -202,7 +202,7 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
         if(count != null && count > 0) {
             throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
         }
-        boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_erp/ods_flow_kingdee_inout_summary_recreate");
+        boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_kingdee_inout_summary_recreate");
         if(reCreate) {
             lambdaUpdate().eq(AdsErpInventoryDiffKingdeeEntity::getCheckMonth, checkMonth)
                     .set(AdsErpInventoryDiffKingdeeEntity::getExecStatus, "doing")

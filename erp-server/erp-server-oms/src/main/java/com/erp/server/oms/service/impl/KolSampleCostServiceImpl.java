@@ -34,7 +34,6 @@ import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
-import com.erp.model.tms.enums.CostAllocationEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -306,9 +305,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(invSkuCostDTO.getClearanceCustomsTax(),invSkuCostDTO.getExchangeRate()));
             }
             //设置小包费用
-            smallBagCostDTOS.stream().filter(obj ->CharSequenceUtil.equals(obj.getFeeAllocationType(), CostAllocationEnum.COST_ALLOCATION.getCode()) &&  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
+            smallBagCostDTOS.stream().filter(obj ->  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
                     .forEach(obj -> {
-                        BigDecimal cost = MathUtil.multiplyWithFour(obj.getAllocatedAmount(), obj.getAllocatedAmountExchange());
+                        BigDecimal cost =  obj.getAllocatedAmountExchange();
 
                         if (CharSequenceUtil.equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode(),obj.getFeeType())) {
                            kolSampleCostEntity.setShippingCost(cost);
@@ -365,12 +364,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
 
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
-                long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
+           /*     long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
                 if (count > 1) {
                     importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】在导入数据中存在重复");
                     errorList.add(importExcelDTO);
                     continue;
-                }
+                }*/
                 List<KolSampleCostEntity> costList = kolSampleCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).collect(Collectors.toList());
                 if (CollUtil.isEmpty(costList)) {
                     importExcelDTO.setErrorMsg("未找到对应的销售订单号：" + importExcelDTO.getSoCode());
