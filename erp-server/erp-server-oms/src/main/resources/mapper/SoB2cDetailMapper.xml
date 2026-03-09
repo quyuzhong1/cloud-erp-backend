@@ -91,6 +91,9 @@
         <where>
             sbd.is_deleted = false and sb.invalid_status = false and sb.pay_status = 'paid'
             and sb.approve_status = 'approve' and sb.bill_status in ('inDistribution','waitDistribution')
+            <if test="params.isThirdWarehouse != null and params.isThirdWarehouse == true">
+                and sb.bill_status in ('waitShipped')
+            </if>
             <if test="paramDTO.skuIdList != null and paramDTO.skuIdList.size > 0">
                 and sbd.sku_id in
                 <foreach collection="paramDTO.skuIdList" item="item" open="(" close=")" separator=",">
