@@ -7318,8 +7318,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     tikTokPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
                 } else if (isTikTokPlatformWarehouseByFulfillmentType(labelJsonDTO.getFulfillmentType())) {
                     tikTokPlatformWarehouseOrder = true;
-                } else if (isTikTokPlatformWarehouseByShippingType(labelJsonDTO.getShippingType())) {
-                    tikTokPlatformWarehouseOrder = true;
                 }
             }
             //TikTok
@@ -7412,12 +7410,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private boolean isTikTokPlatformWarehouseByFulfillmentType(String fulfillmentType) {
         return StringUtils.isNotBlank(fulfillmentType)
                 && "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(fulfillmentType);
-    }
-
-    private boolean isTikTokPlatformWarehouseByShippingType(String shippingType) {
-        return StringUtils.isNotBlank(shippingType)
-                && ("TIKTOK".equalsIgnoreCase(shippingType)
-                || "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(shippingType));
     }
 
     private void checkExchangeRate(SoB2cEntity entity) {
