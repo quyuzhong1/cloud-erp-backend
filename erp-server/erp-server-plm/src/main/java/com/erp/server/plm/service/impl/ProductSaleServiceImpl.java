@@ -209,8 +209,9 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         //处理数据
 
         handleSaveOrUpdate(saleEntity);
+        Boolean result = this.saveOrUpdate(saleEntity);
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(productSaleDTO.getSkuId()));
-        return this.saveOrUpdate(saleEntity);
+        return result;
     }
 
     /**
@@ -262,7 +263,9 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         for (ProductSaleEntity entity : list) {
             entity.setId(map.get(entity.getSkuId()));
         }
-        return this.saveOrUpdateBatch(list);
+        Boolean result = this.saveOrUpdateBatch(list);
+        this.saveOrUpdateParentPropertyIdByChildSkuId(skuIdList);
+        return result;
     }
 
     /**
