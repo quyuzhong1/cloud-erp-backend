@@ -97,4 +97,6 @@ public interface AdsErpDiffOutstockSyncService extends SuperService<AdsErpDiffOu
     List<AdsErpDiffOutstockSyncDTO.ErpOutstockResultDTO> listErpOutstockByParams(AdsErpDiffOutstockSyncDTO.ErpOutstockParamsDTO dto);
 
     List<AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO> listPlateformOutstockNotExistRelation(BaseIdsDTO.IdsDTO dto);
+
+    PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
 }

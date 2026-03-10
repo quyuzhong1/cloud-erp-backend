@@ -97,4 +97,6 @@ public interface AdsErpDiffReturnInstockSyncService extends SuperService<AdsErpD
     List<AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDTO> listErpReturnInstockByParams(AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockParamsDTO dto);
 
     BatchResultDTO batchUpdateReturnInstockRelation(AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO relationDTO);
+
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
 }

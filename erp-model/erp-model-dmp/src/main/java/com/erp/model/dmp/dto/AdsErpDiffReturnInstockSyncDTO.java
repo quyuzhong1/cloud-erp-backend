@@ -141,6 +141,8 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
 
         private List<String> ids;
 
+        private String type;
+
      }
 
 

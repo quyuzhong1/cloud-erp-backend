@@ -14,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.*;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -240,13 +241,16 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage() - 1);
         map.put("pageSize", dto.getPageSize());
-        JSONObject data = new JSONObject();
-        if(CollUtil.isNotEmpty(dto.getParams().getIds())){
-            data.put("sql", StrUtil.format(" and t.id in ({}) ",dto.getParams().getIds().stream()
+        StringBuffer sb = new StringBuffer();
+        AdsErpDiffOutstockSyncDTO.PagingParamDTO params = dto.getParams();
+        if(CollUtil.isNotEmpty(params.getIds())){
+            sb.append(StrUtil.format(" and t.id in ({}) ",params.getIds().stream()
                     .collect(Collectors.joining("','", "'", "'"))));
         }
-        map.put("data", Collections.singletonList(data));
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_diff_outstock_sync_source_platform")
+        if(StringUtils.isNotBlank(sb.toString())){
+            map.put("sql", sb.toString());
+        }
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/"+params.getType())
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
@@ -280,13 +284,17 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage() - 1);
         map.put("pageSize", dto.getPageSize());
-        JSONObject data = new JSONObject();
-        if(CollUtil.isNotEmpty(dto.getParams().getIds())){
-            data.put("sql", StrUtil.format(" and t.id in ({}) ",dto.getParams().getIds().stream()
+        StringBuffer sb = new StringBuffer();
+        AdsErpDiffReturnInstockSyncDTO.PagingParamDTO params = dto.getParams();
+        if(CollUtil.isNotEmpty(params.getIds())){
+            sb.append(StrUtil.format(" and t.id in ({}) ",params.getIds().stream()
                     .collect(Collectors.joining("','", "'", "'"))));
         }
-        map.put("data", Collections.singletonList(data));
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_diff_return_instock_sync_source_platform")
+
+        if(StringUtils.isNotBlank(sb.toString())){
+            map.put("sql", sb.toString());
+        }
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/"+params.getType())
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)

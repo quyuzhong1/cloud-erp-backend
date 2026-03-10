@@ -295,6 +295,12 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         return  dmpRestCloudService.diffOutstockSyncSourcePlatformPaging(dto);
     }
 
+
+    @Override
+    public PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<PagingParamDTO> dto) {
+        return  dmpRestCloudService.diffOutstockSyncSourcePlatformPaging(dto);
+    }
+
     @Override
     public Boolean exportSourcePlatform(PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC_DETAIL_PLATFORM.getCode(), dto);
