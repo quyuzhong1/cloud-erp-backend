@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
@@ -716,9 +717,19 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus()) || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getOrderStatus())) {
                     shudiyunB2cOrderDTO.setGoods_status("已发货");
                 }
-
-                if (dmpSoInfoEntity.getIsCancel() && dmpSoInfoEntity.getIsCancel() != null) {
-                    shudiyunB2cOrderDTO.setGoods_status("已取消");
+                
+                if(dmpSoInfoEntity.getSourceSystem().equalsIgnoreCase(PlatformDictEnum.SHOPIFY.getCode()) && StringUtils.isNotBlank(dmpSoInfoEntity.getExtendData())) {
+                	JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+                    if (jsonObject.get("refundedLineItemIds") != null) {
+                        List<String> refundedLineItemIds = (List<String>) jsonObject.get("refundedLineItemIds");
+                        if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(dmpSoDetailEntity.getThirdDetailId())) {
+                        	shudiyunB2cOrderDTO.setGoods_status("已取消");
+                        }
+                    }
+                }else {
+                	if (dmpSoInfoEntity.getIsCancel() && dmpSoInfoEntity.getIsCancel() != null) {
+                        shudiyunB2cOrderDTO.setGoods_status("已取消");
+                    }
                 }
 
                 //取消金额、数量

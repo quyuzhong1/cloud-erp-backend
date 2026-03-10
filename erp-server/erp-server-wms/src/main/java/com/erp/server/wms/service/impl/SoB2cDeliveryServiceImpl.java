@@ -837,11 +837,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
+    public String printLogisticsBillConfirm(String printType, LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList, HttpServletResponse response){
         //打印类型
-        String printType = dto.getPrintType();
+//        String printType = dto.getPrintType();
         //明细信息
-        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = dto.getDetailList();
+//        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = dto.getDetailList();
         List<String> logisticsChannelIdList = detailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
         List<String> base64UrlList = Collections.synchronizedList(new ArrayList<>());
         //查询打印类型
@@ -857,7 +857,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         });
         detailList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
         //明细取值为拣货单
-        if(!SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(dto.getPrintType())){
+        if(!SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(printType)){
             this.allocateCargoDetail(allPrintWayBillPdfResultList);
         }
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listBySourceIds(allSoIds);
@@ -1138,9 +1138,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public String printLogisticsBillConfirmById(String id, HttpServletResponse response) {
-        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
-        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
-        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
+//        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
+//        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
+        LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new LinkedList<>();
         //发货单
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
@@ -1157,8 +1157,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         detailDTO.setSoB2cId(soB2cDeliveryEntity.getSourceId());
         detailDTO.setLogisticType(soB2cLogisticsList.get(0).getLogisticType());
         detailList.add(detailDTO);
-        dto.setDetailList(detailList);
-        return printLogisticsBillConfirm(dto,response);
+//        dto.setDetailList(detailList);
+        return printLogisticsBillConfirm(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode(),detailList,response);
     }
 
     @Override
@@ -1765,6 +1765,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         this.removeById(id);
         //删除配送明细
         soB2cDeliveryDetailService.removeByMainIds(Collections.singletonList(id));
+    }
+
+    @Override
+    public PagingVO<String> printLogisticsBillConfirmPaging(PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response) {
+        Integer currentPage = dto.getCurrPage();
+        Integer pageSize = dto.getPageSize();
+        int totalItems = dto.getParams().getDetailList().size();
+        int totalPage = (int) Math.ceil((double) totalItems / pageSize); // 计算总页数
+        // 如果页码超出范围，返回空列表
+        if (currentPage < 1 || currentPage > totalPage) {
+            throw new ServiceException("页码超出范围");
+        }
+        // 计算起始索引和结束索引
+        int startIndex = (currentPage - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, totalItems);
+        // 使用 subList 截取对应范围的数据
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> list = dto.getParams().getDetailList().subList(startIndex, endIndex);
+        String printUrl = this.printLogisticsBillConfirm(dto.getParams().getPrintType(), new LinkedList<>(list), response);
+        return new PagingVO<>(Collections.singletonList(printUrl),totalItems,pageSize,currentPage);
     }
 
     @Override

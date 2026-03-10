@@ -109,6 +109,24 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     private String currencySymbol;
 
     /**
+     * 返修数量
+     */
+    @TableField("repair_qty")
+    private Integer repairQty;
+
+    /**
+     * 返修单价
+     */
+    @TableField("repair_price")
+    private BigDecimal repairPrice;
+
+    /**
+     * 返修金额
+     */
+    @TableField("repair_amount")
+    private BigDecimal repairAmount;
+
+    /**
     * 采购金额
     */
     @TableField("amount")

@@ -17,6 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PickingListsEntity;
+import com.erp.server.wms.query.PickingListsQueryHandler;
 import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +60,7 @@ public class PickingListsController extends BaseController {
             menuCode = "wms:picking-lists:paging",
             tableAlias = "pl"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PickingListsQueryHandler.class)
     public ApiResult<PagingVO<PickingListsDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<PickingListsDTO.PagingParam> dto) {
         PagingVO<PickingListsDTO.PagingView> pagingVO = pickingListsService.paging(dto);
         return success(pagingVO);
@@ -149,7 +150,6 @@ public class PickingListsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出拣货单")
     @PostMapping("/export")
-    @WebAdvanceQuery
     public ApiResult<Boolean> export(@RequestBody @Validated PickingListsDTO.ExportDTO dto) {
         pickingListsService.export(dto);
         return success(true);

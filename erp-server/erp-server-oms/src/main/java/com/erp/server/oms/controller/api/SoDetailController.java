@@ -3,7 +3,6 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.AddGroup;
@@ -11,31 +10,20 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -136,7 +124,7 @@ public class SoDetailController extends BaseController {
         for (String id : dto.getDetailIdList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soDetailService.batchUnLockVirtualInventory(id,null);
+                resultDTO = soDetailService.batchUnLockVirtualInventorys(id);
             }catch (Exception e){
                 log.error("销售订单明细释放库存失败",e);
                 SoDetailEntity entity = soDetailService.getById(id);

@@ -81,6 +81,7 @@ public class VwPushHandelDetailPushDTO {
      */
     private String dmpSyncTaskId;
 
+
     @Getter
     @Setter
     public static class DetailList {

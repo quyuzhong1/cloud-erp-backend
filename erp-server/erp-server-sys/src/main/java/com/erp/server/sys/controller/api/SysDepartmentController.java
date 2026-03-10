@@ -14,6 +14,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.erp.server.sys.service.SysDepartmentService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -124,8 +125,11 @@ public class SysDepartmentController extends BaseController {
      * @return
      */
     @GetMapping("/drop/down")
-    ApiResult<List<SysDeptDropDownVO>> listDeptDropDown(){
+    public ApiResult<List<SysDeptDropDownVO>> listDeptDropDown(@RequestParam(value = "deptName",required = false) String deptName){
         List<SysDepartmentEntity> entities = sysDepartmentService.listDept();
+        if(StringUtils.isNotBlank(deptName)){
+            entities = entities.stream().filter(v->v.getName().contains(deptName)).collect(Collectors.toList());
+        }
         List<SysDeptDropDownVO> resultList = entities.stream()
                 .map(x ->
                         new SysDeptDropDownVO(x.getId(), x.getName(),x.getDisabled())

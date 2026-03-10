@@ -223,8 +223,8 @@ public class AliExpressOrder implements Serializable {
                     || "RISK_CONTROL".equals(orderStatus)
                     ||"IN_FROZEN".equals(orderStatus)){
 
-//                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
-                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+//                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
             }
 
         }

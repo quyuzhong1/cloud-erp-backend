@@ -358,4 +358,37 @@ public class LogisticsBillController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 是否分摊状态更新
+     * @author will
+     * @date 2026/1/20 16:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateIsAllocateRequired")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "是否分摊状态更新")
+    public ApiResult<List<BatchResultDTO>> updateIsAllocateRequired(@RequestBody @Valid LogisticsBillDTO.UpdateAllocateRequiredDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = logisticsBillService.updateIsAllocateRequired(id,dto.getIsAllocateRequired(),dto.getNotAllocateRemark());
+            } catch (Exception e) {
+                log.error("是否分摊状态更新{}", e);
+                LogisticsBillEntity entity = logisticsBillService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "头程物流单不存在, 状态更改失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
+    }
 }

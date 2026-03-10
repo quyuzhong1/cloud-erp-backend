@@ -36,9 +36,6 @@ public interface VirtualWarehousePushHandleDetailService extends SuperService<Vi
     * @return
     */
     Boolean update(VirtualWarehousePushHandleDetailDTO.UpdateDTO dto);
-
-
-    void handleDetail(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
     /**
      * 设置
      * @author will
@@ -75,4 +72,30 @@ public interface VirtualWarehousePushHandleDetailService extends SuperService<Vi
      * @return void
      */
     void batchManualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto, String code, List<String> hanleDetailIdList);
+    /**
+     * 新增分货单推送明细
+     * @author will
+     * @date 2026/1/27 15:22
+     * @param allocationEntity
+     * @param pushHandleEntity
+     * @return void
+     */
+    List<VirtualWarehousePushHandleDetailEntity> addAllocationDetailPush(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
+    /**
+     * 取消分货推送明细
+     * @author will
+     * @date 2026/1/27 15:43
+     * @param allocationEntity
+     * @param pushHandleEntity
+     * @return List<VirtualWarehousePushHandleDetailEntity>
+     */
+    List<VirtualWarehousePushHandleDetailEntity> cancelAllocationDetailPush(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2026/1/27 18:28
+     * @param sourceId
+     * @return List<VirtualWarehousePushHandleDetailEntity>
+     */
+    List<VirtualWarehousePushHandleDetailEntity> listBySourceId(String sourceId);
 }

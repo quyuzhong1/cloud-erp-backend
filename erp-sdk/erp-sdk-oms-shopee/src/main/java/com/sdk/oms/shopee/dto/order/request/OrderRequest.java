@@ -29,4 +29,5 @@ public class OrderRequest implements Serializable {
     String orderSns;
     long timestamp;
     boolean isCreateTime;
+    String orderStatus;
 }

@@ -101,6 +101,10 @@ public class AntuCreateOutboundReq {
     @JSONField(name = "license")
     private String license;
 
+    //收件人税号
+    @JSONField(name = "consignee_tax_number")
+    private String consigneeTaxNumber;
+
     //平台店铺
     @JSONField(name = "platform_shop")
     private String platformShop;

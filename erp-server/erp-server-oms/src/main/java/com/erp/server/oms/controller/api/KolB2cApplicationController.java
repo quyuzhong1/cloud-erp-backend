@@ -1,33 +1,36 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
-import com.common.core.utils.ExcelUtil;
-import com.erp.server.oms.query.KolB2cApplicationQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.KolB2cApplicationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
+import com.erp.model.oms.entity.KolB2cApplicationEntity;
+import com.erp.server.oms.query.KolB2cApplicationQueryHandler;
+import com.erp.server.oms.service.KolB2cApplicationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import com.erp.model.oms.entity.KolB2cApplicationEntity;
 
 /**
  * B2C寄样申请单
@@ -358,7 +361,7 @@ public class KolB2cApplicationController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = kolB2cApplicationService.cancelProcess(id);
+                cancelResult = kolB2cApplicationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("B2C寄样申请单撤回流程失败",e);
                 KolB2cApplicationEntity entity = idEntityMap.get(id);
@@ -438,7 +441,7 @@ public class KolB2cApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "B2C-KOL寄样申请下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/kolB2cApplicationTemplate.xlsx";
+        String standardPath = "excel/kolB2cApplicationTemplate.xlsx";
         String standardExcelName = "kolB2cApplicationTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();

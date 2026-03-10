@@ -1197,6 +1197,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDTO.setOutstockId(entity.getId());
             addDTO.setOutstockCode(entity.getCode());
             addDTO.setSourceCode(entity.getSoCode());
+            addDTO.setSalesDeptId(entity.getSalesDeptId());
             String soId = entity.getSoId();
             addDTO.setSourceId(soId);
             String orderType = entity.getOrderType();
@@ -3183,7 +3184,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             this.submitAndApprove(id);
         }
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 
     @Override
@@ -3276,7 +3277,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }
         }
-        return false;
+        return true;
     }
 
 

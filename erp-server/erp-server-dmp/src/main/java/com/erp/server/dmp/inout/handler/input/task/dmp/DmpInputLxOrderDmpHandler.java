@@ -296,6 +296,10 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             //400：等待修改确认
             //500：已发货
             //900：已付款
+            // 乐天
+            if (LingxingPlatformCodeEnum.RAKUTEN.getCode().equals(platformCodeStr)){
+                return !"500".equalsIgnoreCase(sourcePlatformOrderStatus);
+            }
             return "CANCELED".equalsIgnoreCase(sourcePlatformOrderStatus)
                     || "Cancelled".equalsIgnoreCase(sourcePlatformOrderStatus);
         }

@@ -21,6 +21,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.server.wms.query.StocktakingPlanQueryHandler;
+import com.erp.server.wms.service.AwdOutstockService;
 import com.erp.server.wms.service.StocktakingPlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -346,6 +347,17 @@ public class StocktakingPlanController extends BaseController {
             keyIdName = "id")
     public ApiResult<StocktakingPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(stocktakingPlanService.view(id));
+    }
+
+    /**
+     * 下推盘点任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pushStocktakingTask")
+    public ApiResult<?> pushStockingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        boolean flag = stocktakingPlanService.pushStockingTask(dto);
+        return flag == true ? success() : failure();
     }
 
 

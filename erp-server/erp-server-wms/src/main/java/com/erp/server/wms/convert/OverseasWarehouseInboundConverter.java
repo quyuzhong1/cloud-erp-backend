@@ -182,7 +182,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "address2",  source = "receiverInfo.address2"),
             @Mapping(target = "address3",  source = "receiverInfo.address3"),
             @Mapping(target = "zipcode",  source = "receiverInfo.zipCode"),
-            @Mapping(target = "license",  source = "receiverInfo.taxNumber"),
+            @Mapping(target = "consigneeTaxNumber",  source = "receiverInfo.taxNumber"),
             @Mapping(target = "name",  source = "receiverInfo.name"),
             @Mapping(target = "phone",  source = "receiverInfo.phone"),
             @Mapping(target = "doorplate",  constant = "0"),

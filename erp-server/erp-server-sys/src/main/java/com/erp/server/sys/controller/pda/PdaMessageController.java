@@ -47,8 +47,10 @@ public class PdaMessageController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Integer>
      **/
     @GetMapping(value = "/listNotReadMessageDetail")
-    public ApiResult<List<MessageDTO.NotReadMessageNumDetail>> listNotReadMessageDetail(@RequestParam("type") String type) {
-        List<MessageDTO.NotReadMessageNumDetail> list = messageService.listNotReadMessageDetail(type);
+    public ApiResult<List<MessageDTO.NotReadMessageNumDetail>> listNotReadMessageDetail(@RequestParam("type") String type , 
+    		@RequestParam(value = "pageNo" , required = false) Integer pageNo , 
+    		@RequestParam(value = "pageSize" , required = false) Integer pageSize) {
+        List<MessageDTO.NotReadMessageNumDetail> list = messageService.listNotReadMessageDetail(type , pageNo , pageSize);
         return success(list);
     }
 

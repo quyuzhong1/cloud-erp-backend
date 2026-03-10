@@ -160,30 +160,6 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      */
     BatchResultDTO delete(String id);
 
-    /**
-     * 库存组织ID和SKuId最新单据时间
-     *
-     * @author Jim
-     * @date 2024-03-05
-     */
-    List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds);
-
-
-    /**
-     * 仓库ID和SkuId,单据时间查询最新的单号
-     *
-     * @author Jim
-     * @date 2024-03-05
-     */
-    String findLastOneCode(String warehouseId, String skuId, LocalDate billDate);
-
-    /**
-     * 根据组织IDS和SkuIds，比较单据日期是否是已审核的盘盈盘亏单据日期之前
-     *
-     * @author Jim
-     * @date 2024-03-07
-     */
-    boolean checkClosed(List<String> warehouseIds,List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate);
 
     PagingVO<StocktakingProfitLossDTO.ExportViewDTO> exportStocktakingProfitLoss(PagingDTO<StocktakingProfitLossDTO.ExportDTO> dto);
 }

@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.server.file.handler.FileRegistry;
+import com.erp.server.file.repository.IFileTaskRepository;
 import com.erp.server.file.service.FileService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,9 @@ import java.util.UUID;
 public class FileFeignController {
     @Resource
     private FileRegistry fileRegistry;
+
+    @Resource
+    private IFileTaskRepository fileTaskRepository;
 
     /**
      * 上传文件
@@ -135,5 +139,18 @@ public class FileFeignController {
     public List<FileDTO.FileSizeInfo> getBatchFileSize(@RequestBody List<String> fileUrlList) {
         FileService fileService = fileRegistry.getHandler();
         return fileService.getBatchFileSize(fileUrlList);
+    }
+
+    /**
+     * 查询最新的文件任务信息
+     * @author will 
+     * @date 2026/1/26 11:30
+     * @param fileUrlList 
+     * @return List<FileTaskDTO>
+     */
+    @PostMapping("/listLatestFileTask")
+    public List<FileDTO.FileTaskDTO> listLatestFileTask(@RequestBody List<String> fileUrlList) {
+        FileService fileService = fileRegistry.getHandler();
+        return fileTaskRepository.listLatestFileTask(fileUrlList);
     }
 }

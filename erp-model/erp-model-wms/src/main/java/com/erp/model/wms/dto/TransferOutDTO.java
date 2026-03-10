@@ -276,6 +276,25 @@ public class TransferOutDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
 
         /**
          * 审核状态编码
