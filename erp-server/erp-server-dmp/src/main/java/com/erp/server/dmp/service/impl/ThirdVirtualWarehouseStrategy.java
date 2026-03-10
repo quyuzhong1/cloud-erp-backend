@@ -72,7 +72,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
 //        //获取仓库信息
 //        List<VirtualWarehouseEntity> listDTOS = wmsVirtualWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId()));
 //        if (CollectionUtils.isEmpty(listDTOS)) {
-//            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+//            throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
 //        }
 //        warehouse = listDTOS.get(0);
         List<ThirdMappingDTO.ThirdAddDTO> thirdList = addDTO.getThirdList();
@@ -275,7 +275,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
     private void handleData(ThirdMappingEntity thirdMappingEntity) {
         //校验第三方仓库是否存在
         ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByIdOpt(thirdMappingEntity.getThirdId())
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_NOT_FOUND));
         String thirdName = thirdWarehouseEntity.getName();
         String sysName = thirdMappingEntity.getSysName();
         thirdMappingEntity.setThirdInfoId(thirdWarehouseEntity.getWarehouseId());
@@ -287,14 +287,14 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
         ThirdMappingEntity existSysMapping = thirdMappingService.getByTypeAndSysIdAndSysType(thirdMappingEntity);
         if (Objects.nonNull(existSysMapping)) {
             if (!Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) {
-                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
+                throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
             } else {
                 thirdMappingEntity.setId(existSysMapping.getId());
             }
         }
         ThirdMappingEntity existThirdMapping = thirdMappingService.getByTypeAndThirdId(thirdMappingEntity);
         if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) || Objects.isNull(existSysMapping))) {
-            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existThirdMapping.getSysName());
+            throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existThirdMapping.getSysName());
         }
     }
 
@@ -309,7 +309,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
         Map<String, List<ThirdAddDTO>> result = thirdList.stream().collect(groupingBy(ThirdMappingDTO.ThirdAddDTO::getSysType,
                 collectingAndThen(Collectors.toList(), list -> {
                             if (list.size() > 1) {
-                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
+                                throw new ServiceException(ApiError.DMP_THIRD_SYS_TYPE_SINGLE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
                             }
                             return list;
                         }

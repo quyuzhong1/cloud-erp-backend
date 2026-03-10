@@ -19,7 +19,6 @@ import com.erp.server.tms.service.TransferDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +75,7 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
     @Override
     public Boolean update(TransferDeclareProductDTO.UpdateDTO updateDTO) {
         TransferDeclareProductEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转报关产品"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转报关产品"));
         TransferDeclareProductEntity transferDeclareProductEntity =  BeanMapperUtils.map(TransferDeclareProductEntity.class, updateDTO);
 
         // 数据处理

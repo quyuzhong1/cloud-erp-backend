@@ -80,7 +80,8 @@
             t.create_time createTime,
             t.update_user_name updateUserName,
             t.update_time updateTime,
-            h.allocated_currency currency
+            h.allocated_currency currency,
+            k.platform_code as platformCode
         from small_bag_cost_allocation_main t
         left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
         left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
@@ -130,6 +131,34 @@
         and sbcam.report_date = #{reportPeriodStr}
         <if test="reportStatus != null and reportStatus!=''">
             and sbcam.report_status = #{reportStatus}
+        </if>
+    </select>
+
+    <!-- 小包成本分摊 明细列表 -->
+    <select id="listSmallBagCost" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$SmallBagCostDTO">
+        select
+            g.sku_id as skuId,
+            g.outstock_detail_id as soOutstockDetailId,
+            h.fee_type as feeType,
+            h.fee_allocation_type as feeAllocationType,
+            h.allocated_currency as allocatedCurrency,
+            h.allocated_amount_exchange as allocatedAmountExchange,
+            h.allocated_amount as allocatedAmount
+        from small_bag_cost_allocation_main t
+        left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        where t.is_deleted = false and t.report_status = 'confirmed'
+        <if test="param.skuIdList != null and param.skuIdList.size() > 0">
+            and g.sku_id in
+            <foreach collection="param.skuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.soOutstockDetailIdList != null and param.soOutstockDetailIdList.size() > 0">
+            and g.outstock_detail_id in
+            <foreach collection="param.soOutstockDetailIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
     </select>
 </mapper>

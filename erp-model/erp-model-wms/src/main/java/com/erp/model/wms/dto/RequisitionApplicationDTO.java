@@ -213,6 +213,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         @NotBlank(message = "要货申请不能为空")
         private String id;
+        private String type;
 
         /**
          * 装箱任务id

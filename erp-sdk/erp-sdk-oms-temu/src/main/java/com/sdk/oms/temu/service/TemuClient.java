@@ -13,7 +13,6 @@ import com.google.gson.Gson;
 import com.sdk.oms.temu.dto.*;
 import com.sdk.oms.temu.enums.TemuEnum;
 import com.sdk.oms.temu.util.EncryptionUtils;
-import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -61,16 +60,16 @@ public class TemuClient {
         String clientSecret = "a05e0902cf9c1b3c372680e084f1d424332284fb";
         String clientId = "ab3a401ed6c265793776aa3d4c48bd6f";
         String token = "upskffqpqmkoltggbfegqtbs7ghjaenvzwo9kbr1bt1ee5ypb0drvfh20ih";
-        TemuOrderReq temuCommonDTO = new TemuOrderReq();
+        TemuShippingInfoReq temuCommonDTO = new TemuShippingInfoReq();
         temuCommonDTO.setToken(token);
         temuCommonDTO.setAppSecret(clientSecret);
         temuCommonDTO.setAppKey(clientId);
         temuCommonDTO.setAreaCode("US");
-        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-00886115267191231"));
-        temuCommonDTO.setParentOrderSn("PO-211-00886115267191231");
-        temuCommonDTO.setOrderSn( "211-00886023516791231");
+//        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-00886115267191231"));
+        temuCommonDTO.setParentOrderSn("PO-211-19739185877112568");
+//        temuCommonDTO.setOrderSn( "211-00886023516791231");
         TemuClient temuClient = new TemuClient();
-        TemuResp<TemuLogisticShipmentDTO> resp = temuClient.getLogisticsShipment(temuCommonDTO);
+        TemuResp<TemuShippingDTO> resp = temuClient.getShippingInfo(temuCommonDTO);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
@@ -178,7 +177,7 @@ public class TemuClient {
     public TemuResp<TemuShippingDTO> getShippingInfo(TemuShippingInfoReq temuShippingInfoReq){
         TemuEnum temuEnum = TemuEnum.getByCode(temuShippingInfoReq.getAreaCode());
         this.checkShopInfo(temuShippingInfoReq);
-        String api = "bg.order.decryptshippinginfo.get";
+        String api = "bg.order.shippinginfo.v2.get";
         Map<String, Object> params = this.buildDefaultParams(temuShippingInfoReq, api);
         params.put("parentOrderSn",temuShippingInfoReq.getParentOrderSn());
 //        params.put("parentOrderSn","PO-211-1820964856952199");

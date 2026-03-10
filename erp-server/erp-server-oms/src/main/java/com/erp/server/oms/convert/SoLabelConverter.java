@@ -20,9 +20,10 @@ import java.util.List;
 public interface SoLabelConverter {
     SoLabelConverter INSTANCE = Mappers.getMapper(SoLabelConverter.class);
 
+    @Mapping(target = "hasLabel", ignore = true)
     @Mapping(target = "soId", source = "sourceId")
     @Mapping(target = "soCode", source = "sourceCode")
-    @Mapping(target = "fileData", ignore = true)
+    @Mapping(target = "logisticsLabelUrl", ignore = true)
     SoLabelDTO.PrintLabelDTO entityToPrintDTO(SoDeliveryNoticeEntity entity);
     List<SoLabelDTO.PrintLabelDTO> entityToPrintDTO(List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities);
 }

@@ -213,6 +213,10 @@ public class InventoryDTO implements Serializable {
         private List<String> skuIdList;
 
         /**
+         * 导出是否包含供应商
+         */
+        private Boolean includeSupplier = false;
+        /**
          * sku编码
          */
         private List<String> skuNoList;
@@ -416,6 +420,26 @@ public class InventoryDTO implements Serializable {
          * 库区名称
          */
         private String warehouseAreaName;
+
+        /**
+         * 一级供应商
+         */
+        private String mainSupplier;
+
+        /**
+         * 二级供应商
+         */
+        private String secondSupplier;
+        /**
+         * 一级供应商名称
+         */
+        private String mainSupplierName;
+
+        /**
+         * 二级供应商名称
+         */
+        private String secondSupplierName;
+
 
     }
 
@@ -1848,5 +1872,57 @@ public class InventoryDTO implements Serializable {
         private String warehouseId;
         private String skuId;
         private Integer realQty;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class RedisInventoryParamDTO {
+        /**
+         * skuId
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuIdList;
+        /**
+         * 仓库Id
+         */
+        @NotEmpty(message = "实体仓不能为空")
+        private List<String> warehouseIdList;
+        /**
+         * 库存状态
+         */
+        @NotEmpty(message = "库存状态不能为空")
+        private List<String> inventoryStatusList;
+
+        /**
+         * 仓位id
+         */
+        private List<String> warehouseLocationIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class RedisInventoryReturnDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 库存状态
+         */
+        private String inventoryStatus;
+        /**
+         * 库存id
+         */
+        private String inventoryId;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
     }
 }

@@ -34,10 +34,7 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -71,7 +68,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
 
         //校验是否重复
         String type = addDTO.getType();
-        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type)) {
+        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type) || DeliveryPlanTypeEnum.AWD.getCode().equals(type)) {
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<WmsDeliveryPlanDetailEntity>> fbaGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
@@ -137,7 +134,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
 
         //校验是否重复
         String type = updateDTO.getType();
-        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type)) {
+        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type) || DeliveryPlanTypeEnum.AWD.getCode().equals(type)) {
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<WmsDeliveryPlanDetailEntity>> fbaGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
@@ -148,7 +145,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
                             .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
                             .distinct()
                             .collect(Collectors.joining(", "));
-                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                    throw new ServiceException("FBA或AWD 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
                 }
             }
         } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
@@ -227,7 +224,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 WmsDeliveryPlanDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_OVERSEAS_DELIVERY_PLAN);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_PLAN_NOT_EXIST);
                 }
                 operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.DELIVERY_PLAN.getCode(), detailEntity.getId(),"", String.format("【%s】", old.getSkuNo()));
             }

@@ -52,4 +52,13 @@ public class CurrencyDTO implements Serializable {
         private Boolean disabled;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
 }

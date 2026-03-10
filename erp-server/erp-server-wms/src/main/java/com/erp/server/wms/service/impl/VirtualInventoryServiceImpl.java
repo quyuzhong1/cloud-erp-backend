@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -16,27 +17,29 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.VirtualInventoryService;
-import com.erp.server.wms.service.VirtualWarehouseService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
+import com.erp.server.wms.utils.VirtualInventoryRedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
@@ -75,6 +78,12 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private VirtualWarehouseChannelService virtualWarehouseChannelService;
+
+    @Resource
+    private VirtualInventoryTransactionService virtualInventoryTransactionService;
 
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
@@ -126,7 +135,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(found.getId(), qty);
             if (!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_1027);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
         }
         return found;
@@ -141,7 +150,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 .eq(VirtualInventoryEntity::getId, id)
                 .update(new VirtualInventoryEntity());
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_1027);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         }
         return flag;
     }
@@ -167,7 +176,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             return BeanMapperUtils.copyList(VirtualInventoryDTO.ViewQtyDTO.class, qtySearchList);
         }
         List<String> skuIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<String> warehouseIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> warehouseIds = qtySearchDTOS.stream().flatMap(obj -> Stream.of(obj.getWarehouseId(),obj.getToWarehouseId())).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
         vmParamDto.setSkuIdList(skuIds);
         vmParamDto.setWarehouseIdList(warehouseIds);
@@ -193,39 +202,37 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     }
 
     private void getCancelInfo(List<VirtualInventoryDTO.QtySearchDTO> qtySearchDTOS, List<String> skuIds, List<String> warehouseIds, VirtualInventoryDTO.ParamDTO vmParamDto, List<VirtualInventoryDTO.QtySearchDTO> qtySearchList, List<VirtualInventoryDTO.ViewQtyDTO> resultList) {
-        //获取实体仓可用库存
-        InventoryDTO.ParamDTO paramDTO = new InventoryDTO.ParamDTO();
-        paramDTO.setSkuIdList(skuIds);
-        paramDTO.setWarehouseIdList(warehouseIds);
-        List<InventoryDTO.InventoryViewQtyDTO> inventoryUsableQtyList = inventoryService.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
-        //获取实体仓对应的虚拟仓所有（可用+冻结）库存数量
-//        List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = baseMapper.getRealQty(vmParamDto);
+        //实体仓库存
+        InventoryDTO.RedisInventoryParamDTO redisParamDTO = new InventoryDTO.RedisInventoryParamDTO();
+        redisParamDTO.setSkuIdList(skuIds);
+        redisParamDTO.setWarehouseIdList(warehouseIds);
+        redisParamDTO.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+        List<InventoryDTO.RedisInventoryReturnDTO> redisInventoryList = inventoryService.getRedisInventory(redisParamDTO);
+
         //获取调出虚拟仓可用数量
         List<String> fromVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmParamDto.setVirtualWarehouseIdList(fromVmIds);
-        List<VirtualInventoryDTO.ViewQtyDTO> vwUsableQtyList = getVmUsableQty(vmParamDto, fromVmIds);
+        List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> vwUsableQtyList = getVmUsableQty(vmParamDto, fromVmIds);
         for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {
             //获取实体仓可用库存
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
-            List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
+            List<InventoryDTO.RedisInventoryReturnDTO> inventoryViewQtyDTOS = redisInventoryList.stream()
                     .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
                             && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(inventoryViewQtyDTOS)) {
-                Integer warehouseAllocationQty = inventoryViewQtyDTOS.get(0).getUsableQty();
+                Integer warehouseAllocationQty = inventoryViewQtyDTOS.stream().map(InventoryDTO.RedisInventoryReturnDTO::getQty).reduce(MathUtil.ZERO,Integer::sum);
                 viewQtyDTO.setWarehouseAllocationQty(warehouseAllocationQty);
                 viewQtyDTO.setWarehouseUsableQty(warehouseAllocationQty);
             }
 
             //获取调出仓可用库存
-            VirtualInventoryDTO.ViewQtyDTO qtyDTO = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId())
+            Integer usableQty = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId())
                             && Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
-                            && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(qtyDTO)) {
-                viewQtyDTO.setFromVirtualWarehouseUsableQty(qtyDTO.getToVirtualWarehouseUsableQty());
-            }
+                            && Objects.equals(item.getVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewQtyDTO.setFromVirtualWarehouseUsableQty(usableQty);
             resultList.add(viewQtyDTO);
         }
     }
@@ -235,70 +242,74 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         //获取调入、调出虚拟仓可用数量
         List<String> fromVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmIds.addAll(fromVmIds);
-        List<VirtualInventoryDTO.ViewQtyDTO> vwUsableQtyList = getVmUsableQty(vmParamDto, vmIds);
+        List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> vwUsableQtyList = getVmUsableQty(vmParamDto, vmIds);
         for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {//获取调入仓、调出仓可用库存
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             //获取调出仓可用库存
-            VirtualInventoryDTO.ViewQtyDTO fromQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
-                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
-                    .findFirst().orElse(null);
-            VirtualInventoryDTO.ViewQtyDTO toQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
-                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId()))
-                    .findFirst().orElse(null);
-            viewQtyDTO.setToVirtualWarehouseUsableQty(Objects.isNull(toQtyDto) ? 0 : toQtyDto.getToVirtualWarehouseUsableQty());
-            viewQtyDTO.setFromVirtualWarehouseUsableQty(Objects.isNull(fromQtyDto) ? 0 : fromQtyDto.getToVirtualWarehouseUsableQty());
+            Integer fromUsableQty = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
+                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer toUsableQty = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getToWarehouseId())
+                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewQtyDTO.setToVirtualWarehouseUsableQty(toUsableQty);
+            viewQtyDTO.setFromVirtualWarehouseUsableQty(fromUsableQty);
             resultList.add(viewQtyDTO);
         }
     }
 
     private void getAllocationInfo(List<VirtualInventoryDTO.QtySearchDTO> qtySearchDTOS, List<String> skuIds, List<String> warehouseIds, VirtualInventoryDTO.ParamDTO vmParamDto, List<VirtualInventoryDTO.QtySearchDTO> qtySearchList, List<VirtualInventoryDTO.ViewQtyDTO> resultList) {
         //实体仓库存
-        InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-        dto.setWarehouseIdList(warehouseIds);
-        dto.setSkuIdList(skuIds);
-        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
-        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
+        InventoryDTO.RedisInventoryParamDTO redisParamDTO = new InventoryDTO.RedisInventoryParamDTO();
+        redisParamDTO.setSkuIdList(skuIds);
+        redisParamDTO.setWarehouseIdList(warehouseIds);
+        redisParamDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        List<InventoryDTO.RedisInventoryReturnDTO> redisInventoryList = inventoryService.getRedisInventory(redisParamDTO);
 
         //获取实体仓对应的虚拟仓所有（可用+冻结）库存数量
-        List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = baseMapper.getRealQty(vmParamDto);
+        VirtualInventoryDTO.RedisVirtualInventoryParamDTO dto = new VirtualInventoryDTO.RedisVirtualInventoryParamDTO();
+        dto.setSkuIdList(skuIds);
+        dto.setWarehouseIdList(warehouseIds);
+        dto.setDictInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> redisVirtualInventoryList = this.getRedisVirtualInventory(dto);
         //获取调入虚拟仓可用数量
         List<String> toVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getToVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQty = getVmUsableQty(vmParamDto, toVmIds);
+        List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> vmUsableQty = getVmUsableQty(vmParamDto, toVmIds);
         //拼接返回数据
         for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {
             //获取实体仓可分配库存：实体仓实际库存-虚拟仓实际库存（可用+冻结）
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             //仓库实际库存
-            Integer realQty = skuInventoryTotalList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId())
+            Integer realQty = redisInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId())
                             && Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()).contains(obj.getInventoryStatus()))
-                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+                    .map(InventoryDTO.RedisInventoryReturnDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //虚拟仓库存
-            Integer virtualQty = vmRealQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId()) && CharSequenceUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId()))
-                    .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer virtualQty = redisVirtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId()) && CharSequenceUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId()))
+                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             viewQtyDTO.setToVirtualWarehouseRealQty(virtualQty);
             viewQtyDTO.setWarehouseAllocationQty(realQty - virtualQty);
             viewQtyDTO.setRealQty(realQty);
 
-            VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
-                    && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId())
-                    && Objects.equals(inventoryViewQtyDTO.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId())).findFirst().orElse(null);
-            if (Objects.nonNull(vmUsableQtyDto)) {
-                viewQtyDTO.setToVirtualWarehouseUsableQty(vmUsableQtyDto.getToVirtualWarehouseUsableQty());
-            }
+            Integer toUsableQty = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
+                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId())
+                            && Objects.equals(inventoryViewQtyDTO.getVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            viewQtyDTO.setToVirtualWarehouseUsableQty(toUsableQty);
             resultList.add(viewQtyDTO);
         }
     }
 
-    private List<VirtualInventoryDTO.ViewQtyDTO> getVmUsableQty(VirtualInventoryDTO.ParamDTO vmParamDto, List<String> toVmIds) {
-        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQty = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(toVmIds)) {
-            vmParamDto.setVirtualWarehouseIdList(toVmIds);
-            vmUsableQty = baseMapper.getUsableQty(vmParamDto);
-        }
-        return vmUsableQty;
+    private List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> getVmUsableQty(VirtualInventoryDTO.ParamDTO vmParamDto, List<String> toVmIds) {
+        VirtualInventoryDTO.RedisVirtualInventoryParamDTO dto = new VirtualInventoryDTO.RedisVirtualInventoryParamDTO();
+        dto.setVirtualWarehouseIdList(toVmIds);
+        dto.setSkuIdList(vmParamDto.getSkuIdList());
+        dto.setWarehouseIdList(vmParamDto.getWarehouseIdList());
+        dto.setDictInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+        return this.getRedisVirtualInventory(dto);
     }
 
     /**
@@ -353,7 +364,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(dto);
         List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }
@@ -539,7 +550,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
         for (VirtualInventoryDTO.ListDTO listDTO : list) {
             //产品信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品信息"));
             listDTO.setSkuNo(productDetailEntity.getSkuNo());
             listDTO.setProductName(productDetailEntity.getName());
 
@@ -653,5 +664,96 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         return found;
     }
 
+    @Override
+    public VirtualInventoryDTO.AllInventoryDTO getAllUseInventory(VirtualInventoryDTO.AllInventoryParamDTO dto) {
+        VirtualInventoryDTO.AllInventoryDTO allInventoryDTO = new VirtualInventoryDTO.AllInventoryDTO();
+        BeanUtil.copyProperties(dto,allInventoryDTO);
+        //实体仓库存
+        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId());
+        allInventoryDTO.setUsableQty(usableInventoryTotal);
+        //虚拟仓id
+        String virtualWarehouseId = handleVirtualWarehouse(dto.getCustomerId(), dto.getWarehouseId());
+        VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(virtualWarehouseId);
+        if (ObjectUtil.isEmpty(virtualWarehouseEntity)) {
+            return allInventoryDTO;
+        }
+        allInventoryDTO.setVirtualWarehouseId(virtualWarehouseId);
+        allInventoryDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+        VirtualInventoryDTO.ParamDTO params = new VirtualInventoryDTO.ParamDTO();
+        params.setSkuIdList(Collections.singletonList(allInventoryDTO.getSkuId()));
+        params.setWarehouseIdList(Collections.singletonList(allInventoryDTO.getWarehouseId()));
+        params.setVirtualWarehouseIdList(Collections.singletonList(allInventoryDTO.getVirtualWarehouseId()));
+        List<VirtualInventoryDTO.ViewQtyDTO> usableQtyList = baseMapper.getUsableQty(params);
+        if (CollUtil.isNotEmpty(usableQtyList)) {
+            allInventoryDTO.setVirtualUsableQty(usableQtyList.get(0).getToVirtualWarehouseUsableQty());
+        }
+        return allInventoryDTO;
+    }
+
+    @Override
+    public List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> getRedisVirtualInventory(VirtualInventoryDTO.RedisVirtualInventoryParamDTO dto) {
+        //查询库存
+        List<VirtualInventoryEntity> virtualInventoryList = listVirtualInventory(dto.getSkuIdList(), dto.getWarehouseIdList(), dto.getVirtualWarehouseIdList(), dto.getDictInventoryStatusList());
+        if (CollUtil.isEmpty(virtualInventoryList)) {
+            return Collections.emptyList();
+        }
+
+        List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> resultList = new ArrayList<>();
+        for (VirtualInventoryEntity virtualInventoryEntity : virtualInventoryList) {
+            VirtualInventoryDTO.RedisVirtualInventoryReturnDTO returnDTO = new VirtualInventoryDTO.RedisVirtualInventoryReturnDTO();
+            BeanUtils.copyProperties(virtualInventoryEntity, returnDTO);
+            returnDTO.setVirtualInventoryId(virtualInventoryEntity.getId());
+            returnDTO.setDictInventoryStatus(virtualInventoryEntity.getDictInventoryStatus());
+            //查询redis中的库存
+            Integer redisQty = virtualInventoryTransactionService.getRedisQtyByInventory(virtualInventoryEntity.getId());
+            returnDTO.setQty(redisQty);
+            resultList.add(returnDTO);
+        }
+        return resultList;
+    }
+
+   /**
+    * 查询虚拟库存
+    * @author will
+    * @date 2026/1/8 16:15
+    * @param skuIdList
+    * @param warehouseIdList
+    * @param virtualWarehouseIdList
+    * @param dictInventoryStatusList
+    * @return List<VirtualInventoryEntity>
+    */
+    private List<VirtualInventoryEntity> listVirtualInventory(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, List<String> dictInventoryStatusList) {
+        return lambdaQuery().in(VirtualInventoryEntity::getSkuId,skuIdList)
+                .in(VirtualInventoryEntity::getWarehouseId,warehouseIdList)
+                .in(CollUtil.isNotEmpty(virtualWarehouseIdList),VirtualInventoryEntity::getVirtualWarehouseId,virtualWarehouseIdList)
+                .in(CollUtil.isNotEmpty(dictInventoryStatusList),VirtualInventoryEntity::getDictInventoryStatus,dictInventoryStatusList)
+                .list();
+    }
+
+    /**
+     * 查询虚拟仓库
+     * @author will
+     * @date 2025/12/02 19:14
+     * @param customerId
+     * @param warehouseId
+     */
+    private String handleVirtualWarehouse (String customerId,String warehouseId) {
+        //查询客户信息
+        CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,customerId);
+        if (ObjectUtil.isEmpty(customerInfoEntity)) {
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
+        }
+        //查询虚拟仓信息
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
+        platformDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+        platformDTO.setRelationId("");
+        platformDTO.setPartitionId("");
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = virtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+            return "";
+        }
+         return virtualWarehouseList.get(0).getVirtualWarehouseId();
+    }
 
 }

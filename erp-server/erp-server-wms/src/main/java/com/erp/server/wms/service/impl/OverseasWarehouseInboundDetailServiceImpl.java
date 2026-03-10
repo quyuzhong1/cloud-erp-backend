@@ -99,7 +99,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     public Boolean update(OverseasWarehouseInboundDetailDTO.UpdateDTO updateDTO) {
         OverseasWarehouseInboundDetailEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单详情");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "海外仓入库单详情");
         }
         OverseasWarehouseInboundDetailEntity overseasWarehouseInboundDetailEntity = BeanMapperUtils.map(OverseasWarehouseInboundDetailEntity.class, updateDTO);
 
@@ -189,28 +189,22 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     .findFirst()
                     .orElse(null);
             if (Objects.isNull(entity)){
-                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST);
             }
             // 校验
             // 查询提交的平台
             OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundEntityList.stream().filter(v->v.getId().equals(entity.getMainId())).findFirst().orElse(null);
             if (Objects.isNull(mainEntity)){
-                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST);
+                throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST);
             }
             // 非手动单
-            if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
-                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseIdWithNotDisabled(mainEntity.getToWarehouseId());
-                if(Objects.nonNull(overseasProviderWarehouseEntity)){
-                    String msg = CharSequenceUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
-                    throw new ServiceException(msg);
-                }
-            }
-            if (!OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus()) &&
-                    !OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
-            ){
-                String msg = CharSequenceUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
-                throw new ServiceException(msg);
-            }
+//            if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
+//                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseIdWithNotDisabled(mainEntity.getToWarehouseId());
+//                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+//                    String msg = CharSequenceUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
+//                    throw new ServiceException(msg);
+//                }
+//            }
             if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
                 throw new ServiceException("当前签收数量大于剩余签收数量");
             }
@@ -277,7 +271,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 if (CharSequenceUtil.isNotBlank(transferOutId)) {
                     TransferInfoEntity entity = transferInfoService.getById(transferOutId);
                     if (ObjUtil.isEmpty(entity)) {
-                        throw new ServiceException(ApiError.ERROR_99047);
+                        throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
                     }
                     //提交
                     transferInfoService.submit(entity, Boolean.FALSE);
@@ -286,7 +280,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                         try {
                             TransferInfoEntity approveEntity = transferInfoService.getById(transferOutId);
                             if (ObjUtil.isEmpty(approveEntity)) {
-                                throw new ServiceException(ApiError.ERROR_99047);
+                                throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
                             }
                             transferInfoService.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
                         }catch (Exception e){
@@ -294,7 +288,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                         }
                     }
                 } else {
-                    throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
+                    throw new ServiceException(ApiError.WH_GENERATE_TRANSFER_OUT_FAILED);
                 }
             }finally {
                 UserContext.clearIsUserSystem();
@@ -341,13 +335,13 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     .findFirst()
                     .orElse(null);
             if (Objects.isNull(detailEntity)){
-                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST);
             }
             // 校验
             // 查询提交的平台
             OverseasWarehouseInboundEntity entity = overseasWarehouseInboundEntityList.stream().filter(v->v.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
             if (Objects.isNull(entity)){
-                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST);
+                throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST);
             }
             if (detailEntity.getPackQty() < detailEntity.getReceiveQty() + dto.getReceivedQty()){
                 throw new ServiceException("当前签收数量大于剩余签收数量");

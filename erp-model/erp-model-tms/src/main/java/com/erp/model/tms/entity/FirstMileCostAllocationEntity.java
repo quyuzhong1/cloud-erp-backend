@@ -159,7 +159,6 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     @TableField(exist = false)
     private LocalDate deliveryDate;
 
-
     public static final String FIELD_REMARK = "remark";
 
     public static final String RECONCILIATION_ID = "reconciliation_id";

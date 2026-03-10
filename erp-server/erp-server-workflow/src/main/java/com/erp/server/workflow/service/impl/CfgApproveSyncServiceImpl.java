@@ -19,6 +19,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
+import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -34,6 +35,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.lark.oapi.service.approval.v4.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -102,6 +104,8 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
 
     @Resource
     private ProcessManagementService processManagementService;
+    @Resource
+    private CfgQueryOptionService cfgQueryOptionService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -359,7 +363,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Override
     public Boolean update(CfgApproveSyncDTO.UpdateDTO addOrUpdateDTO) {
         CfgApproveSyncEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "ERP审批同步配置"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "ERP审批同步配置"));
 
         //校验是否已存在
         String businessType = addOrUpdateDTO.getBusinessType();
@@ -400,9 +404,18 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             if(count > 5){
                 throw new ServiceException("快捷审批勾选不能超过5个");
             }
+            List<String> fieldIds = pushMsgList.stream().map(CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO::getFieldId).collect(Collectors.toList());
+
+            List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.listByIds(fieldIds);
+
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
+                CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionEntities.stream().filter(e -> e.getId().equals(noticeFieldMapDTO.getFieldId())).findFirst().orElse(null);
+                if(Objects.isNull(cfgQueryOptionEntity)){
+                    throw new ServiceException(noticeFieldMapDTO.getFieldName()+"字段的映射不存在");
+                }
                 noticeFieldMapDTO.setMainId(id);
+                noticeFieldMapDTO.setFieldSource(cfgQueryOptionEntity.getConditionField());
                 noticeFieldMapDTO.setSort(sort++);
             }
             List<CfgApproveSyncFieldMapEntity> list = BeanMapper.copyList(pushMsgList, CfgApproveSyncFieldMapEntity.class);
@@ -737,8 +750,28 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     }
 
     @Override
-    public void cleanFeishuTest() {
+    public List<Map<String, Object>> listApproveNoticeRoleType(CfgApproveSyncDTO.ApproveNoticeRoleTypeParamDTO dto) {
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
+        List<Map<String, Object>> enumList = enumMaps.get("CfgApproveNoticeRoleType");
+        resultList.addAll(enumList);
 
+        if(Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getBusinessType())){
+            List<DictBasicDTO.DropDownDTO> list = dictBasicService.listByType("processCondition", dto.getBusinessType());
+            if(CollUtil.isNotEmpty(list)){
+                for (DictBasicDTO.DropDownDTO dropDownDTO : list) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("code", dropDownDTO.getCode());
+                    map.put("value", dropDownDTO.getName());
+                    resultList.add(map);
+                }
+            }
+        }
+        return resultList;
+    }
+
+    @Override
+    public void cleanFeishuTest() {
         List<CfgApproveSyncEntity> list = lambdaQuery().in(CfgApproveSyncEntity::getBusinessType,Arrays.asList( "pilotApplication", "purchaseOrder")).list();
         for (CfgApproveSyncEntity cfgApproveSyncEntity : list) {
             String businessType = cfgApproveSyncEntity.getBusinessType();

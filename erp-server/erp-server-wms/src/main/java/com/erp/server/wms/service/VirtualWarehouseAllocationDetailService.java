@@ -6,7 +6,6 @@ import com.common.business.service.SuperService;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
-import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 
@@ -52,7 +51,6 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
 
     void submit(VirtualWarehouseAllocationEntity allocationEntity);
 
-    void updateByMainId(String mainId, String syncStatus);
     /**
      * 同步
      *
@@ -67,14 +65,14 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @param id
      * @return
      */
-    DmpPushTaskDTO.SyncInfoDTO viewSyncInfo(String id);
+    List<DmpPushTaskDTO.SyncInfoDTO> viewSyncInfo(String id);
 
-    VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
+    List<VirtualWarehouseAllocationDTO.ThirdCodeDto> view(String id);
 
     /**
      * 修改同步状态
      */
-    void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
+    void updateThirdData(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
 
     /**
      * 获取同步信息
@@ -89,10 +87,6 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      */
     Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
 
-    /**
-     * 初始化第三方编码存在异常的数据
-     */
-    void initFailThirdCode(String errorMsg);
     /**
      * 查询分货信息
      * @author will
@@ -111,4 +105,14 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @return List<VirtualWarehouseAllocationDetailEntity>
      */
     List<VirtualWarehouseAllocationDetailEntity> listByMainIdList(List<String> mainIdList);
+    /**
+     * 查询重复处理的分货明细
+     * @author will
+     * @date 2025/12/29 10:42
+     * @param fromWarehouseIdList
+     * @param fromVirtualWarehouseIdList
+     * @param skuIdList
+     * @return List<VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO>
+     */
+    List<VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO> listRepeatHandleDetail(List<String> fromWarehouseIdList, List<String> fromVirtualWarehouseIdList, List<String> skuIdList);
 }

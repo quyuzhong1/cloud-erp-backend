@@ -16,7 +16,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +30,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpSoReturnInfoDTO;
-import com.erp.model.dmp.dto.DmpSoReturnInfoDTO.AddGyyReturnOrderDTO;
 import com.erp.model.dmp.entity.DmpSoReturnDetailEntity;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
-import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.GyyReturnOrderEntity;
 import com.erp.model.dmp.gyy.bean.ReturnOrderDetailsBean;
 import com.erp.server.dmp.mapper.DmpSoReturnInfoMapper;
@@ -96,7 +93,7 @@ public class DmpSoReturnInfoServiceImpl extends SuperServiceImpl<DmpSoReturnInfo
     @Override
     public Boolean update(DmpSoReturnInfoDTO.UpdateDTO updateDTO) {
         DmpSoReturnInfoEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销售退货订单主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售退货订单主单"));
         DmpSoReturnInfoEntity dmpSoReturnInfoEntity =  BeanMapperUtils.map(DmpSoReturnInfoEntity.class, updateDTO);
 
         // 数据处理

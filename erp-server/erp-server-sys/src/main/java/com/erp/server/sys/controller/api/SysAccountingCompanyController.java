@@ -12,11 +12,13 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.enums.CostAllocationOrgTypeEnum;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -110,13 +112,38 @@ public class SysAccountingCompanyController extends BaseController {
     /**
      * 获取组织列表
      *
+     * @param name 公司名称（模糊查询，非必填）
      * @return
      * @author yl
      * @date 2023-03-21 17:3
      */
     @GetMapping("/list")
-    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> list() {
-        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList();
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> list(@RequestParam(value = "name", required = false) String name) {
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList(name);
+        return success(list);
+
+    }
+
+
+    /**
+     * 获取组织列表
+     *
+     * @return
+     * @author yl
+     * @date 2023-03-21 17:3
+     */
+    @GetMapping("/listToTmsCfgSetting")
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> listToTmsCfgSetting() {
+        List<SysAccountingCompanyDTO.ListDTO> list = new ArrayList<>();
+        CostAllocationOrgTypeEnum[] values = CostAllocationOrgTypeEnum.values();
+        for (CostAllocationOrgTypeEnum value : values) {
+            SysAccountingCompanyDTO.ListDTO listDTO = new SysAccountingCompanyDTO.ListDTO();
+            listDTO.setId(value.getCode());
+            listDTO.setCompanyName(value.getName());
+            listDTO.setDisabled(false);
+            list.add(listDTO);
+        }
+        list.addAll(sysAccountingCompanyService.getList());
         return success(list);
 
     }

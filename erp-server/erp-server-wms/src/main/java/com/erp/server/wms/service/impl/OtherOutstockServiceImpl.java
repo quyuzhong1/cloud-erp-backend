@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -109,7 +108,6 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -266,7 +264,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //新增
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         //提交
         this.submit(id,Boolean.TRUE);
@@ -280,7 +278,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //新增
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         //提交
         this.submit(id,Boolean.FALSE);
@@ -298,10 +296,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     public Boolean update(OtherOutstockDTO.UpdateDTO dto) {
         OtherOutstockEntity old = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(old)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND);
         }
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
 
         OtherOutstockEntity entity = new OtherOutstockEntity();
@@ -340,11 +338,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //根据ids查询
         OtherOutstockEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99061);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_NOT_FOUND);
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("提交 开始修改其他出库单状态数据，id：【{}】", id);
         //更新审核状态
@@ -388,7 +386,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //主表信息
         OtherOutstockEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99061);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_NOT_FOUND);
         }
         BeanMapperUtils.copy(entity, viewDTO);
 
@@ -399,7 +397,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //客户信息
         OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(id);
         if (ObjectUtils.isEmpty(customerEntity)) {
-            throw new ServiceException(ApiError.ERROR_99063);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND);
         }
         OtherOutstockCustomerDTO.UpdateDTO customerDTO = new OtherOutstockCustomerDTO.UpdateDTO();
         BeanMapperUtils.copy(customerEntity,customerDTO);
@@ -408,7 +406,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //明细信息
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99062);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND);
         }
         List<OtherOutstockDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(OtherOutstockDetailDTO.ViewDTO.class, detailList);
 
@@ -456,7 +454,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //待提交并且未作废允许删除
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         log.info("其他出库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除其他出库客户
@@ -483,11 +481,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //非待提交和审核不通过不能作废
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("其他出库单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -513,11 +511,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //根据id查询
         OtherOutstockEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99061);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_NOT_FOUND);
         }
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
@@ -548,7 +546,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -568,14 +566,14 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
 
         //出库客户信息
         OtherOutstockCustomerEntity otherOutstockCustomerEntity = otherOutstockCustomerService.getByMainId(entity.getId());
         if (ObjectUtil.isEmpty(otherOutstockCustomerEntity)) {
-            throw new ServiceException(ApiError.ERROR_99063);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND);
         }
         Map<String, Object> customerMap = BeanUtil.beanToMap(otherOutstockCustomerEntity);
         variablesMap.putAll(customerMap);
@@ -627,11 +625,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //根据id查询
         OtherOutstockEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99061);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_NOT_FOUND);
         }
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         log.info("其他出库单反审核，ids=【{}】", JSONUtil.toJsonStr(id));
@@ -671,7 +669,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("其他出库单撤销流程，id=【{}】", ids);
 
@@ -784,7 +782,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //其他入库明细
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99062);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND);
         }
         List<InOutStockDTO>  inOutStockList = new ArrayList<>();
         for (OtherOutstockDetailEntity detailEntity : detailList) {
@@ -873,7 +871,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if  (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         entity.setWarehouseName(warehouseEntity.getName());
         //库存组织
@@ -882,7 +880,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId, receiveOrgId));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
         //库存组织名称
         String inventoryOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inventoryOrgId)).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
@@ -905,11 +903,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
      */
     private List<OtherOutstockEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<OtherOutstockEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99061);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_NOT_FOUND);
         }
         return list;
     }
@@ -1025,7 +1023,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         WarehouseEntity destWarehouse = warehouseService.getById(entity.getToWarehouseId());
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (CharSequenceUtil.isBlank(destWarehouse.getOnwayWarehouseId())) {
-            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+            throw new ServiceException(ApiError.WH_ONWAY_NOT_CONFIGURED);
         }
         OtherOutstockDTO.AddDTO addDTO = this.buildLossMainDto(destWarehouse,isOnwayWarehouse,entity.getCreateUserId());
         List<OtherOutstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
@@ -1048,7 +1046,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     public OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse,Boolean isOnwayWarehouse,String userId){
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (CharSequenceUtil.isBlank(warehouse.getOnwayWarehouseId())) {
-            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+            throw new ServiceException(ApiError.WH_ONWAY_NOT_CONFIGURED);
         }
         OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
         //出库日期
@@ -1078,7 +1076,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/otherOutstockTemplate.xlsx";
+        String path = "excel/otherOutstockTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -1095,7 +1093,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate 下载失败 e={}", e.getMessage());
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -1107,15 +1105,15 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             EasyExcel.read(excelFile.getInputStream(), OtherOutStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<OtherOutStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<OtherOutStockImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -1132,10 +1130,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         try {
             new ExcelPrintUtils().patchExport(errorList,
                     response,
-                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    CharSequenceUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.FALSE;
 
@@ -1247,7 +1245,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             // 发货仓库
             WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
             if (null == warehouseDTO){
-                importExcelDTO.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                importExcelDTO.setErrorMsg(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -1369,7 +1367,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                         userDTO,
                         orgDTO,
                         code,
-                        "",
+                        importExcelDTO.getRemark(),
                         userInfo.getUid(),
                         userInfo.getUserName()
                 );
@@ -1613,7 +1611,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
         return listApiResult;
@@ -1626,13 +1624,13 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         // 先验证所有ID是否存在
         List<OtherOutstockEntity> list = getList(ids);
         if (list.size() != ids.size()) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND, "部分其他出库单");
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, "部分其他出库单");
         }
         
         // 验证所有实体的状态是否允许删除
         for (OtherOutstockEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-                throw new ServiceException(ApiError.ERROR_1043, "其他出库单[" + entity.getCode() + "]");
+                throw new ServiceException(ApiError.BILL_DELETE_STATUS_NOT_ALLOWED, "其他出库单[" + entity.getCode() + "]");
             }
         }
         
@@ -1645,7 +1643,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         // 执行批量删除
         Boolean result = this.removeByIds(ids);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         
         // 发送金蝶

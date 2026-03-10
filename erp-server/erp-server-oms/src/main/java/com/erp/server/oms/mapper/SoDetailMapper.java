@@ -102,4 +102,12 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
+    /**
+     * 根据来源明细id集合查询
+     * @author will
+     * @date 2025/12/2 14:22
+     * @param sourceDetailIdList
+     * @return List<SoDetailEntity>
+     */
+    List<SoDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList);
 }

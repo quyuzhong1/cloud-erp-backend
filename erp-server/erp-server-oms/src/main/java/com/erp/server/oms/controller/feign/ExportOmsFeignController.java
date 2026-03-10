@@ -9,15 +9,17 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
-import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.server.oms.query.*;
 import com.erp.server.oms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -72,12 +74,31 @@ public class ExportOmsFeignController {
     @Resource
     private PackagePlanService packagePlanService;
 
+    @Resource
+    private KolFeedbackService kolFeedbackService;
+    @Resource
+    private KolFeedbackCostService kolFeedbackCostService;
 
     @Resource
     private SoReceiptService soReceiptService;
 
     @Resource
     private DeliveryBoxRuleService deliveryBoxRuleService;
+
+    @Resource
+    private KolPartnerInfoService kolPartnerInfoService;
+
+    @Resource
+    private KolSocialMediaService kolSocialMediaService;
+
+    @Resource
+    private KolB2bApplicationService kolB2bApplicationService;
+
+    @Resource
+    private KolSampleCostService kolSampleCostService;
+
+    @Resource
+    private KolB2cApplicationService kolB2cApplicationService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -305,13 +326,14 @@ public class ExportOmsFeignController {
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoMultiChannelQueryHandler.class)
     public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return soMultiChannelService.paging(dto);
     }
     @PostMapping("/packagePlan")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "pp.shop_id",
             menuCode = "oms:packagePlan:paging",
             tableAlias = "pp"
     )
@@ -344,4 +366,130 @@ public class ExportOmsFeignController {
         return deliveryBoxRuleService.paging(dto);
     }
 
+    /**
+     * 导出KOL回片列表
+     * @author wuhaotian
+     * @date:  2025-12-01
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportKolFeedback")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolFeedback:export",
+            tableAlias = "kf")
+    @WebAdvanceQuery(handler = KolFeedbackQueryHandler.class)
+    public PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
+        return kolFeedbackService.paging(dto);
+    }
+
+    /**
+     * KOL回片费用导出
+     */
+    @PostMapping("/exportKolFeedbackCost")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolFeedbackCost:export",
+            tableAlias = "kfc")
+    @WebAdvanceQuery
+    public PagingVO<KolFeedbackCostDTO.ListDTO> exportKolFeedbackCost(@RequestBody PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
+        return kolFeedbackCostService.paging(dto);
+    }
+
+    /**
+     * 企业达人库导出
+     * @author jack
+     * @date: 2025-12-03
+     * @param dto
+     * @return PagingVO<KolPartnerInfoDTO.ListDTO>
+     */
+    @PostMapping("/exportKolPartnerInfo")
+    @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
+    public PagingVO<KolPartnerInfoDTO.ListDTO> exportKolPartnerInfo(@RequestBody @Validated PagingDTO<KolPartnerInfoDTO.PagingParamDTO> dto) {
+        return kolPartnerInfoService.paging(dto);
+    }
+
+    /**
+     * 达人社媒数据表导出
+     * @author wuhaotian
+     * @date: 2025-12-04
+     * @param dto
+     * @return PagingVO<KolSocialMediaDTO.ListDTO>
+     */
+    @PostMapping("/exportKolSocialMedia")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolSocialMedia:export",
+            tableAlias = "ksm")
+    @WebAdvanceQuery
+    public PagingVO<KolSocialMediaDTO.ListDTO> exportKolSocialMedia(@RequestBody PagingDTO<KolSocialMediaDTO.ParamDTO> dto) {
+        return kolSocialMediaService.paging(dto);
+    }
+
+
+    /**
+     * 导出B2B寄样申请列表
+     * @author will
+     * @date 2025/12/3 09:15
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportKolB2bApplication")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolB2bApplication:paging",
+            tableAlias = "kba"
+    )
+    @WebAdvanceQuery(handler = KolB2bApplicationQueryHandler.class)
+    public PagingVO<KolB2bApplicationDTO.ListDTO> exportKolB2bApplication(@RequestBody PagingDTO<KolB2bApplicationDTO.PagingParamDTO> dto) {
+        return kolB2bApplicationService.paging(dto);
+    }
+
+    /**
+     * 导出寄样费用列表
+     * @author will
+     * @date 2025/12/3 09:15
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportKolSampleCost")
+    @WebAdvanceQuery
+    public PagingVO<KolSampleCostDTO.ListDTO> exportKolSampleCost(@RequestBody PagingDTO<KolSampleCostDTO.PagingParamDTO> dto) {
+        return kolSampleCostService.paging(dto);
+    }
+
+    /**
+     * B2C寄样申请导出
+     * @author jack
+     * @date: 2025-12-03
+     * @param dto
+     * @return PagingVO<KolB2cApplicationDTO.ListDTO>
+     */
+    @PostMapping("/exportOmsKolB2cApplication")
+    @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
+    public PagingVO<KolB2cApplicationDTO.ListDTO> exportOmsKolB2cApplication(@RequestBody PagingDTO<KolB2cApplicationDTO.PagingParamDTO> dto) {
+        return kolB2cApplicationService.paging(dto);
+    }
+
+    /**
+     * 查询发票附件URL列表（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return 附件URL列表
+     */
+    @PostMapping("/listExportUrl")
+    public List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(@RequestBody InvoiceInfoDTO.PagingParamDTO dto, @RequestParam("type") String type) {
+        return invoiceInfoService.listExportUrl(dto, type);
+    }
+
+    /**
+     * 构建发票附件ZIP文件（用于导出XML/PDF）
+     * @param dto 查询参数
+     * @param type 附件类型
+     * @return ZIP文件URL
+     */
+    @PostMapping("/buildInvoiceAttachZip")
+    public String buildInvoiceAttachZip(@RequestBody InvoiceInfoDTO.PagingParamDTO dto, @RequestParam("type") String type) {
+        return invoiceInfoService.buildInvoiceAttachZip(dto, type);
+    }
 }

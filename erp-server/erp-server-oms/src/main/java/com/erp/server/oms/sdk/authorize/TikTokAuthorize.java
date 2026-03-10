@@ -2,7 +2,6 @@ package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -34,7 +33,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -135,7 +133,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         }
         String shopId = shopIdObj.toString();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
+            throw new ServiceException(ApiError.SHOP_AUTH_REQUIRED);
         }
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         if (Objects.isNull(shopInfo)) {
@@ -143,7 +141,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         }
         String code = dto.getCode();
         if (StringUtils.isBlank(code)) {
-            throw new ServiceException(ApiError.ERROR_AUTHORIZE_CODE_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_AUTHORIZE_CODE_REQUIRED);
         }
         AppClientEnum appClient = AppClientEnum.TIKTOK_ACCESS_TOKEN;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();

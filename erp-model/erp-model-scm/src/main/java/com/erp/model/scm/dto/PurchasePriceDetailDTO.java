@@ -395,6 +395,14 @@ public class PurchasePriceDetailDTO implements Serializable {
          * 采购组织名称
          */
         private String purchaseOrgName;
+        /**
+         *产品属性
+         */
+        private String property;
+        /**
+         *产品属性id
+         */
+        private String propertyId;
     }
 
 

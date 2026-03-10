@@ -527,4 +527,24 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/scmWorkOption/assetPurchaseChangeApprove")
     List<BatchResultDTO> assetPurchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 批量更新合同名称
+     * @return
+     */
+    @PostMapping("feign/contractInfo/updateContractNameByTempId")
+    void updateContractNameByTempId(@RequestBody ContractInfoDTO.UpdateContractNameDTO dto);
+
+    /**
+     * 下推委外订单
+     * @return
+     */
+    @PostMapping("feign/subcontractOrder/pushDownSubcontractOrder")
+    Boolean pushDownSubcontractOrder(SubcontractOrderDTO.AddDTO dto);
+
+    /**
+     * 根据金蝶id查询委外订单
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractOrderByKingdeeId")
+    SubcontractOrderEntity listSubcontractOrderByKingdeeId(@RequestBody String kingdeeId);
 }

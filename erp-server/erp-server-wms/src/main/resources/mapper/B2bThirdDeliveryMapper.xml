@@ -93,7 +93,8 @@
             btdd.delivery_sku_no,
             btdd.warehouse_platform_sku,
             btdd.per_box_qty,
-            btdd.box_qty
+            btdd.box_qty,
+            btd.remark
         FROM b2b_third_delivery btd
                  LEFT JOIN b2b_third_delivery_detail btdd ON btd.id = btdd.main_id AND btdd.is_deleted=false
         WHERE ${params.sqlMap.default} and btd.is_deleted=false

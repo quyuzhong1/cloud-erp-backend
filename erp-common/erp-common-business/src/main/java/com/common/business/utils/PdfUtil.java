@@ -25,8 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -125,6 +123,73 @@ public class PdfUtil {
             e.printStackTrace();
         }
     }
+    /**
+     * 重载方法，支持单个PDF字节数组的处理
+     * @param pdfBytes 单个PDF字节数组
+     * @return 原PDF字节数组（不进行任何处理）
+     */
+    public static byte[] mergePdfFiles(byte[] pdfBytes) {
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            throw new IllegalArgumentException("PDF bytes cannot be null or empty");
+        }
+        return pdfBytes;
+    }
+    /**
+     * 合并多个PDF文件的字节数组，直接返回合并后的字节数组
+     * @param pdfBytesList PDF文件字节数组列表
+     * @return 合并后的PDF字节数组
+     */
+    public static byte[] mergePdfFiles(List<byte[]> pdfBytesList) {
+        if (pdfBytesList == null || pdfBytesList.isEmpty()) {
+            throw new IllegalArgumentException("PDF bytes list cannot be null or empty");
+        }
+
+        ByteArrayOutputStream outputStream = null;
+        Document document = null;
+
+        try {
+            // 使用第一个PDF的页面尺寸作为基础
+            PdfReader firstReader = new PdfReader(pdfBytesList.get(0));
+            document = new Document(firstReader.getPageSize(1));
+
+            // 使用ByteArrayOutputStream替代FileOutputStream
+            outputStream = new ByteArrayOutputStream();
+            PdfCopy copy = new PdfCopy(document, outputStream);
+            document.open();
+
+            // 遍历所有PDF字节数组进行合并
+            for (byte[] pdfBytes : pdfBytesList) {
+                PdfReader reader = new PdfReader(pdfBytes);
+                int pageCount = reader.getNumberOfPages();
+
+                for (int pageNum = 1; pageNum <= pageCount; pageNum++) {
+                    document.newPage();
+                    PdfImportedPage page = copy.getImportedPage(reader, pageNum);
+                    copy.addPage(page);
+                }
+                reader.close();
+            }
+
+            // 关闭文档并返回字节数组
+            document.close();
+            return outputStream.toByteArray();
+
+        } catch (IOException | DocumentException e) {
+            throw new RuntimeException("PDF merge failed", e);
+        } finally {
+            // 确保资源被正确关闭
+            if (document != null && document.isOpen()) {
+                document.close();
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    // 忽略关闭异常
+                }
+            }
+        }
+    }
 
     /**
      * base62 文件，转byte[]
@@ -206,12 +271,12 @@ public class PdfUtil {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_PDF_MERGE);
+            throw new ServiceException(ApiError.LOGISTICS_PDF_MERGE_ERROR);
         }
     }
 
     public static void main(String[] args) {
-        String pdfUrl = "https://p16-printer-pdf-sign-sg.fanczs.com/tos-alisg-i-js2nuampgw-sg/3a0c23f5c0a7493780e942573d4e21f1?rk3s=8c7bcdf4\\u0026x-expires=1744537712\\u0026x-signature=H6nSq74XJ%2FcNo5BSr91P4UOaMQ4%3D";
+        String pdfUrl = "https://erp.ulanzi.cn:8088/group1/M00/66/F6/rBBkCmlthECAco5kAAAAAAAAAAA504.pdf";
         try {
             String base64String = convertPdfUrlToBase64(pdfUrl,true);
             System.out.println("Base64 encoded PDF:\n" + base64String);
@@ -243,12 +308,28 @@ public class PdfUtil {
         try (InputStream inputStream = url.openStream()) {
             byte[] buffer = new byte[4096];
             int bytesRead;
+            int totalBytesRead = 0;
+
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+            }
+
+            // 如果没有读取到任何数据，返回null
+            if (totalBytesRead == 0) {
+                log.error("下载的PDF为空 URL:{}", pdfUrl);
+                throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
             }
         }
 
         byte[] pdfBytes = outputStream.toByteArray();
+
+        // 再次检查字节数组是否为空
+        if (pdfBytes.length == 0) {
+            log.error("下载的PDF为空 URL:{}", pdfUrl);
+            throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
+        }
+
         return Base64.getEncoder().encodeToString(pdfBytes);
     }
 

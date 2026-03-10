@@ -569,6 +569,15 @@ public interface SysUserFeign {
     List<DictCityDTO.ListDTO> getProvincesByCountryCode(@RequestParam("countryCode") String countryCode);
 
     /**
+     * 获取省份城市区域列表
+     *
+     * @param countryCode
+     * @return
+     */
+    @GetMapping("/feign/city/listByCountryCode")
+    List<DictCityEntity> listByCountryCode(@RequestParam("countryCode") String countryCode);
+
+    /**
      * 获取所有币别
      */
     @GetMapping("/feign/currency/list")

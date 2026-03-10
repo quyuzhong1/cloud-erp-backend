@@ -68,6 +68,7 @@
         li.platform_fn_sku,
         li.create_time as systemCreateTime,
         li.source_type as sourceType,
+        li.create_user_name as createUserName,
         li.platform_status as platformStatus,
         li.platform_parent_spu_no as platformParentSpuNo,
         sm.update_user_name,
@@ -204,6 +205,8 @@
         li.remark,
         sm.product_sku_id,
         sm.product_sku_no,
+        li.create_time as systemCreateTime,
+        li.create_user_name as createUserName,
         li.platform_sku_no AS warehouseSkuNo,
         li.platform_sku_name AS warehouseProductName,
         li.match_result,
@@ -314,11 +317,13 @@
         li.auth_id as authId,
         sm.product_sku_id,
         sm.product_sku_no,
+        sm.product_name as productName,
         li.platform_sku_no AS platformSkuNo,
         li.platform_sku_id as platformSkuId,
         li.platform_sku_name AS platformProductName,
         li.platform_spu_no AS platformSpuNo,
-        li.platform_spu_name AS platformSpuName
+        li.platform_spu_name AS platformSpuName,
+        li.platform_fn_sku AS platformFnSku
         FROM sku_mapping sm
         INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
         WHERE sm.is_deleted = FALSE
@@ -429,6 +434,7 @@
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
+          and  (sm.expire_time is null or sm.effective_time is null or sm.expire_time > sm.effective_time)
         <!--is_expire 是否过期-->
         <if test="params.isExpire != null">
             AND sm.is_expire = #{params.isExpire}

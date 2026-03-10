@@ -27,7 +27,6 @@ import javax.annotation.Resource;
 import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
-import com.xxl.job.core.handler.annotation.XxlJob;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -86,20 +85,9 @@ import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 
 /**
@@ -397,7 +385,7 @@ public class DmpInoutController extends BaseController {
 					}
 					values = map.values();
 					if(CollUtil.isNotEmpty(values)) {
-						List<String> warehouseNames = Arrays.asList("东莞塘厦仓" , "奥莱仓");
+						List<String> warehouseNames = values.stream().filter(v -> StringUtils.isNotBlank(v.getWarehouse())).map(WdtInsufficientInventoryDTO::getWarehouse).distinct().collect(Collectors.toList());
 						for(String warehouseName : warehouseNames) {
 							List<WdtInsufficientInventoryDTO> invertoryList = values.stream().filter(v -> v.getWarehouse().equals(warehouseName)).collect(Collectors.toList());
 							if(CollUtil.isNotEmpty(invertoryList)) {

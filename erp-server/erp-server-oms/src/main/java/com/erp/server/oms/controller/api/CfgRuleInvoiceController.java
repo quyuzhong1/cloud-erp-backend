@@ -116,7 +116,7 @@ public class CfgRuleInvoiceController extends BaseController {
         List<CfgRuleInvoiceEntity> entityList = cfgRuleInvoiceService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {
             try {
-                CfgRuleInvoiceEntity entity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "开票规则"));
+                CfgRuleInvoiceEntity entity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "开票规则"));
                 BatchResultDTO batchResultDTO = cfgRuleInvoiceService.updateStatus(entity, dto.getDisabled());
                 list.add(batchResultDTO);
             }catch (Exception e){
@@ -136,7 +136,7 @@ public class CfgRuleInvoiceController extends BaseController {
         List<CfgRuleInvoiceEntity> entityList = cfgRuleInvoiceService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {
             try {
-                CfgRuleInvoiceEntity entity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "开票规则"));
+                CfgRuleInvoiceEntity entity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "开票规则"));
                 BatchResultDTO batchResultDTO = cfgRuleInvoiceService.delete(entity);
                 list.add(batchResultDTO);
             }catch (Exception e){

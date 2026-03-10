@@ -3,12 +3,9 @@ package com.erp.server.tms.schedule;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ConfirmStatusEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
@@ -28,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -282,7 +278,7 @@ public class LogisticsLargeJob {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeActualEntity != null) {
-                XxlJobHelper.log(ApiError.ERROR_EXISTS_LOGISTICS_LARGE.msg);
+                XxlJobHelper.log(ApiError.LOGISTICS_LARGE_TABLE_EXISTS.getMsg());
                 continue;
             }
             //预估账单只能推送一个
@@ -291,7 +287,7 @@ public class LogisticsLargeJob {
                             && CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEstimatedEntity != null) {
-                XxlJobHelper.log(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE.msg);
+                XxlJobHelper.log(ApiError.LOGISTICS_LARGE_ESTIMATED_EXISTS.getMsg());
                 continue;
             }
 
@@ -301,7 +297,7 @@ public class LogisticsLargeJob {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEntity != null) {
-                XxlJobHelper.log(ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED.msg);
+                XxlJobHelper.log(ApiError.LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH.getMsg());
                 continue;
             }
 

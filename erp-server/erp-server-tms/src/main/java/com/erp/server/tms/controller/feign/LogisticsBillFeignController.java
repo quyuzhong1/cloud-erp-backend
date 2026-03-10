@@ -3,12 +3,10 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
@@ -61,8 +59,8 @@ public class LogisticsBillFeignController {
      */
     @PostMapping("/addLogisticsBill")
     public Boolean addLogisticsBill(@RequestBody LogisticsBillDTO.AddDTO addDTO) {
-        Boolean flag = logisticsBillService.add(addDTO);
-        return flag;
+         logisticsBillService.add(addDTO);
+        return Boolean.TRUE;
     }
 
     @PostMapping("/removeLogisticsBill")

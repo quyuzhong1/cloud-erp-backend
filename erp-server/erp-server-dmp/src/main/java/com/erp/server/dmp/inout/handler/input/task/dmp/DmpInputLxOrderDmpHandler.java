@@ -10,7 +10,7 @@ import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
+import com.erp.model.dmp.enums.LingxingPlatformCodeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.service.DictBasicService;
@@ -73,6 +73,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 extendDataMap.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
                 dmpDataMap.put("extendData", JSON.toJSONString(extendDataMap));
 
+
                 // 物流类型
                 String logisticType = "";
                 if (null !=isPlatformWarehouseOrder) {
@@ -86,9 +87,57 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
                 dmpDataMap.put("logisticType", logisticType);
 
+                // 原始销售平台状态
+                String sourcePlatformOrderStatus = "";
+                // 原始销售平台付款状态
+                String sourcePlatformPayStatus = "";
+                // 领星来源平台代号：LingxingPlatformCodeEnum
+                String platformCodeStr = "";
+
+                // 平台原始信息
+                Object platformInfoListObj = dmpDataMap.get("platform_info");
+                if (null != platformInfoListObj) {
+                    JSONArray jsonArray = JSON.parseArray(JSON.toJSONString(platformInfoListObj));
+                    if (CollectionUtils.isNotEmpty(jsonArray)) {
+                        Object platformInfoObjIndex1 = jsonArray.get(0);
+                        Map<String, Object> platformInfoMap = (JSONObject) platformInfoObjIndex1;
+                        String platformOriginalStatus = platformInfoMap.getOrDefault("status", "").toString();
+                        dmpDataMap.put("platformOriginalStatus", platformOriginalStatus);
+
+                        // 平台订单
+                        String platformOrderNo = platformInfoMap.getOrDefault("platform_order_no", "").toString();
+                        dmpDataMap.put("platformCode", platformOrderNo);
+
+                        // 解析来源平台
+                        platformCodeStr = platformInfoMap.getOrDefault("platform_code", "").toString();
+                        if (StringUtils.isNotBlank(platformCodeStr)) {
+                            String finalPlatformCodeStr = platformCodeStr;
+                            DictBasicDTO.ViewDTO viewDTO = dictbaseList.stream().filter(e -> e.getValue().equalsIgnoreCase(finalPlatformCodeStr)).findFirst().orElse(null);
+                            if (null == viewDTO) {
+                                ServiceException.runError("dmp字典未找到领星平台：" + platformCodeStr);
+                            }
+                            String name = viewDTO.getName();
+                            dmpDataMap.put("sourcePlatform", name);
+                        }
+
+                        // 平台仓发货时间
+                        // "delivery_time": NumberInt("0"),
+                        String deliveryTimeStr = platformInfoMap.getOrDefault("delivery_time", "0").toString();
+                        long deliveryTimeLong = Long.parseLong(deliveryTimeStr);
+                        if (0 < deliveryTimeLong && OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode().equals(logisticType)){
+                            LocalDateTime deliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTimeLong), ZoneId.systemDefault());
+                            dmpDataMap.put("deliveryTime", deliveryTime);
+                        }
+
+                        // 销售平台原始状态
+                        sourcePlatformOrderStatus = platformInfoMap.getOrDefault("status", "").toString();
+                        sourcePlatformPayStatus = platformInfoMap.getOrDefault("payment_status", "").toString();
+                    }
+                }
+
                 // 订单状态
                 String sourceOrderStatus = dmpDataMap.getOrDefault("status", "").toString();
-                dmpDataMap.put("deliveryStatus", convertDmpOrderStatus(sourceOrderStatus, isPlatformWarehouseOrder));
+                dmpDataMap.put("deliveryStatus", convertDmpOrderStatus(sourceOrderStatus, isPlatformWarehouseOrder, sourcePlatformOrderStatus, platformCodeStr));
 
                 // 更新时间
                 String updateTimeStr = dmpDataMap.getOrDefault("update_time", "").toString();
@@ -116,16 +165,16 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 dmpDataMap.put("payTime", globalPaymentTime);
 
                 // 付款状态
-                Boolean payStatus = convertPayStatus(sourceOrderStatus);
+                Boolean payStatus = convertPayStatus(sourceOrderStatus,sourcePlatformOrderStatus, platformCodeStr, sourcePlatformPayStatus);
                 dmpDataMap.put("payStatus", payStatus);
 
                 // 取消状态
-                Boolean isCancel = convertIsCancel(sourceOrderStatus);
+                Boolean isCancel = convertIsCancel(sourceOrderStatus,sourcePlatformOrderStatus, platformCodeStr);
                 dmpDataMap.put("isCancel", isCancel);
                 dmpDataMap.put("invalidStatus", isCancel);
 
                 // 审核状态
-                String approveStatus = convertApproveStatus(sourceOrderStatus, isPlatformWarehouseOrder);
+                String approveStatus = convertApproveStatus(sourceOrderStatus, isPlatformWarehouseOrder, sourcePlatformOrderStatus, platformCodeStr);
                 dmpDataMap.put("orderStatus", approveStatus);
 
                 // 店铺ID
@@ -165,41 +214,6 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
 
 
-                // 平台原始信息
-                Object platformInfoListObj = dmpDataMap.get("platform_info");
-                if (null != platformInfoListObj) {
-                    JSONArray jsonArray = JSON.parseArray(JSON.toJSONString(platformInfoListObj));
-                    if (CollectionUtils.isNotEmpty(jsonArray)) {
-                        Object platformInfoObjIndex1 = jsonArray.get(0);
-                        Map<String, Object> platformInfoMap = (JSONObject) platformInfoObjIndex1;
-                        String platformOriginalStatus = platformInfoMap.getOrDefault("status", "").toString();
-                        dmpDataMap.put("platformOriginalStatus", platformOriginalStatus);
-
-                        // 平台订单
-                        String platformOrderNo = platformInfoMap.getOrDefault("platform_order_no", "").toString();
-                        dmpDataMap.put("platformCode", platformOrderNo);
-
-                        // 解析来源平台
-                        String platformCodeStr = platformInfoMap.getOrDefault("platform_code", "").toString();
-                        if (StringUtils.isNotBlank(platformCodeStr)) {
-                            DictBasicDTO.ViewDTO viewDTO = dictbaseList.stream().filter(e -> e.getValue().equalsIgnoreCase(platformCodeStr)).findFirst().orElse(null);
-                            if (null == viewDTO) {
-                                ServiceException.runError("dmp字典未找到领星平台：" + platformCodeStr);
-                            }
-                            String name = viewDTO.getName();
-                            dmpDataMap.put("sourcePlatform", name);
-                        }
-
-                        // 平台仓发货时间
-                        // "delivery_time": NumberInt("0"),
-                        String deliveryTimeStr = platformInfoMap.getOrDefault("delivery_time", "0").toString();
-                        long deliveryTimeLong = Long.parseLong(deliveryTimeStr);
-                        if (0 < deliveryTimeLong && OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode().equals(logisticType)){
-                            LocalDateTime deliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTimeLong), ZoneId.systemDefault());
-                            dmpDataMap.put("deliveryTime", deliveryTime);
-                        }
-                    }
-                }
 
                 // 买家信息
                 Object buyersInfoObj = dmpDataMap.get("buyers_info");
@@ -215,7 +229,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     /**
      * 转换审核状态
      */
-    private String convertApproveStatus(String sourceOrderStatus, Boolean isPlatformWarehouseOrder) {
+    private String convertApproveStatus(String sourceOrderStatus, Boolean isPlatformWarehouseOrder, String sourcePlatformOrderStatus, String platformCodeStr) {
         if (null == isPlatformWarehouseOrder){
             return "";
         }
@@ -237,23 +251,66 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         ) {
             return ApproveStatusEnum.APPROVE.getCode();
         }
+        if ("7".equalsIgnoreCase(sourceOrderStatus)){
+            Boolean isCancel = convertIsCancel(sourceOrderStatus, sourcePlatformOrderStatus, platformCodeStr);
+            if (!isCancel){
+                return ApproveStatusEnum.APPROVE.getCode();
+            }
+        }
         return ApproveStatusEnum.WAIT_SUBMIT.getCode();
     }
 
     /**
      * 转换取消状态
-     * @param sourceOrderStatus 原始订单状态
+     *
+     * @param sourceOrderStatus         原始订单状态
+     * @param sourcePlatformOrderStatus
+     * @param platformCodeStr
      * @return true=取消
      */
-    private Boolean convertIsCancel(String sourceOrderStatus) {
-        // TODO 7 已取消/不发货(优化确定平台取消的场景)
-        return "7".equalsIgnoreCase(sourceOrderStatus);
+    private Boolean convertIsCancel(String sourceOrderStatus, String sourcePlatformOrderStatus, String platformCodeStr) {
+        // 7 已取消/不发货(优化确定平台取消的场景)
+        if ("7".equalsIgnoreCase(sourceOrderStatus)) {
+            // TEMU
+            // PENDING
+            // UN_SHIPPING
+            // PARTIALLY_RECEIVED
+            // CANCELED
+            // RECEIVED
+            // PARTIALLY_SHIPPED
+            // SHIPPED
+
+            // ebay
+            // Cancelled
+            // CancelPending
+            // Completed
+            // Inactive
+            // Active
+
+            // 100：未付款
+            //200：等待乐天处理
+            //600：付款处理中
+            //700：完成支付
+            //800：等待取消确认
+            //300：待发货
+            //400：等待修改确认
+            //500：已发货
+            //900：已付款
+            // 乐天
+            if (LingxingPlatformCodeEnum.RAKUTEN.getCode().equals(platformCodeStr)){
+                return !"500".equalsIgnoreCase(sourcePlatformOrderStatus);
+            }
+            return "CANCELED".equalsIgnoreCase(sourcePlatformOrderStatus)
+                    || "Cancelled".equalsIgnoreCase(sourcePlatformOrderStatus);
+        }
+        return false;
+
     }
 
     /**
      * 转换付款状态
      */
-    private Boolean convertPayStatus(String sourceOrderStatus) {
+    private Boolean convertPayStatus(String sourceOrderStatus, String sourcePlatformOrderStatus, String platformCodeStr, String sourcePlatformPayStatus) {
         // 领星系统订单状态：1 同步中2 已同步3 未付款4 待审核5 待发货6 已发货7 已取消/不发货8 不显示9 平台发货
         if ("3".equalsIgnoreCase(sourceOrderStatus)) {
             return false;
@@ -261,10 +318,16 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         if ("4".equalsIgnoreCase(sourceOrderStatus)
                 || "5".equalsIgnoreCase(sourceOrderStatus)
                 || "6".equalsIgnoreCase(sourceOrderStatus)
-                || "7".equalsIgnoreCase(sourceOrderStatus)
                 || "9".equalsIgnoreCase(sourceOrderStatus)
         ) {
             return true;
+        }
+        if ("7".equalsIgnoreCase(sourceOrderStatus)){
+            Boolean isCancel = convertIsCancel(sourceOrderStatus, sourcePlatformOrderStatus, platformCodeStr);
+            if (!isCancel){
+                return "paid".equalsIgnoreCase(sourcePlatformPayStatus);
+            }
+            return false;
         }
         return null;
     }
@@ -308,7 +371,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     /**
      * 领星订单状态转换订单状态
      */
-    public String convertDmpOrderStatus(String sourceOrderStatus, Boolean isPlatformWarehouseOrder) {
+    public String convertDmpOrderStatus(String sourceOrderStatus, Boolean isPlatformWarehouseOrder, String sourcePlatformOrderStatus, String platformCodeStr) {
         // 1 同步中2 已同步 8 不显示
         if (null == isPlatformWarehouseOrder
                 || "1".equalsIgnoreCase(sourceOrderStatus)
@@ -318,11 +381,22 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             // 无法处理单据=设置空
             return "";
         }
+
+        // 统一取消判断
+        if ("7".equalsIgnoreCase(sourceOrderStatus)){
+            if (convertIsCancel(sourceOrderStatus, sourcePlatformOrderStatus, platformCodeStr)){
+                // 已取消
+                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+            } else {
+                // 非已取消=在其他地方已做了发货
+                return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+            }
+        }
+
         // 平台仓订单
         if (isPlatformWarehouseOrder) {
             // 领星系统订单状态：1 同步中2 已同步3 未付款4 待审核5 待发货6 已发货7 已取消/不发货8 不显示9 平台发货
-            if ("3".equalsIgnoreCase(sourceOrderStatus)
-                    || "7".equalsIgnoreCase(sourceOrderStatus)) {
+            if ("3".equalsIgnoreCase(sourceOrderStatus)) {
                 return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
             }
             if ("4".equalsIgnoreCase(sourceOrderStatus)
@@ -335,12 +409,12 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             }
             return "";
         }
+
         // 自发货订单
         // 领星系统订单状态：1 同步中2 已同步3 未付款4 待审核5 待发货6 已发货7 已取消/不发货8 不显示9 平台发货
         if ("3".equalsIgnoreCase(sourceOrderStatus)
                 || "4".equalsIgnoreCase(sourceOrderStatus)
                 || "5".equalsIgnoreCase(sourceOrderStatus)
-                || "7".equalsIgnoreCase(sourceOrderStatus)
         ) {
             return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
         }

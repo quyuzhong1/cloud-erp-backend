@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -23,8 +22,6 @@ import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import org.apache.commons.lang.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,15 +40,10 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqNewTag;
-import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputResponse;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.erp.server.dmp.inout.handler.DmpHandler;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.output.DmpOutputHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
@@ -63,8 +55,6 @@ import com.google.common.collect.Lists;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.spring.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -139,6 +129,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected abstract List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse);
 	
 	protected void dealDeleteDmpBaseEntity(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse, List<DmpOutputTaskRecordEntity> outputData) {
+		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
+		if(!"1801574477567165866".equals(dmpCfgOutputEntity.getSystemId())) {
+			return;
+		}
 		Map<DmpCfgInputConvertEntity, Set<String>> deleteConvertInputDmpBaseEntityMaps = dmpRequest.getDeleteConvertInputDmpBaseEntityMaps();
 		if(CollUtil.isEmpty(deleteConvertInputDmpBaseEntityMaps)) {
 			return;
@@ -151,8 +145,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			}
 		}
 		if(CollUtil.isNotEmpty(allDeleteConvertInputDmpBaseEntitySet)) {
+			String lastSql = " and exists (select 1 from dmp_output_task g where g.id = dmp_output_task_record.main_id and g.cfg_output_id = '"+ dmpCfgOutputEntity.getId() +"' ) ";
 			Map<String, DmpOutputTaskRecordEntity> dataIdRecordMaps = dmpOutputTaskRecordService.lambdaQuery()
 						.in(DmpOutputTaskRecordEntity::getDataId, allDeleteConvertInputDmpBaseEntitySet)
+						.last(lastSql)
 						.list()
 						.stream()
 						.filter(d -> StringUtils.isNotBlank(d.getRequestData()) && d.getRequestData().trim().startsWith("{"))
@@ -165,6 +161,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				newValue.setSourceCode(value.getSourceCode());
 				newValue.setMainId(dmpRequest.getOutputTaskId());
 				newValue.setDataId(value.getDataId());
+				newValue.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
 				JSONObject parseObject = JSON.parseObject(value.getRequestData());
 				parseObject.put("status", "已删除");
 				newValue.setRequestData(parseObject.toJSONString());

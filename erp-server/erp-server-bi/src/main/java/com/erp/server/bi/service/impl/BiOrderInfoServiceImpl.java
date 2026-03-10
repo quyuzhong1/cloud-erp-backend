@@ -113,7 +113,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
     public Boolean updateState(DmpOrderStateDTO dto) {
         BiOrderInfoEntity biOrderInfoEntity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(biOrderInfoEntity)) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         biOrderInfoEntity.setCorrectionStatus(dto.getState());
         return this.updateById(biOrderInfoEntity);
@@ -1075,7 +1075,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
             //验证导入数据是否为空
             List<DmpOrderInfoImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_95123);
+                throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
             }
 
             //成功数据
@@ -1098,7 +1098,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
                 return false;
             }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         return true;
     }

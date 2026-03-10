@@ -16,6 +16,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -423,7 +424,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }
@@ -588,5 +589,39 @@ public class TmsFirstMileLogisticController extends BaseController {
     @GetMapping("/getTrackInfo")
     public ApiResult<LogisticsTrackDTO.ViewDTO> listTrack(@RequestParam(value = "logisticsBillId") String logisticsBillId){
         return success(tmsFirstMileLogisticService.listTrack(logisticsBillId));
+    }
+
+
+
+    /**
+     * 是否分摊状态更新
+     * @author will
+     * @date 2026/1/20 16:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateIsAllocateRequired")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "是否分摊状态更新")
+    public ApiResult<List<BatchResultDTO>> updateIsAllocateRequired(@RequestBody @Valid LogisticsBillDTO.UpdateAllocateRequiredDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = tmsFirstMileLogisticService.updateIsAllocateRequired(id,dto.getIsAllocateRequired(),dto.getNotAllocateRemark());
+            } catch (Exception e) {
+                log.error("是否分摊状态更新{}", e);
+                LogisticsBillEntity entity = tmsFirstMileLogisticService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "头程物流单不存在, 状态更改失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
     }
 }

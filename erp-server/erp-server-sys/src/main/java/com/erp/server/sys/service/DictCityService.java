@@ -151,4 +151,6 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @return List<ListDTO>
      */
     List<DictCityDTO.ListDTO> countryTreeList();
+
+    List<DictCityEntity> listByCountryCode(String countryCode);
 }

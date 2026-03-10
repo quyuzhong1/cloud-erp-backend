@@ -1,5 +1,6 @@
 package com.sdk.oms.shopee.service;
 
+import cn.hutool.json.JSONUtil;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
@@ -25,16 +26,17 @@ public class ShopeeAuthService {
     public static void main(String[] args) {
         ShopeeAuthService shopeeAuthService = new ShopeeAuthService();
         AuthRequest authRequest = AuthRequest.builder()
-                .host(host)
-                .redirect(redirect_url)
-                .refreshToken(shop_refresh_token)
-                .partnerId(partner_id)
-                .tmpPartnerKey(tmp_partner_key)
-                .shopId(shop_id)
+                .host("https://openplatform.shopee.cn")
+                .redirect("https://erp.ulanzi.cn:8060/store-permission-result")
+                .refreshToken("eyJhbGciOiJIUzI1NiJ9.CLa8ehABGLHL7qgGIAIoy8iXzAYwv8rRsws4AUAB.OYgghTx7Axb5G6Jx3ZOn-moOU6efeKjam8fRvcyrilo")
+                .partnerId(2006582)
+                .tmpPartnerKey("446568575a4b52694578456c4c78645969735a6f716b4b6550496754705a7a63")
+                .shopId(1696310705)
                 .build();
-        String codeUrl = shopeeAuthService.getCodeUrl(authRequest);
-        System.out.println(codeUrl);
-//        shopeeAuthService.refreshShopToken(authRequest);
+//        String codeUrl = shopeeAuthService.getCodeUrl(authRequest);
+//        System.out.println(codeUrl);
+        ShopeeTokenAuth shopeeTokenAuth = shopeeAuthService.refreshShopToken(authRequest);
+        System.out.println(JSONUtil.toJsonStr(shopeeTokenAuth));
 //        shopeeAuthService.refreshMerchantToken(host,merchant_refresh_token,partner_id,tmp_partner_key, merchant_id);
 
     }

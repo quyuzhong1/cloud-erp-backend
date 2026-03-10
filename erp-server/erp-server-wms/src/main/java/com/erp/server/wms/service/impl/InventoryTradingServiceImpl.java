@@ -14,7 +14,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -60,11 +60,13 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private WarehouseService warehouseService;
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
-    @Resource
-    private StocktakingProfitLossServiceImpl stocktakingProfitLossService;
 
     @Resource
     private VirtualInventoryService virtualInventoryService;
+
+    @Resource
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
+
 
     @Override
     @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus",unlockAfterTx = false)
@@ -278,15 +280,15 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         List<String> orgIds = transactionList.stream().map(InventoryTransactionDTO::getOrgId).distinct().collect(Collectors.toList());
         List<String> skuIds = transactionList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
 
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.maxDateByParams(warehouseIds, orgIds, skuIds);
-        if(CollectionUtils.isEmpty(lastStocktakingProfitLossList)) {
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingTaskDetailList = stocktakingTaskDetailService.maxDateByParams(warehouseIds, orgIds, skuIds);
+        if(CollectionUtils.isEmpty(lastStocktakingTaskDetailList)) {
             return;
         }
 
         for(InventoryTransactionDTO transactionDTO:transactionList) {
             if (!InventoryStatusEnum.IN_TRANSIT.getCode().equals(transactionDTO.getInventoryStatus())){
                 // 盘盈盘亏单 匹配 仓库ID, 组织ID，仓位，skuId
-                StocktakingProfitLossDetailDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream()
+                StocktakingTaskDetailDTO.LastDTO lastDTO = lastStocktakingTaskDetailList.stream()
                         .filter(e -> e.getSkuId().equalsIgnoreCase(transactionDTO.getSkuId())
                                 && e.getWarehouseOrgId().equalsIgnoreCase(transactionDTO.getOrgId())
                                 && e.getWarehouseId().equalsIgnoreCase(transactionDTO.getWarehouseId())
@@ -294,9 +296,11 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                                 )
                         .findFirst()
                         .orElse(null);
-                if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
-                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘盈盘亏单【{}】不允许操作【{}】之前单据\n"
+                // 业务规则：根据盘点任务创建日期判断，当业务单据日期 <= 盘点任务创建日期时，禁止操作
+                // 判断逻辑：!billDate.isAfter(盘点日期) 等价于 billDate <= 盘点日期
+                if (null != lastDTO && !billDate.isAfter(lastDTO.getBillDate())){
+                    // 已有盘盈盘亏单【{}】不允许操作【{}】及之前单据
+                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘点任务单【{}】不允许操作【{}】及之前单据\n"
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getWarehouseLocationName()
@@ -373,7 +377,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             String warehouseId = value.get(0).getWarehouseId();
             //虚拟库存校验
             Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
-                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).reduce(MathUtil.ZERO,Integer::sum);
             if(MathUtil.compareTo(virtualQty,MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
@@ -384,7 +388,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",value.get(0).getWarehouseName(),value.get(0).getSkuNo(),virtualQty,realInventoryTotal);
             if (Math.abs(qty) > realInventoryTotal - virtualQty) {
-                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,value.get(0).getSkuNo(),value.get(0).getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
+                ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY,value.get(0).getSkuNo(),value.get(0).getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
             }
         }
 
@@ -516,7 +520,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         log.info("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
         if(null == inventoryEntity || null == inventoryEntity.getId()) {
             log.warn("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
-            throw new ServiceException(ApiError.ERROR_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
+            throw new ServiceException(ApiError.WH_INV_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
         }
         LambdaUpdateWrapper<InventoryEntity> wrapper = new LambdaUpdateWrapper<>();
         wrapper.setSql("qty = qty + " +transactionDTO.getQty())

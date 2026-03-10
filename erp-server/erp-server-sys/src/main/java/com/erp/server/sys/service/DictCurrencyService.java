@@ -1,6 +1,8 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 
@@ -41,4 +43,6 @@ public interface DictCurrencyService extends SuperService<DictCurrencyEntity> {
     List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(List<String> currCodeList);
 
     DictCurrencyEntity getCurrencyByNum(String num);
+
+    PagingVO<CurrencyDTO.ViewDTO> pagingSelect(PagingDTO<CurrencyDTO.SelectDTO> dto);
 }

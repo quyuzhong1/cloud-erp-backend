@@ -10,6 +10,8 @@ import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
@@ -558,4 +560,22 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return
      */
     B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(B2bThirdDeliveryDTO.ViewQueryDTO dto);
+    /**
+     * 根据来源id查询销售订单
+     * @author will
+     * @date 2025/12/2 17:40
+     * @param sourceId
+     * @return List<SoInfoEntity>
+     */
+    List<SoInfoEntity> listBySourceId(String sourceId);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2025/12/2 18:08
+     * @param sourceId
+     * @return List<B2bSoInfoDTO>
+     */
+    List<KolB2bApplicationDTO.B2bSoInfoDTO> listRefBill(String sourceId);
+
+    List<SoInfoEntity> getByPlatformOrderCode(String platformOrderCode);
 }

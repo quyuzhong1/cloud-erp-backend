@@ -87,7 +87,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     public Boolean update(VirtualWarehouseRelationDTO.UpdateDTO updateDTO) {
         VirtualWarehouseRelationEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓实体仓关联关系");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓实体仓关联关系");
         }
         VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = BeanMapperUtils.map(VirtualWarehouseRelationEntity.class, updateDTO);
 
@@ -150,7 +150,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             }
         } else {
             //校验实体仓库是否存在
-            Optional.ofNullable(warehouseService.getById(warehouseIdList.get(0))).orElseThrow(()->new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND));
+            Optional.ofNullable(warehouseService.getById(warehouseIdList.get(0))).orElseThrow(()->new ServiceException(ApiError.WH_ENTITY_NOT_FOUND));
             //获取实体仓绑定关系
             if (CollectionUtils.isNotEmpty(existRelationList)) {
                 //判断原始绑定与变更数据是否相同

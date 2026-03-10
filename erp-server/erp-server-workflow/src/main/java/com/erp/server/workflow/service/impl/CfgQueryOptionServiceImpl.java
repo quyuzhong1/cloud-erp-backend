@@ -23,7 +23,6 @@ import com.erp.server.workflow.service.WorkMenuService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.sql.*;
@@ -171,7 +170,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         //获取配置明细
         List<CfgQueryOptionEntity> cfgQueryOptionList = lambdaQuery()
                 .eq(CfgQueryOptionEntity::getUseType,dto.getUseType())
-                .in(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
+                .eq(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
                 .list();
         if(CollUtil.isNotEmpty(cfgQueryOptionList)){
             //根据fieldBelongsType 进行分组

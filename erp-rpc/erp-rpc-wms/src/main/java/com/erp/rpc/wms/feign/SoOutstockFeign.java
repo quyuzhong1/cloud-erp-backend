@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -184,4 +185,17 @@ public interface SoOutstockFeign {
      */
     @GetMapping("/feign/soOutstock/deleteSoOutstock")
     void deleteSoOutstock(@RequestParam(value = "id") String id, @RequestParam(value = "deliveryId",required = false)String deliveryId);
+
+    /**
+     * kol寄样费用查询出库信息
+     * @author will
+     * @date 2025/12/9 15:36
+     * @param dto
+     * @return List<KolSoOutstockDTO>
+     */
+    @PostMapping("feign/soOutstock/listSoOutstockByTime")
+    List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(@RequestBody SoOutstockDTO.KolSoOutstockDateDTO dto);
+
+    @PostMapping("feign/soOutstock/updateSoB2cLogisticsInfo")
+    void updateSoB2cLogisticsInfo(@RequestBody SoB2cLogisticsDTO.transferOrderDTO dto);
 }

@@ -88,7 +88,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -236,16 +235,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //装箱任务
         PackingTaskEntity taskEntity = this.getById(id);
         if (Objects.isNull(taskEntity)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         if (PickingSourceTypeEnum.B2B.getCode().equals(taskEntity.getSourceType())){
             SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(taskEntity.getSourceId());
             if (Objects.isNull(soDeliveryNoticeEntity)){
-                throw new ServiceException(ApiError.ERROR_92144);
+                throw new ServiceException(ApiError.SO_DELIVERY_NOTICE_RECORD_NOT_FOUND);
             }
             //>仅可操作关联单号未审核通过时候可编辑修改
             if(ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())){
-                throw new ServiceException(ApiError.ERROR_92140, soDeliveryNoticeEntity.getCode());
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_REF_ORDER_APPROVED_FORBIDDEN, soDeliveryNoticeEntity.getCode());
             }
         }else {
             FirstMileDeliveryEntity firstMileDeliveryEntity = this.getFirstMileDeliveryByTask(taskEntity);
@@ -254,12 +253,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())
                         && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(taskEntity.getWeightingStatus())
                         && PackingTaskStatusEnum.PACKED.getCode().equals(taskEntity.getPackingStatus()))) {
-                    throw new ServiceException(ApiError.ERROR_PACKING_DELIVERY_CHECK);
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_DELIVERY_CHECK_FORBIDDEN);
                 }
                 //已下推入库单，不允许修改装箱信息
                 OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(firstMileDeliveryEntity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
                 if (ObjectUtil.isNotEmpty(overseasWarehouseInbound) && !OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equals(overseasWarehouseInbound.getInstockStatus())) {
-                    throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
+                    throw new ServiceException(ApiError.WH_INBOUND_EXIST_NOT_REPEAT, overseasWarehouseInbound.getCode());
                 }
             }
         }
@@ -302,7 +301,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isAddCarton) {
         PackingTaskEntity packingTask = this.getById(dto.getTaskId());
         if (Objects.isNull(packingTask)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         checkSourceOrderStatus(packingTask);
         //删除编辑后 页面删除的装箱信息
@@ -491,7 +490,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 packQty += packedQty;
             }
             if (packQty> deliveryQty){
-                throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_92266.msg,taskDetailEntity.getSkuNo(), packQty, deliveryQty));
+                throw new ServiceException(CharSequenceUtil.format(ApiError.LOGISTICS_PACKING_TOTAL_QTY_EXCEEDS_DELIVERY.getMsg(),taskDetailEntity.getSkuNo(), packQty, deliveryQty));
             }
         });
 
@@ -556,7 +555,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 packQty += packedQty;
             }
             if (packQty> deliveryQty){
-                throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_92252.msg,taskDetailEntity.getSkuNo(),taskDetailEntity.getFnSku(), packQty, deliveryQty));
+                throw new ServiceException(CharSequenceUtil.format(ApiError.LOGISTICS_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.getMsg(),taskDetailEntity.getSkuNo(),taskDetailEntity.getFnSku(), packQty, deliveryQty));
             }
         });
     }
@@ -603,7 +602,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //组装数据
         PackingTaskEntity entity = this.getById(taskId);
         String titleCode = "";
-        if(entity.getSourceType().equals(PickingSourceTypeEnum.FBA.getCode())){
+        if(entity.getSourceType().equals(PickingSourceTypeEnum.FBA.getCode()) || entity.getSourceType().equals(PickingSourceTypeEnum.AWD.getCode())){
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(entity.getSourceCode());
             if(Objects.nonNull(firstMileDeliveryEntity)){
                 RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(firstMileDeliveryEntity.getSourceId());
@@ -632,12 +631,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
         PackingTaskEntity packingTask = this.getById(packedDetailDTO.getTaskId());
         if (Objects.isNull(packingTask)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         if (PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())){
             SoDeliveryNoticeEntity soOutstock = soDeliveryNoticeService.getById(packingTask.getSourceId());
             if (Objects.isNull(soOutstock)){
-                throw new ServiceException(ApiError.ERROR_92143);
+                throw new ServiceException(ApiError.SO_OUTBOUND_RECORD_NOT_FOUND);
             }
             listPackingDTO.setId(soOutstock.getId());
             listPackingDTO.setCode(soOutstock.getCode());
@@ -645,14 +644,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if(packingTask.getSourceCode().contains(BusinessNoConstant.YHSQ)){
                 RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getById(packingTask.getSourceId());
                 if (Objects.isNull(requisitionApplicationEntity)){
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请");
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "要货申请");
                 }
                 listPackingDTO.setId(requisitionApplicationEntity.getId());
                 listPackingDTO.setCode(requisitionApplicationEntity.getCode());
             }else{
                 FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getById(packingTask.getSourceId());
                 if (Objects.isNull(firstMileDelivery)){
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单");
                 }
                 listPackingDTO.setId(firstMileDelivery.getId());
                 listPackingDTO.setCode(firstMileDelivery.getCode());
@@ -693,7 +692,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wb.close();
         } catch (Exception e) {
             log.error("packing downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -707,7 +706,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(excelAnalysisException.getMessage());
         } catch (Exception e) {
             log.error("excel导入错误", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         List<PackingExcelDTO> packingExcelDTOList = listener.getPackingExcelDTOList();
         List<PackingExcelDTO> errorList = listener.getErrorList();
@@ -886,7 +885,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(pagingViewDTO.getSourceId()) || v.getId().equals(pagingViewDTO.getSourceId())).findFirst().orElse(new FirstMileDeliveryEntity());
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId()) && v.getSkuId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
             pagingViewDTO.setDeliveryCode(firstMileDeliveryEntity.getCode());
-            if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())) {
+            if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())) {
                 pagingViewDTO.setBusinessCode(firstMileDeliveryDetailEntity.getFbaShipmentCode());
             }else{
                 OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntityList.stream().filter(v->v.getSourceId().equals(firstMileDeliveryEntity.getId())).findFirst().orElse(new OverseasWarehouseInboundEntity());
@@ -958,7 +957,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         WmsCartonSpecDTO.NoPackingView view = new WmsCartonSpecDTO.NoPackingView();
         PackingTaskEntity packingTaskEntity = this.getById(id);
         if (Objects.isNull(packingTaskEntity)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         view.setTaskId(id);
         view.setSourceCode(packingTaskEntity.getSourceCode());
@@ -981,7 +980,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         WmsCartonSpecDTO.PackedView packedView = new WmsCartonSpecDTO.PackedView();
         PackingTaskEntity packingTaskEntity = this.getById(packedDetailDTO.getTaskId());
         if (Objects.isNull(packingTaskEntity)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         packedView.setTaskId(packingTaskEntity.getId());
         packedView.setSourceId(packingTaskEntity.getSourceId());
@@ -1010,15 +1009,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         getCartonInfo(adjustDTO);
         WmsCartonEntity cartonEntity = wmsCartonService.getById(adjustDTO.getCartonId());
         if (Objects.isNull(cartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         WmsCartonSpecEntity cartonSpecEntity = wmsCartonSpecService.getById(cartonEntity.getSpecId());
         if (Objects.isNull(cartonSpecEntity)){
-            throw new ServiceException(ApiError.ERROR_92145);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_SPEC_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
         if (Objects.isNull(packingTaskEntity)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByTaskIds(Collections.singletonList(cartonEntity.getPackingTaskId()));
         WmsCartonDTO.WmsCartonView cartonView = new WmsCartonDTO.WmsCartonView();
@@ -1162,7 +1161,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public WmsCartonDTO.WmsCartonView packingSaveView(WmsCartonDTO.CartonSearchDTO searchDTO) {
         List<PackingTaskEntity> taskEntityList = this.listBySourceCodes(Collections.singletonList(searchDTO.getSourceCode()));
         if (CollUtil.isEmpty(taskEntityList)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         String cartonId = searchDTO.getCartonId();
         WmsCartonDTO.WmsCartonView view = new WmsCartonDTO.WmsCartonView();
@@ -1268,11 +1267,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public WmsCartonDTO.WmsCartonView packingViewByCartonId(String cartonId) {
         WmsCartonEntity cartonEntity = wmsCartonService.getById(cartonId);
         if (Objects.isNull(cartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
         if (Objects.isNull(packingTaskEntity)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         WmsCartonDTO.WmsCartonView view = new WmsCartonDTO.WmsCartonView();
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
@@ -1373,7 +1372,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         PackingTaskEntity packingTaskEntity = this.getById(addDTO.getTaskId());
         if (Objects.isNull(packingTaskEntity)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         //已绑定货件不能操作
         checkCartonHasFba(addDTO.getTaskId(),addDTO.getCartonId());
@@ -1382,7 +1381,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CharSequenceUtil.isNotBlank(addDTO.getCartonId())){
             cartonEntity = wmsCartonService.getById(addDTO.getCartonId());
             if (Objects.isNull(cartonEntity)){
-                throw new ServiceException(ApiError.ERROR_92146);
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
             }
             //存在则删除之前装箱明细
             wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
@@ -1442,7 +1441,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
 
         if (Objects.isNull(wmsCartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         return getPrintBarCode(wmsCartonEntity.getId());
     }
@@ -1460,12 +1459,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         Integer boxNo = Integer.valueOf(split[1]);
         List<PackingTaskEntity> taskEntityList = this.listBySourceCodes(Collections.singletonList(sourceCode));
         if (CollUtil.isEmpty(taskEntityList)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = taskEntityList.get(0);
         WmsCartonEntity wmsCartonEntity = wmsCartonService.findCartonByTaskIdAndBoxNo(packingTaskEntity.getId(), boxNo);
         if (Objects.isNull(wmsCartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         WmsCartonSpecEntity specEntity = wmsCartonSpecService.getById(wmsCartonEntity.getSpecId());
         return WmsCartonSpecDTO.CartonSpecDTO.builder()
@@ -1490,13 +1489,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto) {
         PackingTaskEntity packingTaskEntity = this.getById(dto.getTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         //校验发货单状态
         checkSourceOrderStatus(packingTaskEntity);
         WmsCartonEntity cartonEntity = wmsCartonService.getById(dto.getCartonId());
         if (Objects.isNull(cartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         checkCartonHasFba(dto.getTaskId(),dto.getCartonId());
 //        if (PackingWeightStatusEnum.SUCCESS.getCode().equals(cartonEntity.getWeightingStatus())){
@@ -1542,11 +1541,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String cartonId = dto.getCartonId();
         WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
         if (Objects.isNull(wmsCartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         WmsCartonSpecEntity cartonSpecEntity = wmsCartonSpecService.getById(wmsCartonEntity.getSpecId());
         if (Objects.isNull(cartonSpecEntity)){
-            throw new ServiceException(ApiError.ERROR_92145);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_SPEC_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = this.getById(wmsCartonEntity.getPackingTaskId());
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
@@ -1630,11 +1629,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             dto.getCartonDetailList().forEach(adjustDetailDTO -> {
                 WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).findFirst().orElse(null);
                 if (Objects.isNull(groupSkuDTO)){
-                    throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_SKU_NOT_IN_ASSOCIATED_ORDER,adjustDetailDTO.getSkuNo());
                 }
                 int adjustQty = dto.getCartonDetailList().stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).map(WmsCartonDTO.AdjustDetailDTO::getAdjustQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (groupSkuDTO.getWaitPackQty() < adjustQty){
-                    throw new ServiceException(ApiError.ERROR_92147,adjustDetailDTO.getSkuNo(),adjustDetailDTO.getFnSku(), groupSkuDTO.getWaitPackQty());
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_FNSKU_QTY_EXCEEDS_UNPACKED,adjustDetailDTO.getSkuNo(),adjustDetailDTO.getFnSku(), groupSkuDTO.getWaitPackQty());
                 }
                 //已装箱数
                 Integer packQty = groupSkuDTO.getPackQty();
@@ -1643,7 +1642,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         && e.getSkuId().equals(adjustDetailDTO.getSkuId())
                         && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 if ((packQty + adjustQty)> deliveryQty){
-                    throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_92252.msg,adjustDetailDTO.getSkuNo(), packQty + adjustQty, deliveryQty));
+                    throw new ServiceException(CharSequenceUtil.format(ApiError.LOGISTICS_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.getMsg(),adjustDetailDTO.getSkuNo(), packQty + adjustQty, deliveryQty));
                 }
             });
 
@@ -1653,15 +1652,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             dto.getCartonDetailList().forEach(adjustDetailDTO -> {
                 WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).findFirst().orElse(null);
                 if (Objects.isNull(groupSkuDTO)){
-                    throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_SKU_NOT_IN_ASSOCIATED_ORDER,adjustDetailDTO.getSkuNo());
                 }
                 WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).findFirst().orElse(null);
                 if (Objects.isNull(wmsCartonDetailEntity)){
-                    throw new ServiceException(ApiError.ERROR_92150,adjustDetailDTO.getSkuNo());
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_SKU_NOT_IN_BOX,adjustDetailDTO.getSkuNo());
                 }
                 int adjustQty = adjustDetailDTO.getPackQty() - adjustDetailDTO.getAdjustQty();
                 if (adjustQty < 0){
-                    throw new ServiceException(ApiError.ERROR_92148,adjustDetailDTO.getSkuNo(), adjustDetailDTO.getPackQty());
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_SKU_QTY_EXCEEDS_BOX,adjustDetailDTO.getSkuNo(), adjustDetailDTO.getPackQty());
                 }
             });
             //调整装箱不能把箱子的SKU都删除，变成空箱
@@ -1677,22 +1676,22 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             });
             //装箱中明细全部清空 则报错
             if (isEmpty.get()){
-                throw new ServiceException(ApiError.ERROR_92255);
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_PICKLIST_REQUIRED);
             }
         }else if (AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
             dto.getCartonDetailList().forEach(adjustDetailDTO -> {
                 WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).findFirst().orElse(null);
                 if (Objects.isNull(groupSkuDTO)){
-                    throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_SKU_NOT_IN_ASSOCIATED_ORDER,adjustDetailDTO.getSkuNo());
                 }
                 int adjustQty = dto.getCartonDetailList().stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).map(WmsCartonDTO.AdjustDetailDTO::getAdjustQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (groupSkuDTO.getWaitPackQty() < adjustQty){
-                    throw new ServiceException(ApiError.ERROR_92147,adjustDetailDTO.getSkuNo(),adjustDetailDTO.getFnSku(), groupSkuDTO.getWaitPackQty());
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_FNSKU_QTY_EXCEEDS_UNPACKED,adjustDetailDTO.getSkuNo(),adjustDetailDTO.getFnSku(), groupSkuDTO.getWaitPackQty());
                 }
                 //校验累计装箱数量不可大于发货数量
                 Integer deliveryQty = finalTaskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (adjustQty > deliveryQty){
-                    throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_92252.msg,adjustDetailDTO.getSkuNo(), adjustQty, deliveryQty));
+                    throw new ServiceException(CharSequenceUtil.format(ApiError.LOGISTICS_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.getMsg(),adjustDetailDTO.getSkuNo(), adjustQty, deliveryQty));
                 }
             });
         }
@@ -1702,15 +1701,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public ApiResult<String> cartonSpecSave(WmsCartonSpecDTO.SpecSaveDTO dto) {
         WmsCartonSpecEntity old = wmsCartonSpecService.getById(dto.getSpecId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.ERROR_92145);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_SPEC_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = this.getById(old.getMainId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         WmsCartonEntity wmsCartonEntity = wmsCartonService.getBySpecId(dto.getSpecId());
         if (Objects.isNull(wmsCartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         if (CharSequenceUtil.isBlank(dto.getMeasureSource())){
             dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
@@ -1793,12 +1792,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //根据源订单和箱号获取箱子记录
         List<PackingTaskEntity> taskEntityList = this.listBySourceCodes(Collections.singletonList(sourceCode));
         if (CollUtil.isEmpty(taskEntityList)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         String taskId = taskEntityList.get(0).getId();
         WmsCartonEntity wmsCartonEntity = wmsCartonService.findCartonByTaskIdAndBoxNo(taskId, boxNo);
         if (Objects.isNull(wmsCartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         adjustDTO.setCartonId(wmsCartonEntity.getId());
     }
@@ -2081,7 +2080,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(packingTask.getWeightingStatus())
                 && PackingTaskStatusEnum.PACKED.getCode().equals(packingTask.getPackingStatus()))) {
             //【发货单状态-已审核】且【装箱任务状态-已装箱/已称重时】不可编辑
-            throw new ServiceException(ApiError.ERROR_PACKING_DELIVERY_CHECK);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_DELIVERY_CHECK_FORBIDDEN);
         }
         if(FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus())
                 || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus())){
@@ -2095,16 +2094,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 ).count();
         if (count > 0) {
             List<String> codes = overseasWarehouseInboundEntities.stream().map(OverseasWarehouseInboundEntity::getCode).distinct().collect(Collectors.toList());
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE, String.join(",",codes));
+            throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE, String.join(",",codes));
         }
     }
 
     private void checkSoDeliveryNoticeStatus(SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
         if (Objects.isNull(soDeliveryNoticeEntity)){
-            throw new ServiceException(ApiError.ERROR_92144);
+            throw new ServiceException(ApiError.SO_DELIVERY_NOTICE_RECORD_NOT_FOUND);
         }
         if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_92251);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_ASSOCIATED_ORDER_APPROVED_EDIT_DELETE_FORBIDDEN);
         }
     }
 
@@ -2184,7 +2183,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public void addPackingByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity) {
         String demandType = firstMileDeliveryEntity.getDemandType();
-        String sourceType = FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.THIRD.getCode():FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.FBA.getCode():PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        String sourceType;
+        if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)){
+            sourceType =  PickingSourceTypeEnum.THIRD.getCode();
+        }else if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.FBA.getCode();
+        }else if (FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.AWD.getCode();
+        }else {
+            sourceType = PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        }
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(firstMileDeliveryEntity.getId(), sourceType);
         if (CollectionUtils.isNotEmpty(taskEntityList)){
@@ -2220,7 +2228,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         taskDetailList.forEach(packingTaskDetailEntity -> {
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
-            if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
+            if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
                 packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getFnSku());
             }else{
                 packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
@@ -2352,11 +2360,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId) {
         WmsCartonEntity cartonEntity = wmsCartonService.getById(cartonId);
         if (Objects.isNull(cartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         return buildPrintInfo(cartonEntity,packingTaskEntity);
     }
@@ -2448,7 +2456,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setShopName(shopInfo.getName());
                     }
                 }
-            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
+            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && (Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode()) || Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.AWD.getCode()))){
                 printDTO.setShopId(requisitionApplication.getChannelId());
                 printDTO.setShopName(requisitionApplication.getChannelName());
                 ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
@@ -2490,7 +2498,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void addPackingByRequisition(RequisitionApplicationEntity entity) {
         String type = entity.getType();
-        String sourceType = RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)? PickingSourceTypeEnum.THIRD.getCode():RequisitionApplicationTypeEnum.FBA.getCode().equals(type)? PickingSourceTypeEnum.FBA.getCode():PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        String sourceType;
+        if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)){
+            sourceType =  PickingSourceTypeEnum.THIRD.getCode();
+        }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.FBA.getCode();
+        }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.AWD.getCode();
+        }else {
+            sourceType = PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        }
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(entity.getId(), sourceType);
         //是否是第三方仓
@@ -2562,7 +2579,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         taskDetailList.forEach(packingTaskDetailEntity -> {
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new RequisitionApplicationDetailEntity());
-            if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+            if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) || entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())){
                 packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
             }else{
                 packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformSku());
@@ -2624,7 +2641,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         //补充数据
         buildPackingDetailTask(page.getRecords());
@@ -2658,12 +2675,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String permissionSql = authDataFeign.getWarehousePermissionSql("pt.warehouse_id");
         List<PackingTaskEntity> taskEntityList = baseMapper.listBySourceCodes(Collections.singletonList(sourceCode),permissionSql);
         if (CollUtil.isEmpty(taskEntityList)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = taskEntityList.get(0);
         WmsCartonEntity wmsCartonEntity = wmsCartonService.findCartonByTaskIdAndBoxNo(packingTaskEntity.getId(), boxNo);
         if (Objects.isNull(wmsCartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         WmsCartonSpecEntity specEntity = wmsCartonSpecService.getById(wmsCartonEntity.getSpecId());
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(wmsCartonEntity.getId()));
@@ -2882,11 +2899,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public Boolean deleteCarton(WmsCartonSpecDTO.DeleteCartonDTO dto) {
         WmsCartonEntity cartonEntity = wmsCartonService.getById(dto.getCartonId());
         if (Objects.isNull(cartonEntity)){
-            throw new ServiceException(ApiError.ERROR_92146);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
         }
         PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         //已绑定FBA货件不能删除
         checkCartonHasFba(cartonEntity.getPackingTaskId(),dto.getCartonId());
@@ -3083,7 +3100,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         //切换为装箱清单导出
         List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS = buildPackingDetailExportTaskMerge(page.getRecords());

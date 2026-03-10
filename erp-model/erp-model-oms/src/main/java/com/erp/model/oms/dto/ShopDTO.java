@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -47,8 +48,6 @@ public class ShopDTO implements Serializable {
          * 平台名称
          */
         private String platformName;
-
-
 
 
         /**
@@ -180,30 +179,30 @@ public class ShopDTO implements Serializable {
          * 扩展字段的 数据+值
          */
         private String extendData;
-        
+
         /**
          * 结算币别
          */
-         private String settlementCurrency;
+        private String settlementCurrency;
         private String settlementCurrencyName;
-         /**
+        /**
          * 交易币别
          */
-         private String tradeCurrency;
+        private String tradeCurrency;
         private String tradeCurrencyName;
-         /**
+        /**
          * 启用时间
          */
-         private LocalDateTime enableTime;
-         /**
-          * 停用时间
-          */
-         private LocalDateTime downTime;
-         /**
+        private LocalDateTime enableTime;
+        /**
+         * 停用时间
+         */
+        private LocalDateTime downTime;
+        /**
          * 店铺退货仓库：名称字段为returnWarehouseName
          */
-         private String returnWarehouse;
-         private String returnWarehouseName;
+        private String returnWarehouse;
+        private String returnWarehouseName;
 
         /**
          * 授权过期时间
@@ -218,7 +217,7 @@ public class ShopDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO  extends SortDTO {
+    public static class PagingParamDTO extends SortDTO {
 
         /**
          * 平台
@@ -231,7 +230,7 @@ public class ShopDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
         /**
          * 展示对应用的的权限集合
          */
@@ -288,12 +287,6 @@ public class ShopDTO implements Serializable {
         private String salesOrgId;
 
         /**
-         * 是否包含平台仓 true 包含
-         */
-        @NotNull(message = "是否包含平台仓不能为空")
-        private Boolean  isHaveWarehouse;
-
-        /**
          * 是否多渠道发货
          */
         private Boolean isMultiChannel;
@@ -307,7 +300,7 @@ public class ShopDTO implements Serializable {
         /**
          * ioss税号
          */
-        private String  iossTaxNo;
+        private String iossTaxNo;
 
         /**
          * 区域id
@@ -325,40 +318,20 @@ public class ShopDTO implements Serializable {
         private String domain;
 
         /**
-         * 店铺平台仓库
-         */
-        private String warehouseId;
-
-        /**
-         * VOEC税号
-         */
-        private String voecTaxNo;
-
-        /**
-         * EORI税号
-         */
-        private String eoriTaxNo;
-        
-        /**
          * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
         @NotBlank(message = "结算币别不能为空")
-         private String settlementCurrency;
-         /**
+        private String settlementCurrency;
+        /**
          * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
-         @NotBlank(message = "交易币别不能为空")
-         private String tradeCurrency;
-         /**
+        @NotBlank(message = "交易币别不能为空")
+        private String tradeCurrency;
+        /**
          * 启用时间
          */
 //         @NotNull(message = "启用时间不能为空")
-         private LocalDateTime enableTime;
-         /**
-         * 店铺退货仓库： 同店铺平台仓库获取方式
-         */
-//         @NotBlank(message = "店铺退货仓库不能为空")
-         private String returnWarehouse;
+        private LocalDateTime enableTime;
 
         /**
          * 渠道id
@@ -412,8 +385,6 @@ public class ShopDTO implements Serializable {
         private String platformName;
 
 
-
-
         /**
          * 店铺名称
          */
@@ -459,7 +430,7 @@ public class ShopDTO implements Serializable {
         /**
          * 是否包含平台仓  true 包含
          */
-        private Boolean  isHaveWarehouse;
+        private Boolean isHaveWarehouse;
         /**
          * 是否多渠道发货
          */
@@ -467,7 +438,7 @@ public class ShopDTO implements Serializable {
         /**
          * ioss税号
          */
-        private String  iossTaxNo;
+        private String iossTaxNo;
         /**
          * VOEC税号
          */
@@ -558,24 +529,24 @@ public class ShopDTO implements Serializable {
         /**
          * 结算币别
          */
-         private String settlementCurrency;
-         /**
+        private String settlementCurrency;
+        /**
          * 交易币别
          */
-         private String tradeCurrency;
-         /**
+        private String tradeCurrency;
+        /**
          * 启用时间
          */
-         private LocalDateTime enableTime;
-         /**
-          * 停用时间
-          */
-         private LocalDateTime downTime;
-         /**
+        private LocalDateTime enableTime;
+        /**
+         * 停用时间
+         */
+        private LocalDateTime downTime;
+        /**
          * 店铺退货仓库：名称字段为returnWarehouseName
          */
-         @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , returnFieldName = "name" , tableName = "warehouse")
-         private String returnWarehouse;
+        @Dict(serviceCode = ServiceCodeNameEnum.WMS, queryFieldName = "id", returnFieldName = "name", tableName = "warehouse")
+        private String returnWarehouse;
 
         /**
          * 渠道信息
@@ -610,6 +581,14 @@ public class ShopDTO implements Serializable {
          * app secret
          */
         private String clientSecret;
+        /**
+         * AWD仓库id
+         */
+        private String awdWarehouseId;
+        /**
+         * AWD仓库名称
+         */
+        private String awdWarehouseName;
     }
 
     @Data
@@ -689,7 +668,6 @@ public class ShopDTO implements Serializable {
         /**
          * 是否包含平台仓  true 包含
          */
-        @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
         /**
          * 是否多渠道发货
@@ -701,18 +679,6 @@ public class ShopDTO implements Serializable {
         @NotNull(message = "数据下载时间不能为空")
         private LocalDateTime initPullTime;
         /**
-         * ioss税号
-         */
-        private String  iossTaxNo;
-        /**
-         * VOEC税号
-         */
-        private String voecTaxNo;
-        /**
-         * EORI税号
-         */
-        private String eoriTaxNo;
-        /**
          * 销售组织
          */
         @NotBlank(message = "销售组织不能为空")
@@ -722,10 +688,6 @@ public class ShopDTO implements Serializable {
          * 渠道id
          */
         private List<String> channelIdList;
-        /**
-         * 仓库id
-         */
-        private String warehouseId;
 
         /**
          * 国家id
@@ -742,27 +704,22 @@ public class ShopDTO implements Serializable {
          */
 //        @NotBlank(message = "客户的id不能为空")
         private String customerId;
-        
+
         /**
          * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
         @NotBlank(message = "结算币别不能为空")
-         private String settlementCurrency;
-         /**
+        private String settlementCurrency;
+        /**
          * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
-         @NotBlank(message = "交易币别不能为空")
-         private String tradeCurrency;
-         /**
+        @NotBlank(message = "交易币别不能为空")
+        private String tradeCurrency;
+        /**
          * 启用时间
          */
 //         @NotNull(message = "启用时间不能为空")
-         private LocalDateTime enableTime;
-         /**
-         * 店铺退货仓库：同店铺平台仓库获取方式
-         */
-//         @NotBlank(message = "店铺退货仓库不能为空")
-         private String returnWarehouse;
+        private LocalDateTime enableTime;
 
         /**
          * 平台经营模式
@@ -794,6 +751,7 @@ public class ShopDTO implements Serializable {
          */
         private String timeZone = "";
     }
+
     @Data
     @NoArgsConstructor
     public static class UpdateInternalDTO {
@@ -822,22 +780,22 @@ public class ShopDTO implements Serializable {
          * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
         private String customerId;
-        
+
         /**
          * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
         @NotBlank(message = "结算币别不能为空")
-         private String settlementCurrency;
-         /**
+        private String settlementCurrency;
+        /**
          * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
-         @NotBlank(message = "交易币别不能为空")
-         private String tradeCurrency;
-         /**
+        @NotBlank(message = "交易币别不能为空")
+        private String tradeCurrency;
+        /**
          * 启用时间
          */
-         @NotNull(message = "启用时间不能为空")
-         private LocalDateTime enableTime;
+        @NotNull(message = "启用时间不能为空")
+        private LocalDateTime enableTime;
 
     }
 
@@ -847,22 +805,22 @@ public class ShopDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ShopBatchUpdateDTO extends BatchUpdateDTO{
-    	/**
+    public static class ShopBatchUpdateDTO extends BatchUpdateDTO {
+        /**
          * 启用时间
          */
-         private LocalDateTime enableTime;
+        private LocalDateTime enableTime;
     }
-    
+
     @Data
     @NoArgsConstructor
-    public static class BatchSetCostDTO  {
+    public static class BatchSetCostDTO {
 
         @NotNull(message = "店铺不能为空")
         private List<String> ids;
 
 
-        @DecimalMin( value = "0",message = "平台费率必须大于0")
+        @DecimalMin(value = "0", message = "平台费率必须大于0")
         @NotNull(message = "平台费率不能为空")
         private BigDecimal platformRate;
 
@@ -872,7 +830,7 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "平台选项不能为空")
         private String dictPlatformOption;
 
-        @DecimalMin( value = "0",message = "vat费率必须大于0")
+        @DecimalMin(value = "0", message = "vat费率必须大于0")
         @NotNull(message = "vat费率不能为空")
         private BigDecimal vatRate;
 
@@ -883,7 +841,7 @@ public class ShopDTO implements Serializable {
         private String dictVatOption;
 
 
-        @DecimalMin( value = "0",message = "转账费率必须大于0")
+        @DecimalMin(value = "0", message = "转账费率必须大于0")
         @NotNull(message = "转账费率不能为空")
         private BigDecimal transferRate;
 
@@ -892,20 +850,32 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "转帐的选项不能为空")
         private String dictTransferOption;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
 
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
 
     }
 
     @Data
     @NoArgsConstructor
-    public static class SetCostDTO  {
+    public static class SetCostDTO {
 
         private String id;
 
         @NotNull(message = "店铺不能为空")
         private String shopId;
 
-        @DecimalMin( value = "0",message = "平台费率必须大于0")
+        @DecimalMin(value = "0", message = "平台费率必须大于0")
         @NotNull(message = "平台费率不能为空")
         private BigDecimal platformRate;
 
@@ -915,7 +885,7 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "平台选项不能为空")
         private String dictPlatformOption;
 
-        @DecimalMin( value = "0",message = "vat费率必须大于0")
+        @DecimalMin(value = "0", message = "vat费率必须大于0")
         @NotNull(message = "vat费率不能为空")
         private BigDecimal vatRate;
 
@@ -926,7 +896,7 @@ public class ShopDTO implements Serializable {
         private String dictVatOption;
 
 
-        @DecimalMin( value = "0",message = "转账费率必须大于0")
+        @DecimalMin(value = "0", message = "转账费率必须大于0")
         @NotNull(message = "转账费率不能为空")
         private BigDecimal transferRate;
 
@@ -935,6 +905,19 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "转帐的选项不能为空")
         private String dictTransferOption;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
 
 
     }
@@ -942,7 +925,68 @@ public class ShopDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewCostDTO  {
+    public static class ViewBaseDTO  {
+
+        /**
+         * 店铺id
+         */
+        private String id;
+
+        private String dictPlatform;
+
+        private Boolean isMultiChannel;
+
+        /**
+         * 订单路由类型
+         */
+        private String orderRouteType;
+        /**
+         * 订单路由类型名称
+         */
+        private String orderRouteTypeName;
+        /**
+         * 是否包含平台仓  true 包含
+         */
+        private Boolean  isHaveWarehouse;
+        /**
+         * 店铺平台仓库
+         */
+        private String warehouseId;
+
+        /**
+         * 店铺平台仓库
+         */
+        private String warehouseName;
+
+        /**
+         * 店铺退货仓库：名称字段为returnWarehouseName
+         */
+        private String returnWarehouse;
+
+        private String returnWarehouseName;
+
+        /**
+         * 店铺AWD仓库：名称字段为awdWarehouseName
+         */
+        private String awdWarehouseId;
+
+        private String awdWarehouseName;
+
+
+        /**
+         * 渠道信息
+         */
+        private List<ShopChannelRefDTO.ViewDTO> shopChannelRefDTOList;
+
+        /**
+         * 渠道id
+         */
+        private List<String> channelIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewCostDTO {
 
         /**
          * 费用id
@@ -996,13 +1040,27 @@ public class ShopDTO implements Serializable {
          */
         private String dictTransferOption;
 
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
+
 
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class RedirectDTO  {
+    public static class RedirectDTO {
 
 
         /**
@@ -1023,11 +1081,10 @@ public class ShopDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class RefreshTokenDTO{
+    public static class RefreshTokenDTO {
 
         /**
          * 刷新token
-         *
          */
         private String refreshToken;
 
@@ -1059,6 +1116,7 @@ public class ShopDTO implements Serializable {
 
 
     }
+
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
@@ -1069,7 +1127,7 @@ public class ShopDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class SelectDTO extends SortDTO{
+    public static class SelectDTO extends SortDTO {
 
         /**
          * 关键词
@@ -1105,6 +1163,7 @@ public class ShopDTO implements Serializable {
         private String authStatus;
 
     }
+
     @Data
     @NoArgsConstructor
     public static class ListDTO {
@@ -1148,9 +1207,10 @@ public class ShopDTO implements Serializable {
         /**
          * 是否可选
          */
-        private Boolean canCheck=true;
+        private Boolean canCheck = true;
 
     }
+
     @Data
     @NoArgsConstructor
     public static class AddInternalDTO {
@@ -1198,23 +1258,23 @@ public class ShopDTO implements Serializable {
         /**
          * 是否包含平台仓 true 包含
          */
-        private Boolean  isHaveWarehouse;
-        
+        private Boolean isHaveWarehouse;
+
         /**
          * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
         @NotBlank(message = "结算币别不能为空")
-         private String settlementCurrency;
-         /**
+        private String settlementCurrency;
+        /**
          * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
-         @NotBlank(message = "交易币别不能为空")
-         private String tradeCurrency;
-         /**
+        @NotBlank(message = "交易币别不能为空")
+        private String tradeCurrency;
+        /**
          * 启用时间
          */
-         @NotNull(message = "启用时间不能为空")
-         private LocalDateTime enableTime;
+        @NotNull(message = "启用时间不能为空")
+        private LocalDateTime enableTime;
     }
 
     /**
@@ -1224,9 +1284,9 @@ public class ShopDTO implements Serializable {
     @NoArgsConstructor
     public static class AreaDTO {
 
-       /**
-        * 区域
-        */
+        /**
+         * 区域
+         */
         private String dictAreaCode;
     }
 

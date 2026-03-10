@@ -395,6 +395,78 @@ public class LogisticsBillCostDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 对账月份【可排序】
+         */
+        private String reconciliationMonth;
+
+        /**
+         * 销售发货单id【可排序】
+         */
+        private String soDeliveryId;
+        /**
+         * 销售发货编号【可排序】
+         */
+        private String soDeliveryCode;
+        /**
+         * 尺寸长（物流商）
+         */
+        private BigDecimal thirdLength;
+        /**
+         * 尺寸宽（物流商）【可排序】
+         */
+        private BigDecimal thirdWidth;
+        /**
+         * 尺寸高（物流商）【可排序】
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 包装尺寸（物流商），长*宽*高
+         */
+        private String thirdPackSize;
+        /**
+         * 实重（物流商）【可排序】
+         */
+        private BigDecimal thirdActualWeight;
+        /**
+         * 区域编码【可排序】
+         */
+        private String subregionCode;
+        /**
+         * 区域名称
+         */
+        private String regionName;
+        /**
+         * 部门id【可排序】
+         */
+        private String deptId;
+        /**
+         * 部门名称
+         */
+        private String deptName;
+        /**
+         * 军区id【可排序】
+         */
+        private String partitionId;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
+         * 是否分摊【可排序】
+         */
+        private Boolean isAllocateRequired;
+        /**
+         * 是否分摊名称
+         */
+        private String isAllocateRequiredName;
+        /**
+         * 不分摊原因【可排序】
+         */
+        private String notAllocateRemark;
+
     }
 
     /**
@@ -530,6 +602,11 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
     	/**
          * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
          */
@@ -618,7 +695,31 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 计费重[物流商]
     	 */
     	private BigDecimal billingWeightLogistics;
-    	
+
+        /**
+         * 对账月份
+         */
+        private String reconciliationMonth;
+        /**
+         * 尺寸长(物流商)
+         */
+        private BigDecimal thirdLength;
+
+        /**
+         * 尺寸宽(物流商)
+         */
+        private BigDecimal thirdWidth;
+
+        /**
+         * 尺寸高(物流商)
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal thirdActualWeight;
+
     	/**
     	 * 实际金额币别
     	 */
@@ -715,6 +816,30 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 计费重[预估]
     	 */
     	private BigDecimal billingWeight;
+
+        /**
+         * 对账月份
+         */
+        private String reconciliationMonth;
+        /**
+         * 尺寸长(物流商)
+         */
+        private BigDecimal thirdLength;
+
+        /**
+         * 尺寸宽(物流商)
+         */
+        private BigDecimal thirdWidth;
+
+        /**
+         * 尺寸高(物流商)
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal thirdActualWeight;
     }
 
     @Data
@@ -792,6 +917,30 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 计费重[物流商]
     	 */
     	private BigDecimal billingWeightLogistics;
+
+        /**
+         * 对账月份
+         */
+        private String reconciliationMonth;
+        /**
+         * 尺寸长(物流商)
+         */
+        private BigDecimal thirdLength;
+
+        /**
+         * 尺寸宽(物流商)
+         */
+        private BigDecimal thirdWidth;
+
+        /**
+         * 尺寸高(物流商)
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal thirdActualWeight;
 
         /**
          * 费用明细
@@ -894,8 +1043,25 @@ public class LogisticsBillCostDTO implements Serializable {
     	 */
     	@NotBlank(message = "核算日期不能为空")
     	private String reportDate;
+    	/**
+    	 *物流标签类型
+    	 */
+    	private String type;
     	
+    } /**
+     * 支付状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushAllocatedCostCountDTO {
+        /**
+         *
+         */
+        private Integer count =0;
+
     }
+
+
     @Data
     @NoArgsConstructor
     public static class OutStockDTO {
@@ -982,4 +1148,43 @@ public class LogisticsBillCostDTO implements Serializable {
         private String sourceType;
         private BigDecimal costValue;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TotalCountDTO {
+
+        /**
+         * 计费重[物流商]
+         */
+        private BigDecimal totalBillingWeightLogistics = BigDecimal.ZERO;
+
+        /**
+         * 实际运费(总)
+         */
+        private BigDecimal totalActualShippingCost = BigDecimal.ZERO;
+        private String actualShippingCostCurrencySymbol = "¥";
+
+        /**
+         * 实际关税费用(总)
+         */
+        private BigDecimal totalActualDeclareCost = BigDecimal.ZERO;
+        private String actualDeclareCostCurrencySymbol = "¥";
+
+
+        /**
+         * 实际可抵扣税金[总]
+         */
+        private BigDecimal totalActualDeductibleTax = BigDecimal.ZERO;
+        private String actualDeductibleTaxCurrencySymbol = "¥";
+
+        /**
+         * 实际其他费用(总)
+         */
+        private BigDecimal totalActualOtherCost = BigDecimal.ZERO;
+        private String actualOtherCostCurrencySymbol = "¥";
+
+    }
+
 }

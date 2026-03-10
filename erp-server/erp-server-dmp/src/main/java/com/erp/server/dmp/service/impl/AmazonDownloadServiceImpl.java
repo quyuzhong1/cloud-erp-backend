@@ -5,21 +5,17 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.*;
-import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
@@ -42,7 +38,6 @@ import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
-import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -247,7 +242,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
                     // 获取锁异常等重试
                     if (error instanceof InterruptedException) {
                         XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
-                        throw new ServiceException(ApiError.ERROR_1026);
+                        throw new ServiceException(ApiError.BILL_DATA_LOCKED);
                     }
                     XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载失败，uniqueId={}, error={}",
                             newDto.getUniqueId(),
@@ -624,7 +619,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             }
             if (e.hasMultiChannel()) {
                 // 多渠道订单
-                parseMultiChannel(e, timeList, curMap, centerEntity);
+                 parseMultiChannel(e, timeList, curMap, centerEntity);
             } else {
                 // B2C订单
                 parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
@@ -674,6 +669,17 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
      * 补充信息(多渠道销售订单)
      */
     private static void parseMultiChannel(ReportFulfilledShipmentsMongoDTO e, List<CfgTimezoneEntity> timeList, Map<String, ShopInfoEntity> curMap, CfgAmzFulfillmentCenterEntity centerEntity) {
+        // 优先店铺地区解析
+        if (!curMap.isEmpty()) {
+            // 相同账号的店铺时区一致
+            ShopInfoEntity shopInfoEntity = curMap.values().stream().findFirst().orElse(null);
+            if (StringUtils.isNotBlank(shopInfoEntity.getTimeZone())) {
+                // 设置所有本地时区
+                e.checkAndSetAllDateLocale(shopInfoEntity.getTimeZone());
+                return;
+            }
+        }
+
         // 解析后的时区(按仓储中心)
         if (null == centerEntity){
             return;

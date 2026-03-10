@@ -31,6 +31,8 @@ import com.erp.model.sys.entity.*;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoDeliveryDetailService;
+import com.erp.server.dmp.service.DmpSoDeliveryService;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoOutstockDetailService;
@@ -50,6 +52,9 @@ import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.Tools;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -92,6 +97,10 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	private DmpSoOutstockService dmpSoOutstockService;
 	@Resource
 	private DmpSoOutstockDetailService dmpSoOutstockDetailService;
+	@Resource
+	private DmpSoDeliveryService dmpSoDeliveryService;
+	@Resource
+	private DmpSoDeliveryDetailService dmpSoDeliveryDetailService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -255,6 +264,56 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 				}
 			}
 			cfgMaps.put("wdtPlatformCodeMap", wdtPlatformCodeMap);
+			
+			Map<String, String> platformCodeSkuMSkuMap = new HashMap<>();
+			List<String> mSkuWdtThirdCodes = changeDmpSoOutstockEntity.stream().filter(c -> StringUtils.isNotBlank(c.getPlatformCode()) && c.getPlatformCode().startsWith("JY"))
+				.map(DmpSoOutstockEntity::getPlatformCode).collect(Collectors.toList());
+			if(CollUtil.isNotEmpty(mSkuWdtThirdCodes)) {
+				Map<String, String> mSkuWdtIdThirdCodeMaps = dmpSoInfoService.lambdaQuery().in(DmpSoInfoEntity::getThirdCode, mSkuWdtThirdCodes)
+						.eq(DmpSoInfoEntity::getSourceSystem, "wdt")
+						.select(DmpSoInfoEntity::getId , DmpSoInfoEntity::getThirdCode)
+						.list().stream().collect(Collectors.toMap(DmpSoInfoEntity::getId , DmpSoInfoEntity::getThirdCode));
+					if(CollUtil.isNotEmpty(mSkuWdtIdThirdCodeMaps)) {
+						Map<String, List<DmpSoDetailEntity>> mSkuMainIdDetailMap = dmpSoDetailService.lambdaQuery().in(DmpSoDetailEntity::getMainId, mSkuWdtIdThirdCodeMaps.keySet()).list()
+								.stream().collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId));
+							for(Map.Entry<String, String> mSkuIdThirdCodeMap : mSkuWdtIdThirdCodeMaps.entrySet()) {
+								List<DmpSoDetailEntity> mSkuDetailList = mSkuMainIdDetailMap.get(mSkuIdThirdCodeMap.getKey());
+								if(CollUtil.isNotEmpty(mSkuDetailList)) {
+									for(DmpSoDetailEntity mSkuDetail : mSkuDetailList) {
+										String platformSku = mSkuDetail.getPlatformSku();
+										if(StringUtils.isNotBlank(platformSku)) {
+											platformCodeSkuMSkuMap.put(mSkuIdThirdCodeMap.getValue() + "_" + mSkuDetail.getSkuNo(), platformSku);
+										}
+									}
+								}
+							}
+					}
+			}
+			
+			List<String> mSkuSdcThirdCodes = changeDmpSoOutstockEntity.stream().filter(c -> StringUtils.isNotBlank(c.getPlatformCode()) && !c.getPlatformCode().startsWith("JY"))
+					.map(DmpSoOutstockEntity::getPlatformCode).collect(Collectors.toList());
+			if(CollUtil.isNotEmpty(mSkuSdcThirdCodes)) {
+				List<SoB2cEntity> soB2cEntityList = FeignQuery.create(SoB2cEntity.class).in(SoB2cEntity::getCode, mSkuSdcThirdCodes)
+						.select(SoB2cEntity::getId , SoB2cEntity::getCode).list();
+				Map<String, String> mSkuSdcIdThirdCodeMaps = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId , SoB2cEntity::getCode));
+					if(CollUtil.isNotEmpty(mSkuSdcIdThirdCodeMaps)) {
+						List<SoB2cDetailEntity> soB2cDetailEntityList = FeignQuery.create(SoB2cDetailEntity.class).in(SoB2cDetailEntity::getMainId, mSkuSdcIdThirdCodeMaps.keySet()).list();
+						Map<String, List<SoB2cDetailEntity>> mSkuMainIdDetailMap = soB2cDetailEntityList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
+							for(Map.Entry<String, String> mSkuIdThirdCodeMap : mSkuSdcIdThirdCodeMaps.entrySet()) {
+								List<SoB2cDetailEntity> mSkuDetailList = mSkuMainIdDetailMap.get(mSkuIdThirdCodeMap.getKey());
+								if(CollUtil.isNotEmpty(mSkuDetailList)) {
+									for(SoB2cDetailEntity mSkuDetail : mSkuDetailList) {
+										String platformSku = mSkuDetail.getPlatformSkuNo();
+										if(StringUtils.isNotBlank(platformSku)) {
+											platformCodeSkuMSkuMap.put(mSkuIdThirdCodeMap.getValue() + "_" + mSkuDetail.getSkuNo(), platformSku);
+										}
+									}
+								}
+							}
+					}
+			}
+			
+			cfgMaps.put("platformCodeSkuMSkuMap", platformCodeSkuMSkuMap);
 		}
 
 
@@ -266,6 +325,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
             	}
             }
         }
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
 
@@ -415,9 +475,13 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	            	shudiyunB2cOrderDTO.setEstimate_investment_time(estimateInvestmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 	            }
 
-				// 添加发货类型
-				boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
-				shudiyunB2cOrderDTO.setFulfillment_type(isPlatformDelivery ? "0":"1");
+	            if(DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platformType)) {
+	            	shudiyunB2cOrderDTO.setFulfillment_type("1");
+	            }else {
+	            	// 添加发货类型
+					boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
+					shudiyunB2cOrderDTO.setFulfillment_type(isPlatformDelivery ? "0":"1");
+	            }
                 
     	        shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockDetailEntity.getThirdOrderCode());
 
@@ -493,6 +557,35 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	        		shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNo);
     	        		}
     				}
+    	        }
+    	        
+    	        String thirdOrderCode = dmpSoOutstockDetailEntity.getThirdOrderCode();
+    	        if(!thirdBillNo.startsWith("CK") && thirdOrderCode.contains(",")) {
+    	        	String thirdDetailId = dmpSoOutstockDetailEntity.getThirdDetailId();
+    	        	SoOutstockDetailEntity soOutstockDetailEntity = FeignQuery.getById(SoOutstockDetailEntity.class, thirdDetailId);
+    	        	if(soOutstockDetailEntity != null) {
+    	        		String soDetailId = soOutstockDetailEntity.getSoDetailId();
+    	        		while(StringUtils.isNotBlank(thirdOrderCode) && thirdOrderCode.contains(",") && StringUtils.isNotBlank(soDetailId)) {
+    		            	List<SoB2cRefEntity> soB2cRefEntityList = FeignQuery.create(SoB2cRefEntity.class).eq(SoB2cRefEntity::getTargetDetailId, soDetailId).list();
+    		            	if(CollUtil.isEmpty(soB2cRefEntityList)) {
+    		            		break;
+    		            	}
+    		            	SoB2cRefEntity soB2cRefEntity = soB2cRefEntityList.get(0);
+    		            	soDetailId = soB2cRefEntity.getSourceDetailId();
+    		            	SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, soB2cRefEntity.getSourceId());
+    		            	if(soB2cEntity == null) {
+    		            		break;
+    		            	}
+    		            	thirdOrderCode = soB2cEntity.getPlatformCode();
+    		            }
+    	        	}
+    	        	shudiyunB2cOrderDTO.setRoot_node_no(thirdOrderCode);
+	        		shudiyunB2cOrderDTO.setRoot_node_no_initial(thirdOrderCode);
+    	        }
+    	        
+    	        Map<String, String> platformCodeSkuMSkuMap = cfgMaps.get("platformCodeSkuMSkuMap");
+    	        if(platformCodeSkuMSkuMap != null) {
+    	        	shudiyunB2cOrderDTO.setMsku_code(platformCodeSkuMSkuMap.get(platformCode + "_" + skuNo));
     	        }
     	        
     	        shudiyunB2cOrderDTO.setDefaultValue();

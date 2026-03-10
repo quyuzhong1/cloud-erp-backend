@@ -225,7 +225,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         }
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
         if (ObjUtil.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
+            throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, userByThird.getUserId());
         }
         addDTO.setCreateUserId(findUserDTO.getUserId());
         addDTO.setCreateUserName(findUserDTO.getUserName());
@@ -323,7 +323,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         String businessKey = entity.getBussinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
         if (null == sourceType) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,"添加评论",businessKey);
+            throw new ServiceException(ApiError.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND,"添加评论",businessKey);
         }
         ApproveDTO.AddCommentDTO addCommentDTO = new ApproveDTO.AddCommentDTO();
         addCommentDTO.setBusinessKey(businessKey);
@@ -343,6 +343,9 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         processDTO.setApproveStatus(ApproveTypeEnum.getByCode(approveStatus));
         // 来自第三方系统的用户ID可能需要转换为您系统内部的用户ID
         SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
+        if (user == null) {
+            throw new ServiceException(ApiError.WF_FS_PROCESS_USER_NOT_FOUND, userId);
+        }
         processDTO.setApproveUserId(user.getUserId());
         processDTO.setApproveTime(approveTime);
         processDTO.setComment(comment);

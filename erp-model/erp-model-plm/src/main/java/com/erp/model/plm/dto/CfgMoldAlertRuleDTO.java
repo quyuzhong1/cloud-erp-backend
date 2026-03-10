@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 /**
@@ -123,6 +124,18 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         private String countDimName;
 
 
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        private List<String> noticeTypeList;
+        /**
+         * 通知类型名称
+         */
+        private String noticeTypeName;
+        private List<String> noticeTypeNameList;
+
+
     }
 
     /**
@@ -138,6 +151,19 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         @Size(max = 19,message = "模具id最大长度不能超过19位")
         private String moldId;
 
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchAddDTO {
+        /**
+         *
+         */
+        @NotEmpty(message = "模具档案不能为空" )
+        private List<@Valid AddDTO> list;
     }
 
     /**
@@ -211,7 +237,11 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         @NotBlank(message = "预警标准不能为空")
         private String countDim;
 
-
+        /**
+         * 通知类型    /sys/cfgThirdNotice/dropDownByMoldMonitor
+         */
+        @NotEmpty(message = "通知类型不能为空")
+        private List<String> noticeTypeList;
     }
 
 
@@ -335,6 +365,16 @@ public class CfgMoldAlertRuleDTO implements Serializable {
          * 预警标准
          */
         private String countDimName;
+
+
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        /**
+         * 通知类型名称
+         */
+        private String noticeTypeName;
     }
 
     /**

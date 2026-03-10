@@ -78,11 +78,21 @@ public class WarehouseLocationController extends BaseController {
     public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> all() {
         return success(warehouseLocationService.all( ));
     }
+
+    /**
+     * 根据关键词查询仓位名称符合的仓位数据
+     * @param keyword 关键词
+     * @return 仓位下拉列表
+     */
+    @GetMapping(value = "/searchByKeyword")
+    public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> searchByKeyword(@RequestParam(value = "keyword", required = false) String keyword) {
+        return success(warehouseLocationService.searchByKeyword(keyword));
+    }
     /**
      * 批量根据仓库获取仓位
      * @return
      */
-    @PostMapping(value = "/selectByWarehouseIds")
+    @PostMapping("/selectByWarehouseIds")
     public ApiResult<List<WarehouseLocationDTO.WarehouseLocationListDTO>> selectByWarehouseIds(@RequestBody ValidList<String> warehouseIds) {
         return success(warehouseLocationService.selectByWarehouseIds(warehouseIds.getList()));
     }
@@ -1059,6 +1069,15 @@ public class WarehouseLocationController extends BaseController {
         return ApiResult.success();
     }
 
+    /**
+     * 批量启用/禁用仓位
+     */
+    @PostMapping("/updateStatusBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={ids},状态值={disabled}(true=禁用,false=启用)")
+    public ApiResult<List<BatchResultDTO>> updateStatusBatch(@RequestBody @Validated WarehouseLocationDTO.UpdateStatusDto dto){
+        List<BatchResultDTO> resultDTOList = warehouseLocationService.updateStatusBatch(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
+    }
     /**
      * 查询操作日志
      * 业务ID：仓位ID

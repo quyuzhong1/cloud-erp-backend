@@ -17,6 +17,7 @@ import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.UserTypeEnum;
@@ -35,7 +36,7 @@ import com.common.message.service.MailService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.SysRoleUserEntity;
+import com.erp.model.sys.entity.SysRoleEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.password.PassEntity;
@@ -43,17 +44,18 @@ import com.erp.model.sys.entity.password.PassHandler;
 import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.sys.enums.SysUserInfoThirdAuthTypeEnum;
 import com.erp.model.sys.enums.ThirdPlatformEnums;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
-import com.erp.rpc.sys.feign.SysRefereConfigFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.convert.SysUserConvert;
@@ -78,14 +80,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_USER_INFO;
 
 @Slf4j
 @Service
@@ -144,8 +147,31 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private SysRefererConfigService sysRefererConfigService;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysRoleService sysRoleService;
+
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
+
+    @Override
+    public List<SysUserInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
+        SysUserInfoDTO.PagingParamDTO searchParam = new SysUserInfoDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<SysUserInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        // 获取状态列表
+        List<SysUserInfoDTO.TabListDTO> result = new ArrayList<>();
+        result.add(new SysUserInfoDTO.TabListDTO("all","全部", 0));
+        SysUserInfoDTO.TabListDTO fTab = list.stream().filter(e -> e.getTabFlag().equals("1")).findFirst().orElse(new SysUserInfoDTO.TabListDTO("1", "启用", 0));
+        fTab.setTabFlagName("启用");
+        result.add(fTab);
+        SysUserInfoDTO.TabListDTO tTab = list.stream().filter(e -> e.getTabFlag().equals("0")).findFirst().orElse(new SysUserInfoDTO.TabListDTO("0", "禁用", 0));
+        tTab.setTabFlagName("禁用");
+        result.add(tTab);
+        return result;
+    }
+
 
 
     @Override
@@ -164,10 +190,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             password = sysUserInfoDTO.getPassword();
             String confirmPassword = sysUserInfoDTO.getConfirmPassword();
             if (StringUtils.isBlank(password) || StringUtils.isBlank(confirmPassword)) {
-                throw new ServiceException(ApiError.ERROR_9015);
+                throw new ServiceException(ApiError.AUTH_PASSWORD_REQUIRED);
             }
             if (!password.equals(confirmPassword)) {
-                throw new ServiceException(ApiError.ERROR_1001);
+                throw new ServiceException(ApiError.AUTH_PASSWORD_MISMATCH);
             }
             needChangePwd = false;
         }else {
@@ -191,7 +217,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             entity.setIsSuper(false);
         }
         boolean saveResult = this.save(entity);
-        if (needChangePwd){
+        if (needChangePwd && StringUtils.isNotBlank(entity.getEmail())){
             sendPwdEmail(entity,randomString);
         }
         //保存成功 就去更新角色表
@@ -201,9 +227,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
             //店铺授权
-            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType(),true);
             //仓库权限
-            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType(),true);
+            //部门授权
+            sysDepartmentUserService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getDepartmentIdList(),true);
+
             //同步金蝶员工数据
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
@@ -233,10 +262,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             password = sysUserInfoDTO.getPassword();
             String confirmPassword = sysUserInfoDTO.getConfirmPassword();
             if (StringUtils.isBlank(password) || StringUtils.isBlank(confirmPassword)) {
-                throw new ServiceException(ApiError.ERROR_9015);
+                throw new ServiceException(ApiError.AUTH_PASSWORD_REQUIRED);
             }
             if (!password.equals(confirmPassword)) {
-                throw new ServiceException(ApiError.ERROR_1001);
+                throw new ServiceException(ApiError.AUTH_PASSWORD_MISMATCH);
             }
         }
         SysUserInfoEntity entity = SysUserConvert.INSTANCE.copyDTOtoSysUser(sysUserInfoDTO);
@@ -278,7 +307,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         //用户名
         String userName = entity.getUserName();
@@ -294,9 +323,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
             //店铺授权
-            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType(),false);
             //仓库权限
-            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType(),false);
+            //部门授权
+            sysDepartmentUserService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getDepartmentIdList(),false);
             //同步金蝶员工数据
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
@@ -320,7 +351,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
@@ -357,7 +388,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         Integer userState = entity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE.equals(userState)) {
-            throw new ServiceException(ApiError.ERROR_1011);
+            throw new ServiceException(ApiError.AUTH_PASSWORD_MISMATCH);
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
@@ -453,25 +484,36 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     /**
      * 分页获取用户信息
      *
-     * @param dto
+     * @param pagingParamDTO
      * @return com.cloud.erp.common.common.vo.PagingVO
      * @author yl
      * @date 2022-07-12 18:30
      */
 
     @Override
-    public PagingVO<UserManageDTO> paging(PagingDTO<SysUserPagingSearchDTO> dto) {
-        Page<UserManageDTO> query = new Page<UserManageDTO>(dto.getCurrPage(), dto.getPageSize());
-        SysUserPagingSearchDTO params = dto.getParams();
-        IPage<UserManageDTO> pageData = baseMapper.paging(query, params, params.getRoleIds());
-        List<UserManageDTO> list = pageData.getRecords();
+    public PagingVO<UserManageDTO> paging(PagingDTO<SysUserInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<UserManageDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<UserManageDTO> list) {
         List<String> userIds = list.stream().map(UserManageDTO::getUid).collect(Collectors.toList());
         //角色
-        List<SysRoleUserEntity> roleUserList = sysRoleUserService.findRoleIdsByUidList(userIds);
-        Map<String, List<String>> roleMap = new HashMap<>();
+        List<SysUserDTO.RoleDTO> roleUserList = sysRoleUserService.listRoleByUserIds(userIds);
+        Map<String, List<String>> roleIdMap = new HashMap<>();
+        Map<String, String> roleMap = new HashMap<>();
         if (CollUtil.isNotEmpty(roleUserList)){
-            roleMap = roleUserList.stream().collect(Collectors.groupingBy(SysRoleUserEntity::getUserId, Collectors.mapping(SysRoleUserEntity::getRoleId, Collectors.toList())));
+            roleMap = roleUserList.stream().collect(Collectors.groupingBy(SysUserDTO.RoleDTO::getUserId, Collectors.mapping(SysUserDTO.RoleDTO::getRoleName,Collectors.joining(";"))));
+            roleIdMap = roleUserList.stream().collect(Collectors.groupingBy(SysUserDTO.RoleDTO::getUserId, Collectors.mapping(SysUserDTO.RoleDTO::getRoleId, Collectors.toList())));
         }
+
         //店铺
         List<SysUserDTO.ShopDTO> shopDTOList = authUserShopService.listShopIdByUserIds(userIds);
         Map<String, List<String>> shopMap = new HashMap<>();
@@ -488,16 +530,43 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             warehouseMap = warehouseDTOList.stream().collect(Collectors.groupingBy(SysUserDTO.WarehouseDTO::getUserId, Collectors.mapping(SysUserDTO.WarehouseDTO::getWarehouseId, Collectors.toList())));
             warehouseAuthTypeMap = warehouseDTOList.stream().collect(Collectors.toMap(SysUserDTO.WarehouseDTO::getUserId, SysUserDTO.WarehouseDTO::getAuthType,(existing,replacement) -> existing));
         }
-        for (UserManageDTO vo : list) {
-            vo.setRoleIdList(roleMap.getOrDefault(vo.getUid(), Collections.emptyList()));
-            vo.setShopAuthType(shopAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(),Collections.emptyList()));
-            vo.setWarehouseAuthType(warehouseAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(),Collections.emptyList()));
-        }
-        return new PagingVO<>(pageData);
-    }
+        //部门
+        List<SysDepartmentUserNumberDTO> departmentList = sysDepartmentUserService.listDeptUserByUserIdList(userIds);
+        Map<String, String> departmentMap = new HashMap<>();
+        Map<String, List<String>> departmentIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(departmentList)){
+            departmentMap = departmentList.stream().collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId, Collectors.mapping(SysDepartmentUserNumberDTO::getDepartmentName,Collectors.joining(";"))));
 
+            departmentIdMap = departmentList.stream().collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId, Collectors.mapping(SysDepartmentUserNumberDTO::getDepartmentId, Collectors.toList())));
+        }
+
+        for (UserManageDTO vo : list) {
+            vo.setRoleIdList(roleIdMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setRoleNames(roleMap.getOrDefault(vo.getUid(), ""));
+            vo.setShopAuthType(shopAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
+            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setWarehouseAuthType(warehouseAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
+            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setDepartmentIdList(departmentIdMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setDepartmentNames(departmentMap.getOrDefault(vo.getUid(), ""));
+
+            if (vo.getUserState() == 1) {
+                vo.setUserStateName("启用");
+            } else if (vo.getUserState() == 0) {
+                vo.setUserStateName("禁用");
+            }
+
+            String thirdAuthType = vo.getThirdAuthType();
+            if (StringUtils.isNotBlank(thirdAuthType)) {
+                List<String> thirdAuthTypeList = Arrays.asList(thirdAuthType.split(";"));
+                String thirdAuthTypeName = thirdAuthTypeList.stream()
+                        .map(s -> SysUserInfoThirdAuthTypeEnum.getName(s))
+                        .filter(name -> StringUtils.isNotBlank(name))
+                        .collect(Collectors.joining(","));
+                vo.setThirdAuthTypeName(StrUtil.format("【{}】已授权", thirdAuthTypeName));
+            }
+        }
+    }
 
     /**
      * 账号绑定第三方平台
@@ -525,7 +594,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (fsUserMap != null && fsUserMap.containsKey("union_id")) {
                 flagId = fsUserMap.get("union_id").toString();
             } else {
-                throw new ServiceException(ApiError.ERROR_9018);
+                throw new ServiceException(ApiError.AUTH_ACCOUNT_BIND_FAILED);
             }
             if (fsUserMap != null && fsUserMap.containsKey("open_id")) {
                 thirdOpenId = fsUserMap.get("open_id").toString();
@@ -540,11 +609,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             String uid = loginUser.getUid();
             boolean ifBinding = sysUserThirdService.checkIfBinding(uid, flagId, bindingPlatform);
             if (ifBinding) {
-                throw new ServiceException(ApiError.ERROR_9020);
+                throw new ServiceException(ApiError.AUTH_ACCOUNT_ALREADY_BOUND);
             }
             sysUserThirdService.bindingThirdParty(uid, flagId,thirdOpenId,thirdUserId, bindingPlatform);
-        }
 
+            SysUserInfoEntity sysUserInfoEntity = getById(uid);
+            if(Objects.nonNull(sysUserInfoEntity)){
+                sysUserInfoEntity.setThirdAuthType(bindingPlatform);
+                updateById(sysUserInfoEntity);
+            }
+        }
     }
 
     /**
@@ -654,7 +728,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //确认密码
         String confirmPassword = updatePasswordDTO.getConfirmPassword();
         if (!newPassword.equals(confirmPassword)) {
-            throw new ServiceException(ApiError.ERROR_1001);
+            throw new ServiceException(ApiError.AUTH_PASSWORD_MISMATCH);
         }
 
         LoginUser loginUser = UserContext.getLoginUser();
@@ -664,7 +738,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             //检查密码是否正确
             boolean passwordFlag = PassHandler.checkPass(oldPassword, infoEntity.getSalt(), infoEntity.getPassword());
             if (!passwordFlag) {
-                throw new ServiceException(ApiError.ERROR_9017);
+                throw new ServiceException(ApiError.AUTH_ACCOUNT_PASSWORD);
             }
             PassEntity passEntity = PassHandler.buildPassword(newPassword);
             infoEntity.setPassword(passEntity.getPassword());
@@ -704,22 +778,22 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (fsUserMap != null && fsUserMap.containsKey("union_id")) {
                 flagId = fsUserMap.get("union_id").toString();
             } else {
-                throw new ServiceException(ApiError.ERROR_1005);
+                throw new ServiceException(ApiError.AUTH_LOGIN_FAILED);
             }
         }
 
         SysUserThirdEntity entity = sysUserThirdService.findByUnionId(flagId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_9019);
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_NOT_BOUND);
         }
         SysUserInfoEntity userEntity = this.getById(entity.getUserId());
         if (Objects.isNull(userEntity)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         Integer userState = userEntity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE.equals(userState)) {
-            throw new ServiceException(ApiError.ERROR_1011);
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_DISABLED, userEntity.getUserAccount());
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(userEntity, vo);
@@ -796,7 +870,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String email = dto.getEmail();
         boolean flag = ValidatorUtil.isEmail(email);
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_1008);
+            throw new ServiceException(ApiError.EMAIL_INVALID);
         }
         //检查邮箱是否存在
         checkEmailIfExist(email);
@@ -825,11 +899,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String email = dto.getEmail();
         boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_1014);
+            throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
         }
         boolean flag = ValidatorUtil.isEmail(email);
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_1008);
+            throw new ServiceException(ApiError.EMAIL_INVALID);
         }
 //        String emailCodeKey = RedisKeyUtil.getEmailCodeCacheKey(email);
 //        String redisCode = redisService.getCacheObject(emailCodeKey);
@@ -959,7 +1033,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String emailCodeKey = RedisKeyUtil.getEmailCodeCacheKey(email);
         String code = redisService.getCacheObject(emailCodeKey);
         if (StringUtils.isBlank(code) || !verifyCode.equals(code)) {
-            throw new ServiceException(ApiError.ERROR_1007);
+            throw new ServiceException(ApiError.EMAIL_CODE_INVALID);
         }
     }
 
@@ -976,7 +1050,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         queryWrapper.eq(SysUserInfoEntity::getEmail, mail);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_9024);
+            throw new ServiceException(ApiError.EMAIL_ADDR_EXISTS);
         }
     }
 
@@ -1015,7 +1089,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         int mobileCount = this.count(mobileQueryWrapper);
         if (mobileCount > 0) {
-            throw new ServiceException(ApiError.ERROR_9010);
+            throw new ServiceException(ApiError.COMMON_MOBILE_EXISTS);
         }
         //验证用户名是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
@@ -1029,7 +1103,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         int userNameCount = this.count(userNameQueryWrapper);
         if (userNameCount > 0) {
-            throw new ServiceException(ApiError.ERROR_9038);
+            throw new ServiceException(ApiError.AUTH_USERNAME_EXISTS);
         }
     }
 
@@ -1273,7 +1347,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         Integer userState = entity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE.equals(userState)) {
-            throw new ServiceException(ApiError.ERROR_1011);
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_DISABLED, entity.getUserAccount());
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
@@ -1348,11 +1422,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Transactional(rollbackFor = Exception.class)
     public Boolean changePassword(String uid) {
         if (StringUtils.isBlank(uid)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         SysUserInfoEntity userInfoEntity = this.getById(uid);
         if (StringUtils.isBlank(userInfoEntity.getEmail())) {
-            throw new ServiceException(ApiError.ERROR_9044);
+            throw new ServiceException(ApiError.EMAIL_ACCOUN_NOT_BOUND);
         }
         EmailVerifyCodeDTO emailVerifyCodeDTO = new EmailVerifyCodeDTO();
         emailVerifyCodeDTO.setEmail(userInfoEntity.getEmail());
@@ -1370,14 +1444,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (flag) {
             boolean emailFlag = ValidatorUtil.isEmail(emailVerifyCodeDTO.getEmail());
             if (!emailFlag) {
-                throw new ServiceException(ApiError.ERROR_1008);
+                throw new ServiceException(ApiError.EMAIL_INVALID);
             }
             LocalDateTime localDate = LocalDateTime.now();
             emailVerifyCodeDTO.setVerifyCode(num);
             emailVerifyCodeDTO.setDate(DateUtil.getCnDate(localDate));
             Boolean sendResult = sendingEmail(emailVerifyCodeDTO, "重置密码");
             if (!sendResult) {
-                throw new ServiceException(ApiError.ERROR_1010);
+                throw new ServiceException(ApiError.EMAIL_SEND_FAILED);
             }
             redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
         }
@@ -1393,14 +1467,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public Boolean changePassword(String uid, String pwd) {
         log.info("changePassword：uid：{}，pwd：{}",uid,pwd);
         if (StringUtils.isBlank(uid)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         if(StringUtils.isEmpty(pwd)){
-            throw new ServiceException(ApiError.ERROR_9015);
+            throw new ServiceException(ApiError.AUTH_PASSWORD_REQUIRED);
         }
         SysUserInfoEntity userInfoEntity = this.getById(uid);
         if (Objects.isNull(userInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_9043);
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_NOT_FOUND);
         }
         //强制退出账号
 
@@ -1435,16 +1509,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_9043);
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_NOT_FOUND);
         }
 
         if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
-            throw new ServiceException(ApiError.ERROR_9044);
+            throw new ServiceException(ApiError.EMAIL_ACCOUN_NOT_BOUND);
         }
 
         String code = redisService.getCacheObject(RedisKeyUtil.getEmailCodeCacheKey(sysUserInfoEntity.getEmail()));
         if (StringUtils.isBlank(code) || !forgotPasswordDTO.getVerificationCode().equals(code)) {
-            throw new ServiceException(ApiError.ERROR_1007);
+            throw new ServiceException(ApiError.EMAIL_CODE_INVALID);
         }
         SysUserInfoEntity entity = new SysUserInfoEntity();
 
@@ -1478,11 +1552,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_9043);
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_NOT_FOUND);
         }
 
         if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
-            throw new ServiceException(ApiError.ERROR_9044);
+            throw new ServiceException(ApiError.EMAIL_ACCOUN_NOT_BOUND);
         }
         EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
         dto.setEmail(sysUserInfoEntity.getEmail());
@@ -1496,11 +1570,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public Map<String, Object> getCodeByAccountAndType(String phone,String userType) {
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, phone).eq(SysUserInfoEntity::getUserType,userType).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_9043);
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_NOT_FOUND);
         }
 
         if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
-            throw new ServiceException(ApiError.ERROR_9044);
+            throw new ServiceException(ApiError.EMAIL_ACCOUN_NOT_BOUND);
         }
         EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
         dto.setEmail(sysUserInfoEntity.getEmail());
@@ -1581,7 +1655,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String userId = UserContext.getDefaultLoginUser().getUid();
         SysUserInfoEntity userInfo = this.getById(userId);
         if (Objects.isNull(userInfo)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
 
         String headPhotoUrl = filefeign.uploadFile(headPhotoFile);
@@ -1658,11 +1732,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String email = dto.getEmail();
         boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_1014);
+            throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
         }
         boolean flag = ValidatorUtil.isEmail(email);
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_1008);
+            throw new ServiceException(ApiError.EMAIL_INVALID);
         }
         EmailDTO<EmailVerifyCodeDTO> emailDTO = new EmailDTO();
         emailDTO.setData(dto);
@@ -1889,7 +1963,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             
             // 检查应用类型是否为飞书
             if (!"FS".equalsIgnoreCase(config.getAppType())) {
-                throw new ServiceException(ApiError.ERROR_400.code, "应用类型不是飞书");
+                throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "应用类型不是飞书");
             }
             
             // 调用FsService获取用户信息
@@ -1897,13 +1971,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             
             if (userInfo == null || userInfo.isEmpty()) {
                 log.warn("获取飞书用户信息失败，appId: {}", appId);
-                throw new ServiceException(ApiError.ERROR_500.code, "获取飞书用户信息失败");
+                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "获取飞书用户信息失败");
             }
             
             // 提取unionId
             Object unionIdObj = userInfo.get("union_id");
             if (unionIdObj == null) {
-                throw new ServiceException(ApiError.ERROR_500.code, "未获取到用户UnionId");
+                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "未获取到用户UnionId");
             }
             
             String unionId = unionIdObj.toString();
@@ -1916,7 +1990,55 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw e;
         } catch (Exception e) {
             log.error("通过App-Id获取飞书用户UnionId异常，appId: {}", appId, e);
-            throw new ServiceException(ApiError.ERROR_500.code, "获取飞书用户UnionId失败：" + e.getMessage());
+            throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "获取飞书用户UnionId失败：" + e.getMessage());
+        }
+    }
+    @Override
+    public void exportList(SysUserInfoDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("用户管理导出", EXPORT_SYS_USER_INFO.getCode(), param);
+    }
+
+    @Override
+    public void batchRefUserIdByType(SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        String uid = refParamseDTO.getUid();
+        String type = refParamseDTO.getType();
+        String authType = refParamseDTO.getAuthType();
+        String refType = refParamseDTO.getRefType();
+        List<String> refIdList = refParamseDTO.getRefIdList();
+
+        if(Objects.equals(refType, "role")){
+            if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(authType)){
+                refIdList = sysRoleService.list().stream().map(SysRoleEntity::getId).distinct().collect(Collectors.toList());
+            }
+
+            if(type.equals("reapportion")){
+                sysRoleUserService.batchInsertRef(uid, refIdList, false);
+            }else if(type.equals("add")){
+                sysRoleUserService.batchInsertRef(uid, refIdList, true);
+            }
+        }else if(Objects.equals(refType, "shop")){
+            //店铺授权
+            if(type.equals("reapportion")){
+                authUserShopService.batchSaveOrUpdate(uid,refIdList,authType,false);
+            }else if(type.equals("add")){
+                authUserShopService.batchSaveOrUpdate(uid,refIdList,authType,true);
+            }
+
+        }else if(Objects.equals(refType, "warehouse")){
+            //仓库权限
+            if(type.equals("reapportion")){
+                authUserWarehouseService.batchSaveOrUpdate(uid,refIdList,authType,false);
+            }else if(type.equals("add")){
+                authUserWarehouseService.batchSaveOrUpdate(uid,refIdList,authType,true);
+            }
+
+        }else if(Objects.equals(refType, "department")){
+            //部门授权
+            if(type.equals("reapportion")){
+                sysDepartmentUserService.batchSaveOrUpdate(uid,refIdList,false);
+            }else if(type.equals("add")){
+                sysDepartmentUserService.batchSaveOrUpdate(uid,refIdList,true);
+            }
         }
     }
 }

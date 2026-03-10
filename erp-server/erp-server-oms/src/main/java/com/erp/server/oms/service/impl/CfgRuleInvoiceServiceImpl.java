@@ -85,7 +85,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         CfgRuleInvoiceEntity entity = new CfgRuleInvoiceEntity();
         BeanMapperUtils.copy(addDTO, entity);
@@ -113,7 +113,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         String id = updateDTO.getId();
         CfgRuleInvoiceEntity old = super.getById(id);
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.CFG_RULE_INVOICE.getName());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ModuleTypeEnum.CFG_RULE_INVOICE.getName());
         }
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
@@ -124,7 +124,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         CfgRuleInvoiceEntity entity = BeanMapperUtils.map(CfgRuleInvoiceEntity.class, updateDTO);
         // 数据处理
@@ -161,7 +161,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
     public CfgRuleInvoiceDTO.ViewDTO view(String id) {
         CfgRuleInvoiceEntity entity = this.getById(id);
         if(null == entity){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.CFG_RULE_INVOICE.getName());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ModuleTypeEnum.CFG_RULE_INVOICE.getName());
         }
         CfgRuleInvoiceDTO.ViewDTO view = new CfgRuleInvoiceDTO.ViewDTO();
         BeanMapper.copy(entity, view);
@@ -175,7 +175,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
     public BatchResultDTO updateStatus(CfgRuleInvoiceEntity entity, Boolean state) {
         Boolean disabled = entity.getDisabled();
         if (disabled.equals(state)) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "禁用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "禁用");
         entity.setDisabled(state);
@@ -229,7 +229,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
     public Map<String, Boolean> invoiceCfgRule(SoB2cEntity entity, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         Map<String, Boolean> resultMap = new HashMap<>();
         if (null == entity) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C销售订单表");
         }
         if (map.isEmpty()) {
             //匹配审核规则

@@ -66,7 +66,9 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
             return new BaseResultDTO.AddDTO(addDTO1.getId(), addDTO1.getCode());
         }else{
             //判断是否存在
-            addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
+            if(StringUtils.isBlank(addDTO.getCategory())){
+                addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
+            }
             ThirdWarehouseEntity existEntity = this.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
                             .eq(ThirdWarehouseEntity::getSysType, addDTO.getSysType())
                             .eq(ThirdWarehouseEntity::getCategory, addDTO.getCategory())
@@ -105,7 +107,7 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     @Override
     public Boolean update(ThirdWarehouseDTO.UpdateDTO updateDTO) {
         ThirdWarehouseEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "第三方系统仓库单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "第三方系统仓库单"));
         ThirdWarehouseEntity thirdWarehouseEntity = BeanMapperUtils.map(ThirdWarehouseEntity.class, updateDTO);
 
         // 数据处理

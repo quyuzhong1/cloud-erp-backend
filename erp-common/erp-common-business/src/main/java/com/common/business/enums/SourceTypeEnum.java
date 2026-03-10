@@ -29,7 +29,7 @@ public enum SourceTypeEnum {
     CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
     CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
     SUPPLIER_PHASE("supplierPhase", "供应商阶段审核列表","supplier_phase"),
-
+    SUBCONTRACT_BOM("subcontractBOM", "委外用料清单",""),
 
 
     //WMS
@@ -65,12 +65,13 @@ public enum SourceTypeEnum {
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
-
+    AWD_OUT_STOCK("awdOutStock","awd出库货件","awd_out_stock"),
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
     STOCKTAKING_LOSS("stocktakingTaskLoss", "盘亏单","stocktaking_profit_loss"),
     STOCKTAKING_PROFIT("stocktakingTaskProfit", "盘盈单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
+    AWD_SHIPMENT("awdShipment", "AWD货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     //当前仓可用减少，中转仓冻结增加
@@ -105,7 +106,10 @@ public enum SourceTypeEnum {
     SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
     SAMPLE_ADJUSTMENT_INFO("sampleAdjustmentInfo","样品调整单","sample_adjustment_info"),
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
+    KOL_B2B_APPLICATION("kolB2bApplication","B2B寄样申请","kol_b2b_application"),
+    KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请","kol_b2c_application"),
 
+    WDT_SO_B2B_DELIVERY( "wdtSoB2bDelivery", "旺店通B2B订单发货","so_info"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -118,6 +122,7 @@ public enum SourceTypeEnum {
     SDY_CUSTOMER_INFO( "sdy_customerInfo", "数帝云客户表","customer_info"),
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
+    WDT_SO_B2C( "wdtSoB2c", "B2C销售订单","so_b2c"),
     SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
     TIK_TOK_FULLY( "TikTokFully", "TikTok全托管","so_b2c"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
@@ -138,6 +143,8 @@ public enum SourceTypeEnum {
     SO_RECEIPT("soReceipt", "收款单","so_receipt"),
     SO_B2C_REFUND("soB2cRefund", "售后订单","so_b2c_refund"),
 
+    //KOL
+    KOL_FEEDBACK("kolFeedback", "回片列表","kol_feedback"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
@@ -175,6 +182,9 @@ public enum SourceTypeEnum {
     ASSET_NOTICE("assetNotice","资产通知","asset_notice"),
     ASSET_PURCHASE_ORDER("assetPurchaseOrder","资产采购单","asset_purchase_order"),
     ASSET_PURCHASE_CHANGE("assetPurchaseChange","资产采购变更单","asset_purchase_change"),
+    CFG_MOLD_RETURN_ALERT_RULE("cfgMoldReturnAlertRule","资产采购变更单","cfg_mold_return_alert_rule"),
+    CFG_MOLD_ALERT_RULE("cfgMoldAlertRule","资产采购变更单","cfg_mold_alert_rule"),
+    MOLD_MONITOR("moldMonitor", "模具监控","mold_monitor"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -272,6 +282,8 @@ public enum SourceTypeEnum {
     // 旺店通相关
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
     WDT_RETURN_ORDER("wdt_return_order", "旺店通退货入库单","dmp_pull_task"),
+    WDT_VIRTUAL_INVENTORY("wdt_virtual_inventory", "旺店通虚拟仓库存","dmp_pull_task"),
+
 
     //旺店通
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),

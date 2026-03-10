@@ -3,7 +3,6 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -165,12 +164,12 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
         //委外发料明细
         List<SubcontractIssueDetailEntity> detailList = subcontractIssueDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ISSUE_NOT_EXIST);
         }
         //委外订单
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(entity.getSubcontractOrderId()));
         if (CollectionUtils.isEmpty(subcontractOrderList)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
         //委外订单明细
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(entity.getSourceId()));
@@ -178,7 +177,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
         //委外组织
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(subcontractOrderList.get(0).getSubcontractOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-           throw new ServiceException(ApiError.ERROR_RECEIVE_ORG_NOT_FOUND);
+           throw new ServiceException(ApiError.PO_RECEIVE_ORG_NOT_FOUND);
         }
         resultMap.put("orgCode", accountingCompanyList.get(0).getCode());
         //仓库

@@ -432,10 +432,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Override
     public LinkedList<String> thirdFieldListName(TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto) {
         TmsB2cDeclareReconciliationEntity old = tmsB2cDeclareReconciliationService.getById(dto.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c报关对账单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c报关对账单"));
 
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(old.getLogisticsSupplierId());
-        Optional.ofNullable(transferLogisticsSupplierEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转物流商"));
+        Optional.ofNullable(transferLogisticsSupplierEntity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转物流商"));
 
         LinkedList<String> thirdFieldList = cfgReconciliationFieldService.thirdFieldListName(Arrays.asList(CfgReconciliationTypeEnum.B2C_DECLARE.getCode()), transferLogisticsSupplierEntity.getSupplierId(), Boolean.TRUE);
         return thirdFieldList;
@@ -478,15 +478,15 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             EasyExcel.read(excelFile.getInputStream(), DeclareReconciliationStandardExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<DeclareReconciliationStandardExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<DeclareReconciliationStandardExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -528,7 +528,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //对账单信息
         TmsB2cDeclareReconciliationEntity oldMainEntity = tmsB2cDeclareReconciliationService.getById(id);
         if (ObjectUtil.isEmpty(oldMainEntity)) {
-            throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND);
         }
         //对账单明细
         List<TmsB2cDeclareReconciliationDetailEntity> oldDetailList = this.listMainIdList(Arrays.asList(oldMainEntity.getId()));
@@ -666,15 +666,15 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<JSONObject> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<JSONObject> successList = excelListenerUtil.getSuccessList();
@@ -717,7 +717,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //对账单信息
         TmsB2cDeclareReconciliationEntity oldMainEntity = tmsB2cDeclareReconciliationService.getById(id);
         if (ObjectUtil.isEmpty(oldMainEntity)) {
-            throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND);
         }
 
         //中转物流供应商查询
@@ -916,7 +916,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         if (CollectionUtils.isNotEmpty(oldDetailList)) {
             String codes = oldDetailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE,codes);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND,codes);
         }
     }
 
@@ -1067,7 +1067,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //对账单
         TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(mainId);
         if (ObjectUtils.isEmpty(declareReconciliationEntity)) {
-            throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND);
         }
         //新增不需要添加新增SKU的日志
         List<TmsB2cDeclareReconciliationDetailEntity> addList = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getMainId())).collect(Collectors.toList());
@@ -1080,11 +1080,11 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             //添加日志
             TmsB2cDeclareReconciliationDetailEntity old = declareReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_DETAIL_NOT_FOUND);
             }
             //供应商、结算组织验证
             if (!CharSequenceUtil.equals(declareReconciliationEntity.getLogisticsSupplierId(),old.getLogisticsSupplierId())) {
-                throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_ADD_DETAIL,declareReconciliationEntity.getCode(),declareReconciliationEntity.getLogisticsSupplierName());
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_SUPPLIER_MISMATCH,declareReconciliationEntity.getCode(),declareReconciliationEntity.getLogisticsSupplierName());
             }
 
             entity.setMainId(mainId);

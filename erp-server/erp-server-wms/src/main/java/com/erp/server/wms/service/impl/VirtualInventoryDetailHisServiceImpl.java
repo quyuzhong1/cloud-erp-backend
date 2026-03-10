@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -87,7 +88,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
 
 
     @Override
-    public void hisVirtualInventoryJob(String virtualInventoryId, LocalDate startDate) {
+    public void hisVirtualInventoryJob(List<String> virtualInventoryIdList, LocalDate startDate) {
         // 生成日期集合
         List<LocalDate> dateList = new ArrayList<>();
         // 获取天数差
@@ -98,13 +99,34 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
         }
         // 使用自定义线程池处理订单类型
         List<CompletableFuture<Void>> futures = dateList.stream()
-                .map(date -> CompletableFuture.runAsync(() -> processVirtualInventoryHis(virtualInventoryId,date), virtualInventoryHisPool))
+                .map(date -> CompletableFuture.runAsync(() -> processVirtualInventoryHis(virtualInventoryIdList,date), virtualInventoryHisPool))
                 .collect(Collectors.toList());
 
         // 等待所有任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         log.info("VirtualInventoryHisServiceImpl rebuildInventoryHis end");
     }
+
+    @Override
+    public void hisVirtualInventoryDetailJob( LocalDate startDate) {
+        // 生成日期集合
+        List<LocalDate> dateList = new ArrayList<>();
+        // 获取天数差
+        long daysBetween = ChronoUnit.DAYS.between(startDate, LocalDate.now());
+        for (int i = 0; i <= daysBetween; i++) {
+            // 添加每一天的日期
+            dateList.add(startDate.plusDays(i));
+        }
+        // 使用自定义线程池处理订单类型
+        List<CompletableFuture<Void>> futures = dateList.stream()
+                .map(date -> CompletableFuture.runAsync(() -> processVirtualInventoryDetailHis(date), virtualInventoryHisPool))
+                .collect(Collectors.toList());
+
+        // 等待所有任务完成
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        log.info("VirtualInventoryHisServiceImpl rebuildInventoryHis end");
+    }
+
     /**
      *
      * @author will
@@ -112,10 +134,25 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
      * @param localDate
      * @return void
      */
-    private void processVirtualInventoryHis(String virtualInventoryId,LocalDate localDate) {
+    private void processVirtualInventoryHis(List<String> virtualInventoryIdList,LocalDate localDate) {
         try {
             //添加虚拟仓每日库存
-            virtualInventoryHisService.addVirtualInventoryHis(virtualInventoryId,localDate);
+            virtualInventoryHisService.addVirtualInventoryHis(virtualInventoryIdList,localDate);
+        } catch (Exception e) {
+            log.error("生成结余失败，date = {},msg = {}",localDate,e.getMessage());
+            sendWarnMsg(localDate);
+        }
+    }
+
+    /**
+     *
+     * @author will
+     * @date 2025/12/16 16:27
+     * @param localDate
+     * @return void
+     */
+    private void processVirtualInventoryDetailHis(LocalDate localDate) {
+        try {
             //添加虚拟仓明细每日库存
             this.addVirtualInventoryDetailHis(new VirtualTransFlowEntity().setBillDate(localDate));
         } catch (Exception e) {
@@ -186,7 +223,8 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                 //库龄,当前日期 - 入库日期
                 addDTO.setInventoryAgeDays((int)(minusDate.toEpochDay() -  viewDTO.getBillDate().toEpochDay()) + 1);
                 addDTO.setDate(minusDate);
-                this.addOrUpdate(addDTO);
+                VirtualInventoryDetailHisServiceImpl bean = ApplicationContextUtils.getBean(VirtualInventoryDetailHisServiceImpl.class);
+                bean.addOrUpdate(addDTO);
             }
         }
     }

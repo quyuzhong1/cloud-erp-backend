@@ -8,14 +8,15 @@ import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.service.LogisticsBillService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ import java.util.List;
 @RocketMQMessageListener(topic = RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC,
         selectorExpression = "async_get_platform_label_tag",
         consumerGroup = RocketMqConsumerGroup.ASYNC_GET_PLATFORM_LABEL_CONSUMER)
+@Slf4j
 public class PlatformLabelPrintConsumerService implements RocketMQListener<LogisticsBillDTO.PrintLogisticsWaybillDTO> {
     @Resource
     private LogisticsBillService logisticsBillService;
@@ -33,18 +35,19 @@ public class PlatformLabelPrintConsumerService implements RocketMQListener<Logis
 
     @Override
     public void onMessage(LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
+        log.warn("接收到异步请求打印平台面单消息：{}", dto);
         dto.setIsFromMq(true);
-        List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(Arrays.asList(dto));
-        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
-        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            for (String labelBase : waybillDTO.getDistributeBase64()) {
-                SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
-                updateDTO.setLogisticsLabelBase64(labelBase);
-                updateDTO.setMainId(waybillDTO.getSoB2cId());
-                dtoList.add(updateDTO);
-            }
-        }
-        soB2cFeign.saveSoB2cLabel(dtoList);
+        logisticsBillService.printLogisticsWaybill(Collections.singletonList(dto));
+//        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
+//        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
+//            for (String labelBase : waybillDTO.getDistributeBase64Url()) {
+//                SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
+//                updateDTO.setLogisticsLabelUrl(labelBase);
+//                updateDTO.setMainId(waybillDTO.getSoB2cId());
+//                dtoList.add(updateDTO);
+//            }
+//        }
+//        soB2cFeign.saveSoB2cLabel(dtoList);
     }
 
 }

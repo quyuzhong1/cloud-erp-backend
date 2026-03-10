@@ -3,6 +3,7 @@ package com.erp.server.wms.schedule;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.server.wms.service.VirtualInventoryAgeService;
 import com.erp.server.wms.service.VirtualInventoryDetailHisService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
@@ -17,6 +18,9 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 虚拟仓任务
@@ -66,16 +70,43 @@ public class WmsVirtualDetailMsgJob {
         long start = System.currentTimeMillis();
         String jobParam = XxlJobHelper.getJobParam();
         String virtualInventoryId = "";
-        LocalDateTime date = null;
+        List<String> virtualInventoryIdList = null;
+        LocalDateTime date = LocalDateTime.now();
         if (CharSequenceUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             virtualInventoryId = jsonParam.getStr("virtualInventoryId");
             date = jsonParam.getLocalDateTime("date",LocalDateTime.now());
         }
-        virtualInventoryDetailHisService.hisVirtualInventoryJob(virtualInventoryId,date.toLocalDate());
+        if (StringUtils.isNotBlank(virtualInventoryId)){
+            virtualInventoryIdList = Arrays.stream(virtualInventoryId.split(",")).collect(Collectors.toList());
+        }
+        virtualInventoryDetailHisService.hisVirtualInventoryJob(virtualInventoryIdList,date.toLocalDate());
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====自动执行生成虚拟仓流水结余 结束任务=====");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 历史虚拟仓明细保存任务
+     * @author will
+     * @date 2024/12/9 19:21
+     * @return ReturnT<String>
+     */
+    @XxlJob("hisVirtualInventoryDetailJob")
+    public ReturnT<String> hisVirtualInventoryDetailJob() {
+        XxlJobHelper.log("=====自动执行生成虚拟仓流水明细结余 开始任务=====");
+        long start = System.currentTimeMillis();
+        String jobParam = XxlJobHelper.getJobParam();
+        LocalDateTime date = LocalDateTime.now();
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
+            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
+            date = jsonParam.getLocalDateTime("date",LocalDateTime.now());
+        }
+        virtualInventoryDetailHisService.hisVirtualInventoryDetailJob(date.toLocalDate());
+        long end = System.currentTimeMillis();
+        XxlJobHelper.log("主线程花费时间：{}", (end - start));
+        XxlJobHelper.log("=====自动执行生成虚拟仓流水明细结余 结束任务=====");
         return ReturnT.SUCCESS;
     }
 

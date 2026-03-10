@@ -46,6 +46,14 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
     @TableField("bill_date")
     private LocalDate billDate;
 
+
+    /**
+     * 单据类型
+     * /dict/list?key=subcontractOrderType
+     */
+    @TableField("type")
+    private String type;
+
     /**
     * 采购组织id
     */
@@ -154,7 +162,11 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    
+    /**
+     * 用料清单id
+     */
+    @TableField("subcontract_bom_id")
+    private String subcontractBomId;
 
 
     public static final String APPROVE_STATUS = "approve_status";

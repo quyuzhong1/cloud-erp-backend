@@ -20,11 +20,13 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -35,10 +37,7 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
@@ -77,19 +76,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Date;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -303,7 +304,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CharSequenceUtil.isBlank(dto.getPurchaseOrderId())){
             List<PurchaseReturnOrderDetailDTO.AddDTO> collect = dto.getPurchasePriceDetailList().stream().filter(e -> Objects.nonNull(e) && Objects.isNull(e.getReturnPrice())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
-                throw new ServiceException(ApiError.ERROR_92261);
+                throw new ServiceException(ApiError.PO_RETURN_UNIT_PRICE_REQUIRED);
             }
         }
         //校验补货数量不能大于退货数量
@@ -437,7 +438,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CharSequenceUtil.isBlank(dto.getPurchaseOrderId())){
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> collect = dto.getPurchasePriceDetailList().stream().filter(e -> Objects.nonNull(e) && Objects.isNull(e.getReturnPrice())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
-                throw new ServiceException(ApiError.ERROR_92261);
+                throw new ServiceException(ApiError.PO_RETURN_UNIT_PRICE_REQUIRED);
             }
         }
         //校验补货数量不能大于退货数量
@@ -473,12 +474,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setSupplierName(supplierEntity.getName());
             }
         }
-        poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
         if (CharSequenceUtil.isNotBlank(dto.getSupplierContactId())) {
+            poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             if (ObjectUtil.isNotEmpty(supplierContactById)) {
                 poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
             }
+        }else {
+            poReturnEntity.setSupplierContactId("");
+            poReturnEntity.setSupplierContactName("");
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
         //退货组织名称
@@ -647,7 +651,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean submit(List<String> ids) {
         List<PoReturnEntity> purchaseReturnOrderEntities = this.listByIds(ids);
         if (CollectionUtils.isEmpty(purchaseReturnOrderEntities)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         return submitEntityList(ids, purchaseReturnOrderEntities);
     }
@@ -662,7 +666,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         ).count();
 
         if (count != purchaseReturnOrderEntities.size()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         //采购组织不能为空
@@ -711,7 +715,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 //无关联采购时 退款单价不能为空
                 if (CharSequenceUtil.isBlank(purchaseReturnOrderEntity.getPurchaseOrderId())){
                     if (Objects.isNull(poReturnDetailEntity.getReturnPrice())){
-                        throw new ServiceException(ApiError.ERROR_92262, purchaseReturnOrderEntity.getCode(), poReturnDetailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.PO_RETURN_SKU_UNIT_PRICE_REQUIRED, purchaseReturnOrderEntity.getCode(), poReturnDetailEntity.getSkuNo());
                     }
                 }
             }
@@ -749,7 +753,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public PoReturnEntity addAndSubmit(PurchaseReturnOrderDTO.AddDTO dto) {
         PoReturnEntity entity = this.add(dto);
         if (CharSequenceUtil.isBlank(entity.getId())) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         entity = this.getById(entity.getId());
         this.submitEntity(entity);
@@ -769,7 +773,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean updateAndSubmit(PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean update = this.update(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(dto.getId()));
     }
@@ -789,12 +793,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(PoReturnEntity entity, String type, String comment, Boolean isNeedProcess,List<PoReturnDetailEntity> poReturnDetailList) {
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
         //校验补货数量不能大于退货数量
         List<PurchaseReturnOrderDTO.ReplenishQtyValidateDTO> validateList = poReturnDetailList.stream()
@@ -1033,7 +1037,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 BaseResultDTO.AddDTO add = subcontractReturnService.addAndSubmit(addDTO);
                 String id = add.getId();
                 if (CharSequenceUtil.isBlank(id)) {
-                    throw new ServiceException(ApiError.ERROR_1019);
+                    throw new ServiceException(ApiError.BILL_SAVE_FAILED);
                 }
                 subcontractReturnService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(),"系统自动审核"));
             }
@@ -1046,7 +1050,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 PoReturnEntity addEntity = this.add(addDTO);
                 String id = addEntity.getId();
                 if (CharSequenceUtil.isBlank(id)) {
-                    throw new ServiceException(ApiError.ERROR_1019);
+                    throw new ServiceException(ApiError.BILL_SAVE_FAILED);
                 }
                 //查询提交数据
                 PoReturnEntity poReturnEntity = this.getById(id);
@@ -1244,7 +1248,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<PoReturnDetailEntity> detailList = poReturnDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
 
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getReturnWarehouseId()), "wdt");
@@ -1276,13 +1280,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<String> ids = poReturnEntityList.stream().map(PoReturnEntity::getId).collect(Collectors.toList());
         List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(poReturnDetailList)) {
-            throw new ServiceException(ApiError.ERROR_99008);
+            throw new ServiceException(ApiError.PO_RETURN_DATA_NOT_FOUND);
         }
         List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
         for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
             PoReturnEntity entity = poReturnEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poReturnDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_99008);
+                throw new ServiceException(ApiError.PO_RETURN_DATA_NOT_FOUND);
             }
             if (Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode())) {
                 //质检退货单不生成对账明细
@@ -1328,13 +1332,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public BatchResultDTO disApprove(PoReturnEntity entity,List<PoReturnDetailEntity> detailEntityList) {
         //已审核支持反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         //判断是否已生成采购订单
         List<PurchaseOrderEntity> poList = scmTaskFeign.listPoBySourceIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(poList)) {
             List<String> poCodeList = poList.stream().map(PurchaseOrderEntity::getCode).distinct().collect(Collectors.toList());
-            throw new ServiceException(ApiError.ERROR_92245,String.join(",",poCodeList));
+            throw new ServiceException(ApiError.PO_ORDER_REVERSE_FORBIDDEN,String.join(",",poCodeList));
         }
         //判断是否已生成委外退料单
         List<SubcontractReturnEntity> subcontractReturnEntityList = subcontractReturnService.listBySourceIds(Collections.singletonList(entity.getId()));
@@ -1354,11 +1358,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
         }
         if (CollectionUtils.isNotEmpty(subCodeList) && CollectionUtils.isNotEmpty(codeList)){
-            throw new ServiceException(ApiError.ERROR_92247,String.join(",",subCodeList), String.join(",",codeList));
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_AND_PO_RETURN_REVERSE_FORBIDDEN,String.join(",",subCodeList), String.join(",",codeList));
         }else if (CollectionUtils.isNotEmpty(subCodeList)){
-            throw new ServiceException(ApiError.ERROR_92244,String.join(",",subCodeList));
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_RETURN_ORDER_REVERSE_FORBIDDEN,String.join(",",subCodeList));
         }else if (CollectionUtils.isNotEmpty(codeList)){
-            throw new ServiceException(ApiError.ERROR_92246,String.join(",",codeList));
+            throw new ServiceException(ApiError.PO_RETURN_ORDER_REVERSE_FORBIDDEN,String.join(",",codeList));
         }
         List<String> poReturnDetailIdList = detailEntityList.stream().map(PoReturnDetailEntity::getId).collect(Collectors.toList());
         //对账单删除
@@ -1453,7 +1457,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<PoReturnDetailEntity> detailList = poReturnDetailService.getDetailByMainId(entity.getId());
         if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
         for (PoReturnDetailEntity detailEntity : detailList) {
@@ -1480,7 +1484,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean cancelProcess(List<String> ids) {
         List<PoReturnEntity> poReturnEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //审核中可以撤销
         long count = poReturnEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -1488,7 +1492,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         ).count();
 
         if (count != poReturnEntityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         //撤销现有流程
@@ -1520,7 +1524,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean invalid(List<String> ids, String remark) {
         List<PoReturnEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //审核不通过 待提交可以作废
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -1529,7 +1533,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         ).count();
 
         if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
 
         //修改状态为待提交
@@ -1562,7 +1566,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean delete(List<String> ids) {
         List<PoReturnEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //待提交支持删除
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -1570,7 +1574,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         ).count();
 
         if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         //删除详情表
         poReturnDetailService.delete(ids);
@@ -1617,7 +1621,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(orderRefReceiveDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_99006);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
             orderRefReceiveDTO.setReturnModeName(ReturnModeEnum.getName(orderRefReceiveDTO.getReturnMode()));
             orderRefReceiveDTO.setProductName(purchaseOrderDetailEntity.getProductName());
@@ -1852,7 +1856,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //采购订单明细
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98017);
+            throw new ServiceException(ApiError.PO_APPLY_DETAIL_NOT_FOUND);
         }
 
         Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getReturnMode())));
@@ -1863,7 +1867,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             //采购订单
             PurchaseOrderDTO.PurchaseOrderInfoDTO purchaseOrderEntity = entityList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_98025);
+                throw new ServiceException(ApiError.PO_NOT_FOUND);
             }
 
             String orgId = entityList.stream().filter(r -> r.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).
@@ -1891,7 +1895,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         )
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                 if (CharSequenceUtil.isNotBlank(skuNos)) {
-                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrderEntity.getCode(),skuNos);
+                    throw new ServiceException(ApiError.PO_SKU_PUSH_DOWN_NOT_ALLOWED,purchaseOrderEntity.getCode(),skuNos);
                 }
 
                 //验证退货数量
@@ -2006,12 +2010,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean autoGeneratePurchaseOrder(BaseIdsDTO.IdsDTO dto) {
         List<PoReturnEntity> list = this.listByIds(dto.getIds());
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99008);
+            throw new ServiceException(ApiError.PO_RETURN_DATA_NOT_FOUND);
         }
         //判断单据是否审核完成
         String codes = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoReturnEntity::getCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(codes)) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO_APPROVE,codes);
+            throw new ServiceException(ApiError.PO_RETURN_REF_PO_NOT_APPROVED,codes);
         }
         //下推采购订单
         autoAddPurchaseOrder(list, Boolean.FALSE);
@@ -2266,7 +2270,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             List<String> sourceIds = poList.stream().map(PurchaseOrderEntity::getSourceId).collect(Collectors.toList());
             String codes = poReturnEntityList.stream().filter(obj -> sourceIds.contains(obj.getId())).map(PoReturnEntity::getCode).distinct().collect(Collectors.joining(","));
             if (CharSequenceUtil.isNotBlank(codes)) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,codes);
+                throw new ServiceException(ApiError.PO_RETURN_REF_PO_EXISTS,codes);
             }
         }
         List<PoReturnEntity> returnList = poReturnEntityList
@@ -2291,7 +2295,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<String> supplierIds = returnList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSupplierId())).map(PoReturnEntity::getSupplierId).collect(Collectors.toList());
         List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIds);
         if (CollectionUtils.isEmpty(supplierList)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         //供应商联系人信息
         List<String> supplierContactIds = returnList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSupplierContactId())).map(PoReturnEntity::getSupplierContactId).collect(Collectors.toList());
@@ -2301,12 +2305,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<String> mainIds = returnList.stream().map(PoReturnEntity::getId).collect(Collectors.toList());
         List<PoReturnDetailEntity> detailList = poReturnDetailService.listByMainIds(mainIds);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99008);
+            throw new ServiceException(ApiError.PO_RETURN_DATA_NOT_FOUND);
         }
         //主体公司信息
         List<BaseIdDTO.CodeDTO> companyCodeList = sysUserFeign.listAccountingCompanyByCodeList(Collections.singletonList(companyCode));
         if (CollectionUtils.isEmpty(companyCodeList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
 
         for (PoReturnEntity entity : returnList) {
@@ -2334,7 +2338,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(entity.getSupplierId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(supplierEntity)) {
                     log.error("未找到供应商信息，supplierId = {} ",entity.getSupplierId());
-                    throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+                    throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
                 }
                 supplierDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
                 supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
@@ -2353,7 +2357,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             List<PoReturnDetailEntity> details = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(details)) {
                 log.error("未找到退货明细信息，mainId = {} ",entity.getId());
-                throw new ServiceException(ApiError.ERROR_99008);
+                throw new ServiceException(ApiError.PO_RETURN_DATA_NOT_FOUND);
             }
             List<PurchaseOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PoReturnDetailEntity detailEntity:details) {
@@ -2491,7 +2495,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             for (PurchaseReturnOrderDetailDTO.AddDTO updateDTO : detailList) {
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                    throw new ServiceException(ApiError.PURCHASE_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                    throw new ServiceException(ApiError.PO_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
                 }
             }
 
@@ -2505,7 +2509,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : purchaseReturnOrderDetailList) {
                 PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(detailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
+                    throw new ServiceException(ApiError.PO_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
                 }
 
                 List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
@@ -2564,7 +2568,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                    throw new ServiceException(ApiError.PURCHASE_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                    throw new ServiceException(ApiError.PO_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
                 }
             }
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> addDTOList = new ArrayList<>();
@@ -2577,7 +2581,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : purchaseReturnOrderDetailList) {
                 PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(detailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                    throw new ServiceException(ApiError.PO_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
                 }
 
                 List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
@@ -2629,7 +2633,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean pdaAddAndSubmit(PurchaseReturnOrderDTO.AddDTO dto) {
         String id = this.pdaAdd(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         return this.submit(Collections.singletonList(id));
     }
@@ -2639,7 +2643,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean pdaUpdateAndSubmit(PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean update = this.pdaUpdate(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(dto.getId()));
     }
@@ -2655,7 +2659,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //采购退货明细信息
         List<PoReturnDetailEntity> detailList = poReturnDetailService.listByMainIds(Collections.singletonList(poReturnEntity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99008);
+            throw new ServiceException(ApiError.PO_RETURN_DATA_NOT_FOUND);
         }
         PurchaseOrderEntity purchaseOrderEntity = null;
         if(StringUtils.isNotBlank(poReturnEntity.getPurchaseOrderId())){
@@ -2670,7 +2674,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         String warehouseId = purchaseOrderEntity != null?purchaseOrderEntity.getDeliveryWarehouseId():poReturnEntity.getReturnWarehouseId();
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
 
         // 产品属性为费用或服务的sku忽略库存计算
@@ -2695,10 +2699,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detailEntity.getSkuId(), warehouseLocation, InventoryStatusEnum.USABLE.getCode());
             if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
                     && usableQty < detailEntity.getReplenishQty()) {
-                throw new ServiceException(ApiError.ERROR_99070);
+                throw new ServiceException(ApiError.WH_SKU_STOCK_INSUFFICIENT, detailEntity.getSkuNo());
             } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
                     && usableQty < detailEntity.getDeductAmountQty()) {
-                throw new ServiceException(ApiError.ERROR_99070);
+                throw new ServiceException(ApiError.WH_SKU_STOCK_INSUFFICIENT, detailEntity.getSkuNo());
             }
         }
     }
@@ -2752,7 +2756,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //查询登录信息
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
 
         PurchaseReturnOrderDTO.SupplierPagingParamDTO params = pagingParamDTO.getParams();
@@ -2827,7 +2831,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //仅退货状态为待确认可操作
         if (!PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getConfirmStatus())) {
-            throw new ServiceException(ApiError.NOT_WAIT_CONFIRM_STATUS);
+            throw new ServiceException(ApiError.BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED);
         }
 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -2856,14 +2860,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         PoReturnEntity entity = this.getById(dto.getId());
         //仅退货状态为待确认可操作
         if (!PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getConfirmStatus())) {
-            throw new ServiceException(ApiError.NOT_WAIT_CONFIRM_STATUS);
+            throw new ServiceException(ApiError.BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED);
         }
 
         //上传附件
         if (!CollectionUtils.isEmpty(dto.getAttachList())) {
             //限制最多上传5个附件
             if (dto.getAttachList().size() > 5) {
-                throw new ServiceException(ApiError.ATTACH_QTY_MAX_FIVE);
+                throw new ServiceException(ApiError.COMMON_ATTACH_QTY_MAX_FIVE);
             }
             //保存附件
             Class<PoReturnEntity> aClass = PoReturnEntity.class;
@@ -2876,7 +2880,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //查询退货配置
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.PO_RETURN.getCode());
         if (ObjectUtils.isEmpty(cfgSettingEntity)) {
-            throw new ServiceException(ApiError.CFG_SETTING_NOT_EXISTS);
+            throw new ServiceException(ApiError.PO_RETURN_CFG_SETTING_NOT_EXISTS);
         }
         CfgSettingValueDTO.PoReturnSettingDTO poReturnSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
 
@@ -2889,7 +2893,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             //其他问题取值
             unusualHandleUserId = poReturnSettingDTO.getOtherHandlePostId();
         } else {
-            throw new ServiceException(ApiError.UNUSUAL_TYPE_NOT_EXISTS);
+            throw new ServiceException(ApiError.COMMON_UNUSUAL_TYPE_NOT_EXISTS);
         }
         //查询岗位名称
         SysPostEntity sysPostEntity = sysPostFeign.getById(unusualHandleUserId);
@@ -3006,10 +3010,288 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     @Override
+    public void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto, HttpServletResponse response) {
+        // 设置权限SQL
+        dto.setPermissionSql(dto.getPermissionSql());
+        
+        //查询登录信息
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if(Objects.isNull(loginUser)){
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+        }
+
+        //查询供应商信息
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            dto.setSupplierId(supplier.getId());
+        }
+
+        //分页查询所有数据
+        List<PurchaseReturnOrderDTO.SupplierPagingViewDTO> allRecords = new ArrayList<>();
+        int pageSize = 1000;
+        int currPage = 1;
+        IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pageData;
+        do {
+            pageData = this.baseMapper.supplierPaging(new Page<>(currPage, pageSize), dto);
+            if (CollUtil.isNotEmpty(pageData.getRecords())) {
+                allRecords.addAll(pageData.getRecords());
+            }
+            currPage++;
+        } while (pageData.getRecords().size() == pageSize && currPage <= pageData.getPages());
+
+        if (CollUtil.isEmpty(allRecords)) {
+            return;
+        }
+        
+        //根据ids查询sku信息
+        List<String> skuIdList = allRecords.stream().map(PurchaseReturnOrderDTO.SupplierPagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (PurchaseReturnOrderDTO.SupplierPagingViewDTO record : allRecords) {
+            //退货来源名称
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            record.setReturnOrderSource(returnOrderSourceEnum.getCode());
+            record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+
+            //订单确认状态名称
+            record.setConfirmStatusName(PoReturnConfirmStatusEnum.getName(record.getConfirmStatus()));
+
+            //异常分类名称
+            record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
+            //退货方式名称
+            record.setReturnModeName(ReturnModeEnum.getName(record.getReturnMode()));
+            //产品信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(record.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            record.setProductName(productDetailEntity.getName());
+        }
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/supplierPoReturnExport.xlsx";
+        String name = "SRM供应商退货单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(allRecords, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+    }
+
+    @Override
+    public PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        
+        //查询登录信息
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if(Objects.isNull(loginUser)){
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+        }
+
+        PurchaseReturnOrderDTO.SupplierPagingParamDTO params = dto.getParams();
+        //查询供应商信息
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            params.setSupplierId(supplier.getId());
+        }
+
+        //分页查询
+        IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pageData = this.baseMapper.supplierPaging(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
+        //明细数据
+        List<PurchaseReturnOrderDTO.SupplierPagingViewDTO> records = pageData.getRecords();
+        if (CollUtil.isEmpty(records)) {
+            return new PagingVO<>(pageData);
+        }
+        
+        //根据ids查询sku信息
+        List<String> skuIdList = records.stream().map(PurchaseReturnOrderDTO.SupplierPagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (PurchaseReturnOrderDTO.SupplierPagingViewDTO record : records) {
+            //退货来源名称
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            record.setReturnOrderSource(returnOrderSourceEnum.getCode());
+            record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+
+            //订单确认状态名称
+            record.setConfirmStatusName(PoReturnConfirmStatusEnum.getName(record.getConfirmStatus()));
+
+            //异常分类名称
+            record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
+            //退货方式名称
+            record.setReturnModeName(ReturnModeEnum.getName(record.getReturnMode()));
+            //产品信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(record.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            record.setProductName(productDetailEntity.getName());
+        }
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderView(PurchaseReturnOrderDTO.detailIdsDTO detailIdsDTO) {
+        PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO();
+        List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO> pushDownSubcontractOrderDetailViewDTOS = new ArrayList<>();
+
+        List<String> detailIds = detailIdsDTO.getDetailIds();
+        List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByIds(detailIds);
+        if (poReturnDetailList.isEmpty()) {
+            throw new ServiceException(ApiError.PO_RETURN_DETAIL_NOT_EXISTS);
+        }
+
+        long count = poReturnDetailList.stream().map(item -> item.getMainId()).distinct().count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER);
+        }
+
+        String mainId = poReturnDetailList.get(0).getMainId();
+        PoReturnEntity poReturnEntity = this.getById(mainId);
+        if (Objects.isNull(poReturnEntity)) {
+            throw new ServiceException(ApiError.PO_RETURN_NOT_EXISTS);
+        }
+
+        //委外订单已下推完毕不允许下推
+        Map<String, Integer> sourceIdToQtyMap = null;
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(detailIds);
+        if (!subcontractOrderDetailList.isEmpty()) {
+            sourceIdToQtyMap = subcontractOrderDetailList.stream()
+                    .collect(Collectors.toMap(
+                            SubcontractOrderDetailEntity::getSourceDetailId,
+                            SubcontractOrderDetailEntity::getQty,
+                            Integer::sum
+                    ));
+        }
+
+        //采购订单信息
+        if (StringUtils.isNotBlank(poReturnEntity.getPurchaseOrderId())) {
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(poReturnEntity.getPurchaseOrderId());
+            pushDownSubcontractOrderViewDTO.setDeptId(purchaseOrderEntity.getPurchaseDeptId());
+            pushDownSubcontractOrderViewDTO.setDeptName(purchaseOrderEntity.getPurchaseDeptName());
+            pushDownSubcontractOrderViewDTO.setPurchaserId(purchaseOrderEntity.getPurchaseUserId());
+            pushDownSubcontractOrderViewDTO.setPurchaserName(purchaseOrderEntity.getPurchaseUserName());
+            pushDownSubcontractOrderViewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+            pushDownSubcontractOrderViewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+
+        }
+        //默认返修委外订单
+        pushDownSubcontractOrderViewDTO.setType(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode());
+        pushDownSubcontractOrderViewDTO.setBillDate(LocalDate.now());
+        pushDownSubcontractOrderViewDTO.setSourceId(poReturnEntity.getId());
+        pushDownSubcontractOrderViewDTO.setSourceCode(poReturnEntity.getCode());
+        pushDownSubcontractOrderViewDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+
+        List<String> skuIdList = poReturnDetailList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIdList);
+
+
+        for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
+            PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO pushDownSubcontractOrderDetailViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO();
+            List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO> childPushDownSubcontractOrderDetailViewDTOS = new ArrayList<>();
+            PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO childPushDownSubcontractOrderDetailViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO();
+            //父行信息
+            //sku信息
+            String productName = skuList.stream()
+                    .filter(item -> Objects.equals(item.getId(), poReturnDetailEntity.getSkuId()))
+                    .findFirst()
+                    .map(ProductDetailEntity::getName)
+                    .orElse("");
+            pushDownSubcontractOrderDetailViewDTO.setSkuId(poReturnDetailEntity.getSkuId());
+            pushDownSubcontractOrderDetailViewDTO.setSkuNo(poReturnDetailEntity.getSkuNo());
+            pushDownSubcontractOrderDetailViewDTO.setProductName(productName);
+
+            //供应商信息
+            SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(poReturnEntity.getSupplierId());
+            if (Objects.nonNull(supplierEntity)) {
+                pushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
+                pushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
+                pushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
+                pushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
+            }
+
+            //返修数量 = 采购退货的退货数量 - 委外订单的委外数量
+            //已下推委外订单数量
+            Integer pushQty = 0;
+            Integer repairQty = 0;
+            if (Objects.nonNull(sourceIdToQtyMap)) {
+                pushQty = sourceIdToQtyMap.get(poReturnDetailEntity.getId());
+                repairQty = poReturnDetailEntity.getReturnQty() - pushQty;
+            } else {
+                repairQty = poReturnDetailEntity.getReturnQty();
+            }
+
+
+            if (repairQty <= 0) {
+                throw new ServiceException(ApiError.PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY,poReturnDetailEntity.getSkuNo());
+            }
+            //返修信息
+            pushDownSubcontractOrderDetailViewDTO.setRepairQty(repairQty);
+            pushDownSubcontractOrderDetailViewDTO.setRepairPrice(poReturnDetailEntity.getReturnPrice());
+            pushDownSubcontractOrderDetailViewDTO.setRepairAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),repairQty));
+
+            //采购退货单信息
+            pushDownSubcontractOrderDetailViewDTO.setCurrency(poReturnDetailEntity.getCurrency());
+            pushDownSubcontractOrderDetailViewDTO.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
+            pushDownSubcontractOrderDetailViewDTO.setSourceDetailId(poReturnDetailEntity.getId());
+
+            //子行信息
+            childPushDownSubcontractOrderDetailViewDTO.setSkuId(poReturnDetailEntity.getSkuId());
+            childPushDownSubcontractOrderDetailViewDTO.setSkuNo(poReturnDetailEntity.getSkuNo());
+            childPushDownSubcontractOrderDetailViewDTO.setProductName(productName);
+            if (Objects.nonNull(supplierEntity)) {
+                childPushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
+                childPushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
+                childPushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
+                childPushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
+            }
+
+            childPushDownSubcontractOrderDetailViewDTO.setCurrency(poReturnDetailEntity.getCurrency());
+            childPushDownSubcontractOrderDetailViewDTO.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
+            childPushDownSubcontractOrderDetailViewDTO.setQty(poReturnDetailEntity.getReturnQty());
+            childPushDownSubcontractOrderDetailViewDTO.setDeliveryQty(poReturnDetailEntity.getReturnQty());
+            childPushDownSubcontractOrderDetailViewDTO.setPrice(poReturnDetailEntity.getReturnPrice());
+            childPushDownSubcontractOrderDetailViewDTO.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),poReturnDetailEntity.getReturnQty()));
+            childPushDownSubcontractOrderDetailViewDTO.setSourceDetailId(poReturnDetailEntity.getId());
+
+            //子行
+            childPushDownSubcontractOrderDetailViewDTOS.add(childPushDownSubcontractOrderDetailViewDTO);
+            pushDownSubcontractOrderDetailViewDTO.setChildList(childPushDownSubcontractOrderDetailViewDTOS);
+            //父行
+            pushDownSubcontractOrderDetailViewDTOS.add(pushDownSubcontractOrderDetailViewDTO);
+        }
+
+        pushDownSubcontractOrderViewDTO.setDetailList(pushDownSubcontractOrderDetailViewDTOS);
+        return pushDownSubcontractOrderViewDTO;
+    }
+
+    @Override
+    public Boolean pushDownSubcontractOrder(PurchaseReturnOrderDTO.PushDownSubcontractOrderDTO pushDownSubcontractOrderDTO) {
+        SubcontractOrderDTO.AddDTO addDTO = new SubcontractOrderDTO.AddDTO();
+        List<SubcontractOrderDetailDTO.AddDTO> addDTOS = new ArrayList<>();
+
+        BeanUtils.copyProperties(pushDownSubcontractOrderDTO,addDTO);
+        addDTO.setType(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode());
+        addDTO.setSubcontractOrgId(pushDownSubcontractOrderDTO.getPurchaseOrgId());
+
+        for (PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailDTO pushDownSubcontractOrderDetailDTO : pushDownSubcontractOrderDTO.getDetailList()) {
+            SubcontractOrderDetailDTO.AddDTO dto = new SubcontractOrderDetailDTO.AddDTO();
+            BeanUtils.copyProperties(pushDownSubcontractOrderDetailDTO,dto);
+
+            //子行
+            List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailDTO> childList = pushDownSubcontractOrderDetailDTO.getChildList();
+            List<SubcontractOrderDetailDTO.AddDTO> childAddDTOS = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.AddDTO.class, childList);
+            dto.setChildList(childAddDTOS);
+            addDTOS.add(dto);
+        }
+        addDTO.setDetailList(addDTOS);
+
+        return scmTaskFeign.pushDownSubcontractOrder(addDTO);
+    }
+
+
+    @Override
     public List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(String poId) {
         List<PurchaseOrderEntity> purchaseOrderEntityList = purchaseOrderService.ListPurchaseOrderEntityByIds(Collections.singletonList(poId));
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.PO_NOT_FOUND);
         }
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderEntityList.get(0);
         if (CharSequenceUtil.isBlank(purchaseOrderEntity.getSubcontractType())) {
@@ -3186,11 +3468,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIds);
         if (CollectionUtils.isEmpty(supplierList)) {
             log.error("未找到供应商信息，supplierIds = {} ",supplierIds);
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         //供应商联系人信息
         List<String> supplierContactIds = pushDownPurchaseViews.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSupplierContactId())).map(PurchasePriceDTO.PushDownPurchaseView::getSupplierContactId).collect(Collectors.toList());
         List<SupplierContactEntity> supplierContactList = scmTaskFeign.listSupplierContactByIds(supplierContactIds);
+        
+        //供应商账户信息
+        List<SupplierAccountEntity> supplierAccountList = scmTaskFeign.listSupplierAccount();
 
         //部门信息
         List<String> purchaseUserIds = pushDownPurchaseViews.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPurchaseUserId())).map(PurchasePriceDTO.PushDownPurchaseView::getPurchaseUserId).collect(Collectors.toList());
@@ -3223,7 +3508,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (CollectionUtils.isNotEmpty(supplierList)) {
                 SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(mainView.getSupplierId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(supplierEntity)) {
-                    throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+                    throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
                 }
                 supplierDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
                 supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
@@ -3235,6 +3520,17 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
                     //联系人电话
                     supplierDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+                }
+            }
+            //供应商账户信息
+            if (CollectionUtils.isNotEmpty(supplierAccountList)) {
+                SupplierAccountEntity supplierAccountEntity = supplierAccountList.stream()
+                        .filter(obj -> obj.getSupplierId().equals(mainView.getSupplierId()))
+                        .filter(obj -> obj.getIsDefault() != null && obj.getIsDefault())
+                        .findFirst()
+                        .orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierAccountEntity)) {
+                    supplierDTO.setSupplierAccountId(supplierAccountEntity.getId());
                 }
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);
@@ -3311,7 +3607,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
         if (count <= 0 ) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(mainEntity.getId());
         //撤销现有流程
@@ -3338,7 +3634,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         ).count();
 
         if (count <= 0 ) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
 
@@ -3368,7 +3664,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         ).count();
 
         if (count <= 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         //删除详情表

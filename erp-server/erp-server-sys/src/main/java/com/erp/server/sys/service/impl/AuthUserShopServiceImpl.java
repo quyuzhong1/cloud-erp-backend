@@ -22,6 +22,7 @@ import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserShopEntity;
+import com.erp.model.sys.entity.AuthUserWarehouseEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.convert.AuthUserConvert;
@@ -80,7 +81,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
     @Override
     public Boolean update(AuthUserShopDTO.UpdateDTO addOrUpdateDTO) {
         AuthUserShopEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "用户-店铺权限"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户-店铺权限"));
         AuthUserShopEntity authUserShopEntity =  BeanMapperUtils.map(AuthUserShopEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -233,13 +234,13 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType) {
+    public void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType, boolean ifAdd) {
         if (CharSequenceUtil.isBlank(uid)){
             return;
         }
-        List<AuthUserShopEntity> list = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, uid).list();
+        List<AuthUserShopEntity> oldList = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, uid).list();
         if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(shopAuthType)){
-            AuthUserShopEntity auth = list.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
+            AuthUserShopEntity auth = oldList.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
             if (Objects.isNull(auth)){
                 //清空历史
                 this.lambdaUpdate().eq(AuthUserShopEntity::getUserId, uid).remove();
@@ -250,34 +251,35 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
                 this.save(entity);
             }
         }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(shopAuthType)){
-            //删除移除的权限
-            List<String> ids = new ArrayList<>();
-            if (CollUtil.isNotEmpty(list)){
-                ids = list.stream().map(AuthUserShopEntity::getShopId).collect(Collectors.toList());
-                List<String> deleteIdList = list.stream().filter(e -> !shopIdList.contains(e.getShopId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
-                        .map(AuthUserShopEntity::getId).collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(deleteIdList)){
-                    this.removeByIds(deleteIdList);
+            if (CollUtil.isNotEmpty(oldList)){
+                if(!ifAdd){
+                    List<String> deleteIdList = oldList.stream().filter(e -> !shopIdList.contains(e.getShopId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
+                            .map(AuthUserShopEntity::getId).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(deleteIdList)){
+                        this.removeByIds(deleteIdList);
+                    }
                 }
+
+                Set<String> existingIds = oldList.stream()
+                        .map(AuthUserShopEntity::getShopId)
+                        .collect(Collectors.toSet());
+                shopIdList.removeIf(existingIds::contains);
+
             }
             //添加新增权限
             List<AuthUserShopEntity> addList = new ArrayList<>();
-            List<String> finalIds = ids;
             if (CollUtil.isNotEmpty(shopIdList)){
                 shopIdList.forEach(shopId ->{
-                    if (CollUtil.isEmpty(finalIds) || !finalIds.contains(shopId)){
-                        AuthUserShopEntity entity = new AuthUserShopEntity();
-                        entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
-                        entity.setUserId(uid);
-                        entity.setShopId(shopId);
-                        addList.add(entity);
-                    }
+                    AuthUserShopEntity entity = new AuthUserShopEntity();
+                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                    entity.setUserId(uid);
+                    entity.setShopId(shopId);
+                    addList.add(entity);
                 });
             }else {
                 AuthUserShopEntity entity = new AuthUserShopEntity();
                 entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setUserId(uid);
-                entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setShopId("-1");
                 addList.add(entity);
             }

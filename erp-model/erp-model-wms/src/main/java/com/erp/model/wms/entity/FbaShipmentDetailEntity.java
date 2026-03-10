@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.Data;
@@ -94,6 +95,54 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField(exist = false)
     private String shipmentCode;
 
+    /**
+     * 单箱数量
+     */
+    @TableField("per_box_qty")
+    private String perBoxQty;
+
+    /**
+     * 单箱数量
+     */
+    @TableField("box_qty")
+    private String boxQty;
+    /**
+     * 箱子长
+     */
+    @TableField("package_length")
+    private BigDecimal packageLength;
+    /**
+     * 箱子宽
+     */
+    @TableField("package_width")
+    private BigDecimal packageWidth;
+    /**
+     * 箱子高
+     */
+    @TableField("package_height")
+    private BigDecimal packageHeight;
+    /**
+     * 箱子尺寸单位
+     * UnitEnum.SizeUnitEnum
+     */
+    @TableField("package_unit")
+    private String packageUnit;
+    /**
+     * 箱子重量
+     */
+    @TableField("package_weight")
+    private BigDecimal packageWeight;
+    /**
+     * 箱子重量单位
+     * UnitEnum.WeightUnitEnum
+     */
+    @TableField("package_weight_unit")
+    private String packageWeightUnit;
+    /**
+     * 平台产品名称
+     */
+    @TableField("platform_product_name")
+    private String platformProductName;
 
     public static final String MAIN_ID = "main_id";
 

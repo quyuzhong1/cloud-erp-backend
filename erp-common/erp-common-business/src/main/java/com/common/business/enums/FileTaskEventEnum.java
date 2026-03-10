@@ -75,6 +75,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出","","",""),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发","","",""),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","","",""),
+    EXPORT_PLM_SKU_DYNAMIC("EXPORT_PLM_SKU_DYNAMIC", "产品管理导出","","",""),
     IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","com.erp.rpc.plm.feign.ImportPlmFeign","productDetailImages",""),
     EXPORT_PLM_PRODUCT_CUSTOMS("EXPORT_PLM_PRODUCT_CUSTOMS", "目的国清关导出","","",""),
     EXPORT_PLM_SKU_STD_COST("EXPORT_PLM_SKU_STD_COST", "SKU标准成本导出","","",""),
@@ -89,6 +90,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_CFG_MOLD_ALERT("IMPORT_PLM_CFG_MOLD_ALERT", "模具预警策略导入","com.erp.rpc.plm.feign.ImportPlmFeign","importCfgMoldAlert",""),
     EXPORT_PLM_MOLD_MONITOR_RETURN("EXPORT_PLM_MOLD_MONITOR_RETURN", "模具返还监控导出","","",""),
     EXPORT_PLM_MOLD_MONITOR_ALERT("EXPORT_PLM_MOLD_MONITOR_ALERT", "模具预警监控导出","","",""),
+    EXPORT_PLM_PRODUCT_IMAGES("EXPORT_PLM_PRODUCT_IMAGES", "批量下载图片","","","ExportPlmProductImagesHandler"),
+    IMPORT_PLM_PRODUCT_IMG_ATTACHMENT("IMPORT_PLM_PRODUCT_IMG_ATTACHMENT", "批量上传图片","com.erp.rpc.plm.feign.ImportPlmFeign","importBatchUpload",""),
 
 
 
@@ -116,6 +119,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_CUSTOMER("EXPORT_OMS_CUSTOMER","客户列表","","",""),
     EXPORT_INVOICE_INFO("EXPORT_INVOICE_INFO","发票管理","","",""),
     EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号","","",""),
+    EXPORT_INVOICE_XML("EXPORT_INVOICE_XML","导出发票XML","","","ExportOmsInvoiceXmlHandler"),
+    EXPORT_INVOICE_PDF("EXPORT_INVOICE_PDF","导出发票PDF","","","ExportOmsInvoicePdfHandler"),
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据","","",""),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据","","",""),
     EXPORT_SO_MULTI_CHANNEL("EXPORT_SO_MULTI_CHANNEL","多渠道订单数据","","",""),
@@ -125,8 +130,18 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_OMS_EXHIBITION_ORDER("IMPORT_OMS_EXHIBITION_ORDER","展会订单导入","com.erp.rpc.oms.feign.ImportOmsFeign","importExhibitionOrder",""),
     EXPORT_OMS_DELIVERY_BOX_RULE("EXPORT_OMS_DELIVERY_BOX_RULE", "发货箱规导出","","",""),
     IMPORT_OMS_DELIVERY_BOX_RULE("IMPORT_OMS_DELIVERY_BOX_RULE", "发货箱规导入","com.erp.rpc.oms.feign.ImportOmsFeign","importDeliveryBoxRule",""),
-
-
+    EXPORT_OMS_KOL_FEEDBACK("EXPORT_OMS_KOL_FEEDBACK", "KOL回片列表导出","","",""),
+    IMPORT_OMS_KOL_FEEDBACK("IMPORT_OMS_KOL_FEEDBACK","KOL回片列表导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolFeedback",""),
+    EXPORT_OMS_KOL_FEEDBACK_COST("EXPORT_OMS_KOL_FEEDBACK_COST", "KOL回片费用导出","","",""),
+    IMPORT_OMS_KOL_FEEDBACK_COST("IMPORT_OMS_KOL_FEEDBACK_COST","KOL回片费用导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolFeedbackCost",""),
+    EXPORT_OMS_KOL_PARTNER_INFO("EXPORT_OMS_KOL_PARTNER_INFO", "企业达人库导出","","",""),
+    IMPORT_OMS_KOL_PARTNER_INFO("IMPORT_OMS_KOL_PARTNER_INFO","企业达人库导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolPartnerInfo",""),
+    EXPORT_OMS_KOL_SOCIAL_MEDIA("EXPORT_OMS_KOL_SOCIAL_MEDIA", "达人社媒数据表导出","","",""),
+    EXPORT_OMS_KOL_B2B_APPLICATION_REPORT("EXPORT_OMS_KOL_B2B_APPLICATION_REPORT","B2B寄样申请导出","","",""),
+    EXPORT_OMS_KOL_SAMPLE_COST_REPORT("EXPORT_OMS_KOL_SAMPLE_COST_REPORT","寄样费用导出","","",""),
+    IMPORT_OMS_KOL_B2B_APPLICATION("IMPORT_OMS_KOL_B2B_APPLICATION","B2B寄样申请导入","com.erp.rpc.wms.feign.ImportWmsFeign","importKolB2bApplication",""),
+    EXPORT_OMS_KOL_B2C_APPLICATION("EXPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导出","","",""),
+    IMPORT_OMS_KOL_B2C_APPLICATION("IMPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolB2cApplication",""),
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表","","",""),
     EXPORT_SCM_PURCHASE_PRICE_CHANGE("EXPORT_SCM_PURCHASE_PRICE_CHANGE","采购调价数据","","",""),
@@ -172,6 +187,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
     EXPORT_DICT_BASIC_ALL("EXPORT_DICT_BASIC_ALL", "字典数据导出","","",""),
     EXPORT_SYS_TEMPLATE("EXPORT_SYS_TEMPLATE", "模板导出","","",""),
+    EXPORT_SYS_USER_INFO("EXPORT_SYS_USER_INFO","用户管理导出","","",""),
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),
@@ -192,6 +208,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_OVERSEAS_DELIVERY_PLAN("EXPORT_WMS_OVERSEAS_DELIVERY_PLAN", "发货计划导出","","",""),
     EXPORT_WMS_PICKING_LISTS("EXPORT_WMS_PICKING_LISTS", "拣货单","","",""),
     EXPORT_WMS_FBA_SHIPMENT("EXPORT_WMS_FBA_SHIPMENT", "FBA货件导出","","",""),
+    EXPORT_WMS_AWD_SHIPMENT("EXPORT_WMS_AWD_SHIPMENT", "AWD货件导出","","",""),
     EXPORT_WMS_FBA_SHIPMENT_PACKING("EXPORT_WMS_FBA_SHIPMENT_PACKING", "FBA货件装箱导出","","",""),
     EXPORT_WMS_STOCKTAKING_PROFIT_LOSS("EXPORT_WMS_STOCKTAKING_PROFIT_LOSS", "盘盈盘亏单","","",""),
     EXPORT_WMS_STOCKTAKING_TASK_DETAIL("EXPORT_WMS_STOCKTAKING_TASK_DETAIL", "盘点任务明细列表","","",""),
@@ -225,6 +242,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_INVENTORY_IN_OUT_STOCK_SUMMARY("EXPORT_WMS_INVENTORY_IN_OUT_STOCK_SUMMARY", "出入库列表数据","","",""),
     EXPORT_WMS_PURCHASE_BUSINESS("EXPORT_WMS_PURCHASE_BUSINESS", "采购业务汇总表","","",""),
     EXPORT_WMS_PURCHASE_RETURN_ORDER("EXPORT_WMS_PURCHASE_RETURN_ORDER", "退货单","","",""),
+    EXPORT_WMS_SUPPLIER_PO_RETURN("EXPORT_WMS_SUPPLIER_PO_RETURN", "SRM供应商退货单导出","","",""),
     EXPORT_WMS_SO_OUT_STOCK("EXPORT_WMS_SO_OUT_STOCK", "销售订单出库列表","","",""),
     EXPORT_WMS_SO_RETURN_NOTICE("EXPORT_WMS_SO_RETURN_NOTICE", "销售退货通知单","","",""),
     EXPORT_WMS_SO_RETURN_RECEIVE("EXPORT_WMS_SO_RETURN_RECEIVE", "销售退货签收单","","",""),
@@ -288,6 +306,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO("IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO","样品调整单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleAdjustment",""),
 
     EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT("EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT", "B2B三方发货单导出","","",""),
+    EXPORT_WMS_AWD_OUT_STOCK("EXPORT_WMS_AWD_OUT_STOCK", "AWD出库货件导出","","",""),
+    EXPORT_WMS_AWD_INVENTORY("EXPORT_WMS_AWD_INVENTORY", "AWD库存导出","","",""),
+
 
     //tms
     EXPORT_TMS_LOGISTICS_ADDRESS("EXPORT_TMS_LOGISTICS_ADDRESS", "物流地址列表","","",""),
@@ -306,8 +327,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION_DETAIL("EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION_DETAIL", "b2c报关对账单明细导出","","",""),
     EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION("EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION", "头程对账单导出","","",""),
     EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL("EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL", "头程对账单明细导出","","",""),
-    EXPORT_TMS_LOGISTICS_LAST_MILE_COST("EXPORT_TMS_LOGISTICS_LAST_MILE_COST", "尾程费用列表","","",""),
-    EXPORT_TMS_LOGISTICS_BILL_COST("EXPORT_TMS_LOGISTICS_BILL_COST", "自发货列表","","",""),
+    EXPORT_TMS_LOGISTICS_LAST_MILE_COST("EXPORT_TMS_LOGISTICS_LAST_MILE_COST", "尾程费用(平台发货)列表","","",""),
+    EXPORT_TMS_LOGISTICS_BILL_COST("EXPORT_TMS_LOGISTICS_BILL_COST", "尾程费用(自发货)列表","","",""),
     EXPORT_SMALL_BAG_COST_ALLOCATION("EXPORT_SMALL_BAG_COST_ALLOCATION", "小包费用分摊列表","","",""),
     EXPORT_TRANSFER_DECLARE_COST_ALLOCATION("EXPORT_TRANSFER_DECLARE_COST_ALLOCATION", "中转费用分摊列表","","",""),
     EXPORT_TMS_SHIPPING_CALCULATION("EXPORT_TMS_SHIPPING_CALCULATION", "运费计算列表","","",""),
@@ -324,9 +345,12 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_DICT_HS_CODE("EXPORT_TMS_DICT_HS_CODE", "出口申报要素导出","","",""),
     EXPORT_TMS_CFG_SAILING("EXPORT_TMS_CFG_SAILING", "截单开船导出","","",""),
 
-    IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入自发货费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
-    IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),
+    IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入尾程费用(自发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
+    IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用(平台发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),
     IMPORT_TMS_LOGISTICS_TRACK_INFO("IMPORT_TMS_LOGISTICS_TRACK_INFO", "导入物流单信息","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsTrackInfo",""),
+    EXPORT_TMS_CFG_LOGISTICS_COST("EXPORT_TMS_CFG_LOGISTICS_COST","费用配置导出","","",""),
+    IMPORT_TMS_CFG_LOGISTICS_COST("IMPORT_TMS_CFG_LOGISTICS_COST","费用配置导入","com.erp.rpc.tms.feign.ImportTmsFeign","importCfgLogisticsCost",""),
+    IMPORT_TMS_IMPORT_HISTORY_RECORD("IMPORT_TMS_IMPORT_HISTORY_RECORD","物流商费用导入","com.erp.rpc.tms.feign.ImportTmsFeign","preprocessingImportExcel",""),
 
     //mrp
     EXPORT_MRP_REPLENISHMENT_RULE("EXPORT_MRP_REPLENISHMENT_RULE", "补货规则","","",""),
@@ -374,6 +398,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_FMS_ASSET_DISPOSAL("IMPORT_FMS_ASSET_DISPOSAL", "资产处置单导入","com.erp.rpc.fms.feign.ImportFmsFeign","importAssetDisposal",""),
     EXPORT_FMS_ASSET_STOCKTAKING("EXPORT_FMS_ASSET_STOCKTAKING","资产盘点单导出","","","ExportFmsAssetStocktakingHandler"),
     EXPORT_FMS_ASSET_PROFIT_LOSS("EXPORT_FMS_ASSET_PROFIT_LOSS","盘盈盘亏单导出","","","ExportFmsAssetProfitLossHandler"),
+    //file
+    MERGE_LABEL("MERGE_LABEL", "合并标签","","",""),
+
 
 
     DEFAULT("DEFAULT", "默认","","","");

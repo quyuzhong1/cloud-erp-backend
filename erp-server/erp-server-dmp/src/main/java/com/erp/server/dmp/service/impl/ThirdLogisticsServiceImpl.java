@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.entity.ThirdLogisticsEntity;
 import com.erp.server.dmp.mapper.ThirdLogisticsMapper;
 import com.erp.server.dmp.service.ThirdLogisticsService;
@@ -71,7 +70,7 @@ public class ThirdLogisticsServiceImpl extends SuperServiceImpl<ThirdLogisticsMa
     @Override
     public Boolean update(ThirdLogisticsDTO.UpdateDTO updateDTO) {
         ThirdLogisticsEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方渠道单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方渠道单"));
         ThirdLogisticsEntity thirdLogisticsEntity =  BeanMapperUtils.map(ThirdLogisticsEntity.class, updateDTO);
 
         // 数据处理

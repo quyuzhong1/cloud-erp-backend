@@ -235,5 +235,10 @@ public class ProductSaleShowDTO implements Serializable {
      */
     private String batteryCapacityUnit;
 
+    /**
+     * 电池重量（克）
+     */
+    private BigDecimal batteryWeight;
+
     private static final long serialVersionUID = 1L;
 }

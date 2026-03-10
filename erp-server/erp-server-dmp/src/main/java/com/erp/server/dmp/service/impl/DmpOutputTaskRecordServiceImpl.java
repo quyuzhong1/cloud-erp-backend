@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
@@ -32,6 +33,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
@@ -114,6 +116,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     private DmpInputTaskService dmpInputTaskService;
     
     @Resource
+    private DmpInputTaskFileHisService dmpInputTaskFileHisService;
+    
+    @Resource
     private DmpInputFileMongoRelationService dmpInputFileMongoRelationService;
     
     @Resource
@@ -150,7 +155,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Override
     public Boolean update(DmpOutputTaskRecordDTO.UpdateDTO updateDTO) {
         DmpOutputTaskRecordEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "推送任务记录"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "推送任务记录"));
         DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = BeanMapperUtils.map(DmpOutputTaskRecordEntity.class, updateDTO);
 
         // 数据处理
@@ -568,8 +573,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     	String extendJson = dmpCfgInputEntity.getExtendJson();
 		JSONObject parseObject = JSON.parseObject(extendJson);
 		String system = parseObject.getString("system");
-		
-		List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
+
+        List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
 		DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO();
 		List<SyncParamDetailDTO> sourceDetailList = new ArrayList<>();
 		for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
@@ -582,8 +587,17 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 		}
 		syncParamDTO.setSourceDetailList(sourceDetailList);
 		String outputSystemId = dmpCfgOutputEntity.getSystemId();
-		String outputSystemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(outputSystemId)).get(0).getCode();
-		if(DmpBasicSystemCodeEnum.WDT.getCode().equals(outputSystemCode)) {
+        String outputSystemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(outputSystemId)).get(0).getCode();
+        String outputExtendJson = dmpCfgOutputEntity.getExtendJson();
+        Boolean isNewFindDataSendSyncTask = false;
+        if(StringUtils.isNotBlank(outputExtendJson)){
+            JSONObject outputParseObject = JSON.parseObject(outputExtendJson);
+            isNewFindDataSendSyncTask = outputParseObject.getBoolean("isNewFindDataSendSyncTask");
+            if(null == isNewFindDataSendSyncTask){
+                isNewFindDataSendSyncTask = false;
+            }
+        }
+        if(DmpBasicSystemCodeEnum.WDT.getCode().equals(outputSystemCode) && !isNewFindDataSendSyncTask) {
 			try {
 				FeignQuery.invoke("com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "findWdtDataSendSyncTask", Arrays.asList(syncParamDTO));
 				this.lambdaUpdate()
@@ -677,6 +691,28 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 		List<List<String>> partition = Lists.partition(list, 50000);
 		for(List<String> p : partition) {
 			this.getBaseMapper().dmpInputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
+	}
+	
+	@Override
+	public void dmpFdsDeleteHisFile(String beforeUpdateTime, String size) {
+		List<DmpInputTaskFileHisEntity> list = dmpInputTaskFileHisService.lambdaQuery()
+				.ne(DmpInputTaskFileHisEntity::getFileUrl, "")
+				.lt(DmpInputTaskFileHisEntity::getUpdateTime, beforeUpdateTime)
+				.last(" limit " + size + " ")
+				.select(DmpInputTaskFileHisEntity::getId , DmpInputTaskFileHisEntity::getFileUrl)
+				.list();
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<DmpInputTaskFileHisEntity>> partition = Lists.partition(list, 1000);
+		for(List<DmpInputTaskFileHisEntity> p : partition) {
+			FastDFSClientUtil.deleteBatchFile(p.stream().map(DmpInputTaskFileHisEntity::getFileUrl).collect(Collectors.toList()));
+			dmpInputTaskFileHisService.lambdaUpdate()
+			.in(DmpInputTaskFileHisEntity::getId, p.stream().map(DmpInputTaskFileHisEntity::getId).collect(Collectors.toList()))
+			.set(DmpInputTaskFileHisEntity::getFileUrl, "")
+			.update();
 		}
 	}
 
@@ -799,5 +835,18 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Override
     public List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(List<String> sourceCodeList, String outputClass) {
         return baseMapper.getLastOutputTaskRecordList(sourceCodeList, outputClass);
+    }
+
+    @Override
+    public List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(DmpSyncTaskDTO.ListDTO listDTO) {
+        List<DmpPushTaskDTO.SyncInfoDTO> list = baseMapper.listErrorData(listDTO);
+        if (CollUtil.isNotEmpty(list)) {
+            return list;
+        }
+        List<DmpPushTaskEntity> taskList = dmpPushTaskService.listByParam(listDTO);
+        if (CollUtil.isEmpty(taskList)) {
+            return Collections.emptyList();
+        }
+        return BeanUtil.copyToList(taskList,DmpPushTaskDTO.SyncInfoDTO.class);
     }
 }

@@ -75,7 +75,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(List<TransferInfoDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_1041,"直接调波单明细");
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED,"直接调波单明细");
         }
         List<TransferInfoDetailEntity> list = BeanMapperUtils.copyList(TransferInfoDetailEntity.class, detailList);
 
@@ -94,7 +94,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(List<TransferInfoDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_1041,"直接调波单明细");
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED,"直接调波单明细");
         }
         //原明细数据
         List<TransferInfoDetailEntity> oldList = this.listByMainId(mainId);
@@ -168,7 +168,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     private void checkTransferInfoQty (List<TransferInfoDetailEntity> newList ,String mainId) {
         TransferInfoEntity transferInfoEntity = transferInfoService.getById(mainId);
         if (ObjectUtils.isEmpty(transferInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
         }
 
         if (!SourceTypeEnum.TRANSFER_APPLICATION.getCode().equals(transferInfoEntity.getSourceType())) {
@@ -196,7 +196,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             }
             //数量检验
             if (detailEntity.getQty() >applicationQty - hasPickingQty) {
-                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg,transferInfoEntity.getSourceCode(), detailEntity.getSkuNo()));
+                throw new ServiceException(ApiError.WH_TRANSFER_APPLY_ALREADY_COMPLETED_DIRECT, transferInfoEntity.getSourceCode(), detailEntity.getSkuNo());
             }
         }
 
@@ -230,7 +230,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         List<String> warehouseIdList = newList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         //仓位必填验证
         checkWarehouseLocation(warehouseList,newList);
@@ -250,7 +250,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         List<String> skuIds = newList.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         for (TransferInfoDetailEntity detail:newList) {
@@ -258,13 +258,13 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             //调入仓库
             WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getInWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(inWarehouse)) {
-                throw new ServiceException(ApiError.ERROR_99002);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             detail.setInWarehouseName(inWarehouse.getName());
             //调出仓库
             WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getOutWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(outWarehouse)) {
-                throw new ServiceException(ApiError.ERROR_99002);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             detail.setOutWarehouseName(outWarehouse.getName());
             //验证调入仓位
@@ -277,7 +277,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
                                 && (ObjectUtils.isNotEmpty(obj.getDisabled()) && !obj.getDisabled()))
                         .count();
                 if (count == 0) {
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getInWarehouseName(),detail.getInWarehouseLocation());
+                    throw new ServiceException(ApiError.WH_REF_LOCATION_NOT_FOUND,detail.getInWarehouseName(),detail.getInWarehouseLocation());
                 }
             }
             //验证调出仓位
@@ -290,14 +290,14 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
                                 && (ObjectUtils.isNotEmpty(obj.getDisabled()) && !obj.getDisabled()))
                         .count();
                 if (count == 0) {
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getOutWarehouseName(),detail.getOutWarehouseLocation());
+                    throw new ServiceException(ApiError.WH_REF_LOCATION_NOT_FOUND,detail.getOutWarehouseName(),detail.getOutWarehouseLocation());
                 }
             }
 
             //单位
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             detail.setUnit(skuVO.getUnitName());
             detail.setSkuNo(skuVO.getSkuNo());
@@ -305,11 +305,11 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_99048);
+                    throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
                 }
                 TransferInfoDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_99048);
+                    throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.TRANSFER_INFO.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
@@ -341,12 +341,12 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             //调入仓库
             WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).findFirst().orElse(new WarehouseEntity());
             if (warehouseIdList.contains(inWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getInWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,inWarehouse.getName());
+                throw new ServiceException(ApiError.WH_LOCATION_REQUIRED,inWarehouse.getName());
             }
             //调出仓库
             WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).findFirst().orElse(new WarehouseEntity());
-            if (warehouseIdList.contains(outWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getInWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,outWarehouse.getName());
+            if (warehouseIdList.contains(outWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getOutWarehouseLocation())) {
+                throw new ServiceException(ApiError.WH_LOCATION_REQUIRED,outWarehouse.getName());
             }
         }
     }

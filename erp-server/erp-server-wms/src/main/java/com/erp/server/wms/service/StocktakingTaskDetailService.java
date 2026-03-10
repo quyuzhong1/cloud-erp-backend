@@ -10,6 +10,7 @@ import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -113,4 +114,34 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
     void updateQty(List<StocktakingTaskDetailEntity> taskDetailList);
 
     PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(PagingDTO<StocktakingTaskDTO.BaseIdDTO> dto);
+
+
+    /**
+     * 库存组织ID和SKuId最新单据时间
+     *
+     * @author Cloud
+     */
+    List<StocktakingTaskDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds);
+
+    /**
+     * 检查是否已关闭盘点
+     *
+     * @author Cloud
+     */
+    boolean checkClosed(List<String> strings, List<String> warehourseLocationList, List<String> strings1, List<String> skuIds, LocalDate billDate);
+
+    /**
+     * 导入初盘数量
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response);
+
+
+    /**
+     * 下载初盘数量模板
+     * @param response
+     */
+    void downloadFirstQtyTemplate(HttpServletResponse response);
 }

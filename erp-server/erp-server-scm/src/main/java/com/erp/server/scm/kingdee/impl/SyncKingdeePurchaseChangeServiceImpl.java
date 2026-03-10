@@ -26,6 +26,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -34,6 +35,7 @@ import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -99,6 +101,8 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
 
     @Resource
     private KingdeeFeign kingdeeFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -163,7 +167,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
 		//采购订单未同步成功则无需推送采购变更
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.PO_NOT_FOUND);
         }
         Map<String, Object> resultMap = new HashMap<>();
         //业务id
@@ -198,7 +202,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
             log.error("未找到供应商，supplierId = {}",entity.getSupplierId());
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         resultMap.put("supplierCode",supplierEntity.getCode());
         //来源单号
@@ -251,13 +255,13 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         List<PurchaseChangeDetailEntity> detailList = purchaseChangeDetailService.listByPurchaseChangeIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             log.error("未找到变更明细，changeId = {}",entity.getId());
-            throw new ServiceException(ApiError.ERROR_98042);
+            throw new ServiceException(ApiError.PO_CHANGE_NOT_FOUND);
         }
         List<String> purchaseDetailIdList = detailList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(purchaseDetailIdList);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             log.error("未找到采购订单明细，purchaseDetailIdList = {}",purchaseDetailIdList);
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
 
         //交货仓库信息
@@ -291,7 +295,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
                 log.error("未找到采购订单明细，purchaseDetailIdList = {}",detailEntity.getPurchaseOrderDetailId());
-                throw new ServiceException(ApiError.ERROR_98026);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -339,7 +343,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
                 .eq(CfgSettingEntity::getValue, "1")
                 .list();
         if(CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_CFG_SETTING_NOTFOUND,SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode());
+            throw new ServiceException(ApiError.DMP_PUSH_CFG_NOT_FOUND,SourceTypeEnum.ASSET_PURCHASE_CHANGE.getCode());
         }
         ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
         scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
@@ -360,7 +364,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         //采购订单未同步成功则无需推送采购变更
         AssetPurchaseOrderEntity assetPurchaseOrderEntity = assetPurchaseOrderService.getById(entity.getSourceId());
         if (ObjectUtils.isEmpty(assetPurchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.PO_NOT_FOUND);
         }
         Map<String, Object> resultMap = new HashMap<>();
         //业务id
@@ -396,7 +400,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         SupplierEntity supplierEntity = supplierService.getById(assetPurchaseOrderSupplierEntity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
             log.error("未找到供应商");
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         resultMap.put("supplierCode",supplierEntity.getCode());
         //来源单号
@@ -448,14 +452,18 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
                 .list();
         if (CollectionUtils.isEmpty(detailList)) {
             log.error("未找到资产变更明细，changeId = {}",entity.getId());
-            throw new ServiceException(ApiError.ERROR_98042);
+            throw new ServiceException(ApiError.PO_CHANGE_NOT_FOUND);
         }
         List<String> purchaseDetailIdList = detailList.stream().map(AssetPurchaseChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailList = assetPurchaseOrderDetailService.listByIds(purchaseDetailIdList);
         if (CollectionUtils.isEmpty(assetPurchaseOrderDetailList)) {
             log.error("未找到资产采购订单明细，assetPurchaseOrderDetailList = {}",purchaseDetailIdList);
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
+        List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(detailList
+                .stream().map(AssetPurchaseChangeDetailEntity::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList())
+        );
+        Map<String, String> codeToProjectNameMap = moldInfoEntities.stream().filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName())).collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
 
         //明细信息
         List<JSONObject> list = new ArrayList<>();
@@ -483,7 +491,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = assetPurchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(assetPurchaseOrderDetailEntity)) {
                 log.error("未找到资产采购订单明细，assetPurchaseDetailIdList = {}",detailEntity.getSourceDetailId());
-                throw new ServiceException(ApiError.ERROR_98026);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
             //标识
             jsonObject.set("tag",assetPurchaseOrderDetailEntity.getTag());
@@ -501,6 +509,8 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             refJsonObject.set("refKingdeeDetailId",assetPurchaseOrderDetailEntity.getKingdeeDetailId());
 
             jsonObject.set("refList",Arrays.asList(refJsonObject));
+            jsonObject.set("projectName",codeToProjectNameMap.getOrDefault(detailEntity.getAssetCode(),""));
+
             list.add(jsonObject);
         }
         //明细信息

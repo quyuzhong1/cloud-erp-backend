@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
@@ -148,6 +147,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
             	}
             }
         }
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
     

@@ -64,7 +64,7 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<DictDTO> dictEntities) {
         if (CollectionUtils.isEmpty(dictEntities)) {
-            throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+            throw new ServiceException(ApiError.COMMON_REQUEST_EMPTY);
         }
 
         List<BiDictEntity> entities = BeanMapperUtils.copyList(BiDictEntity.class, dictEntities);

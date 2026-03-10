@@ -72,7 +72,7 @@ public class AfterSaleProgressServiceImpl extends SuperServiceImpl<AfterSaleProg
     @Override
     public Boolean update(AfterSaleProgressDTO.UpdateDTO addOrUpdateDTO) {
         AfterSaleProgressEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "售后进度记录单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后进度记录单"));
         AfterSaleProgressEntity afterSaleProgressEntity =  BeanMapperUtils.map(AfterSaleProgressEntity.class, addOrUpdateDTO);
 
         // 数据处理

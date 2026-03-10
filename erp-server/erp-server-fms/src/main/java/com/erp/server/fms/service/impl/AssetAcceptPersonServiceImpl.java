@@ -68,7 +68,7 @@ public class AssetAcceptPersonServiceImpl extends SuperServiceImpl<AssetAcceptPe
     @Override
     public Boolean update(AssetAcceptPersonDTO.UpdateDTO addOrUpdateDTO) {
         AssetAcceptPersonEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产验收人员关联单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产验收人员关联单"));
         AssetAcceptPersonEntity assetAcceptPersonEntity =  BeanMapperUtils.map(AssetAcceptPersonEntity.class, addOrUpdateDTO);
 
         // 数据处理

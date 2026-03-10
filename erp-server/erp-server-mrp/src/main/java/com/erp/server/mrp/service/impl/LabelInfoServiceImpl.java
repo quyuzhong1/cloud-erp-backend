@@ -76,7 +76,7 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
 
     @Override
     public BatchResultDTO delete(String id) {
-        LabelInfoEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "标签信息单"));
+        LabelInfoEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "标签信息单"));
         List<ReplenishmentRefLabelEntity> refLabelList = replenishmentRefLabelService.listLabelInfoByLabelId(id);
         if (CollectionUtils.isNotEmpty(refLabelList)) {
             throw new ServiceException("标签已被引用不支持删除");
@@ -88,7 +88,7 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
 
     @Override
     public BatchResultDTO updateDisabled(String id,Boolean disabled) {
-        LabelInfoEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "标签信息单"));
+        LabelInfoEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "标签信息单"));
         if (old.getDisabled().equals(disabled)) {
             if (Boolean.TRUE.equals(disabled)) {
                 return BatchResultDTO.success(old.getId(), old.getName(), "已禁用不支持再次禁用");

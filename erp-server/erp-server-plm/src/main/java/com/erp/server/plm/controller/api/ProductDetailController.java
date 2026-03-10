@@ -21,6 +21,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.plm.service.ProductBrandService;
 import com.erp.server.plm.service.ProductRDTTeamService;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -43,6 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -893,14 +895,14 @@ public class ProductDetailController extends BaseController {
         String path = "";
         String excelName = "template.xlsx";
         if(importType == 1){//导入新增
-            path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+            path = "excel/productNoSpecDetailTemplate.xlsx";
         }else if(importType == 2){//导入更新（待审核）
-            path = "classpath:excel/productUpdateNotApproveTemplate.xlsx";
+            path = "excel/productUpdateNotApproveTemplate.xlsx";
         }else if(importType == 3){//导入更新（已审核）
-            path = "classpath:excel/productUpdateApproveTemplate.xlsx";
+            path = "excel/productUpdateApproveTemplate.xlsx";
         }
         if(StringUtils.isEmpty(path)){
-            throw new ServiceException(ApiError.ERROR_99999);
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -1372,11 +1374,11 @@ public class ProductDetailController extends BaseController {
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductWarehouseLocationExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         List<ProductWarehouseLocationExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<ProductWarehouseLocationExcelDTO> list = excelListenerUtil.getDateList();
         if (list.size() > 0) {
@@ -1389,7 +1391,7 @@ public class ProductDetailController extends BaseController {
             try {
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
 
             return failure();

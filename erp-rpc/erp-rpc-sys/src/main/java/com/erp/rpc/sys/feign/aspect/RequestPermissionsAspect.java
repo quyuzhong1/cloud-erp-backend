@@ -52,14 +52,16 @@ public class RequestPermissionsAspect {
                 UserRequestPermissionsDTO permissions = permissionsList.stream().
                         filter(r -> permissionsCode.equals(r.getPermissionsCode())).findFirst().orElse(null);
                 if (Objects.isNull(permissions)) {
-                    throw new ServiceException(ApiError.NO_PERMISSION);
+                    // 用户已认证但没有此权限，返回 403
+                    throw new ServiceException(ApiError.HTTP_FORBIDDEN);
                 } else {
                     if(params.length > 0){
                         ObjectUtils.setFieldValue(params[inject.index()],inject.dataScope(),permissions.getDataScope());
                     }
                 }
             }else{
-                throw new ServiceException(ApiError.ERROR_403);
+                // 用户ID为空表示未认证，返回 401
+                throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
             }
 
         }

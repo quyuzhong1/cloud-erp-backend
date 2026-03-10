@@ -7,6 +7,7 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 import com.common.business.enums.ApproveStatusEnum;
 
 
@@ -16,11 +17,12 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-05-23
+ * @since 2025-12-26
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("cfg_third_notice")
 public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
 
@@ -65,11 +67,6 @@ public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
     @TableField("cron")
     private String cron;
     /**
-     * 岗位
-     */
-    @TableField("post")
-    private String post;
-    /**
     * 通知人员
     */
     @TableField("role_type")
@@ -84,6 +81,16 @@ public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
     */
     @TableField("notice_method")
     private String noticeMethod;
+    /**
+    * 岗位
+    */
+    @TableField("post")
+    private String post;
+    /**
+    * 适用范围：billType  =单据类型,billHeader=单据整单,billLine=单据明细  枚举：CfgThirdNoticeApplyScopeEnum
+    */
+    @TableField("apply_scope")
+    private String applyScope;
 
 
     public static final String BUSINESS_TYPE = "business_type";
@@ -107,6 +114,10 @@ public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
     public static final String SPECIFIC_PERSON = "specific_person";
 
     public static final String NOTICE_METHOD = "notice_method";
+
+    public static final String POST = "post";
+
+    public static final String APPLY_SCOPE = "apply_scope";
 
     @Override
     public Serializable pkVal() {

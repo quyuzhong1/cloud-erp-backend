@@ -26,12 +26,20 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
     @FieldValid(fieldName = "供应商名称",isNotBlank = true, maxLength =50 )
     private String supplierName;
 
+    /**
+     * 是否含税
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "是否含税", index = 1)
+    @FieldValid(fieldName = "是否含税", isNotBlank = true)
+    private String isTaxIncludedName;
+
 
     /**
      * 报价日期
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "报价日期", index = 1)
+    @ExcelProperty(value = "报价日期", index = 2)
 //    @FieldValid(fieldName = "报价日期",formatPattern = FieldFormatPatternTypeEnum.DATE_S)
     private String quotedDate;
 
@@ -39,14 +47,14 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 采购员
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "定价员", index = 2)
+    @ExcelProperty(value = "定价员", index = 3)
     private String pricingUserName;
 
     /**
      * 采购组织
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购组织", index = 3)
+    @ExcelProperty(value = "采购组织", index = 4)
     @FieldValid(fieldName = "采购组织",isNotBlank = true, maxLength =50 )
     private String purchaseOrgName;
 
@@ -54,7 +62,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * SKU 编号
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "SKU", index = 4)
+    @ExcelProperty(value = "SKU", index = 5)
     @FieldValid(fieldName = "SKU",isNotBlank = true, maxLength =64 )
     private String skuNo;
 
@@ -62,7 +70,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 采购交期（天）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购交期（天）", index = 5)
+    @ExcelProperty(value = "采购交期（天）", index = 6)
     @FieldValid(fieldName = "采购交期（天）",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String deliveryDay;
 
@@ -70,7 +78,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 开始区间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "区间从", index = 6)
+    @ExcelProperty(value = "区间从", index = 7)
     @FieldValid(fieldName = "区间从",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String minQty;
 
@@ -78,7 +86,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 结束区间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "区间到", index = 7)
+    @ExcelProperty(value = "区间到", index = 8)
     @FieldValid(fieldName = "区间到",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String maxQty;
 
@@ -86,7 +94,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 币制
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "币制", index = 8)
+    @ExcelProperty(value = "币制", index = 9)
     @FieldValid(fieldName = "币制", maxLength = 3)
     private String currency;
 
@@ -94,7 +102,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 含税单价
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "含税单价", index = 9)
+    @ExcelProperty(value = "含税单价", index = 10)
     @FieldValid(fieldName = "含税单价", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String taxPrice;
 
@@ -102,7 +110,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 税率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率", index = 10)
+    @ExcelProperty(value = "税率", index = 11)
     @FieldValid(fieldName = "税率", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String taxRate;
 
@@ -110,7 +118,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 生效时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "生效时间", index = 11)
+    @ExcelProperty(value = "生效时间", index = 12)
 //    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE_S)
     private String effectiveDate;
 
@@ -118,7 +126,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 失效时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "失效时间", index = 12)
+    @ExcelProperty(value = "失效时间", index = 13)
 //    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE_S)
     private String expireDate;
 
@@ -126,14 +134,14 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 启用状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "启用状态", index = 13)
+    @ExcelProperty(value = "启用状态", index = 14)
     @FieldValid(fieldName = "启用状态",isNotBlank = true,fieldValues ="启用,停用" )
     private String disabled;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index =14)
+    @ExcelProperty(value = "错误数据", index =15)
     @ColumnWidth(50)
     private String  errorMsg;
 

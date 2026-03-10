@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.cloud.erp.gateway.config.JwtProperties;
 import com.cloud.erp.gateway.context.GatewayContext;
+import com.cloud.erp.gateway.utils.GatewayLocaleUtils;
 import com.cloud.erp.gateway.utils.IpRateLimitUtil;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
@@ -13,7 +14,6 @@ import com.common.business.constant.AuthPassPath;
 import com.common.business.constant.TokenConstants;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -22,7 +22,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -42,7 +41,6 @@ import java.util.Objects;
 @Slf4j
 @Component
 public class AuthGatewayFilter implements GlobalFilter, Order {
-
     /**
      * Feign资源前缀
      */
@@ -72,6 +70,8 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
     @Resource
     private IpRateLimitUtil ipRateLimitUtil;
 
+    @Resource
+    private GatewayLocaleUtils localeUtils;
 
     @Override
     public Class<? extends Annotation> annotationType() {
@@ -87,13 +87,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
             //判断是否有feign
             if (uri.contains(FEIGN_URL)) {
                 //文件头使用JSON格式
-                return unauthorizedResponse(exchange, ApiError.ERROR_5001.msg, ApiError.ERROR_5001.code);
+                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
             }
             if (uri.contains(SSO_URL)||uri.contains(KEY_REGISTER_URL)){
                 String clientIp = getClientIp(request);
                 if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
                     log.warn("开放接口访问频率过高，IP: {}, URI: {}", clientIp, uri);
-                    return unauthorizedResponse(exchange, ApiError.ERROR_429.msg, ApiError.ERROR_429.code);
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
                 }
                 return chain.filter(exchange);
             }
@@ -132,15 +132,15 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 String token = headers.getFirst(TokenConstants.AUTHENTICATION);
                 if (StringUtils.isBlank(token)) {
                     // 响应中放入返回的状态吗, 没有权限访问
-                    Mono<Void> mono = unauthorizedResponse(exchange, ApiError.ERROR_403.msg, ApiError.ERROR_403.code);
+                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                     return mono;
                 }
                 //解析token
                 LoginUser loginUser = tokenService.getLoginUser(token);
                 if (Objects.isNull(loginUser)) {
-                    return unauthorizedResponse(exchange, ApiError.ERROR_403.msg, ApiError.ERROR_403.code);
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                 }
-                
+
                 // 检查JWT Token是否包含pathList权限
                 String[] jwtPathList = com.erp.model.sys.utils.JwtUtils.getPathList(token, jwtProperties.getSecret());
                 if (jwtPathList.length > 0) {
@@ -148,10 +148,10 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                     boolean hasPermission = checkPathPermission(uri, jwtPathList);
                     if (!hasPermission) {
                         log.warn("接口无权限，URI: {}, 用户权限: {}", uri, Arrays.toString(jwtPathList));
-                        return unauthorizedResponse(exchange, "接口无权限", ApiError.ERROR_403.code);
+                        return unauthorizedResponse(exchange, "接口无权限", ApiError.HTTP_FORBIDDEN.getCode());
                     }
                 }
-                
+
                 loginUser.setAccessToken(token);
                 request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
             }
@@ -179,7 +179,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
      */
     private String getClientIp(ServerHttpRequest request) {
         HttpHeaders headers = request.getHeaders();
-        
+
         // 检查X-Forwarded-For头
         String xForwardedFor = headers.getFirst("X-Forwarded-For");
         if (StringUtils.isNotBlank(xForwardedFor) && !"unknown".equalsIgnoreCase(xForwardedFor)) {
@@ -189,41 +189,41 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 return ips[0].trim();
             }
         }
-        
+
         // 检查X-Real-IP头
         String xRealIp = headers.getFirst("X-Real-IP");
         if (StringUtils.isNotBlank(xRealIp) && !"unknown".equalsIgnoreCase(xRealIp)) {
             return xRealIp;
         }
-        
+
         // 检查Proxy-Client-IP头
         String proxyClientIp = headers.getFirst("Proxy-Client-IP");
         if (StringUtils.isNotBlank(proxyClientIp) && !"unknown".equalsIgnoreCase(proxyClientIp)) {
             return proxyClientIp;
         }
-        
+
         // 检查WL-Proxy-Client-IP头
         String wlProxyClientIp = headers.getFirst("WL-Proxy-Client-IP");
         if (StringUtils.isNotBlank(wlProxyClientIp) && !"unknown".equalsIgnoreCase(wlProxyClientIp)) {
             return wlProxyClientIp;
         }
-        
+
         // 检查HTTP_CLIENT_IP头
         String httpClientIp = headers.getFirst("HTTP_CLIENT_IP");
         if (StringUtils.isNotBlank(httpClientIp) && !"unknown".equalsIgnoreCase(httpClientIp)) {
             return httpClientIp;
         }
-        
+
         // 检查HTTP_X_FORWARDED_FOR头
         String httpXForwardedFor = headers.getFirst("HTTP_X_FORWARDED_FOR");
         if (StringUtils.isNotBlank(httpXForwardedFor) && !"unknown".equalsIgnoreCase(httpXForwardedFor)) {
             return httpXForwardedFor;
         }
-        
+
         // 最后使用远程地址
-        String remoteAddress = request.getRemoteAddress() != null ? 
+        String remoteAddress = request.getRemoteAddress() != null ?
                 request.getRemoteAddress().getAddress().getHostAddress() : "unknown";
-        
+
         return "unknown".equals(remoteAddress) ? "127.0.0.1" : remoteAddress;
     }
 
@@ -276,7 +276,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                         //解析token
                         LoginUser loginUser = tokenService.getLoginUser(token);
                         if (Objects.isNull(loginUser)) {
-//                            ServiceException.runError(ApiError.ERROR_403.msg);
+//                            ServiceException.runError(ApiError.ERROR_FORBIDDEN.getMsg());
                             log.info("埋点接口token失效:{}", data);
                             return;
                         }

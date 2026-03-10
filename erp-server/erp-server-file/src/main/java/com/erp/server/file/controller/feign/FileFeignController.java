@@ -2,10 +2,10 @@ package com.erp.server.file.controller.feign;
 
 
 import cn.hutool.core.collection.CollUtil;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FileUtil;
-import com.erp.model.sys.dto.SysCommonDTO;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.server.file.handler.FileRegistry;
+import com.erp.server.file.repository.IFileTaskRepository;
 import com.erp.server.file.service.FileService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,6 +25,9 @@ import java.util.UUID;
 public class FileFeignController {
     @Resource
     private FileRegistry fileRegistry;
+
+    @Resource
+    private IFileTaskRepository fileTaskRepository;
 
     /**
      * 上传文件
@@ -45,7 +47,7 @@ public class FileFeignController {
         return fileService.deleteFile(url);
     }
     @PostMapping("/deleteBatchFile")
-    public void deleteBatchFile(@RequestParam("urlList") List<String> urlList){
+    public void deleteBatchFile(@RequestBody List<String> urlList){
         if(CollUtil.isNotEmpty(urlList)){
             FileService fileService = fileRegistry.getHandler();
             fileService.deleteBatchFile(urlList);
@@ -75,11 +77,80 @@ public class FileFeignController {
         }
     }
     @PostMapping(value = "/uploadFileByBase64")
-    public String uploadFileByBase64(@RequestParam("base64Str")String base64Str){
+    public String uploadFileByBase64(@RequestBody FileDTO.UploadBase64 uploadBase64){
         FileService fileService = fileRegistry.getHandler();
-        String[] parts = base64Str.split(",");
+        String[] parts = uploadBase64.getBase64().split(",");
         byte[] bytes = Base64.getDecoder().decode(parts.length > 1 ? parts[1] : parts[0]);
-        String fileName = UUID.randomUUID().toString();
+        String fileName = uploadBase64.getFileName() != null ? uploadBase64.getFileName() : UUID.randomUUID().toString() + ".pdf";
         return fileService.uploadFile(bytes,fileName,null);
+    }
+
+    /**
+     * 合并多个文件为一个文件
+     * @param fileIds 文件id列表
+     * @return 合并后的文件url
+     */
+    @PostMapping(value = "/mergeFiles")
+    public String mergeFiles(@RequestBody List<String> fileIds){
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.mergeFiles(fileIds);
+    }
+
+    /**
+     * 压缩图片并上传（优化版本：直接从FastDFS下载、压缩、上传，避免文件系统IO）
+     * @param fileUrl 原图片的FastDFS URL
+     * @param targetSizeInKB 目标大小（KB），0表示不压缩
+     * @return 压缩后图片的FastDFS URL
+     */
+    @PostMapping("/compressAndUploadImage")
+    public String compressAndUploadImage(@RequestParam("fileUrl") String fileUrl, @RequestParam("targetSizeInKB") Long targetSizeInKB){
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.compressAndUploadImage(fileUrl, targetSizeInKB);
+    }
+
+    /**
+     * 解压缩ZIP文件并上传所有文件到FastDFS
+     * @param zipUrl ZIP文件的FastDFS URL
+     * @return 解压后的文件信息列表（文件名、URL、大小）
+     */
+    @PostMapping("/unzipAndUploadFiles")
+    public List<FileDTO.ExtractedFileInfo> unzipAndUploadFiles(@RequestParam("zipUrl") String zipUrl){
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.unzipAndUploadFiles(zipUrl);
+    }
+
+    /**
+     * 根据文件夹结构创建ZIP文件并上传到FastDFS
+     * @param dto 压缩文件请求DTO（包含文件夹结构和文件URL列表）
+     * @return ZIP文件的FastDFS URL
+     */
+    @PostMapping("/createZipFromFolderStructure")
+    public String createZipFromFolderStructure(@RequestBody FileDTO.CreateZipDTO dto){
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.createZipFromFolderStructure(dto);
+    }
+
+    /**
+     * 批量获取文件大小
+     * @param fileUrlList 文件URL列表
+     * @return 文件大小信息列表
+     */
+    @PostMapping("/getBatchFileSize")
+    public List<FileDTO.FileSizeInfo> getBatchFileSize(@RequestBody List<String> fileUrlList) {
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.getBatchFileSize(fileUrlList);
+    }
+
+    /**
+     * 查询最新的文件任务信息
+     * @author will 
+     * @date 2026/1/26 11:30
+     * @param fileUrlList 
+     * @return List<FileTaskDTO>
+     */
+    @PostMapping("/listLatestFileTask")
+    public List<FileDTO.FileTaskDTO> listLatestFileTask(@RequestBody List<String> fileUrlList) {
+        FileService fileService = fileRegistry.getHandler();
+        return fileTaskRepository.listLatestFileTask(fileUrlList);
     }
 }

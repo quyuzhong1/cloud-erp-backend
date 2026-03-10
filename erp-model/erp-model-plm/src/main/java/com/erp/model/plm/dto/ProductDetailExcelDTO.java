@@ -7,6 +7,8 @@ import com.erp.model.plm.enums.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @Description 产品sku信息导入
  * @Author Luo_WG
@@ -94,10 +96,16 @@ public class ProductDetailExcelDTO {
     private String brandName;
 
     /**
-     * 研发团队
+     * 研发团队（产线）
      */
-    @FieldValid(fieldName = "研发团队", maxLength = 50)
+    @FieldValid(fieldName = "研发团队（产线）", maxLength = 50)
     private String rdtTeamName;
+
+    /**
+     * BU线
+     */
+    @FieldValid(fieldName = "BU线", isNotBlank = true, maxLength = 50)
+    private String buName;
 
     /**
      * 产品开发状态
@@ -383,6 +391,12 @@ public class ProductDetailExcelDTO {
     private String insuranceProperty;
 
     /**
+     * 电池重量（g）
+     */
+    @FieldValid(fieldName = "电池重量（g）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    private BigDecimal batteryWeight;
+
+    /**
      * 报关申报价（$）
      */
     @FieldValid(fieldName = "报关申报价（$）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
@@ -431,37 +445,37 @@ public class ProductDetailExcelDTO {
     /**
      * 产品尺寸(长)
      */
-    @FieldValid(fieldName = "产品尺寸(长)(cm)")
+    @FieldValid(fieldName = "产品尺寸(长)(mm)")
     private String productLength;
 
     /**
      * 产品尺寸(宽)
      */
-    @FieldValid(fieldName = "产品尺寸(宽)(cm)")
+    @FieldValid(fieldName = "产品尺寸(宽)(mm)")
     private String productWidth;
 
     /**
      * 产品尺寸(高)
      */
-    @FieldValid(fieldName = "产品尺寸(高)(cm)")
+    @FieldValid(fieldName = "产品尺寸(高)(mm)")
     private String productHeight;
 
     /**
      * 箱规(长)
      */
-    @FieldValid(fieldName = "箱规(长)(cm)")
+    @FieldValid(fieldName = "箱规(长)(mm)")
     private String boxLength;
 
     /**
      * 箱规(宽)
      */
-    @FieldValid(fieldName = "箱规(宽)(cm)")
+    @FieldValid(fieldName = "箱规(宽)(mm)")
     private String boxWidth;
 
     /**
      * 箱规(高)
      */
-    @FieldValid(fieldName = "箱规(高)(cm)")
+    @FieldValid(fieldName = "箱规(高)(mm)")
     private String boxHeight;
 
     /**

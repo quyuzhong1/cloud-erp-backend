@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -221,6 +222,13 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "币种不能为空")
         private String currency;
+
+        /**
+         * 是否含税（true=是，false=否）
+         */
+        @NotNull(message = "是否含税不能为空")
+        private Boolean isTaxIncluded;
+
         /**
          * 外部平台单号
          */
@@ -250,6 +258,13 @@ public class PurchasePriceDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 付款条件
+         */
+        @NotBlank(message = "付款条件不能为空")
+        private String paymentCondition;
+
 
         /**
          * 报价明细
@@ -329,6 +344,10 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 付款条件名称
          */
+        private String paymentCondition;
+        /**
+         * 付款条件名称
+         */
         private String paymentConditionName;
 
         /**
@@ -346,6 +365,16 @@ public class PurchasePriceDTO implements Serializable {
          */
         @Valid
         private List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList;
+
+        /**
+         * 是否含税-中文
+         */
+        private String isTaxIncludedName;
+
+        /**
+         * 是否含税
+         */
+        private Boolean isTaxIncluded;
 
     }
 
@@ -372,6 +401,13 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
+
+        /**
+         * 是否含税（true=是，false=否）
+         */
+        @NotNull(message = "是否含税不能为空")
+        private Boolean isTaxIncluded;
+
         /**
          * 外部平台单号
          */
@@ -409,6 +445,18 @@ public class PurchasePriceDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 付款条件
+         */
+        @NotBlank(message = "付款条件不能为空")
+        private String paymentCondition;
+
+        /**
+         *
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
 
         /**
          * 报价明细
@@ -458,6 +506,16 @@ public class PurchasePriceDTO implements Serializable {
          * 供应商名
          */
         private String supplierName;
+
+        /**
+         * 是否含税（true=是，false=否）
+         */
+        private Boolean isTaxIncluded;
+
+        /**
+         * 是否含税名称
+         */
+        private String isTaxIncludedName;
 
         /**
          * sku id
@@ -707,6 +765,12 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String supplierId;
 
+
+        /**
+         * 是否含税
+         */
+        private Boolean isTaxIncluded;
+
         /**
          * 供应商名称
          */
@@ -831,5 +895,30 @@ public class PurchasePriceDTO implements Serializable {
     public static class UpdateApprovalStatusDTO {
         private PurchasePriceEntity  purchasePriceEntity;
         private ApproveStatusEnum approveStatus;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PayConditionBySupplierAndCompanyDTO {
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+        /**
+         * 付款条件code
+         */
+        private String paymentCondition;
+        /**
+         * 付款条件
+         */
+        private String paymentConditionName;
+
     }
 }

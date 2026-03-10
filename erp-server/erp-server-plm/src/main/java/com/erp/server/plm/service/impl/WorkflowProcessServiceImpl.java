@@ -62,7 +62,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
         if (null == sourceType) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,ApproveTypeEnum.getName(dto.getType()),businessKey);
+            throw new ServiceException(ApiError.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND,ApproveTypeEnum.getName(dto.getType()),businessKey);
         }
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         return  handler.approve(BeanUtil.toBean(dto, ApproveOneDTO.class));
@@ -105,7 +105,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
         if (null == sourceType) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,dto.getApproveStatus().getName(),businessKey);
+            throw new ServiceException(ApiError.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND,dto.getApproveStatus().getName(),businessKey);
         }
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         return  handler.approveEnd(BeanUtil.toBean(dto, ApproveDTO.EndProcessDTO.class));
@@ -116,7 +116,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
         if (null == sourceType) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, ApproveTypeEnum.DIS_APPROVE.getName(),businessKey);
+            throw new ServiceException(ApiError.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND, ApproveTypeEnum.DIS_APPROVE.getName(),businessKey);
         }
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         return  handler.disApprove(dto);
@@ -127,7 +127,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
         if (null == sourceType) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, ApproveTypeEnum.REVOKE.getName(),businessKey);
+            throw new ServiceException(ApiError.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND, ApproveTypeEnum.REVOKE.getName(),businessKey);
         }
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         return  handler.cancelProcess(dto);
@@ -139,7 +139,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
         if (null == sourceType) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, "添加评论",businessKey);
+            throw new ServiceException(ApiError.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND, "添加评论",businessKey);
         }
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         handler.addComment(dto);

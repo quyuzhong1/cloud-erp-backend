@@ -14,6 +14,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.server.oms.service.SoB2cLabelService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -48,6 +49,8 @@ public class SoB2cLogisticsController extends BaseController {
     private SoB2cService soB2cService;
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Resource
+    private SoB2cLabelService soB2cLabelService;
 
 
     /**
@@ -94,4 +97,5 @@ public class SoB2cLogisticsController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 }

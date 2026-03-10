@@ -15,7 +15,6 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
@@ -85,7 +84,7 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
     @Override
     public Boolean update(InventorySkuCostDetailDTO.UpdateDTO updateDTO) {
         InventorySkuCostDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "SKU成本明细"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "SKU成本明细"));
         InventorySkuCostDetailEntity inventorySkuCostDetailEntity = BeanMapperUtils.map(InventorySkuCostDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -145,11 +144,12 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
                         && !Objects.equals(entity.getId(), e.getId())
                         && Objects.equals(e.getCompanyId(), entity.getCompanyId())
                         && Objects.equals(e.getAllocatedMonth(), entity.getAllocatedMonth())
+                        && Objects.equals(e.getAccountingMonth(), entity.getAccountingMonth())
                         && Objects.equals(e.getWarehouseId(), detailEntity.getWarehouseId())
                         && Objects.equals(e.getSkuId(), detailEntity.getSkuId())
                         && Objects.equals(e.getSkuNo(), detailEntity.getSkuNo())).findFirst().orElse(null);
                 if (Objects.nonNull(pagingVO)){
-                    throw new ServiceException(CharSequenceUtil.format("SKU成本中【{}】成本组织【{}】SKU【{}】分摊月份【{}】仓库【{}】已存在", pagingVO.getCode(), entity.getCompanyName(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr(),pagingVO.getWarehouseName()));
+                    throw new ServiceException(CharSequenceUtil.format("SKU成本中【{}】成本组织【{}】SKU【{}】分摊月份【{}】核算月份【{}】仓库【{}】已存在", pagingVO.getCode(), entity.getCompanyName(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr(),pagingVO.getAccountingMonth(),pagingVO.getWarehouseName()));
                 }
             }
         });

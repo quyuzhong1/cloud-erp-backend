@@ -5,10 +5,10 @@ package com.common.core.controller.vo;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.common.core.exception.ServiceException;
 import org.slf4j.MDC;
 
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -59,8 +59,8 @@ public class ApiResult<T>  implements Serializable {
      * @param error ApiError
      */
     public ApiResult(ApiError error) {
-        this.code = error.code;
-        this.msg = error.msg;
+        this.code = error.getCode();
+        this.msg = error.getMsg();
     }
 
     /**
@@ -94,8 +94,8 @@ public class ApiResult<T>  implements Serializable {
 
     public static <T> ApiResult<T> error(ApiError error) {
         ApiResult<T> apiResult = new ApiResult<>();
-        apiResult.setCode(error.code);
-        apiResult.setMsg(error.msg);
+        apiResult.setCode(error.getCode());
+        apiResult.setMsg(error.getMsg());
         return apiResult;
     }
 

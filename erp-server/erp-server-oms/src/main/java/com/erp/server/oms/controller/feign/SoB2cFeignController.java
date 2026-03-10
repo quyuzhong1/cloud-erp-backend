@@ -9,7 +9,6 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,7 +71,8 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SyncSoB2cService syncSoB2cService;
-
+    @Resource
+    private SoB2cLabelService soB2cLabelService;
 
     /**
      * 根据b2c订单id获取物流信息
@@ -88,6 +87,21 @@ public class SoB2cFeignController extends BaseController {
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(mainIdList);
         return soB2cLogisticsList;
     }
+    /**
+     * 根据b2c订单id获取标签信息
+     *
+     * @param mainIdList
+     * @return ApiResult<List < SoB2cLogisticsEntity>>
+     * @author Will
+     * @date: 2023/11/20 11:53
+     */
+    @PostMapping("/listSoB2cLabelByMainIdList")
+    public List<SoB2cLabelEntity> listSoB2cLabelByMainIdList(@RequestBody List<String> mainIdList) {
+        List<SoB2cLabelEntity> soB2cLogisticsList = soB2cLabelService.listSoB2cLabelByMainIds(mainIdList);
+        return soB2cLogisticsList;
+    }
+
+
 
     /**
      * 根据跟踪单号查询订单物流信息
@@ -933,6 +947,15 @@ public class SoB2cFeignController extends BaseController {
        return soB2cCoreService.handleSoOutStock(soId);
     }
 
+
+    /**
+     * 添加日志备注
+     */
+    @PostMapping("/updateRemarkAndLog")
+    public void updateRemarkAndLog(@RequestBody SoB2cDTO.RemarkDTO remarkDTO) {
+        soB2cCoreService.updateRemarkAndLog(remarkDTO);
+    }
+
     /**
      * 销售订单审核
      * @Author Luo_WG
@@ -981,5 +1004,10 @@ public class SoB2cFeignController extends BaseController {
             return true;
         }
         return soB2cDetailService.updateBatchById(soB2cDetailEntityList);
+    }
+
+    @PostMapping("/updateB2cByPlatformOutbound")
+    public void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO){
+        soB2cService.updateB2cByPlatformOutbound(b2cByPlatformOutboundDTO);
     }
 }

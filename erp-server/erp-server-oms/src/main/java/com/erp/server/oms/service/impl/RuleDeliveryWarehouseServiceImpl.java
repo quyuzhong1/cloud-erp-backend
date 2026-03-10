@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -48,7 +47,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,7 +102,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String expression = expressionDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = new RuleDeliveryWarehouseEntity();
         BeanMapperUtils.copy(addDTO, ruleDeliveryWarehouseEntity);
@@ -133,7 +131,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String id = updateDTO.getId();
         RuleDeliveryWarehouseEntity old = super.getById(id);
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货仓库规则单");
         }
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
@@ -144,7 +142,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
 
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = BeanMapperUtils.map(RuleDeliveryWarehouseEntity.class, updateDTO);
@@ -191,7 +189,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public RuleDeliveryWarehouseDTO.ViewDTO view(String id) {
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
         if(null == ruleDeliveryWarehouse){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货仓库规则单");
         }
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
@@ -214,11 +212,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String id = dto.getId();
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
         if(null == ruleDeliveryWarehouse){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货仓库规则单");
         }
         Boolean disabled = ruleDeliveryWarehouse.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", disabled ? "停用" : "启用", disabled ? "启用" : "停用");
         ruleDeliveryWarehouse.setDisabled(dto.getState());
@@ -416,11 +414,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         // TODO 验证数据 & 数据赋值
         String warehouseId = ruleDeliveryWarehouseEntity.getWarehouseId();
         if (StringUtils.isBlank(warehouseId)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         ruleDeliveryWarehouseEntity.setWarehouseName(warehouseList.get(0).getName());
 

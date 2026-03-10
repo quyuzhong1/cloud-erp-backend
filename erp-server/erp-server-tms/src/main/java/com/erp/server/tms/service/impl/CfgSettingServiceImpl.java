@@ -15,10 +15,7 @@ import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.enums.CfgSettingEnum;
-import com.erp.model.tms.enums.CostAllocationEnum;
-import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.WeightAllocationEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.tms.mapper.CfgSettingMapper;
 import com.erp.server.tms.service.CfgSettingService;
@@ -153,13 +150,13 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         dto.setFirstTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setFirstOtherTaxFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setFirstOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
-        dto.setFirstOrgId(CharSequenceUtil.EMPTY);
+        dto.setFirstOrgId(CostAllocationOrgTypeEnum.BILL_ORG.getCode());
         dto.setFirstWarehouseId(CharSequenceUtil.EMPTY);
 
         dto.setPackageShippingCost(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
         dto.setPackageTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setPackageOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
-        dto.setPackageOrgId(CharSequenceUtil.EMPTY);
+        dto.setPackageOrgId(CostAllocationOrgTypeEnum.BILL_ORG.getCode());
         dto.setPackageWarehouseId(CharSequenceUtil.EMPTY);
 
         dto.setTransferTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
@@ -184,7 +181,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         List<CfgSettingEntity> list = new ArrayList<>();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         if (CollectionUtils.isEmpty(dictList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //查询已有配置信息
         List<CfgSettingEntity> cfgSettingList = listCfgSetting();

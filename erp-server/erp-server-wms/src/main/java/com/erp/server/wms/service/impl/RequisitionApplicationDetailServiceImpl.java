@@ -67,11 +67,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
 
         //校验是否重复
         String type = addDTO.getType();
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type) || RequisitionApplicationTypeEnum.AWD.getCode().equals(type)) {
             //明细中的fnsku不能为空
             long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+                throw new ServiceException(ApiError.WH_FBA_FNSKU_NOT_BLANK);
             }
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
@@ -134,11 +134,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         handleData(list, mainId, Boolean.TRUE);
         //校验是否重复
         String type = updateDTO.getType();
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type) || RequisitionApplicationTypeEnum.AWD.getCode().equals(type)) {
             //明细中的fnsku不能为空
             long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+                throw new ServiceException(ApiError.WH_FBA_FNSKU_NOT_BLANK);
             }
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
@@ -150,7 +150,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                             .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
                             .distinct()
                             .collect(Collectors.joining(", "));
-                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                    throw new ServiceException("FBA/AWD 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
                 }
             }
         } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
@@ -270,7 +270,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             if (CharSequenceUtil.isNotBlank(requisitionApplicationDetailEntity.getId())) {
                 RequisitionApplicationDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_REQ_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old, requisitionApplicationDetailEntity, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), mainId,"", String.format("【%s】", old.getSkuNo()));
             }

@@ -1,32 +1,22 @@
 package com.erp.server.wms.kingdee.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.ThirdPartySystemEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
-import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
@@ -38,9 +28,9 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
 import com.erp.server.wms.service.TransferInfoDetailService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
-
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -80,6 +70,9 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -102,27 +95,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (TransferInfoEntity entity, String operate, Map<String, Object> resultMap) {
-//    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-//        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-//        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.TRANSFER_INFO.getCode())
-//        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-//        		.eq(CfgSettingEntity::getValue, "1")
-//        		.list();
-//        if(CollUtil.isEmpty(list)) {
-//        	//添加推送任务
-//            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-//            dmpSyncTaskDTO.setSourceId(entity.getId());
-//            dmpSyncTaskDTO.setSourceCode(entity.getCode());
-//            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.TRANSFER_INFO.getCode());
-//            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-//            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_TRANSFER_INFO_TAG.getName());
-//            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-//            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-//            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-//            dmpSyncTaskDTO.setSyncOperate(operate);
-//            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-//        }
-        
+
         WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
         wmsPushMsgEntity.setSourceType(SourceTypeEnum.TRANSFER_INFO.getCode());
@@ -130,9 +103,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        
         wmsPushMsgService.save(wmsPushMsgEntity);
-        
         return null;
     }
 
@@ -178,7 +149,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
         //调入组织机构编码
         String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId()))
@@ -191,7 +162,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("outOrgCode", outOrgCode);
 
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
 
         //获取sku的id集合
@@ -199,7 +170,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         List<String> warehouseIds = detailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());

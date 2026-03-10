@@ -700,7 +700,7 @@ public class FullyManagedOrderController extends BaseController {
                 continue;
             }
             try {
-                result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity);
+                result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity, true);
             } catch (Exception e) {
                 log.error("全平台销售订单获取物流单号失败", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
@@ -1144,7 +1144,7 @@ public class FullyManagedOrderController extends BaseController {
             }
             //订单更换发货SKU操作只能在待提交和审核不通过状态操作
             if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
-                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.ERROR_92154.msg, entity.getCode()));
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.SO_REPLACE_SKU_STATUS_INVALID.getMsg(), entity.getCode()));
                 resultDTOS.add(result);
                 continue;
             }

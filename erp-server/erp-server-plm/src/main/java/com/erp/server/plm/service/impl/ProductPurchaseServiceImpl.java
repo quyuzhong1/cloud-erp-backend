@@ -143,7 +143,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
             if (CharSequenceUtil.isNotBlank(entity.getEan())) {
                 List<ProductPurchaseEntity> eanList = eanMap.get(entity.getEan());
                 if (eanList.size() > 1) {
-                    throw new ServiceException(ApiError.ERROR_95164);
+                    throw new ServiceException(ApiError.PRODUCT_SKU_EAN_DUPLICATE);
                 }
                 //验证数据
                 checkProductPurchase(eanList.get(0));
@@ -192,12 +192,14 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         if (StringUtils.isBlank(ean)) {
             return;
         }
-        List<ProductPurchaseEntity> list = lambdaQuery().eq(ProductPurchaseEntity::getEan, ean).list();
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> ids = list.stream().map(ProductPurchaseEntity::getId).collect(Collectors.toList());
-            if (ids.size() > 1 || !ids.contains(entity.getId())) {
-                throw new ServiceException(ApiError.ERROR_95164);
-            }
+        LambdaQueryWrapper<ProductPurchaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductPurchaseEntity::getEan, ean);
+        if (StringUtils.isNotBlank(entity.getId())) {
+            queryWrapper.ne(ProductPurchaseEntity::getId, entity.getId());
+        }
+        long count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.PRODUCT_SKU_EAN_DUPLICATE);
         }
     }
 

@@ -92,6 +92,15 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     Integer getUsableInventoryTotal(String warehouseId, String skuId);
 
     /**
+     * 可领用库存 = 实体仓可用 + 实体仓冻结 - 虚拟仓可用 - 虚拟仓冻结
+     *
+     * @param warehouseId 仓库ID（实体仓或虚拟仓）
+     * @param skuId       SKU ID
+     * @return 计算后的可领用库存
+     */
+    Integer getRecipientAvailableQty(String warehouseId, String skuId);
+
+    /**
      * 查实际库存
      * @author will
      * @date 2024/8/6 20:02
@@ -364,4 +373,13 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryDTO.RealQtyDTO> getRealQty(List<String> skuIds, List<String> warehouseIds, List<String> inventoryStatusList);
 
     List<InventoryDTO.LocationInventory> recommendedLocations(InventoryDTO.RecommendedLocationParams params);
+    /**
+     * 查询redis库存信息
+     * @author will
+     * @date 2026/1/8 18:16
+     * @param dto
+     * @return List<RedisInventoryReturnDTO>
+     */
+    List<InventoryDTO.RedisInventoryReturnDTO> getRedisInventory(InventoryDTO.RedisInventoryParamDTO dto);
+
 }

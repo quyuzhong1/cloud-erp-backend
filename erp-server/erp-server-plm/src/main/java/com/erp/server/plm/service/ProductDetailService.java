@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
@@ -847,4 +848,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<SkuVO>
      */
     List<SkuVO> listByApprovePropertyNotAsset(List<String> skuNos);
+
+    PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
+
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
 }

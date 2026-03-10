@@ -9,13 +9,11 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
+import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.entity.BaseEntity;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -23,9 +21,10 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.enums.DmpReturnInfoStatusEnum;
+import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DmpSoRefundInfoService;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -37,12 +36,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -56,6 +54,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
     private SysUserFeign sysUserFeign;
     @Resource
     private DmpSoRefundInfoService dmpSoRefundInfoService;
+    @Resource
+    private DmpOutputCreateFactory dmpOutputCreateFactory;
 
     /**
      * 解析订单数据
@@ -445,8 +445,28 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                 		.select(DmpSoRefundInfoEntity::getPlatformOrderCode)
                 		.list().stream().map(DmpSoRefundInfoEntity::getPlatformOrderCode).collect(Collectors.toList());
                 }
+        	}else if(PlatformDictEnum.WDT.getCode().equalsIgnoreCase(sourceSystem) && !isRetryPush) {
+        		Set<String> tidList = new HashSet<>();
+        		for(DmpSoReturnInfoEntity dmpSoReturnInfoEntity : changeDmpSoReturnInfoList) {
+        			List<DmpSoReturnDetailEntity> dmpSoReturnDetailEntityList = dmpSoReturnDetailEntityMap.get(dmpSoReturnInfoEntity.getId());
+        			if(CollUtil.isNotEmpty(dmpSoReturnDetailEntityList)) {
+        				tidList.addAll(dmpSoReturnDetailEntityList.stream().filter(d -> "1".equals(d.getReturnOriginalType()) && StringUtils.isNotBlank(d.getTid()))
+        						.map(DmpSoReturnDetailEntity::getTid).collect(Collectors.toSet()));
+        			}
+        		}
+        		if(CollUtil.isNotEmpty(tidList)) {
+        			DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
+                    request.setCfgOutputId("1859427581292469023");
+                    List<QueryParam> queryParams = new ArrayList<>();
+                    queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", DmpBasicSystemCodeEnum.WDT.getCode()));
+                    queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
+                    queryParams.add(new QueryParam(QueryTypeEnum.IN, "platform_code", tidList));
+                    request.setQueryParams(queryParams);
+                    dmpOutputCreateFactory.doHotfixOutputTask(request);
+        		}
         	}
         }
+        
         Map<String, String> map = new HashMap<>();
         Map<String, Map<String, Object>> cacheMap = new HashMap<>();
         for(String changId : changeIds) {
@@ -457,7 +477,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             	}
             }
         }
-
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
 }

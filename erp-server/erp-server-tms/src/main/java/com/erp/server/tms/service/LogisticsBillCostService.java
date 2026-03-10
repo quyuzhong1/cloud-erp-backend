@@ -1,17 +1,19 @@
 package com.erp.server.tms.service;
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.AsyncTaskRecordDTO;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import org.springframework.scheduling.annotation.Async;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -49,7 +51,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
+    BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
     
     List<EditViewDTO> editView(String id);
     
@@ -134,6 +136,15 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     List<LogisticsBillCostEntity> listByLogisticsBillIdList(List<String> mainIdList);
 
     /**
+     * 跟进物流单id和对账月份查询
+     * @author will
+     * @date 2026/1/9 16:43
+     * @param logisticsBillIdList
+     * @param reconciliationMonth
+     * @return List<LogisticsBillCostEntity>
+     */
+    List<LogisticsBillCostEntity> listByLogisticsBillIdList (List<String> logisticsBillIdList,String reconciliationMonth);
+    /**
      * @description: 根据物流单明细id集合查询
      * @author Will
      * @date: 2024/5/11 14:13
@@ -164,7 +175,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @author Will
      * @date: 2024/5/9 20:16
      */
-    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList, String dictCostAttribution, String importType);
+    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList, String dictCostAttribution, String importType,Map<String,Object> extMap);
     /**
      * @description: 更新店铺
      * @author Will
@@ -214,7 +225,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void initExchangeRate();
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
-    
+
     BatchResultDTO pushAllocation(String id , String reportDate);
 
     /**
@@ -235,4 +246,19 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return List<String>
      */
     List<String> listLogisticsBillCostId(LogisticsBillCostDTO.ListParamDTO dto);
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:18
+     * @param dto
+     * @return TotalCountDTO
+     */
+    LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
+
+    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+
+    void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
+
+    LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
+
 }

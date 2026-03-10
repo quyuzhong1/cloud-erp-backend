@@ -75,13 +75,15 @@
         lc.track_query_type AS trackQueryType,
         lb.platform_code as platformCode,
         lb.shipment_type as shipmentType,
-        lb.create_time AS createTime
+        lb.create_time AS createTime,
+        lb.is_allocate_cost_required as isAllocateRequired,
+        lb.not_allocate_cost_remark as notAllocateRemark
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
         where
             ${params.sqlMap.default}
-            and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale')
+            and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale','other')
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
@@ -149,7 +151,7 @@
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
         WHERE  lb.is_deleted=false
-        and lb.order_type in ('B2B','B2C','AfterSale')
+        and lb.order_type in ('B2B','B2C','AfterSale','other')
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
@@ -256,6 +258,8 @@
             lbd.sign_time AS signTime,
             lb.ship_time AS shipTime,
             lb.remark,
+            lb.is_allocate_weight_required as isAllocateRequired,
+            lb.not_allocate_weight_remark as notAllocateRemark,
             lb.create_time AS createTime,
             COALESCE(fpt1.packing_status, fpt2.packing_status) AS packingStatus,
             fmb.status AS estimatedStatus,
@@ -677,7 +681,7 @@
         FROM logistics_bill lb
         <if test="orderType == 'B2B' or orderType == 'B2C'">
             LEFT JOIN foreign_so_outstock so on lb.outstock_id = so.id and so.is_deleted = false
-            where lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale')
+            where lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale','other')
             and so.id is null
         </if>
         <if test="orderType == 'firstMile'">
@@ -708,5 +712,94 @@
             ${permissionSql}
         </if>
         GROUP BY tabFlag
+    </select>
+
+    <!-- 查询物流信息 -->
+    <select id="listLogisticsBillVoByData" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
+        SELECT
+            lb.id,
+            lb.shop_id,
+            lb.shop_name,
+            lb.source_type,
+            lb.source_id,
+            lb.source_code,
+            lb.outstock_id,
+            lb.outstock_code,
+            lb.transport_no,
+            lb.channel_id,
+            lb.order_time,
+            lb.so_delivery_id,
+            lb.so_delivery_code,
+            lb.platform_code,
+            lbd.id as detailId,
+            lbd.track_status,
+            lbd.track_no
+        FROM logistics_bill lb
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted = FALSE
+        WHERE lb.is_deleted = FALSE
+        <trim prefix="AND (" suffix=")" prefixOverrides="OR">
+            <if test="platformCodeList != null and platformCodeList.size > 0">
+                or lb.platform_code IN
+                <foreach collection="platformCodeList" item="platformCode" open="(" close=")" separator=",">
+                    #{platformCode}
+                </foreach>
+            </if>
+            <if test="soCodeList != null and soCodeList.size > 0">
+                or lb.source_code IN
+                <foreach collection="soCodeList" item="soCode" open="(" close=")" separator=",">
+                    #{soCode}
+                </foreach>
+            </if>
+            <if test="soDeliveryCodeList != null and soDeliveryCodeList.size > 0">
+                or lb.so_delivery_code IN
+                <foreach collection="soDeliveryCodeList" item="soDeliveryCode" open="(" close=")" separator=",">
+                    #{soDeliveryCode}
+                </foreach>
+            </if>
+            <if test="trackNoList != null and trackNoList.size > 0">
+                or lbd.track_no IN
+                <foreach collection="trackNoList" item="trackNo" open="(" close=")" separator=",">
+                    #{trackNo}
+                </foreach>
+            </if>
+        </trim>
+    </select>
+
+    <!-- 根据唯一键查询物流单详情 -->
+    <select id="listLogisticsBillByUniqueKey"
+            resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
+        select * from (
+        SELECT
+        lb.id,
+        lb.shop_id as shopId,
+        lb.shop_name as shopName,
+        lb.source_type as sourceType,
+        lb.source_id as sourceId,
+        lb.source_code as sourceCode,
+        lb.outstock_id as outstockId,
+        lb.outstock_code as outstockCode,
+        lb.transport_no as transportNo,
+        lb.channel_id as channelId,
+        lb.order_time as orderTime,
+        lb.so_delivery_id as soDeliveryId,
+        lb.so_delivery_code as soDeliveryCode,
+        lb.platform_code as platformCode,
+        lbd.id as detailId,
+        lbd.track_status as trackStatus,
+        lbd.track_no as trackNo
+        FROM logistics_bill lb
+        left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        WHERE lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale','other')
+        ) lb where 1 = 1
+        <trim prefix="AND (" suffix=")" prefixOverrides="OR">
+            <foreach collection="paramMap" item="valueList" index="field" separator=" ">
+                <if test="valueList != null and valueList.size() > 0">
+                    OR ${field} IN
+                    <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                        #{val}
+                    </foreach>
+                </if>
+            </foreach>
+        </trim>
     </select>
 </mapper>

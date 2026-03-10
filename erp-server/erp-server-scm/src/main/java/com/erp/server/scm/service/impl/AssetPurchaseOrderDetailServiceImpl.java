@@ -101,7 +101,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
     @Override
     public Boolean update(AssetPurchaseOrderDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetPurchaseOrderDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity =  BeanMapperUtils.map(AssetPurchaseOrderDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -129,14 +129,14 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         List<AssetPurchaseOrderDetailEntity> oldList = this.listByIds(idList);
         if (CollectionUtils.isEmpty(oldList)) {
-            throw new ServiceException(ApiError.ERROR_95298);
+            throw new ServiceException(ApiError.MOULD_NOTICE_DETAIL_NOT_FOUND);
         }
         //只有已审核的采购单才可以结束验收
         List<String> purchaseOrderIdList = oldList.stream().map(obj -> obj.getMainId()).collect(Collectors.toList());
         List<AssetPurchaseOrderEntity> assetPurchaseOrderEntityList = assetPurchaseOrderService.listByIds(purchaseOrderIdList);
         long count = assetPurchaseOrderEntityList.stream().filter(obj -> !obj.getApproveStatus().equals(AssetApproveStatusEnum.APPROVE.getCode())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98146);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE);
         }
 
         // 过滤需更新的记录（未结束接收的明细）
@@ -192,7 +192,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         List<PurchasePriceDTO.PriceDTO> priceDTOS = purchasePriceService.batchGetPurchasePrice(priceDTOList);
         if (priceDTOS.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
 
         List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
@@ -228,7 +228,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                 .findFirst()
                 .orElse(null);
         if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_98140,assetPurchaseOrderDetailEntity.getAssetCode());
+            throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND,assetPurchaseOrderDetailEntity.getAssetCode());
         }
 
         super.saveBatch(detailEntityList);
@@ -246,7 +246,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         if (StringUtils.isNotBlank(updateDTO.getSourceId())) {
             // 校验来源是否存在
             if (Objects.isNull(assetNoticeService.getById(updateDTO.getSourceId()))) {
-                throw new ServiceException(ApiError.ERROR_95297); // 来源不存在
+                throw new ServiceException(ApiError.MOULD_NOTICE_NOT_FOUND); // 来源不存在
             }
 
             // 校验明细条数是否增加
@@ -255,7 +255,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                     .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
                     .list();
             if (detailList.size() > oldList.size()) {
-                throw new ServiceException(ApiError.ERROR_98138); // 不允许增加明细
+                throw new ServiceException(ApiError.MOULD_PURCHASE_PUSHED_NO_NEW_DETAIL); // 不允许增加明细
             }
 
             // 校验采购数量是否超过剩余数量
@@ -280,15 +280,23 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         } else {
 
-            // 无来源的订单，直接删除旧数据 + 保存新数据
+            //先从价表取价
+            List<PurchasePriceDTO.PriceDTO> priceDTOS = getPurchasePrices(updateDTO, detailList);
+
+            //构建明细实体
+            List<AssetPurchaseOrderDetailEntity> detailEntityList = buildDetailEntities(updateDTO, detailList, priceDTOS);
+
+            //检查总金额是否为 0
+            checkTotalAmount(detailEntityList);
+
+            //删除旧数据
             deleteOldDetails(assetPurchaseOrderId, detailList);
 
-            List<AssetPurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailEntity.class, detailList);
+            //补充关联关系
+            fillDetaillList(detailEntityList, assetPurchaseOrderId);
 
-            // 补充关联关系
-            fillDetaillList(newList,assetPurchaseOrderId);
-
-            this.saveOrUpdateBatch(newList);
+            //保存新数据
+            this.saveOrUpdateBatch(detailEntityList);
         }
     }
 
@@ -314,7 +322,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
             if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum)
                     .compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
-                throw new ServiceException(ApiError.ERROR_98139); // 采购数量超过剩余数量
+                throw new ServiceException(ApiError.PO_ALREADY_QTY_EXCEED); // 采购数量超过剩余数量
             }
         }
     }
@@ -336,7 +344,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         List<PurchasePriceDTO.PriceDTO> priceDTOS = purchasePriceService.batchGetPurchasePrice(priceDTOList);
         if (priceDTOS.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         return priceDTOS;
     }
@@ -379,7 +387,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                 .findFirst()
                 .orElse(null);
         if (Objects.nonNull(invalidEntity)) {
-            throw new ServiceException(ApiError.ERROR_98140, invalidEntity.getAssetCode());
+            throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND, invalidEntity.getAssetCode());
         }
     }
 

@@ -3,20 +3,16 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO.ThirdAddDTO;
 import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
-import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.dmp.mapper.ThirdMappingMapper;
@@ -24,7 +20,6 @@ import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +57,7 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
         //校验系统是否存在
         DmpBasicSystemEntity systemEntity = dmpBasicSystemService.getById(addDTO.getSysId());
         if (Objects.isNull(systemEntity)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
         }
         List<ThirdAddDTO> thirdList = addDTO.getThirdList();
         //同一个第三方平台只能绑定一个仓库
@@ -273,7 +268,7 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
     private void handleData(ThirdMappingEntity thirdMappingEntity) {
         //校验系统平台是否存在
         DmpBasicSystemEntity systemEntity = Optional.ofNullable(dmpBasicSystemService.getById(thirdMappingEntity.getSysId()))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                .orElseThrow(() -> new ServiceException(ApiError.SHOP_NOT_EXIST_NO_PERMISSION));
 
         String sysName = thirdMappingEntity.getThirdName();
 //        String thirdName = thirdShopEntity.getName();
@@ -286,14 +281,14 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
         ThirdMappingEntity existSysMapping = thirdMappingService.getByTypeAndSysIdAndSysType(thirdMappingEntity);
         if (Objects.nonNull(existSysMapping)) {
             if (!Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) {
-                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdMappingEntity.getThirdName(), existSysMapping.getSysName());
+                throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdMappingEntity.getThirdName(), existSysMapping.getSysName());
             } else {
                 thirdMappingEntity.setId(existSysMapping.getId());
             }
         }
         ThirdMappingEntity existThirdMapping = thirdMappingService.getByTypeAndThirdId(thirdMappingEntity);
         if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(), existThirdMapping.getSysId())) || Objects.isNull(existSysMapping))) {
-            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdMappingEntity.getThirdName(), existThirdMapping.getSysName());
+            throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdMappingEntity.getThirdName(), existThirdMapping.getSysName());
         }
     }
 
@@ -308,7 +303,7 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
         Map<String, List<ThirdAddDTO>> result = thirdList.stream().collect(groupingBy(ThirdAddDTO::getSysType,
                 collectingAndThen(Collectors.toList(), list -> {
                             if (list.size() > 1) {
-                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
+                                throw new ServiceException(ApiError.DMP_THIRD_SYS_TYPE_SINGLE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
                             }
                             return list;
                         }

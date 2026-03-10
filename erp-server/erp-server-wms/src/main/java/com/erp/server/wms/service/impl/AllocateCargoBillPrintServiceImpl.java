@@ -20,10 +20,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -78,7 +75,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
     }
 
     @Override
-    public void print(String waveId, HttpServletResponse response) {
+    public String print(String waveId, HttpServletResponse response) {
         WaveListEntity pickingWave = waveListService.getById(waveId);
         if(Objects.isNull(pickingWave)){
             throw new ServiceException("波次为空");
@@ -92,10 +89,10 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         param.setIds(deliveryIds);
         param.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillDTOList = soB2cDeliveryService.printLogisticsWaybillPreview(param);
-        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> printDetailDTOList = printLogisticsWaybillDTOList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDTO::getDetailList).flatMap(Collection::stream).collect(Collectors.toList());
-        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
-        dto.setDetailList(printDetailDTOList);
-        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
-        soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
+        LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> printDetailDTOList = printLogisticsWaybillDTOList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDTO::getDetailList).flatMap(Collection::stream).collect(Collectors.toCollection(LinkedList::new));
+//        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
+//        dto.setDetailList(printDetailDTOList);
+//        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
+        return soB2cDeliveryService.printLogisticsBillConfirm(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode(),printDetailDTOList,response);
     }
 }

@@ -108,7 +108,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //获取退货详情
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(returnDetailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
         List<SoReturnDetailEntity> list = new ArrayList<>();
@@ -121,7 +121,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                     .map(item -> item.getActualQty() * soDetailEntity.getPerBoxQty()).reduce(MathUtil.ZERO, Integer::sum);
 
             if (actualQty < detailDto.getReturnQty() + returnQty) {
-                throw new ServiceException(ApiError.ERROR_92009);
+                throw new ServiceException(ApiError.SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND);
             }
             soReturnDetailEntity.setMainId(id);
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
@@ -181,7 +181,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //获取退货详情
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(returnDetailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         //原明细数据
         List<SoReturnDetailEntity> oldList = this.listDetailByMainId(dto.getId());
@@ -209,7 +209,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             }
 
             if (actualQty < detailDto.getReturnQty() + returnQty) {
-                throw new ServiceException(ApiError.ERROR_92009);
+                throw new ServiceException(ApiError.SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND);
             }
 
             soReturnDetailEntity.setMainId(dto.getId());
@@ -234,7 +234,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             if (StringUtils.isNotBlank(soReturnDetailEntity.getId())) {
                 SoReturnDetailEntity old = this.getById(soReturnDetailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                    throw new ServiceException(ApiError.SALES_DEMAND_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,soReturnDetailEntity, ModuleTypeEnum.SO_RETURN.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
             }
@@ -290,7 +290,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             if (StringUtils.isNotBlank(soReturnDetailEntity.getId())) {
                 SoReturnDetailEntity old = this.getById(soReturnDetailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                    throw new ServiceException(ApiError.SALES_DEMAND_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,soReturnDetailEntity, ModuleTypeEnum.SO_RETURN.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
             }

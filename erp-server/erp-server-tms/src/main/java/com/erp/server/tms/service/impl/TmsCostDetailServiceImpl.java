@@ -10,14 +10,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO.AddDataDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
-import com.erp.model.tms.enums.DictCostCategoryEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.mapper.TmsCostDetailMapper;
@@ -82,6 +80,9 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             throw new ServiceException("自发货费用明细保存失败");
         }
         this.validateDbCategoryCurrency(mainId);
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("添加了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
         return saveBatch;
     }
 
@@ -129,6 +130,15 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if(CollectionUtils.isEmpty(list)){
             return true;
         }
+
+        //添加操作日志
+        List<TmsCostDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        //添加费用日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCostName())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("新增了一条费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), addPairList, "编辑操作");
+        }
+
         boolean saveBatch = super.saveOrUpdateBatch(list);
         if(!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
@@ -279,6 +289,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+
         String currency;
         switch (dictCostAttributionEnum) {
             case FIRST_MILE:
@@ -311,6 +322,10 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         List<String> cfgCostIdList = list.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
         List<TmsCostDetailEntity> oldDetailList = listByCfgCostIdListAndMainId(cfgCostIdList, mainId);
 
+        //配置选项
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
+        Map<String, String> costMap = CollUtil.isEmpty(tmsCfgCostList) ? new HashMap<>() : tmsCfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, TmsCfgCostEntity::getCostName));
+
         Map<String, BigDecimal> rateMap = new HashMap<>();
         rateMap.put("CNY", BigDecimal.ONE);
         for (TmsCostDetailEntity entity : list) {
@@ -335,13 +350,18 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             entity.setExchangeRate(exchangeRate);
             //更新数据无类型默认实际
             entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
-
+            //费用名称
+            entity.setCostName(costMap.get(entity.getCfgCostId()));
             //主表id
             TmsCostDetailEntity oldDetailEntity = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCfgCostId(), entity.getCfgCostId())
                     && CharSequenceUtil.equals(entity.getType(), obj.getType())
             ).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
                 entity.setId(oldDetailEntity.getId());
+            }
+            //操作日志
+            if (StringUtils.isNotBlank(entity.getId())) {
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("编辑了一个费用【{}】,费用值【{}】，币别【{}】",entity.getCostName(),entity.getCostValue(),entity.getCurrency()), ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(),entity.getId(),"编辑操作");
             }
         }
     }

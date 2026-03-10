@@ -190,6 +190,17 @@
             </foreach>
         </if>
 
+        <if test="params.buIdList !=null and params.buIdList.size>0">
+            and pi.id in (
+                select product_id from product_ref_bu prb
+                where prb.is_deleted = false and prd.bu_id in
+            <foreach collection="params.buIdList" item="buId" open="(" separator="," close=")">
+                #{buId}
+            </foreach>
+
+            )
+        </if>
+
         <if test="params.propertyList !=null and params.propertyList.size>0">
             AND pi.property_id IN
             <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
@@ -482,6 +493,7 @@
 
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelExportDTO">
         SELECT
+            pi.id as productId,
         pd.images_url as imageUrl,
         pi.spu_no as spuNo,
         pi.name as spuName,
@@ -571,7 +583,8 @@
         pd.warehouse_location,
         pd.warehouse_location_large,
         pi.application_category_id,
-        ps.insurance_property
+        ps.insurance_property,
+        ps.battery_weight
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -662,7 +675,15 @@
                 #{rdtTeamId}
             </foreach>
         </if>
-
+        <if test="params.buIdList !=null and params.buIdList.size>0">
+            and pi.id in (
+            select product_id from product_ref_bu prb
+            where prb.is_deleted = false and prd.bu_id in
+            <foreach collection="params.buIdList" item="buId" open="(" separator="," close=")">
+                #{buId}
+            </foreach>
+            )
+        </if>
         <if test="params.propertyList !=null and params.propertyList.size>0">
             AND pi.property_id IN
             <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
@@ -1804,7 +1825,7 @@
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
     <select id="listSku" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
-        select id,sku_id,spu_no,sku_no,productName ,retailPrice,variantProperty from
+        select id,sku_id,spu_no,sku_no,productName ,retailPrice,variantProperty,property,property_id from
        (
             select
                 pi."id",
@@ -1812,6 +1833,8 @@
                 pi.spu_no,
                 pi.name as productName,
                 pd.sku_no,
+                pi.property,
+                pi.property_id,
                 pc.retail_price as retailPrice,
                 pd.variant_property as variantProperty
             FROM product_info pi
@@ -1953,8 +1976,11 @@
         pi.name AS spuName,
         pi.spec_type,
         pi.materials,
+        pi.property_id as propertyId,
+        pi.property as propertyName,
         pi.function_desc,
         pi.grade AS productGrade,
+        pi.brand_id AS brandId,
         pi.brand_name as brandName,
         pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
@@ -1969,9 +1995,14 @@
         pd.status,
         pd.variant_property as variantProperty,
         pd.warehouse_location as warehouseLocation,
-        pd.warehouse_location_large as warehouseLocationLarge
+        pd.warehouse_location_large as warehouseLocationLarge,
+        pp.product_length as productLength,
+        pp.product_width as productWidth,
+        pp.product_height as productHeight,
+        pp.net_weight as netWeight
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_pack pp on pp.sku_id = pd.id and pp.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN

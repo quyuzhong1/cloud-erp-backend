@@ -3,13 +3,16 @@ package com.erp.server.dmp.inout.handler.input.task.init.api;
 import java.lang.reflect.Method;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +34,8 @@ import com.taobao.api.TaobaoResponse;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
@@ -43,6 +48,13 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 
 	@Resource
     private QiMenClientService qimenService;
+	
+	@Value("${restcloud.url:172.16.100.96}")
+    private String restcloudUrl;
+	
+	@Value("${restcloud.port:8080}")
+	private String restcloudPort;
+
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputWdtApiInitRequest) {
@@ -80,6 +92,7 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 				parseObject.put("startTime", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 				parseObject.put("endTime", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));	
 			}
+			String dmpRestCloudUrl = parseObject.getString("dmpRestCloudUrl");
 			Class<?> paramsClass = Class.forName(className + "$Params");
 			Object params = paramsClass.newInstance();
 			for(Map.Entry<String , Object> parse: parseObject.entrySet()) {
@@ -167,6 +180,33 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 				}
 				pageNo = pageNo + 1;
 			}
+			
+			if(StringUtils.isNotBlank(dmpRestCloudUrl)) {
+				DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+				Map<String, Object> map = new HashMap<>();
+				Map<String, String> dataMap = new HashMap<>();
+				dataMap.put("start_time", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+				dataMap.put("end_time", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        		map.put("data", Arrays.asList(dataMap));
+				String url = "http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud" + dmpRestCloudUrl;
+				HttpResponse response = HttpRequest.post(url)
+		                .header("Content-Type", "application/json")
+		                .body(JSON.toJSONString(map))
+		                .timeout(60000)
+		                .execute();
+				if (200 != response.getStatus()) {
+					throw new ServiceException("调用restcloud的" + url + "接口报错，错误原因：" + response.getStatus());
+				}
+				String body = response.body();
+				if(body.contains("\"state\": \"true\"")) {
+					JSONObject pddData = JSON.parseObject(body);
+					dmpInputTaskInitDTO.setMsg(pddData.getJSONArray("data").toJSONString());
+					dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+				}else {
+					throw new ServiceException("调用restcloud的" + url + "接口报错，错误原因：" + body);
+				}
+			}
+
 		}catch (ServiceException e) {
 			throw e;
 		}catch (InterruptedException e) {

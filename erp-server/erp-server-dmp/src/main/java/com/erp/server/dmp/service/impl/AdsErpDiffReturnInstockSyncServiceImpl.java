@@ -3,7 +3,6 @@ package com.erp.server.dmp.service.impl;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -29,7 +28,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.PagingParamDTO;
@@ -37,7 +35,6 @@ import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO;
-import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffReturnInstockSyncMapper;
@@ -101,7 +98,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
     @Override
     public Boolean update(AdsErpDiffReturnInstockSyncDTO.UpdateDTO addOrUpdateDTO) {
         AdsErpDiffReturnInstockSyncEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "ERP退货入库单差异单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "ERP退货入库单差异单"));
         AdsErpDiffReturnInstockSyncEntity adsErpDiffReturnInstockSyncEntity =  BeanMapperUtils.map(AdsErpDiffReturnInstockSyncEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -187,7 +184,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
     /**
@@ -243,7 +240,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_antu/ods_flow_antu_excel_return_instock");
+		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_return_instock_diff_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpDiffReturnInstockSyncEntity::getCheckMonth, checkMonth)
 			.set(AdsErpDiffReturnInstockSyncEntity::getExecStatus, "doing")
@@ -269,7 +266,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 			if(count != null && count > 0) {
 				throw new ServiceException(list.stream().map(AdsErpDiffReturnInstockSyncEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
 			}
-			boolean reCreate = RestCloudApiUtil.reCreate("", "dbtodb/check_month_diff_so_outstock");
+			boolean reCreate = RestCloudApiUtil.syncReCreate("", "ods_erp/ods_flow_return_instock_diff_update");
 			if(reCreate) {
 				lambdaUpdate().eq(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
 				.set(AdsErpDiffReturnInstockSyncEntity::getExecStatus, "doing")

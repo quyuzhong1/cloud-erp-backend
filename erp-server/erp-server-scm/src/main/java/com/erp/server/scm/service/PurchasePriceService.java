@@ -13,6 +13,7 @@ import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -234,4 +235,6 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     List<PurchasePriceDTO.SupplierSkuPrice> listSkuPrice();
+
+    PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO getPayConditionBySupplierAndCompany(PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO dto);
 }

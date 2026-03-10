@@ -1,7 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import com.common.core.enums.ApiError;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -20,7 +20,6 @@ import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,6 +142,20 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
     @Override
     public void removeByMainId(String mainId) {
         lambdaUpdate().eq(StocktakingProfitLossDetailEntity::getMainId, mainId).remove();
+    }
+
+    @Override
+    public List<StocktakingProfitLossDetailEntity> listBySourceId(String sourceId) {
+        return this.lambdaQuery()
+                .eq(StocktakingProfitLossDetailEntity::getSourceDetailId, sourceId)
+                .list();
+    }
+
+    @Override
+    public List<StocktakingProfitLossDetailEntity> listBySourceIds(List<String> sourceIds) {
+        return this.lambdaQuery()
+                .in(StocktakingProfitLossDetailEntity::getSourceDetailId, sourceIds)
+                .list();
     }
 
     /**

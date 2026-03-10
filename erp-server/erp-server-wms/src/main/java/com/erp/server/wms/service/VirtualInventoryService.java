@@ -175,4 +175,21 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return VirtualInventoryEntity
      */
     VirtualInventoryEntity getByTransaction(VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO);
+    /**
+     * 查询实体仓、虚拟仓可用库存
+     * @author will
+     * @date 2025/12/5 09:34
+     * @param dto
+     * @return List<AllInventoryDTO>
+     */
+    VirtualInventoryDTO.AllInventoryDTO getAllUseInventory(VirtualInventoryDTO.AllInventoryParamDTO dto);
+
+    /**
+     * 查询redis中的库存
+     * @author will
+     * @date 2026/1/8 16:07
+     * @param dto
+     * @return List<RedisInventoryReturnDTO>
+     */
+    List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> getRedisVirtualInventory(VirtualInventoryDTO.RedisVirtualInventoryParamDTO dto);
 }

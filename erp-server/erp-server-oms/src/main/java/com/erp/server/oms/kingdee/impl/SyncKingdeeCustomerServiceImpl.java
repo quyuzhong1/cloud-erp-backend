@@ -17,7 +17,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,7 +77,6 @@ import com.erp.server.oms.service.ShopInfoService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -321,7 +319,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             List<CustomerAddressDTO.ViewDTO> collect = customerAddressList.stream().sorted(Comparator.comparing(CustomerAddressDTO.ViewDTO::getIsDefault).reversed()).collect(Collectors.toList());
             resultMap.put("telNumber", collect.get(MathUtil.ZERO).getTelNumber());
             resultMap.put("person", collect.get(MathUtil.ZERO).getPerson());
-            resultMap.put("address", collect.get(MathUtil.ZERO).getAddress());
+            resultMap.put("address", collect.get(MathUtil.ZERO).getAddress()+collect.get(MathUtil.ZERO).getAddress2()+collect.get(MathUtil.ZERO).getAddress3());
         }
         for (CustomerAddressDTO.ViewDTO viewDTO : customerAddressList) {
             viewDTO.setDisabled(viewDTO.getDisabled() ? Boolean.FALSE : Boolean.TRUE);

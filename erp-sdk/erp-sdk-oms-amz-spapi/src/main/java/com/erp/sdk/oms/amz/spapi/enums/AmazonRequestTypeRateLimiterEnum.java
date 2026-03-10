@@ -30,8 +30,13 @@ public enum AmazonRequestTypeRateLimiterEnum {
     PRODUCT_LISTING("1", "1", "product_listing","商品列表"),
 
     // 货件相关
-    FBA_SHIPMENT("2", "30","fba_shipment","货件信息"),
-    FBA_SHIPMENT_DETAIL("2", "30","fba_shipment_detail","货件详情信息"),
+    FBA_SHIPMENT("2", "30","fba_shipment","FBA货件信息"),
+    FBA_SHIPMENT_DETAIL("2", "30","fba_shipment_detail","FBA货件详情信息"),
+    FBA_SHIPMENT_LABEL("2", "30","fba_shipment_label","FBA货件标签信息"),
+
+    AWD_SHIPMENT("2", "30","awd_shipment","AWD货件信息"),
+    AWD_SHIPMENT_DETAIL("2", "30","awd_shipment_detail","AWD货件详情信息"),
+    AWD_SHIPMENT_LABEL("2", "30","awd_shipment_label","AWD货件标签信息"),
     //履行订单
     FULFILL_ORDER("2", "30","fulfill_order","履行订单"),
     // 入库计划

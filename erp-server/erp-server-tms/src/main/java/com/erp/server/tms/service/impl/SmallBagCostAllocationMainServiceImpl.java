@@ -1,27 +1,29 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
-import com.erp.server.tms.mapper.SmallBagCostAllocationMainMapper;
-import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.SmallBagCostAllocationMainDTO;
+import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
+import com.erp.server.tms.mapper.SmallBagCostAllocationMainMapper;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.SmallBagCostAllocationMainDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 小包费用分摊主表 服务实现类
@@ -68,7 +70,7 @@ public class SmallBagCostAllocationMainServiceImpl extends SuperServiceImpl<Smal
     @Override
     public Boolean update(SmallBagCostAllocationMainDTO.UpdateDTO updateDTO) {
         SmallBagCostAllocationMainEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "小包费用分摊主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "小包费用分摊主单"));
         SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity =  BeanMapperUtils.map(SmallBagCostAllocationMainEntity.class, updateDTO);
 
         // 数据处理
@@ -106,5 +108,13 @@ public class SmallBagCostAllocationMainServiceImpl extends SuperServiceImpl<Smal
                 .set(SmallBagCostAllocationMainEntity::getBigTableStatus, bigTableStatus)
                 .eq(SmallBagCostAllocationMainEntity::getId, id)
                 .update();
+    }
+
+    @Override
+    public List<SmallBagCostAllocationMainEntity> listByCostIdList(List<String> costIdList) {
+        if (CollUtil.isEmpty(costIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SmallBagCostAllocationMainEntity::getCostId,costIdList).list();
     }
 }

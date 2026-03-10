@@ -9,7 +9,6 @@ import com.erp.server.tms.service.TmsPushMsgService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +65,7 @@ public class TmsPushMsgServiceImpl extends SuperServiceImpl<TmsPushMsgMapper, Tm
     @Override
     public Boolean update(TmsPushMsgDTO.UpdateDTO updateDTO) {
         TmsPushMsgEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "本地推送消息单"));
         TmsPushMsgEntity tmsPushMsgEntity =  BeanMapperUtils.map(TmsPushMsgEntity.class, updateDTO);
 
         // 数据处理

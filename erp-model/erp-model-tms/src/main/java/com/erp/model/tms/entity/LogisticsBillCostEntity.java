@@ -198,7 +198,55 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
      */
     @TableField(value = "check_status")
     private String checkStatus;
-    
+
+    /**
+     * 对账月份
+     */
+    @TableField("reconciliation_month")
+    private String reconciliationMonth;
+    /**
+     * 尺寸长(物流商)
+     */
+    @TableField(value = "third_length")
+    private BigDecimal thirdLength;
+
+    /**
+     * 尺寸宽(物流商)
+     */
+    @TableField(value = "third_width")
+    private BigDecimal thirdWidth;
+
+    /**
+     * 尺寸高(物流商)
+     */
+    @TableField(value = "third_height")
+    private BigDecimal thirdHeight;
+
+    /**
+     * 实重(物流商)
+     */
+    @TableField(value = "third_actual_weight")
+    private BigDecimal thirdActualWeight;
+
+
+    /**
+     * 区域编码
+     */
+    @TableField(value = "subregion_code")
+    private String subregionCode;
+
+    /**
+     * 部门id
+     */
+    @TableField(value = "dept_id")
+    private String deptId;
+
+    /**
+     * 军区id
+     */
+    @TableField(value = "partition_id")
+    private String partitionId;
+
     /**
      * 费用编辑（导入数据返回）
      */

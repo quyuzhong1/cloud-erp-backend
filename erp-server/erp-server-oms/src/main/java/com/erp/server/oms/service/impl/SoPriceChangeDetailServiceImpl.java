@@ -386,16 +386,16 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         for (SoPriceChangeDetailEntity entity : list) {
             //检验失效时间需要大于等于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_EXPIRE_BEFORE_EFFECTIVE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
             if (entity.getMaxQty().compareTo(entity.getMinQty()) < MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_INTERVAL_INVALID,entity.getSkuNo());
             }
         }
         SoPriceChangeEntity soPriceChangeEntity = soPriceChangeService.getById(soPriceChangeId);
         if (ObjUtil.isEmpty(soPriceChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         //区间验证
         checkSoPriceChangeDetail(soPriceChangeEntity.getSoOrgId(),list);
@@ -439,11 +439,11 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             SoPriceChangeDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_EXPIRE_BEFORE_EFFECTIVE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
             if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_INTERVAL_INVALID,entity.getSkuNo());
             }
 
             //1、数据与新增同类数据校验
@@ -486,7 +486,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
             if (overlap) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                throw new ServiceException(ApiError.PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
             }
         }
         //时间重叠时
@@ -495,7 +495,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                throw new ServiceException(ApiError.SUPPLIER_INTERVAL_OVERLAP);
             }
         }
     }
@@ -515,7 +515,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
             if (overlap) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                throw new ServiceException(ApiError.PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
             }
         }
         //时间重叠时
@@ -524,7 +524,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                throw new ServiceException(ApiError.SUPPLIER_INTERVAL_OVERLAP);
             }
         }
     }

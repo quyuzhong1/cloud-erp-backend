@@ -17,6 +17,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.core.utils.*;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -47,8 +48,10 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
@@ -205,12 +208,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单保存失败");
         }
 
-        // 库存校验
-        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
-            //去掉库存校验
+//        // 库存校验：只有需要出库时才校验可领用库存
+//        if (CollUtil.isNotEmpty(addDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
 //            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
+//        }
 
-            // 保存明细数据
+        // 保存明细数据
+        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
             List<SampleRecipientDetailEntity> detailEntities = new ArrayList<>();
             for (SampleRecipientDTO.ProductDTO productDTO : addDTO.getDetailList()) {
                 SampleRecipientDetailEntity detailEntity = new SampleRecipientDetailEntity();
@@ -219,6 +223,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 detailEntity.setSkuId(productDTO.getSkuId());
                 detailEntity.setProductName(productDTO.getProductName());
                 detailEntity.setRecipientQty(productDTO.getQuantity());
+                detailEntity.setAuditQty(0); // 新增默认审核数量为0
                 detailEntity.setDeliveryQty(0); // 初始已出库数量为0
                 if(!sampleRecipientEntity.getIsOutstockRequired()){
                     detailEntity.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
@@ -286,7 +291,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Override
     public Boolean update(SampleRecipientDTO.UpdateDTO addOrUpdateDTO) {
         SampleRecipientEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品领用单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品领用单"));
 
         // 检查单据是否已作废
         if (InvalidStatusEnum.VOIDED.getStatus().equals(old.getInvalidStatus())) {
@@ -295,7 +300,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         SampleRecipientEntity sampleRecipientEntity =  BeanMapperUtils.map(SampleRecipientEntity.class, addOrUpdateDTO);
         
@@ -312,12 +317,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
             throw new ServiceException("样品领用单明细不能为空");
-        }
-
-        // 库存校验
-        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
-            //去掉库存校验
-//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
         }
 
         log.info("编辑 开始修改样品领用单数据，单号：【{}】", old.getCode());
@@ -354,6 +353,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         processedIds.add(recordId);
                         existingDetail.setProductName(productDTO.getProductName());
                         existingDetail.setRecipientQty(productDTO.getQuantity());
+                        existingDetail.setAuditQty(ObjectUtil.defaultIfNull(existingDetail.getAuditQty(), 0));
                         existingDetail.setRemark(productDTO.getRemark());
                         existingDetail.setSkuNo(productDTO.getSkuNo());
                         existingDetail.setSkuId(productDTO.getSkuId());
@@ -374,6 +374,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         newDetail.setSkuId(productDTO.getSkuId());
                         newDetail.setProductName(productDTO.getProductName());
                         newDetail.setRecipientQty(productDTO.getQuantity());
+                        newDetail.setAuditQty(0); // 新增默认审核数量为0
                         newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
                         if(!sampleRecipientEntity.getIsOutstockRequired()){
                             newDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
@@ -391,6 +392,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     newDetail.setSkuId(productDTO.getSkuId());
                     newDetail.setProductName(productDTO.getProductName());
                     newDetail.setRecipientQty(productDTO.getQuantity());
+                    newDetail.setAuditQty(0); // 新增默认审核数量为0
                     newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
                     if(!sampleRecipientEntity.getIsOutstockRequired()){
                         newDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
@@ -617,6 +619,31 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
 
         validateSubmit(entity);
+        
+        // 库存校验：只有需要出库且用途类型不是PVT阶段-供应商时才校验可领用库存
+        boolean isPvtUsage = SampleUsageEnum.PVT.getUsage().equals(entity.getUsage());
+        if (Boolean.TRUE.equals(entity.getIsOutstockRequired()) && !isPvtUsage) {
+            // 查询明细数据
+            List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                    .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
+                    .list();
+            if (CollUtil.isNotEmpty(detailList)) {
+                // 转换为DTO格式进行校验
+                List<SampleRecipientDTO.ProductDTO> productDTOList = detailList.stream()
+                        .map(detail -> {
+                            SampleRecipientDTO.ProductDTO dto = new SampleRecipientDTO.ProductDTO();
+                            dto.setSkuId(detail.getSkuId());
+                            dto.setSkuNo(detail.getSkuNo());
+                            dto.setQuantity(detail.getRecipientQty());
+                            return dto;
+                        })
+                        .collect(Collectors.toList());
+                validateRecipientQuantity(entity.getWarehouseId(), productDTOList);
+            }
+        }
+        
+        // 提交前同步审核数量 = 领用数量
+        syncAuditQtyWithRecipientQty(entity.getId());
         // 更新单据审核状态
         log.info("提交 开始修改样品领用单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -642,6 +669,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
+    }
+
+    /**
+     * 提交流程前，将审核数量同步为当前的领用数量
+     */
+    private void syncAuditQtyWithRecipientQty(String mainId) {
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                .eq(SampleRecipientDetailEntity::getMainId, mainId)
+                .list();
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        detailList.forEach(detail -> detail.setAuditQty(ObjectUtil.defaultIfNull(detail.getRecipientQty(), 0)));
+        sampleRecipientDetailService.updateBatchById(detailList);
     }
 
     @Override
@@ -677,7 +718,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         SampleRecipientEntity entity = getById(dto.getId());
 
@@ -688,7 +729,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -751,7 +792,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -808,7 +849,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private Boolean validateDisApprove(SampleRecipientEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         // 检查是否有下推的其他出库单
@@ -829,7 +870,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 检查单据是否已作废
         if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
@@ -875,7 +916,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改样品领用单状态数据，id：【{}】", id);
         lambdaUpdate().eq(SampleRecipientEntity::getId, id)
@@ -911,7 +952,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -1099,7 +1140,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 检查是否有待出库或部分出库状态的明细
         boolean hasWaitOrPartOutstock = detailList.stream()
-            .anyMatch(detail -> 
+            .anyMatch(detail ->
                 SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()) ||
                 SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus().equals(detail.getExecStatus())
             );
@@ -1176,12 +1217,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 productDTO.setSkuId(detail.getSkuId());
                 productDTO.setProductName(detail.getProductName());
                 productDTO.setQuantity(detail.getRecipientQty());
+                productDTO.setAuditQty(detail.getAuditQty());
                 productDTO.setRemark(detail.getRemark());
                 productDTO.setUsableQty(inventoryMap.get(detail.getSkuId())!=null?inventoryMap.get(detail.getSkuId()).getUsableQty():0);
                 
                 // 移动端商品详情字段填充
-                // 待出库数量：如果执行状态为completeOutstock（结束出库），则为0；否则为领用数量-已出库数量
-                Integer reservedQty = "completeOutstock".equals(detail.getExecStatus()) ? 0 : (detail.getRecipientQty() - detail.getDeliveryQty());
+                // 待出库数量：如果执行状态为completeOutstock（结束出库），则为0；否则为审核数量-已出库数量
+                Integer reservedQty = "completeOutstock".equals(detail.getExecStatus()) ? 0 : (ObjectUtil.defaultIfNull(detail.getAuditQty(), 0) - ObjectUtil.defaultIfNull(detail.getDeliveryQty(), 0));
                 productDTO.setReservedQty(reservedQty);
                 productDTO.setDeliveryQty(detail.getDeliveryQty());
                 productDTO.setExecStatus(detail.getExecStatus());
@@ -1199,7 +1241,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
-        
+
         //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_RECIPIENT.getCode(), data.getId()));
@@ -1343,7 +1385,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1364,6 +1406,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 userIdSet.add(dto.getWarehouseChargeId());
             }
         });
+        List<String> deptIdList = list.stream()
+                .map(SampleRecipientDTO.ListDTO::getDeptId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SysDepartmentEntity> sysDepartmentEntityList = sysUserFeign.getDeptByIds(deptIdList);
+        Map<String, String> deptNameMap = sysDepartmentEntityList.stream()
+                .collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName, (v1, v2) -> v1));
+
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
         // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
@@ -1376,6 +1427,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
+            data.setDeptName(deptNameMap.getOrDefault(data.getDeptId(),""));
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setUsage(usageNameMap.getOrDefault(data.getUsage(), ""));
@@ -1411,7 +1463,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private void validateSubmit(SampleRecipientEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -1441,77 +1493,190 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("需要出库选择为否时，不出库原因必填");
         }
 
+        // 处理 user_id 和 use_user_id 可能是中文名称的情况：如果传入的是中文名称，尝试通过名称查询ID
+        String userId = sampleRecipientEntity.getUserId();
+        String useUserId = sampleRecipientEntity.getUseUserId();
+        
+        // 检查 userId 是否为中文名称，如果是则通过名称查询ID
+        if (StringUtils.isNotBlank(userId) && containsChinese(userId)) {
+            log.warn("检测到领用人ID是中文名称，尝试通过名称查询ID：{}", userId);
+            try {
+                FindUserDTO user = sysUserFeign.getUserByUserName(userId, null);
+                if (user != null && StringUtils.isNotBlank(user.getUserId())) {
+                    sampleRecipientEntity.setUserId(user.getUserId());
+                    userId = user.getUserId();
+                    log.info("通过用户名称查询到用户ID，名称：{}，ID：{}", sampleRecipientEntity.getUserId(), userId);
+                } else {
+                    throw new ServiceException(ApiError.SAMPLE_USER_ID_CHINESE_NOT_FOUND, userId);
+                }
+            } catch (ServiceException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("通过用户名称查询用户ID失败，用户名称：{}，错误：{}", userId, e.getMessage());
+                throw new ServiceException(ApiError.SAMPLE_USER_ID_CHINESE_QUERY_FAILED, userId);
+            }
+        }
+        
+        // 检查 useUserId 是否为中文名称，如果是则通过名称查询ID
+        if (StringUtils.isNotBlank(useUserId) && containsChinese(useUserId)) {
+            log.warn("检测到使用方ID是中文名称，尝试通过名称查询ID：{}", useUserId);
+            try {
+                // 先尝试查询内部用户
+                FindUserDTO user = sysUserFeign.getUserByUserName(useUserId, null);
+                if (user != null && StringUtils.isNotBlank(user.getUserId())) {
+                    sampleRecipientEntity.setUseUserId(user.getUserId());
+                    useUserId = user.getUserId();
+                    log.info("通过使用方名称查询到用户ID，名称：{}，ID：{}", sampleRecipientEntity.getUseUserId(), useUserId);
+                } else {
+                    // 如果内部用户查不到，尝试查询外部使用人字典
+                    List<String> nameList = Collections.singletonList(useUserId);
+                    ApiResult<List<SampleUseUserDTO.ViewDTO>> result = sysUserFeign.getSampleUseUserListByNameList(nameList);
+                    if (result != null && result.isSuccess() && CollectionUtils.isNotEmpty(result.getData())) {
+                        SampleUseUserDTO.ViewDTO externalUser = result.getData().get(0);
+                        if (externalUser != null && StringUtils.isNotBlank(externalUser.getId())) {
+                            sampleRecipientEntity.setUseUserId(externalUser.getId());
+                            useUserId = externalUser.getId();
+                            log.info("通过使用方名称查询到外部用户ID，名称：{}，ID：{}", sampleRecipientEntity.getUseUserId(), useUserId);
+                        } else {
+                            throw new ServiceException(ApiError.SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND, useUserId);
+                        }
+                    } else {
+                        throw new ServiceException(ApiError.SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND, useUserId);
+                    }
+                }
+            } catch (ServiceException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("通过使用方名称查询用户ID失败，使用方名称：{}，错误：{}", useUserId, e.getMessage());
+                throw new ServiceException(ApiError.SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED, useUserId);
+            }
+        }
+        
         // 查询用户信息
         List<String> userIds = new ArrayList<>();
-        userIds.add(sampleRecipientEntity.getUserId());
-        userIds.add(sampleRecipientEntity.getUseUserId());
+        if (StringUtils.isNotBlank(userId)) {
+            userIds.add(userId);
+        }
+        if (StringUtils.isNotBlank(useUserId)) {
+            userIds.add(useUserId);
+        }
         Map<String, String> userNameMap = new HashMap<>();
 
         if (CollUtil.isNotEmpty(userIds)) {
             try {
-                // 优先查询内部用户信息
-                List<SysDepartmentUserNumberDTO> userList = sysUserFeign.listDeptUserByUserIdList(userIds);
+                // 优先使用 getUserListByUserIds 查询内部用户信息（与列表查询保持一致）
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIds);
                 if (CollUtil.isNotEmpty(userList)) {
                     // 如果存在重复的用户ID，保留第一个
                     userNameMap = userList.stream()
-                            .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, SysDepartmentUserNumberDTO::getUserName, (existing, replacement) -> existing));
+                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
                 }
 
-                // 对于未找到的用户，尝试查询外部使用人字典
+                // 对于未找到的用户，尝试单个查询（可能 getUserListByUserIds 返回不完整）
                 Map<String, String> finalUserNameMap = userNameMap;
                 List<String> notFoundUserIds = userIds.stream()
-                        .filter(id -> !finalUserNameMap.containsKey(id))
+                        .filter(id -> !finalUserNameMap.containsKey(id) || StringUtils.isBlank(finalUserNameMap.get(id)))
                         .collect(Collectors.toList());
 
                 if (CollUtil.isNotEmpty(notFoundUserIds)) {
-                    log.info("尝试查询外部使用人字典，用户ID列表：{}", notFoundUserIds);
-                    try {
-                        List<BaseIdDTO> externalUsers = sysDictFeign.getByIds(notFoundUserIds);
-                        if (CollUtil.isNotEmpty(externalUsers)) {
-                            for (BaseIdDTO externalUser : externalUsers) {
-                                // 假设BaseIdDTO中有name字段，如果没有则需要调整
-                                if (externalUser.getName() != null) {
-                                    userNameMap.put(externalUser.getId(), externalUser.getName());
+                    log.info("部分用户未查询到名称，尝试单个查询，用户ID列表：{}", notFoundUserIds);
+                    for (String notFoundUserId : notFoundUserIds) {
+                        try {
+                            FindUserDTO user = sysUserFeign.getUserByUserId(notFoundUserId);
+                            if (user != null && StringUtils.isNotBlank(user.getUserName())) {
+                                userNameMap.put(user.getUserId(), user.getUserName());
+                                log.debug("通过单个查询获取到用户名称，用户ID：{}，用户名称：{}", user.getUserId(), user.getUserName());
+                            }
+                        } catch (Exception e) {
+                            log.debug("单个查询用户失败，用户ID：{}，错误：{}", notFoundUserId, e.getMessage());
+                        }
+                    }
+                    
+                    // 如果单个查询还是找不到，尝试查询外部使用人字典
+                    Map<String, String> finalUserNameMap1 = userNameMap;
+                    List<String> stillNotFoundUserIds = notFoundUserIds.stream()
+                            .filter(id -> !finalUserNameMap1.containsKey(id) || StringUtils.isBlank(finalUserNameMap1.get(id)))
+                            .collect(Collectors.toList());
+                    
+                    if (CollUtil.isNotEmpty(stillNotFoundUserIds)) {
+                        log.info("尝试查询外部使用人字典，用户ID列表：{}", stillNotFoundUserIds);
+                        try {
+                            List<BaseIdDTO> externalUsers = sysDictFeign.getByIds(stillNotFoundUserIds);
+                            if (CollUtil.isNotEmpty(externalUsers)) {
+                                for (BaseIdDTO externalUser : externalUsers) {
+                                    if (externalUser != null && StringUtils.isNotBlank(externalUser.getName())) {
+                                        userNameMap.put(externalUser.getId(), externalUser.getName());
+                                    }
                                 }
                             }
+                        } catch (Exception e) {
+                            log.warn("查询外部使用人字典失败，错误：{}", e.getMessage());
                         }
-                    } catch (Exception e) {
-                        log.warn("查询外部使用人字典失败，错误：{}", e.getMessage());
                     }
                 }
             } catch (Exception e) {
                 log.warn("查询用户信息失败，错误：{}", e.getMessage());
+                // 查询失败时，尝试单个查询作为备用方案
+                for (String userIdItem : userIds) {
+                    if (!userNameMap.containsKey(userIdItem) || StringUtils.isBlank(userNameMap.get(userIdItem))) {
+                        try {
+                            FindUserDTO user = sysUserFeign.getUserByUserId(userIdItem);
+                            if (user != null && StringUtils.isNotBlank(user.getUserName())) {
+                                userNameMap.put(user.getUserId(), user.getUserName());
+                            }
+                        } catch (Exception ex) {
+                            log.debug("备用查询用户失败，用户ID：{}", userIdItem);
+                        }
+                    }
+                }
             }
         }
 
-        sampleRecipientEntity.setUserName(userNameMap.get(sampleRecipientEntity.getUserId()));
-        sampleRecipientEntity.setUseUserName(userNameMap.get(sampleRecipientEntity.getUseUserId()));
+        // 设置用户名称，确保数据库字段被填充
+        if (StringUtils.isNotBlank(sampleRecipientEntity.getUserId())) {
+            String userName = userNameMap.get(sampleRecipientEntity.getUserId());
+            sampleRecipientEntity.setUserName(StringUtils.isNotBlank(userName) ? userName : "");
+        } else {
+            sampleRecipientEntity.setUserName("");
+        }
+        
+        if (StringUtils.isNotBlank(sampleRecipientEntity.getUseUserId())) {
+            String useUserName = userNameMap.get(sampleRecipientEntity.getUseUserId());
+            sampleRecipientEntity.setUseUserName(StringUtils.isNotBlank(useUserName) ? useUserName : "");
+        } else {
+            sampleRecipientEntity.setUseUserName("");
+        }
+
+        // 查询并设置领料组织名称，确保数据库字段被填充
+        if (StringUtils.isNotBlank(sampleRecipientEntity.getPickOrgId())) {
+            try {
+                SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(sampleRecipientEntity.getPickOrgId());
+                if (company != null && StringUtils.isNotBlank(company.getCompanyName())) {
+                    sampleRecipientEntity.setPickOrgName(company.getCompanyName());
+                } else {
+                    log.warn("未找到组织ID对应的组织名称，组织ID：{}", sampleRecipientEntity.getPickOrgId());
+                    sampleRecipientEntity.setPickOrgName("");
+                }
+            } catch (Exception e) {
+                log.warn("查询组织名称失败，组织ID：{}，错误：{}", sampleRecipientEntity.getPickOrgId(), e.getMessage());
+                sampleRecipientEntity.setPickOrgName("");
+            }
+        } else {
+            sampleRecipientEntity.setPickOrgName("");
+        }
 
 
     }
 
     /**
      * 校验领用数量（新增和修改场景通用）
-     * 实时库存-冻结库存-领用数量>0，否则报错"可领用库存不足"
+     * 可领用库存 = 实体仓未分配虚拟仓库库存 = 实体仓可用库存 + 冻结库存 - 虚拟仓实际库存
+     * 可领用库存 - 总领用数量 >= 0，否则报错"可领用库存不足"
      */
     private void validateRecipientQuantity(String warehouseId, List<SampleRecipientDTO.ProductDTO> detailList) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
-
-        // 构建库存查询参数
-        List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> inventoryParams = new ArrayList<>();
-        for (SampleRecipientDTO.ProductDTO detail : detailList) {
-            InventoryDTO.InventoryBySkuIdAndWarehouseDTO param = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
-            param.setWarehouseId(warehouseId);
-            param.setSkuId(detail.getSkuId());
-            inventoryParams.add(param);
-        }
-
-        // 查询库存信息
-        List<InventoryDTO.InventoryViewQtyDTO> inventoryList = sampleRecipientEntity.getInventoryQty(inventoryParams);
-        Map<String, InventoryDTO.InventoryViewQtyDTO> inventoryMap = inventoryList.stream()
-            .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item, (existing, replacement) -> existing));
 
         // 按SKU分组累计数量
         Map<String, Integer> skuTotalQuantityMap = detailList.stream()
@@ -1525,32 +1690,28 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             String skuId = entry.getKey();
             Integer totalQuantity = entry.getValue();
             
-            InventoryDTO.InventoryViewQtyDTO inventory = inventoryMap.get(skuId);
-            if (inventory == null) {
-                // 从detailList中找到对应的SKU编号用于错误提示
-                String skuNo = detailList.stream()
-                    .filter(detail -> skuId.equals(detail.getSkuId()))
-                    .map(SampleRecipientDTO.ProductDTO::getSkuNo)
-                    .findFirst()
-                    .orElse(skuId);
+            // 从detailList中找到对应的SKU编号用于错误提示
+            String skuNo = detailList.stream()
+                .filter(detail -> skuId.equals(detail.getSkuId()))
+                .map(SampleRecipientDTO.ProductDTO::getSkuNo)
+                .findFirst()
+                .orElse(skuId);
+            
+            // 使用getRecipientAvailableQty方法获取可领用库存（实体仓可用+冻结-虚拟仓实际库存）
+            Integer recipientAvailableQty = sampleRecipientEntity.getRecipientAvailableQty(warehouseId, skuId);
+            if (recipientAvailableQty == null) {
                 throw new ServiceException(String.format("SKU【%s】在仓库【%s】中不存在库存信息", skuNo, warehouseId));
             }
 
-            // 计算可领用库存：可用库存 - 总领用数量
-            int availableQty = inventory.getUsableQty() - totalQuantity;
-            if (availableQty < 0) {
-                // 从detailList中找到对应的SKU编号用于错误提示
-                String skuNo = detailList.stream()
-                    .filter(detail -> skuId.equals(detail.getSkuId()))
-                    .map(SampleRecipientDTO.ProductDTO::getSkuNo)
-                    .findFirst()
-                    .orElse(skuId);
-                throw new ServiceException(String.format("SKU【%s】可领用库存不足，可用库存：%d，总领用数量：%d", 
-                    skuNo, inventory.getUsableQty(), totalQuantity));
+            // 计算剩余可领用库存：可领用库存 - 总领用数量
+            int remainingQty = recipientAvailableQty - totalQuantity;
+            if (remainingQty < 0) {
+                throw new ServiceException(String.format("SKU【%s】可领用库存不足，可领用库存：%d，总领用数量：%d", 
+                    skuNo, recipientAvailableQty, totalQuantity));
             }
 
-            log.info("SKU【{}】库存校验通过，可用库存：{}，总领用数量：{}，剩余可领用库存：{}", 
-                skuId, inventory.getUsableQty(), totalQuantity, availableQty);
+            log.info("SKU【{}】库存校验通过，可领用库存：{}，总领用数量：{}，剩余可领用库存：{}", 
+                skuNo, recipientAvailableQty, totalQuantity, remainingQty);
         }
 
 
@@ -1598,6 +1759,96 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
 
         /**
+     * 修改审核数量（只有审核中的才能修改）
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAuditQty(SampleRecipientDTO.UpdateAuditQtyDTO dto) {
+        try {
+            log.info("开始修改审核数量，参数：{}", JSONUtil.toJsonStr(dto));
+
+            // 参数校验
+            if (CollUtil.isEmpty(dto.getDetailList())) {
+                throw new ServiceException(ApiError.BILL_AUDIT_QTY_DETAIL_REQUIRED);
+            }
+
+            // 1. 查询样品领用单主表
+            SampleRecipientEntity entity = this.getById(dto.getId());
+            if (entity == null) {
+                throw new ServiceException(ApiError.SAMPLE_APPLY_NOT_FOUND);
+            }
+
+            // 2. 校验单据状态：只有审核中的才能修改
+            if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+                throw new ServiceException(ApiError.SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY);
+            }
+
+            // 检查单据是否已作废
+            if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+                throw new ServiceException(ApiError.SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN);
+            }
+
+            // 3. 查询所有明细
+            List<String> detailIds = dto.getDetailList().stream()
+                    .map(SampleRecipientDTO.UpdateAuditQtyDetailDTO::getDetailId)
+                    .collect(Collectors.toList());
+            
+            List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                    .in(SampleRecipientDetailEntity::getId, detailIds)
+                    .eq(SampleRecipientDetailEntity::getMainId, dto.getId())
+                    .list();
+
+            if (detailList.size() != detailIds.size()) {
+                throw new ServiceException(ApiError.SAMPLE_DETAIL_NOT_BELONG_TO_APPLY);
+            }
+
+            // 4. 构建明细ID到审核数量的映射
+            Map<String, Integer> auditQtyMap = dto.getDetailList().stream()
+                    .filter(item -> item.getDetailId() != null && item.getAuditQty() != null)
+                    .collect(Collectors.toMap(
+                            SampleRecipientDTO.UpdateAuditQtyDetailDTO::getDetailId,
+                            SampleRecipientDTO.UpdateAuditQtyDetailDTO::getAuditQty,
+                            (existing, replacement) -> replacement
+                    ));
+
+            // 5. 更新明细的审核数量
+            for (SampleRecipientDetailEntity detail : detailList) {
+                Integer auditQty = auditQtyMap.get(detail.getId());
+                if (auditQty == null) {
+                    continue;
+                }
+                
+                // 校验审核数量不能大于领用数量
+                if (auditQty > ObjectUtil.defaultIfNull(detail.getRecipientQty(), 0)) {
+                    throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY, detail.getSkuNo(), auditQty, detail.getRecipientQty());
+                }
+                
+                detail.setAuditQty(auditQty);
+            }
+
+            // 6. 批量更新明细
+            boolean updateResult = sampleRecipientDetailService.updateBatchById(detailList);
+            if (!updateResult) {
+                throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_UPDATE_FAILED);
+            }
+
+            // 7. 记录操作日志
+            String msg = StrUtil.format("用户【{}】修改样品领用单【{}】的审核数量", 
+                    UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "修改审核数量");
+
+            log.info("修改审核数量成功，单据编号：{}，修改明细数量：{}", entity.getCode(), detailList.size());
+            return true;
+
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("修改审核数量失败，参数：{}，错误：{}", JSONUtil.toJsonStr(dto), e.getMessage(), e);
+            throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_UPDATE_FAILED, e.getMessage());
+        }
+    }
+
+    /**
      * 查询SKU成本
      */
         @Override
@@ -1836,8 +2087,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 stockDTO.setSkuId(skuId);
                 stockDTO.setWarehouseId(warehouseId);
                 // 查询可用库存
-                Integer availableQty = sampleRecipientEntity.getUsableInventoryTotal(warehouseId, skuId);
-                stockDTO.setAvailableQty(availableQty != null ? availableQty : 0);
+            Integer availableQty = sampleRecipientEntity.getRecipientAvailableQty(warehouseId, skuId);
+            stockDTO.setAvailableQty(availableQty != null ? availableQty : 0);
                 result.add(stockDTO);
             }
             
@@ -2005,9 +2256,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 3. 过滤出待出库数量大于0的明细数据
         detailList = detailList.stream()
                 .filter(detail -> {
-                    Integer recipientQty = detail.getRecipientQty() != null ? detail.getRecipientQty() : 0;
+                    Integer auditQty = ObjectUtil.defaultIfNull(detail.getAuditQty(), 0);
                     Integer deliveryQty = detail.getDeliveryQty() != null ? detail.getDeliveryQty() : 0;
-                    return (recipientQty - deliveryQty) > 0; // 待出库数量大于0
+                    return (auditQty - deliveryQty) > 0; // 待出库数量大于0
                 })
                 .collect(Collectors.toList());
 
@@ -2100,14 +2351,14 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             dto.setUserId(main.getUserId());
 
             // 设置数量信息
-            Integer recipientQty = detail.getRecipientQty() != null ? detail.getRecipientQty() : 0;
+            Integer auditQty = ObjectUtil.defaultIfNull(detail.getAuditQty(), 0);
             Integer deliveryQty = detail.getDeliveryQty() != null ? detail.getDeliveryQty() : 0;
-            dto.setReservedQty(recipientQty - deliveryQty); // 待出库数量 = 领用数量 - 已出库数量
+            dto.setReservedQty(auditQty - deliveryQty); // 待出库数量 = 审核数量 - 已出库数量
             dto.setDeliveryQty(deliveryQty);
 
             // 设置即时可用库存
             String inventoryKey = detail.getSkuId() + "_" + main.getWarehouseId();
-            Integer inventoryQty = inventoryMap.getOrDefault(inventoryKey, 0);
+            Integer inventoryQty = sampleRecipientEntity.getRecipientAvailableQty(main.getWarehouseId(), detail.getSkuId());
             dto.setCurInventoryQty(inventoryQty);
 
             // 设置其他字段
@@ -2223,7 +2474,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     skuNoOutQtySumMap.merge(skuNo, outQty, Integer::sum);
                 }
 
-                // 统计整张单据内各 skuNo 的待出库数量（recipientQty - deliveryQty）
+                // 统计整张单据内各 skuNo 的待出库数量（auditQty - deliveryQty）
                 List<SampleRecipientDetailEntity> allDetailsOfDoc = sampleRecipientDetailService.lambdaQuery()
                         .eq(SampleRecipientDetailEntity::getMainId, sourceId)
                         .list();
@@ -2231,7 +2482,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 if (CollUtil.isNotEmpty(allDetailsOfDoc)) {
                     for (SampleRecipientDetailEntity d : allDetailsOfDoc) {
                         String skuNo = d.getSkuNo();
-                        int reserved = Math.max(ObjectUtil.defaultIfNull(d.getRecipientQty(), 0) - ObjectUtil.defaultIfNull(d.getDeliveryQty(), 0), 0);
+                        int reserved = Math.max(ObjectUtil.defaultIfNull(d.getAuditQty(), 0) - ObjectUtil.defaultIfNull(d.getDeliveryQty(), 0), 0);
                         skuNoReservedQtyMap.merge(skuNo, reserved, Integer::sum);
                     }
                 }
@@ -2302,7 +2553,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setReceiveOrgId(sampleRecipient.getPickOrgId()); // 领料组织ID
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
             addDTO.setProcessApplyCode(firstItem.getSourceCode()); // 流程申请单号：样品领用单号
-            addDTO.setRemark("样品领用单【下推】其他出库单"); // 备注
+            addDTO.setRemark(sampleRecipient.getUsageDesc()); // 备注
+            // 用途：从字典获取中文名称
+            if (StringUtils.isNotBlank(sampleRecipient.getUsage())) {
+                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                Map<String, String> usageNameMap = usageDictList.stream()
+                        .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                String usageCn = usageNameMap.getOrDefault(sampleRecipient.getUsage(), sampleRecipient.getUsage());
+                addDTO.setUsage(usageCn);
+            } else {
+                addDTO.setUsage("");
+            }
             
             // 构建客户信息
             OtherOutstockCustomerDTO.AddDTO customerDTO = new OtherOutstockCustomerDTO.AddDTO();
@@ -2341,7 +2602,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             // 调用其他出库单服务创建出库单 并审核通过
             String outboundOrderId = otherOutstockService.add(addDTO);
             if (CharSequenceUtil.isBlank(outboundOrderId)) {
-                throw new ServiceException(ApiError.ERROR_1019);
+                throw new ServiceException(ApiError.BILL_SAVE_FAILED);
             }
             
             if (StringUtils.isNotBlank(outboundOrderId)) {
@@ -2383,20 +2644,22 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     /**
-     * 根据已出库数量和领用数量计算执行状态
+     * 根据已出库数量和审核数量计算执行状态
      * 根据表格规则：
      * - 已出库数量=0：待出库
-     * - 0 < 已出库数量 < 借用数量：部分出库
+     * - 0 < 已出库数量 < 审核数量：部分出库
      * - 待出库数量=0：已出库
      *
      * @param deliveryQty 已出库数量
-     * @param recipientQty 领用数量
+     * @param auditQty 审核数量
      * @return 执行状态
      */
-    private String calculateExecStatus(Integer deliveryQty, Integer recipientQty) {
-        if (deliveryQty == null || deliveryQty == 0) {
+    private String calculateExecStatus(Integer deliveryQty, Integer auditQty) {
+        int delivery = ObjectUtil.defaultIfNull(deliveryQty, 0);
+        int audit = ObjectUtil.defaultIfNull(auditQty, 0);
+        if (delivery == 0) {
             return SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus(); // 待出库
-        } else if (deliveryQty < recipientQty) {
+        } else if (delivery < audit) {
             return SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus(); // 部分出库
         } else {
             return SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus(); // 已出库
@@ -2471,7 +2734,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             EasyExcel.read(new ByteArrayInputStream(bytes), SampleRecipientExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -2572,7 +2835,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             detail.setDeliveryQty(newDeliveryQty);
             
             // 根据已出库数量和领用数量的关系，更新执行状态
-            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getRecipientQty());
+            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getAuditQty());
             detail.setExecStatus(newExecStatus);
             
             // 更新样品领用单明细
@@ -2619,7 +2882,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             detail.setDeliveryQty(newDeliveryQty);
             
             // 根据已出库数量和领用数量的关系，更新执行状态
-            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getRecipientQty());
+            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getAuditQty());
             detail.setExecStatus(newExecStatus);
             
             // 更新样品领用单明细
@@ -2671,7 +2934,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
             for (SampleRecipientDetailEntity detail : detailList) {
                 // 计算数量：审核为+X，反审核为-X
-                Integer qty = calculateQty(detail.getRecipientQty(), approveType);
+                Integer qty = calculateQty(ObjectUtil.defaultIfNull(detail.getAuditQty(), 0), approveType);
                 
                 SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
                 flowDetail.setSourceDetailId(detail.getId());
@@ -2754,6 +3017,21 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
         
         return originalQty;
+    }
+
+    /**
+     * 检查字符串是否包含中文字符
+     */
+    private boolean containsChinese(String str) {
+        if (StringUtils.isBlank(str)) {
+            return false;
+        }
+        for (char c : str.toCharArray()) {
+            if (c >= 0x4E00 && c <= 0x9FA5) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -2951,10 +3229,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
             if (StrUtil.isNotBlank(ledgerId)) {
                 sampleLedgerIds.add(ledgerId);
-                qtys.add(-detail.getRecipientQty()); // 反审核时扣减库存
+                qtys.add(-ObjectUtil.defaultIfNull(detail.getAuditQty(), 0)); // 反审核时扣减库存
                 skuNos.add(detail.getSkuNo());
             } else {
-                log.warn("未找到台账，SKU：{}，领用人：{}，单据编号：{}", 
+                log.warn("未找到台账，SKU：{}，领用人：{}，单据编号：{}",
                     detail.getSkuNo(), entity.getUserName(), entity.getCode());
                 throw new ServiceException(StrUtil.format("SKU【{}】的样品台账不存在，无法反审核", detail.getSkuNo()));
             }

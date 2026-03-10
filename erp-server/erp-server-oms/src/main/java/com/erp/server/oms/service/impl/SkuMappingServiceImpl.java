@@ -222,7 +222,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             wb.close();
         } catch (Exception e) {
             log.error("SkuMaping downloadTemplate  出错了 e>>>>>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -436,11 +436,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //step1 参数校验
         String id = dto.getId();
         if (Objects.isNull(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_92051);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_NOT_FOUND);
         }
         //启用日期不能大于上个映射关系的开始时间
-        if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
-            throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
+        if (Objects.nonNull(skuMapping.getEffectiveTime()) && dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
+            throw new ServiceException(ApiError.MAPPING_START_DATE_INVALID,skuMapping.getEffectiveTime());
         }
         // 历史skuId
         String historyProductSkuId = skuMapping.getProductSkuId();
@@ -448,12 +448,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         String platformDict = dto.getDictPlatform();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SALES_PLATFORM.getType(), platformDict);
         if (Objects.isNull(dictBasic)) {
-            throw new ServiceException(ApiError.ERROR_92053);
+            throw new ServiceException(ApiError.COMMON_PLATFORM_NOT_FOUND);
         }
         String platformSkuNo = dto.getPlatformSkuNo();
         if (null == listing) {
@@ -462,9 +462,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //检查映射关系是否存在
         checkExist(id, listing.getId(), shopId);
         //检查历史映射关系是否存在
-        if(!historyProductSkuId.equals(productSkuId)){
-            checkHistory(id, listing.getId(), shopId, dto.getProductSkuId());
-        }
+//        if(!historyProductSkuId.equals(productSkuId)){
+//            checkHistory(id, listing.getId(), shopId, dto.getProductSkuId());
+//        }
 
         // 平台sku校验
         if (PlatformDictEnum.hasConnectionPlatform().contains(platformSkuNo)) {
@@ -694,16 +694,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String id = dto.getId();
         SkuMappingEntity skuMapping = this.getById(id);
         if (Objects.isNull(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_92051);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_NOT_FOUND);
         }
         //启用日期不能大于上个映射关系的开始时间
-        if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
-            throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
+        if (Objects.nonNull(skuMapping.getEffectiveTime()) && dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
+            throw new ServiceException(ApiError.MAPPING_START_DATE_INVALID,skuMapping.getEffectiveTime());
         }
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         String thirdBarcode = dto.getThirdBarcode();
         String warehouseSkuNo = dto.getWarehouseSkuNo();
@@ -1200,7 +1200,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         long count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92052);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP);
         }
 
 
@@ -1212,7 +1212,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(CollectionUtils.isEmpty(oldEntities)){
             return;
         }
-        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntities.get(0).getExpireTime().toString());
+        throw new ServiceException(ApiError.MAPPING_SKU_HISTORY_EXISTS, oldEntities.get(0).getExpireTime().toString());
     }
 
     /**
@@ -1363,25 +1363,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (RuleTypeEnum.CUSTOMER == entity.getType()) {
             this.deleteCustomer(entity, listingInfoEntity);
             return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
-        }
-        // 无平台
-        if (StringUtils.isBlank(entity.getDictPlatform())) {
+        }else{
             this.deleteAll(id, listingInfoEntity);
             return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
-        // 销售平台
-        if (RuleTypeEnum.B2C_PLATFORM == entity.getType() && !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
-            this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
-        }
-        // 仓库平台
-        if (RuleTypeEnum.WAREHOUSE == entity.getType() && null == OmsPlatformEnum.getByCode(entity.getDictPlatform())) {
-            this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(),listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
-        }
-
-        // 有平台
-        throw new ServiceException("API接口新增的平台SKU和库存SKU不允许删除");
     }
 
     private void deleteCustomer(SkuMappingEntity entity, ListingInfoEntity listingInfoEntity) {
@@ -1461,6 +1446,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!this.removeById(id)) {
             throw new ServiceException("删除映射失败,请重试");
         }
+        if (!listingInfoService.removeById(listingInfoEntity.getId())) {
+            throw new ServiceException("删除listing失败");
+        }
+        String msg =  CharSequenceUtil.format("用户【{}】删除【{}】sku为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getProductSkuNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "删除操作");
     }
 
     @Override

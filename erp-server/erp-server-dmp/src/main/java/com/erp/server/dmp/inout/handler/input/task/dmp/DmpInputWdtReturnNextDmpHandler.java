@@ -21,6 +21,8 @@ public class DmpInputWdtReturnNextDmpHandler extends DmpInputWdtNextDmpHandler{
 		detailList.forEach(d -> {
 			d.put("returnLogisticsNo", dmpInputMongoEntity.get("return_logistics_no"));
 			d.put("returnLogisticsCompany", dmpInputMongoEntity.get("return_logistics_name"));
+			d.put("warehouseId", dmpInputMongoEntity.get("return_warehouse_id"));
+			d.put("warehouseName", dmpInputMongoEntity.get("return_warehouse_no"));
 			d.put("reason", dmpInputMongoEntity.get("reason_name"));
 			Object type = dmpInputMongoEntity.get("type");
 			if(type != null) {

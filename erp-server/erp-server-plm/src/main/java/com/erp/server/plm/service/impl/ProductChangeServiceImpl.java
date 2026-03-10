@@ -260,7 +260,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 }
 
                 // 抛出包含库存状态和数量信息的自定义异常
-                throw new ServiceException(ApiError.ERROR_95286,sb.toString());
+                throw new ServiceException(ApiError.PRODUCT_SKU_STOCK_REF_CHANGE_FORBIDDEN,sb.toString());
             }
         }
     }
@@ -272,15 +272,15 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         //获取到变更信息
         ProductChangeEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95105);
+            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING.getState())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -309,7 +309,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -393,11 +393,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     public BatchResultDTO cancelProcess(String id) {
         ProductChangeEntity entity = this.getById(id);
         if (ObjectUtil.isNotEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING.getState())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         updateForApprove(id, ProductChangeStateEnum.WAIT_SUBMIT.getState(),"");
         //操作日志
@@ -422,7 +422,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ProductChangeStateEnum.WAIT_SUBMIT.getState().equals(entity.getState()) && !ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(entity.getState()))) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         // 更新单据审核状态
@@ -590,7 +590,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     public Boolean cancellation(String productChangeId) {
         ProductChangeEntity entity = this.getById(productChangeId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95105);
+            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
         Integer state = entity.getState();
         //待提交
@@ -599,7 +599,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Integer auditNoPassState = ProductChangeStateEnum.AUDIT_NO_PASS.getState();
         //当不等于他们的时候
         if (!waitAudit.equals(state) && !auditNoPassState.equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95106);
+            throw new ServiceException(ApiError.PROJECT_CHANGE_VOID_REQUIRED);
         }
         entity.setState(ProductChangeStateEnum.CANCELLATION.getState());
         return this.updateById(entity);
@@ -656,13 +656,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         //获取到变更信息
         ProductChangeEntity changeEntity = this.getById(id);
         if (Objects.isNull(changeEntity)) {
-            throw new ServiceException(ApiError.ERROR_95105);
+            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
         Integer state = changeEntity.getState();
         Integer waitAudit = ProductChangeStateEnum.WAIT_SUBMIT.getState();
         //只有待提交才能编辑
         if (!waitAudit.equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95109);
+            throw new ServiceException(ApiError.BILL_WAIT_APPROVE_REQUIRED);
         }
         //新的
         String sourceId = dto.getSourceId();
@@ -795,19 +795,19 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     public List<String> listChangeField(String id) {
         ProductChangeEntity productChangeEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_95127);
+            throw new ServiceException(ApiError.PROJECT_CHANGE_INFO_NOT_FOUND);
         }
         //查询变更后的json字符串
         String detailsJson = productChangeDetailsService.getDetailsJson(id);
         if (StringUtils.isBlank(detailsJson)) {
-            throw new ServiceException(ApiError.ERROR_95128);
+            throw new ServiceException(ApiError.COMMON_CHANGE_NO_RECORD);
         }
         //变更后数据
         ProductSmallestUnitDTO newBom = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
         //变更前数据
         ProductSmallestUnitDTO oldbom = productDetailService.getSkuBySkuId(productChangeEntity.getSourceId());
         if (ObjectUtils.isEmpty(oldbom)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         List<String> resultList = new ArrayList<>();
         setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(), resultList);

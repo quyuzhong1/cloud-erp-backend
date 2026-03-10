@@ -37,7 +37,7 @@ public class VwPushHandelDetailPushDTO {
     @SerializedName("is_pre_check")
     private String isPreCheck;
     /**
-     * 库存不足则不审核:仅在order_type=3时生效，默认0
+     * 库存不足则不审核:默认0
      * <p>
      * 1：审核，  0：不审核
      */
@@ -80,6 +80,7 @@ public class VwPushHandelDetailPushDTO {
      * 同步id
      */
     private String dmpSyncTaskId;
+
 
     @Getter
     @Setter

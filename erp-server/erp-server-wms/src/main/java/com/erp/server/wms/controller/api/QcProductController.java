@@ -9,7 +9,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,13 +44,13 @@ public class QcProductController extends BaseController {
     @GetMapping("/skuView")
     public ApiResult<ProductVO.ProductPackVO> getSkuInfo(@RequestParam("skuId") String skuId) {
         if (CharSequenceUtil.isBlank(skuId)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         List<String> skuIdList = new ArrayList<>();
         skuIdList.add(skuId);
         List<ProductVO.ProductPackVO> packVOList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
         if (CollectionUtils.isEmpty(packVOList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         return success(packVOList.get(0));
     }

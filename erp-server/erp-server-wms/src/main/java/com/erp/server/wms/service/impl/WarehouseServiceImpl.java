@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -399,7 +398,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             warehouseNameList = CollUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.emptyList();
             warehoseAreaList = CollUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.emptyList();
             warehosueLocationList = CollUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.emptyList();
-            throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList));
+            throw new ServiceException(ApiError.WH_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList));
         }
     }
 
@@ -639,7 +638,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
             if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
+                throw new ServiceException(ApiError.WH_ONWAY_NOT_EXIST);
             }
             warehouse.setOnwayWarehouseName(entity.getName());
         }
@@ -652,7 +651,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
                     WarehouseEntity entity = this.getById(checkThirdWarehouseNameExist.getWarehouseId());
-                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName(), entity.getName());
+                    throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName(), entity.getName());
                 }
                 WarehouseMappingDTO.AddDTO addDTO = new WarehouseMappingDTO.AddDTO();
                 addDTO.setName(dto.getThirdWarehouseName());
@@ -706,7 +705,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99001);
+            throw new ServiceException(ApiError.WH_REQUIRED);
         }
         String code = dto.getKingdeeWarehouseCode();
         String name = dto.getName();
@@ -732,7 +731,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
             if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
+                throw new ServiceException(ApiError.WH_ONWAY_NOT_EXIST);
             }
             warehouse.setOnwayWarehouseName(entity.getName());
         }else {
@@ -756,11 +755,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
                 updateDTO.setId(mappingViewByDictPlatform.getId());
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist) && !checkThirdWarehouseNameExist.getId().equals(mappingViewByDictPlatform.getId())) {
-                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                    throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
                 }
             } else {
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
-                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                    throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
                 }
             }
             updateDTO.setName(dto.getThirdWarehouseName());
@@ -787,7 +786,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
         if (CharSequenceUtil.isBlank(warehouseId)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         Boolean result = this.submit(Collections.singletonList(warehouseId));
         return result;
@@ -825,7 +824,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         statusList.add(waitSubmitStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
         return result;
@@ -850,7 +849,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99001);
+            throw new ServiceException(ApiError.WH_REQUIRED);
         }
         //仓库下绑定第三方店铺不能修改为禁用状态
         //Delete by Edison.qu 2024-07-23 去除不必要的限制
@@ -894,12 +893,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),MessageUtils.getMessage(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY));
         }
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
         if (WmsConstant.PASS.equals(type)) {
             //审核通过
@@ -929,14 +928,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),MessageUtils.getMessage(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY));
         }
         List<WarehouseEntity> list = Collections.singletonList(entity);
         //仓库已绑定店铺不允许反审核
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),CharSequenceUtil.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.msg, shopInfoEntity.getName()));
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),MessageUtils.getMessage(ApiError.WH_SHOP_INFO_EXIST_NOT_DISAPPROVE, shopInfoEntity.getName()));
         }
         this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //仓库下绑定第三方店铺不能进行反审核
@@ -956,7 +955,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         viewParamDTO.setSysId(warehouseId);
         Boolean hasThirdMapping = dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
         if (!hasThirdMapping){
-            throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING,warehouseName);
+            throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_MAPPING_EXIST,warehouseName);
         }
     }
 
@@ -981,13 +980,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 //        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
         List<WarehouseEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (WarehouseEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), MessageUtils.getMessage(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY)));
                 continue;
             }
             removeList.add(entity);
@@ -1000,7 +999,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         //删除发送金蝶
         sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
-        this.removeByIds(removeList);
+        this.removeByIds(removeIdList);
         return resultDTOList;
     }
 
@@ -1017,7 +1016,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public WarehouseDTO.UpdateDTO view(String warehouseId) {
         WarehouseEntity warehouse = this.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99001);
+            throw new ServiceException(ApiError.WH_REQUIRED);
         }
         WarehouseDTO.UpdateDTO dto = new WarehouseDTO.UpdateDTO();
         BeanMapper.copy(warehouse, dto);
@@ -1143,7 +1142,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -1203,7 +1202,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
         String id = this.updateWarehouse(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(id));
 
@@ -1384,7 +1383,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99000);
+            throw new ServiceException(ApiError.WH_K3_CLOUD_WAREHOUSE_CODE_EXISTS);
         }
 
     }
@@ -1407,7 +1406,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+            throw new ServiceException(ApiError.COMMON_DUPLICATION_NAME);
         }
     }
 
@@ -1494,9 +1493,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
 	}
 
+    @Override
+    public List<WarehouseDTO.UpdateDTO> listWarehouseNameByIds(List<String> warehouseIds) {
+        return baseMapper.listWarehouseNameByIds(warehouseIds);
+    }
+
     private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
 		if(this.checkOpenCloseTime(warehouseEntity)) {
-			throw new ServiceException(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL);
+			throw new ServiceException(ApiError.WH_OPEN_STATUS_OPEN_TIME_REQUIRED);
 		}
 	}
 

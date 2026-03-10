@@ -6,10 +6,11 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileService;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 文件中心
@@ -65,7 +64,7 @@ public class FileController extends BaseController {
      */
     @PostMapping("/deleteBatchFile")
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除文件")
-    public ApiResult deleteBatchFile(@RequestParam("urlList") List<String> urlList){
+    public ApiResult deleteBatchFile(@RequestBody List<String> urlList){
         FileService fileService = fileRegistry.getHandler();
         fileService.deleteBatchFile(urlList);
         return success();
@@ -102,5 +101,42 @@ public class FileController extends BaseController {
         } catch (Exception e) {
             return ResponseEntity.status(500).build();
         }
+    }
+
+    /**
+     * 上传文件base64编码
+     * @param uploadBase64
+     * @return
+     */
+    @PostMapping(value = "/uploadFileByBase64")
+    public String uploadFileByBase64(@RequestBody FileDTO.UploadBase64 uploadBase64){
+        FileService fileService = fileRegistry.getHandler();
+        String[] parts = uploadBase64.getBase64().split(",");
+        byte[] bytes = Base64.getDecoder().decode(parts.length > 1 ? parts[1] : parts[0]);
+        String fileName = uploadBase64.getFileName();
+        return FastDFSClientUtil.publicUrl + fileService.uploadFile(bytes,fileName,null);
+    }
+
+    /**
+     * 获取文件base64编码
+     * @param fileId
+     * @return
+     */
+    @PostMapping(value = "/getFileByBase64")
+    public String getFileByBase64(@RequestBody String fileId){
+        FileService fileService = fileRegistry.getHandler();
+        byte[] bytes = fileService.downloadFile(fileId);
+//        "data:application/pdf;base64," +
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+    /**
+     * 合并多个文件为一个文件
+     * @param fileIds 文件id列表
+     * @return 合并后的文件url
+     */
+    @PostMapping(value = "/mergeFiles")
+    public String mergeFiles(@RequestBody List<String> fileIds){
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.mergeFiles(fileIds);
     }
 }

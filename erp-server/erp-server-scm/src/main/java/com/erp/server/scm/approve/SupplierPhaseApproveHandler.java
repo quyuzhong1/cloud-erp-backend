@@ -43,7 +43,7 @@ public class SupplierPhaseApproveHandler extends AbstractApproveHandler {
         //供应商
         SupplierPhaseEntity entity = supplierPhaseService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         return supplierPhaseService.approveEnd(new ApproveOneDTO(entity.getId(),dto.getApproveStatus().getStatus(),dto.getComment()),entity);
     }

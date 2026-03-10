@@ -14,6 +14,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
@@ -24,6 +25,7 @@ import com.erp.model.sys.enums.TemplateManagementBizTypeEnum;
 import com.erp.model.sys.enums.TemplateManagementStatusEnum;
 import com.erp.model.sys.enums.TemplateManagementTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.sys.mapper.TemplateManagementMapper;
 import com.erp.server.sys.service.TemplateManagementService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -31,8 +33,8 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +71,9 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -84,11 +89,15 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String type = templateManagementEntity.getType();
             Integer count = lambdaQuery().eq(TemplateManagementEntity::getType, type).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementTypeEnum.getName(type));
             }
         }
         //默认已发布
         templateManagementEntity.setStatus(TemplateManagementStatusEnum.FINISHED.getCode());
+        //模板大小
+        BigDecimal length = templateManagementEntity.getLength();
+        BigDecimal width = templateManagementEntity.getWidth();
+        templateManagementEntity.setSize(String.format("%.2f", length)  + "*" + String.format("%.2f", width));
 
         log.info("开始新增模板管理");
         // 生成单号
@@ -115,7 +124,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             throw new ServiceException("采购框架合同无法创建模板");
         }
         TemplateManagementEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
         TemplateManagementEntity templateManagementEntity = BeanMapperUtils.map(TemplateManagementEntity.class, addOrUpdateDTO);
 
         Boolean isDefault = templateManagementEntity.getIsDefault();
@@ -123,12 +132,16 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String type = templateManagementEntity.getType();
             Integer count = lambdaQuery().ne(TemplateManagementEntity::getId,old.getId()).eq(TemplateManagementEntity::getType, type).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementTypeEnum.getName(type));
             }
         }
 
         //默认已发布
         templateManagementEntity.setStatus(TemplateManagementStatusEnum.FINISHED.getCode());
+        //模板大小
+        BigDecimal length = templateManagementEntity.getLength();
+        BigDecimal width = templateManagementEntity.getWidth();
+        templateManagementEntity.setSize(String.format("%.2f", length)  + "*" + String.format("%.2f", width));
 
         log.info("编辑 开始修改模板管理数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(templateManagementEntity);
@@ -141,6 +154,13 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), templateManagementEntity.getId(), "编辑信息");
         //再记录一个修改字段的日志
         operateLogService.addModuleOperateLogByObj(old, templateManagementEntity, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), templateManagementEntity.getId(), msg);
+
+        if(!old.getName().equals(templateManagementEntity.getName())){
+            ContractInfoDTO.UpdateContractNameDTO dto = new ContractInfoDTO.UpdateContractNameDTO();
+            dto.setName(templateManagementEntity.getName());
+            dto.setTemplateId(templateManagementEntity.getId());
+            scmTaskFeign.updateContractNameByTempId(dto);
+        }
         return Boolean.TRUE;
     }
 
@@ -185,17 +205,14 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             record.setStatusName(TemplateManagementStatusEnum.getName(record.getStatus()));
             //启用状态
             record.setDisabledName(record.getDisabled() ? "停用" : "启用");
-            //模板大小
-            BigDecimal length = record.getLength();
-            BigDecimal width = record.getWidth();
-            record.setSize(String.format("%.2f", length)  + "*" + String.format("%.2f", width) +" 毫米");
+
         }
     }
 
     @Override
     public TemplateManagementDTO.ViewDTO view(String id) {
         TemplateManagementEntity old = super.getById(id);
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
         TemplateManagementDTO.ViewDTO view = new TemplateManagementDTO.ViewDTO();
         BeanMapper.copy(old,view);
 
@@ -229,7 +246,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         for (String id : ids) {
             TemplateManagementEntity entity = idEntityMap.getOrDefault(id, null);
             if(Objects.isNull(entity)){
-                resultDTOList.add(BatchResultDTO.fail(id, id, CharSequenceUtil.format(ApiError.NOT_EXIST_BILL.msg, "模板管理")));
+                resultDTOList.add(BatchResultDTO.fail(id, id, CharSequenceUtil.format(ApiError.BILL_NOT_EXIST_WITH_TYPE.getMsg(), "模板管理")));
                 continue;
             }
 
@@ -250,14 +267,13 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
 
     @Override
     public BatchResultDTO setDisabled(String id, Boolean disabledStatus) {
-        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
         List<ContractInfoEntity> contractInfoList = FeignQuery.create(ContractInfoEntity.class).eq(ContractInfoEntity::getTemplateId, id).list();
-        if(CollUtil.isNotEmpty(contractInfoList)){
-            return BatchResultDTO.fail(id, entity.getName(), "合同管理已引用不可设置停用");
-        }
+//        if(CollUtil.isNotEmpty(contractInfoList)){
+//            return BatchResultDTO.fail(id, entity.getName(), "合同管理已引用不可设置停用");
+//        }
         entity.setDisabled(disabledStatus);
         super.updateById(entity);
-
         // 日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新启用状态由【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", disabledStatus ? "停用" : "启用", disabledStatus ? "启用" : "停用" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), entity.getId(), "更新模板管理");
@@ -266,7 +282,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
 
     @Override
     public BatchResultDTO setDefault(String id) {
-        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
 
         Boolean isDefault = entity.getIsDefault();
         Boolean newValue = isDefault ? Boolean.FALSE : Boolean.TRUE;
@@ -274,13 +290,11 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String bizType = entity.getBizType();
             Integer count = lambdaQuery().eq(TemplateManagementEntity::getBizType, bizType).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementBizTypeEnum.getName(bizType));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementBizTypeEnum.getName(bizType));
             }
         }
-
         entity.setIsDefault(newValue);
         super.updateById(entity);
-
         // 日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新默认状态由【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", isDefault ? "默认" : "不默认", newValue ?  "默认" : "不默认" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), entity.getId(), "更新模板管理");
@@ -295,5 +309,22 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Override
     public void exportList(TemplateManagementDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("模板管理导出", EXPORT_SYS_TEMPLATE.getCode(), param);
+    }
+
+    @Override
+    public List<TemplateManagementDTO.TemplateResultDTO> getTemplateByType(TemplateManagementDTO.TemplateParamsDTO dto) {
+        List<TemplateManagementEntity> list = this.lambdaQuery().eq(TemplateManagementEntity::getBizType, dto.getBizType())
+                .eq(TemplateManagementEntity::getType, dto.getType())
+                .eq(TemplateManagementEntity::getDisabled,Boolean.FALSE)
+                .list();
+        List<TemplateManagementDTO.TemplateResultDTO> templateResultDTOS = new ArrayList<>();
+        for (TemplateManagementEntity templateManagementEntity : list) {
+            TemplateManagementDTO.TemplateResultDTO templateResultDTO = new TemplateManagementDTO.TemplateResultDTO();
+            BeanUtils.copyProperties(templateManagementEntity,templateResultDTO);
+            templateResultDTO.setTemplateId(templateManagementEntity.getId());
+            templateResultDTO.setTemplateName(templateManagementEntity.getName());
+            templateResultDTOS.add(templateResultDTO);
+        }
+        return templateResultDTOS;
     }
 }

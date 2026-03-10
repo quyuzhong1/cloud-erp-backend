@@ -126,7 +126,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public Boolean update(LogisticsSupplierDTO.UpdateDTO updateDTO) {
         LogisticsSupplierEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商单"));
         LogisticsSupplierEntity logisticsSupplierEntity = BeanMapperUtils.map(LogisticsSupplierEntity.class, updateDTO);
 
         // 数据处理
@@ -175,7 +175,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         LogisticsSupplierEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商"));
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
         List<String> supplierIds =Collections.singletonList(id);
         //渠道列表
@@ -240,16 +240,16 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     public BatchResultDTO sync(String id) {
         LogisticsSupplierEntity logisticsSupplier = this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
         if (!alreadyCode.equals(authStatus)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", id);
         if (Objects.isNull(authEntity)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
         //同步第三方渠道
@@ -427,20 +427,42 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     @Override
     public List<LogisticsSupplierDTO.ListChildTreeDTO> tree() {
-        List<LogisticsSupplierEntity> dbList = list();
-        List<LogisticsSupplierDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
-        List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
+        List<LogisticsSupplierDTO.ListChildTreeDTO> list = baseMapper.listSupplier(new LogisticsSupplierDTO.SelectDTO());
+        List<LogisticsSupplierDTO.ListChildTreeDTO> allChannelList = logisticsChannelService.listChannel(new LogisticsSupplierDTO.SelectDTO());
         for (LogisticsSupplierDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
-            List<LogisticsChannelEntity> channelList = allChannelList.stream().
-                    filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsChannelEntity::getDisabled)).
+            List<LogisticsSupplierDTO.ListChildTreeDTO> channelList = allChannelList.stream().
+                    filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsSupplierDTO.ListChildTreeDTO::getDisabled)).
                     collect(Collectors.toList());
-            List<LogisticsSupplierDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
-            item.setChildren(childrenList);
+            item.setChildren(channelList);
         }
         return list;
     }
-
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listSupplierTree(LogisticsSupplierDTO.SelectDTO dto) {
+        List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel;
+        List<LogisticsSupplierDTO.ListChildTreeDTO> listSupplier;
+        if (Objects.nonNull(dto) && CharSequenceUtil.isNotBlank(dto.getSearchKeyword())){
+            listChannel = logisticsChannelService.listChannel(dto);
+            List<String> supplierIds = CollUtil.isNotEmpty(listChannel) ? listChannel.stream().map(LogisticsSupplierDTO.ListChildTreeDTO::getMainId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()) : new ArrayList<>();
+            dto.setSupplierIds(supplierIds);
+            listSupplier = CollUtil.isNotEmpty(supplierIds) ? baseMapper.listSupplier(dto) : new ArrayList<>();
+        }else {
+            listSupplier = baseMapper.listSupplier(dto);
+            listChannel = logisticsChannelService.listChannel(dto);
+        }
+        if (CollectionUtils.isEmpty(listSupplier)){
+            return Collections.emptyList();
+        }
+        for (LogisticsSupplierDTO.ListChildTreeDTO item : listSupplier) {
+            String id = item.getId();
+            List<LogisticsSupplierDTO.ListChildTreeDTO> channelList = listChannel.stream().
+                    filter(c -> c.getMainId().equals(id)).
+                    collect(Collectors.toList());
+            item.setChildren(channelList);
+        }
+        return listSupplier;
+    }
     @Override
     public List<LogisticsSupplierDTO.LogisticsSupplierListDTO> listLogisticsChannel(List<String> logisticsSupplierIdList) {
         List<LogisticsSupplierDTO.LogisticsSupplierListDTO> resultList = new ArrayList<>();

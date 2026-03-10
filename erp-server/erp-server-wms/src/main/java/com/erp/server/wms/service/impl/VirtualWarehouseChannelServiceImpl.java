@@ -12,6 +12,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.Md5Util;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -72,7 +73,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public BaseResultDTO.AddDTO batchUpdate(VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO) {
         String virtualWarehouseId = batchUpdateDTO.getVirtualWarehouseId();
         VirtualWarehouseEntity warehouseEntity = virtualWarehouseService.getById(virtualWarehouseId);
-        VirtualWarehouseEntity oldWarehouseEntity = Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓"));
+        VirtualWarehouseEntity oldWarehouseEntity = Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓"));
         log.info("更新虚拟仓数据，id：【{}】", oldWarehouseEntity.getId());
         //渠道配置
         List<VirtualWarehouseChannelDTO.ChannelAddDTO> internalChannelList = CollUtil.isNotEmpty(batchUpdateDTO.getInternalChannelList())? batchUpdateDTO.getInternalChannelList() :Collections.emptyList();
@@ -431,7 +432,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public VirtualWarehouseChannelDTO.ViewDTO view(String id) {
         VirtualWarehouseEntity warehouseEntity = virtualWarehouseService.getById(id);
         if (Objects.isNull(warehouseEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓");
         }
         VirtualWarehouseChannelDTO.ViewDTO viewDTO = new VirtualWarehouseChannelDTO.ViewDTO();
         viewDTO.setVirtualWarehouseId(id);
@@ -609,7 +610,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 matchesOrWildcard(e1.getRelationId(), e2.getRelationId()) &&
                 matchesOrWildcard(e1.getPartitionId(), e2.getPartitionId()));
         if (isSame){
-            String format = CharSequenceUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg,  dictPlatformName,CharSequenceUtil.isBlank(shopName) ? "全部" : shopName, CharSequenceUtil.isBlank(partitionName) ? "全部" : partitionName, virtualWarehouseName);
+            String format = MessageUtils.getMessage(ApiError.VM_CHANNEL_RELATION_ERROR,  dictPlatformName,CharSequenceUtil.isBlank(shopName) ? "全部" : shopName, CharSequenceUtil.isBlank(partitionName) ? "全部" : partitionName, virtualWarehouseName);
             if (!msg.toString().contains(format)){
                 msg.append(format);
             }

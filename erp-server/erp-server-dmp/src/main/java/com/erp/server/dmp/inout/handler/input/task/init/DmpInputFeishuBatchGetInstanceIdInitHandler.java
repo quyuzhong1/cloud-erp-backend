@@ -47,7 +47,7 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
         LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 
         //获取第三方审批定义
-        String approvalCode = dmpResponse.getDmpCfgInputDetailEntity().getNextLevelId();
+        String approvalCode = dmpCfgInputDetailEntity.getNextLevelId();
         if (StringUtils.isBlank(approvalCode)) {
             ServiceException.runError("第三方审批定义代号配置为空");
         }

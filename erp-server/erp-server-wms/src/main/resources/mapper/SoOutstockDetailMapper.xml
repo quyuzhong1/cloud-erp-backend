@@ -43,7 +43,8 @@
         sod.so_detail_id,
         so.approve_status,
         so.invalid_status,
-        so.so_id
+        so.so_id,
+        so.track_no
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON sod.main_id = so.id AND so.is_deleted=FALSE
         WHERE sod.is_deleted = FALSE
@@ -138,6 +139,35 @@
             and so.is_deleted = FALSE and sod.is_deleted = FALSE
             GROUP BY sod.sku_id
 
+    </select>
+
+    <!-- 根据时间范围查询出库单信息 -->
+    <select id="listSoOutstockByTime" resultType="com.erp.model.wms.dto.SoOutstockDTO$KolSoOutstockDTO">
+        select
+            so.id as soOutstockId,
+            so.code as soOutstockCode,
+            so.so_id as soId,
+            so.so_code as soCode,
+            so.source_type as sourceType,
+            so.sales_org_id as salesOrgId,
+            so.sales_org_name as salesOrgName,
+            so.bill_date as soOutstockDate,
+            sod.id as soOutstockDetailId,
+            sod.so_detail_id as soDetailId,
+            sod.sku_id as skuId,
+            sod.sku_no as skuNo,
+            sod.actual_qty as actualQty,
+            so.warehouse_id as warehouseId,
+            so.warehouse_name as warehouseName
+        from so_outstock so
+        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        where so.is_deleted = false and so.approve_status = 'approve'
+        <if test="param.startTime != null">
+            and so.bill_date &gt;= #{param.startTime}
+        </if>
+        <if test="param.endTime != null">
+            and so.bill_date &lt; #{param.endTime}
+        </if>
     </select>
 
 

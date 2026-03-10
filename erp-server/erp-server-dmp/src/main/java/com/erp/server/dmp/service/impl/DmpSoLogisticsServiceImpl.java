@@ -65,7 +65,7 @@ public class DmpSoLogisticsServiceImpl extends SuperServiceImpl<DmpSoLogisticsMa
     @Override
     public Boolean update(DmpSoLogisticsDTO.UpdateDTO addOrUpdateDTO) {
         DmpSoLogisticsEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台物流单主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中台物流单主单"));
         DmpSoLogisticsEntity dmpSoLogisticsEntity =  BeanMapperUtils.map(DmpSoLogisticsEntity.class, addOrUpdateDTO);
 
         // 数据处理

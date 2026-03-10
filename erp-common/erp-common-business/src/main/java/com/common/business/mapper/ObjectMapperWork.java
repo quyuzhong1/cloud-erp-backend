@@ -41,4 +41,21 @@ public class ObjectMapperWork {
         return String.valueOf(integer - 1);
     }
 
+    @Named("intToString")
+    public String intToString(Integer value) {
+        return Objects.nonNull(value) ? String.valueOf(value) : null;
+    }
+
+    @Named("stringToInt")
+    public Integer stringToInt(String value) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
 }

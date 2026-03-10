@@ -92,6 +92,10 @@ public class ContractInfoDTO implements Serializable {
         * 单据编号
         */
         private String code;
+        /**
+        * 名称
+        */
+        private String name;
 
         /**
         * 服务商id
@@ -206,6 +210,10 @@ public class ContractInfoDTO implements Serializable {
         * 单据编号
         */
         private String code;
+        /**
+        * 名称
+        */
+        private String name;
 
         /**
         * 服务商id
@@ -317,8 +325,11 @@ public class ContractInfoDTO implements Serializable {
         /**
          * 模板管理id
          */
-        @TableField("template_id")
         private String templateId;
+        /**
+         * 名称
+         */
+        private String name;
     }
 
 
@@ -398,6 +409,22 @@ public class ContractInfoDTO implements Serializable {
          * 前端渲染配置JSON
          */
         private String content;
+    }
+
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateContractNameDTO {
+        /**
+         * 名称
+         */
+        private String name;
+
+        private String templateId;
     }
 
 }

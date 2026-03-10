@@ -359,6 +359,10 @@ public class WmsCartonDetailDTO implements Serializable {
         private Integer totalQty = 0;
         private BigDecimal volumeWeight;
 
+        /**
+         * 是否取消
+         */
+        private Boolean isCancelRequired;
     }
 
     /**

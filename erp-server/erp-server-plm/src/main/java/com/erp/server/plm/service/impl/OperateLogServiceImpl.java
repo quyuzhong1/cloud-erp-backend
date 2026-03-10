@@ -18,9 +18,6 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-import com.erp.model.oms.entity.BankAccountEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.OperateLogShowDTO;
 import com.erp.model.plm.dto.OperateLogSelectDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -39,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -228,7 +226,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         String content = entity.getContent();
         if (StringUtils.isBlank(content)) {
             if (StringUtils.isBlank(entity.getFieldName())) {
-                throw new ServiceException(ApiError.ERROR_95089);
+                throw new ServiceException(ApiError.BILL_SUBMIT_APPROVAL_STATUS_INVALID);
             }
             if (StringUtils.isBlank(entity.getOldValue())) {
                 content = "编辑了[".concat(entity.getFieldName()).concat("]").concat("由空值变更为[").concat(entity.getNewValue()).concat("]");
@@ -385,7 +383,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
      */
     private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         String  oldValue = "";
         String  newValue = "";
@@ -393,11 +391,11 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         if (StringUtils.isNotBlank(valuePair.getKey())) {
             EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);
@@ -432,4 +430,16 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         String result = matcher.replaceAll("");
         return result;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addModuleOperateLog(String content, String moduleType, String businessId, String operation) {
+        OperateLogEntity entity = new OperateLogEntity();
+        entity.setModuleType(moduleType)
+                .setBusinessId(businessId)
+                .setContent(content)
+                .setOperation(operation);
+        return this.save(entity);
+    }
+
 }

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolSampleCostMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolSampleCostEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="type" property="type" />
+       <result column="partner_id" property="partnerId" />
+       <result column="partner_nickname" property="partnerNickname" />
+       <result column="feedback_url" property="feedbackUrl" />
+       <result column="so_code" property="soCode" />
+       <result column="so_id" property="soId" />
+       <result column="so_org_id" property="soOrgId" />
+       <result column="so_org_name" property="soOrgName" />
+       <result column="so_outstock_id" property="soOutstockId" />
+       <result column="so_outstock_code" property="soOutstockCode" />
+       <result column="so_outstock_date" property="soOutstockDate" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="partition_id" property="partitionId" />
+       <result column="partition_name" property="partitionName" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="qty" property="qty" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="total_cost" property="totalCost" />
+       <result column="product_cost" property="productCost" />
+       <result column="first_mile_shipping_cost" property="firstMileShippingCost" />
+       <result column="clearance_customs_tax" property="clearanceCustomsTax" />
+       <result column="shipping_cost" property="shippingCost" />
+       <result column="customs_tax" property="customsTax" />
+       <result column="other_cost" property="otherCost" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id as  createUserId,
+        create_user_name as createUserName,
+        create_time as createTime,
+        update_user_id as updateUserId,
+        update_user_name as updateUserName,
+        update_time as updateTime,
+        version,
+        is_deleted as isDeleted,
+        source_id as sourceId,
+          source_code as sourceCode,
+          source_type as sourceType,
+          type,
+          partner_id as partnerId,
+          partner_nickname as partnerNickname,
+          feedback_url as feedbackUrl ,
+          so_code as soCode,
+          so_id as soId,
+          so_detail_id as soDetailId,
+          so_org_id as soOrgId,
+          so_org_name as soOrgName,
+          so_outstock_id as soOutstockId,
+          so_outstock_detail_id as soOutstockDetailId,
+          so_outstock_code as soOutstockCode,
+          so_outstock_date as soOutstockDate,
+          warehouse_id as warehouseId,
+          warehouse_name as warehouseName,
+          partition_id as partitionId,
+          partition_name as partitionName,
+          sku_id as skuId,
+          sku_no as skuNo,
+          qty,
+          currency,
+          currency_symbol as currencySymbol,
+          exchange_rate as exchangeRate,
+          total_cost as totalCost,
+          product_cost as productCost,
+          first_mile_shipping_cost as firstMileShippingCost,
+          clearance_customs_tax as clearanceCustomsTax,
+          shipping_cost as shippingCost,
+          customs_tax as customsTax,
+          other_cost as otherCost
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.oms.dto.KolSampleCostDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from kol_sample_cost ksc
+        <where>
+            ${params.sqlMap.default}
+            and ksc.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            ksc.id desc
+        </where>
+    </select>
+
+    <!-- 按时间范围查询列表 -->
+    <select id="listByTime" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
+        select
+            <include refid="Base_Column_List" />
+        from kol_sample_cost ksc
+        <where>
+            ksc.is_deleted = false
+            <if test="startTime != null">
+                and ksc.so_outstock_date &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                and ksc.so_outstock_date &lt; #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据出库单明细ID列表查询样品费用列表 -->
+    <select id="listKolSampleCostBySoDetailIdList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
+        WITH kolFeedback as (
+        select
+            array_to_string(array_agg(DISTINCT partner_id),',') as partner_id,
+            array_to_string(array_agg(DISTINCT partner_nickname),',') as partner_nickname,
+            array_to_string(array_agg(DISTINCT url),',') as url,
+            source_detail_id
+            from kol_feedback
+            where is_deleted = false group by source_detail_id
+        )
+        select
+            sba.source_code,
+            sba.source_id,
+            sba.source_detail_id,
+            sba.source_type,
+            sba.so_detail_id,
+            sba.partition_id,
+            sba.type,
+            sba.detail_id,
+            kfb.partner_id,
+            kfb.partner_nickname,
+            kfb.url as feedback_url
+            from (select
+            kba.code as source_code,
+            kba.id as source_id,
+            kbad.id as source_detail_id,
+            'kolB2bApplication' as source_type,
+            kba.type,
+            sd.id as so_detail_id,
+            si.code as so_code,
+            si.partition_id,
+            kbad.id as detail_id
+        from kol_b2b_application kba
+        inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+        inner join so_info si on si.source_id = kba.id and si.is_deleted = false
+        inner join so_detail sd on sd.source_detail_id = kbad.id and sd.is_deleted = false
+        where kba.is_deleted = false
+
+        union
+
+        select
+            kba.code as source_code,
+            kba.id as source_id,
+            ksbad.id as source_detail_id,
+            'kolB2cApplication' as source_type,
+            kba.sample_type as type,
+            sbd.id as so_detail_id,
+            sb.code as so_code,
+            sbr.partition_id,
+            kbad.id as detail_id
+        from
+        kol_b2c_application kba
+        inner join kol_b2c_application_detail kbad on
+        kba.id = kbad.main_id
+        and kbad.is_deleted = false
+        inner join kol_sub_b2c_application_detail ksbad on
+        kbad.id = ksbad.source_detail_id
+        and ksbad.is_deleted = false
+        inner join so_b2c_detail sbd on
+        sbd.source_detail_id = ksbad.id
+        and sbd.is_deleted = false
+        inner join so_b2c sb on
+        sb.id = sbd.main_id
+        and sb.is_deleted = false
+        inner join so_b2c_receiver sbr on
+        sbd.main_id = sbr.main_id
+        and sbr.is_deleted = false
+        where kba.is_deleted = false
+        ) sba
+        left join kolFeedback kfb on sba.detail_id = kfb.source_detail_id
+        where sba.so_detail_id in 
+        <foreach collection="soDetailIdList" item="id" open="(" separator="," close=")">
+             #{id}
+         </foreach>
+    </select>
+
+
+</mapper>

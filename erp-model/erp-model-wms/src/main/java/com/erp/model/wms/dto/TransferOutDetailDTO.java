@@ -86,6 +86,11 @@ public class TransferOutDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 规格
+         */
+        private String specification;
+
+        /**
          * 变体信息
          */
         private String variantProperty;
@@ -130,6 +135,11 @@ public class TransferOutDetailDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         *
+         */
+        private String outWarehouseName;
 
     }
 

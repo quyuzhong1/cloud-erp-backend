@@ -11,8 +11,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.ThirdShopEntity;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.server.dmp.mapper.ThirdShopMapper;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.service.ThirdShopService;
@@ -21,7 +19,6 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +84,7 @@ public class ThirdShopServiceImpl extends SuperServiceImpl<ThirdShopMapper, Thir
     @Override
     public Boolean update(ThirdShopDTO.UpdateDTO updateDTO) {
         ThirdShopEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "第三方系统店铺单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "第三方系统店铺单"));
         ThirdShopEntity thirdShopEntity = BeanMapperUtils.map(ThirdShopEntity.class, updateDTO);
 
         // 数据处理

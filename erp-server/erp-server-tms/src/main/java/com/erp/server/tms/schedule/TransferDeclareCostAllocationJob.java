@@ -91,6 +91,11 @@ public class TransferDeclareCostAllocationJob {
             return ReturnT.SUCCESS;
         }
         CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
+        if (ReconciliationTypeEnum.NOT_GENERATE.getCode().equals(dto.getTransferAllocationType())) {
+            XxlJobHelper.log("[生成中转费用分摊] autoGenerateTransferDeclareCostAllocation 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+            return ReturnT.SUCCESS;
+        }
+
         Integer transferAllocationDate = dto.getTransferAllocationDate();
         int dayOfMonth = currentDateTime.getDayOfMonth();
         if(transferAllocationDate != null && dayOfMonth >= transferAllocationDate) {
@@ -129,6 +134,9 @@ public class TransferDeclareCostAllocationJob {
                 	XxlJobHelper.log("====自动生成中转费用分摊周期生成指定日期不存在====");
                 	return ReturnT.SUCCESS;
                 }
+            }else {
+                XxlJobHelper.log("[生成中转费用分摊] autoGenerateTransferDeclareCostAllocation 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+                return ReturnT.SUCCESS;
             }
             
             List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList = tmsB2cDeclareReconciliationDetailService

@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -20,12 +21,15 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.query.LogisticsBillQueryHandler;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -74,6 +79,8 @@ public class LogisticsBillController extends BaseController {
 
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private SoB2cFeign soB2cFeign;
     /**
      * tab 列表
      *
@@ -243,7 +250,7 @@ public class LogisticsBillController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }
@@ -291,6 +298,95 @@ public class LogisticsBillController extends BaseController {
                 log.error("生成自发货费用/尾程费用失败{}", e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getTransportNo(), e.getMessage()));
             }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
+    }
+
+    /**
+     * 重新获取面单
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025/2/17 10:47
+     */
+    @PostMapping("/getLogisticsLabel")
+    @LogAction(value = LogActionEnum.GET_LOGISTICS_LABEL, desc = "重新获取面单")
+    public ApiResult<List<BatchResultDTO>> getLogisticsLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoB2cEntity> entityList = soB2cFeign.listByIds(ids);
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(ids);
+        List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list = new ArrayList<>(ids.size());
+        List<String> soCodeList = new ArrayList<>();
+        for (String id : ids) {
+            BatchResultDTO result;
+            SoB2cEntity entity = entityList.stream().filter(e ->Objects.equals(id, e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流面单失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
+            if (Objects.isNull(soB2cLogisticsEntity)) {
+                result = BatchResultDTO.fail(id, entity.getCode(), "B2C销售订单物流信息不存在, 获取物流面单失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
+            waybillDTO.setB2cSoId(entity.getId());
+            waybillDTO.setDeliveryNo(entity.getCode());
+            waybillDTO.setShopId(entity.getShopId());
+            waybillDTO.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+            waybillDTO.setTransportNo(soB2cLogisticsEntity.getCode());
+            waybillDTO.setLogisticType(soB2cLogisticsEntity.getLogisticType());
+            list.add(waybillDTO);
+            soCodeList.add(entity.getCode());
+        }
+        List<List<LogisticsBillDTO.PrintLogisticsWaybillDTO>> partition = ListUtil.partition(list, 10);
+        for (List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list1 : partition){
+            BatchResultDTO result = null;
+            try {
+                logisticsBillService.printLogisticsWaybill(list1);
+                result = BatchResultDTO.success("", String.join(",", soCodeList), "获取物流面单成功");
+            } catch (Exception e) {
+                log.error("B2C销售订单获取物流单号失败", e);
+                result = BatchResultDTO.fail("", String.join(",", soCodeList), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 是否分摊状态更新
+     * @author will
+     * @date 2026/1/20 16:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateIsAllocateRequired")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "是否分摊状态更新")
+    public ApiResult<List<BatchResultDTO>> updateIsAllocateRequired(@RequestBody @Valid LogisticsBillDTO.UpdateAllocateRequiredDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = logisticsBillService.updateIsAllocateRequired(id,dto.getIsAllocateRequired(),dto.getNotAllocateRemark());
+            } catch (Exception e) {
+                log.error("是否分摊状态更新{}", e);
+                LogisticsBillEntity entity = logisticsBillService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "头程物流单不存在, 状态更改失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 

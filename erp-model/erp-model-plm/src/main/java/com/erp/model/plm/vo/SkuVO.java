@@ -122,6 +122,10 @@ public class SkuVO implements Serializable {
     private String productGrade;
 
     /**
+     * 产品品牌ID
+     */
+    private String brandId;
+    /**
      * 产品品牌
      */
     private String brandName;
@@ -253,7 +257,6 @@ public class SkuVO implements Serializable {
      */
     private PropertyDTO propertyDTO;
 
-
     /**
      * 是否是捆绑商品:true=是，false=否
      * (可能字段为null，需添加查询)
@@ -358,7 +361,7 @@ public class SkuVO implements Serializable {
         private String otherName;
         /**
          * 汇总标识
-         * - 属性包含：带电池，带电池（内置不可拆卸），带电池（内置可拆卸），带电池（纯电），显示电标识
+         * - 属性包含：带电池，带电池（内置不可拆卸），带电池（内置可拆卸），带电池（纯电），锂金属电池（纽扣电池，干电池），锂离子电池（可充电式），锂聚合物电池（充电式），显示电标识
          * - 属性包含：带磁，显示磁标识
          * - 属性包含：液体，显示液标识
          * - 属性包含：木，显示木标识

@@ -29,12 +29,12 @@ public class CommonServiceImpl implements CommonService {
     public SupplierEntity getSupplierEntity(){
         LoginUser loginUser = UserContext.getLoginUser();
         if(Objects.isNull(loginUser)){
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
         }
         //查询供应商信息
         SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
         if(Objects.isNull(supplier)){
-            throw new ServiceException(ApiError.ERROR_96001);
+            throw new ServiceException(ApiError.SUPPLIER_REF_NOT_FOUND);
         }
         return supplier;
     }

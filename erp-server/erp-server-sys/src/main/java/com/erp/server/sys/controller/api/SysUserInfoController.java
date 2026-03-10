@@ -2,10 +2,14 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -14,9 +18,11 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.query.SysUserInfoQueryHandler;
+import com.erp.server.sys.service.SysDepartmentUserService;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +30,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +53,17 @@ public class SysUserInfoController extends BaseController {
     @Autowired
     private SysUserThirdService sysUserThirdService;
 
+    @Autowired
+    private SysDepartmentUserService sysDepartmentUserService;
+
+    /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<SysUserInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(sysUserInfoService.tabList(dto));
+    }
 
     /**
      * 列表
@@ -63,8 +81,8 @@ public class SysUserInfoController extends BaseController {
      * @return
      */
     @RequestMapping("/paging")
-    public ApiResult<PagingVO<UserManageDTO>> list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
-        dto.getParams().setUserType(UserTypeEnum.ERP.code);
+    @WebAdvanceQuery(handler = SysUserInfoQueryHandler.class)
+    public ApiResult<PagingVO<UserManageDTO>> list(@RequestBody @Validated PagingDTO<SysUserInfoDTO.PagingParamDTO> dto) {
         PagingVO<UserManageDTO> pagingVO = sysUserInfoService.paging(dto);
         return success(pagingVO);
     }
@@ -88,6 +106,53 @@ public class SysUserInfoController extends BaseController {
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
         sysUserInfoService.add(sysUserInfoDTO);
+        return success();
+    }
+
+
+
+    /**
+     * 批量操作-分配店铺/仓库/权限
+     */
+    @RequestMapping("/batchRefUserIdByShop")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:batchRefUserIdByShop",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "uid")
+    public ApiResult batchRefUserIdByShop(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        refParamseDTO.setRefType("shop");
+        sysUserInfoService.batchRefUserIdByType(refParamseDTO);
+        return success();
+    }
+
+    /**
+     * 批量操作-分配店铺/仓库/权限
+     */
+    @RequestMapping("/batchRefUserIdByWarehouse")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:batchRefUserIdByWarehouse",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "uid")
+    public ApiResult batchRefUserIdByWarehouse(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        refParamseDTO.setRefType("warehouse");
+        sysUserInfoService.batchRefUserIdByType(refParamseDTO);
+        return success();
+    }
+
+    /**
+     * 批量操作-分配店铺/仓库/权限
+     */
+    @RequestMapping("/batchRefUserIdByRole")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:batchRefUserIdByRole",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "uid")
+    public ApiResult batchRefUserIdByRole(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        refParamseDTO.setRefType("role");
+        sysUserInfoService.batchRefUserIdByType(refParamseDTO);
         return success();
     }
 
@@ -121,6 +186,11 @@ public class SysUserInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改用户状态:ids={ids},状态={state}(1=启用,0=未启用)")
     @RequestMapping("/updateState")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:updateState",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "ids")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         sysUserInfoService.updateState(stateDTO);
         return success();
@@ -237,4 +307,43 @@ public class SysUserInfoController extends BaseController {
     public void syncFsUser() {
         sysUserInfoService.syncFsUser();
     }
+
+    @PostMapping("/findList")
+    public ApiResult<List<FindUserDTO>> findList(@RequestBody @Validated BaseSearchDTO dto) {
+        List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
+        return success(list);
+    }
+
+    /**
+     * 根据用户id查询部门信息
+     * 自动带出用户绑定部门，如用户绑定多个部门，则取最近绑定的部门；若部门已禁用，则不带出
+     * @param userId 用户id
+     * @return ApiResult
+     */
+    @GetMapping("/getDeptByUserId")
+    public ApiResult<SysDepartmentUserNumberDTO> getDeptByUserId(@RequestParam("userId") String userId) {
+        SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getDeptByUserIdWithDisabledFilter(userId);
+        return success(dto);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2026-01-08
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery(handler = SysUserInfoQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "sys:user:export",
+            tableAlias = "sui"
+    )
+    public ApiResult<Object> exportList(@RequestBody @Validated SysUserInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
+        sysUserInfoService.exportList(dto, response);
+        return success();
+    }
+
 }

@@ -9,7 +9,6 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -331,7 +330,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param detailId
      * @return BatchResultDTO
      */
-    BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity);
+    BatchResultDTO batchUnLockVirtualInventorys(String detailId);
     /**
      * 批量释放库存
      * @author will
@@ -369,5 +368,12 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
     Boolean updatePlatformOrderIdByMainId(String id, List<String> platformDetailIdList);
 
 
-    SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 销售订单明细根据来源明细id集合查询
+     * @author will
+     * @date 2025/12/2 14:19
+     * @param sourceDetailIdList
+     * @return List<SoDetailEntity>
+     */
+    List<SoDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList);
 }

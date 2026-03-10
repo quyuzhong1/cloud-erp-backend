@@ -34,6 +34,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     AUTH("auth","授权", null),
     REFRESH_TOKEN("refresh_token","刷新token",null),
     FBA_SHIPMENT("fba_shipment","亚马逊FBA货件", SourceTypeEnum.FBA_SHIPMENT),
+    AWD_SHIPMENT("awd_shipment","亚马逊AWD货件", SourceTypeEnum.AWD_SHIPMENT),
     FBA_SHIPMENT_DETAIL("fba_shipment_detail","亚马逊FBA货件明细", SourceTypeEnum.FBA_SHIPMENT_DETAIL),
     FBA_INVENTORY("fba_inventory","亚马逊FBA仓库", SourceTypeEnum.FBA_INVENTORY),
     SO_OUT_STOCK("so_out_stock","销售出库单", SourceTypeEnum.PLATFORM_SO_OUT_STOCK),
@@ -44,6 +45,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     WDT_SHOP("wdt_shop", "旺店通店铺基础数据", SourceTypeEnum.WDT_SHOP),
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", SourceTypeEnum.QIMEN_SO_OUT_STOCK),
     QIMEN_RETURN_ORDER("qimen_return_order","奇门退货入库单", SourceTypeEnum.QIMEN_RETURN_ORDER),
+    WDT_VIRTUAL_INVENTORY("wdt_virtual_inventory","旺店通虚拟仓库存", SourceTypeEnum.WDT_VIRTUAL_INVENTORY),
 
 
     WAREHOUSE("warehouse","仓库", SourceTypeEnum.THIRD_WAREHOUSE_GET_WAREHOUSE),

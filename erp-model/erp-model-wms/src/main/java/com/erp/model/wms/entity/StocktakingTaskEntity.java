@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -77,10 +78,11 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
     @TableField("approve_user_name")
     private String approveUserName;
 
-
-    
-
-    
+    /**
+     * 盘点日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
 
     public static final String SOURCE_ID = "source_id";
 

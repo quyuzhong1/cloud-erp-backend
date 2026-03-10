@@ -1,9 +1,7 @@
 package com.sdk.oms.tiktok.service;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -14,7 +12,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -69,8 +66,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -147,7 +142,7 @@ public class TikTokSdkClientService {
         }
 
         if (!"success".equalsIgnoreCase(tikTokTokenDTO.getMessage())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
+            throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
         TokenDTO tokenDTO = tikTokTokenDTO.getData();
         if(StringUtils.isBlank(paramMap.get("isFully"))) {
@@ -260,7 +255,7 @@ public class TikTokSdkClientService {
         }
 
         if (StringUtil.isBlank(tikTokTokenDTO.getData().getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
+            throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
 
         //返回token实体
@@ -1214,6 +1209,11 @@ public class TikTokSdkClientService {
             shipOrderOther = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), ShipOrderOther.class);
         } catch (Exception e) {
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（非美国站点）返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+        }
+        if (!Objects.equals(shipOrderOther.getCode(), 0) ) {
+            log.error("调用url={},入参params={}, TikTok订单发货（其他站点）失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（非美国站点）失败，返回值 responseMap={}",
+                    sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         return shipOrderOther;
     }

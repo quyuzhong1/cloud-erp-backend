@@ -7,7 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -24,7 +23,9 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.SubcontractOrderTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderDetailMapper;
@@ -35,7 +36,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -101,11 +101,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
-    public void add(List<SubcontractOrderDetailDTO.AddDTO> detailList, String mainId) {
+    public void add(List<SubcontractOrderDetailDTO.AddDTO> detailList, SubcontractOrderEntity subcontractOrderEntity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
         List<SubcontractOrderDetailEntity> list = new ArrayList<>();
+        List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
         for (SubcontractOrderDetailDTO.AddDTO addDTO : detailList) {
             SubcontractOrderDetailEntity entity = BeanMapperUtils.map(SubcontractOrderDetailEntity.class, addDTO);
             List<SubcontractOrderDetailDTO.AddDTO> addList = addDTO.getChildList();
@@ -113,8 +114,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             entity.setChildList(updateList);
             list.add(entity);
         }
-        //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.TRUE);
+        if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+            resultList.addAll(generateRepairResultDetail(list, subcontractOrderEntity.getId(),Boolean.TRUE));
+        } else {
+            //处理父子级数据
+            resultList.addAll(generateResultDetail(list, subcontractOrderEntity.getId(),Boolean.TRUE));
+        }
 
         this.saveBatch(resultList);
         //标记SKU
@@ -174,12 +179,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
+    public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, SubcontractOrderEntity subcontractOrderEntity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
         List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
-
+        String mainId = subcontractOrderEntity.getId();
         //原明细数据
         List<SubcontractOrderDetailEntity> oldList = this.listByMainId(mainId);
         //将子级SKU添加入集合判断是否删除
@@ -196,10 +201,17 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
-        checkSourceDetailQty(list,mainId);
-
-        //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
+        //普通委外订单校验
+        if (Objects.equals(SubcontractOrderTypeEnum.COMMON_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+            checkSourceDetailQty(list,mainId);
+        }
+        List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
+        if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+            resultList.addAll(generateRepairResultDetail(list, mainId,Boolean.TRUE));
+        } else {
+            //处理父子级数据
+            resultList.addAll(generateResultDetail(list, mainId,Boolean.TRUE));
+        }
 
         this.saveOrUpdateBatch(resultList);
         //标记SKU
@@ -216,8 +228,15 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
 
         checkSourceDetailQty(list,mainId);
-        //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
+
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(mainId);
+        List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
+        if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+            resultList.addAll(generateRepairResultDetail(list, mainId,Boolean.TRUE));
+        } else {
+            //处理父子级数据
+            resultList.addAll(generateResultDetail(list, mainId,Boolean.TRUE));
+        }
         //变更不更新bom版本
         resultList.forEach(obj -> {
             obj.setBomVersion(null);
@@ -298,7 +317,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //主表信息
         SubcontractOrderEntity entity = subcontractOrderService.getById(mainId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
 
         //采购申请单明细
@@ -312,12 +331,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<String> skuIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         //收集所有SKU校验错误信息
         List<String> errorMessages = new ArrayList<>();
-        
+
         for (SubcontractOrderDetailEntity detailEntity : sourceDetailList) {
             //sku编码
             String skuNo = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
@@ -337,7 +356,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 errorMessages.add(StrUtil.format("委外订单【{}】SKU【{}】可下推数量为【{}】，请检查", entity.getCode(), skuNo, applyQty - pushdownQty));
             }
         }
-        
+
         //统一抛出所有错误信息
         if (CollectionUtils.isNotEmpty(errorMessages)) {
             String errorMsg = String.join("；\n", errorMessages);
@@ -358,7 +377,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
         //收集所有SKU校验错误信息
         List<String> errorMessages = new ArrayList<>();
-        
+
         //父级skuIds
         List<String> parentSkuIds = new ArrayList<>();
         //全部skuIds
@@ -389,7 +408,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //委外订单
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(mainId);
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
         //获取采购单价
         String purchaseOrgId = subcontractOrderEntity.getPurchaseOrgId();
@@ -412,12 +431,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         List<SupplierEntity> supplierList = null;
         if (CollectionUtils.isNotEmpty(supplierIds)) {
@@ -512,7 +531,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     hasChildError = true;
                     break;
                 }
-                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+//                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+//                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+//                    hasChildError = true;
+//                    break;
+//                }
+                //空仓位允许通过校验
+                if (Objects.isNull(childEntity.getWarehouseLocation())) {
                     errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
                     hasChildError = true;
                     break;
@@ -538,23 +563,23 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 }
                 handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
             }
-            
+
             //如果子件有错误，跳过本条父级SKU
             if (hasChildError) {
                 continue;
             }
-            
+
             resultList.add(detailEntity);
             resultList.addAll(childList);
 
         }
-        
+
         //统一抛出所有错误信息
         if (CollectionUtils.isNotEmpty(errorMessages)) {
             String errorMsg = String.join("；\n", errorMessages);
             throw new ServiceException("委外订单校验失败：\n" + errorMsg);
         }
-        
+
         //添加修改操作日志
         for (SubcontractOrderDetailEntity resultEntity : resultList) {
             SubcontractOrderDetailEntity old = this.getById(resultEntity.getId());
@@ -571,6 +596,221 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         return resultList;
     }
 
+
+    private List<SubcontractOrderDetailEntity> generateRepairResultDetail (List<SubcontractOrderDetailEntity> newList, String mainId,Boolean isAdd) {
+        List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
+        //收集所有SKU校验错误信息
+        List<String> errorMessages = new ArrayList<>();
+
+        //父级skuIds
+        List<String> parentSkuIds = new ArrayList<>();
+        //全部skuIds
+        List<String> allSkuIds = new ArrayList<>();
+        //仓库Ids
+        List<String> warehouseIds = new ArrayList<>();
+        //供应商Ids
+        List<String> supplierIds = new ArrayList<>();
+        //id集合赋值
+        handleIdList (newList,parentSkuIds,allSkuIds,warehouseIds,supplierIds);
+
+        //采购退货单下推数量校验
+        List<String> sourceDetailIds = newList.stream().filter(obj->StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //采购退货单明细数据
+        List<PoReturnDetailEntity> sourceDetailList = new ArrayList<>();
+        List<SubcontractOrderDetailEntity> refDetailList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(sourceDetailIds)) {
+            //采购申请信息
+            sourceDetailList.addAll(wmsTaskFeign.listPoReturnDetailByIdList(sourceDetailIds));
+            //委外明细信息
+            refDetailList = this.listBySourceDetailIdsWithNoPurchase(sourceDetailIds);
+        }
+        //查询下推采购单
+        PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
+        searchParamDTO.setPurchaseApplicationDetailIds(sourceDetailIds);
+        List<PurchaseApplicationRefPoDTO.ListDTO> purchaseRefList = purchaseApplicationRefPoService.list(searchParamDTO);
+
+        //委外订单
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(mainId);
+        if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+        }
+        //获取采购单价
+        String purchaseOrgId = subcontractOrderEntity.getPurchaseOrgId();
+        List<PurchasePriceDTO.PriceDTO> list = new ArrayList<>();
+        newList.forEach(e ->{
+            if (CollectionUtils.isNotEmpty(e.getChildList())){
+                e.getChildList().forEach(f -> {
+                    if (Objects.nonNull(f.getIsGift()) && !f.getIsGift()){
+                        list.add(PurchasePriceDTO.PriceDTO.builder()
+                                .purchaseOrgId(purchaseOrgId)
+                                .qty(f.getQty())
+                                .skuId(f.getSkuId())
+                                .supplierId(f.getSupplierId())
+                                .build());
+                    }
+                });
+            }
+        });
+        List<PurchasePriceDTO.PriceDTO> priceList = purchasePriceService.batchGetPurchasePrice(list);
+        //产品信息
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
+        }
+        List<SupplierEntity> supplierList = null;
+        if (CollectionUtils.isNotEmpty(supplierIds)) {
+            supplierList = supplierService.listByIds(supplierIds);
+        }
+
+        //仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
+
+        for (SubcontractOrderDetailEntity detailEntity : newList) {
+
+            //父级SKU信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                errorMessages.add(StrUtil.format("父级SKU【{}】产品信息不存在", detailEntity.getSkuId()));
+                continue;
+            }
+
+            //采购退货数量校验
+            if (CollectionUtils.isNotEmpty(sourceDetailList)) {
+                //采购退货数量
+                Integer returnQty = sourceDetailList.stream()
+                        .filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getReturnQty())).orElse(MathUtil.ZERO);
+
+                Integer purchaseQty = MathUtil.ZERO;
+                Integer subcontractQty = MathUtil.ZERO;
+                if (CollectionUtils.isNotEmpty(refDetailList)) {
+                    subcontractQty = refDetailList.stream()
+                            .filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()) && StringUtils.isBlank(obj.getParentId()))
+                            .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+                //查询已采购数量
+                if (CollectionUtils.isNotEmpty(purchaseRefList)) {
+                    purchaseQty = purchaseRefList.stream().filter(obj -> detailEntity.getSourceDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
+                }
+
+                //已下推数量
+                Integer pushdownQty = purchaseQty + subcontractQty;
+
+                if (detailEntity.getRepairQty() > returnQty - pushdownQty) {
+                    errorMessages.add(StrUtil.format("SKU【{}】可下推数量为【{}】，请检查", skuVO.getSkuNo(), returnQty - pushdownQty));
+                    continue;
+                }
+            }
+
+            detailEntity.setIsAdd(Boolean.FALSE);
+            //新增数据手动添加ID
+            if (StringUtils.isBlank(detailEntity.getId())) {
+                detailEntity.setId(IdWorker.getIdStr());
+                detailEntity.setIsAdd(Boolean.TRUE);
+            }
+            detailEntity.setMainId(mainId);
+            detailEntity.setVariantProperty(skuVO.getVariantProperty());
+            detailEntity.setSkuNo(skuVO.getSkuNo());
+            //仓库名称
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(updateDTO)) {
+                    errorMessages.add(StrUtil.format("SKU【{}】仓库信息不存在", skuVO.getSkuNo()));
+                    continue;
+                }
+                //仓库组织匹配校验
+                if (!StrUtil.equals(updateDTO.getOrgId(),subcontractOrderEntity.getSubcontractOrgId())) {
+                    errorMessages.add(StrUtil.format("SKU【{}】仓库【{}】所属组织与委外组织【{}】不一致", skuVO.getSkuNo(), updateDTO.getName(), subcontractOrderEntity.getSubcontractOrgName()));
+                    continue;
+                }
+                detailEntity.setWarehouseName(updateDTO.getName());
+            }
+            //供应商名称
+            if (CollectionUtils.isNotEmpty(supplierList)) {
+                String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                detailEntity.setSupplierName(supplierName);
+            }
+            handleSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
+            //子集SKU信息
+            List<SubcontractOrderDetailEntity> childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
+            boolean hasChildError = false;
+            for (SubcontractOrderDetailEntity childEntity : childList) {
+                //产品信息
+                SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(childSkuVO)) {
+                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】产品信息不存在", skuVO.getSkuNo(), childEntity.getSkuId()));
+                    hasChildError = true;
+                    break;
+                }
+//                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+//                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+//                    hasChildError = true;
+//                    break;
+//                }
+                //空仓位允许通过校验
+                if (Objects.isNull(childEntity.getWarehouseLocation())) {
+                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+                    hasChildError = true;
+                    break;
+                }
+
+                if (detailEntity.getRepairQty() % childEntity.getQty() != 0 && childEntity.getQty()  % detailEntity.getRepairQty() != 0) {
+                    errorMessages.add(StrUtil.format("父级SKU【{}】和子件SKU【{}】数量需要为整数倍", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+                    hasChildError = true;
+                    break;
+                }
+
+                childEntity.setMainId(mainId);
+                childEntity.setParentId(detailEntity.getId());
+                childEntity.setVariantProperty(childSkuVO.getVariantProperty());
+                childEntity.setSkuNo(childSkuVO.getSkuNo());
+                //仓库名称
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(updateDTO)) {
+                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓库信息不存在", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+                    hasChildError = true;
+                    break;
+                }
+                childEntity.setWarehouseName(updateDTO.getName());
+                //供应商名称
+                if (CollectionUtils.isNotEmpty(supplierList)) {
+                    String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    childEntity.setSupplierName(supplierName);
+                }
+                handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getPurchaseOrgId(), priceList);
+            }
+
+            //如果子件有错误，跳过本条父级SKU
+            if (hasChildError) {
+                continue;
+            }
+
+            resultList.add(detailEntity);
+            resultList.addAll(childList);
+
+        }
+
+        //统一抛出所有错误信息
+        if (CollectionUtils.isNotEmpty(errorMessages)) {
+            String errorMsg = String.join("；\n", errorMessages);
+            throw new ServiceException("委外订单校验失败：\n" + errorMsg);
+        }
+
+        //添加修改操作日志
+        for (SubcontractOrderDetailEntity resultEntity : resultList) {
+            SubcontractOrderDetailEntity old = this.getById(resultEntity.getId());
+            if (ObjectUtils.isNotEmpty(old)) {
+                moduleOperateLogService.addModuleOperateLogByObj(old,resultEntity, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
+        //新增SKU添加操作日志
+        List<SubcontractOrderDetailEntity> addList = newList.stream().filter(c ->c.getIsAdd()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("新增了一条父级SKU【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), addPairList, "编辑操作");
+        }
+        return resultList;
+    }
 
     /**
      * @description: id集合赋值

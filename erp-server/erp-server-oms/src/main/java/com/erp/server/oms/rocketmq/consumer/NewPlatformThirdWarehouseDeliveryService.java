@@ -2,6 +2,8 @@ package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.message.constant.RocketMqNewConsumerGroup;
+import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
@@ -25,8 +27,8 @@ import javax.annotation.Resource;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_THIRD_WAREHOUSE_ERP_TOPIC,
-        selectorExpression = "${spring.cloud.nacos.discovery.namespace}-erp_third_warehouse_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_dmp_group",
+        selectorExpression = RocketMqNewTag.RESTCLOUD_THIRD_WAREHOUSE_TO_OMS_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.DMP_THIRD_WAREHOUSE_TO_WMS_GROUP,
         consumeMode = ConsumeMode.ORDERLY)
 public class NewPlatformThirdWarehouseDeliveryService extends AbstractNewPlatformConsumerHandler {
     @Resource

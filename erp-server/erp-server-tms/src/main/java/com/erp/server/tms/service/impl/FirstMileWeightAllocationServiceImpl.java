@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -20,6 +21,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -569,7 +571,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public List<FirstMileWeightAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds) {
-        if (logisticsBillIds.isEmpty()){
+        if (CollUtil.isNotEmpty(logisticsBillIds)){
             return this.lambdaQuery().in(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillIds).list();
         }
         return Collections.emptyList();
@@ -585,6 +587,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = RedisKeyConstant.FIRST_MILE_WEIGHT_ALLOCATION_KEY,keyName = "logisticsBillId",waiteTime = 60)
     public BatchResultDTO add(String logisticsBillId) throws InterruptedException {
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
@@ -592,6 +595,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         Integer count = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).count();
         if(count > 0){
             return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "已下推重量分摊，不能再次下推");
+        }
+
+        if (!logisticsBillEntity.getIsAllocateWeightRequired()) {
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "头程物流单设置的不分摊重量，不能下推重量分摊");
         }
 
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
@@ -654,7 +661,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 weightAllocationDTO.setBusinessCode(warehouseInboundEntity.get(0).getCode());
             }
         }
-        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
+        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())
+                || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode())
+                || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode())){
             //备货FBA仓：取FBA货件单号
             String fbaShipmentCode = firstMileDeliveryDetailList.get(0).getFbaShipmentCode();
             weightAllocationDTO.setBusinessCode(fbaShipmentCode);
@@ -669,6 +678,11 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         weightAllocationDTO.setFromWarehouseId(firstMileDeliveryEntity.getDeliveryWarehouseId());
         List<FirstMileWeightAllocationEntity> saveList = new ArrayList<>();
         for (WmsCartonDTO.DetailDTO cartonDetail : cartonDetailList) {
+            //箱子明细设置的取消分摊
+            if (cartonDetail.getIsCancelRequired()) {
+                log.warn("物流单【{}】的装箱内容物【{}】设置了取消分摊，跳过该箱子重量分摊计算", logisticsBillEntity.getTransportNo(), cartonDetail.getBoxNo());
+               continue;
+            }
             FirstMileWeightAllocationEntity entity = new FirstMileWeightAllocationEntity();
             BeanMapper.copy(weightAllocationDTO, entity);
             entity.setSkuId(cartonDetail.getSkuId());
@@ -848,19 +862,19 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
                 }
                 return Boolean.FALSE;
             }
         } catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         return Boolean.TRUE;
@@ -895,7 +909,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 

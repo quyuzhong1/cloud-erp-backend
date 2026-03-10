@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -352,6 +353,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
+
     }
 
     /**
@@ -409,6 +415,14 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 销售单号【可排序】
          */
         private String soCode;
+        /**
+         * 物流标签url
+         */
+        private String logisticsLabelUrl;
+        /**
+         * 物流标签名称
+         */
+        private String logisticsLabelUrlName;
         /**
          * 状态【可排序】
          */
@@ -965,7 +979,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 详情
          */
-        private List<PrintLogisticsWaybillDetailDTO> detailList;
+        private LinkedList<PrintLogisticsWaybillDetailDTO> detailList;
     }
 
     /**

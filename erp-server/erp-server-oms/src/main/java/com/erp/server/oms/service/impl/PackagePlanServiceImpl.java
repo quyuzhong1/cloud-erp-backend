@@ -23,10 +23,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -49,7 +49,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -152,7 +151,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     @Override
     public Boolean update(PackagePlanDTO.UpdateDTO addOrUpdateDTO) {
         PackagePlanEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划主单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包计划主单"));
         PackagePlanEntity packagePlanEntity = BeanMapperUtils.map(PackagePlanEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -612,7 +611,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
         List<SoB2cLabelEntity> soB2cLabelEntities = soB2cLabelService.listSoB2cLabelByMainIds(Collections.singletonList(soId));
         //订单已生成标签
-        if (CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo()) && CollUtil.isNotEmpty(soB2cLabelEntities) && CharSequenceUtil.isNotBlank(soB2cLabelEntities.get(0).getLogisticsLabelBase64())) {
+        if (CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo()) && CollUtil.isNotEmpty(soB2cLabelEntities) && CharSequenceUtil.isNotBlank(soB2cLabelEntities.get(0).getLogisticsLabelUrl())) {
             data.put("trackNo", soB2cLogisticsEntity.getTrackNo());
             mqResponseDTO.setData(data);
             return mqResponseDTO;
@@ -644,7 +643,12 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
             SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
             updateDTO.setMainId(soId);
-            updateDTO.setLogisticsLabelBase64("data:application/pdf;base64," + PdfUtil.ImageToPdfBase64(file));
+            FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                    .base64(PdfUtil.ImageToPdfBase64(file))
+                    .fileName(soB2cEntity.getCode() + ".pdf")
+                    .build();
+            String url = fileFeign.uploadFileByBase64(uploadBase64);
+            updateDTO.setLogisticsLabelUrl(url);
             dtoList.add(updateDTO);
             soB2cLabelService.saveSoB2cLabel(dtoList);
             data.put("trackNo", trackNo);
@@ -908,7 +912,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
         List<SoB2cLabelEntity> soB2cLabelEntities = soB2cLabelService.listSoB2cLabelByMainIds(Collections.singletonList(soId));
         //订单已生成标签
-        if (CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo()) && CollUtil.isNotEmpty(soB2cLabelEntities) && CharSequenceUtil.isNotBlank(soB2cLabelEntities.get(0).getLogisticsLabelBase64())) {
+        if (CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getTrackNo()) && CollUtil.isNotEmpty(soB2cLabelEntities) && CharSequenceUtil.isNotBlank(soB2cLabelEntities.get(0).getLogisticsLabelUrl())) {
             data.put("trackNo", soB2cLogisticsEntity.getTrackNo());
             mqResponseDTO.setData(data);
 //            return mqResponseDTO;
@@ -1013,42 +1017,30 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     }
 
     @Override
-    public void batchOrderPrint(List<String> ids, HttpServletResponse response) {
+    public String batchOrderPrint(List<String> ids, HttpServletResponse response) {
         List<PackagePlanEntity> entityList = this.listByIds(ids);
         List<String> errorCodeList = new ArrayList<>();
-        List<String> base64List = new ArrayList<>();
+        List<String> base64UrlList = new ArrayList<>();
         for (PackagePlanEntity entity : entityList) {
-            String base64 = this.print(entity.getId());
-            if(StringUtils.isEmpty(base64)){
+            String base64Url = this.print(entity.getId());
+            if(StringUtils.isEmpty(base64Url)){
                 errorCodeList.add(entity.getCode());
             }else{
-                base64List.add(base64);
+                base64UrlList.add(base64Url);
             }
         }
         if(CollectionUtils.isNotEmpty(errorCodeList)){
             throw new ServiceException("组包预报批量打印失败,单号:{},无标签",errorCodeList);
         }
-        if(CollectionUtils.isNotEmpty(base64List)){
+        if(CollectionUtils.isNotEmpty(base64UrlList)){
             try {
-                String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
-
-                // 设置响应头，告诉浏览器返回的是一个 PDF 文件
-                response.setContentType("application/pdf");
-                response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
-                BASE64Decoder decoder = new BASE64Decoder();
-                try (OutputStream out = response.getOutputStream()) {
-                    // 将 Base64 编码的字符串解码为字节数组
-                    byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
-                    // 将字节数组写入到响应输出流中
-                    out.write(pdfBytes);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
+                return fileFeign.mergeFiles(base64UrlList);
             } catch (Exception e) {
                 log.error("组包预报批量打印打印失败>>>>>>>", e);
                 throw new ServiceException(e.getMessage());
             }
+        }else {
+            throw new ServiceException("组包预报批量打印失败,单号:{},无标签",ids);
         }
     }
 
@@ -1072,7 +1064,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         addTaskDTO.setFirstNodeInputData(map);
         workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
         }
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, dto.getSoId(),2);
         if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -1126,12 +1118,12 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     public void downloadHandoverLabel(PackagePlanDTO.LabelDTO dto) {
         PackagePlanEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包计划单");
         }
         String shopId = entity.getShopId();
         ShopAuthEntity authEntity = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(authEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "店铺授权信息");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "店铺授权信息");
         }
         String packageNo = entity.getPackageNo();
         if (CharSequenceUtil.isBlank(packageNo)){
@@ -1156,7 +1148,11 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         }
 //        byte[] bytes = Base64.getDecoder().decode(pdfBase64);
 //        String labelUrl = FastDFSClientUtil.uploadFile(bytes, UUID.randomUUID().toString(), null);
-        String labelUrl = fileFeign.uploadFileByBase64(pdfBase64);
+        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                .base64(pdfBase64)
+                .fileName(packageNo + ".pdf")
+                .build();
+        String labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
         log.info("获取交接标签成功，labelUrl地址：{}", labelUrl);
         entity.setHandoverLabelUrl(labelUrl);
         entity.setIsHandoverDownload(true);
@@ -1203,32 +1199,32 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     }
 
     private String print(String id) {
-        String base64 = "";
+        String base64Url = "";
         PackagePlanEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            return base64;
+            return base64Url;
         }
         List<PackagePlanDetailEntity> detailEntityList = packagePlanDetailService.getByMainIds(Collections.singletonList(id));
         if(CollectionUtils.isEmpty(detailEntityList)){
-            return base64;
+            return base64Url;
 //            throw new ServiceException("组包计划【{}】详情不存在",entity.getCode());
         }
         PackagePlanDetailEntity packagePlanDetailEntity = detailEntityList.get(0);
         String soId = packagePlanDetailEntity.getSoId();
         List<SoB2cLabelEntity> soB2cLabelEntities = soB2cLabelService.listSoB2cLabelByMainIds(Collections.singletonList(soId));
         if(CollectionUtils.isEmpty(soB2cLabelEntities)){
-            return base64;
+            return base64Url;
 //            throw new ServiceException("【{}】订单标签不存在",entity.getCode());
         }
-        base64 = soB2cLabelEntities.get(0).getLogisticsLabelBase64();
-        if (CharSequenceUtil.isNotBlank(base64)) {
+        base64Url = soB2cLabelEntities.get(0).getLogisticsLabelUrl();
+        if (CharSequenceUtil.isNotBlank(base64Url)) {
             entity.setPrintOrderStatus(PackagePrintStatusEnum.ALREADY.getCode());
             this.updateById(entity);
         }
 //        else {
 //            throw new ServiceException("打印失败");
 //        }
-        return base64;
+        return base64Url;
     }
 
     private void fillData(List<PackagePlanDTO.PagingViewDTO> list) {

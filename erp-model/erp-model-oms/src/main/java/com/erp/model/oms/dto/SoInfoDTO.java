@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -95,6 +94,12 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        private String thirdCode;
 
         /**
          * 平台订单编号
@@ -902,6 +907,7 @@ public class SoInfoDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        private String thirdSystem;
 
         /**
          * 订单金额
@@ -1104,6 +1110,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformOrderCode;
         /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
+        /**
          * 平台订单Id
          */
         private String platformOrderId;
@@ -1120,7 +1130,10 @@ public class SoInfoDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
-
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
         /**
          * 平台更新时间
          */
@@ -1183,6 +1196,8 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+        private String thirdCode;
+        private String thirdSystem;
 
         /**
          * 平台
@@ -1708,6 +1723,7 @@ public class SoInfoDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        private String thirdSystem;
 
         private String platformOrderId;
         /**
@@ -1751,6 +1767,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformOrderCode;
 
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
         /**
          * 销售员id
          */

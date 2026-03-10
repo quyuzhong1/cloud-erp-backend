@@ -104,6 +104,12 @@ public class TemplateManagementDTO implements Serializable {
         private Integer index;
 
 
+        /**
+         * 尺寸
+         */
+        private String size;
+
+
     }
 
     /**
@@ -412,8 +418,53 @@ public class TemplateManagementDTO implements Serializable {
         private String id;
         private String code;
         private String name;
-        private String isDefault;
+        private Boolean isDefault;
+        private Boolean disabled;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class TemplateResultDTO{
+        /**
+         * id
+         */
+        private String templateId;
 
+        /**
+         * 单据类型 transferOut
+         * sys/common/enumDropDown?type=SourceType
+         */
+        private String bizType;
+        /**
+         * 模板类型 shippingLabel
+         * sys/common/enumDropDown?type=TemplateManagementType
+         *
+         */
+        private String type;
+
+        /**
+         * 模板名称
+         */
+        private String templateName;
+
+        /**
+         * 前端渲染配置JSON
+         */
+        private String content;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TemplateParamsDTO{
+        /**
+         * 单据类型 transferOut
+         * sys/common/enumDropDown?type=TemplateManagementType
+         */
+        private String bizType;
+        /**
+         * 模板类型 shippingLabel
+         * sys/common/enumDropDown?type=SourceType
+         */
+        private String type;
+    }
 }

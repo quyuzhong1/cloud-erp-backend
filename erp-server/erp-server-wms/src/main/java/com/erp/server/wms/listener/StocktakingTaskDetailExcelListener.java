@@ -9,11 +9,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
@@ -30,8 +29,11 @@ import java.util.Objects;
  */
 public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<StocktakingTaskDetailExcelDTO> {
 
+    private StocktakingTaskService stocktakingTaskService;
 
     private StocktakingTaskDetailService stocktakingTaskDetailService;
+
+    private StocktakingProfitLossService stocktakingProfitLossService;
 
     private String code;
 
@@ -47,12 +49,16 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
 
     List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
 
-    public StocktakingTaskDetailExcelListener(StocktakingTaskDetailService stocktakingTaskDetailService,
+    public StocktakingTaskDetailExcelListener(StocktakingTaskService stocktakingTaskService,
+                                              StocktakingTaskDetailService stocktakingTaskDetailService,
+                                              StocktakingProfitLossService stocktakingProfitLossService,
                                               String code,
                                               List<StocktakingTaskDetailEntity> taskDetailList,
                                               WarehouseService warehouseService,
                                               OperateLogService operateLogService) {
+        this.stocktakingTaskService = stocktakingTaskService;
         this.stocktakingTaskDetailService = stocktakingTaskDetailService;
+        this.stocktakingProfitLossService = stocktakingProfitLossService;
         this.code = code;
         this.taskDetailList = taskDetailList;
         this.warehouseService = warehouseService;
@@ -92,6 +98,13 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         if (!code.equals(taskCode)) {
             errorMsgList.add("盘点任务单号有误");
         }
+
+        StocktakingTaskEntity taskEntity = stocktakingTaskService.getByCode(taskCode);
+        List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(taskEntity.getId());
+        if (!stocktakingProfitLossList.isEmpty()) {
+            errorMsgList.add("已生成盘盈盘亏单的盘点任务不允许修改");
+        }
+
         //仓库名称
         String warehouseName = excelDTO.getWarehouseName();
         //仓库id
@@ -99,7 +112,7 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                 findFirst().map(WarehouseDTO.ListDTO::getId).orElse("");
         if (CharSequenceUtil.isBlank(warehouseId)) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+            errorMsgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
         }
         //仓位
         String warehouseLocation = Objects.isNull(excelDTO.getWarehouseLocation()) ? "" : excelDTO.getWarehouseLocation();

@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
@@ -15,14 +16,13 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -115,12 +115,21 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      * @date 2022-07-26 14:20
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean removeThirdParty(String bindingThird) {
         LoginUser loginUser = UserContext.getLoginUser();
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, bindingThird);
         queryWrapper.eq(SysUserThirdEntity::getUserId, loginUser.getUid());
-        return baseMapper.delete(queryWrapper) > 0 ? true : false;
+        boolean flag = baseMapper.delete(queryWrapper) > 0;
+        if(flag){
+            SysUserInfoEntity sysUserInfoEntity = sysUserInfoService.getById(loginUser.getUid());
+            if(Objects.nonNull(sysUserInfoEntity)){
+                sysUserInfoEntity.setThirdAuthType("");
+                sysUserInfoService.updateById(sysUserInfoEntity);
+            }
+        }
+        return flag;
     }
 
 
@@ -192,15 +201,20 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
 
     @Override
     public List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds) {
-        if(StringUtils.isBlank(platform) || CollUtil.isEmpty(userIds)){
+        if(StringUtils.isBlank(platform)){
             return Collections.emptyList();
         }
-        List<SysUserThirdEntity> list = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
-                .in(SysUserThirdEntity::getUserId, userIds)
-                .ne(SysUserThirdEntity::getThirdOpenId, "")
-                .ne(SysUserThirdEntity::getThirdUserId, "")
-                .ne(SysUserThirdEntity::getThirdUnionId, "")
-                .list();
+        LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, platform);
+        // 只有当 userIds 不为空且不为 null 时才添加 in 条件
+        if (CollUtil.isNotEmpty(userIds)) {
+            queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
+        }
+        queryWrapper.ne(SysUserThirdEntity::getThirdOpenId, "");
+        queryWrapper.ne(SysUserThirdEntity::getThirdUserId, "");
+        queryWrapper.ne(SysUserThirdEntity::getThirdUnionId, "");
+
+        List<SysUserThirdEntity> list = this.list(queryWrapper);
         List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,list);
         if(CollUtil.isEmpty(thirdUnionDTOs)){
             return Collections.emptyList();

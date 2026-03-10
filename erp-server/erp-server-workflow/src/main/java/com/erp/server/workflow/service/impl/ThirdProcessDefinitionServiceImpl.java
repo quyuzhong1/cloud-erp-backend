@@ -26,6 +26,7 @@ import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.DictBasicService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
@@ -64,6 +65,10 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     private DictBasicService dictBasicService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private FsService fsService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -81,12 +86,16 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         if(!save) {
             throw new ServiceException("三方审批定义保存失败");
         }
+        //同步订阅飞书定义接口
+        subscribeFeiShuDefinition(thirdProcessDefinitionEntity);
 
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
         dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.ADD.getStatus()));
         dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.ADD.getStatus()));
         return new BaseResultDTO.AddDTO(thirdProcessDefinitionEntity.getId(), thirdProcessDefinitionEntity.getId());
     }
+
+
 
     /**
     * 修改
@@ -96,7 +105,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     @Override
     public Boolean update(ThirdProcessDefinitionDTO.UpdateDTO addOrUpdateDTO) {
         ThirdProcessDefinitionEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方审批定义"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方审批定义"));
         ThirdProcessDefinitionEntity thirdProcessDefinitionEntity =  BeanMapperUtils.map(ThirdProcessDefinitionEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -106,6 +115,15 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         if(!save) {
             throw new ServiceException("三方审批定义保存失败");
         }
+
+        //判断审批定义编码是否存在更新
+        if (!CharSequenceUtil.equals(old.getApprovalCode(), thirdProcessDefinitionEntity.getApprovalCode())) {
+            //同步订阅飞书定义接口
+            subscribeFeiShuDefinition(thirdProcessDefinitionEntity);
+            //取消订阅旧的飞书定义接口
+            unSubscribeFeiShuDefinition(old);
+        }
+
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
         dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.UPDATE.getStatus()));
         dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.UPDATE.getStatus()));
@@ -156,6 +174,10 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     public BatchResultDTO delete(String id) {
         ThirdProcessDefinitionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
         super.removeById(id);
+
+        //同步取消订阅飞书定义接口
+        unSubscribeFeiShuDefinition(entity);
+
         //给dmp服务自动添加飞书dmp_cfg_input_detail配置
         dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,entity.getApprovalCode(),OperationTypeEnum.DELETE.getStatus()));
         dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,entity.getApprovalCode(),OperationTypeEnum.DELETE.getStatus()));
@@ -187,7 +209,32 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             throw new ServiceException("审批定义编码【{}】已存在",entity.getApprovalCode());
         }
     }
-    
+
+    /**
+     * 订阅飞书审批定义
+     * @author will
+     * @date 2025/9/10 18:20
+     * @param entity
+     */
+    private void subscribeFeiShuDefinition(ThirdProcessDefinitionEntity entity) {
+        if (!CharSequenceUtil.equals(entity.getSourcePlatform(), ProcessSourcePlatformEnum.FS.getCode())) {
+            return;
+        }
+        fsService.subscribeFeiShuDefinition(entity.getApprovalCode());
+    }
+
+    /**
+     * 取消订阅飞书审批定义
+     * @author will
+     * @date 2025/9/10 18:20
+     * @param entity
+     */
+    private void unSubscribeFeiShuDefinition(ThirdProcessDefinitionEntity entity) {
+        if (!CharSequenceUtil.equals(entity.getSourcePlatform(), ProcessSourcePlatformEnum.FS.getCode())) {
+            return;
+        }
+        fsService.unSubscribeFeiShuDefinition(entity.getApprovalCode());
+    }
     
     /**
      * 根据审批定义编码查询

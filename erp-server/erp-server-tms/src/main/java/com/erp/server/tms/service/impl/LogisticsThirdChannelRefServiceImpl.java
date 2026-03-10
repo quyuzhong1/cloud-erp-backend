@@ -109,7 +109,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Override
     public Boolean update(LogisticsThirdChannelRefDTO.UpdateDTO addOrUpdateDTO) {
         LogisticsThirdChannelRefEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流-第三方渠道关系单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流-第三方渠道关系单"));
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity =  BeanMapperUtils.map(LogisticsThirdChannelRefEntity.class, addOrUpdateDTO);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())){
@@ -287,7 +287,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 

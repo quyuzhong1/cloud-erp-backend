@@ -167,6 +167,8 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
             return resultMap;
         }
 
+        resultMap.put("usage", entity.getUsage());
+        resultMap.put("processApplyCode", entity.getProcessApplyCode());
         //其他出库类型
         resultMap.put("type", entity.getType());
         resultMap.put("outType", entity.getOutType());
@@ -228,7 +230,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99062);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND);
         }
         //客户信息
         OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(entity.getId());

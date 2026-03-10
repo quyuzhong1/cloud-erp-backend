@@ -2,17 +2,19 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.service.FirstMileCostAllocationService;
+import com.erp.server.tms.service.InventorySkuCostService;
+import com.erp.server.tms.service.SmallBagCostAllocationService;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -25,6 +27,12 @@ public class TmsFirstMileLogisticFeignController {
 
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
+
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
+
+    @Resource
+    private SmallBagCostAllocationService smallBagCostAllocationService;
 
     /**
      * 根据来源id查询物流单
@@ -71,5 +79,40 @@ public class TmsFirstMileLogisticFeignController {
     @PostMapping("/getRecordBySkuIdAndCode")
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO){
         return firstMileCostAllocationService.getRecordBySkuIdAndCode(detailDTO.getSkuId(),detailDTO.getBusinessCode(),detailDTO.getReportMonth());
+    }
+
+
+    /**
+     * 查询sku成本
+     * @author will
+     * @date 2025/12/10 14:40
+     * @param paramDTO
+     * @return List<InvSkuCostDTO>
+     */
+    @PostMapping("/listInventorySkuCost")
+    List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(@RequestBody InventorySkuCostDTO.SkuCostParamDTO paramDTO){
+        return inventorySkuCostService.listInventorySkuCost(paramDTO);
+    }
+    /**
+     * 查询小包费用分摊
+     * @author will
+     * @date 2025/12/10 14:40
+     * @param paramDTO
+     * @return List<SmallBagCostDTO>
+     */
+    @PostMapping("/listSmallBagCost")
+    List<SmallBagCostAllocationDTO.SmallBagCostDTO> listSmallBagCost(@RequestBody SmallBagCostAllocationDTO.SmallBagCostParamDTO paramDTO){
+        return smallBagCostAllocationService.listSmallBagCost(paramDTO);
+    }
+    /**
+     * 添加日志
+     * @author will 
+     * @date 2026/1/26 16:18
+     * @param addLogDTO 
+     * @return void
+     */
+    @PostMapping("/addFirstMileLogisticLog")
+    public void addFirstMileLogisticLog(@RequestBody TmsFirstMileLogisticDTO.AddLogDTO addLogDTO){
+        tmsFirstMileLogisticService.addFirstMileLogisticLog(addLogDTO);
     }
 }

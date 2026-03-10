@@ -275,7 +275,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_INSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
 
         if (CollectionUtils.isNotEmpty(records)) {
@@ -507,6 +507,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setSoReturnId(dto.getSoReturnId());
         entity.setSoReturnCode(dto.getSoReturnCode());
         entity.setPlatformOrderCode(dto.getPlatformOrderCode());
+        entity.setThirdCode(dto.getThirdCode());
         entity.setSourceCode(dto.getSourceCode());
         entity.setSourceType(dto.getSourceType());
         entity.setSourceId(dto.getSourceId());
@@ -541,7 +542,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String id = dto.getId();
         SoReturnInstockEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.PO_RETURN_INBOUND_NOT_FOUND);
         }
         // 历史Entity
         SoReturnInstockEntity byId = new SoReturnInstockEntity();
@@ -561,7 +562,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType()) || SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())){
             CustomerInfoEntity customerInfo = customerFeign.getCustomerById(dto.getCustomerId());
             if (null == customerInfo){
-                ServiceException.runError(ApiError.ERROR_92011);
+                ServiceException.runError(ApiError.CUSTOMER_NOT_FOUND);
             }
             entity.setCustomerId(dto.getCustomerId());
             entity.setCustomerName(customerInfo.getName());
@@ -731,13 +732,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(SoReturnInstockEntity entity,Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 
         //未作废、待提交、审核不通过才可以提交
         if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         if(isNeedProcess){
             startProcess(entity);
@@ -791,7 +792,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoReturnInstockDetailEntity> detailList = soReturnInstockDetailService.lambdaQuery().eq(SoReturnInstockDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_92174);
+            throw new ServiceException(ApiError.SO_RETURN_INBOUND_DETAIL_REQUIRED);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
@@ -834,11 +835,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public Boolean addAndSubmit(SoReturnInstockDTO.Add dto) {
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         SoReturnInstockEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.PO_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -849,11 +850,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public Boolean updateAndSubmit(SoReturnInstockDTO.Update dto) {
         Boolean update = this.update(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         SoReturnInstockEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.PO_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -865,7 +866,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public BatchResultDTO approve(SoReturnInstockEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //如果是菜鸟仓的情况，不能手动审核
         List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
@@ -905,7 +906,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -958,7 +959,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public BatchResultDTO disApprove(SoReturnInstockEntity entity, Boolean isPushKingDee) {
         //已审核支持反审核
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         // 取消三方仓退货入库单不允许反审核
 //        if(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equals(entity.getSourceType()) && isPushKingDee){
@@ -997,14 +998,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public Boolean cancelProcess(List<String> ids) {
         List<SoReturnInstockEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //审核中可以撤销
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -1034,7 +1035,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<SoReturnInstockEntity> approveList = lambdaQuery().in(SoReturnInstockEntity::getId, ids).eq(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus()).list();
         if(CollUtil.isNotEmpty(approveList)) {
@@ -1048,7 +1049,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnInstockEntity::getInvalidStatus, Boolean.TRUE)
@@ -1074,14 +1075,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public Boolean delete(List<String> ids) {
         List<SoReturnInstockEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //待提交支持删除
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
 
         //获取需要推送数帝云的数据
@@ -1107,7 +1108,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public BatchResultDTO deleteEntity(SoReturnInstockEntity entity) {
         //待提交支持删除
         if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         
@@ -1147,7 +1148,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> soReceiveIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
         long count = soReturnReceiveDetailService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92032);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND);
         }
 
         for (String id : soReceiveIdList) {
@@ -1228,7 +1229,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> soReceiveIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
         long count = soReturnReceiveService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92032);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND);
         }
         for (String id : soReceiveIdList) {
             List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
@@ -1369,6 +1370,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             soReturnInstockDetailService.delete(ids);
         }
         this.save(instockEntity);
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", instockEntity.getCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), instockEntity.getId(), "新增操作");
         return soReturnInstockDetailService.saveBatch(detailEntityList);
     }
 
@@ -1489,29 +1492,29 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> viewGenerateMachineInfo(List<String> ids) {
         List<SoReturnInstockDetailEntity> list = soReturnInstockDetailService.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<SoReturnInstockDetailEntity> viewList = list.stream().filter(obj -> obj.getIsSubContract()).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<String> mainIds = viewList.stream().map(SoReturnInstockDetailEntity::getMainId).collect(Collectors.toList());
         List<SoReturnInstockEntity> mainList = this.listByIds(mainIds);
         if (CollectionUtils.isEmpty(mainList)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.PO_RETURN_INBOUND_NOT_FOUND);
         }
 
         List<String> skuIds = viewList.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         //sku信息
         List<String> allSkuIdList = bomList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIdList);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = viewList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
@@ -1528,7 +1531,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
 
                 if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-                    throw new ServiceException(ApiError.ERROR_SO_RETURN_INSTOCK_NOT_GENERATE,entity.getCode());
+                    throw new ServiceException(ApiError.SO_RETURN_INSTOCK_NOT_GENERATE,entity.getCode());
                 }
                 //事务类型默认拆卸
                 viewDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
@@ -1546,7 +1549,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 //产品信息
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
                 }
                 viewDTO.setProductName(skuVO.getSkuName());
                 viewDTO.setVariantProperty(skuVO.getVariantProperty());
@@ -1556,7 +1559,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
                 List<BomChildrenSkuDTO> childList = bomList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(childList)) {
-                    throw new ServiceException(ApiError.ERROR_95166);
+                    throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
                 }
                 viewDTO.setBomVersion(childList.get(0).getBomVersion());
                 viewDTO.setCurInventoryQty(curInventoryQty);
@@ -1568,7 +1571,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     //产品信息
                     SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(childSkuVO)) {
-                        throw new ServiceException(ApiError.ERROR_95084);
+                        throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
                     }
                     SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
                     BeanMapperUtils.copy(viewDTO,viewChildDTO);
@@ -1599,7 +1602,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean generateMachineInfo(ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 
         /**
@@ -1610,13 +1613,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         List<String> ids = new ArrayList<>();
 
@@ -1640,7 +1643,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailValue.get(0).getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
+                    throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
                 }
                 addDetailDTO.setSkuId(detailValue.get(0).getSkuId());
                 addDetailDTO.setSkuNo(skuVO.getSkuNo());
@@ -1653,7 +1656,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     //产品信息
                     SkuVO child = skuList.stream().filter(obj -> obj.getSkuId().equals(subComponentsDTO.getChildSkuId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(child)) {
-                        throw new ServiceException(ApiError.ERROR_95084);
+                        throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
                     }
                     //BOM信息
                     BomChildrenSkuDTO bomChildrenSkuDTO = bomList.stream().filter(obj -> obj.getParentSkuId().equals(subComponentsDTO.getSkuId())
@@ -1662,7 +1665,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                             .findFirst().orElse(null);
 
                     if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                        throw new ServiceException(ApiError.ERROR_95166);
+                        throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
                     }
                     addSubComponentsDTO.setSkuId(subComponentsDTO.getChildSkuId());
                     addSubComponentsDTO.setSkuNo(child.getSkuNo());
@@ -1691,7 +1694,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //自动提交
         Boolean submit = machineInfoService.submit(ids);
         if (!submit) {
-            throw new ServiceException(ApiError.ERROR_1042);
+            throw new ServiceException(ApiError.BILL_SUBMIT_FAILED, SourceTypeEnum.SO_RETURN_INSTOCK.getName());
         }
         //自动审核
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -1727,22 +1730,22 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         List<MachineInfoEntity> list = machineInfoService.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND);
         }
         List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99053);
+            throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND);
         }
         List<String> detailIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
         List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsService.listByDetailIds(detailIds);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99056);
+            throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND);
         }
         for (MachineInfoEntity entity : list) {
             //明细
             List<MachineDetailEntity> detailEntityList = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_99053);
+                throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND);
             }
             //子件
             List<String> detailIdList = detailEntityList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
@@ -1782,11 +1785,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         List<String> warehouseIds = list.stream().map(obj -> JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseId()).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(warehouseIds)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         /**
          * 1、同一加工单下，相同调入、调出组织（仓库、库位可不同）数据生成同一个调拨单
@@ -1924,11 +1927,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public Boolean pdaAddAndSubmit(SoReturnInstockDTO.Add dto) {
         String id = this.pdaAdd(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         SoReturnInstockEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.PO_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -1939,11 +1942,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto) {
         Boolean update = this.pdaUpdate(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         SoReturnInstockEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.PO_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -1978,7 +1981,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_INSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
 
         for (SoReturnInstockDTO.PagingView obj : pagingViews.getRecords()) {
@@ -2188,7 +2191,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate 下载失败 e={}", e.getMessage());
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -2200,15 +2203,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             EasyExcel.read(excelFile.getInputStream(), SoReturnStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<SoReturnStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<SoReturnStockImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -2228,7 +2231,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.FALSE;
     }
@@ -2312,7 +2315,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         SoB2cReturnDTO.ReturnInstockDTO instockDTO = returnInstockDTOS.get(0);
         WarehouseEntity warehouseEntity = warehouseService.getById(instockDTO.getWarehouseId());
         if (Objects.isNull(warehouseEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST,"仓库【"+instockDTO.getWarehouseName()+"】");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库【"+instockDTO.getWarehouseName()+"】");
         }
         //构建退货入库单新增数据
         SoReturnInstockDTO.Add add = SoB2cReturnInstockConverter.INSTANCE.soB2cReturnEntityToAdd(instockDTO);
@@ -2352,7 +2355,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollUtil.isEmpty(successList)) {
             return;
         }
-        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName()).concat(CharSequenceUtil.isNotBlank(obj.getReturnLogisticCode()) ? obj.getReturnLogisticCode() : "")));
+        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName()).concat(CharSequenceUtil.isNotBlank(obj.getReturnLogisticCode()) ? obj.getReturnLogisticCode() : "").concat(CharSequenceUtil.isNotBlank(obj.getThirdCode()) ? obj.getThirdCode() : "").concat(CharSequenceUtil.isNotBlank(obj.getPlatformOrderCode()) ? obj.getPlatformOrderCode() : "")));
 
         List<String> customerNameList = successList.stream().map(SoReturnStockImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
         List<CustomerInfoEntity> customerInfoList = FeignQuery.create(CustomerInfoEntity.class).in(CustomerInfoEntity::getName, customerNameList).eq(CustomerInfoEntity::getDisabled,Boolean.FALSE).eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus()).list();
@@ -2400,6 +2403,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             add.setBillDate(excelDTO.getBillDate());
             add.setType(OrderTypeEnum.getCodeByName(excelDTO.getTypeName()));
             add.setReturnLogisticCode(excelDTO.getReturnLogisticCode());
+            add.setPlatformOrderCode(excelDTO.getPlatformOrderCode());
+            add.setThirdCode(excelDTO.getThirdCode());
+
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnStockImportExcelDTO soReturnStockImportExcelDTO : value) {
                 SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();
@@ -2509,21 +2515,21 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
         List<SoReturnInstockEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //待提交支持删除
 //        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
 //                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
 //        ).count();
 //        if (count != entityList.size()) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
 
         List<SoReturnInstockEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SoReturnInstockEntity entity : entityList) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -2550,7 +2556,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         // 执行批量删除
         Boolean result = this.removeByIds(removeIdList);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         
         // 添加批量操作日志

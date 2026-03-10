@@ -48,6 +48,8 @@ public class DepartmentDTO {
 
     private String parentName;
 
+    private Boolean disabled;
+
 
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<DepartmentDTO> childrenList;

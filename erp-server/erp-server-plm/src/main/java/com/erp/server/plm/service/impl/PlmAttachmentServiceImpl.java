@@ -9,13 +9,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.mapper.PlmAttachmentMapper;
 import com.erp.server.plm.service.PlmAttachmentService;
-import com.erp.server.plm.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -24,12 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * <p>
@@ -43,8 +39,6 @@ import java.util.stream.Collectors;
 @Service
 public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapper, PlmAttachmentEntity> implements PlmAttachmentService {
 
-    @Resource
-    private ProductDetailService productDetailService;
     @Resource
     private FileFeign fileFeign;
 
@@ -102,18 +96,18 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         double fileSize = size / (1024 * 1024);
         fileSize = (double) Math.round(fileSize * 100) / 100;
         if (fileSize > 300) {
-            throw new ServiceException(ApiError.ERROR_95160, 300);
+            throw new ServiceException(ApiError.FILE_SIZE_EXCEEDS_LIMIT, 300);
         }
         String fileName = multipartFile.getOriginalFilename();
         if (org.springframework.util.StringUtils.isEmpty(fileName)) {
-            throw new ServiceException(ApiError.ERROR_1018);
+            throw new ServiceException(ApiError.COMMON_PARAM_NAME_TOO_LONG);
         }
         if (fileName.length() > 200) {
-            throw new ServiceException(ApiError.ERROR_1018);
+            throw new ServiceException(ApiError.COMMON_PARAM_NAME_TOO_LONG);
         }
         String fileUrl = fileFeign.uploadFile(multipartFile);
         if (StringUtils.isBlank(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
         }
         PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
         attachmentEntity.setAttachUrl(fileUrl);
@@ -140,7 +134,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
     @Transactional(rollbackFor = Exception.class)
     public List<PlmAttachmentEntity> batchUpload(List<MultipartFile> multipartFileList, String type) {
         if (CollectionUtils.isEmpty(multipartFileList)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
         }
         List<PlmAttachmentEntity> resultList = new ArrayList<>();
         for(MultipartFile multipartFile :multipartFileList) {
@@ -168,19 +162,32 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
     }
 
     @Override
-    public List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id) {
-        if(StringUtils.isBlank(id)){
+    public List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id, String businessId, LocalDateTime createTime) {
+        if(StringUtils.isBlank(id) || StringUtils.isBlank(businessId)){
             return Collections.emptyList();
         }
-        List<ProductDetailEntity> productDetailEntities = productDetailService.getSkuListByProductId(id);
-        if(CollectionUtils.isEmpty(productDetailEntities)){
-            return new ArrayList<>();
+
+        // 构建查询条件
+        LambdaQueryWrapper<PlmAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PlmAttachmentEntity::getBusinessId, businessId)
+                .eq(PlmAttachmentEntity::getType, SourceTypeEnum.PRODUCT_DETAIL.getTableName());
+
+        // 如果提供了 createTime，则匹配时间范围（前后1秒）
+        if(createTime != null) {
+            LocalDateTime startTime = createTime.minusSeconds(1);
+            LocalDateTime endTime = createTime.plusSeconds(1);
+            queryWrapper.ge(PlmAttachmentEntity::getCreateTime, startTime)
+                    .le(PlmAttachmentEntity::getCreateTime, endTime);
         }
-        List<String> ids = productDetailEntities.stream().map(v->v.getId()).collect(Collectors.toList());
-        List<PlmAttachmentEntity> entities = this.lambdaQuery().in(PlmAttachmentEntity::getBusinessId, ids).eq(PlmAttachmentEntity::getType, SourceTypeEnum.PRODUCT_DETAIL.getTableName()).list();
-        if(CollectionUtils.isEmpty(entities)){
-            return new ArrayList<>();
+
+        queryWrapper.orderByDesc(PlmAttachmentEntity::getCreateTime);
+
+        List<PlmAttachmentEntity> attachments = this.list(queryWrapper);
+
+        if(CollectionUtils.isEmpty(attachments)){
+            return Collections.emptyList();
         }
-        return BeanUtil.copyToList(entities,AttachmentDTO.CommonDTO.class);
+
+        return BeanUtil.copyToList(attachments, AttachmentDTO.CommonDTO.class);
     }
 }

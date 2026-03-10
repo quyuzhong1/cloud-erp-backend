@@ -1,12 +1,15 @@
 package com.erp.model.plm.dto;
 
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.plm.enums.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 
 /**
  * @Description 产品sku信息导入
@@ -108,11 +111,18 @@ public class ProductDetailImprotUpdateExcelDTO {
     private String brandName;
 
     /**
-     * 研发团队
+     * 研发团队（产线）
      */
-    @FieldValid(fieldName = "研发团队" , maxLength = 50)
-    @ExcelProperty("研发团队")
+    @FieldValid(fieldName = "研发团队（产线）" , maxLength = 50)
+    @ExcelProperty("研发团队（产线）")
     private String rdtTeamName;
+
+    /**
+     * BU线
+     */
+    @FieldValid(fieldName = "BU线" , maxLength = 30)
+    @ExcelProperty("BU线")
+    private String buName;
 
     /**
      * 产品开发状态
@@ -446,6 +456,15 @@ public class ProductDetailImprotUpdateExcelDTO {
     private String insuranceProperty;
 
     /**
+     * 电池重量（g）
+     */
+    @FieldValid(fieldName = "电池重量（g）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    @ExcelProperty("电池重量（g）")
+    private String batteryWeightStr;
+    @ExcelIgnore
+    private BigDecimal batteryWeight;
+
+    /**
      * 报关申报价（$）
      */
     @FieldValid(fieldName = "报关申报价（$）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
@@ -503,43 +522,43 @@ public class ProductDetailImprotUpdateExcelDTO {
     /**
      * 产品尺寸(长)
      */
-    @FieldValid(fieldName = "产品尺寸(长)(cm)")
-    @ExcelProperty("产品尺寸(长)(cm)")
+    @FieldValid(fieldName = "产品尺寸(长)(mm)")
+    @ExcelProperty("产品尺寸(长)(mm)")
     private String productLength;
 
     /**
      * 产品尺寸(宽)
      */
-    @FieldValid(fieldName = "产品尺寸(宽)(cm)")
-    @ExcelProperty("产品尺寸(宽)(cm)")
+    @FieldValid(fieldName = "产品尺寸(宽)(mm)")
+    @ExcelProperty("产品尺寸(宽)(mm)")
     private String productWidth;
 
     /**
      * 产品尺寸(高)
      */
-    @FieldValid(fieldName = "产品尺寸(高)(cm)")
-    @ExcelProperty("产品尺寸(高)(cm)")
+    @FieldValid(fieldName = "产品尺寸(高)(mm)")
+    @ExcelProperty("产品尺寸(高)(mm)")
     private String productHeight;
 
     /**
      * 箱规(长)
      */
-    @FieldValid(fieldName = "箱规(长)(cm)")
-    @ExcelProperty("箱规(长)(cm)")
+    @FieldValid(fieldName = "箱规(长)(mm)")
+    @ExcelProperty("箱规(长)(mm)")
     private String boxLength;
 
     /**
      * 箱规(宽)
      */
-    @FieldValid(fieldName = "箱规(宽)(cm)")
-    @ExcelProperty("箱规(宽)(cm)")
+    @FieldValid(fieldName = "箱规(宽)(mm)")
+    @ExcelProperty("箱规(宽)(mm)")
     private String boxWidth;
 
     /**
      * 箱规(高)
      */
-    @FieldValid(fieldName = "箱规(高)(cm)")
-    @ExcelProperty("箱规(高)(cm)")
+    @FieldValid(fieldName = "箱规(高)(mm)")
+    @ExcelProperty("箱规(高)(mm)")
     private String boxHeight;
 
     /**

@@ -192,7 +192,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
 
         if (CollectionUtils.isNotEmpty(records)) {
@@ -624,7 +624,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnDetailEntity> detailEntityList = soReturnDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_92023);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
         }
         if(StringUtils.isNotBlank(soReturnEntity.getSourceId())){
             SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
@@ -686,13 +686,13 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(SoReturnEntity entity,Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 
         //未作废、待提交、审核不通过才可以提交
         if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         //提交流程
         if(isNeedProcess){
@@ -744,7 +744,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoReturnDetailEntity> detailList = soReturnDetailService.lambdaQuery().eq(SoReturnDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售退货单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"销售退货单");
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
@@ -755,11 +755,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public Boolean addAndSubmit(SoReturnDTO.Add dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         SoReturnEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_92173);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -770,11 +770,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public Boolean updateAndSubmit(SoReturnDTO.Update dto) {
         Boolean update = this.update(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         SoReturnEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_92173);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -791,7 +791,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ).count();
 
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //调用审核流程
         approveProcess(entity, new ApproveOneDTO(entity.getId(), baseApproveParamDTO.getType(), baseApproveParamDTO.getComment()));
@@ -821,7 +821,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -927,7 +927,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
 
         for (SoReturnDTO.PagingView pagingView : page.getRecords()) {
@@ -1005,7 +1005,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             }
         } catch (Exception e) {
             log.error("请求erp-oms soInfoFeign.getSoInfoById 异常:{}", e.getMessage());
-            throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始订单异常");
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN.getCode(), "获取原始订单异常");
         }
         CustomerInfoEntity customerInfo = null;
         try {
@@ -1084,7 +1084,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public BatchResultDTO disApprove(SoReturnEntity entity) {
         //已审核支持反审核
         if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         List<String> ids = Arrays.asList(entity.getId());
         //TODO 待加审核流程
@@ -1092,12 +1092,12 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //有退货通知单不能反审核
         List<SoReturnNoticeEntity> soReturnNoticeEntities = soReturnNoticeFeign.listBySourceId(ids);
         if (CollectionUtils.isNotEmpty(soReturnNoticeEntities)) {
-            throw new ServiceException(ApiError.ERROR_92012);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN);
         }
         //有退货签收单不能反审核
         List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveFeign.listBySourceId(ids);
         if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
-            throw new ServiceException(ApiError.ERROR_92013);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -1119,7 +1119,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public Boolean cancelProcess(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //审核中可以撤销
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -1127,7 +1127,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ).count();
 
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -1159,7 +1159,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public Boolean invalid(List<String> ids, String remark) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //审核不通过 待提交可以作废
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -1168,7 +1168,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         ).count();
 
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
 
         //修改状态为待提交
@@ -1188,14 +1188,14 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public Boolean delete(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //待提交支持删除
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
         ).count();
         if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
 
         //删除详情表
@@ -1210,14 +1210,14 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public List<BatchResultDTO> delete(List<String> ids, boolean returnDetails) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 //        //待提交支持删除
 //        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
 //                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
 //        ).count();
 //        if (count != entityList.size()) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
         List<SoReturnEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
@@ -1225,7 +1225,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         for (SoReturnEntity entity : entityList) {
             if (!entity.getApproveStatus().equals(waitSubmitStatus)
                     ||entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1239,7 +1239,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnDetailService.delete(removeIdList);
         boolean flag = this.removeByIds(removeIdList);
         if (!flag){
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         
         // 添加批量操作日志
@@ -1402,6 +1402,36 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
+    public SoReturnEntity getByPlatformOrderCode(String platformOrderCode) {
+        if(StringUtils.isBlank(platformOrderCode)){
+            return null;
+        }
+        return this.lambdaQuery()
+                .eq(SoReturnEntity::getPlatformOrderCode,platformOrderCode)
+                .eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE)
+                .last("limit 1")
+                .one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addByPlatform(SoReturnEntity soReturn, List<SoReturnDetailEntity> soB2cReturnDetailEntityList) {
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THDD);
+        soReturn.setCode(code);
+        this.save(soReturn);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("平台自动新增退货单【%s】", code), ModuleTypeEnum.SO_B2C_RETURN.getCode(), soReturn.getId(), "新增操作");
+
+        soB2cReturnDetailEntityList.forEach(v->v.setMainId(soReturn.getId()));
+        soReturnDetailService.saveBatch(soB2cReturnDetailEntityList);
+        this.submit(soReturn,false);
+        ApproveOneDTO dto = new ApproveOneDTO();
+        dto.setType(ApproveTypeEnum.PASS.getStatus());
+        this.approveEnd(dto,soReturn);
+    }
+
+    @Override
     public List<SoReturnDTO.PagingView> listSoReturnDetailBySourceId(String sourceId) {
         List<SoReturnDTO.PagingView> list = this.baseMapper.listSoReturnDetailBySourceId(sourceId);
         if (CollectionUtils.isEmpty(list)) {
@@ -1530,7 +1560,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnDetailEntity> detailEntityList = soReturnDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_92023);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
         }
         SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);

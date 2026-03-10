@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolSocialMediaMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolSocialMediaEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="type" property="type" />
+       <result column="media_platform" property="mediaPlatform" />
+       <result column="third_platform" property="thirdPlatform" />
+       <result column="platform_account_id" property="platformAccountId" />
+       <result column="platform_account_name" property="platformAccountName" />
+       <result column="publish_time" property="publishTime" />
+       <result column="url" property="url" />
+       <result column="url_hash" property="urlHash" />
+       <result column="title" property="title" />
+       <result column="insert_timestamp" property="insertTimestamp" />
+       <result column="insert_time" property="insertTime" />
+       <result column="follower_count" property="followerCount" />
+       <result column="view_count" property="viewCount" />
+       <result column="play_count" property="playCount" />
+       <result column="comment_count" property="commentCount" />
+       <result column="like_count" property="likeCount" />
+       <result column="repost_count" property="repostCount" />
+       <result column="unique_key" property="uniqueKey" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        type, media_platform, third_platform, platform_account_id, platform_account_name, publish_time, url, url_hash, title, insert_timestamp, insert_time, follower_count, view_count, play_count, comment_count, like_count, repost_count, unique_key
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.KolSocialMediaDTO$ListDTO">
+        SELECT
+            ksm.id,
+            ksm.type,
+            ksm.media_platform AS mediaPlatform,
+            ksm.third_platform AS thirdPlatform,
+            ksm.platform_account_id AS platformAccountId,
+            ksm.platform_account_name AS platformAccountName,
+            ksm.publish_time AS publishTime,
+            ksm.url,
+            ksm.url_hash AS urlHash,
+            ksm.title,
+            ksm.insert_timestamp AS insertTimestamp,
+            ksm.insert_time AS insertTime,
+            ksm.follower_count AS followerCount,
+            ksm.view_count AS viewCount,
+            ksm.play_count AS playCount,
+            ksm.comment_count AS commentCount,
+            ksm.like_count AS likeCount,
+            ksm.repost_count AS repostCount,
+            ksm.unique_key AS uniqueKey,
+            ksm.create_time AS createTime,
+            ksm.create_user_id AS createUserId,
+            ksm.create_user_name AS createUserName,
+        ksm.update_time AS updateTime,
+        ksm.update_user_id AS updateUserId,
+        ksm.update_user_name AS updateUserName
+
+        FROM kol_social_media ksm
+        WHERE
+        ${params.sqlMap.default}
+        AND ksm.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ksm.create_time DESC
+    </select>
+
+</mapper>

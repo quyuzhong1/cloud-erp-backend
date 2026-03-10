@@ -22,6 +22,9 @@ public enum SyncOperateEnum {
     OPERATE_UNDO_TO_PLAN_CONFIRM("operateUndoToPlanConfirm", "UndoToPlanConfirm","反执行至计划确认"),
     OPERATE_SYNC_ERROR("operateSyncError", "","同步错误任务"),
 
+    OPERATE_DELIVERY("operateDelivery", "","发货"),
+    //OPERATE_PUSH("operatePush", "","下推"),
+
     ;
     private String code;
 

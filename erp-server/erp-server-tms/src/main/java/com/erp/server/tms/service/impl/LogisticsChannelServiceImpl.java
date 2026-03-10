@@ -149,7 +149,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Override
     public Boolean update(LogisticsChannelDTO.UpdateDTO updateDTO) {
         LogisticsChannelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道单"));
         LogisticsChannelEntity logisticsChannelEntity = BeanMapperUtils.map(LogisticsChannelEntity.class, updateDTO);
         handleData(logisticsChannelEntity);
         boolean save = super.updateById(logisticsChannelEntity);
@@ -236,7 +236,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.ViewDTO view(String id) {
         LogisticsChannelEntity channelEntity = this.getById(id);
         if (Objects.isNull(channelEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         LogisticsChannelDTO.ViewDTO view = new LogisticsChannelDTO.ViewDTO();
         BeanMapperUtils.copy(channelEntity, view);
@@ -337,7 +337,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         List<SoB2cLogisticsEntity> b2cLogisticsList = soB2cFeign.listSoB2cLogisticsByChannelId(id);
         if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
-            return BatchResultDTO.fail(id,entity.getCode(), ApiError.ERROR_CHANNEL_QUOTE.msg);
+            return BatchResultDTO.fail(id,entity.getCode(), ApiError.LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN.getMsg());
         }
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
@@ -363,7 +363,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         LogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         Boolean dbDisabled = entity.getDisabled();
         if (dbDisabled.equals(disabled)) {
@@ -401,7 +401,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public Boolean copy(String id) {
         LogisticsChannelEntity channel = this.getById(id);
         if (Objects.isNull(channel)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         String addChannelId = IdWorker.getIdStr();
         channel.setId(addChannelId);
@@ -477,7 +477,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.BaseDTO getInfoById(String channelId) {
         LogisticsChannelEntity entity = this.getById(channelId);
         if (Objects.isNull(entity)) {
-            throw  new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw  new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         LogisticsChannelDTO.BaseDTO baseDTO = new LogisticsChannelDTO.BaseDTO();
         BeanMapperUtils.copy(entity, baseDTO);
@@ -497,7 +497,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds) {
         List<LogisticsChannelEntity> logisticsChannelEntities = this.listByIds(channelIds);
         if (CollectionUtils.isEmpty(logisticsChannelEntities)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
         List<String> mainIds = baseDTOS.stream().map(req -> req.getMainId()).collect(Collectors.toList());
@@ -636,7 +636,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String mainId = logisticsChannelEntity.getMainId();
         LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(logisticsSupplier)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
 
         //纸张大小
@@ -689,7 +689,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             //存在空值，校验是否存在非空值，存在则报错
             if (logisticsChannelEntity.getMaxHeight().compareTo(BigDecimal.ZERO) != 0 || logisticsChannelEntity.getMaxLength().compareTo(BigDecimal.ZERO) != 0
                     || logisticsChannelEntity.getMaxWidth().compareTo(BigDecimal.ZERO) != 0){
-                throw new ServiceException(ApiError.ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY);
+                throw new ServiceException(ApiError.LOGISTICS_PACKAGE_DIMENSION_REQUIRED);
             }
         }
         String code = logisticsChannelEntity.getCode();
@@ -708,7 +708,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform) {
         LogisticsChannelEntity channelEntity = this.getById(logisticsChannelId);
         if (null == channelEntity){
-            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道id："+logisticsChannelId+"");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道id："+logisticsChannelId+"");
         }
         if (StringUtils.isBlank(dictPlatform)){
             throw new ServiceException("关联的销售平台不能为空");
@@ -775,7 +775,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public void deliverySetting(LogisticsChannelDTO.DeliveryDTO dto) {
         LogisticsChannelEntity old = this.getById(dto.getId());
         if (null == old){
-            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道");
         }
         //更新配置
         this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())
@@ -832,7 +832,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto) {
         LogisticsChannelEntity old = this.getById(dto.getId());
         if (null == old){
-            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道");
         }
         //更新配置
         this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())
@@ -1069,5 +1069,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return true;
         }).collect(Collectors.toList());
         return warehouseChannelDTOS;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel(LogisticsSupplierDTO.SelectDTO dto) {
+        return baseMapper.listChannel(dto);
     }
 }

@@ -175,8 +175,8 @@ public enum ModuleTypeEnum {
     SAMPLE_ADJUSTMENT_INFO("160", "样品调整单"),
     PAYABLE_INFO("145", "应付单"),
     SO_B2C_REFUND("146", "售后订单"),
-
-
+    AWD_OUTSTOCK("156", "AWD出库"),
+    AWD_INVENTORY("157","AWD库存"),
     // ==================== 资产相关模块 ====================
     ASSET_LOCATION("146", "资产位置"),
     ASSET_ACCEPTANCE("147", "资产验收单"),
@@ -189,6 +189,29 @@ public enum ModuleTypeEnum {
     ASSET_PURCHASE_ORDER("154","资产采购单"),
     ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
     DICT_BASIC("150", "字典数据"),
+
+    KOL_FEEDBACK("161", "回片列表"),
+    KOL_FEEDBACK_COST("162", "回片费用"),
+    KOL_SOCIAL_MEDIA("163", "达人社媒数据"),
+
+
+    KOL_B2B_APPLICATION("156", "B2B寄样申请单"),
+    KOL_PARTNER_INFO("157", "企业达人库"),
+    KOL_B2C_APPLICATION("158", "B2C寄样申请单"),
+    KOL_KOL_SAMPLE_COST("159", "寄样费用单"),
+    CFG_LOGISTICS_COST_IMPORT("160", "费用配置"),
+
+    PRODUCT_BU("160", "产品BU线"),
+
+
+
+
+
+
+
+
+
+
     // DMP配置
     DMP_BASIC_SYSTEM("1000", "平台管理"),
     DMP_CFG_INPUT("1001", "拉取配置"),

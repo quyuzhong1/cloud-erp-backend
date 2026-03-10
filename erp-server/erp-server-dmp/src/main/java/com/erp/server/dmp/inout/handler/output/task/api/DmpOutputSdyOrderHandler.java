@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
@@ -35,6 +36,7 @@ import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSoOutstockDetailService;
 import com.erp.server.dmp.service.DmpSoOutstockService;
+import com.erp.server.dmp.service.DmpSoReturnDetailService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +74,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     private DictBasicService dictBasicService;
     @Resource
     private DmpSoOutstockDetailService dmpSoOutstockDetailService;
+    @Resource
+    private DmpSoReturnDetailService dmpSoReturnDetailService;
 
     @Override
     protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
@@ -447,7 +451,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 if(wdtSoOutstockMap.containsKey(dmpSoDetailEntity.getThirdDetailId())) {
                 	shudiyunB2cOrderDTO.setGoods_status("已发货");
                 }else {
-                	shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
+                	Map<String, Object> wdtSoReturnMap = cacheMap.get("wdtSoReturnMap");
+                	if(StringUtils.isNotBlank(dmpSoInfoEntity.getPlatformCode()) 
+                			&& StringUtils.isNotBlank(dmpSoDetailEntity.getSkuNo())
+                			&& wdtSoReturnMap.containsKey(dmpSoInfoEntity.getPlatformCode() + "_" + dmpSoDetailEntity.getSkuNo())) {
+                		shudiyunB2cOrderDTO.setGoods_status("已取消");
+                	}else {
+                		shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
+                	}
                 }
 
                 //取消金额、数量
@@ -706,9 +717,19 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus()) || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getOrderStatus())) {
                     shudiyunB2cOrderDTO.setGoods_status("已发货");
                 }
-
-                if (dmpSoInfoEntity.getIsCancel() && dmpSoInfoEntity.getIsCancel() != null) {
-                    shudiyunB2cOrderDTO.setGoods_status("已取消");
+                
+                if(dmpSoInfoEntity.getSourceSystem().equalsIgnoreCase(PlatformDictEnum.SHOPIFY.getCode()) && StringUtils.isNotBlank(dmpSoInfoEntity.getExtendData())) {
+                	JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+                    if (jsonObject.get("refundedLineItemIds") != null) {
+                        List<String> refundedLineItemIds = (List<String>) jsonObject.get("refundedLineItemIds");
+                        if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(dmpSoDetailEntity.getThirdDetailId())) {
+                        	shudiyunB2cOrderDTO.setGoods_status("已取消");
+                        }
+                    }
+                }else {
+                	if (dmpSoInfoEntity.getIsCancel() && dmpSoInfoEntity.getIsCancel() != null) {
+                        shudiyunB2cOrderDTO.setGoods_status("已取消");
+                    }
                 }
 
                 //取消金额、数量
@@ -795,6 +816,18 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }else {
             	shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoDetailEntity.getSrcTid());
             	shudiyunB2cOrderDTO.setRoot_node_no(dmpSoDetailEntity.getSrcTid());
+            	if("3".equals(dmpSoInfoEntity.getOrderType())) {
+            		String platformDetailId = dmpSoDetailEntity.getPlatformDetailId();
+            		if(StringUtils.isNotBlank(platformDetailId) && !platformDetailId.startsWith("AD")) {
+            			if(platformDetailId.contains(":")) {
+                			shudiyunB2cOrderDTO.setRoot_node_no_initial(platformDetailId.split(":")[0]);
+                        	shudiyunB2cOrderDTO.setRoot_node_no(platformDetailId.split(":")[0]);
+                		}else {
+                			shudiyunB2cOrderDTO.setRoot_node_no_initial(platformDetailId);
+                        	shudiyunB2cOrderDTO.setRoot_node_no(platformDetailId);
+                		}
+            		}
+            	}
             }
             
             shudiyunB2cOrderDTO.setSuite_no(dmpSoDetailEntity.getSuiteNo());
@@ -917,8 +950,22 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 wdtSoOutstockMap = outStockDetailList.stream().filter(o -> finishIds.contains(o.getMainId()))
                 		.collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getSrcOrderDetailId , (d1 , d2) -> d1));
         	}
+        	
         }
         cacheMap.put("wdtSoOutstock", wdtSoOutstockMap);
+        
+        List<String> wdtPlatformCodeList = DmpSoInfoEntityMap.values().stream()
+        		.filter(d -> PlatformDictEnum.WDT.getCode().equalsIgnoreCase(d.getSourceSystem()) && StringUtils.isNotBlank(d.getPlatformCode()))
+        		.map(DmpSoInfoEntity::getPlatformCode)
+        		.collect(Collectors.toList());
+        Map<String, Object> wdtSoReturnMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(wdtPlatformCodeList)) {
+        	wdtSoReturnMap = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getTid, wdtPlatformCodeList).eq(DmpSoReturnDetailEntity::getReturnOriginalType, "1")
+        			.ne(DmpSoReturnDetailEntity::getSkuNo, "").list()
+    		.stream().collect(Collectors.toMap(d -> d.getTid() + "_" + d.getSkuNo(), d -> "d" , (d1 , d2) -> d1));
+        }
+        cacheMap.put("wdtSoReturnMap", wdtSoReturnMap);
+        
         Set<String> jdSuitShopList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitShop").list()
         		.stream().map(com.erp.model.dmp.entity.DictBasicEntity::getValue).collect(Collectors.toSet());
         Set<String> jdSuitWarehouseList = dictBasicService.lambdaQuery().eq(com.erp.model.dmp.entity.DictBasicEntity::getType, "jdSuitWarehouse").list()
@@ -986,7 +1033,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
             }
         }
-        
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
 

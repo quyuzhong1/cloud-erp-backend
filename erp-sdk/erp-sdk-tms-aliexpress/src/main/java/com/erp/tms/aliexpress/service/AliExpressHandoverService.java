@@ -123,8 +123,8 @@ public class AliExpressHandoverService {
      * @throws ApiException
      */
     public IopResponse commit(Map<String, String> authMap, CommitRequest commitRequest) throws ApiException {
-        log.info("==========AliExpressHandoverService.commit==========start");
-        log.info("authMap:{}, commitRequest:{}",authMap, commitRequest);
+        log.warn("==========AliExpressHandoverService.commit==========start");
+        log.warn("authMap:{}, commitRequest:{}",authMap, commitRequest);
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -170,9 +170,8 @@ public class AliExpressHandoverService {
         }
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        System.out.println(response.getBody());
-        log.info("==========AliExpressHandoverService.commit==========end");
-        log.info("response:{}",response);
+        log.warn("==========AliExpressHandoverService.commit==========end");
+        log.warn("response:{}",response);
         return response;
     }
 

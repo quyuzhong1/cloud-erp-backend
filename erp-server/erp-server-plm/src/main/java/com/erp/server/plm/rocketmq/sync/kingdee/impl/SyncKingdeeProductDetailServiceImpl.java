@@ -94,6 +94,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     private ProductDetailService productDetailService;
     @Resource
     private ApplicationCategoryService applicationCategoryService;
+    @Resource
+    private ProductRefBuService productRefBuService;
 
     /**
      * 组装数据发送到金蝶
@@ -176,7 +178,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //销售信息
         ProductSaleEntity productSaleEntity = productSaleService.getBySkuId(entity.getId());
@@ -238,6 +240,11 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 
         //产品经理
         resultMap.put("chargeName", productInfoEntity.getChargeName());
+        //产品BU线（同步金蝶字段 F_ULZ_buName）
+        ProductRefBuEntity productRefBu = productRefBuService.getByProductIds(entity.getProductId());
+        if (ObjectUtils.isNotEmpty(productRefBu) && StringUtils.isNotBlank(productRefBu.getBuName())) {
+            resultMap.put("buName", productRefBu.getBuName());
+        }
         //销售信息
         if (ObjectUtils.isNotEmpty(productSaleEntity)) {
             //上市时间

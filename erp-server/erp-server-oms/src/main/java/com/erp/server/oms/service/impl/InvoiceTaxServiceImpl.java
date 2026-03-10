@@ -160,7 +160,7 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
             }
         }
         if (CharSequenceUtil.isBlank(listingId)) {
-            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
+            throw new ServiceException(ApiError.SHOP_LISTING_NOT_FOUND);
         }
         invoiceTaxEntity.setListingId(listingId);
         InvoiceTaxEntity old = getByListingId(listingId);

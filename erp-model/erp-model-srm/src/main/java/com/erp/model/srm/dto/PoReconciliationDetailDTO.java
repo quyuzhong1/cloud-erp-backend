@@ -223,16 +223,6 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String paymentConditionName;
 
         /**
-         * 供应商备注
-         */
-        private String supplierRemark;
-
-        /**
-         * 采购备注
-         */
-        private String purchaseRemark;
-
-        /**
          * 单据备注
          */
         private String remark;
@@ -262,26 +252,6 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 送货编码
          */
         private String deliveryCode;
-        /**
-         * 折扣税率
-         */
-        private BigDecimal discountRate;
-        /**
-         * 折扣税率,%
-         */
-        private String discountRateStr;
-        /**
-         * 折扣额
-         */
-        private BigDecimal discountAmount;
-        /**
-         * 预付金额
-         */
-        private BigDecimal prepayAmount;
-        /**
-         * 税价合计（折扣）
-         */
-        private BigDecimal discountTaxAmount;
 
         /**
          * 采购申请单id集合
@@ -521,64 +491,6 @@ public class PoReconciliationDetailDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO {
-
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-        /**
-         * 供方备注
-         */
-        private String supplierRemark;
-    }
-
-    /**
-     * 修改
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ScmUpdateDTO {
-
-        /**
-         * 主键id
-         */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-        /**
-         * 税率
-         */
-        private BigDecimal taxRate;
-
-        /**
-         * 含税单价
-         */
-        private BigDecimal taxPrice;
-
-        /**
-         * 折扣率
-         */
-        private BigDecimal discountRate;
-
-        /**
-         * 预付金额
-         */
-        private BigDecimal prepayAmount;
-
-        /**
-         * 采方备注
-         */
-        private String purchaseRemark;
     }
 
 
@@ -830,7 +742,7 @@ public class PoReconciliationDetailDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<PoReconciliationDetailDTO.ViewDTO> successList;
+        private List<PoReconciliationRefDetailDTO.ViewDTO> successList;
 
         /**
          * 错误的url

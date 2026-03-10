@@ -687,6 +687,21 @@ public interface PlmTaskFeign {
     MoldInfoEntity getMoldInfoByCode(@RequestBody String moldCode);
 
     /**
+     * 批量获取模具信息
+     * @param moldCodes 模具编码列表
+     */
+    @PostMapping("feign/moldInfo/listMoldInfoByCodes")
+    List<MoldInfoEntity> listMoldInfoByCodes(@RequestBody List<String> moldCodes);
+
+    /**
+     * 根据项目名称查询模具编码列表
+     * @param projectName 项目名称
+     * @return 模具编码列表
+     */
+    @PostMapping("feign/moldInfo/listMoldCodesByProjectName")
+    List<String> listMoldCodesByProjectName(@RequestBody String projectName);
+
+    /**
      * 获取模具信息
      * @param dto
      */
@@ -700,7 +715,13 @@ public interface PlmTaskFeign {
     @PostMapping("feign/moldInfo/searchMoldRefSkuByAssetId")
     List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId);
 
-
+    /**
+     * 批量通过模具code获取供应商信息
+     * @param moldCodes 模具编码列表
+     * @return Map<String, MoldInfoDTO.SupplierInfoByCodeDTO> key为模具编码，value为供应商信息
+     */
+    @PostMapping("feign/moldInfo/batchGetSupplierInfoByCodes")
+    Map<String, com.erp.model.plm.dto.MoldInfoDTO.SupplierInfoByCodeDTO> batchGetSupplierInfoByCodes(@RequestBody List<String> moldCodes);
 
     /**
      * 模具档案审核
@@ -719,4 +740,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/moldRefSkuApprove")
     void moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto);
+
+    /**
+     * 根据金蝶id查询sku
+     */
+    @PostMapping("feign/productDetail/getSkuBySyncKingdeeId")
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
 }

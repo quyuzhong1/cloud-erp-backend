@@ -344,7 +344,17 @@
         </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseEntity">
-        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code,charge_id AS chargeId
+        select
+            id,
+            name,
+            type_id,
+            org_id,
+            disabled,
+            approve_status,
+            kingdee_warehouse_code,
+            charge_id AS chargeId,
+            onway_warehouse_id as onwayWarehouseId,
+            onway_warehouse_name as onwayWarehouseName
         from warehouse where is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -370,5 +380,14 @@
                 #{typeId}
             </foreach>
         </if>
+    </select>
+    <select id="listWarehouseNameByIds" resultType="com.erp.model.wms.dto.WarehouseDTO$UpdateDTO">
+        select
+            id,
+            name
+        from warehouse where is_deleted = false and id in
+        <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
     </select>
 </mapper>

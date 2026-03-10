@@ -10,7 +10,6 @@ import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.DictCountryOrgDTO;
 import java.util.*;
@@ -59,7 +58,7 @@ public class DictCountryOrgServiceImpl extends SuperServiceImpl<DictCountryOrgMa
     @Override
     public Boolean update(DictCountryOrgDTO.UpdateDTO updateDTO) {
         DictCountryOrgEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "国家-组织（政治经济）关系单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "国家-组织（政治经济）关系单"));
         DictCountryOrgEntity dictCountryOrgEntity =  BeanMapperUtils.map(DictCountryOrgEntity.class, updateDTO);
 
         // 数据处理

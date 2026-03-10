@@ -6,7 +6,6 @@ import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.excel.metadata.CellExtra;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -98,7 +97,7 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             ExcelDataConvertException convertException = (ExcelDataConvertException) exception;
             int row = convertException.getRowIndex();
             int column = convertException.getColumnIndex()+1;
-            throw new ServiceException(ApiError.EXCEL_ILLEGAL_FIELDS,row,column);
+            throw new ServiceException(ApiError.FILE_EXCEL_ILLEGAL_FIELDS,row,column);
         }
         throw exception;
     }

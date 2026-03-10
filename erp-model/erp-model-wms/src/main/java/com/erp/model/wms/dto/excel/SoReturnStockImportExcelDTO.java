@@ -61,59 +61,72 @@ public class SoReturnStockImportExcelDTO implements Serializable {
     @ExcelProperty(value = "退货物流单号", index = 5)
     @FieldValid(fieldName = "退货物流单号")
     private String returnLogisticCode;
+
+    /**
+     * 第三方单据编号
+     */
+    @ExcelProperty(value = "第三方单据编号", index = 6)
+    @FieldValid(fieldName = "第三方单据编号")
+    private String thirdCode;
+    /**
+     * 平台订单编号
+     */
+    @ExcelProperty(value = "平台订单编号", index = 7)
+    @FieldValid(fieldName = "平台订单编号")
+    private String platformOrderCode;
     /**
      * SKU
      */
-    @ExcelProperty(value = "*SKU", index = 6)
+    @ExcelProperty(value = "*SKU", index = 8)
     @FieldValid(fieldName = "SKU", isNotBlank = true)
     private String skuNo;
 
     /**
      * 上架数量
      */
-    @ExcelProperty(value = "*上架数量", index = 7)
+    @ExcelProperty(value = "*上架数量", index = 9)
     @FieldValid(fieldName = "上架数量", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String realQtyStr;
 
     /**
      * 仓位
      */
-    @ExcelProperty(value = "仓位", index = 8)
+    @ExcelProperty(value = "仓位", index = 10)
     @FieldValid(fieldName = "仓位", maxLength = 50)
     private String warehouseLocationName;
 
     /**
      * 退货金额
      */
-    @ExcelProperty(value = "退货金额", index = 9)
+    @ExcelProperty(value = "退货金额", index = 11)
     @FieldValid(fieldName = "退货金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String returnAmountStr;
 
     /**
      * 含税退货金额
      */
-    @ExcelProperty(value = "含税退货金额", index = 10)
+    @ExcelProperty(value = "含税退货金额", index = 12)
     @FieldValid(fieldName = "含税退货金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String taxReturnAmountStr;
 
     /**
      * 币种
      */
-    @ExcelProperty(value = "币种", index = 11)
+    @ExcelProperty(value = "币种", index = 13)
     @FieldValid(fieldName = "币种", maxLength = 50)
     private String currencyStr;
 
     /**
      * 退货原因
      */
-    @ExcelProperty(value = "*退货原因", index = 12)
+    @ExcelProperty(value = "*退货原因", index = 14)
     @FieldValid(fieldName = "退货原因",maxLength = 200 , enumClass = ReturnReasonEnum.class )
     private String returnReasonDictStr;
 
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 13)
+    @ExcelProperty(value = "备注", index = 15)
     @FieldValid(fieldName = "备注", maxLength = 200)
     private String remark;
 

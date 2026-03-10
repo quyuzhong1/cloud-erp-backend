@@ -9,6 +9,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.enums.logisticsPayTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class LogisticsBillCostExcelListener extends AnalysisEventListener<LogisticsBillCostExcelDTO> {
@@ -24,6 +26,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     private final String taskId;
     private final String importType;
     private final Integer importCount;
+    private final Map<String,Object> extMap;
     @Getter
     private Integer count = 0;
     /**
@@ -45,10 +48,11 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
-    public LogisticsBillCostExcelListener(String taskId, String importType, Integer importCount) {
+    public LogisticsBillCostExcelListener(String taskId, String importType, Integer importCount, Map<String,Object> extMap) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
+        this.extMap = extMap;
     }
 
    /**
@@ -78,12 +82,12 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
             errorList.add(excelDTO);
             return;
         }
-        excelDTO.setPayType(excelDTO.getPayTypeName().equals("付款") ? "pay" : "refund");
+        excelDTO.setPayType(logisticsPayTypeEnum.getByName(excelDTO.getPayTypeName()));
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(),importType);
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(),importType,extMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
@@ -106,7 +110,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         if (!successList.isEmpty()) {
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(), importType);
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(), importType,extMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));

@@ -10,6 +10,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -26,9 +27,11 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.*;
+import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
 import com.sdk.third.lingxing.dto.ProductInfo;
+import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.math3.util.Pair;
 import lombok.extern.slf4j.Slf4j;
@@ -124,6 +127,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private SoMultiChannelService soMultiChannelService;
+    @Resource
+    private SyncWangDianSoB2cService syncWangDianSoB2cService;
+    @Resource
+    private KolSubB2cApplicationService kolSubB2cApplicationService;
+    @Resource
+    private KolSubB2cApplicationDetailService kolSubB2cApplicationDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -333,8 +342,74 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case CAINIAO_LISTING:
                 resultList = newSyncCaiNiaoListing(sourceDetailList);
                 break;
+            case WDT_SO_B2C:
+                resultList = newSyncKolB2c(sourceDetailList);
+                break;
+            case WDT_SO_B2B_DELIVERY:
+                resultList = newSyncWdtB2bDelivery(sourceDetailList);
+                break;
             default:
                 break;
+        }
+        return resultList;
+    }
+
+
+    /**
+     * 查询同步KOL-B2C到旺店通wdt
+     */
+    private Map<String , Map<String, Object>> newSyncKolB2c(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<KolSubB2cApplicationDTO.PushDTO> list = kolSubB2cApplicationService.listPushByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("newSyncKolB2c >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            KolSubB2cApplicationDTO.PushDTO pushDTO = list.stream()
+                    .filter(obj -> obj.getEntity().getId().equals(sourceId))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(pushDTO)) {
+                continue;
+            }
+            PushSelf2Request request = syncWangDianSoB2cService.newSyncKolB2c(pushDTO, null);
+            if(Objects.isNull(request)){
+                log.warn("newSyncKolB2c >>>> 未找到KOL-B2C拆分单: sourceId={}", sourceId);
+                continue;
+            }
+            Map<String, Object> dataMap = JSONUtil.parseObj(request);
+            resultList.put(syncParamDetailDTO.getDataId(), dataMap);
+        }
+        return resultList;
+    }
+
+
+
+    /**
+     * 查询同步销售订单发货到旺店通wdt
+     */
+    private Map<String , Map<String, Object>> newSyncWdtB2bDelivery(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<SoInfoEntity> list = soInfoService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("newSyncWdtB2bDelivery >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            SoInfoEntity pushDTO = list.stream()
+                    .filter(obj -> obj.getId().equals(sourceId))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(pushDTO)) {
+                continue;
+            }
+            Map<String, Object> dataMap = JSONUtil.parseObj(pushDTO);
+            resultList.put(syncParamDetailDTO.getDataId(), dataMap);
         }
         return resultList;
     }

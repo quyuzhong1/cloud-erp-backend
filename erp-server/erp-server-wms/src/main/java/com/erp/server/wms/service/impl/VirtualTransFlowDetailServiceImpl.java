@@ -452,7 +452,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             updateList.add(detailEntity);
         }
         if (MathUtil.compareTo(notOutQty,MathUtil.ZERO) > MathUtil.ZERO) {
-            throw new ServiceException(StrUtil.format("单据【{}】库龄库存扣减失败",entity.getSourceCode()));
+            throw new ServiceException("单据【{}】库龄库存扣减失败",entity.getSourceCode());
         }
         if (CollUtil.isEmpty(addDTOList)) {
             throw new ServiceException("未找到库龄流水数据");
@@ -536,7 +536,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
               Integer inStockDays = (int) (listDTO.getTradeTime().toLocalDate().toEpochDay()- listDTO.getBillDate().toEpochDay() + 1);
               listDTO.setInStockDays(inStockDays);
           }
-          String uniqueKey = StrUtil.format("{}_{}_{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId(),listDTO.getVirtualWarehouseId(),listDTO.getBatchNo());
+          String uniqueKey = CharSequenceUtil.format("{}_{}_{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId(),listDTO.getVirtualWarehouseId(),listDTO.getBatchNo());
           if (uniqueKeyList.contains(uniqueKey)) {
               listDTO.setSkuNo("");
               listDTO.setProductName("");

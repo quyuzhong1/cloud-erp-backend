@@ -73,7 +73,7 @@ public class DmpPlatformSoDeliveryServiceImpl extends SuperServiceImpl<DmpPlatfo
     @Override
     public Boolean update(DmpPlatformSoDeliveryDTO.UpdateDTO addOrUpdateDTO) {
         DmpPlatformSoDeliveryEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         DmpPlatformSoDeliveryEntity dmpPlatformSoDeliveryEntity =  BeanMapperUtils.map(DmpPlatformSoDeliveryEntity.class, addOrUpdateDTO);
 
         // 数据处理

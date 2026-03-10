@@ -14,7 +14,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.SampleBackDetailExcelListener;
 import com.erp.server.wms.mapper.SampleBackDetailMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SampleBackDetailService;
 import com.erp.server.wms.service.SampleLedgerService;
@@ -89,7 +88,7 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
     @Override
     public Boolean update(SampleBackDetailDTO.UpdateDTO addOrUpdateDTO) {
         SampleBackDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品退回详情"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品退回详情"));
         SampleBackDetailEntity sampleBackDetailEntity =  BeanMapperUtils.map(SampleBackDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -135,7 +134,7 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
             EasyExcel.read(excelFile.getInputStream(), SampleBackDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品退回详情错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         List<SampleBackDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";

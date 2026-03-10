@@ -7,6 +7,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -22,7 +23,6 @@ import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
@@ -33,6 +33,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -148,17 +149,17 @@ public class FirstMileDeliveryController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            return failure(ApiError.BILL_SAVE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
         //提审
         try {
-            firstMileDeliveryService.submit(resultAdd.getId());;
+            firstMileDeliveryService.submit(resultAdd.getId(),Boolean.TRUE);;
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
         }
 
         return success(new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(), resultAdd.getCode(),Boolean.TRUE));
@@ -186,17 +187,17 @@ public class FirstMileDeliveryController extends BaseController {
             return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
-            firstMileDeliveryService.submit(dto.getId());
+            firstMileDeliveryService.submit(dto.getId(),Boolean.TRUE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
 
         return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
@@ -221,7 +222,7 @@ public class FirstMileDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = firstMileDeliveryService.submit(id);
+                submit = firstMileDeliveryService.submit(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("发货单 提交审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
@@ -720,4 +721,47 @@ public class FirstMileDeliveryController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 取消发货列表
+     * @author will
+     * @date 2026/1/23 15:18
+     * @param dto
+     * @return ApiResult<PagingVO<CancelDeliveryListDTO>>
+     */
+    @PostMapping("/cancelDeliveryPaging")
+    @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fmd.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging"
+    )
+    public ApiResult<PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO>> cancelDeliveryPaging(@RequestBody @Valid PagingDTO<FirstMileDeliveryDTO.CancelDeliveryParamDTO> dto) {
+        PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO> pagingVO = firstMileDeliveryService.cancelDeliveryPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 批量取消发货
+     * @author will
+     * @date 2026/1/23 18:49
+     * @param list
+     * @return ApiResult<Object>
+     */
+    @PostMapping("/batchCancelDelivery")
+    public ApiResult<Object> batchCancelDelivery(@RequestBody @Valid ValidList<FirstMileDeliveryDTO.CancelDeliveryDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO :list) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = firstMileDeliveryService.cancelDelivery(cancelDeliveryDTO);
+            }catch (Exception e){
+                resultDTO = BatchResultDTO.fail(cancelDeliveryDTO.getPackingTaskId(), cancelDeliveryDTO.getPackingTaskId(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 }

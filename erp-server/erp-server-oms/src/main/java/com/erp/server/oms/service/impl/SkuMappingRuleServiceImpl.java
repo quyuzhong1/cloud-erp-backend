@@ -16,6 +16,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
@@ -45,6 +46,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -125,7 +128,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
 
     private static void isExist(SkuMappingRuleEntity old) {
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "sku对照表匹配规则");
         }
     }
 
@@ -492,6 +495,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                             skuMappingEntity.setProductSkuId(skuVO.getSkuId());
                             skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
                             skuMappingEntity.setProductName(skuVO.getSkuName());
+                            skuMappingEntity.setEffectiveTime(LocalDateTime.now(ZoneId.systemDefault()));
+                            skuMappingEntity.setExpireTime(LocalDateTime.now(ZoneId.systemDefault()).plusYears(MathUtil.NUMBER_100));
                             skuMappingEntity.setListingId(listingInfoEntity.getId());
                             updateSkuMappingList.add(skuMappingEntity);
                             break ruleLoop;

@@ -32,7 +32,7 @@ public class ResultUtil {
      */
     public static void checkRemoteResult(ApiResult result,String errorMsg) {
         if (result == null) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         boolean success = result.getCode() == 200;
         if (!success) {

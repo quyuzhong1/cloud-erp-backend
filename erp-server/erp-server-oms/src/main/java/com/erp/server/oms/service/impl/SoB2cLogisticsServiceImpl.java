@@ -32,12 +32,15 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +91,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     private WorkflowTaskRecordService workflowTaskRecordService;
     @Resource
     private PackagePlanService packagePlanService;
+    @Autowired
+    private SoOutstockFeign soOutstockFeign;
+
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
@@ -105,7 +111,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     public Boolean update(SoB2cLogisticsDTO.UpdateDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity old = super.getById(logisticsDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单物流信息表");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C销售订单物流信息表");
         }
         if(StringUtils.isNotBlank(old.getCode()) && old.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())){
             if(!old.getLogisticsChannelId().equals(logisticsDTO.getLogisticsChannelId()) || !old.getCode().equals(logisticsDTO.getCode())){
@@ -337,11 +343,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         //买家信息
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(orderId);
         if (Objects.isNull(receiverEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_NULL);
+            throw new ServiceException(ApiError.BILL_RECEIVER_REQUIRED);
         }
         SoB2cLogisticsEntity entity = this.getByMainId(orderId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
         }
         SoB2cDTO.ShippingCalculationDTO shippingCalculationDTO = new SoB2cDTO.ShippingCalculationDTO();
         shippingCalculationDTO.setWeight(entity.getWeight());
@@ -488,8 +494,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public void updateLogisticsBySoId(String soId, String trackNo) {
-        if (CharSequenceUtil.isNotBlank(soId)){
+        if (CharSequenceUtil.isBlank(soId)){
+            return;
+        }
+        SoB2cLogisticsEntity entity = this.getByMainId(soId);
+        if (Objects.nonNull(entity) && !Objects.equals(trackNo, entity.getTrackNo()) ){
             this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
+            //清空面单
+            soB2cLabelService.deleteByMainIds(Collections.singletonList(soId));
         }
     }
 
@@ -523,6 +535,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO transferOrderSave(SoB2cLogisticsDTO.transferOrderDTO dto, LogisticsChannelDTO.BaseDTO channel, SoB2cEntity soB2cEntity) {
         if (CharSequenceUtil.isBlank(dto.getTransportNo())){
             dto.setTransportNo(dto.getTrackNo());
@@ -537,7 +551,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                .set(SoB2cLogisticsEntity::getCode, dto.getTransportNo())
                .set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.ERP.getCode())
                .set(SoB2cLogisticsEntity::getTrackNo, dto.getTrackNo()).update();
-         operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "物流转单");
+        operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "物流转单");
+        soOutstockFeign.updateSoB2cLogisticsInfo(dto);
         return BatchResultDTO.success(dto.getId(),soB2cEntity.getCode(),"转单成功");
     }
 }
