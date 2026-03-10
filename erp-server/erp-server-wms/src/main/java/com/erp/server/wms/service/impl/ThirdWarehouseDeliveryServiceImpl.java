@@ -168,7 +168,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         ThirdWarehouseDeliveryEntity exist = service.getLatestBySoId(entity.getId());
         if(ObjectUtil.isNotEmpty(exist) && exist.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())){
             log.warn("销售订单{}已存在三方仓发货单{}",entity.getCode(), JSONUtil.toJsonStr(exist));
-            return;
+            throw new ServiceException("已生成三方仓发货单，不允许操作手动发货");
         }
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
 
