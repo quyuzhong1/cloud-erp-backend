@@ -75,7 +75,7 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
         BeanMapper.copy(dto, entity);
         boolean flag = this.save(entity);
         if (flag) {
-            List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList();
+            List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList(1);
             MessageEntity messageEntity = new MessageEntity();
             messageEntity.setType(MessageTypeEnum.SYS.getCode());
             messageEntity.setRemark(dto.getRemark());
