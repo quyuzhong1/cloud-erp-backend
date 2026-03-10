@@ -4700,22 +4700,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, dto.getUpdateFiledCode());
             }
-            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode() , dto.getValues(), enumByCode.getKeyName());
-            // 如果批量更新的是 product_property_id，需要同时更新 product_property
             if (ProductBatchFieldEnum.PRODUCT_PROPERTY_ID.getCode().equals(dto.getUpdateFiledCode())) {
-                // 根据 product_property_id 生成 product_property
-                Map<String, BasicDictEntity> propertyMap = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode())
-                        .stream()
-                        .collect(Collectors.toMap(BasicDictEntity::getId, Function.identity(), (v1, v2) -> v1));
-                List<String> propertyIdList = Arrays.stream(dto.getValues().toString().split(",")).collect(Collectors.toList());
-                String propertyNames = propertyIdList.stream()
-                        .map(propertyMap::get)
-                        .filter(Objects::nonNull)
-                        .map(BasicDictEntity::getName)
-                        .collect(Collectors.joining(","));
-                // 批量更新 product_property（使用 PRODUCT_PROPERTY 枚举）
-                ProductBatchFieldEnum productPropertyEnum = ProductBatchFieldEnum.PRODUCT_PROPERTY;
-                baseMapper.updateFiledBatch(dto.getIds(), productPropertyEnum.getTableName(), productPropertyEnum.getCode(), propertyNames, productPropertyEnum.getKeyName());
+                String productPropertyId = Objects.toString(dto.getValues(), "");
+                List<ProductLogisticsDTO> productLogisticsDTOList = dto.getIds().stream().map(skuId -> {
+                    ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
+                    productLogisticsDTO.setSkuId(skuId);
+                    productLogisticsDTO.setProductPropertyId(productPropertyId);
+                    return productLogisticsDTO;
+                }).collect(Collectors.toList());
+                productLogisticsService.saveOrUpdateBatch(productLogisticsDTOList);
+
+                List<ProductSaleDTO> productSaleDTOList = dto.getIds().stream().map(skuId -> {
+                    ProductSaleDTO productSaleDTO = new ProductSaleDTO();
+                    productSaleDTO.setSkuId(skuId);
+                    productSaleDTO.setProductPropertyId(productPropertyId);
+                    return productSaleDTO;
+                }).collect(Collectors.toList());
+                productSaleService.saveOrUpdateBatch(productSaleDTOList);
+
+                // 清空属性时，确保名称字段也被清空，避免出现“ID为空但名称残留”
+                if (StringUtils.isBlank(productPropertyId)) {
+                    productLogisticsService.lambdaUpdate()
+                            .set(ProductLogisticsEntity::getProductPropertyId, "")
+                            .set(ProductLogisticsEntity::getProductProperty, "")
+                            .in(ProductLogisticsEntity::getSkuId, dto.getIds())
+                            .update();
+                    productSaleService.lambdaUpdate()
+                            .set(ProductSaleEntity::getProductPropertyId, "")
+                            .set(ProductSaleEntity::getProductProperty, "")
+                            .in(ProductSaleEntity::getSkuId, dto.getIds())
+                            .update();
+                }
+                flag = Boolean.TRUE;
+            } else {
+                flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode() , dto.getValues(), enumByCode.getKeyName());
             }
         }
         if (!flag) {
