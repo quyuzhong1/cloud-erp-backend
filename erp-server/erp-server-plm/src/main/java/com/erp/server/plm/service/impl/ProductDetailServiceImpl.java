@@ -1879,8 +1879,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //6.修改/新增 物流信息
         List<ProductLogisticsDTO> productLogisticsList = productManySpecDTO.getProductLogisticsList();
         if (!productLogisticsList.isEmpty()) {
+            Map<String, ProductSaleDTO> finalProductSaleMapBySkuId = productSaleMapBySkuId;
             productLogisticsList.forEach(productLogisticsDTO -> {
-                ProductSaleDTO productSale = productSaleMapBySkuId.get(productLogisticsDTO.getSkuId());
+                ProductSaleDTO productSale = finalProductSaleMapBySkuId.get(productLogisticsDTO.getSkuId());
                 if (ObjectUtils.isNotEmpty(productSale)) {
                     // 多规格入口：物流属性按同SKU的销售属性覆盖
                     productLogisticsDTO.setProductPropertyId(productSale.getProductPropertyId());
