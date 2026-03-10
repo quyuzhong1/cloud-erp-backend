@@ -458,6 +458,33 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
+        if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.BILL_VOID_EDIT_FORBIDDEN);
+        }
+        String oldRemark = entity.getRemark();
+        boolean updated = this.lambdaUpdate()
+                .eq(MoldInfoEntity::getId, id)
+                .set(MoldInfoEntity::getRemark, remark)
+                .update();
+        if (!updated) {
+            throw new ServiceException("模具档案更新备注失败");
+        }
+        String msg = StrUtil.format(
+                "用户【{}】编辑单号为【{}】的【{}】备注，由【{}】更新为【{}】",
+                UserContext.getDefaultLoginUser().getUserName(),
+                entity.getCode(),
+                "模具档案",
+                StrUtil.nullToEmpty(oldRemark),
+                remark
+        );
+        sysLogService.addSysLogBySave(msg, String.valueOf(MoldInfoEntity.class), id, "", "更新备注");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
     /**
     * 撤销
     */
