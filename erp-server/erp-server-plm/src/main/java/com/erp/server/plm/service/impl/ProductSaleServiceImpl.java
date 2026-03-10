@@ -399,7 +399,12 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                     .distinct()
                     .collect(Collectors.joining(","));
             if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(propertyIds)){
-                String productProperty = propertytList.stream().filter(obj -> childrenLPropertyIds.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+                // 使用处理后的propertyIds来生成productProperty
+                List<String> propertyIdList = Arrays.asList(propertyIds.split(","));
+                String productProperty = propertytList.stream()
+                        .filter(obj -> propertyIdList.contains(obj.getId()))
+                        .map(BasicDictEntity::getName)
+                        .collect(Collectors.joining(","));
                 productSaleEntity.setProductProperty(productProperty);
                 //物流属性名称
                 productSaleEntity.setProductPropertyId(propertyIds);
