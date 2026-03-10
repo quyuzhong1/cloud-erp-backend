@@ -46,6 +46,7 @@ import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -61,6 +62,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1368,9 +1370,10 @@ public class SoB2cController extends BaseController {
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(e -> Objects.equals(e.getMainId(), soB2cEntity.getId())).findFirst().orElse(new SoB2cReceiverEntity());
             OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse = overseasWarehouseList.stream().filter(v -> v.getWarehouseId().equals(dto.getWarehouseId())).findFirst().orElse(null);
             //前置数据处理
+            SoB2cEntity oldSoB2cEntity = SerializationUtils.clone(soB2cEntity);
             beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity,soB2cReceiverEntity,updateDTO,detailEntityList);
             try {
-                BatchResultDTO resultDTO = soB2cService.deliveryWithNotOutbound(dto,soB2cEntity,soB2cLogisticsEntity,detailEntityList,soB2cReceiverEntity,baseDTO, noInventorySkuIdList,overseasWarehouse);
+                BatchResultDTO resultDTO = soB2cService.deliveryWithNotOutbound(dto,soB2cEntity,soB2cLogisticsEntity,detailEntityList,soB2cReceiverEntity,baseDTO, noInventorySkuIdList,overseasWarehouse,oldSoB2cEntity);
                 resultDTOList.add(resultDTO);
             }catch (Exception e){
                 log.error("B2C销售订单不出库发货失败,id:{}",soB2cEntity.getId(), e);
