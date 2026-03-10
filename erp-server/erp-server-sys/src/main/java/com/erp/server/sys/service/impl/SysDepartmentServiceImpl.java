@@ -94,6 +94,22 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (ObjectUtil.isEmpty(entity)) {
             BatchResultDTO.fail(entity.getId(), entity.getCode(),"未找到部门信息");
         }
+        List<SysDepartmentTreeDTO> flagList = baseMapper.findTree();
+        List<String> resultList = new LinkedList<>();
+        if (CollectionUtils.isNotEmpty(flagList)) {
+            for (SysDepartmentTreeDTO vo : flagList) {
+                //如果路径包含了 就说有
+                if (vo.getPath().contains(id)) {
+                    resultList.add(vo.getId());
+                }
+            }
+        }
+        //校验是否存在用户
+        List<SysDepartmentUserEntity> sysDepartmentUserEntities = sysDepartmentUserService.listByDepartmentIds(resultList);
+        if(CollUtil.isNotEmpty(sysDepartmentUserEntities)){
+            throw new ServiceException(ApiError.COMMON_DEPARTMENT_HAVE_USER, entity.getName());
+        }
+
         LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysDepartmentEntity::getParentId, entity.getId());
         int count = this.count(queryWrapper);
