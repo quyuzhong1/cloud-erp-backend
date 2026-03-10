@@ -119,10 +119,11 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 获取客户端配置
         CfgAppClientEntity cfgAppClient = getCfgAppClientEntity();
         // 生成随机数据
-        String resultState = base64AndUrlEncode(randomGSAState());
-
+        String randomGSAState = randomGSAState();
+        // 加密后state
+        String resultState = base64AndUrlEncode(randomGSAState);
         // 缓存state
-        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, resultState);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, randomGSAState);
 
         Object obj = redisUtil.get(key);
         if (null != obj) {
@@ -414,7 +415,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
 //        System.out.println(s1);
 //        String s2 = base64AndUrlEncode("2972340DEMO");
 //        System.out.println(s2);
-        String ss = "NTA3Mzg1MThfVGlqbzFQWjVNS2FyS0JjTWwySmdlb2w1WUs3SUFIREc2LTUtR2NCbk52QUEwa3hJaF9kTVMyQUtFNUlRRExzanRDci1NdnppMS1fVkpLcWx6N0pLOTRHNWwxQ0tPY0lDODNhZUI2eE9lbGUzamxoTm9UeVRQUlZQaHpmbGNXWjNJMTNwYlNFZkdTNXJsSFdIU0x2LTQ5TlRBelozbEdWOWlicDF4X0d0ekM2eU56YXNMVXlJVVNmdUwyYXlWMFN3MjhHU204c1JpcTZHY2RpSVYwTHZ6M252ZjNhWnF6OEJzNVBLbVhaOUl1ZlMxN3RSY0VDQzVlUGM3MFZKNDVLdTNPY3l1aG40T3FVN25ERzhEejVhODVCR3lOZHFFZEctS2pMZXBpMEFIVUN0a3o2RUlIZkJmNTRHdEpCQmRKYl9yT3hPRnIyZUFxd3luQ0dPVVE%3D";
+        String ss = "NzU5NDM0MjRfX3VPNmVFeDBHRjk4WDdQNEgwNVZaS283QUJDeThPdGszS1BXaHdsOGdVMDc2cnJFLUdfNlZYTkFyZENVMkNGT1hLcURSOHNBRjdlUThNR3JqUHRvbjNheXJqdFJfSEtDWkJTQVNFQ09yZV9mNHppc0J0cjFFU3ZrUkJHWW5xdHhrN3FDZThKRHFiUTZWNTFIVDdvUGVxZ09EQm9HRld6a3RhelJ0UHVrbk9YYmlBTGI3aVprZEJMLTlKanBxdjNsQ3BDMlpySHJnRGtSV1NUVDQ0enp0SjlSaUNMNU45emdkaVdwZ2V5aTNGd00xTkFjeHhQZU9DQkdWamMtbHpkbGJXTnJleFBSZ3NrbTJvelJuYkM1M0VDSXRQZUFtYmZ6NFJYZ0drVnJCWmhfaWlsbEIyYTRGSklaWGFDRV80RVM4SFBSWWNtX3JHNS1CdzdGRnc%3D";
         String decode = codec.decode(ss, "UTF-8");
         System.out.println("反解析" + decode);
         String lastDecode = new String(Base64.getDecoder().decode(decode), StandardCharsets.UTF_8);
