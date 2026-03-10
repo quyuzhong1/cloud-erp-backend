@@ -318,7 +318,7 @@ public class FeignBuilder {
     	return data;
 	}
 	
-	private ApiResult<?> invokeFeign(FeignInvoke feignInvoke){
+	public ApiResult<?> invokeFeign(FeignInvoke feignInvoke){
 		DictCore dictCore = ApplicationContextUtils.getBean(DictCore.class);
 		String serviceCode = feignInvoke.getClassName().split("\\.")[3];
     	ServiceCodeNameEnum serviceCodeNameEnum = EnumMessage.getByCode(ServiceCodeNameEnum.class, serviceCode);
