@@ -141,7 +141,7 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
         if(StringUtils.isNotBlank(projectChargeName)){
             FindUserDTO findUserDTO = userList.stream().filter(e -> Objects.equals(e.getUserName(), projectChargeName)).findFirst().orElse(null);
             if(Objects.isNull(findUserDTO)){
-                errorMsgList.add("产品经理不存在");
+                errorMsgList.add("项目经理不存在");
             }else {
                 excelDTO.setProjectChargeId(findUserDTO.getUserId());
             }
