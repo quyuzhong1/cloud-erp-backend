@@ -1,10 +1,10 @@
 package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BatchResultDTO;
@@ -14,7 +14,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
@@ -90,35 +89,22 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> removeByIdList(List<String> ids) {
-        List<SysDepartmentEntity> list = this.listByIds(ids);
-
-        List<SysDepartmentEntity> removeList=new ArrayList<>();
-        List<BatchResultDTO> resultDTOList=new ArrayList<>();
-        for (SysDepartmentEntity entity : list) {
-            LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(SysDepartmentEntity::getParentId, entity.getId());
-            int count = this.count(queryWrapper);
-            if (count>0){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.COMMON_DELETE_PARENT_NODE_EXISTS.getMsg()));
-            }
-            removeList.add(entity);
-            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+    public BatchResultDTO remove(String id) {
+        SysDepartmentEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            BatchResultDTO.fail(entity.getId(), entity.getCode(),"未找到部门信息");
         }
-        List<String> removeIdList = removeList.stream().map(SysDepartmentEntity::getId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(removeIdList)){
-            return resultDTOList;
+        LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysDepartmentEntity::getParentId, entity.getId());
+        int count = this.count(queryWrapper);
+        if (count>0){
+           return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.COMMON_DELETE_PARENT_NODE_EXISTS.getMsg());
         }
-        boolean flag = this.removeByIds(removeIdList);
-        //删除成功就要去移除对应的员工
-        if (flag) {
-            sysDepartmentUserService.removeByDepartmentIds(removeIdList);
-            if (CollectionUtils.isNotEmpty(removeList)) {
-                //金蝶删除
-                //list.forEach(obj -> syncKingdeeSysDeptService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
-            }
+        boolean flag = this.removeById(id);
+        if (!flag) {
+            throw new  ServiceException(ApiError.BILL_SAVE_FAILED);
         }
-        return resultDTOList;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功");
     }
 
     /**
@@ -661,6 +647,18 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             }
             this.saveOrUpdateBatch(sysDepartmentEntities);
         }
+    }
+
+    @Override
+    public Map<String, SysDepartmentEntity> mapByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<SysDepartmentEntity> list = this.listByIds(ids);
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyMap();
+        }
+       return list.stream().collect(Collectors.toMap(SysDepartmentEntity::getId, e -> e));
     }
 
 
