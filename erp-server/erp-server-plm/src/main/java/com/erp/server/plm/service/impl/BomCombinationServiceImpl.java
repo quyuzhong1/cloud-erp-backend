@@ -743,16 +743,34 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
-        List<String> supplierIdList = records.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getChildList())).flatMap(obj -> Stream.of(obj.getChildList().stream().filter(e -> StringUtils.isNotBlank(e.getMainSupplierId()))
-                .map(BomCombinationDTO.ChildDTO::getMainSupplierId).toArray(String[]::new))).distinct().collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+        List<String> supplierIdList = records.stream()
+                .filter(Objects::nonNull)
+                .map(BomCombinationDTO.ListDTO::getChildList)
+                .filter(CollectionUtils::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .map(BomCombinationDTO.ChildDTO::getMainSupplierId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = CollectionUtils.isEmpty(supplierIdList)
+                ? Collections.emptyList()
+                : Optional.ofNullable(scmTaskFeign.listSupplierSkuPrice(supplierIdList)).orElse(Collections.emptyList());
 
         for (BomCombinationDTO.ListDTO dto : records) {
             if (CollectionUtils.isEmpty(dto.getChildList())) {
                 continue;
             }
             for (BomCombinationDTO.ChildDTO childDTO : dto.getChildList()) {
-                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(childDTO.getMainSupplierId()) && req.getSkuId().equals(childDTO.getChildSkuId())).findFirst().orElse(null);
+                if (childDTO == null || StringUtils.isBlank(childDTO.getMainSupplierId()) || StringUtils.isBlank(childDTO.getChildSkuId())) {
+                    continue;
+                }
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream()
+                        .filter(Objects::nonNull)
+                        .filter(req -> Objects.equals(req.getSupplierId(), childDTO.getMainSupplierId())
+                                && Objects.equals(req.getSkuId(), childDTO.getChildSkuId()))
+                        .findFirst()
+                        .orElse(null);
                 if (supplierSkuPrice == null) {
                     continue;
                 }
@@ -760,9 +778,20 @@ public class BomCombinationServiceImpl implements BomCombinationService {
                 childDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
             }
             //子级sku编号
-            String childSkoNos = dto.getChildList().stream().map(BomCombinationDTO.ChildDTO::getChildSkuNo).collect(Collectors.joining(","));
+            String childSkoNos = dto.getChildList().stream()
+                    .filter(Objects::nonNull)
+                    .map(obj -> StringUtils.isBlank(obj.getChildSkuNo()) ? StringPool.EMPTY : obj.getChildSkuNo())
+                    .collect(Collectors.joining(","));
             dto.setChildSkuNos(childSkoNos);
-            BigDecimal childSkuCost = dto.getChildList().stream().map(obj -> MathUtil.multiplyWithTwo(MathUtil.compareTo(obj.getActualTaxCost(), BigDecimal.ZERO) == MathUtil.ZERO ? obj.getTargetTaxCost() : obj.getActualTaxCost(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal childSkuCost = dto.getChildList().stream()
+                    .filter(Objects::nonNull)
+                    .map(obj -> {
+                        BigDecimal actualTaxCost = Objects.nonNull(obj.getActualTaxCost()) ? obj.getActualTaxCost() : BigDecimal.ZERO;
+                        BigDecimal targetTaxCost = Objects.nonNull(obj.getTargetTaxCost()) ? obj.getTargetTaxCost() : BigDecimal.ZERO;
+                        BigDecimal cost = MathUtil.compareTo(actualTaxCost, BigDecimal.ZERO) == MathUtil.ZERO ? targetTaxCost : actualTaxCost;
+                        Integer qty = Objects.nonNull(obj.getQty()) ? obj.getQty() : MathUtil.ZERO;
+                        return MathUtil.multiplyWithTwo(cost, qty);
+                    }).reduce(BigDecimal.ZERO, BigDecimal::add);
             dto.setChildSkuCost(childSkuCost);
         }
     }
