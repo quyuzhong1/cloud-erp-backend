@@ -168,8 +168,9 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         //处理数据
 
         handleSaveOrUpdate(saleEntity);
+        Boolean result = this.saveOrUpdate(saleEntity);
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(productSaleDTO.getSkuId()));
-        return this.saveOrUpdate(saleEntity);
+        return result;
     }
 
     /**
@@ -221,7 +222,9 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         for (ProductSaleEntity entity : list) {
             entity.setId(map.get(entity.getSkuId()));
         }
-        return this.saveOrUpdateBatch(list);
+        Boolean result = this.saveOrUpdateBatch(list);
+        this.saveOrUpdateParentPropertyIdByChildSkuId(skuIdList);
+        return result;
     }
 
     /**
@@ -358,7 +361,12 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                     .distinct()
                     .collect(Collectors.joining(","));
             if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(propertyIds)){
-                String productProperty = propertytList.stream().filter(obj -> childrenLPropertyIds.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+                // 使用处理后的propertyIds来生成productProperty
+                List<String> propertyIdList = Arrays.asList(propertyIds.split(","));
+                String productProperty = propertytList.stream()
+                        .filter(obj -> propertyIdList.contains(obj.getId()))
+                        .map(BasicDictEntity::getName)
+                        .collect(Collectors.joining(","));
                 productSaleEntity.setProductProperty(productProperty);
                 //物流属性名称
                 productSaleEntity.setProductPropertyId(propertyIds);
