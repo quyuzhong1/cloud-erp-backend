@@ -1471,6 +1471,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
         if (ObjectUtils.isNotEmpty(productLogisticsDTO)) {
             productLogisticsDTO.setSkuId(skuId);
+            // 该入口要求：物流属性直接以销售属性覆盖
+            if (ObjectUtils.isNotEmpty(productSaleDTO)) {
+                productLogisticsDTO.setProductPropertyId(productSaleDTO.getProductPropertyId());
+                productLogisticsDTO.setProductProperty(productSaleDTO.getProductProperty());
+            }
             //保险属性
             if(CollUtil.isNotEmpty(productLogisticsDTO.getInsurancePropertyList())){
                 productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
@@ -1856,6 +1861,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //5.修改/新增 销售信息
         List<ProductSaleDTO> productSaleList = productManySpecDTO.getProductSaleList();
+        Map<String, ProductSaleDTO> productSaleMapBySkuId = new HashMap<>();
         if (productSaleList.size() > 0) {
             productSaleList.forEach(productLogisticsDTO -> {
                 //保险属性
@@ -1863,6 +1869,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
                 }
             });
+            productSaleMapBySkuId = productSaleList.stream()
+                    .filter(v -> StringUtils.isNotBlank(v.getSkuId()))
+                    .collect(Collectors.toMap(ProductSaleDTO::getSkuId, Function.identity(), (v1, v2) -> v2));
             //操作日志
             productSaleList.stream().forEach(obj -> addProductSaleLog(obj, productInfoDTO.getId()));
             productSaleService.saveOrUpdateBatch(productSaleList);
@@ -1872,6 +1881,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductLogisticsDTO> productLogisticsList = productManySpecDTO.getProductLogisticsList();
         if (!productLogisticsList.isEmpty()) {
             productLogisticsList.forEach(productLogisticsDTO -> {
+                ProductSaleDTO productSale = productSaleMapBySkuId.get(productLogisticsDTO.getSkuId());
+                if (ObjectUtils.isNotEmpty(productSale)) {
+                    // 多规格入口：物流属性按同SKU的销售属性覆盖
+                    productLogisticsDTO.setProductPropertyId(productSale.getProductPropertyId());
+                    productLogisticsDTO.setProductProperty(productSale.getProductProperty());
+                }
                 //保险属性
                 if(CollUtil.isNotEmpty(productLogisticsDTO.getInsurancePropertyList())){
                     productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
