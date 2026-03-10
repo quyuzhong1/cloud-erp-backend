@@ -41,7 +41,7 @@ public class TikTokRefundDetailDmpHandler extends TikTokRefundGetDetailDmpHandle
                     dmpDataMap.put("extendData", JSON.toJSONString(data));
                     dmpDataMap.put("amount", refundAmountMap.get("refundTotal"));
                     dmpDataMap.put("taxAmount", refundAmountMap.get("refundTax"));
-                    dmpDataMap.put("srcOrderDetailId", refundAmountMap.get("orderLineItemId"));
+                    dmpDataMap.put("srcOrderDetailId", dmpDataMap.get("orderLineItemId"));
 
                     dmpDataMap.put("thirdOrderCode", dmpDataMap.get("orderId"));
                     dmpDataMap.put("platformOrderCode", dmpDataMap.get("orderId"));

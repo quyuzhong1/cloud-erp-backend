@@ -551,9 +551,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 if (isTikTokPlatformWarehouseByFulfillmentType(labelJsonDTO.getFulfillmentType())) {
                     return true;
                 }
-                if (isTikTokPlatformWarehouseByShippingType(labelJsonDTO.getShippingType())) {
-                    return true;
-                }
             }
         }
         if(PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(this.dictPlatform)
@@ -574,12 +571,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private boolean isTikTokPlatformWarehouseByFulfillmentType(String fulfillmentType) {
         return StrUtil.isNotBlank(fulfillmentType)
                 && "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(fulfillmentType);
-    }
-
-    private boolean isTikTokPlatformWarehouseByShippingType(String shippingType) {
-        return StrUtil.isNotBlank(shippingType)
-                && ("TIKTOK".equalsIgnoreCase(shippingType)
-                || "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(shippingType));
     }
 
     /**

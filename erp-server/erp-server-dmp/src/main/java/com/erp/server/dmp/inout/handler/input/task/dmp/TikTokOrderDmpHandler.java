@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     private static final String TIKTOK_SHIPPING_TYPE_SELLER = "SELLER";
-    private static final String TIKTOK_SHIPPING_TYPE_TIKTOK = "TIKTOK";
     private static final String TIKTOK_FULFILLMENT_BY_TIKTOK = "FULFILLMENT_BY_TIKTOK";
     private static final String TIKTOK_FULFILLMENT_BY_SELLER = "FULFILLMENT_BY_SELLER";
 
@@ -139,7 +138,7 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 String fulfillmentType = getStringValue(dmpDataMap, "fulfillmentType", "fulfillment_type");
                 String shippingType = getStringValue(dmpDataMap, "shippingType", "shipping_type", "logisticType");
-                boolean isPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder(fulfillmentType, shippingType);
+                boolean isPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder(fulfillmentType);
                 boolean hasDeliveryType = StringUtils.isNotBlank(fulfillmentType) || StringUtils.isNotBlank(shippingType);
                 if (StringUtils.isNotBlank(fulfillmentType)) {
                     lableMap.put("fulfillmentType", fulfillmentType);
@@ -262,10 +261,8 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         return "";
     }
 
-    private boolean isTikTokPlatformWarehouseOrder(String fulfillmentType, String shippingType) {
-        return TIKTOK_FULFILLMENT_BY_TIKTOK.equalsIgnoreCase(fulfillmentType)
-                || TIKTOK_SHIPPING_TYPE_TIKTOK.equalsIgnoreCase(shippingType)
-                || TIKTOK_FULFILLMENT_BY_TIKTOK.equalsIgnoreCase(shippingType);
+    private boolean isTikTokPlatformWarehouseOrder(String fulfillmentType) {
+        return TIKTOK_FULFILLMENT_BY_TIKTOK.equalsIgnoreCase(fulfillmentType);
     }
 
     private boolean isSelfDeliveryOrder(String fulfillmentType, String shippingType) {
