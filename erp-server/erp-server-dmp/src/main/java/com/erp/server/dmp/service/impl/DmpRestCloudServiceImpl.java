@@ -238,7 +238,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
     public PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> diffOutstockSyncSourcePlatformPaging(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
         // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
         Map<String, Object> map = new HashMap<>();
-        map.put("currPage", dto.getCurrPage());
+        map.put("currPage", dto.getCurrPage() - 1);
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
         if(CollUtil.isNotEmpty(dto.getParams().getIds())){
@@ -264,9 +264,9 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                         .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpDiffOutstockSyncDTO.SourcePlatformDTO.class))
                         .collect(Collectors.toList());
                 return new PagingVO<>(resultList,
-                        responseJson.getInteger("total"),
+                        responseJson.getInteger("totalDataCount"),
                         responseJson.getInteger("pageSize"),
-                        responseJson.getInteger("currPage")
+                        responseJson.getInteger("pageNo")
                 );
             }else {
                 throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
@@ -278,7 +278,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
     public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> diffReturnInstockSourcePlatformPaging(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
         // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
         Map<String, Object> map = new HashMap<>();
-        map.put("currPage", dto.getCurrPage());
+        map.put("currPage", dto.getCurrPage() - 1);
         map.put("pageSize", dto.getPageSize());
         JSONObject data = new JSONObject();
         if(CollUtil.isNotEmpty(dto.getParams().getIds())){
@@ -304,9 +304,9 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                         .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO.class))
                         .collect(Collectors.toList());
                 return new PagingVO<>(resultList,
-                        responseJson.getInteger("total"),
+                        responseJson.getInteger("totalDataCount"),
                         responseJson.getInteger("pageSize"),
-                        responseJson.getInteger("currPage")
+                        responseJson.getInteger("pageNo")
                 );
             }else {
                 throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
