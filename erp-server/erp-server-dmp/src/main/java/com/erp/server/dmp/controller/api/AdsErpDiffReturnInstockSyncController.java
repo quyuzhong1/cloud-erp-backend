@@ -143,7 +143,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
      */
     @PostMapping("/sourcePlatformPaging")
     public ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO>> sourcePlatformPaging(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
-        dto.getParams().setType("platform");
+        dto.getParams().setType("clean_diff_return_instock_sync_source_platform");
         return success(adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto));
     }
 
@@ -157,7 +157,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
     @PostMapping(value = "/exportSourcePlatform")
     public ApiResult<Object>exportSourcePlatform(@RequestBody AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto) {
-        dto.setType("platform");
+        dto.setType("clean_diff_return_instock_sync_source_platform");
         Boolean flag = adsErpDiffReturnInstockSyncService.exportSourcePlatform(dto);
         return flag == true ? success() : failure();
     }
@@ -171,8 +171,8 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
      */
     @PostMapping("/sourceSelfPaging")
     public ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO>> sourceSelfPaging(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
-        dto.getParams().setType("self");
-        return success(adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto));
+        dto.getParams().setType("clean_diff_return_instock_sync_source_self");
+        return success(adsErpDiffReturnInstockSyncService.sourceSelfPaging(dto));
     }
 
     /**
@@ -185,7 +185,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
     @PostMapping(value = "/exportSourceSelf")
     public ApiResult<Object>exportSourceSelf(@RequestBody AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto) {
-        dto.setType("self");
+        dto.setType("clean_diff_return_instock_sync_source_self");
         Boolean flag = adsErpDiffReturnInstockSyncService.exportSourceSelf(dto);
         return flag == true ? success() : failure();
     }

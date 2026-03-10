@@ -296,6 +296,10 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
     public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<PagingParamDTO> dto) {
         return  dmpRestCloudService.diffReturnInstockSourcePlatformPaging(dto);
     }
+    @Override
+    public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<PagingParamDTO> dto) {
+        return  dmpRestCloudService.diffReturnInstockSourcePlatformPaging(dto);
+    }
 
     @Override
     public Boolean exportSourcePlatform(PagingParamDTO dto) {

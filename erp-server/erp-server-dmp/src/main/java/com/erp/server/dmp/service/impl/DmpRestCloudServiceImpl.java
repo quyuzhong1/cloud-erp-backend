@@ -284,24 +284,17 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         Map<String, Object> map = new HashMap<>();
         map.put("currPage", dto.getCurrPage() - 1);
         map.put("pageSize", dto.getPageSize());
-        JSONObject data = new JSONObject();
         StringBuffer sb = new StringBuffer();
         AdsErpDiffReturnInstockSyncDTO.PagingParamDTO params = dto.getParams();
         if(CollUtil.isNotEmpty(params.getIds())){
             sb.append(StrUtil.format(" and t.id in ({}) ",params.getIds().stream()
                     .collect(Collectors.joining("','", "'", "'"))));
         }
-        if(StringUtils.isNotBlank(params.getType())){
-            if(params.getType().equals("platform")){
-                sb.append(" and dt.outstock_code != '' ");
-            }else if(params.getType().equals("self")){
-                sb.append(" and dt.erp_so_code != '' ");
-            }
-        }
+
         if(StringUtils.isNotBlank(sb.toString())){
             map.put("sql", sb.toString());
         }
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_diff_return_instock_sync_source_platform")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/"+params.getType())
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
