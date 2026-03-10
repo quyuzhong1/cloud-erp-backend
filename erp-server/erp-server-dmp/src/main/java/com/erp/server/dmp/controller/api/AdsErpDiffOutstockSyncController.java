@@ -173,7 +173,7 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
      */
     @PostMapping("/sourceSelfPaging")
     public ApiResult<PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO>> sourceSelfPaging(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
-        return success(adsErpDiffOutstockSyncService.sourcePlatformPaging(dto));
+        return success(adsErpDiffOutstockSyncService.sourceSelfPaging(dto));
     }
 
     /**

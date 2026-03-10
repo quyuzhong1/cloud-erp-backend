@@ -143,6 +143,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
      */
     @PostMapping("/sourcePlatformPaging")
     public ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO>> sourcePlatformPaging(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
+        dto.getParams().setType("platform");
         return success(adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto));
     }
 
@@ -156,6 +157,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
     @PostMapping(value = "/exportSourcePlatform")
     public ApiResult<Object>exportSourcePlatform(@RequestBody AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto) {
+        dto.setType("platform");
         Boolean flag = adsErpDiffReturnInstockSyncService.exportSourcePlatform(dto);
         return flag == true ? success() : failure();
     }
@@ -169,6 +171,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
      */
     @PostMapping("/sourceSelfPaging")
     public ApiResult<PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO>> sourceSelfPaging(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto) {
+        dto.getParams().setType("self");
         return success(adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto));
     }
 
@@ -182,6 +185,7 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
     @PostMapping(value = "/exportSourceSelf")
     public ApiResult<Object>exportSourceSelf(@RequestBody AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto) {
+        dto.setType("self");
         Boolean flag = adsErpDiffReturnInstockSyncService.exportSourceSelf(dto);
         return flag == true ? success() : failure();
     }

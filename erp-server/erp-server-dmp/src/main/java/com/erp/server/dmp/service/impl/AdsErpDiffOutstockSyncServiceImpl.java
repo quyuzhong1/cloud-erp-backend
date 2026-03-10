@@ -292,6 +292,14 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 
     @Override
     public PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<PagingParamDTO> dto) {
+        dto.getParams().setType("clean_diff_outstock_sync_source_platform");
+        return  dmpRestCloudService.diffOutstockSyncSourcePlatformPaging(dto);
+    }
+
+
+    @Override
+    public PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<PagingParamDTO> dto) {
+        dto.getParams().setType("clean_diff_outstock_sync_source_self");
         return  dmpRestCloudService.diffOutstockSyncSourcePlatformPaging(dto);
     }
 

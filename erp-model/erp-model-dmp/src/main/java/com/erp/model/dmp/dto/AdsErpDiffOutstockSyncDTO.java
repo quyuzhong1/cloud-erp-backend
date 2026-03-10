@@ -65,18 +65,20 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
      public static class PagingParamDTO extends SortDTO {
 
          /**
-         * 页面高级查询
-         */
+          * 页面高级查询
+          */
          private List<AdvanceQueryDTO> advanceQueryDTOList;
 
-        /**
-            * sqlMap 默认key default
-        */
-        private Map<String,String> sqlMap;
+         /**
+          * sqlMap 默认key default
+          */
+         private Map<String, String> sqlMap;
          /**
           * 主键ids
           */
          private List<String> ids;
+
+         private String type;
 
      }
      
