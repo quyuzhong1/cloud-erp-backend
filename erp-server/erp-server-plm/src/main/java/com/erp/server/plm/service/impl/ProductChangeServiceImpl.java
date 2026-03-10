@@ -1312,6 +1312,23 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             operateLogService.addSysLogByUpdate(oldProductSaleEntity, productSaleEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
         }
         if (packChanged) {
+            //校验箱规长宽高要大于包装长宽高，毛重大于净重
+            if (Objects.nonNull(productPackEntity.getBoxLength()) && Objects.nonNull(productPackEntity.getProductLength())
+                    && productPackEntity.getBoxLength().compareTo(productPackEntity.getProductLength()) < 0) {
+                throw new ServiceException("箱规长度必须大于等于包装长度");
+            }
+            if (Objects.nonNull(productPackEntity.getBoxWidth()) && Objects.nonNull(productPackEntity.getProductWidth())
+                    && productPackEntity.getBoxWidth().compareTo(productPackEntity.getProductWidth()) < 0) {
+                throw new ServiceException("箱规宽度必须大于等于包装宽度");
+            }
+            if (Objects.nonNull(productPackEntity.getBoxHeight()) && Objects.nonNull(productPackEntity.getProductHeight())
+                    && productPackEntity.getBoxHeight().compareTo(productPackEntity.getProductHeight()) < 0) {
+                throw new ServiceException("箱规高度必须大于等于包装高度");
+            }
+            if (Objects.nonNull(productPackEntity.getGrossWeight()) && Objects.nonNull(productPackEntity.getNetWeight())
+                    && productPackEntity.getGrossWeight().compareTo(productPackEntity.getNetWeight()) < 0) {
+                throw new ServiceException("毛重必须大于等于净重");
+            }
             productPackService.updateById(productPackEntity);
             operateLogService.addSysLogByUpdate(oldProductPackEntity, productPackEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
         }
