@@ -27,6 +27,7 @@ import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING_TASK_DETAIL;
@@ -242,38 +244,70 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public List<StocktakingTaskDetailDTO.ViewDTO> listByMainId(String mainId) {
+        // 批量查询所有详情数据
         List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Collections.singletonList(mainId));
-        List<StocktakingTaskDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, StocktakingTaskDetailDTO.ViewDTO.class);
-        List<String> skuIdList = resultList.stream().map(StocktakingTaskDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
-        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dbList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
-        for (StocktakingTaskDetailDTO.ViewDTO item : resultList) {
-            String skuId = item.getSkuId();
-            String skuName = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().
-                    map(ProductDetailEntity::getName).orElse("");
-            item.setProductName(skuName);
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(item.getWarehouseId()) && e.getCode().equals(item.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            item.setWarehouseLocationName(warehouseLocationEntity.getName());
-
-            //下推盘盈盘亏状态
-            List<StocktakingProfitLossDetailEntity> stocktakingProfitLossDetailList = stocktakingProfitLossDetailService.listBySourceId(item.getId());
-            if (stocktakingProfitLossDetailList.isEmpty()) {
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
-                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getName());
-            } else {
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
-                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.GENERATED.getName());
-            }
-
-            if (item.getDiffQty() == 0) {
-                item.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
-                item.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getName());
-            }
-
+        if (CollectionUtils.isEmpty(dbList)) {
+            return Collections.emptyList();
         }
-        return resultList;
+
+        // 预加载所有需要的SKU信息
+        Set<String> skuIdSet = dbList.stream()
+                .map(StocktakingTaskDetailEntity::getSkuId)
+                .collect(Collectors.toSet());
+        Map<String, ProductDetailEntity> skuMap = productDetailService.listProductDetailByIds(new ArrayList<>(skuIdSet))
+                .stream()
+                .collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
+
+        // 预加载所有仓库位置信息
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationService.listByWarehouseIdAndCode(
+                dbList.stream()
+                        .map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation()))
+                        .collect(Collectors.toList())
+        ).stream()
+                .collect(Collectors.toMap(
+                        e -> e.getWarehouseId() + "_" + e.getCode(),
+                        Function.identity()
+                ));
+
+        // 批量查询盈亏状态
+        Set<String> detailIds = dbList.stream()
+                .map(StocktakingTaskDetailEntity::getId)
+                .collect(Collectors.toSet());
+        Map<String, List<StocktakingProfitLossDetailEntity>> profitLossMap = stocktakingProfitLossDetailService.listBySourceIds(new ArrayList<>(detailIds))
+                .stream()
+                .collect(Collectors.groupingBy(StocktakingProfitLossDetailEntity::getSourceDetailId));
+
+        // 一次性转换并填充所有数据
+        return dbList.stream().map(entity -> {
+            StocktakingTaskDetailDTO.ViewDTO dto = new StocktakingTaskDetailDTO.ViewDTO();
+            BeanUtils.copyProperties(entity,dto);
+
+            // 设置SKU名称
+            ProductDetailEntity sku = skuMap.get(dto.getSkuId());
+            dto.setProductName(sku != null ? sku.getName() : "");
+
+            // 设置仓库位置名称
+            String locationKey = entity.getWarehouseId() + "_" + entity.getWarehouseLocation();
+            WarehouseLocationEntity location = warehouseLocationMap.get(locationKey);
+            dto.setWarehouseLocationName(location != null ? location.getName() : "");
+
+            // 设置盈亏状态
+            List<StocktakingProfitLossDetailEntity> profitLossDetails = profitLossMap.getOrDefault(entity.getId(), Collections.emptyList());
+            if (entity.getDiffQty() == 0) {
+                dto.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+                dto.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getName());
+            } else if (profitLossDetails.isEmpty()) {
+                dto.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+                dto.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getName());
+            } else {
+                dto.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                dto.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.GENERATED.getName());
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
     }
+
 
 
     /**
