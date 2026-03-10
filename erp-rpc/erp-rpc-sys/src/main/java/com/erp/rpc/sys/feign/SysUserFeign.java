@@ -92,6 +92,12 @@ public interface SysUserFeign {
     List<FindUserDTO> getUserList();
 
     /**
+     * 获取用户列表(包括启用和未启用)
+     */
+    @GetMapping("feign/user/getAllUserList")
+    List<FindUserDTO> getAllUserList();
+
+    /**
      * 更新用户管理更新时间
      */
     @PostMapping("feign/user/updateSysUserTime")
