@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,7 @@ public class AdsErpReceiveFlowDiffDetailDTO implements Serializable {
         /**
          * 主键ids
          */
+        @NotEmpty(message = "ids不能为空")
         private List<String> ids;
 
     }
