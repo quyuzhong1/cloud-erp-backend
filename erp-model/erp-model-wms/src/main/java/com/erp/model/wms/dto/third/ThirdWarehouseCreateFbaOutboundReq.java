@@ -37,6 +37,12 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      * 收货国家，取发货通知的客户的收货国家二字码
      */
     private String receiverCountryCode;
+
+    /**
+     * 客户名称
+     */
+    private String customerName;
+
     /**
      * 派送方式，取发货通知下推时选择的派送方式
      * EXPRESS:渠道订单
@@ -156,6 +162,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          * 客户商品编码，取发货通知的库存SKU
          */
         private String warehousePlatformSku;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
 
         /**
          * 单箱数量
