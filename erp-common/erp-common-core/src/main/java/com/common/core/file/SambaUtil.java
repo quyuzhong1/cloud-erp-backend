@@ -157,7 +157,7 @@ public class SambaUtil {
      */
     public static MultipartFile toMultipartFile(String filepath, String username, String pwd) throws Exception {
         //字符转义
-        String fileUrl = filepath.replace("\\","/");
+        String fileUrl = filepath.replace("\\","/").replace(" ","%20");
 
         SmbFile smbFile = new SmbFile("smb://" + username + ":" + pwd + "@"
                 + fileUrl);
@@ -181,8 +181,13 @@ public class SambaUtil {
         // 关闭 ByteArrayOutputStream
         outputStream.close();
 
-        // 创建 MockMultipartFile 对象
-        return new MockMultipartFile(smbFile.getName(), new ByteArrayInputStream(bytes));
+        // 创建 MockMultipartFile 对象，并设置 originalFilename
+        return new MockMultipartFile(
+                "file",
+                smbFile.getName(),
+                null,
+                new ByteArrayInputStream(bytes)
+        );
     }
 
     /**
