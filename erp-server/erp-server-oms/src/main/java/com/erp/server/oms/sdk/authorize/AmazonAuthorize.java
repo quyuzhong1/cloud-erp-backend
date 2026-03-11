@@ -31,6 +31,7 @@ import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,8 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -116,10 +119,12 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 获取客户端配置
         CfgAppClientEntity cfgAppClient = getCfgAppClientEntity();
         // 生成随机数据
-        String resultState = randomGSAState();
-
+        String randomGSAState = randomGSAState();
+        // 加密后state
+        String resultState = base64AndUrlEncode(randomGSAState);
         // 缓存state
-        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, resultState);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, randomGSAState);
+
         Object obj = redisUtil.get(key);
         if (null != obj) {
             throw new ServiceException("该店铺真正申请授权中");
@@ -128,6 +133,19 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
         redisUtil.set(key, shopIds, RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
         return String.format(cfgAppClient.getUrl(), sellerCentralUrl, resultState);
+    }
+
+
+    public static String base64AndUrlEncode(String input) {
+        try {
+            // base64 encode
+            String base64 = Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+            // url encode
+            URLCodec codec = new URLCodec();
+            return codec.encode(base64, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -367,5 +385,37 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     @Override
     public Boolean refreshToken(RefreshShopTokenDTO dto) {
         return Boolean.TRUE;
+    }
+
+    public static void main(String[] args) throws Exception{
+//        String input = "2972340DEMO";
+//        String base64 = Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+//        System.out.println("Base64 Encoded: " + base64);
+        // Mjk3MjM0MERFTU8=
+        // Mjk3MjM0MERFTU8=
+        URLCodec codec = new URLCodec();
+//        String newUrlState = codec.encode(base64, "UTF-8");
+//        System.out.println(newUrlState);
+//        // Mjk3MjM0MERFTU8%3D
+//        SecureRandom secureRandom = new SecureRandom();
+//        // 生成 256 字节的随机数据
+//        byte[] randomBytes = new byte[256];
+//        secureRandom.nextBytes(randomBytes);
+//        // 进行 Base64 编码
+//        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+//        // 账号要求
+//        String s = "75943424_" + state.substring(4);
+//        System.out.println(s);
+//        String s1 = base64AndUrlEncode(s);
+//        System.out.println(s1);
+//        String s2 = base64AndUrlEncode("2972340DEMO");
+//        System.out.println(s2);
+        String ss = "NzU5NDM0MjRfX3VPNmVFeDBHRjk4WDdQNEgwNVZaS283QUJDeThPdGszS1BXaHdsOGdVMDc2cnJFLUdfNlZYTkFyZENVMkNGT1hLcURSOHNBRjdlUThNR3JqUHRvbjNheXJqdFJfSEtDWkJTQVNFQ09yZV9mNHppc0J0cjFFU3ZrUkJHWW5xdHhrN3FDZThKRHFiUTZWNTFIVDdvUGVxZ09EQm9HRld6a3RhelJ0UHVrbk9YYmlBTGI3aVprZEJMLTlKanBxdjNsQ3BDMlpySHJnRGtSV1NUVDQ0enp0SjlSaUNMNU45emdkaVdwZ2V5aTNGd00xTkFjeHhQZU9DQkdWamMtbHpkbGJXTnJleFBSZ3NrbTJvelJuYkM1M0VDSXRQZUFtYmZ6NFJYZ0drVnJCWmhfaWlsbEIyYTRGSklaWGFDRV80RVM4SFBSWWNtX3JHNS1CdzdGRnc%3D";
+        String decode = codec.decode(ss, "UTF-8");
+        System.out.println("反解析" + decode);
+        String lastDecode = new String(Base64.getDecoder().decode(decode), StandardCharsets.UTF_8);
+        System.out.println("最后反解析" + lastDecode);
+
+
     }
 }
