@@ -195,7 +195,7 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_recreate");
+		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_receive_flow_diff_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpReceiveFlowDiffEntity::getCheckMonth, checkMonth)
 			.set(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing")
