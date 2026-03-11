@@ -698,9 +698,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isNotBlank(customerId)) {
 
             CustomerAddressEntity customerAddressEntity = customerAddressService.getById(addressId);
-
-            String countryId = customerAddressEntity.getCountryId();
-            view.setCountryId(countryId);
+            if(Objects.nonNull(customerAddressEntity)){
+                String countryId = customerAddressEntity.getCountryId();
+                view.setCountryId(countryId);
+            }
             // 国家
             List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
             //国家
