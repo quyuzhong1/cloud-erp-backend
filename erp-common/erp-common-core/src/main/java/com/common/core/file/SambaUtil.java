@@ -10,10 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -209,19 +206,33 @@ public class SambaUtil {
             return path;
         }
         String host = path.substring(0, firstSlashIdx);
-        String rawSubPath = path.substring(firstSlashIdx + 1);
-        String encodedSubPath = Arrays.stream(rawSubPath.split("/"))
+        String[] subSegments = path.substring(firstSlashIdx + 1).split("/");
+        if (subSegments.length == 0) {
+            return path;
+        }
+        // share name 不能编码，否则 treeConnect 可能报参数错误
+        String shareName = subSegments[0];
+        if (subSegments.length == 1) {
+            return host + "/" + shareName;
+        }
+        String encodedSubPath = Arrays.stream(subSegments)
+                .skip(1)
                 .filter(segment -> segment != null && !segment.isEmpty())
-                .map(segment -> {
-                    try {
-                        return URLEncoder.encode(segment, StandardCharsets.UTF_8.name())
-                                .replace("+", "%20");
-                    } catch (UnsupportedEncodingException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                .map(SambaUtil::escapeSmbSegment)
                 .collect(Collectors.joining("/"));
-        return host + "/" + encodedSubPath;
+        if (encodedSubPath.isEmpty()) {
+            return host + "/" + shareName;
+        }
+        return host + "/" + shareName + "/" + encodedSubPath;
+    }
+
+    /**
+     * 仅转义SMB URL中必要字符，保留中文等可读字符
+     */
+    private static String escapeSmbSegment(String segment) {
+        return segment
+                .replace("#", "%23")
+                .replace("?", "%3F");
     }
 
     /**
