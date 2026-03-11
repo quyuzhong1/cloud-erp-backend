@@ -335,7 +335,16 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         if (list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).distinct().count() > 1) {
             throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD);
         }
-        return BeanMapper.copyList(list,AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO.class);
+        List<AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO> result = new ArrayList<>();
+        for (AdsErpDiffOutstockSyncEntity adsErpDiffOutstockSyncEntity : list) {
+            AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO relationDTO = new AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO();
+            relationDTO.setPlatformOutstockCode(adsErpDiffOutstockSyncEntity.getPlatformOutstockCode());
+            relationDTO.setId(adsErpDiffOutstockSyncEntity.getId());
+            relationDTO.setOrderCode(adsErpDiffOutstockSyncEntity.getPlatformOrderCode());
+            relationDTO.setStockSku(adsErpDiffOutstockSyncEntity.getStockSku());
+            result.add(relationDTO);
+        }
+        return result;
     }
 
     @Override
