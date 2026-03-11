@@ -395,7 +395,33 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasInboundReceiveResponse>>() {
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasOutboundCreateResponse>>() {
+            }.getType());
+        } catch (IOException e) {
+            log.error("请求失败,异常: {}", e);
+            throw new ServiceException("请求失败,异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 取消出库单
+     */
+    public BaseResponse<OverseasOutboundCancelResponse> cancelOutboundBill(String token, OverseasOutboundCancelRequest overseasOutboundCancelRequest){
+        log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundCancelRequest));
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(overseasOutboundCancelRequest));
+        Request request = new Request.Builder()
+                .url(getPreUrl() + "/open/outbound-order-data/cancel")
+                .method("POST", body)
+                .addHeader("Authorization", token)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            String bodyStr = response.body().string();
+            log.warn("bodyStr: {}", bodyStr);
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasOutboundCancelResponse>>() {
             }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);

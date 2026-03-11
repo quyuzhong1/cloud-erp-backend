@@ -10,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
@@ -17,8 +18,10 @@ import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
+import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCancelRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.response.BaseResponse;
+import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCancelResponse;
 import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCreateResponse;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
@@ -215,7 +218,18 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-        return failure("ERP功能暂不支持");
+        OverseasOutboundCancelRequest overseasOutboundCancelRequest = new OverseasOutboundCancelRequest();
+        String token = AuthUtils.getToken(apiKey, apiSecret);
+        overseasOutboundCancelRequest.setCancelRemark(cancelOutboundReq.getRemark());
+        overseasOutboundCancelRequest.setOrderNos(Collections.singletonList(cancelOutboundReq.getErpOrderCode()));
+        log.warn(getPlatForm().getName()+"取消出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCancelRequest));
+        BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(token, overseasOutboundCancelRequest);
+        log.warn(getPlatForm().getName()+"取消出库单结果:{}", JSONUtil.toJsonStr(response));
+        if (!response.getData().getResponseData().getSuccessList().isEmpty()) {
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        } else {
+            return failure(response.getData().getMessage());
+        }
     }
 
     @Override
@@ -282,7 +296,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        OverseasOutboundCreateRequest overseasOutboundCreateRequest = buildFbaOutboundDto(createOutboundReq);
+        OverseasOutboundCreateRequest overseasOutboundCreateRequest = buildCreateFbaOutboundDto(createOutboundReq);
         String token = AuthUtils.getToken(apiKey, apiSecret);
         log.warn(getPlatForm().getName()+"创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCreateRequest));
         BaseResponse<OverseasOutboundCreateResponse> response = zhongbaoService.createOutboundBill(token,overseasOutboundCreateRequest);
@@ -290,7 +304,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return response.getSuccess() ? success(response.getData().getResponseData().getOrderNo()) : failure(response.getMessage());
     }
 
-    public OverseasOutboundCreateRequest buildFbaOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq){
+    public OverseasOutboundCreateRequest buildCreateFbaOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq){
         OverseasOutboundCreateRequest overseasOutboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToZhongBao(createOutboundReq);
         List<ThirdWarehouseCreateFbaOutboundReq.Item> items = createOutboundReq.getItems();
         if (items == null || items.isEmpty()) {
