@@ -476,7 +476,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 errorMsgList.add(isBlank(e.getMessage()) ? "文件路径下未找到文件" : e.getMessage());
             }
             if ((ObjectUtil.isEmpty(multipartFile) || multipartFile.isEmpty())
-                    && errorMsgList.stream().noneMatch(msg -> CharSequenceUtil.contains(msg, "文件路径下未找到文件"))) {
+                    && errorMsgList.stream().noneMatch(msg -> CharSequenceUtil.contains(msg, "未找到文件")
+                    || CharSequenceUtil.contains(msg, "获取共享文件失败"))) {
                 errorMsgList.add("文件路径下未找到文件");
             }
             if (!ObjectUtil.isEmpty(multipartFile) && isBlank(multipartFile.getOriginalFilename())) {
@@ -571,8 +572,65 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         try {
             return SambaUtil.toMultipartFile(normalizeSambaPath(filePath), nasUserList.get(0), nasUserList.get(1));
         } catch (Exception e) {
-            throw new ServiceException("获取共享文件失败");
+            String errorMsg = buildSambaErrorMsg(e);
+            log.error("读取共享文件失败,path={},msg={}", normalizeSambaPath(filePath), errorMsg, e);
+            throw new ServiceException(errorMsg);
         }
+    }
+
+    /**
+     * 构建共享文件读取错误信息
+     */
+    private String buildSambaErrorMsg(Exception e) {
+        String rawMsg = getRootCauseMessage(e);
+        if (isBlank(rawMsg)) {
+            return "获取共享文件失败";
+        }
+        String msg = rawMsg.toLowerCase();
+        if (msg.contains("logon failure")
+                || msg.contains("status_logon_failure")
+                || msg.contains("authentication")) {
+            return "获取共享文件失败: 共享账号或密码错误";
+        }
+        if (msg.contains("access is denied")
+                || msg.contains("status_access_denied")
+                || msg.contains("permission denied")) {
+            return "获取共享文件失败: 共享目录无读取权限";
+        }
+        if (msg.contains("unknown host")
+                || msg.contains("unknownhostexception")) {
+            return "获取共享文件失败: 共享服务器地址无法解析";
+        }
+        if (msg.contains("network name cannot be found")
+                || msg.contains("bad network name")
+                || msg.contains("status_bad_network_name")) {
+            return "获取共享文件失败: 共享名称错误";
+        }
+        if (msg.contains("connection refused")
+                || msg.contains("connect timed out")
+                || msg.contains("no route to host")
+                || msg.contains("network is unreachable")
+                || msg.contains("failed to connect")) {
+            return "获取共享文件失败: 共享服务器网络不可达";
+        }
+        if (msg.contains("object name not found")
+                || msg.contains("status_object_name_not_found")
+                || msg.contains("no such file")
+                || msg.contains("file not found")) {
+            return "共享路径下未找到文件";
+        }
+        return "获取共享文件失败";
+    }
+
+    /**
+     * 获取最底层异常信息
+     */
+    private String getRootCauseMessage(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause != null && cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+        return cause == null ? "" : cause.getMessage();
     }
 
     /**
