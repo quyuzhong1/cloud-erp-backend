@@ -338,7 +338,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         data.put("ids", dto.getParams().getIds().stream()
                 .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_source_transfer_info")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_receive_transfer_info")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
@@ -376,7 +376,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         data.put("ids", dto.getParams().getIds().stream()
                 .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_source_platform_flow")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_receive_platform_flow")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
