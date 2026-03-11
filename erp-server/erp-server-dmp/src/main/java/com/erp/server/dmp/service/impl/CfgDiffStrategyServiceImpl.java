@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.collection.CollectionUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -330,5 +332,13 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
 			result.setDetailList(detailList);
 		}
 		return result;
+	}
+
+	@Override
+	public List<CfgDiffStrategyDTO.ListByBillTypeDTO> listByBillType(String billType) {
+		if(StringUtils.isNotBlank(billType)){
+			return new ArrayList<>();
+		}
+		return baseMapper.listByBillType(billType);
 	}
 }

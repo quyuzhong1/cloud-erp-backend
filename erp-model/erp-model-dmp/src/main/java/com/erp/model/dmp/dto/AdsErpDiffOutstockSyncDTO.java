@@ -1171,4 +1171,18 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateSuggestTypeParamsDTO {
+
+        private String id ;
+
+        private String suggestType;
+
+        private String conditionSql;
+    }
+
 }
