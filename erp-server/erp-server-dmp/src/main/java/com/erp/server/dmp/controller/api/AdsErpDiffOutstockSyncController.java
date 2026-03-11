@@ -160,9 +160,9 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
     @PostMapping(value = "/exportSourcePlatform")
-    public ApiResult<Object>exportSourcePlatform(@RequestBody AdsErpDiffOutstockSyncDTO.PagingParamDTO dto) {
-        dto.setType("clean_diff_outstock_sync_source_platform");
-        Boolean flag = adsErpDiffOutstockSyncService.exportSourcePlatform(dto);
+    public ApiResult<Object>exportSourcePlatform(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
+        dto.getParams().setType("clean_diff_outstock_sync_source_platform");
+        Boolean flag = adsErpDiffOutstockSyncService.exportSourcePlatform(dto.getParams());
         return flag == true ? success() : failure();
     }
 
@@ -188,9 +188,9 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出朔源信息")
     @PostMapping(value = "/exportSourceSelf")
-    public ApiResult<Object>exportSourceSelf(@RequestBody AdsErpDiffOutstockSyncDTO.PagingParamDTO dto) {
-        dto.setType("clean_diff_outstock_sync_source_self");
-        Boolean flag = adsErpDiffOutstockSyncService.exportSourceSelf(dto);
+    public ApiResult<Object>exportSourceSelf(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto) {
+        dto.getParams().setType("clean_diff_outstock_sync_source_self");
+        Boolean flag = adsErpDiffOutstockSyncService.exportSourceSelf(dto.getParams());
         return flag == true ? success() : failure();
     }
 
