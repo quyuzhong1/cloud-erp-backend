@@ -128,4 +128,12 @@ public class BaseIdsDTO implements Serializable {
         private LocalDate deliveryDate;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class CancelDTO extends IdsDTO{
+
+        @NotBlank(message = "取消原因不能为空")
+        private String remark;
+
+    }
 }

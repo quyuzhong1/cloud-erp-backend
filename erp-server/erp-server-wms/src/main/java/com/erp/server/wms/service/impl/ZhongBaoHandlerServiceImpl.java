@@ -17,7 +17,9 @@ import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
-import com.sdk.wms.zhongbao.dto.response.BaseResponse;
+import com.sdk.wms.zhongbao.dto.request.OverseasInboundCancelRequest;
+import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
+import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -79,29 +81,49 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(thirdWarehouseSkuRespList);
     }
 
+    /***
+     * B2C发货单下推海外仓
+     * @param createInboundReq
+     * @return
+     */
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-
-        GoodCangCreateInboundReq goodCangCreateInboundReq = this.buildInboundDto(createInboundReq);
+        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
         // 创建入库单
-        GoodCangResponse<String> goodCangResponse = goodCangService.createInboundBill(goodCangCreateInboundReq);
-
-        return isSuccess(goodCangResponse.getAsk(), "") ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
+        BaseResponse<OverseasInboundCreateResponse> responseBaseResponse = zhongbaoService.overseasInboundCreate(overseasInboundCreateRequest);
+        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage() +":"+ responseBaseResponse.getErrors().stream().collect(Collectors.joining(", ")));
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        GoodCangCreateInboundReq goodCangCreateInboundReq = this.buildInboundDto(createInboundReq);
+        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
         // 编辑入库单
-        GoodCangResponse<String> goodCangResponse = goodCangService.editInboundBill(goodCangCreateInboundReq);
+        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
 
-        return isSuccess(goodCangResponse.getAsk(), "") ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
+        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        GoodCangResponse<String> response = goodCangService.cancelInboundBill(cancelInboundReq.getReceivingCode());
-        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
+        OverseasInboundCancelRequest overseasInboundCancelRequest = OverseasInboundCancelRequest.builder()
+                .orderNos(Collections.singletonList(cancelInboundReq.getReceivingCode()))
+                .cancelRemark(cancelInboundReq.getRemark())
+                .build();
+        BaseResponse<OverseasInboundCancelResponse> responseBaseResponse = zhongbaoService.overseasInboundCancel(overseasInboundCancelRequest);
+        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getSuccessList().get(0).getOrderNo()) : failure(responseBaseResponse.getData().getFailList().get(0).getMessage());
+    }
+
+    /***
+     * B2C发货单下推海外仓
+     * @param createInboundReq
+     * @return
+     */
+    @Override
+    public ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+        // 创建入库单
+        BaseResponse<OverseasInboundApproveResponse> responseBaseResponse = zhongbaoService.overseasInboundApprove(overseasInboundCreateRequest);
+        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
     @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
@@ -231,45 +253,12 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
     }
 
-    private GoodCangCreateInboundReq buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq){
-        GoodCangCreateInboundReq goodCangCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToGoodCang(createInboundReq);
-
-        //处理揽收数据
-        GoodCangCreateInboundReq.CollectingAddress collectingAddress = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToGoodCangCollect(createInboundReq);
-        List<GoodCangCreateInboundReq.CollectingAddress> collectingAddressList = Collections.singletonList(collectingAddress);
-        goodCangCreateInboundReq.setCollectingAddressList(collectingAddressList);
-        // 处理箱子明细
-        List<GoodCangCreateInboundReq.Item> itemList = new ArrayList<>();
-        List<ThirdWarehouseCreateInboundReq.Item> requestItemList = createInboundReq.getItems();
-
-        // 检查请求的商品数据是否为空
-        if (CollectionUtils.isEmpty(requestItemList)) {
-            throw new ServiceException("入库单产品数据为空");
-        }
-
-        // 根据箱号对商品进行分组
-        Map<Integer, List<ThirdWarehouseCreateInboundReq.Item>> requestItemMap = requestItemList.stream().collect(Collectors.groupingBy(ThirdWarehouseCreateInboundReq.Item::getBoxNo));
-
-        // 遍历分组后的数据，构建 GoodCang 的箱子明细对象
-        requestItemMap.forEach((key, val) -> {
-            GoodCangCreateInboundReq.Item item = new GoodCangCreateInboundReq.Item();
-            item.setBoxNo(String.valueOf(key));
-
-            List<GoodCangCreateInboundReq.Item.BoxDetail> boxDetails = val.stream()
-                    .map(requestItem -> {
-                        GoodCangCreateInboundReq.Item.BoxDetail boxDetail = new GoodCangCreateInboundReq.Item.BoxDetail();
-                        boxDetail.setProductSku(requestItem.getProductSku());
-                        boxDetail.setQuantity(requestItem.getQuantity());
-                        return boxDetail;
-                    })
-                    .collect(Collectors.toList());
-
-            item.setBox_detailList(boxDetails);
-            itemList.add(item);
-        });
-
-        goodCangCreateInboundReq.setItems(itemList);
-        return goodCangCreateInboundReq;
+    private OverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq){
+        OverseasInboundCreateRequest inboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToZhongbao(createInboundReq);
+        List<OverseasInboundCreateRequest.Attachment> attachmentOpenDTOs = new ArrayList<>();
+        attachmentOpenDTOs.add(OverseasInboundCreateRequest.Attachment.builder().base64(createInboundReq.getFileBase64()).fileName(createInboundReq.getFileName()).build());
+        inboundCreateRequest.setAttachmentOpenDTOs(attachmentOpenDTOs);
+        return inboundCreateRequest;
     }
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {

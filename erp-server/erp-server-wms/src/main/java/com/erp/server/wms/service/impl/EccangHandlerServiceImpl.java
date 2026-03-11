@@ -90,6 +90,10 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
     @Override
+    protected ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+    @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
         AntuCalculateFeeReq antuCalculateFeeReq = ThirdWarehouseConverter.INSTANCE.reqToAntuCalculateFeeReq(calculateFeeReq);
         AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq,getPlatForm());

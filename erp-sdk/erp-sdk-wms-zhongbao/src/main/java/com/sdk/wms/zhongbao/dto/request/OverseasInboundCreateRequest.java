@@ -16,6 +16,8 @@ import java.util.List;
 @Data
 @Builder
 public class OverseasInboundCreateRequest implements Serializable {
+    //订单号
+    private String orderNo;
     //自定义编号
     private String referenceNo;
     //派送方式:1=>客户自发头程,2=>海外仓头程,3=>海外仓码头提货

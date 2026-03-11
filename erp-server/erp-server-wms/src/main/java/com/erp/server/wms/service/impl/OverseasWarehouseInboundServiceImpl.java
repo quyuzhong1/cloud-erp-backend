@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -227,7 +228,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 推送到第三方草稿
         if (null != providerEntity && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())) {
             // 推送到第三方草稿
-            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping(providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
+            ApiResult<String> resultInfo = this.pullThirdOverseasPlatform(providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
             if (200 != resultInfo.getCode()) {
                 log.error("推送第三方仓库新增失败:msg={}", JSONUtil.toJsonStr(resultInfo));
                 throw new ServiceException("推送第三方仓库失败:" + resultInfo.getMsg());
@@ -328,7 +329,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .verify(verifyCode)
                 .transitWarehouseCode(mainEntity.getPlatformTransferWarehouseCode())
                 .smCode(mainEntity.getLogisticsProductCode())
-                .containerType(mainEntity.getContainerType())
+                .containerType(CharSequenceUtil.isNotBlank(mainEntity.getContainerType()) ? mainEntity.getContainerType() : null)
                 .customsType(customsTypeValue)
                 //  OpenCollectingServiceEnum： 0=自送货物，1=上门提货
                 .collectingService(collectingService)
@@ -535,7 +536,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
             // 自送货物
             if (OverseasDeliveryModeEnum.SELF_DELIVERY.getCode().equalsIgnoreCase(commonDTO.getDeliveryMode())) {
-                if (CharSequenceUtil.isBlank(commonDTO.getTransferWarehouseId()) && !OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (CharSequenceUtil.isBlank(commonDTO.getTransferWarehouseId()) && !OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform) && !OmsPlatformEnum.ZHONG_BAO.getCode().equalsIgnoreCase(dictPlatform)) {
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
                 if (CharSequenceUtil.isBlank(commonDTO.getExpressNo())) {
@@ -879,7 +880,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancel(String id) {
+    public BatchResultDTO cancel(String id, String remark) {
         OverseasWarehouseInboundEntity mainEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST));
         boolean isApi = overseasProviderWarehouseService.isApiWarehouse(mainEntity.getToWarehouseId());
         if(isApi){
@@ -899,7 +900,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (!this.updateById(mainEntity)) {
             throw new ServiceException("【海外入库单】更新状态失败");
         }
-
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("取消了单据编号为【{}】的海外入库单,原因是【{}】",  mainEntity.getCode(), remark), ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "取消操作");
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(mainEntity.getSourceId());
         if (Objects.isNull(deliveryEntity)){
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单");
@@ -934,6 +935,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
             cancelInboundReq.setShopId(shopId);
             cancelInboundReq.setWarehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode());
+            cancelInboundReq.setRemark(remark);
             ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
             log.info("取消海外入库单推送第三方仓库: dto={}", JSONUtil.toJsonStr(cancelInboundReq));
             ApiResult<String> resultInfo = handlerService.cancelInboundBill(cancelInboundReq, providerEntity.getId());
@@ -1109,27 +1111,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         return transferInfoService.add(addDTO);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public ApiResult<String> pullThirdOverseasPlatform(
-            OverseasProviderEntity providerEntity,
-            OverseasWarehouseInboundEntity mainEntity,
-            List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
-            String verityCode) {
-        // 发货的skuIds
-        List<String> skuIds = deliveryDetailEntityList.stream()
-                .map(FirstMileDeliveryDetailEntity::getSkuId)
-                .distinct()
-                .collect(Collectors.toList());
-        // 调用
-        return this.pullThirdOverseasPlatformWithSkuMapping(providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(OverseasProviderEntity providerEntity,
+    public ApiResult<String> pullThirdOverseasPlatform(OverseasProviderEntity providerEntity,
                                                                      OverseasWarehouseInboundEntity mainEntity,
                                                                      List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
                                                                      String verityCode
@@ -1154,7 +1140,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, shipperInfo, verityCode, code,deliveryDetailEntityList,providerEntity);
         ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
         log.info("推送第三方仓库: dto={}", JSONUtil.toJsonStr(createInboundReq));
-        if (CharSequenceUtil.isBlank(code)){
+        if (OverseasVerifyEnum.PASS.getCode().equals(verityCode) && OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerEntity.getCode())){
+            // 审核
+            return handlerService.approveInboundBill(createInboundReq, providerEntity.getId());
+        }else if (CharSequenceUtil.isBlank(code)){
             // 新增
             return handlerService.createInboundBill(createInboundReq, providerEntity.getId());
         } else {

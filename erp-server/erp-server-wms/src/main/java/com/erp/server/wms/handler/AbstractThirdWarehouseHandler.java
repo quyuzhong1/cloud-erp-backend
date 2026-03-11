@@ -96,7 +96,10 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq, String authId) {
         return handleAndRemoveContext(() -> cancelInboundBill(cancelInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_INBOUND_BILL,cancelInboundReq.getReceivingCode());
     }
-
+    @Override
+    public ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
+        return handleAndRemoveContext(() -> approveInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_APPROVE_INBOUND_BILL,createInboundReq.getReferenceNo());
+    }
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
         log.error("createOutboundBill authId:{} request:{}", authId, JSONUtil.toJsonStr(createOutboundReq));
@@ -169,6 +172,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
 
     protected abstract ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq);
+    protected abstract ApiResult<String> approveInboundBill(@Valid ThirdWarehouseCreateInboundReq createInboundReq);
     protected abstract ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq);
     protected abstract ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq);
     protected abstract ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq);

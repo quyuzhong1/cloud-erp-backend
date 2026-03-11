@@ -18,6 +18,7 @@ import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
+import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -269,4 +270,41 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo")
     })
     FirstMileChangeRecordDTO.AddDTO convertFbaToChangeRecord(FbaShipmentEntity entity, FbaShipmentDetailEntity detailEntity, FbaShipmentReceiveEntity receivedEntity, String deliveryCode);
+    @Mappings({
+            @Mapping(target = "orderNo", source = "receivingCode"),
+            @Mapping(target = "referenceNo", source = "referenceNo"),
+            @Mapping(target = "transitType", expression = "java(com.sdk.wms.zhongbao.enums.ZhongbaoEnums.OpenTransitTypeEnum.getCodeByErp(sourceData.getTransitType()))"),
+            @Mapping(target = "warehouseCode", source = "warehouseCode"),
+            @Mapping(target = "shippingType", expression = "java(com.sdk.wms.zhongbao.enums.ZhongbaoEnums.ProductCodeEnum.getCodeByErp(sourceData.getReceivingShippingType()))"),
+            @Mapping(target = "trackingNo", source = "trackingNumber"),
+            @Mapping(target = "asnDesc", source = "remark"),
+            @Mapping(target = "carrierCode", source = "smCode"),
+            @Mapping(target = "etaDate", source = "etaDate", qualifiedByName = "localDateTimeToDateStr"),
+            @Mapping(target = "remark", source = "remark"),
+            @Mapping(target = "itemDTOs", source = "items"),
+            @Mapping(target = "attachmentOpenDTOs", ignore = true),
+            @Mapping(target = "containerNo", ignore = true),
+            @Mapping(target = "emailOfTowingContainer", ignore = true),
+            @Mapping(target = "fromWarehouseCode", ignore = true),
+            @Mapping(target = "isMixedPallet", ignore = true),
+            @Mapping(target = "isUsePallet", ignore = true),
+            @Mapping(target = "orderType", ignore = true),
+            @Mapping(target = "palletQty", ignore = true),
+            @Mapping(target = "returnContainerDate", ignore = true),
+            @Mapping(target = "shelfMode", ignore = true),
+            @Mapping(target = "stockType", ignore = true),
+            @Mapping(target = "unloadType", ignore = true)
+    })
+    OverseasInboundCreateRequest inboundDtoToZhongbao(ThirdWarehouseCreateInboundReq sourceData);
+
+    @Mapping(target = "width", source = "boxWidth")
+    @Mapping(target = "weight", source = "packageWeight")
+    @Mapping(target = "remark", ignore = true)
+    @Mapping(target = "qty", source = "quantity")
+    @Mapping(target = "packageType", ignore = true)
+    @Mapping(target = "length", source = "boxLength")
+    @Mapping(target = "isPicture", ignore = true)
+    @Mapping(target = "isMixedBox", ignore = true)
+    @Mapping(target = "height", source = "boxHeight")
+    OverseasInboundCreateRequest.Item inboundItemToZhongbao(ThirdWarehouseCreateInboundReq.Item item);
 }
