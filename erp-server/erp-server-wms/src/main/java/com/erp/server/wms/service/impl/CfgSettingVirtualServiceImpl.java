@@ -5,15 +5,24 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.dto.CfgSettingVirtualDTO;
 import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.CfgSettingVirtualEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgSettingService;
 import com.erp.server.wms.service.CfgSettingVirtualService;
 import com.erp.server.wms.service.DictBasicService;
@@ -24,10 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * 虚拟仓配置
@@ -36,13 +42,16 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
+public class CfgSettingVirtualServiceImpl  implements CfgSettingVirtualService {
 
     @Resource
     private CfgSettingService cfgSettingService;
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private SpElServer spElServer;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -75,6 +84,35 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             handleViewEnum(cfgSetting,viewDTO);
         }
         return viewDTO;
+    }
+
+    @Override
+    public CfgSettingVirtualDTO.MatchVirtualTransferResultDTO matchTransferRule(CfgSettingVirtualDTO.MatchVirtualTransferRuleDTO dto) {
+
+        Map<String, Object> detailMap = new HashMap<>();
+        detailMap.put("inWarehouseCode", dto.getInWarehouseCode());
+        detailMap.put("outWarehouseCode", dto.getOutWarehouseCode());
+        Map<String, Object> map = new HashMap<>();
+        map.put("detailList", Collections.singletonList(detailMap));
+        map.put("inWarehouseCode", dto.getInWarehouseCode());
+        map.put("outWarehouseCode", dto.getOutWarehouseCode());
+
+        CfgSettingVirtualDTO.ViewDTO viewDTO = this.viewVirtual();
+        CfgSettingVirtualValueDTO.VirtualTransferSettingDTO virtualTransferSettingDTO = viewDTO.getVirtualTransferSettingDTO();
+        if(Objects.isNull(virtualTransferSettingDTO)){
+            return new CfgSettingVirtualDTO.MatchVirtualTransferResultDTO(false, "");
+        }
+        List<CfgSettingVirtualValueDTO.VirtualTransferConditionElement> virtualTransferConditionElements = virtualTransferSettingDTO.getConditionElementList();
+        if(CollectionUtils.isEmpty(virtualTransferConditionElements)){
+            return new CfgSettingVirtualDTO.MatchVirtualTransferResultDTO(false, "");
+        }
+        List<ConditionElement> conditionList = BeanMapper.copyList(virtualTransferConditionElements, ConditionElement.class);
+        Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map,"");
+
+        if(matchResult){
+            return new CfgSettingVirtualDTO.MatchVirtualTransferResultDTO(Boolean.TRUE,virtualTransferSettingDTO.getTransferDirection());
+        }
+        return new CfgSettingVirtualDTO.MatchVirtualTransferResultDTO(false, "");
     }
 
 
@@ -131,6 +169,9 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             case VIRTUAL_RULE:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualRuleDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualRuleDTO());
                 break;
+            case VIRTUAL_TRANSFER:
+                jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualTransferSettingDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualTransferSettingDTO());
+                break;
             default:
                 break;
         }
@@ -171,6 +212,10 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             case VIRTUAL_RULE:
                 CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.VirtualRuleDTO.class);
                 viewDTO.setVirtualRuleDTO(virtualRuleDTO);
+                break;
+            case VIRTUAL_TRANSFER:
+                CfgSettingVirtualValueDTO.VirtualTransferSettingDTO virtualTransferSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.VirtualTransferSettingDTO.class);
+                viewDTO.setVirtualTransferSettingDTO(virtualTransferSettingDTO);
                 break;
             default:
                 break;

@@ -121,6 +121,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
 
     @Resource
+    private CfgSettingVirtualService cfgSettingVirtualService;
+
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
     private static final int size = 2000;
     private static final String splitStr = "_&_";
@@ -814,7 +817,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, pickPair);
 
         List<String> resultList = new ArrayList<>();
-        Map<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> map = transferWarehouseList.stream().collect(groupingBy(obj -> obj.getFromOrgId() + splitStr + obj.getToOrgId()));
+        Map<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> map = transferWarehouseList.stream().collect(groupingBy(obj -> obj.getFromWarehouseId() + splitStr + obj.getToWarehouseId()));
         for (Map.Entry<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> entry : map.entrySet()) {
             List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> value = entry.getValue();
             TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
@@ -822,7 +825,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //判断组织类型
             boolean orgEquals = CharSequenceUtil.equals(value.get(0).getFromOrgId(), value.get(0).getToOrgId());
             addDTO.setType(orgEquals ? TransferTypeEnum.IN_ORG.getCode() : TransferTypeEnum.CROSS_ORG.getCode());
-            addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+            CfgSettingVirtualDTO.MatchVirtualTransferRuleDTO matchVirtualTransferRuleDTO = new  CfgSettingVirtualDTO.MatchVirtualTransferRuleDTO();
+            matchVirtualTransferRuleDTO.setInWarehouseCode(value.get(0).getToWarehouseId());
+            matchVirtualTransferRuleDTO.setOutWarehouseCode(value.get(0).getFromWarehouseId());
+            CfgSettingVirtualDTO.MatchVirtualTransferResultDTO matchTransferRule = cfgSettingVirtualService.matchTransferRule(matchVirtualTransferRuleDTO);
+            String transferDirection = TransferDirectionEnum.ORDINARY.getCode();
+            if(matchTransferRule.getIsMatch() && StringUtils.isNotBlank(matchTransferRule.getTransferDirection())){
+                transferDirection = matchTransferRule.getTransferDirection();
+            }
+            addDTO.setTransferDirection(transferDirection);
             addDTO.setInOrgId(value.get(0).getToOrgId());
             addDTO.setOutOrgId(value.get(0).getFromOrgId());
             addDTO.setSourceType(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
