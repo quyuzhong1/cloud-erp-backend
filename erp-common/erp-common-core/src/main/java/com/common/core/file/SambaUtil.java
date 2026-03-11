@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
@@ -211,8 +212,14 @@ public class SambaUtil {
         String rawSubPath = path.substring(firstSlashIdx + 1);
         String encodedSubPath = Arrays.stream(rawSubPath.split("/"))
                 .filter(segment -> segment != null && !segment.isEmpty())
-                .map(segment -> URLEncoder.encode(segment, StandardCharsets.UTF_8)
-                        .replace("+", "%20"))
+                .map(segment -> {
+                    try {
+                        return URLEncoder.encode(segment, StandardCharsets.UTF_8.name())
+                                .replace("+", "%20");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .collect(Collectors.joining("/"));
         return host + "/" + encodedSubPath;
     }
