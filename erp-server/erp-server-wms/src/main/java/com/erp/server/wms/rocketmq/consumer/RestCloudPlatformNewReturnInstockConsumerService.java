@@ -566,12 +566,18 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuList = dto.getProductDetailList().stream().map(PlatformReturnInstockDTO.Detail::getProductSku).distinct().collect(Collectors.toList());
 		// 查询店铺映射:
 		ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-		paramDTO.setPlatform(dto.getPlatform());
 		paramDTO.setPlatformSkuNoList(platformSkuList);
-		paramDTO.setShopIdList(shopIds);
-		paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
 		paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		paramDTO.setIsExpire(false);
+		//传参调整
+		if  (CharSequenceUtil.equals(dto.getPlatform(), PlatformDictEnum.NASDAQ_JD.getCode())) {
+			paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+			paramDTO.setWarehouseIdList(Collections.singletonList(warehouseEntity.getId()));
+		} else {
+			paramDTO.setPlatform(dto.getPlatform());
+			paramDTO.setShopIdList(shopIds);
+			paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
+		}
 		// 查询ListingInfo和skuMapping的关系
 		List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 		Map<String, List<ListingInfoWithSkuMappingDTO>> mappingRelationMap = listingedInfoWithSkuMappingList.stream()
