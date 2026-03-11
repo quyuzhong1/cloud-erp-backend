@@ -201,6 +201,9 @@ public enum ApiError implements Serializable {
     COMMON_FS_USER_NOT_BIND(98130,"飞书【{0}】事件,用户【{1}】未绑定飞书账号"),
     COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
     COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
+    COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
+    COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
+
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
