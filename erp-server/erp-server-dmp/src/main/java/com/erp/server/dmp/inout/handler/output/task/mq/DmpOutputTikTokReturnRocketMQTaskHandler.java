@@ -96,7 +96,7 @@ public class DmpOutputTikTokReturnRocketMQTaskHandler extends DmpOutputRocketMQT
         dto.setUniqueId(CharSequenceUtil.format("return_{}_{}_{}", dmpEntity.getThirdCode(), dmpEntity.getSourceId(), dmpEntity.getBatchNo()));
         dto.setPlatformReturnNo(dmpEntity.getThirdCode());
         dto.setPlatformOrderNo(StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode()));
-        dto.setReason(StringUtils.defaultIfBlank(dmpEntity.getRemark(), dmpEntity.getReason()));
+        dto.setReason(StringUtils.defaultIfBlank(dmpEntity.getRemark(), ""));
         dto.setDictPlatform(dmpEntity.getSourceSystem());
         dto.setPlatform(dmpEntity.getSourceSystem());
         dto.setDmpSyncTaskId(cfgOutputId);
