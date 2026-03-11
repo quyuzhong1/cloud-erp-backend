@@ -10,7 +10,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
-import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import jodd.util.StringUtil;
@@ -303,13 +302,13 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 
     @Override
     public Boolean exportSourcePlatform(PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_DETAIL_PLATFORM.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_PLATFORM.getCode(), dto);
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean exportSourceSelf(PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("朔源查询-ERP出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_DETAIL_SELF.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("朔源查询-ERP出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_SELF.getCode(), dto);
         return Boolean.TRUE;
     }
 

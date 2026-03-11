@@ -39,11 +39,10 @@ public class ExportAdsErpDiffReturnInstockPlatformHandler extends AbstractPageFi
 
     @Override
     protected String getExcelPath() {
-        return "excel/dmp/adsErpDiffOutstockSyncDetailPlatformExport.xlsx";
+        return "excel/dmp/adsErpDiffReturnInstockSyncPlatformExport.xlsx";
     }
-
     @Override
     public FileTaskEventEnum getEvent() {
-        return FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_DETAIL_PLATFORM;
+        return FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_PLATFORM;
     }
 }
