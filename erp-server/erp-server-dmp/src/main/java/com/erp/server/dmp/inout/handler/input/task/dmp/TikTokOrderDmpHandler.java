@@ -153,7 +153,7 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 Object orderTypeObj = dmpDataMap.get("orderType");
                 if (orderTypeObj != null) {
                     String orderType = String.valueOf(orderTypeObj);
-                    if("PRE_ORDER".equals(orderType)){
+                    if("BACK_ORDER".equals(orderType)){
                         lableMap.put("orderType", "preOrder");
                     }
                 }

@@ -5871,7 +5871,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("payTime", payTimeStr);
 
         map.put("platformDeliveryWarehouse", soB2cEntity.getPlatformDeliveryWarehouse());
-        String label = soB2cEntity.getLabelJson();
         //产品信息尺寸
         map.put("packageWeight", logisticsEntity.getWeight());
         map.put("packageLength", logisticsEntity.getLength());
