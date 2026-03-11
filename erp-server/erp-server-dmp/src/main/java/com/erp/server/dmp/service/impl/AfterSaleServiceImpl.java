@@ -45,13 +45,16 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.dmp.enums.AfterSaleStatusEnum;
 import com.erp.server.dmp.mapper.AfterSaleMapper;
 import com.erp.server.dmp.service.*;
@@ -138,6 +141,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -1042,11 +1048,31 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         startDTO.setBusinessKey(SourceTypeEnum.AFTER_SALE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = buildVariablesMap(entity);
+        startDTO.setVariablesMap(map);
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
+    }
+
+    private Map<String, Object> buildVariablesMap(AfterSaleEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        AfterSaleDTO.ViewDTO viewDTO = this.view((entity.getId()));
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.AFTER_SALE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(viewDTO));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        map.put("detailList", viewDTO.getDetailList());
+
+        Map<String,String> progresstMap = new HashMap<>();
+        if (StringUtils.isNotBlank(viewDTO.getOutboundTrackNo())) {
+            progresstMap.put("progress",viewDTO.getOutboundTrackNo());
+        }
+
+        if(!progresstMap.isEmpty()){
+            map.put("progress", progresstMap);
+        }
+        return map;
     }
 
     private void fillOne(AfterSaleDTO.ViewDTO data) {
