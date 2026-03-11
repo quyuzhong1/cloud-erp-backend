@@ -10,11 +10,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.common.business.config.ExportFeignConfig;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
-
 @FeignClient(name = "erp-dmp", contextId = "exportDmpFeign", configuration = ExportFeignConfig.class)
 public interface ExportDmpFeign {
 
@@ -88,4 +83,12 @@ public interface ExportDmpFeign {
     @PostMapping("/feign/export/exportAdsErpFirstMileInTransitDiff")
     PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> exportAdsErpFirstMileInTransitDiff(@RequestBody @Validated PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/exportAdsErpReceiveFlowDiff")
+    PagingVO<AdsErpReceiveFlowDiffDTO.ListDTO> exportAdsErpReceiveFlowDiff(PagingDTO<AdsErpReceiveFlowDiffDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpReceiveInventoryFlow")
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> exportAdsErpReceiveInventoryFlow(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpReceiveTransfer")
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> exportAdsErpReceiveTransfer(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
 }

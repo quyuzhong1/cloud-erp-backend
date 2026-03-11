@@ -22,6 +22,7 @@ import com.erp.model.dmp.entity.doris.AdsErpReceiveFlowDiffEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpReceiveFlowDiffMapper;
 import com.erp.server.dmp.service.AdsErpReceiveFlowDiffService;
+import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -52,6 +53,9 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -236,28 +240,32 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
 	
 	@Override
 	public Boolean exportExcel(ExportParamDTO dto) {
-		downloadTaskFeign.saveDownloadTask("出库同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC.getCode(), dto);
-		return true;
+		downloadTaskFeign.saveDownloadTask("签收流水差异", FileTaskEventEnum.EXPORT_ADS_ERP_RECEIVE_FLOW_DIFF.getCode(), dto);
+		return Boolean.TRUE;
 	}
 
     @Override
     public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> transferInfoPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto) {
-        return null;
+        PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> pagingVO = dmpRestCloudService.transferInfoPaging(dto);
+        return pagingVO;
     }
 
     @Override
     public Boolean exportTransferInfo(AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO dto) {
-        return null;
+        downloadTaskFeign.saveDownloadTask("朔源查询-直接调拨单", FileTaskEventEnum.EXPORT_ADS_ERP_RECEIVE_TRANSFER_INFO.getCode(), dto);
+        return Boolean.TRUE;
     }
 
     @Override
     public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> sourcePlatformFlowPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto) {
-        return null;
+        PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> pagingVO = dmpRestCloudService.sourcePlatformFlowPaging(dto);
+        return pagingVO;
     }
 
     @Override
     public Boolean exportPlatformFlow(AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO dto) {
-        return null;
+        downloadTaskFeign.saveDownloadTask("朔源查询-库存流水", FileTaskEventEnum.EXPORT_ADS_ERP_RECEIVE_INVENTORY_FLOW.getCode(), dto);
+        return Boolean.TRUE;
     }
 
 }

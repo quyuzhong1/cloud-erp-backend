@@ -127,7 +127,7 @@ public class AdsErpReceiveFlowDiffEntity extends BaseEntity<AdsErpReceiveFlowDif
     @TableField("op_code")
     private String opCode;
     /**
-    * 平台销售单号
+    * 平台业务单号
     */
     @TableField("biz_code")
     private String bizCode;

@@ -4,17 +4,20 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDetailDTO;
 import com.erp.model.dmp.dto.DmpRestCloudDTO;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +78,82 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                         responseJson.getInteger("total"),
                         responseJson.getInteger("pageSize"),
                         responseJson.getInteger("pageNo")
+                );
+            }else {
+                throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> transferInfoPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto) {
+        // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
+        Map<String, Object> map = new HashMap<>();
+        map.put("currPage", dto.getCurrPage());
+        map.put("pageSize", dto.getPageSize());
+        JSONObject data = new JSONObject();
+        data.put("ids", dto.getParams().getIds().stream()
+                .collect(Collectors.joining("','", "'", "'")));
+        map.put("data", Collections.singletonList(data));
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_source_transfer_info")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+        if (200 != response.getStatus()) {
+            throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+        }else {
+            String body = response.body();
+            JSONObject responseJson = JSON.parseObject(body);
+            Boolean state = responseJson.getBoolean("state");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null != state && state) {
+                List<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> resultList = responseJson.getJSONArray("data")
+                        .stream()
+                        .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO.class))
+                        .collect(Collectors.toList());
+                return new PagingVO<>(resultList,
+                        responseJson.getInteger("total"),
+                        responseJson.getInteger("pageSize"),
+                        responseJson.getInteger("currPage")
+                );
+            }else {
+                throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> sourcePlatformFlowPaging(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto) {
+        // 对应RestCloud接口类：ERP_BEAN_FLOW_LIST
+        Map<String, Object> map = new HashMap<>();
+        map.put("currPage", dto.getCurrPage());
+        map.put("pageSize", dto.getPageSize());
+        JSONObject data = new JSONObject();
+        data.put("ids", dto.getParams().getIds().stream()
+                .collect(Collectors.joining("','", "'", "'")));
+        map.put("data", Collections.singletonList(data));
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_source_platform_flow")
+                .header("Content-Type", "application/json")
+                .body(JSON.toJSONString(map))
+                .timeout(60000)
+                .execute();
+        if (200 != response.getStatus()) {
+            throw new ServiceException("调用restCloud流程信息错误:{}", response.body());
+        }else {
+            String body = response.body();
+            JSONObject responseJson = JSON.parseObject(body);
+            Boolean state = responseJson.getBoolean("state");
+            // 判断结果异常:ETLProcessRunResultCode
+            if (null != state && state) {
+                List<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> resultList = responseJson.getJSONArray("data")
+                        .stream()
+                        .map(e -> JSONUtil.toBean(JSONUtil.toJsonStr(e),AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO.class))
+                        .collect(Collectors.toList());
+                return new PagingVO<>(resultList,
+                        responseJson.getInteger("total"),
+                        responseJson.getInteger("pageSize"),
+                        responseJson.getInteger("currPage")
                 );
             }else {
                 throw new ServiceException("调用restCloud流程信息错误:{}", response.body());

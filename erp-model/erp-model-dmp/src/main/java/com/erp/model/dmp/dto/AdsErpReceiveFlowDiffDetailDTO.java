@@ -155,65 +155,41 @@ public class AdsErpReceiveFlowDiffDetailDTO implements Serializable {
         private String id;
 
         /**
-         * 库存SKU
+         * 单据单号
          */
-        private String stockSku;
+        private String transferInfoCode;
 
         /**
-         * ERP_SKU_ID
+         * 来源单号
          */
-        private String skuId;
+        private String platformOutstockCode;
 
+        /**
+         * 单据日期
+         */
+        private String billDate;
+
+        /**
+         * ERP仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatusName;
         /**
          * ERP_SKU
          */
         private String skuNo;
-
         /**
-         * 平台产品名称
+         * 调拨数量
          */
-        private String platformProductName;
-
+        private String qty;
         /**
-         * 出库仓库
+         * 产品名称
          */
-        private String platformWarehouse;
-        /**
-         * 出库仓库名称
-         */
-        private String platformWarehouseName;
-        /**
-         * 仓库id
-         */
-        private String erpWarehouseId;
-        /**
-         * 仓库名称
-         */
-        private String erpWarehouseName;
-        /**
-         * 实际库存
-         */
-        private Integer actualQty;
-        /**
-         * 可用库存
-         */
-        private Integer usableQty;
-        /**
-         * 冻结库存
-         */
-        private Integer frozenQty;
-        /**
-         * 在途库存
-         */
-        private Integer inTransitQty;
-        /**
-         * 待出库库存
-         */
-        private Integer reservedQty;
-        /**
-         * 其他库存
-         */
-        private Integer otherQty;
+        private String productName;
     }
 
 }

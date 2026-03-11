@@ -172,29 +172,14 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
         private String platformBillStatusName;
 
         /**
-        * 平台ERP店铺
-        */
-        private String platformShopName;
-
-        /**
-        * 平台平台名称
-        */
-        private String platformSalesPlatformName;
-
-        /**
         * 平台原始单号
         */
-        private String platformOrderCode;
+        private String opCode;
 
         /**
-        * 平台销售单号
+        * 平台业务单号
         */
-        private String platformSoCode;
-
-        /**
-        * 平台出库单号
-        */
-        private String platformOutstockCode;
+        private String bizCode;
 
         /**
          * 平台库存SKU数量
@@ -232,29 +217,13 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
         private String billStatusName;
 
         /**
-        * ERP店铺
-        */
-        private String shopName;
-
-        /**
-        * ERP平台名称
-        */
-        private String salesPlatformName;
-
-        /**
         * 原始单号
         */
         private String orderCode;
-
         /**
-        * 销售单号
+        * 直接调拨单号
         */
-        private String soCode;
-
-        /**
-        * 出库单号
-        */
-        private String outstockCode;
+        private String transferInfoCode;
 
         /**
         * ERP_SKU数量

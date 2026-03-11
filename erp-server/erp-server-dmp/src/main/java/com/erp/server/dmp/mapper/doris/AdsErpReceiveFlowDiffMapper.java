@@ -49,5 +49,4 @@ public interface AdsErpReceiveFlowDiffMapper extends BaseMapper<AdsErpReceiveFlo
      * @return
      */
     AdsErpReceiveFlowDiffDTO.TotalDTO total(@Param("params") AdsErpReceiveFlowDiffDTO.PagingParamDTO params);
-    
 }
