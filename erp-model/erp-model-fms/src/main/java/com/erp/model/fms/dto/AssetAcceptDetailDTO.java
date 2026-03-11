@@ -68,6 +68,11 @@ public class AssetAcceptDetailDTO implements Serializable {
         private String moldType;
 
         /**
+         * 模具类型名称（来自模具档案）
+         */
+        private String moldTypeName;
+
+        /**
         * 验收数量
         */
         private Integer acceptQty;

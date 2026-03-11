@@ -395,15 +395,18 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
         detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
         detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
         detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
+        detail.setIsGift("是".equals(importExcelDTO.getIsGiftName()));
         detail.setRemark(importExcelDTO.getRemark());
 
         List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
-        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-        if (ObjectUtils.isEmpty(priceDTOList)) {
-            errorMsgList.add("未找到采购价目表");
-            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(importExcelDTO);
-            return;
+        if (CollectionUtils.isNotEmpty(convertList)) {
+            List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+            if (ObjectUtils.isEmpty(priceDTOList)) {
+                errorMsgList.add("未找到采购价目表");
+                importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(importExcelDTO);
+                return;
+            }
         }
 
         // 将detail添加到对应的excelDTO的detailList中
@@ -441,6 +444,9 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     public static List<PurchasePriceDTO.PriceDTO> convertImportDTOToPriceDTO(AssetPurchaseOrderDetailDTO.MoldImportDTO importDTO,
                                                                              AssetPurchaseOrderDetailDTO.MoldDetailImportDTO detail) {
+        if (Boolean.TRUE.equals(detail.getIsGift())) {
+            return Collections.emptyList();
+        }
         PurchasePriceDTO.PriceDTO priceDTO = PurchasePriceDTO.PriceDTO.builder()
                 .purchaseOrgId(importDTO.getPurchaseOrgId())
                 .skuId(detail.getAssetId())

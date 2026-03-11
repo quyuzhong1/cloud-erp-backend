@@ -1324,7 +1324,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                         BeanUtil.copyProperties(detail, detailView);
                         MoldInfoEntity moldInfo = moldInfoMap.get(detail.getSkuNo());
                         if (moldInfo != null) {
-                            detailView.setMoldType(StringUtils.isNotBlank(moldInfo.getTypeName()) ? moldInfo.getTypeName() : moldInfo.getType());
+                            String moldTypeName = getMoldTypeName(moldInfo);
+                            detailView.setMoldType(moldInfo.getType());
+                            detailView.setMoldTypeName(moldTypeName);
                         }
                         
                         // 填充资产位置名称
@@ -1479,7 +1481,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             MoldInfoEntity moldInfo = moldInfoMap.get(data.getSkuNo());
             if (moldInfo != null) {
-                data.setMoldType(StringUtils.isNotBlank(moldInfo.getTypeName()) ? moldInfo.getTypeName() : moldInfo.getType());
+                String moldTypeName = getMoldTypeName(moldInfo);
+                data.setMoldType(moldInfo.getType());
+                data.setMoldTypeName(moldTypeName);
             }
             
             // 设置验收人中文名称（从数据库中已有的 acceptUserName 字段获取）
@@ -1810,7 +1814,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 String moldCode = StringUtils.isNotBlank(detail.getMoldCode()) ? detail.getMoldCode() : detail.getSkuNo();
                 MoldInfoEntity moldInfo = moldInfoMap.get(moldCode);
                 if (moldInfo != null) {
-                    item.setMoldType(StringUtils.isNotBlank(moldInfo.getTypeName()) ? moldInfo.getTypeName() : moldInfo.getType());
+                    String moldTypeName = getMoldTypeName(moldInfo);
+                    item.setMoldType(moldInfo.getType());
+                    item.setMoldTypeName(moldTypeName);
                 }
                 item.setPurchaseQty(detail.getPurchaseQty());
                 item.setIsUrgent(detail.getIsUrgent());
@@ -1917,7 +1923,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 if (moldInfo != null) {
                     item.setMoldCode(skuDTO.getSkuNo());
                     item.setMoldName(moldInfo.getName());
-                    item.setMoldType(StringUtils.isNotBlank(moldInfo.getTypeName()) ? moldInfo.getTypeName() : moldInfo.getType());
+                    String moldTypeName = getMoldTypeName(moldInfo);
+                    item.setMoldType(moldInfo.getType());
+                    item.setMoldTypeName(moldTypeName);
                 }
                 item.setAvailableAcceptQty(0); // 根据业务需求设置
                 detailList.add(item);
@@ -1946,6 +1954,13 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             log.error("查询模具档案失败，moldCodes: {}", moldCodes, e);
             return Collections.emptyMap();
         }
+    }
+
+    private String getMoldTypeName(MoldInfoEntity moldInfo) {
+        if (moldInfo == null) {
+            return null;
+        }
+        return StringUtils.isNotBlank(moldInfo.getTypeName()) ? moldInfo.getTypeName() : moldInfo.getType();
     }
 
     /**

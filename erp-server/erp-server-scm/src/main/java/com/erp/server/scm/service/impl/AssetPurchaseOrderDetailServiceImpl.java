@@ -179,9 +179,13 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             return;
         }
 
-        //从价表取价
+        List<AssetPurchaseOrderDetailDTO.AddDTO> nonGiftDetailList = addDTO.getAssetPurchaseOrderDetailDTOList().stream()
+                .filter(dto -> !Boolean.TRUE.equals(dto.getIsGift()))
+                .collect(Collectors.toList());
+
+        //从价表取价（非赠品）
         List<PurchasePriceDTO.PriceDTO> priceDTOList = new ArrayList<>();
-        for (AssetPurchaseOrderDetailDTO.AddDTO dto : addDTO.getAssetPurchaseOrderDetailDTOList()) {
+        for (AssetPurchaseOrderDetailDTO.AddDTO dto : nonGiftDetailList) {
             PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
             priceDTO.setSkuId(dto.getAssetId());
             priceDTO.setSupplierId(addDTO.getAssetPurchaseOrderSupplierDTO().getSupplierId());
@@ -190,8 +194,10 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             priceDTOList.add(priceDTO);
         }
 
-        List<PurchasePriceDTO.PriceDTO> priceDTOS = purchasePriceService.batchGetPurchasePrice(priceDTOList);
-        if (priceDTOS.isEmpty()) {
+        List<PurchasePriceDTO.PriceDTO> priceDTOS = CollectionUtils.isEmpty(priceDTOList)
+                ? Collections.emptyList()
+                : purchasePriceService.batchGetPurchasePrice(priceDTOList);
+        if (CollectionUtils.isNotEmpty(nonGiftDetailList) && priceDTOS.isEmpty()) {
             throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
 
@@ -208,14 +214,20 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             assetPurchaseOrderDetailEntity.setPurchaseQty(addDTO1.getPurchaseQty());
             assetPurchaseOrderDetailEntity.setPlanDeliveryDate(addDTO1.getPlanDeliveryDate());
             assetPurchaseOrderDetailEntity.setIsUrgent(addDTO1.getIsUrgent());
+            assetPurchaseOrderDetailEntity.setIsGift(Boolean.TRUE.equals(addDTO1.getIsGift()));
             assetPurchaseOrderDetailEntity.setSourceDetailId(StringUtils.isNotBlank(addDTO1.getSourceDetailId()) ? addDTO1.getSourceDetailId() : null);
             assetPurchaseOrderDetailEntity.setTag(addDTO1.getTag());
             assetPurchaseOrderDetailEntity.setRemark(StringUtils.isNotBlank(addDTO1.getRemark()) ? addDTO1.getRemark() : null);
 
-            for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
-                if (priceDTO.getSkuId().equals(addDTO1.getAssetId())) {
-                    assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                    assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+            if (Boolean.TRUE.equals(addDTO1.getIsGift())) {
+                assetPurchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+                assetPurchaseOrderDetailEntity.setTotalAmount(BigDecimal.ZERO);
+            } else {
+                for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
+                    if (priceDTO.getSkuId().equals(addDTO1.getAssetId())) {
+                        assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                        assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                    }
                 }
             }
 
@@ -224,7 +236,8 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         }
 
         AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = detailEntityList.stream()
-                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
+                .filter(obj -> !Boolean.TRUE.equals(obj.getIsGift()))
+                .filter(obj -> Objects.isNull(obj.getTotalAmount()) || obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
                 .findFirst()
                 .orElse(null);
         if (Objects.nonNull(assetPurchaseOrderDetailEntity)) {
@@ -332,6 +345,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
      */
     private List<PurchasePriceDTO.PriceDTO> getPurchasePrices(AssetPurchaseOrderDTO.UpdateDTO updateDTO, List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList) {
         List<PurchasePriceDTO.PriceDTO> priceDTOList = detailList.stream()
+                .filter(dto -> !Boolean.TRUE.equals(dto.getIsGift()))
                 .map(dto -> {
                     PurchasePriceDTO.PriceDTO priceDTO = new PurchasePriceDTO.PriceDTO();
                     priceDTO.setSkuId(dto.getAssetId());
@@ -342,8 +356,12 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                 })
                 .collect(Collectors.toList());
 
+        if (CollectionUtils.isEmpty(priceDTOList)) {
+            return Collections.emptyList();
+        }
+
         List<PurchasePriceDTO.PriceDTO> priceDTOS = purchasePriceService.batchGetPurchasePrice(priceDTOList);
-        if (priceDTOS.isEmpty()) {
+        if (CollectionUtils.isEmpty(priceDTOS)) {
             throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         return priceDTOS;
@@ -361,16 +379,22 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                     AssetPurchaseOrderDetailEntity entity = new AssetPurchaseOrderDetailEntity();
                     BeanUtils.copyProperties(dto, entity);
                     entity.setMainId(updateDTO.getId());
+                    entity.setIsGift(Boolean.TRUE.equals(dto.getIsGift()));
                     entity.setSourceDetailId(StringUtils.isNotBlank(dto.getSourceDetailId()) ? dto.getSourceDetailId() : null);
 
-                    // 设置价格
-                    priceDTOS.stream()
-                            .filter(priceDTO -> priceDTO.getSkuId().equals(dto.getAssetId()))
-                            .findFirst()
-                            .ifPresent(priceDTO -> {
-                                entity.setTaxPrice(priceDTO.getTaxPrice());
-                                entity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
-                            });
+                    // 赠品固定金额为0，非赠品从价表取价
+                    if (Boolean.TRUE.equals(dto.getIsGift())) {
+                        entity.setTaxPrice(BigDecimal.ZERO);
+                        entity.setTotalAmount(BigDecimal.ZERO);
+                    } else {
+                        priceDTOS.stream()
+                                .filter(priceDTO -> priceDTO.getSkuId().equals(dto.getAssetId()))
+                                .findFirst()
+                                .ifPresent(priceDTO -> {
+                                    entity.setTaxPrice(priceDTO.getTaxPrice());
+                                    entity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                                });
+                    }
 
                     entity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
                     return entity;
@@ -383,7 +407,8 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
      */
     private void checkTotalAmount(List<AssetPurchaseOrderDetailEntity> detailEntityList) {
         AssetPurchaseOrderDetailEntity invalidEntity = detailEntityList.stream()
-                .filter(obj -> obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
+                .filter(obj -> !Boolean.TRUE.equals(obj.getIsGift()))
+                .filter(obj -> Objects.isNull(obj.getTotalAmount()) || obj.getTotalAmount().compareTo(BigDecimal.ZERO) == 0)
                 .findFirst()
                 .orElse(null);
         if (Objects.nonNull(invalidEntity)) {
@@ -440,6 +465,10 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             //收货状态
             if (StringUtils.isBlank(assetPurchaseOrderDetailEntity.getEndReceive())) {
                 assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
+            }
+
+            if (Objects.isNull(assetPurchaseOrderDetailEntity.getIsGift())) {
+                assetPurchaseOrderDetailEntity.setIsGift(Boolean.FALSE);
             }
 
         }
