@@ -9,6 +9,9 @@ import javax.servlet.http.HttpServletResponse;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
+import com.erp.server.dmp.service.CfgDiffStrategyService;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -65,6 +68,8 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpRestCloudService dmpRestCloudService;
+    @Resource
+    private CfgDiffStrategyService cfgDiffStrategyService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -348,7 +353,6 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUpdateOutstockRelation(AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO dto) {
         AdsErpDiffOutstockSyncEntity entity = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getId, dto.getId())
                 .eq(AdsErpDiffOutstockSyncEntity::getExecStatus,"finish")
@@ -366,66 +370,71 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         if (Objects.isNull(detailEntity)) {
             throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
         }
+
+        Integer diffQty = 0;
+        String diffTag ="same";
+        String diffTagName ="完全匹配";
+        String suggestType ="";
+        StringBuffer sb = new StringBuffer();
+
         Boolean isDateSame = false;
         Boolean isQtySame = false;
         Boolean isStatusSame = false;
+        Boolean isWarehouseSame = false;
 
         Date billDate = entity.getPlatformBillDate();
         Date detailBillDate = detailEntity.getBillDate();
         if (Objects.nonNull(billDate) && Objects.nonNull(detailBillDate) && billDate.getYear() == detailBillDate.getYear() && billDate.getMonth() == detailBillDate.getMonth()) {
             isDateSame = true;
+        }else {
+            sb.append("单据日期不匹配;");
         }
-        //平台-出库数量 、ERP-实发数量相等
-        Integer platformQty = entity.getPlatformQty();
-        Integer qty = detailEntity.getQty();
-        Integer diffQty = 0;
-        String diffTag ="same";
-        String diffTagName ="完全匹配";
-        String suggestType ="";
-        if(Objects.nonNull(platformQty) && Objects.nonNull(qty)){
-            if(Objects.equals(platformQty,qty)){
-                isQtySame = true;
-            }else if(platformQty > qty ){
-                diffQty = platformQty - qty;
-                suggestType ="请核实单据";
-            }else if(platformQty < qty ){
-                diffQty = platformQty - qty;
-                suggestType ="请核实单据";
-            }
-        }
+
         //平台-单据状态/ERP-ERP单据状态
         String platformBillStatusName = entity.getPlatformBillStatusName();
         String billStatusName = detailEntity.getBillStatusName();
         if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已发货") && Objects.equals(billStatusName,"已审核")){
             isStatusSame =true;
-        }
-
-        if(isDateSame && isQtySame && isStatusSame){
-
         }else {
-//            StringBuffer sb = new StringBuffer();
-//            if(!isDateSame){
-//                sb.append("单据日期;");
-//            }
-//            if(!isQtySame){
-//                sb.append("单据数量;");
-//            }
-//            if(!isStatusSame){
-//                sb.append("单据状态;");
-//            }
-            if(diffQty > 0){
-                diffTag ="platform";
-                diffTagName ="平台单据多";
-            }else {
-                diffTag ="erp";
-                diffTagName ="ERP单据多";
-            }
+            sb.append("单据状态不匹配;");
         }
+
+        String platformWarehouseName = entity.getPlatformWarehouseName();
+        String erpWarehouseName = detailEntity.getErpWarehouseName();
+        if(Objects.equals(platformWarehouseName,erpWarehouseName)){
+            isWarehouseSame = true;
+        }else {
+            sb.append("仓库不匹配;");
+        }
+
+        //平台-出库数量 、ERP-实发数量相等
+        Integer platformQty = entity.getPlatformQty();
+        Integer qty = detailEntity.getQty();
+        if(Objects.nonNull(platformQty) && Objects.nonNull(qty) ){
+            if(Objects.equals(platformQty,qty)){
+                isQtySame = true;
+            }else {
+                diffQty = platformQty - qty;
+                sb.append("数量不匹配;");
+            }
+        }else {
+            sb.append("数量不匹配;");
+        }
+
+        if(!isDateSame || !isStatusSame || !isQtySame || !isWarehouseSame){
+            diffTag ="diff";
+            diffTagName ="字段差异";
+            suggestType ="请核实单据";
+        }
+
+
+
         //获取diffQty的绝对值
         entity.setDiffQty(Math.abs(diffQty));
         entity.setDiffTag(diffTag);
         entity.setDiffTagName(diffTagName);
         entity.setSuggestType(suggestType);
+        entity.setDiffDesc(sb.toString());
         //erp其余字段补充道平台
         entity.setBillName(detailEntity.getBillName());
         entity.setBillStatusName(detailEntity.getBillStatusName());
@@ -443,7 +452,23 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         updateById(entity);
         //删除对应的erp记录
         detailEntity.setIsDeleted(true);
-        updateById(detailEntity);
+        boolean save = updateById(detailEntity);
+
+        if(save){
+            if(!Objects.equals(diffTag,"same")){
+                List<CfgDiffStrategyDTO.ListByBillTypeDTO> cfgDiffStrategyList = cfgDiffStrategyService.listByBillType("outstock");
+                cfgDiffStrategyList = cfgDiffStrategyList.stream().filter(e -> Objects.equals(e.getDiffTag(),"diff")).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(cfgDiffStrategyList)){
+                    CfgDiffStrategyDTO.ListByBillTypeDTO listByBillTypeDTO = cfgDiffStrategyList.get(0);
+                    AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO updateSuggestTypeParamsDTO = new AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO();
+                    updateSuggestTypeParamsDTO.setSuggestType(listByBillTypeDTO.getSuggestType());
+                    updateSuggestTypeParamsDTO.setConditionSql(listByBillTypeDTO.getConditionSql());
+                    updateSuggestTypeParamsDTO.setId(dto.getId());
+                    baseMapper.updateSuggestType(updateSuggestTypeParamsDTO);
+                }
+            }
+        }
+
         return BatchResultDTO.success(entity.getId(), entity.getPlatformOutstockCode(), OperationTypeEnum.UPDATE);
     }
 
