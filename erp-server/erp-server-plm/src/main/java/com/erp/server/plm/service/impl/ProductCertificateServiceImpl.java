@@ -616,10 +616,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         if (msg.contains("object name not found")
                 || msg.contains("status_object_name_not_found")
                 || msg.contains("no such file")
-                || msg.contains("file not found")) {
+                || msg.contains("file not found")
+                || msg.contains("cannot find the path specified")
+                || msg.contains("path not found")) {
             return "共享路径下未找到文件";
         }
-        return "获取共享文件失败";
+        return "获取共享文件失败: " + rawMsg;
     }
 
     /**

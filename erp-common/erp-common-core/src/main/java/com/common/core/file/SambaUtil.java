@@ -10,7 +10,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * @description: samba工具类
@@ -156,8 +160,8 @@ public class SambaUtil {
      * 转换MultipartFile
      */
     public static MultipartFile toMultipartFile(String filepath, String username, String pwd) throws Exception {
-        //字符转义
-        String fileUrl = filepath.replace("\\","/").replace(" ","%20");
+        // 按路径段做编码，兼容中文、空格、+ 等字符
+        String fileUrl = encodeSmbPath(filepath);
 
         SmbFile smbFile = new SmbFile("smb://" + username + ":" + pwd + "@"
                 + fileUrl);
@@ -188,6 +192,29 @@ public class SambaUtil {
                 null,
                 new ByteArrayInputStream(bytes)
         );
+    }
+
+    /**
+     * SMB路径编码（仅编码host之后的路径段）
+     */
+    private static String encodeSmbPath(String filepath) {
+        String path = filepath.replace("\\", "/").trim();
+        path = path.replaceFirst("(?i)^smb://", "");
+        while (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        int firstSlashIdx = path.indexOf('/');
+        if (firstSlashIdx <= 0 || firstSlashIdx >= path.length() - 1) {
+            return path;
+        }
+        String host = path.substring(0, firstSlashIdx);
+        String rawSubPath = path.substring(firstSlashIdx + 1);
+        String encodedSubPath = Arrays.stream(rawSubPath.split("/"))
+                .filter(segment -> segment != null && !segment.isEmpty())
+                .map(segment -> URLEncoder.encode(segment, StandardCharsets.UTF_8)
+                        .replace("+", "%20"))
+                .collect(Collectors.joining("/"));
+        return host + "/" + encodedSubPath;
     }
 
     /**
