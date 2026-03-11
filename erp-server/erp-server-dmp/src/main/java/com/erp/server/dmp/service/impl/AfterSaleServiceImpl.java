@@ -34,6 +34,7 @@ import com.erp.model.dmp.dto.CfgAfterPlatformShopDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.enums.ThirdMappingSystemEnum;
 import com.erp.model.dmp.enums.ThirdMappingTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -201,32 +202,48 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         afterSaleEntity.setPhoneNumber(addDTO.getPhoneNumber());
 
         //平台映射
-        DmpBasicSystemEntity dmpBasicSystem = dmpBasicSystemService.lambdaQuery()
-                .eq(DmpBasicSystemEntity::getCode, addDTO.getDictPlatform())
+        ThirdMappingEntity ThirdMapping = thirdMappingService.lambdaQuery()
+                .eq(ThirdMappingEntity::getThirdSysType, ThirdMappingSystemEnum.ERP.getCode())
+                .eq(ThirdMappingEntity::getThirdCode, addDTO.getDictPlatform())
                 .one();
 
-        if (Objects.nonNull(dmpBasicSystem)) {
+        if (Objects.nonNull(ThirdMapping)) {
             List<ThirdMappingEntity> list = thirdMappingService.lambdaQuery()
-                    .eq(ThirdMappingEntity::getType, ThirdMappingTypeEnum.PLATFORM.getCode())
-                    .eq(ThirdMappingEntity::getSysId, dmpBasicSystem.getId())
+                    .eq(ThirdMappingEntity::getSysId, ThirdMapping.getSysId())
+                    .ne(ThirdMappingEntity::getType,ThirdMappingSystemEnum.ERP.getCode())
                     .list();
 
-            List<String> thirdCode = list.stream()
-                    .map(item -> item.getThirdCode())
-                    .collect(Collectors.toList());
+            if (!list.isEmpty()) {
+                List<String> thirdCodeList = list.stream()
+                        .map(item -> item.getThirdCode())
+                        .collect(Collectors.toList());
 
-            DmpSoInfoEntity dmpSoInfo = dmpSoInfoService.lambdaQuery()
-                    .eq(DmpSoInfoEntity::getPlatformCode, addDTO.getPlatformCode())
-                    .in(DmpSoInfoEntity::getSourcePlatform,thirdCode)
-                    .one();
+                DmpSoInfoEntity dmpSoInfo = dmpSoInfoService.lambdaQuery()
+                        .eq(DmpSoInfoEntity::getPlatformCode, addDTO.getPlatformCode())
+                        .in(DmpSoInfoEntity::getSourcePlatform,thirdCodeList)
+                        .one();
 
-            if (Objects.nonNull(dmpSoInfo)) {
-                if (StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
-                    ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
-                    if (Objects.nonNull(shopInfo)) {
-                        afterSaleEntity.setShopId(shopInfo.getId());
-                        if (StringUtils.isNotBlank(afterSaleEntity.getShopId())) {
-                            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), afterSaleEntity.getShopId());
+                if (Objects.nonNull(dmpSoInfo)) {
+                    if (StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
+                        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
+                        if (Objects.nonNull(shopInfo)) {
+                            afterSaleEntity.setShopId(shopInfo.getId());
+                            if (StringUtils.isNotBlank(afterSaleEntity.getShopId())) {
+                                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), afterSaleEntity.getShopId());
+                                if (!csAgentDTOList.isEmpty()) {
+                                    String ids = csAgentDTOList.stream()
+                                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                                            .collect(Collectors.joining(","));
+                                    String names = csAgentDTOList.stream()
+                                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                                            .collect(Collectors.joining(","));
+                                    afterSaleEntity.setCsAgentId(ids);
+                                    afterSaleEntity.setCsAgentName(names);
+                                }
+
+                            }
+                        } else {
+                            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
                             if (!csAgentDTOList.isEmpty()) {
                                 String ids = csAgentDTOList.stream()
                                         .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
@@ -237,33 +254,20 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                                 afterSaleEntity.setCsAgentId(ids);
                                 afterSaleEntity.setCsAgentName(names);
                             }
-
-                        }
-                    } else {
-                        List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
-                        if (!csAgentDTOList.isEmpty()) {
-                            String ids = csAgentDTOList.stream()
-                                    .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
-                                    .collect(Collectors.joining(","));
-                            String names = csAgentDTOList.stream()
-                                    .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
-                                    .collect(Collectors.joining(","));
-                            afterSaleEntity.setCsAgentId(ids);
-                            afterSaleEntity.setCsAgentName(names);
                         }
                     }
-                }
-            } else {
-                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
-                if (!csAgentDTOList.isEmpty()) {
-                    String ids = csAgentDTOList.stream()
-                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
-                            .collect(Collectors.joining(","));
-                    String names = csAgentDTOList.stream()
-                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
-                            .collect(Collectors.joining(","));
-                    afterSaleEntity.setCsAgentId(ids);
-                    afterSaleEntity.setCsAgentName(names);
+                } else {
+                    List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
+                    if (!csAgentDTOList.isEmpty()) {
+                        String ids = csAgentDTOList.stream()
+                                .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                                .collect(Collectors.joining(","));
+                        String names = csAgentDTOList.stream()
+                                .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                                .collect(Collectors.joining(","));
+                        afterSaleEntity.setCsAgentId(ids);
+                        afterSaleEntity.setCsAgentName(names);
+                    }
                 }
             }
 
