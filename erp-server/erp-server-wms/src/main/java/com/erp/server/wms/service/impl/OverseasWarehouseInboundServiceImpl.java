@@ -58,7 +58,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -312,6 +311,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .ownerCode(providerEntity.getOwnerCode())
                 .fileBase64(mainEntity.getBase64Str())
                 .fileName(mainEntity.getFileName())
+                .attachmentList(mainEntity.getAttachmentList())
                 // 交货方式，0自送，1揽收
                 .incomeType(collectingService)
                 .receivingType(inStockType)
@@ -437,25 +437,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         wmsAttachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, old.getId());
 
         String base64 = null;
-        if (!CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) {
+        if (CollectionUtils.isNotEmpty(updateDTO.getAttachUrlList())) {
             byte[] content = fileFeign.downloadFile(updateDTO.getAttachUrlList().get(0));
             if (content != null) {
                 base64 = Base64.getEncoder().encodeToString(content);
                 mainEntity.setBase64Str(base64);
                 mainEntity.setFileName(updateDTO.getAttachNameList().get(0));
             }
-        }else{
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(updateDTO.getId()));
-            if(!CollectionUtils.isEmpty(attachmentList)){
-                byte[] content = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
-                if (content != null) {
-                    base64 = Base64.getEncoder().encodeToString(content);
-                    mainEntity.setBase64Str(base64);
-                    mainEntity.setFileName(attachmentList.get(0).getAttachName());
-                }
-            }
-
         }
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(updateDTO.getId()));
+        mainEntity.setAttachmentList(attachmentList);
         // 推送到第三方
         if (null != providerEntity) {
             if (CharSequenceUtil.isBlank(mainEntity.getCode())) {
@@ -1140,10 +1131,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, shipperInfo, verityCode, code,deliveryDetailEntityList,providerEntity);
         ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
         log.info("推送第三方仓库: dto={}", JSONUtil.toJsonStr(createInboundReq));
-        if (OverseasVerifyEnum.PASS.getCode().equals(verityCode) && OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerEntity.getCode())){
-            // 审核
-            return handlerService.approveInboundBill(createInboundReq, providerEntity.getId());
-        }else if (CharSequenceUtil.isBlank(code)){
+        if (CharSequenceUtil.isBlank(code)){
             // 新增
             return handlerService.createInboundBill(createInboundReq, providerEntity.getId());
         } else {
