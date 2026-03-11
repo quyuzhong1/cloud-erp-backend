@@ -5,6 +5,7 @@ import com.common.business.mapper.DateMapperWork;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.*;
@@ -18,6 +19,7 @@ import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
+import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -168,6 +170,23 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "hsCode",  source = "hsCode"),
     })
     GoodCangCreateOutboundReq.Item outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq.Item createOutboundReq);
+
+    @Mappings({
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "contactName",  source = "customerName"),
+            @Mapping(target = "contactMobile",  source = "telNumber"),
+            @Mapping(target = "province",  source = "province"),
+            @Mapping(target = "city",  source = "city"),
+            @Mapping(target = "address",  source = "address1"),
+            @Mapping(target = "address2",  source = "address2"),
+            @Mapping(target = "address3",  source = "address3"),
+            @Mapping(target = "postcode",  source = "postCode"),
+            @Mapping(target = "remark",  source = "remark"),
+            @Mapping(target = "shippingMethodCode",  source = "channelCode"),
+            @Mapping(target = "code2",  source = "receiverCountryCode"),
+            @Mapping(target = "itemDTOs",  source = "items"),
+    })
+    OverseasOutboundCreateRequest outboundDtoToZhongBao(ThirdWarehouseCreateFbaOutboundReq createOutboundReq);
 
     @Mappings({
             @Mapping(target = "referenceNo",  source = "referenceNo"),

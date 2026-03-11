@@ -3,7 +3,6 @@ package com.erp.model.wms.dto.third;
 import com.common.business.dto.ReceiverDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
 import java.util.ArrayList;
 import java.util.List;
 
