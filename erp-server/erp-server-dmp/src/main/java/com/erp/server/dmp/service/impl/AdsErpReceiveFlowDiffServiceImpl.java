@@ -221,7 +221,7 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
 			if(count != null && count > 0) {
 				throw new ServiceException(list.stream().map(AdsErpReceiveFlowDiffEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
 			}
-			boolean reCreate = RestCloudApiUtil.syncReCreate("", "ods_erp/ods_receive_flow_diff_recreate");
+			boolean reCreate = RestCloudApiUtil.syncReCreate("", "ods_erp/ods_receive_flow_diff_update");
 			if(reCreate) {
 				lambdaUpdate().eq(AdsErpReceiveFlowDiffEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
 				.set(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing")
