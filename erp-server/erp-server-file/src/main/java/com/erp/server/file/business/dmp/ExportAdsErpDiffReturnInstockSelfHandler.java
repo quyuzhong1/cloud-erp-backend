@@ -39,11 +39,11 @@ public class ExportAdsErpDiffReturnInstockSelfHandler extends AbstractPageFileEv
 
     @Override
     protected String getExcelPath() {
-        return "excel/dmp/adsErpDiffOutstockSyncDetailPlatformExport.xlsx";
+        return "excel/dmp/adsErpDiffReturnInstockSyncSelfExport.xlsx";
     }
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_DETAIL_SELF;
+        return FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_SELF;
     }
 }
