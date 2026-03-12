@@ -442,6 +442,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
 		soReturnInstockEntity.setCreated(dto.getCreateTime());
 		soReturnInstockEntity.setType("B2C");
+		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		if(Objects.nonNull(soB2cEntity)) {
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
