@@ -15,7 +15,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class ProductChangeListSearchDTO implements Serializable {
+public class BomChangeListSearchDTO implements Serializable {
 
     @NotBlank(message = "变更类型不能为空")
     @StateEnumValue(strValues = {"sku", "bom"}, message = "类型有误")

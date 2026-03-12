@@ -6,7 +6,7 @@ package com.erp.model.plm.enums;
  * @Date 2023-01-28 16:30
  * @Created by yl
  */
-public enum ProductChangeStateEnum {
+public enum BomChangeStateEnum {
 
     WAIT_SUBMIT(0, "待提交"),
     AUDIT_ING(1, "审核中"),
@@ -17,7 +17,7 @@ public enum ProductChangeStateEnum {
     private Integer state;
     private String name;
 
-    ProductChangeStateEnum(Integer state, String name) {
+    BomChangeStateEnum(Integer state, String name) {
         this.state = state;
         this.name = name;
     }

@@ -96,6 +96,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     if(valueStr.equals("cainiaoWarehouse")){
                         sb.append(" sb2c.label_json ~ 'cainiaoInternationalWarehouse' ");
                     }
+                    if(valueStr.equals("preOrder")){
+                        sb.append(" sb2c.label_json ~ 'preOrder' ");
+                    }
                     if(valueStr.equals("aliexpressAePlus")){
                         sb.append(" sb2c.label_json ~ 'AE_PLUS' ");
                     }
@@ -147,6 +150,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     }
                     if(valueStr.equals("cainiaoWarehouse")){
                         sb.append(" sb2c.label_json !~ 'cainiaoInternationalWarehouse' ");
+                    }
+                    if(valueStr.equals("preOrder")){
+                        sb.append(" sb2c.label_json !~ 'preOrder' ");
                     }
                     if(valueStr.equals("aliexpressAePlus")){
                         sb.append(" sb2c.label_json !~ 'AE_PLUS' ");

@@ -97,7 +97,6 @@
         AND sdu.user_id = #{userId}
         AND (sd.disabled IS NULL OR sd.disabled = false)
         ORDER BY sdu.create_time DESC
-        LIMIT 1
     </select>
 
     <select id="listDeptUserByDeptId" resultType="com.common.business.dto.FindUserDTO">
