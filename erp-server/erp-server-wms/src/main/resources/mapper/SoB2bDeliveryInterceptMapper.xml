@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoB2bDeliveryInterceptMapper">
+
+    <select id="tabList" resultType="com.erp.model.wms.dto.SoB2bDeliveryInterceptDTO$TabListDTO">
+        SELECT
+            sbdi.handle_status AS tabFlag,
+            count(distinct sbdid.id) AS count
+        FROM so_b2b_delivery_intercept_detail sbdid
+        LEFT JOIN so_b2b_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
+        WHERE sbdid.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY sbdi.handle_status
+    </select>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SoB2bDeliveryInterceptDTO$ListDTO">
+        SELECT
+            sbdi.id,
+            sbdi.code,
+            sbdi.source_type,
+            sbdi.so_code,
+            sbdi.third_delivery_code,
+            sbdi.so_outstock_code,
+            sbdid.sku_id,
+            sbdid.sku_no,
+            sbdid.delivery_qty,
+            sbdid.warehouse_id,
+            sbdid.warehouse_name,
+            sbdi.logistics_channel_id,
+            sbdi.logistics_channel_name,
+            sbdi.bill_type,
+            sbdi.transport_no,
+            sbdi.cancel_status,
+            sbdi.intercept_status,
+            sbdi.handle_status,
+            sbdi.handle_result,
+            sbdi.remark,
+            sbdi.create_user_name,
+            sbdi.handle_user_name,
+            sbdi.create_time,
+            sbdi.handle_time,
+            btd.platform_order_code as platformOrderCode,
+            sbdi.third_warehouse_order_code
+        FROM so_b2b_delivery_intercept_detail sbdid
+        LEFT JOIN so_b2b_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
+        LEFT JOIN b2b_third_delivery btd ON btd.id = sbdi.source_id AND btd.is_deleted = FALSE
+        WHERE sbdid.is_deleted = FALSE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbdi.create_time desc
+    </select>
+</mapper>

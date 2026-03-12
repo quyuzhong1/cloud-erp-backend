@@ -113,6 +113,8 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
 
     List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds);
 
+    B2bThirdDeliveryEntity getLatestByCode(String code);
+
     void submitApprove(String soOutstockId);
 
     void createFbaOutbound(ThirdWarehouseCreateFbaOutboundReq req);
