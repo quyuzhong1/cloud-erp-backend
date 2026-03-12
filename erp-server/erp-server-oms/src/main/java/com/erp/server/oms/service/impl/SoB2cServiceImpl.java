@@ -5005,6 +5005,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 labelDTO.setIsRefunded(labelJsonDTO.getIsRefunded());
                 labelDTO.setDeliveryType(labelJsonDTO.getDeliveryType());
                 labelDTO.setPriorityLevel(labelJsonDTO.getPriorityLevel());
+                labelDTO.setOrderType(labelJsonDTO.getOrderType());
                 data.setIsDeliver(labelJsonDTO.getIsDeliver());
             }
             if (isFullyManaged) {
@@ -5895,11 +5896,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //获取开票清单最新开票记录
         InvoiceInfoEntity latestInvoice = invoiceInfoService.findLatestInvoice(soB2cEntity.getId());
         map.put("invoiceStatus", Objects.nonNull(latestInvoice) ? latestInvoice.getStatus() : "");
+        SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
         //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
-            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
+
             map.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
+        }
+
+        if(StringUtils.isNotBlank(labelJsonDTO.getOrderType())){
+            map.put("orderType", labelJsonDTO.getOrderType());
         }
 
         //是否买家留言
@@ -5907,14 +5913,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         map.put("isHavebuyerRemark", isHavebuyerRemark);
         //主表标签处理
-        String mainLabelJson = soB2cEntity.getLabelJson();
         Boolean isAmazonFBA = Boolean.FALSE;
-        if (CharSequenceUtil.isNotBlank(mainLabelJson)) {
-            SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(mainLabelJson, SoB2cDTO.LabelJsonDTO.class);
-            //FBA
-            if ("AFN".equals(labelJsonDTO.getFulfillmentChannel())) {
-                isAmazonFBA = Boolean.TRUE;
-            }
+        //FBA
+        if ("AFN".equals(labelJsonDTO.getFulfillmentChannel())) {
+            isAmazonFBA = Boolean.TRUE;
         }
         map.put("isAmazonFBA", isAmazonFBA);
         map.put("packageWidth", logisticsEntity.getWidth());
@@ -5993,20 +5995,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
             if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())
                     || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
-                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
                 detailMap.put("mercadoOrderDeliveryType", labelJsonDTO.getLogisticType());
+            }
+            if(StringUtils.isNotBlank(labelJsonDTO.getOrderType())){
+                detailMap.put("orderType", labelJsonDTO.getOrderType());
             }
 
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
             if (CharSequenceUtil.isNotBlank(detailLabelJson)) {
-                SoB2cDetailDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(detailLabelJson, SoB2cDetailDTO.LabelJsonDTO.class);
+                SoB2cDetailDTO.LabelJsonDTO detailLabelJsonDTO = JSONUtil.toBean(detailLabelJson, SoB2cDetailDTO.LabelJsonDTO.class);
                 //速卖通已税
-                if ("U_TAXED".equals(labelJsonDTO.getAlreadyTaxed()) || "I_TAXED".equals(labelJsonDTO.getAlreadyTaxed())) {
+                if ("U_TAXED".equals(detailLabelJsonDTO.getAlreadyTaxed()) || "I_TAXED".equals(detailLabelJsonDTO.getAlreadyTaxed())) {
                     detailMap.put("isAliExpressTaxOrder", Boolean.TRUE);
                 }
                 //菜鸟官方仓
-                if ("cainiaoInternationalWarehouse".equals(labelJsonDTO.getLogisticsWarehouseType())) {
+                if ("cainiaoInternationalWarehouse".equals(detailLabelJsonDTO.getLogisticsWarehouseType())) {
                     detailMap.put("isAliExpressNewbieWarehouse", Boolean.TRUE);
                 }
             }
@@ -10156,6 +10160,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             if (Objects.equals("AFN", labelJsonDTO.getFulfillmentChannel())) {
                 labelOrderStr.append("FBA,");
+            }
+            if (Objects.equals("preOrder", labelJsonDTO.getOrderType())) {
+                labelOrderStr.append("预售订单,");
             }
             List<String> shipNodeTypeList = Arrays.asList("WFSFulfilled", "3PLFulfilled");
             if (shipNodeTypeList.contains(labelJsonDTO.getShipNodeType())) {
