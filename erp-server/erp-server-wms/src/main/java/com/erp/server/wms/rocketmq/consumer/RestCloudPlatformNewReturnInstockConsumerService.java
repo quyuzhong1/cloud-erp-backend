@@ -447,7 +447,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else {
-			soReturnInstockEntity.setCurrency(shopInfoEntity.getSettlementCurrency());
+			soReturnInstockEntity.setCurrency(CharSequenceUtil.isBlank(shopInfoEntity.getSettlementCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : shopInfoEntity.getSettlementCurrency());
 		}
 		if (StringUtils.isBlank(shopInfoEntity.getCustomerId())){
 			ServiceException.runError("店铺对应客户信息为空:{}", shopInfoEntity.getName());
@@ -593,6 +593,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
 			soReturnInstockDetailEntity.setSkuId(mappingDTO.getProductSkuId());
 			soReturnInstockDetailEntity.setSkuNo(mappingDTO.getProductSkuNo());
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
 			soReturnInstockDetailEntity.setMustQty(detail.getMustQty());
 			soReturnInstockDetailEntity.setReceiveQty(detail.getReceiveQty());
 			soReturnInstockDetailEntity.setRealQty(detail.getRealQty());

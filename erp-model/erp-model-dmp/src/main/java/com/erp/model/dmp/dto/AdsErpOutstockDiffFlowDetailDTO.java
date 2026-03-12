@@ -1,6 +1,5 @@
 package com.erp.model.dmp.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -34,16 +33,6 @@ public class AdsErpOutstockDiffFlowDetailDTO implements Serializable {
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
 
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExpotParamDTO extends PagingParamDTO{
-    	/**
-         * 主键id
-         */
-        private List<String> ids;
     }
 
     /**
