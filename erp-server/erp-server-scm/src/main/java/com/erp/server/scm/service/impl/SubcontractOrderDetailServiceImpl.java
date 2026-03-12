@@ -611,6 +611,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<String> warehouseIds = new ArrayList<>();
         //供应商Ids
         List<String> supplierIds = new ArrayList<>();
+        SupplierEntity supplierEntity = null;
         //id集合赋值
         handleIdList (newList,parentSkuIds,allSkuIds,warehouseIds,supplierIds);
 
@@ -728,10 +729,16 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             }
             //供应商名称
             if (CollectionUtils.isNotEmpty(supplierList)) {
-                String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                detailEntity.setSupplierName(supplierName);
+                 supplierEntity = supplierList.stream()
+                        .filter(obj -> obj.getId().equals(detailEntity.getSupplierId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(supplierEntity)) {
+                    detailEntity.setSupplierName(supplierEntity.getName());
+                }
+
             }
-            handleRepairSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
+            handleRepairSupplierTaxPrice(detailEntity,supplierEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
             //子集SKU信息
             List<SubcontractOrderDetailEntity> childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
             boolean hasChildError = false;
@@ -775,10 +782,16 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 childEntity.setWarehouseName(updateDTO.getName());
                 //供应商名称
                 if (CollectionUtils.isNotEmpty(supplierList)) {
-                    String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                    childEntity.setSupplierName(supplierName);
+                    supplierEntity = supplierList.stream()
+                            .filter(obj -> obj.getId().equals(detailEntity.getSupplierId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.nonNull(supplierEntity)) {
+                        detailEntity.setSupplierName(supplierEntity.getName());
+                    }
+
                 }
-                handleRepairSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getPurchaseOrgId(), priceList);
+                handleRepairSupplierTaxPrice(childEntity,supplierEntity,Boolean.TRUE,subcontractOrderEntity.getPurchaseOrgId(), priceList);
             }
 
             //如果子件有错误，跳过本条父级SKU
@@ -906,7 +919,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     }
 
-    private void handleRepairSupplierTaxPrice(SubcontractOrderDetailEntity entity, Boolean isChild, String purchaseOrgId, List<PurchasePriceDTO.PriceDTO> priceList) {
+    private void handleRepairSupplierTaxPrice(SubcontractOrderDetailEntity entity, SupplierEntity supplierEntity,Boolean isChild, String purchaseOrgId, List<PurchasePriceDTO.PriceDTO> priceList) {
 
         //赠品无需报价,默认人民币
         if (ObjectUtils.isNotEmpty(entity.getIsGift()) && entity.getIsGift()) {
@@ -933,18 +946,23 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 PoReturnDetailEntity poReturnDetailEntity = poReturnDetails.get(0);
 
                 if (poReturnDetailEntity.getReturnPrice().compareTo(BigDecimal.ZERO) > 0 && Objects.equals(poReturnDetailEntity.getSkuId(),entity.getSkuId())) {
-                    SupplierEntity supplier = supplierService.getById(poReturnDetailEntity.getMainSupplierId());
                     entity.setCurrency(poReturnDetailEntity.getCurrency());
                     entity.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
                     entity.setPrice(poReturnDetailEntity.getReturnPrice());
-                    entity.setTaxRate(supplier.getTaxRate());
-                    entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),entity.getRepairQty()));
+                    entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),entity.getQty()));
+                    if (Objects.nonNull(supplierEntity)) {
+                        entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),100) : BigDecimal.ZERO);
+                    }
                 } else {
                     entity.setCurrency(viewDTO.getCurrency());
                     entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
                     entity.setPrice(viewDTO.getTaxPrice());
                     entity.setTaxRate(viewDTO.getTaxRate());
-                    entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
+                    entity.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),entity.getQty()));
+                }
+            } else {
+                if (Objects.nonNull(supplierEntity)) {
+                    entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),100) : BigDecimal.ZERO);
                 }
             }
 
