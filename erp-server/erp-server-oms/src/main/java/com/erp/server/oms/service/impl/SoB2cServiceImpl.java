@@ -10335,6 +10335,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.equals("AFN", labelJsonDTO.getFulfillmentChannel())) {
                 labelOrderStr.append("FBA,");
             }
+            if (Objects.equals("preOrder", labelJsonDTO.getOrderType())) {
+                labelOrderStr.append("预售订单,");
+            }
             List<String> shipNodeTypeList = Arrays.asList("WFSFulfilled", "3PLFulfilled");
             if (shipNodeTypeList.contains(labelJsonDTO.getShipNodeType())) {
                 labelOrderStr.append("WFS,");
