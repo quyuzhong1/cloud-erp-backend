@@ -5040,6 +5040,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             log.debug("使用并行流处理{}条订单数据", listSize);
         }
 
+        Map<String, String> finalCountryNameMap = countryNameMap;
         (useParallel ? list.parallelStream() : list.stream()).forEach(data -> {
             data.setMultiChannelTypeName(SoB2cMultiChannelTypeEnum.getName(data.getMultiChannelType()));
             if (SoB2cMultiChannelTypeEnum.AMAZON_FAILED.getCode().equals(data.getMultiChannelType())){
@@ -5066,7 +5067,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 data.setShopName(shopInfoEntity.getName());
             }
             // 国家=买家信息国家
-            Map<String, String> finalCountryNameMap = countryNameMap;
             String countryName = finalCountryNameMap.getOrDefault(data.getCountry(), "");
             data.setCountryName(countryName);
 
