@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class ProductChangeHandler extends AbstractQueryHandler {
+public class BomChangeHandler extends AbstractQueryHandler {
 
     @Resource
     private WorkflowFeign workflowFeign;

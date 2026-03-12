@@ -1,7 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.plm.entity.ProductChangeDetailsEntity;
+import com.erp.model.plm.entity.BomChangeDetailsEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-01-11 14:05:03
  */
 @Mapper
-public interface ProductChangeDetailsMapper  extends BaseMapper<ProductChangeDetailsEntity> {
+public interface BomChangeDetailsMapper extends BaseMapper<BomChangeDetailsEntity> {
 
     
 

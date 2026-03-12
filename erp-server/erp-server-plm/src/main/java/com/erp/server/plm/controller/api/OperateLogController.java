@@ -82,8 +82,8 @@ public class OperateLogController extends BaseController {
      * @return ApiResult<PagingVO<OperateLogShowDTO.HistoryDTO>>
      */
     @PostMapping("/productChange/paging")
-    public ApiResult<PagingVO<OperateLogShowDTO.HistoryDTO>> getProductChangePaging(@RequestBody @Validated PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
-        PagingVO<OperateLogShowDTO.HistoryDTO> pagingVO = operateLogService.getProductChangeHistory(dto);
+    public ApiResult<PagingVO<OperateLogShowDTO.HistoryDTO>> getBomChangePaging(@RequestBody @Validated PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
+        PagingVO<OperateLogShowDTO.HistoryDTO> pagingVO = operateLogService.getBomChangeHistory(dto);
         return success(pagingVO);
     }
 }

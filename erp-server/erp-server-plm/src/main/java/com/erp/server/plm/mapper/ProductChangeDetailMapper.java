@@ -1,5 +1,5 @@
 package com.erp.server.plm.mapper;
-import com.erp.model.plm.entity.ProductChangeEntity;
+import com.erp.model.plm.entity.ProductChangeDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
-import com.erp.model.plm.dto.ProductChangeDTO;
+import com.erp.model.plm.dto.ProductChangeDetailDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
  * @since 2026-02-03
  */
 @Mapper
-public interface ProductChangeMapper extends BaseMapper<ProductChangeEntity> {
+public interface ProductChangeDetailMapper extends BaseMapper<ProductChangeDetailEntity> {
 
     /**
     * 分页查询
@@ -28,21 +28,21 @@ public interface ProductChangeMapper extends BaseMapper<ProductChangeEntity> {
     * @param params
     * @return
     */
-    IPage<ProductChangeDTO.ListDTO> paging(Page query, @Param("params") ProductChangeDTO.PagingParamDTO params);
+    IPage<ProductChangeDetailDTO.ListDTO> paging(Page query, @Param("params") ProductChangeDetailDTO.PagingParamDTO params);
 
     /**
     * 状态数量
     * @param params
     * @return
     */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") ProductChangeDTO.PagingParamDTO params);
+    List<ApproveStatusQtyDTO> listCount(@Param("params") ProductChangeDetailDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询
     * @param params
     * @return
     */
-    List<ProductChangeDTO.ListDTO> listExport(@Param("params") ProductChangeDTO.ExportDTO params);
+    List<ProductChangeDetailDTO.ListDTO> listExport(@Param("params") ProductChangeDetailDTO.ExportDTO params);
 
 
     /**
@@ -50,5 +50,5 @@ public interface ProductChangeMapper extends BaseMapper<ProductChangeEntity> {
     * @param searchParam
     * @return
     */
-    List<ProductChangeDTO.TabListDTO> tabList(@Param("params") ProductChangeDTO.PagingParamDTO searchParam);
+    List<ProductChangeDetailDTO.TabListDTO> tabList(@Param("params") ProductChangeDetailDTO.PagingParamDTO searchParam);
 }

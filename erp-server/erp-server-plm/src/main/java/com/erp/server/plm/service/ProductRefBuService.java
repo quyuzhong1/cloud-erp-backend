@@ -20,7 +20,7 @@ public interface ProductRefBuService extends SuperService<ProductRefBuEntity> {
 
     List<ProductRefBuEntity> listByBuId(String id);
 
-    void addOrUpdate(String productId, String buId);
+    void addOrUpdate(String skuId,String productId, String buId);
 
     List<ProductRefBuEntity> listByProductIds(List<String> productIdList);
 

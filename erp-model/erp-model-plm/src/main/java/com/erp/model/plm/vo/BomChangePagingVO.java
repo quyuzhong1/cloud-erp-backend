@@ -2,10 +2,8 @@ package com.erp.model.plm.vo;
 
 import lombok.*;
 
-import javax.ws.rs.GET;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 产品变更信息
@@ -17,7 +15,7 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class ProductChangePagingVO implements Serializable {
+public class BomChangePagingVO implements Serializable {
 
     private String id;
 
