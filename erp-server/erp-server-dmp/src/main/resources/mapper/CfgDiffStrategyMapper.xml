@@ -67,15 +67,12 @@
     </select>
 
     <select id="listByBillType" resultType="com.erp.model.dmp.dto.CfgDiffStrategyDTO$ListByBillTypeDTO">
-        SELECT DISTINCT G.ID,
-                        type_name,
-                        diff_tag,
-                        condition_sql,
-                        suggest_type
+        SELECT DISTINCT G.ID,type_name, diff_tag, condition_sql, suggest_type
         FROM
-            cfg_diff_Strategy
-                T LEFT JOIN cfg_diff_Strategy_detail G ON T.ID = G.main_id
-                  LEFT JOIN dict_basic h ON T.bill_type = h. VALUE
+            cfg_diff_strategy T
+            LEFT JOIN cfg_diff_strategy_detail G ON T.ID = G.main_id
+            LEFT JOIN dict_basic h ON T.bill_type = h.VALUE
+        WHERE
             T.bill_type =  #{billType}
           AND T.is_deleted = FALSE
           AND T.status = TRUE
