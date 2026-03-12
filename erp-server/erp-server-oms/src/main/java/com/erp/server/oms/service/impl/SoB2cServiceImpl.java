@@ -4924,7 +4924,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 data.setShopName(shopInfoEntity.getName());
             }
             // 国家=买家信息国家
-            String countryName = countryNameMap.getOrDefault(data.getCountry(), "");
+            Map<String, String> finalCountryNameMap = countryNameMap;
+            String countryName = finalCountryNameMap.getOrDefault(data.getCountry(), "");
             data.setCountryName(countryName);
 
             //重量单位,默认g
