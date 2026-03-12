@@ -660,6 +660,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList = new ArrayList<>(firstMileDeliveryDetailEntityList.size());
         //遍历计算sku分摊
         for (FirstMileDeliveryDetailEntity deliveryDetailEntity : firstMileDeliveryDetailEntityList) {
+            List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream()
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                            && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
+                    ).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(weightAllocationEntityList1)) {
+                //装箱任务明细存在是否取消发货字段， 若取消发货则不下推重量分摊，因此必然存在发货单明细sku存在但重量分摊不存在的情况
+                continue;
+            }
+
             //上期账单是实际账单 并且对应sku所有费用分类的期末在途费用为0则不进行费用分摊
             BatchResultDTO batchResultDTO2 = checkCostAllocationBySku(voList, entity.getReportPeriodMonth(), entity.getReconciliationMonth(),deliveryDetailEntity);
             if (!batchResultDTO2.getSuccess()) {
