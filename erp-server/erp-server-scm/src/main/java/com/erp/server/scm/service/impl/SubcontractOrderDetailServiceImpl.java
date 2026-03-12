@@ -933,7 +933,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 PoReturnDetailEntity poReturnDetailEntity = poReturnDetails.get(0);
 
                 if (poReturnDetailEntity.getReturnPrice().compareTo(BigDecimal.ZERO) > 0 && Objects.equals(poReturnDetailEntity.getSkuId(),entity.getSkuId())) {
-                    SupplierEntity supplier = supplierService.getById(poReturnDetailEntity);
+                    SupplierEntity supplier = supplierService.getById(poReturnDetailEntity.getMainSupplierId());
                     entity.setCurrency(poReturnDetailEntity.getCurrency());
                     entity.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
                     entity.setPrice(poReturnDetailEntity.getReturnPrice());
