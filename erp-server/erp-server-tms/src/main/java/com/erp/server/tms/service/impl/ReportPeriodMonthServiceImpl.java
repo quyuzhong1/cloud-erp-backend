@@ -32,6 +32,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -182,7 +183,38 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
 
     @Override
     public List<ReportPeriodMonthDTO.ListDTO> listLocalDate() {
-        return baseMapper.listLocalDate();
+        List<ReportPeriodMonthDTO.ListDTO> list = baseMapper.listLocalDate();
+        String lastMonthStr = LocalDate.now().minusMonths(1)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        boolean hasLastMonth = list.stream().anyMatch(dto -> lastMonthStr.equals(dto.getReportPeriodStr()));
+        if (!hasLastMonth) {
+            LocalDate lastMonthDate = LocalDate.now().minusMonths(1).withDayOfMonth(1);
+            LocalDate twoMonthsAgoDate = LocalDate.now().minusMonths(2).withDayOfMonth(1);
+            List<ReportPeriodMonthEntity> twoMonthsAgoList = this.lambdaQuery()
+                    .eq(ReportPeriodMonthEntity::getMonth, twoMonthsAgoDate)
+                    .list();
+            if (!CollectionUtils.isEmpty(twoMonthsAgoList)) {
+                List<ReportPeriodMonthEntity> insertList = twoMonthsAgoList.stream()
+                        .filter(e -> CharSequenceUtil.isNotBlank(e.getOrgId()))
+                        .map(ReportPeriodMonthEntity::getOrgId)
+                        .distinct()
+                        .map(orgId -> {
+                            ReportPeriodMonthEntity orgEntity = twoMonthsAgoList.stream()
+                                    .filter(e -> orgId.equals(e.getOrgId()))
+                                    .findFirst().orElse(null);
+                            ReportPeriodMonthEntity newEntity = new ReportPeriodMonthEntity();
+                            newEntity.setOrgId(orgId);
+                            newEntity.setOrgName(orgEntity != null ? orgEntity.getOrgName() : null);
+                            newEntity.setMonth(lastMonthDate);
+                            return newEntity;
+                        }).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(insertList)) {
+                    this.saveBatch(insertList);
+                    list = baseMapper.listLocalDate();
+                }
+            }
+        }
+        return list;
     }
 
 
