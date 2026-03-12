@@ -951,7 +951,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     entity.setPrice(poReturnDetailEntity.getReturnPrice());
                     entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),entity.getQty()));
                     if (Objects.nonNull(supplierEntity)) {
-                        entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),100) : BigDecimal.ZERO);
+                        entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                     }
                 } else {
                     entity.setCurrency(viewDTO.getCurrency());
@@ -962,7 +962,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 }
             } else {
                 if (Objects.nonNull(supplierEntity)) {
-                    entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),100) : BigDecimal.ZERO);
+                    entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                 }
             }
 
