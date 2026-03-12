@@ -716,7 +716,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     .setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol())
                     .setWeightUnit(UnitEnum.WeightUnitEnum.KG.code)
                     .setPlatformSkuNo(deliveryDetailEntity.getPlatformSkuNo())
-                    .setDeliveryQty(Objects.nonNull(deliveryDetailEntity.getDeliveryQty()) ? deliveryDetailEntity.getDeliveryQty() : MathUtil.ZERO)
+//                    .setDeliveryQty(Objects.nonNull(deliveryDetailEntity.getDeliveryQty()) ? deliveryDetailEntity.getDeliveryQty() : MathUtil.ZERO)
+                    .setDeliveryQty(weightAllocationEntityList1.stream()
+                            .map(e -> Objects.nonNull(e.getDeliveryQty()) ? e.getDeliveryQty() : MathUtil.ZERO)
+                            .reduce(MathUtil.ZERO, Integer::sum))
                     .setLastDetailEntityList(lastDetailEntityList);
 
             InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity = initFirstMileAllocationDetailEntityList.stream()
