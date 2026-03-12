@@ -538,10 +538,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("customerCode", customerInfoEntity.getCode());
             resultMap.put("customerName", customerInfoEntity.getName());
             String platformType = customerInfoEntity.getPlatformType();
-            String partitionId = soInfoById.getPartitionId();
-            if(StringUtils.isBlank(partitionId)){
-                partitionId = customerInfoEntity.getPartitionId();
-            }
             PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
             String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
             //平台类型
@@ -556,25 +552,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             	}
             }
 
-            String deptId = customerInfoEntity.getSalesDeptId();
-            if(StringUtils.isNotBlank(platformType) && StringUtils.isNotBlank(partitionId)) {
-                List<CfgDeptRelationEntity> cfgDeptRelationEntityList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDictPlatform, platformType)
-                        .eq(CfgDeptRelationEntity::getPartitionId, partitionId)
-                        .eq(CfgDeptRelationEntity::getDisabled,false)
-                        .list();
-                if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(cfgDeptRelationEntityList)) {
-                    deptId = cfgDeptRelationEntityList.get(0).getDeptId();
-                }
-            }
-            if(StringUtils.isNotBlank(deptId)){
-                DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdeeDTO = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-                findDeptKingdeeDTO.setDeptId(deptId);
-                findDeptKingdeeDTO.setOrgId(soInfoById.getSalesOrgId());
-                KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeFeign.getDeptKingdee(findDeptKingdeeDTO);
-                if(Objects.nonNull(kingdeeDepartmentEntity)){
-                    resultMap.put("salesDeptCode",kingdeeDepartmentEntity.getKingdeeDeptCode());
-                }
-            }
         }
 
         //销售员
@@ -593,7 +570,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
-//                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
         //销售员

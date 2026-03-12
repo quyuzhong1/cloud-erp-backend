@@ -181,11 +181,11 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Override
     public SysDepartmentUserNumberDTO getDeptByUserIdWithDisabledFilter(String userId) {
-        SysDepartmentUserNumberDTO deptByUserId = baseMapper.getDeptByUserIdWithDisabledFilter(userId);
-        if (ObjectUtils.isEmpty(deptByUserId)) {
+        List<SysDepartmentUserNumberDTO> deptByUserId = baseMapper.getDeptByUserIdWithDisabledFilter(userId);
+        if (CollectionUtils.isEmpty(deptByUserId)) {
             return new SysDepartmentUserNumberDTO();
         }
-        return deptByUserId;
+        return deptByUserId.get(0);
     }
 
     @Override
@@ -283,6 +283,11 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             return;
         }
         lambdaUpdate().in(SysDepartmentUserEntity::getUserId, uids).remove();
+    }
+
+    @Override
+    public List<SysDepartmentUserNumberDTO> listDeptByUserIdWithDisabledFilter(String userId) {
+        return baseMapper.getDeptByUserIdWithDisabledFilter(userId);
     }
 
     private void deleteUidDepartmentRef(String uid) {

@@ -118,4 +118,6 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return  void
      */
     void deleteByUserIds(List<String> uids);
+
+    List<SysDepartmentUserNumberDTO> listDeptByUserIdWithDisabledFilter(String userId);
 }
