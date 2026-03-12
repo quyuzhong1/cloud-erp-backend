@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @LogSystemModule("差异策略配置基础信息")
-@RequestMapping("/a")
+@RequestMapping("/cfgDiffStrategy")
 public class CfgDiffStrategyController extends BaseController {
 
     @Resource

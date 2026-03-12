@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -334,6 +335,7 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
 		return result;
 	}
 
+	@DS("postgres")
 	@Override
 	public List<CfgDiffStrategyDTO.ListByBillTypeDTO> listByBillType(String billType) {
 		if(StringUtils.isBlank(billType)){
