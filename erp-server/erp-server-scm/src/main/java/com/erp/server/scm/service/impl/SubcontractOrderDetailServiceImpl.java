@@ -26,6 +26,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SubcontractOrderTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderDetailMapper;
@@ -730,7 +731,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 detailEntity.setSupplierName(supplierName);
             }
-            handleSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
+            handleRepairSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
             //子集SKU信息
             List<SubcontractOrderDetailEntity> childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
             boolean hasChildError = false;
@@ -777,7 +778,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     childEntity.setSupplierName(supplierName);
                 }
-                handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getPurchaseOrgId(), priceList);
+                handleRepairSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getPurchaseOrgId(), priceList);
             }
 
             //如果子件有错误，跳过本条父级SKU
@@ -903,6 +904,86 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
         }
 
+    }
+
+    private void handleRepairSupplierTaxPrice(SubcontractOrderDetailEntity entity, Boolean isChild, String purchaseOrgId, List<PurchasePriceDTO.PriceDTO> priceList) {
+
+        //赠品无需报价,默认人民币
+        if (ObjectUtils.isNotEmpty(entity.getIsGift()) && entity.getIsGift()) {
+            entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+            entity.setPrice(BigDecimal.ZERO);
+            entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
+            return;
+        }
+
+        if (StringUtils.isNotBlank(entity.getSourceDetailId())) {
+            if (isChild) {
+                PurchasePriceDTO.PriceDTO viewDTO = priceList.stream().filter(obj ->
+                        obj.getSkuId().equals(entity.getSkuId())
+                                && obj.getSupplierId().equals(entity.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
+                        .findFirst().orElse(null);
+
+                if (Objects.isNull(viewDTO)){
+                    return;
+                }
+
+                List<PoReturnDetailEntity> poReturnDetails = wmsTaskFeign.listPoReturnDetailByIdList(Collections.singletonList(entity.getSourceDetailId()));
+                PoReturnDetailEntity poReturnDetailEntity = poReturnDetails.get(0);
+
+                if (poReturnDetailEntity.getReturnPrice().compareTo(BigDecimal.ZERO) > 0 && Objects.equals(poReturnDetailEntity.getSkuId(),entity.getSkuId())) {
+                    SupplierEntity supplier = supplierService.getById(poReturnDetailEntity);
+                    entity.setCurrency(poReturnDetailEntity.getCurrency());
+                    entity.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
+                    entity.setPrice(poReturnDetailEntity.getReturnPrice());
+                    entity.setTaxRate(supplier.getTaxRate());
+                    entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),entity.getRepairQty()));
+                } else {
+                    entity.setCurrency(viewDTO.getCurrency());
+                    entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                    entity.setPrice(viewDTO.getTaxPrice());
+                    entity.setTaxRate(viewDTO.getTaxRate());
+                    entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
+                }
+            }
+
+        } else {
+            //子件SKU默认取供应商报价
+            if (isChild) {
+                PurchasePriceDTO.PriceDTO viewDTO = priceList.stream().filter(obj ->
+                        obj.getSkuId().equals(entity.getSkuId())
+                                && obj.getSupplierId().equals(entity.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
+                        .findFirst().orElse(null);
+                if (Objects.isNull(viewDTO)){
+                    return;
+                }
+                entity.setCurrency(viewDTO.getCurrency());
+                entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                entity.setPrice(viewDTO.getTaxPrice());
+                entity.setTaxRate(viewDTO.getTaxRate());
+                entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
+            }else {
+                //供应商报价信息
+                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(entity.getQty(),entity.getSkuId(),entity.getSkuNo(),entity.getSupplierId(),purchaseOrgId);
+                Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
+                String error = pair.getKey();
+                //存在价目表
+                if (StrUtil.isBlank(error) && CollectionUtils.isNotEmpty(pair.getValue())) {
+                    PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = pair.getValue().get(0);
+                    entity.setCurrency(viewDTO.getCurrency());
+                    entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                    entity.setTaxRate(viewDTO.getTaxRate());
+                    entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
+                    return;
+                }
+                entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+                entity.setTaxRate(BigDecimal.ZERO);
+                entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
+            }
+        }
     }
 
 }
