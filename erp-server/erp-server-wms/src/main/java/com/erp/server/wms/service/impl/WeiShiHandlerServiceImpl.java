@@ -144,10 +144,6 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(resp.getData());
     }
 
-    @Override
-    protected ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        return failure("ERP功能暂不支持");
-    }
 
     @Override
     protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq) {

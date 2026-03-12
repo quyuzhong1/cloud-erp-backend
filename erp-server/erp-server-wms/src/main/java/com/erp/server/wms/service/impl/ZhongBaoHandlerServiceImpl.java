@@ -115,16 +115,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
         // 创建入库单
         BaseResponse<OverseasInboundApproveResponse> responseBaseResponse = zhongbaoService.overseasInboundApprove(overseasInboundCreateRequest);
-        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage() + ":" + responseBaseResponse.getErrors().stream().collect(Collectors.joining(", ")));
+        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage() + ":" + String.join(", ", responseBaseResponse.getErrors()));
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-        // 编辑入库单
-        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
-
-        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
+        return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
+//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+//        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
+//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
 
     @Override
@@ -135,23 +134,6 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .build();
         BaseResponse<OverseasInboundCancelResponse> responseBaseResponse = zhongbaoService.overseasInboundCancel(overseasInboundCancelRequest);
         return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getSuccessList().get(0).getOrderNo()) : failure(responseBaseResponse.getData().getFailList().get(0).getMessage());
-    }
-
-    /***
-     * B2C发货单下推海外仓
-     * @param createInboundReq
-     * @return
-     */
-    @Override
-    public ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        createInboundReq.setReceivingCode(null);
-        // 众包推送需要默认ERP的头程发货单号-HH+MM+SS
-        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
-        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-        // 创建入库单
-        BaseResponse<OverseasInboundApproveResponse> responseBaseResponse = zhongbaoService.overseasInboundApprove(overseasInboundCreateRequest);
-        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
 
     @Override
