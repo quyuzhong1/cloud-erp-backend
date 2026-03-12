@@ -336,7 +336,7 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
 
 	@Override
 	public List<CfgDiffStrategyDTO.ListByBillTypeDTO> listByBillType(String billType) {
-		if(StringUtils.isNotBlank(billType)){
+		if(StringUtils.isBlank(billType)){
 			return new ArrayList<>();
 		}
 		return baseMapper.listByBillType(billType);

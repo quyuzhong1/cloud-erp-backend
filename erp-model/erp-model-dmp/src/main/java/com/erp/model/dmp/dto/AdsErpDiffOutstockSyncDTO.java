@@ -1144,6 +1144,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "id不能为空")
         private String id;
         /**
          * 平台出库单号
@@ -1166,6 +1167,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
          * detailId
          */
+        @NotBlank(message = "SKU不能为空")
         private String detailId;
 
 

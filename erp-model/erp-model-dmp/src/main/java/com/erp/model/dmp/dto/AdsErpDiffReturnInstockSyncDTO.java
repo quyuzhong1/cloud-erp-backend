@@ -1178,6 +1178,7 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "id不能为空")
         private String id;
         /**
          * 平台入库单号
@@ -1200,6 +1201,7 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
         /**
          * detailId
          */
+        @NotBlank(message = "SKU不能为空")
         private String detailId;
 
 

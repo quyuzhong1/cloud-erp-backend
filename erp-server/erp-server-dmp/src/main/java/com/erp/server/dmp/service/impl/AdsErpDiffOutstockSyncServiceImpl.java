@@ -6,13 +6,14 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.entity.CfgDiffStrategyDetailEntity;
 import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
-import com.erp.server.dmp.service.CfgDiffStrategyService;
-import com.erp.server.dmp.service.DmpRestCloudService;
+import com.erp.server.dmp.service.*;
 import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -40,8 +41,6 @@ import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
-import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
-import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
 
 import cn.hutool.core.collection.CollUtil;
@@ -70,6 +69,8 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
     private DmpRestCloudService dmpRestCloudService;
     @Resource
     private CfgDiffStrategyService cfgDiffStrategyService;
+    @Resource
+    private CfgDiffStrategyDetailService cfgDiffStrategyDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -393,7 +394,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         //平台-单据状态/ERP-ERP单据状态
         String platformBillStatusName = entity.getPlatformBillStatusName();
         String billStatusName = detailEntity.getBillStatusName();
-        if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已发货") && Objects.equals(billStatusName,"已审核")){
+        if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已出库") && Objects.equals(billStatusName,"已审核")){
             isStatusSame =true;
         }else {
             sb.append("单据状态不匹配;");
@@ -447,13 +448,13 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         entity.setErpWarehouseName(detailEntity.getErpWarehouseName());
         entity.setBillDate(detailEntity.getBillDate());
         //更新平台记录
-        updateById(entity);
+        boolean save = updateById(entity);
         //删除对应的erp记录
-        detailEntity.setIsDeleted(true);
-        boolean save = updateById(detailEntity);
+        lambdaUpdate().set(AdsErpDiffOutstockSyncEntity::getIsDeleted, true).eq(AdsErpDiffOutstockSyncEntity::getId, detailEntity.getId()).update();
 
         if(save){
             if(!Objects.equals(diffTag,"same")){
+                DynamicDataSourceContextHolder.poll();
                 List<CfgDiffStrategyDTO.ListByBillTypeDTO> cfgDiffStrategyList = cfgDiffStrategyService.listByBillType("outstock");
                 cfgDiffStrategyList = cfgDiffStrategyList.stream().filter(e -> Objects.equals(e.getDiffTag(),"diff")).collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(cfgDiffStrategyList)){

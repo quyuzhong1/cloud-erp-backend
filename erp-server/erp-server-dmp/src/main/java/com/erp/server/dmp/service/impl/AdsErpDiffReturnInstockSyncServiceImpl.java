@@ -12,6 +12,8 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.entity.CfgDiffStrategyDetailEntity;
+import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.server.dmp.service.CfgDiffStrategyService;
 import com.erp.server.dmp.service.DmpRestCloudService;
@@ -307,13 +309,13 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 
     @Override
     public Boolean exportSourcePlatform(PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_PLATFORM.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("朔源查询-平台退货单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_PLATFORM.getCode(), dto);
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean exportSourceSelf(PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("朔源查询-ERP出库单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_SELF.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("朔源查询-ERP退货单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_SELF.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -398,7 +400,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         //平台-单据状态/ERP-ERP单据状态
         String platformBillStatusName = entity.getPlatformBillStatusName();
         String billStatusName = detailEntity.getBillStatusName();
-        if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已发货") && Objects.equals(billStatusName,"已审核")){
+        if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已完成") && Objects.equals(billStatusName,"已审核")){
             isStatusSame =true;
         }else {
             sb.append("单据状态不匹配;");
@@ -450,10 +452,9 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         entity.setErpWarehouseName(detailEntity.getErpWarehouseName());
         entity.setBillDate(detailEntity.getBillDate());
         //更新平台记录
-        updateById(entity);
+        boolean save = updateById(entity);
         //删除对应的erp记录
-        detailEntity.setIsDeleted(true);
-        boolean save = updateById(detailEntity);
+        lambdaUpdate().set(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, true).eq(AdsErpDiffReturnInstockSyncEntity::getId, detailEntity.getId()).update();
         if(save){
             if(!Objects.equals(diffTag,"same")){
                 List<CfgDiffStrategyDTO.ListByBillTypeDTO> cfgDiffStrategyList = cfgDiffStrategyService.listByBillType("instock");

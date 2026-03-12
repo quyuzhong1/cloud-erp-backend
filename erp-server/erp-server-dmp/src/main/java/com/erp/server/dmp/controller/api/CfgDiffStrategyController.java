@@ -5,11 +5,9 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.entity.CfgDiffStrategyDetailEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -43,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @LogSystemModule("差异策略配置基础信息")
-@RequestMapping("/cfgDiffStrategy")
+@RequestMapping("/a")
 public class CfgDiffStrategyController extends BaseController {
 
     @Resource
