@@ -1,7 +1,9 @@
 package com.sdk.wms.zhongbao.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -14,10 +16,14 @@ import java.util.List;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class WarehouseResponse extends PageResponse {
     private List<Warehouse> list;
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Warehouse {
         //仓库代码
         private String warehouseCode;
@@ -29,6 +35,8 @@ public class WarehouseResponse extends PageResponse {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Country {
         //名称
         private String name;

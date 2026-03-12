@@ -1,6 +1,8 @@
 package com.sdk.wms.zhongbao.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -12,10 +14,14 @@ import java.util.List;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class OverseasInboundReceiveResponse extends PageResponse{
     //数据列表
     private List<OverseasInboundReceive> list;
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class OverseasInboundReceive {
         //批次号
         private String batchNo;
@@ -63,11 +69,15 @@ public class OverseasInboundReceiveResponse extends PageResponse{
         private Product openProduct;
     }
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Warehouse {
         //仓库代码
         private String warehouseCode;
     }
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Product {
         //产品SKU
         private String productSku;

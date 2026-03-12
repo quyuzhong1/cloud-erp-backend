@@ -104,6 +104,10 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
     }
     @Override
+    protected ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+    @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
         GoodCangCalculateDeliveryFeeReq goodCangCalculateDeliveryFeeReq = ThirdWarehouseConverter.INSTANCE.reqToGucangCalculateFeeReq(calculateFeeReq);
         GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(goodCangCalculateDeliveryFeeReq);

@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.Map;
 
@@ -102,12 +103,13 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
     /**
      * 取消
      *
-     * @param id ID
+     * @param id     ID
+     * @param remark
      * @return
      * @author Jim
      * @date: 2023-11-27
      */
-    BatchResultDTO cancel(String id);
+    BatchResultDTO cancel(String id, String remark);
 
     /**
      * 删除
@@ -178,17 +180,6 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
                                                 List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
                                                 String verityCode);
 
-    /**
-     * 推动海外入库单到第三方
-     *
-     * @Author Jim
-     * @Date 2023/12/6
-     **/
-    ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(
-            OverseasProviderEntity providerEntity,
-            OverseasWarehouseInboundEntity mainEntity,
-            List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
-            String verityCode);
 
     ApiResult handlePlatformMessage(PlatformInboundDTO dto);
 

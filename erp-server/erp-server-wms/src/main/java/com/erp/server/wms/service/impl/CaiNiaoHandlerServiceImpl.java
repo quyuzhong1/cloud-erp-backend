@@ -143,7 +143,10 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             throw new ServiceException("取消菜鸟仓入库单失败：" + e.getMessage());
         }
     }
-
+    @Override
+    protected ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        return failure("ERP功能暂不支持");
+    }
     @Override
     protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq) {
         return null;

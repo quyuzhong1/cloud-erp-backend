@@ -1,7 +1,9 @@
 package com.sdk.wms.zhongbao.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -14,10 +16,14 @@ import java.util.List;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ProductResponse extends PageResponse {
     private List<Product> list;
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Product {
         //产品SKU
         private String productSku;
@@ -80,6 +86,8 @@ public class ProductResponse extends PageResponse {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Category {
         //分类名称
         private String name;
@@ -87,6 +95,8 @@ public class ProductResponse extends PageResponse {
         private String nameEn;
     }
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Battery {
         //电池类型:1=>干电池,2=>纽扣电池,3=>镍氢电池,4=>铅酸蓄电池,5=>锂金属电池,6=>锂离子电池(组)
         private Integer batteryType;
@@ -122,6 +132,8 @@ public class ProductResponse extends PageResponse {
         private String ulNumber;
     }
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class PlatformSku {
         //平台类型:1=>亚马逊,2=>速卖通,3=>wish,4=>ebay
         private Integer platformType;
@@ -133,6 +145,8 @@ public class ProductResponse extends PageResponse {
         private String platformSkuBarcode;
     }
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Attachment {
         //附件类型
         private String attachmentType;

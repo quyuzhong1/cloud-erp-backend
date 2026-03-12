@@ -1,6 +1,8 @@
 package com.sdk.wms.zhongbao.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author zdy
@@ -10,6 +12,8 @@ import lombok.Data;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PageResponse {
     private String pageNum;
     private String pageSize;

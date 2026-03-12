@@ -1,8 +1,10 @@
 package com.sdk.wms.zhongbao.dto.response;
 
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class OverseasInboundCancelResponse implements Serializable {
     //总数量
     private Integer totalQty;
@@ -29,6 +33,8 @@ public class OverseasInboundCancelResponse implements Serializable {
     private List<Order> failList;
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Order {
         //标记
         private String orderNo;
