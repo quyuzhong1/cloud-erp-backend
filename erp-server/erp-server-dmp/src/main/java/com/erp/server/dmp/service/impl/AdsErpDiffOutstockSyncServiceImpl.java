@@ -454,7 +454,6 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 
         if(save){
             if(!Objects.equals(diffTag,"same")){
-                DynamicDataSourceContextHolder.poll();
                 List<CfgDiffStrategyDTO.ListByBillTypeDTO> cfgDiffStrategyList = cfgDiffStrategyService.listByBillType("outstock");
                 cfgDiffStrategyList = cfgDiffStrategyList.stream().filter(e -> Objects.equals(e.getDiffTag(),"diff")).collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(cfgDiffStrategyList)){
