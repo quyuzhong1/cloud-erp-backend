@@ -427,8 +427,6 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
             suggestType ="请核实单据";
         }
 
-
-
         //获取diffQty的绝对值
         entity.setDiffQty(Math.abs(diffQty));
         entity.setDiffTag(diffTag);

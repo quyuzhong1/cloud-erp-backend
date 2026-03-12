@@ -9,8 +9,11 @@ import javax.servlet.http.HttpServletResponse;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
+import com.erp.server.dmp.service.CfgDiffStrategyService;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -66,6 +69,8 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpRestCloudService dmpRestCloudService;
+    @Resource
+    private CfgDiffStrategyService cfgDiffStrategyService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -340,7 +345,6 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUpdateReturnInstockRelation(AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO dto) {
         AdsErpDiffReturnInstockSyncEntity entity = lambdaQuery().eq(AdsErpDiffReturnInstockSyncEntity::getId, dto.getId())
                 .eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus,"finish")
@@ -358,61 +362,75 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         if (Objects.isNull(detailEntity)) {
             throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
         }
+        Integer diffQty = 0;
+        String diffTag ="same";
+        String diffTagName ="完全匹配";
+        String suggestType ="";
+        StringBuffer sb = new StringBuffer();
+
         Boolean isDateSame = false;
         Boolean isQtySame = false;
         Boolean isStatusSame = false;
+        Boolean isWarehouseSame = false;
 
         Date billDate = entity.getPlatformBillDate();
         Date detailBillDate = detailEntity.getBillDate();
         if (Objects.nonNull(billDate) && Objects.nonNull(detailBillDate) && billDate.getYear() == detailBillDate.getYear() && billDate.getMonth() == detailBillDate.getMonth()) {
             isDateSame = true;
+        }else {
+            sb.append("单据日期不匹配;");
         }
+
         //平台-出库数量 、ERP-实发数量相等
         Integer platformQty = entity.getPlatformQty();
         Integer qty = detailEntity.getQty();
-        Integer diffQty = 0;
-        String diffTag ="same";
-        String diffTagName ="完全匹配";
-        String suggestType ="";
-        if(Objects.nonNull(platformQty) && Objects.nonNull(qty)){
+        if(Objects.nonNull(platformQty) && Objects.nonNull(qty) ){
             if(Objects.equals(platformQty,qty)){
                 isQtySame = true;
-            }else if(platformQty > qty ){
+            }else {
                 diffQty = platformQty - qty;
-                suggestType ="请核实单据";
-            }else if(platformQty < qty ){
-                diffQty = platformQty - qty;
-                suggestType ="请核实单据";
+                sb.append("数量不匹配;");
             }
+        }else {
+            sb.append("数量不匹配;");
         }
+
         //平台-单据状态/ERP-ERP单据状态
         String platformBillStatusName = entity.getPlatformBillStatusName();
         String billStatusName = detailEntity.getBillStatusName();
         if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已发货") && Objects.equals(billStatusName,"已审核")){
             isStatusSame =true;
-        }
-
-        if(isDateSame && isQtySame && isStatusSame){
-
         }else {
-//            StringBuffer sb = new StringBuffer();
-//            if(!isDateSame){
-//                sb.append("单据日期;");
-//            }
-//            if(!isQtySame){
-//                sb.append("单据数量;");
-//            }
-//            if(!isStatusSame){
-//                sb.append("单据状态;");
-//            }
-            if(diffQty > 0){
-                diffTag ="platform";
-                diffTagName ="平台单据多";
-            }else {
-                diffTag ="erp";
-                diffTagName ="ERP单据多";
-            }
+            sb.append("单据状态不匹配;");
         }
+
+        String platformWarehouseName = entity.getPlatformWarehouseName();
+        String erpWarehouseName = detailEntity.getErpWarehouseName();
+        if(Objects.equals(platformWarehouseName,erpWarehouseName)){
+            isWarehouseSame = true;
+        }else {
+            sb.append("仓库不匹配;");
+        }
+
+        if(Objects.nonNull(platformQty) && Objects.nonNull(qty) ){
+            if(Objects.equals(platformQty,qty)){
+                isQtySame = true;
+            }else {
+                diffQty = platformQty - qty;
+                sb.append("数量不匹配;");
+            }
+        }else {
+            sb.append("数量不匹配;");
+        }
+
+
+        if(!isDateSame || !isStatusSame || !isQtySame || !isWarehouseSame){
+            diffTag ="diff";
+            diffTagName ="字段差异";
+            suggestType ="请核实单据";
+        }
+
+
         //获取diffQty的绝对值
         entity.setDiffQty(Math.abs(diffQty)+"");
         entity.setDiffTag(diffTag);
@@ -435,7 +453,21 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         updateById(entity);
         //删除对应的erp记录
         detailEntity.setIsDeleted(true);
-        updateById(detailEntity);
+        boolean save = updateById(detailEntity);
+        if(save){
+            if(!Objects.equals(diffTag,"same")){
+                List<CfgDiffStrategyDTO.ListByBillTypeDTO> cfgDiffStrategyList = cfgDiffStrategyService.listByBillType("instock");
+                cfgDiffStrategyList = cfgDiffStrategyList.stream().filter(e -> Objects.equals(e.getDiffTag(),"diff")).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(cfgDiffStrategyList)){
+                    CfgDiffStrategyDTO.ListByBillTypeDTO listByBillTypeDTO = cfgDiffStrategyList.get(0);
+                    AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO updateSuggestTypeParamsDTO = new AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO();
+                    updateSuggestTypeParamsDTO.setSuggestType(listByBillTypeDTO.getSuggestType());
+                    updateSuggestTypeParamsDTO.setConditionSql(listByBillTypeDTO.getConditionSql());
+                    updateSuggestTypeParamsDTO.setId(dto.getId());
+                    baseMapper.updateSuggestType(updateSuggestTypeParamsDTO);
+                }
+            }
+        }
         return BatchResultDTO.success(entity.getId(), entity.getPlatformReturnInstockCode(), OperationTypeEnum.UPDATE);
     }
 
