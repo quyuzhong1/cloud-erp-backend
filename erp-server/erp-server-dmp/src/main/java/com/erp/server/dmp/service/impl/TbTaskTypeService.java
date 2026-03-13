@@ -15,6 +15,7 @@ import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -180,9 +181,11 @@ public class TbTaskTypeService {
      */
     public void addNewDmpTask(OverseasProviderEntity overseasProviderEntity) {
         //根据授权的系统编码查询新中台系统表
-        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(overseasProviderEntity.getCode());
+        String systemCode = resolveThirdWarehouseSystemCode(overseasProviderEntity.getCode());
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(systemCode);
         if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
-            log.error("三方仓授权编码【" + overseasProviderEntity.getCode() + "】 在新中台系统表中不存在！");
+            log.error("三方仓授权编码【{}】映射系统编码【{}】在新中台系统表中不存在！",
+                    overseasProviderEntity.getCode(), systemCode);
             return;
         }
 
@@ -190,10 +193,7 @@ public class TbTaskTypeService {
         String systemId = dmpBasicSystemEntity.getId();
 
         //根据系统id查询所有主任务
-        List<DmpCfgInputEntity> cfgInputEntityList = dmpCfgInputService.lambdaQuery()
-                .eq(DmpCfgInputEntity::getSystemId, systemId)
-                .eq(DmpCfgInputEntity::getDisabled, false)
-                .list();
+        List<DmpCfgInputEntity> cfgInputEntityList = listThirdWarehouseCfgInputs(systemId, overseasProviderEntity.getCode());
         List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(cfgInputIds)) {
             return;
@@ -402,9 +402,11 @@ public class TbTaskTypeService {
 
     public void removeThirdWarehouseTask(OverseasProviderEntity overseasProviderEntity) {
         //根据授权的系统编码查询新中台系统表
-        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(overseasProviderEntity.getCode());
+        String systemCode = resolveThirdWarehouseSystemCode(overseasProviderEntity.getCode());
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(systemCode);
         if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
-            log.error("三方仓授权编码【" + overseasProviderEntity.getCode() + "】 在新中台系统表中不存在！");
+            log.error("三方仓授权编码【{}】映射系统编码【{}】在新中台系统表中不存在！",
+                    overseasProviderEntity.getCode(), systemCode);
             return;
         }
 
@@ -412,10 +414,7 @@ public class TbTaskTypeService {
         String systemId = dmpBasicSystemEntity.getId();
 
         //根据系统id查询所有主任务
-        List<DmpCfgInputEntity> cfgInputEntityList = dmpCfgInputService.lambdaQuery()
-                .eq(DmpCfgInputEntity::getSystemId, systemId)
-                .eq(DmpCfgInputEntity::getDisabled, false)
-                .list();
+        List<DmpCfgInputEntity> cfgInputEntityList = listThirdWarehouseCfgInputs(systemId, overseasProviderEntity.getCode());
         List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(cfgInputIds)) {
             return;
@@ -449,5 +448,26 @@ public class TbTaskTypeService {
         if(CollectionUtils.isNotEmpty(cfgOutputDetailEntities)){
             dmpCfgOutputDetailService.removeByIds(cfgOutputDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         }
+    }
+
+    private String resolveThirdWarehouseSystemCode(String providerCode) {
+        if (OmsPlatformEnum.FBT.getCode().equals(providerCode)) {
+            return DmpBasicSystemCodeEnum.TIKTOK.getCode();
+        }
+        return providerCode;
+    }
+
+    private List<DmpCfgInputEntity> listThirdWarehouseCfgInputs(String systemId, String providerCode) {
+        if (OmsPlatformEnum.FBT.getCode().equals(providerCode)) {
+            return dmpCfgInputService.lambdaQuery()
+                    .eq(DmpCfgInputEntity::getSystemId, systemId)
+                    .eq(DmpCfgInputEntity::getDisabled, false)
+                    .likeRight(DmpCfgInputEntity::getCode, "fbt")
+                    .list();
+        }
+        return dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, systemId)
+                .eq(DmpCfgInputEntity::getDisabled, false)
+                .list();
     }
 }
