@@ -237,6 +237,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     }
 
     private void forShopAuthor(ShopAuthorizeDTO dto, List<String> shopIds, Map<SettingEnum, String> configMap, CfgAppClientEntity cfgAppClient, AmazonTokenDTO tokenDTO) {
+        List<PlatformTaskDTO.DisabledDTO> disabledDTOS = new ArrayList<>();
         for (String shopId : shopIds) {
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (null == shopInfo) {
@@ -289,13 +290,17 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             redisUtil.set(tokenKey, redisShopInfoDTO, tokenDTO.getExpiresIn());
 
             // 授权后添加任务和添加报告计划
-            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+            PlatformTaskDTO.DisabledDTO taskDTO = new PlatformTaskDTO.DisabledDTO(
+                    shopInfo.getId(),
                     shopInfo.getName(),
                     shopInfo.getDictPlatform(),
                     false,
                     shopInfo.getDictCountryCode(),
-                    shopInfo.getPlatformShopCode()));
+                    shopInfo.getPlatformShopCode()
+            );
+            disabledDTOS.add(taskDTO);
         }
+        dmpTaskFeign.batchAddOrUpdateTasksAndSchedules(disabledDTOS);
     }
 
     /**
