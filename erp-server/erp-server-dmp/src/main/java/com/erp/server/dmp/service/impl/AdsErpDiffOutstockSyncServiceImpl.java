@@ -13,6 +13,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
 import com.erp.model.dmp.entity.CfgDiffStrategyDetailEntity;
 import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.dmp.service.*;
 import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -363,6 +364,9 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
         }
+        AdsErpDiffOutstockSyncEntity old = new AdsErpDiffOutstockSyncEntity();
+        BeanMapper.copy(entity, old);
+
         AdsErpDiffOutstockSyncEntity detailEntity = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getId, dto.getDetailId())
                 .eq(AdsErpDiffOutstockSyncEntity::getExecStatus,"finish")
                 .eq(AdsErpDiffOutstockSyncEntity::getDiffTag,"erp")
@@ -466,6 +470,11 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
                 }
             }
         }
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录出库同步差异日志数据，单号：【{}】", entity.getPlatformOutstockCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getPlatformOutstockCode(), "出库同步差异");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.DMP_ADS_ERP_DIFF_OUTSTOCK_SYNC.getCode(), entity.getId(), msg);
 
         return BatchResultDTO.success(entity.getId(), entity.getPlatformOutstockCode(), OperationTypeEnum.UPDATE);
     }
