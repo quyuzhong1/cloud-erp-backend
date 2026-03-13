@@ -651,6 +651,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
 
     public void handleZhongBaoResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response) {
+        XxlJobHelper.log("处理众包订单状态,id={},response={},", id, JSONUtil.toJsonStr(response));
         String deliveryTimeStr = response.getDeliveryTimeStr();
         LocalDateTime deliveryTime = null;
         if (StrUtil.isNotBlank(deliveryTimeStr)) {
