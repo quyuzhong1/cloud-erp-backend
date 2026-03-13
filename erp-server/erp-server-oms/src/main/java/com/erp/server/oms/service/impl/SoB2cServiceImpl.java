@@ -7382,7 +7382,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 亚马逊作废保留以前状态
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 oldEntity.setApproveStatus(oldApproveStatus);
-                dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
@@ -7390,7 +7389,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getDictPlatform()) &&
                     ("voided".equalsIgnoreCase(dto.getPlatformOrderStatus())) || ("partially_refunded".equalsIgnoreCase(dto.getPlatformOrderStatus()))) {
                 oldEntity.setApproveStatus(oldApproveStatus);
-                dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
@@ -7405,7 +7403,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if ("IN_CANCEL".equalsIgnoreCase(dto.getPlatformOrderStatus())
                         || ("CANCELLED".equalsIgnoreCase(dto.getPlatformOrderStatus()))) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setPayTime(oldEntity.getPayTime());
                     dto.setBillStatus(oldEntity.getBillStatus());
                     dto.setApproveStatusStr("");//取消和取消中不更新审核状态
@@ -7418,12 +7415,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         || "IN_FROZEN".equals(platformOrderStatus)
                         || "RISK_CONTROL".equals(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                 }
                 if ("FINISH".equals(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
@@ -7434,7 +7429,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 全托管作废保留以前状态
             if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 oldEntity.setApproveStatus(oldApproveStatus);
-                dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
@@ -7444,7 +7438,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         || "Refund".equals(platformOrderStatus)
                 ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
@@ -7468,7 +7461,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         || "COMPLETED".equalsIgnoreCase(platformOrderStatus)
                 ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     if (!tikTokPlatformWarehouseOrder) {
                         dto.setBillStatus(oldEntity.getBillStatus());
                     }
@@ -7478,7 +7470,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 if ("CANCELLED".equalsIgnoreCase(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     if (!tikTokPlatformWarehouseOrder) {
                         dto.setBillStatus(oldEntity.getBillStatus());
                     }
@@ -7526,6 +7517,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setInvalidStatus(true);
                 dto.setInvalidRemark(oldEntity.getInvalidRemark());
                 dto.setInvalidType(oldEntity.getInvalidType());
+            }
+            //如果旧数据是已付款，不更新付款状态
+            if(SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(oldEntity.getPayStatus())){
+                dto.setPayStatus(oldEntity.getPayStatus());
             }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
