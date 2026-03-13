@@ -186,6 +186,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return List<ShopInfoEntity>
      */
     List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql);
+
+    /**
+     * 根据平台集合查询店铺，并补充仓库权限标识
+     * @param platformList 平台集合
+     * @return 店铺列表
+     */
+    List<ShopInfoEntity> listByPlatformListAuth(List<String> platformList);
     /**
      * 查询亚马逊店铺信息
      * @Author Luo_WG
