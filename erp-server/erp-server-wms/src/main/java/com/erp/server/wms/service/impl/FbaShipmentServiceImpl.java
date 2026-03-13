@@ -1527,6 +1527,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (ShipmentSourceTypeEnum.AWD.getCode().equalsIgnoreCase(viewDTO.getFbaType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.AWD.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.AWD.getName());
+            } else if (ShipmentSourceTypeEnum.FBT.getCode().equalsIgnoreCase(viewDTO.getFbaType())) {
+                viewDTO.setType(RequisitionApplicationTypeEnum.FBT.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBT.getName());
             }else {
                 viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
@@ -2019,7 +2022,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(requisitionApplicationService.getById(dto.getRequisitionId())).orElseThrow(()->new ServiceException("要货申请为空"));
         String shopId = requisitionApplicationEntity.getChannelId();
         List<String> codeList = dto.getCodeList();
-        List<FbaShipmentEntity> fbaShipmentEntityList = this.lambdaQuery().eq(FbaShipmentEntity::getShopId,shopId).in(FbaShipmentEntity::getCode,codeList).list();
+        String sourceType = null;
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())) {
+            sourceType = ShipmentSourceTypeEnum.FBA.getCode();
+        } else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())) {
+            sourceType = ShipmentSourceTypeEnum.AWD.getCode();
+        } else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(requisitionApplicationEntity.getType())) {
+            sourceType = ShipmentSourceTypeEnum.FBT.getCode();
+        }
+        List<FbaShipmentEntity> fbaShipmentEntityList = this.lambdaQuery()
+                .eq(FbaShipmentEntity::getShopId,shopId)
+                .eq(CharSequenceUtil.isNotBlank(sourceType), FbaShipmentEntity::getSourceType, sourceType)
+                .in(FbaShipmentEntity::getCode,codeList)
+                .list();
         List<FbaShipmentDTO.SearchResultDTO> list = new ArrayList<>();
         for (String code : codeList) {
             FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntityList.stream().filter(v->v.getCode().equals(code)).findFirst().orElse(null);
