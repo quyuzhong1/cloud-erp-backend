@@ -48,11 +48,25 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
         ThirdWarehouseDTO.QueryMapParamDTO queryMapParamDTO = new ThirdWarehouseDTO.QueryMapParamDTO();
         queryMapParamDTO.setSysType(ThirdSysTypeEnum.WDT.getCode());
         queryMapParamDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
         queryMapParamDTO.setInventorySyncMode(InventorySyncModeEnum.INVENTORY.getCode());
+        String extendJson = dmpInputTaskEntity.getExtendJson();
+        //转JSON，查看是否有传仓库ID参数
+        if (CharSequenceUtil.isNotBlank(extendJson)) {
+            JSONObject extendJsonObject = JSON.parseObject(extendJson);
+            if (Objects.nonNull(extendJsonObject)) {
+                String warehouseIdsStr = extendJsonObject.getString("erpWarehouseIdList");
+                if (CharSequenceUtil.isNotBlank(warehouseIdsStr)) {
+                    List<String> warehouseIdList = JSON.parseArray(warehouseIdsStr, String.class);
+                    queryMapParamDTO.setSysIdList(warehouseIdList);
+                }
+            }
+        }
+
         //获取旺店通更新库存的仓库列表
         List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOList = thirdWarehouseService.listQueryMapping(queryMapParamDTO);
         if (CollectionUtils.isEmpty(queryMapDTOList)) {

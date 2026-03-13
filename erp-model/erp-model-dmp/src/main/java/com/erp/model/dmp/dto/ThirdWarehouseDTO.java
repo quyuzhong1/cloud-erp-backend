@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -418,5 +419,8 @@ public class ThirdWarehouseDTO implements Serializable {
          * inventory 库存同步 ，order 单据同步
          */
         private String inventorySyncMode;
+
+
+        private List<String> sysIdList;
     }
 }

@@ -3,6 +3,8 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.utils.Md5Util;
 import com.common.message.service.mq.MQProducerService;
@@ -49,6 +51,20 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
+
+        String extendJson = dmpInputTaskEntity.getExtendJson();
+        List<String> erpSkuIds = new ArrayList<>();
+        //转JSON，查看是否有传仓库ID参数
+        if (CharSequenceUtil.isNotBlank(extendJson)) {
+            JSONObject extendJsonObject = JSON.parseObject(extendJson);
+            if (Objects.nonNull(extendJsonObject)) {
+                String skuIdList = extendJsonObject.getString("skuIdList");
+                if (CharSequenceUtil.isNotBlank(skuIdList)) {
+                    erpSkuIds = JSON.parseArray(skuIdList, String.class);
+                }
+            }
+        }
+
         // 重置数据
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
@@ -70,6 +86,9 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
             inventoryChangeQueryDTO.setWarehouseId(erpWarehouseId);
             inventoryChangeQueryDTO.setStartTime(startTime);
             inventoryChangeQueryDTO.setEndTime(endTime);
+            if(CollUtil.isNotEmpty(erpSkuIds)) {
+                inventoryChangeQueryDTO.setSkuIds(erpSkuIds);
+            }
             List<InventoryQtyDTO.InventoryChangeDTO> inventoryChangeDTOS = inventoryFeign.listInventoryChangeByParam(inventoryChangeQueryDTO);
             //合并旺店通变更库存和erp变更库存成一个列表
             List<String> skuNoList = inventoryChangeDTOS.stream().map(InventoryQtyDTO.InventoryChangeDTO::getSkuNo).collect(Collectors.toList());

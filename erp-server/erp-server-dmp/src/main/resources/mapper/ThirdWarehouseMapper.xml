@@ -104,7 +104,12 @@
           <if test="params.inventorySyncMode!=null and params.inventorySyncMode!=''">
               AND tw.inventory_sync_mode = #{params.inventorySyncMode}
           </if>
-
+        <if test="params.sysIdList !=null and params.sysIdList.size>0">
+            AND tm.sys_id IN
+            <foreach collection="params.sysIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 
