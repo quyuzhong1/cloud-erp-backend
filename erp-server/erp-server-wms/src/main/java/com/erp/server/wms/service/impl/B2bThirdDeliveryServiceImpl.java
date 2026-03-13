@@ -42,10 +42,7 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
-import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
-import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -64,6 +61,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -106,6 +104,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
+    private OverseasProviderService overseasProviderService;
+    @Resource
     private SyncB2bThirdWarehouseService syncB2bThirdWarehouseService;
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
@@ -124,7 +124,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Lazy
     @Resource
     private B2bThirdDeliveryService service;
-
+    @Resource
+    private CfgThirdWarehouseOperationDescriptionService cfgThirdWarehouseOperationDescriptionService;
+    @Resource
+    private CfgThirdWarehouseOperationDescriptionValueService cfgThirdWarehouseOperationDescriptionValueService;
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
 
@@ -389,6 +392,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     item.setSaleQty(soDetailMap.getOrDefault(item.getSoDetailId(), 0));
                 });
             }
+            OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
+            if (Objects.nonNull(overseasProviderWarehouse)) {
+                OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
+                if (Objects.nonNull(overseasProvider)) {
+                    viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+                }
+            }
+
             return viewDTO;
         }
     }
@@ -852,6 +863,39 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             // 创建失败
             this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
         }
+    }
+
+    @Override
+    public List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO> listWarehouseOperationDescription(B2bThirdDeliveryDTO.ThirdWarehousePlatformDTO thirdWarehousePlatformDTO) {
+        List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO> resultList = new ArrayList<>();
+        List<CfgThirdWarehouseOperationDescriptionEntity> queryList = cfgThirdWarehouseOperationDescriptionService.lambdaQuery()
+                .eq(CfgThirdWarehouseOperationDescriptionEntity::getThirdWarehouseCode, thirdWarehousePlatformDTO.getThirdWarehouse())
+                .list();
+        List<String> idList = queryList.stream()
+                .filter(item -> Objects.equals(item.getInputType(), WarsehouseOperationDescriptionEnum.DROP_DOWN.getCode()))
+                .map(CfgThirdWarehouseOperationDescriptionEntity::getId)
+                .collect(Collectors.toList());
+        List<CfgThirdWarehouseOperationDescriptionValueEntity> valueList = new ArrayList<>();
+        if (!idList.isEmpty()) {
+            // 下拉框值
+            valueList = cfgThirdWarehouseOperationDescriptionValueService.lambdaQuery()
+                    .in(CfgThirdWarehouseOperationDescriptionValueEntity::getMainId, idList)
+                    .list();
+        }
+
+        for (CfgThirdWarehouseOperationDescriptionEntity entity : queryList) {
+            B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO resultDTO = new B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO();
+            BeanUtils.copyProperties(entity,resultDTO);
+            resultDTO.setThirdWarehouse(entity.getThirdWarehouseCode());
+            // 过滤出当前主表ID对应的下拉框值
+            List<CfgThirdWarehouseOperationDescriptionValueEntity> currentValues = valueList.stream()
+                    .filter(value -> Objects.equals(value.getMainId(), entity.getId()))
+                    .collect(Collectors.toList());
+            List<B2bThirdDeliveryDTO.InputValueDTO> inputValueDTOS = BeanMapperUtils.copyList(B2bThirdDeliveryDTO.InputValueDTO.class, currentValues);
+            resultDTO.setInputValueList(inputValueDTOS);
+            resultList.add(resultDTO);
+        }
+        return resultList;
     }
 
     private ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCancelFbaOutboundReq req, final int retryCount) {
