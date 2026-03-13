@@ -69,7 +69,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                                 e.getString("mapUrl").toLowerCase(),
                                 CharSequenceUtil.subAfter(e.getString("mapUrl").toLowerCase(), "/", true),
                                 e.getString("appId").toLowerCase(),
-                                parseAppCategory(e.getString("appId"))
+                                parseAppCategory(e.getString("appId")),
+                                e.getString("appName")
                         )).collect(Collectors.toList());
                 return new PagingVO<>(resultList,
                         responseJson.getInteger("total"),

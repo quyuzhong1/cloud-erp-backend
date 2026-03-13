@@ -22,6 +22,7 @@
        <result column="exec_timeout" property="execTimeout" />
        <result column="disabled" property="disabled" />
        <result column="extend_json" property="extendJson" />
+       <result column="next_level_type" property="nextLevelType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -116,6 +117,7 @@
             dcid.is_deleted AS isDeleted,
             dcid.main_id AS mainId,
             dcid.next_level_id AS nextLevelId,
+            dcid.next_level_type AS nextLevelType,
             dcid.last_time AS lastTime,
             dcid.next_time AS nextTime,
             dcid.interval_time AS intervalTime,

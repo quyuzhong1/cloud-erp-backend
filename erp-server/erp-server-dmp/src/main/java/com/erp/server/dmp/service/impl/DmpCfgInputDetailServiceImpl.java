@@ -24,10 +24,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
-import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -73,6 +70,8 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     private DmpCfgInputService dmpCfgInputService;
     @Resource
     private DmpInputCreateFactory dmpInputCreateFactory;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -303,6 +302,12 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         if (null != inputEntity){
             data.setName(inputEntity.getName());
         }
+        Map<String, DictBasicEntity> dmpInputNextLevelTypeMap = dictBasicService.getByType("dmpInputNextLevelType")
+                .stream()
+                .collect(Collectors.toMap(DictBasicEntity::getValue, Function.identity(), (v1, v2) -> v1));
+
+        DictBasicEntity dictBasicEntity = dmpInputNextLevelTypeMap.get(data.getNextLevelType());
+        data.setNextLevelTypeName(null != dictBasicEntity ? dictBasicEntity.getName() : "");
     }
 
     /**
@@ -318,6 +323,11 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
                 .list()
                 .stream()
                 .collect(Collectors.toMap(DmpBasicSystemEntity::getId, Function.identity(), (v1, v2) -> v1));
+
+        Map<String, DictBasicEntity> dmpInputNextLevelTypeMap = dictBasicService.getByType("dmpInputNextLevelType")
+                .stream()
+                .collect(Collectors.toMap(DictBasicEntity::getValue, Function.identity(), (v1, v2) -> v1));
+
         for (DmpCfgInputDetailDTO.ListDTO data : list) {
             DmpBasicSystemEntity systemEntity = systemMap.get(data.getSystemId());
             if (null != systemEntity) {
@@ -326,6 +336,9 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
             }
             data.setTaskTypeName(DmpInputTaskTaskTypeEnum.getName(data.getTaskType()));
             data.setDisabledDesc(data.getDisabled() ? "停用":"启用");
+
+            DictBasicEntity dictBasicEntity = dmpInputNextLevelTypeMap.get(data.getNextLevelType());
+            data.setNextLevelTypeName(null != dictBasicEntity ? dictBasicEntity.getName() : "");
         }
     }
 

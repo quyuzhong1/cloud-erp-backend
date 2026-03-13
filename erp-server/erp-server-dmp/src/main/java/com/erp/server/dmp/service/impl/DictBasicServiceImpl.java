@@ -2,9 +2,11 @@ package com.erp.server.dmp.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
@@ -82,5 +84,12 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<DictBasicEntity> getByType(String type) {
+        return lambdaQuery()
+                .eq(StringUtils.isNotBlank(type), DictBasicEntity::getType, type)
+                .list();
     }
 }

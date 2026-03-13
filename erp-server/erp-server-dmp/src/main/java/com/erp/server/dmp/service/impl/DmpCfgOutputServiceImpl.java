@@ -29,6 +29,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.mapper.DmpCfgOutputMapper;
 import com.erp.server.dmp.service.*;
+import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -273,6 +274,7 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
                     data.setFlowCode(flowData.getFlowCode());
                     data.setFullName(flowData.getFullName());
                     data.setAppId(flowData.getAppId());
+                    data.setAppName(flowData.getAppName());
                 }
             }
         }  else {
@@ -301,11 +303,34 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
                 .stream()
                 .collect(Collectors.toMap(DmpBasicSystemEntity::getId, DmpBasicSystemEntity::getName, (v1, v2) -> v1));
 
+        // 查询应用名称
+        Map<String, String> appNameMap = new HashMap<>();
+        List<String> execSystemList = list.stream().map(DmpCfgOutputDTO.ListDTO::getExecSystem).distinct().collect(Collectors.toList());
+        if (execSystemList.contains(DmpCfgInputExecSystemEnum.REST_CLOUD.getCode())) {
+            DmpRestCloudDTO.PagingParamDTO paramDTO = new DmpRestCloudDTO.PagingParamDTO();
+            paramDTO.setTaskCfgType("output");
+            PagingDTO<DmpRestCloudDTO.PagingParamDTO> dto = new PagingDTO<>();
+            dto.setCurrPage(1);
+            dto.setPageSize(500);
+            dto.setParams(paramDTO);
+            PagingVO<DmpRestCloudDTO.ListDTO> pagingVO = dmpRestCloudService.flowPaging(dto);
+            if (CollectionUtils.isNotEmpty(pagingVO.getList())) {
+                appNameMap = pagingVO.getList().stream().collect(Collectors.toMap(DmpRestCloudDTO.ListDTO::getAppId, DmpRestCloudDTO.ListDTO::getAppName, (v1, v2) -> v1));
+            }
+        }
+
+
         // 属性赋值
         for(DmpCfgOutputDTO.ListDTO data : list) {
             data.setTypeName(DmpCfgOutputTypeEnum.getName(data.getType()));
             data.setSystemName(systemMap.getOrDefault(data.getSystemId(), ""));
             data.setDisabledDesc(data.getDisabled() ? "停用":"启用");
+            // 提取/push_erp/push_flow_zhongbao_inventory_gen
+            if (StringUtils.isNotBlank(data.getExecUrl())) {
+                String restCloudAppId = StrUtil.subBefore(StrUtil.removePrefix(data.getExecUrl(), "/"), "/", false);
+                String appName = appNameMap.getOrDefault(restCloudAppId, "");
+                data.setAppName(appName);
+            }
         }
     }
 
@@ -347,4 +372,6 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
         IPage<DmpCfgOutputDTO.ListDmpCfgOutputDTO> pageData = this.baseMapper.searchPaging(query, pagingParamDTO.getParams());
         return new PagingVO<>(pageData);
     }
+
+
 }

@@ -36,4 +36,11 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return List<ViewDTO>
      */
     List<DictBasicDTO.ViewDTO> getByKey(String key);
+
+    /**
+     * 查询字典
+     * @param type 分类
+     * @return 字典信息
+     */
+    List<DictBasicEntity> getByType(String type);
 }

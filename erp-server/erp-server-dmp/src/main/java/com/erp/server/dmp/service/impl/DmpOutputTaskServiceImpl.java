@@ -9,6 +9,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.enums.*;
@@ -223,6 +224,8 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
         for(DmpOutputTaskDTO.ListDTO data : list) {
             data.setStatusName(DmpInputTaskStatusEnum.convertStateName(data.getStatus(), data.getErrorCount(), globalErrorValue));
             //  其他如需要显示名称的字段赋值
+            SourceTypeEnum sourceType = SourceTypeEnum.getByCode(data.getBillType());
+            data.setBillTypeName(null == sourceType ? "" : sourceType.getName());
         }
     }
 

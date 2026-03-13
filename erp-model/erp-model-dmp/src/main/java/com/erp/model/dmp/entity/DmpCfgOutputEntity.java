@@ -91,6 +91,12 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
      */
     @TableField("exec_url")
     private String execUrl;
+    /**
+     * 业务类型：SourceTypeEnum业务类型
+     */
+    @TableField("bill_type")
+    private String billType;
+
 
     public static final String SYSTEM_ID = "system_id";
 
