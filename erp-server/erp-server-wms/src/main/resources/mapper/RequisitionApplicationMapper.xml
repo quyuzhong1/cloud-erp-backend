@@ -260,6 +260,7 @@
         rad.approve_qty AS planQty,
         rad.picking_qty AS deliveryQty,
         ra.type,
+        ra.delivery_type as deliveryType,
         rad.platform_sku as platformSku,
         rad.platform_sku_name as platformSkuName,
         ra.status as status,
