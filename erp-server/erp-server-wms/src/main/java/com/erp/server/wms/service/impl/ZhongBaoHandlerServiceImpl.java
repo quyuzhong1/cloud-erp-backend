@@ -19,13 +19,10 @@ import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
-import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCancelRequest;
-import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCreateRequest;
+import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.BaseResponse;
 import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCancelResponse;
 import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCreateResponse;
-import com.sdk.wms.zhongbao.dto.request.OverseasInboundCancelRequest;
-import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
@@ -38,6 +35,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -262,7 +260,34 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
-        return failure("ERP功能暂不支持");
+        OverseasOutboundQueryRequest overseasOutboundQueryRequest = new OverseasOutboundQueryRequest();
+        List<ThirdWarehouseQueryFbaOutboundResponse> thirdWarehouseQueryFbaOutboundResponses = new ArrayList<>();
+        //一个半小时到现在的订单
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Calendar now = Calendar.getInstance();
+        String endUpdateTime = sdf.format(now.getTime());
+        Calendar oneAndHalfHourAgo = Calendar.getInstance();
+        oneAndHalfHourAgo.add(Calendar.MINUTE, -90);
+        String startUpdateTime = sdf.format(oneAndHalfHourAgo.getTime());
+        overseasOutboundQueryRequest.setStartUpdateTime(startUpdateTime);
+        overseasOutboundQueryRequest.setEndUpdateTime(endUpdateTime);
+
+        String token = AuthUtils.getToken(apiKey, apiSecret);
+        log.warn(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundQueryRequest));
+        BaseResponse<OverseasOutboundQueryResponse> response = zhongbaoService.queryOutboundBill(token, overseasOutboundQueryRequest);
+        log.warn(getPlatForm().getName() + "创建b2b出库单结果:{}", JSONUtil.toJsonStr(response));
+        if (response.getData().getCode().equals("20000")  && !response.getData().getResponseData().getList().isEmpty()) {
+            for (OverseasOutboundQueryResponse.DataList dataList : response.getData().getResponseData().getList()) {
+                ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
+                thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
+                thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
+                thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
+                thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
+                thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
+            }
+        }
+
+        return !thirdWarehouseQueryFbaOutboundResponses.isEmpty() ? success(thirdWarehouseQueryFbaOutboundResponses) : failure(response.getMessage());
     }
 
     @Override
