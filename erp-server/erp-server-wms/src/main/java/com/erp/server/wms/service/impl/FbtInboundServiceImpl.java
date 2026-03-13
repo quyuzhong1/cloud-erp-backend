@@ -338,21 +338,13 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private List<ShopInfoEntity> listAuthorizedTiktokShops() {
         List<ShopInfoEntity> tiktok = shopInfoFeign.listByParams(
                 new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.TIK_TOK.getCode(), null));
-        List<ShopInfoEntity> tiktokFully = shopInfoFeign.listByParams(
-                new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.TIK_TOK_FULLY.getCode(), null));
-        Map<String, ShopInfoEntity> mergeMap = new LinkedHashMap<>();
-        if (tiktok != null) {
-            for (ShopInfoEntity shopInfo : tiktok) {
-                if (shopInfo != null && StrUtil.isNotBlank(shopInfo.getId())) {
-                    mergeMap.put(shopInfo.getId(), shopInfo);
-                }
-            }
+        if (tiktok == null) {
+            return new ArrayList<>();
         }
-        if (tiktokFully != null) {
-            for (ShopInfoEntity shopInfo : tiktokFully) {
-                if (shopInfo != null && StrUtil.isNotBlank(shopInfo.getId())) {
-                    mergeMap.put(shopInfo.getId(), shopInfo);
-                }
+        Map<String, ShopInfoEntity> mergeMap = new LinkedHashMap<>();
+        for (ShopInfoEntity shopInfo : tiktok) {
+            if (shopInfo != null && StrUtil.isNotBlank(shopInfo.getId())) {
+                mergeMap.put(shopInfo.getId(), shopInfo);
             }
         }
         return new ArrayList<>(mergeMap.values());

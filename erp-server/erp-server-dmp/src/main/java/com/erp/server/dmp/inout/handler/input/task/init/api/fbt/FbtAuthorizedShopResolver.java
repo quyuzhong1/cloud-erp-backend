@@ -91,16 +91,7 @@ public class FbtAuthorizedShopResolver {
                 .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
                 .list();
         ShopInfoEntity preferred = pickPreferredShop(tiktokShops);
-        if (preferred != null) {
-            return preferred;
-        }
-
-        List<ShopInfoEntity> tiktokFullyShops = FeignQuery.create(ShopInfoEntity.class)
-                .eq(ShopInfoEntity::getAccount, normalizedAccount)
-                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.TIK_TOK_FULLY.getCode())
-                .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                .list();
-        return pickPreferredShop(tiktokFullyShops);
+        return preferred;
     }
 
     private ShopInfoEntity pickPreferredShop(List<ShopInfoEntity> shopInfoList) {
