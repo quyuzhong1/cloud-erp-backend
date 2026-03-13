@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -186,7 +187,10 @@ public class SoB2cReceiverDTO implements Serializable {
          * IE号
          */
         private String ieNo;
-
+        /**
+         * 门牌号
+         */
+        private String houseNumber;
 
     }
 

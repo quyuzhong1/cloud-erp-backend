@@ -26,7 +26,6 @@ import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCreateResponse;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
-import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,7 +38,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -183,19 +181,49 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        GoodCangCreateOutboundReq cangCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToGoodCang(createOutboundReq);
-        if (StringUtils.isNotBlank(createOutboundReq.getCarrierType())) {
-            cangCreateOutboundReq.setDistributorType(Integer.valueOf(createOutboundReq.getCarrierType()));
-        }
-        log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(cangCreateOutboundReq));
-        GoodCangResponse<String> response = goodCangService.createOutboundBill(cangCreateOutboundReq);
+    public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        OutboundB2cCreateRequest createRequest = OverseasWarehouseInboundConverter.INSTANCE.b2coutboundDtoToZhongbao(createOutboundReq);
+        //设置拣货类型
+        setPickType(createOutboundReq, createRequest);
+        //设置附件
+        setAttachment(createOutboundReq, createRequest);
+        log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(createRequest));
+        BaseResponse<OutboundB2cCreateResponse> response = zhongbaoService.createB2cOutboundBill(createRequest);
         log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(response));
-        if (response.getMessage().contains("参考号重复")) {
-            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
-            return success(orderCode.getData());
+//        if (response.getMessage().contains("参考号重复")) {
+//            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
+//            return success(orderCode.getData());
+//        }
+        return response.getSuccess() ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getOrderNo()).trackNo(response.getData().getTrackingNo()).build()) : failure(response.getMessage());
+    }
+
+    private void setAttachment(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
+        List<OutboundB2cCreateRequest.Attachment> attachments = new ArrayList<>();
+        if (CharSequenceUtil.isNotBlank(createOutboundReq.getLabelData())) {
+            attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(createOutboundReq.getLabelData()).fileName(createOutboundReq.getReferenceNo()+"面单.pdf").build());
         }
-        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
+        if (CharSequenceUtil.isNotBlank(createOutboundReq.getInvoiceData())) {
+            attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(createOutboundReq.getInvoiceData()).fileName(createOutboundReq.getReferenceNo()+"发票.pdf").build());
+        }
+        createRequest.setAttachmentOpenDTOs(attachments);
+    }
+
+    private static void setPickType(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
+        List<ThirdWarehouseCreateOutboundReq.Item> items = createOutboundReq.getItems();
+        /**
+         * 订单只有一个SKU，数量为1时：1=>一票一件
+         * 订单只有一个SKU，数量大于1时：2=>一票一件多个
+         * 订单SKU大于1个时：3=>一票多件
+         */
+        if (CollUtil.isEmpty(items)) {
+            createRequest.setPickType(1);
+        } else if (items.size() == 1 && items.get(0).getQuantity() == 1) {
+            createRequest.setPickType(1);
+        } else if (items.size() == 1 && items.get(0).getQuantity() > 1) {
+            createRequest.setPickType(2);
+        } else {
+            createRequest.setPickType(3);
+        }
     }
 
     @Override
@@ -253,9 +281,12 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
-        GoodCangResponse<String> response = goodCangService.getOutboundCode(queryOutboundReq.getErpOrderCode());
-        return CharSequenceUtil.isNotBlank(response.getData()) ? success(response.getData()) : failure(response.getMessage());
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
+        OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().referenceNo(queryOutboundReq.getErpOrderCode()).build();
+        BaseResponse<List<OutboundB2cQueryResponse>> response = zhongbaoService.queryB2cOutboundBill(queryRequest);
+        return response.getSuccess() ?
+                success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().get(0).getOrderNo()).trackNo(response.getData().get(0).getTrackingNo()).build())
+                : failure(response.getMessage() + ":" + String.join(", ", response.getErrors()));
     }
 
     @Override

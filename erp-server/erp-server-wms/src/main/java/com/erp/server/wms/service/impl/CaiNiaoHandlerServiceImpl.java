@@ -160,7 +160,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AliexpressOrderDTO aliexpressOrderDTO = convertToOrderDto(createOutboundReq);
         try {
             log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(aliexpressOrderDTO));
@@ -170,7 +170,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 log.error("创建菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
                 return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
             }
-            return success(apiOrderResponseDTO.getResult().getData().getDeliveryOrderId());
+            return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(apiOrderResponseDTO.getResult().getData().getDeliveryOrderId()).build());
         }catch (Exception e){
             log.error("创建菜鸟仓出库单失败，入参：{}，错误信息：", JSONUtil.toJsonStr(createOutboundReq), e);
             throw new ServiceException("创建菜鸟仓出库单失败：" + e.getMessage());
@@ -282,7 +282,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         return ApiResult.error("查询菜鸟仓出库单失败");
     }
 
