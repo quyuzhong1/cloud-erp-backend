@@ -215,6 +215,36 @@ public class DmpOutputTaskDTO implements Serializable {
         private String  id;
 
         /**
+         * 任务名称
+         */
+        private String flowName;
+
+        /**
+         * 目标系统ID
+         */
+        private String targetSystemId;
+
+        /**
+         * 目标系统名称
+         */
+        private String targetSystemName;
+
+        /**
+         * 目标业务代号
+         */
+        private String billType;
+
+        /**
+         * 目标业务名称
+         */
+        private String billTypeName;
+
+        /**
+         * 输入任务名称
+         */
+        private String inputTaskName;
+
+        /**
          * 推送数据配置id
          */
         private String cfgOutputId;

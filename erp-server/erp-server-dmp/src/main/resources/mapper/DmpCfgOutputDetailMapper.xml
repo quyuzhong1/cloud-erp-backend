@@ -22,6 +22,7 @@
        <result column="exec_timeout" property="execTimeout" />
        <result column="disabled" property="disabled" />
        <result column="extend_json" property="extendJson" />
+       <result column="next_level_type" property="nextLevelType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -71,6 +72,7 @@
             dbs.name AS systemName,
             dcod.main_id AS mainId,
             dcod.next_level_id AS nextLevelId,
+            dcod.next_level_type AS nextLevelType,
             dcod.last_time AS lastTime,
             dcod.next_time AS nextTime,
             dcod.interval_time AS intervalTime,

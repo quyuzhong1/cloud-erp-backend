@@ -105,6 +105,10 @@ public class DmpCfgOutputDTO implements Serializable {
          */
         private String appId;
         /**
+         * restcloud应用名称
+         */
+        private String appName;
+        /**
          * restcloud流程编码
          */
         private String flowCode;
@@ -254,6 +258,13 @@ public class DmpCfgOutputDTO implements Serializable {
          */
         private String execUrl;
 
+        /**
+         * 业务类型：单据类型，来源:sourceType
+         * 来源名称
+         * /api/sys/common/enumDropDown?type=SourceType
+         */
+        private String billType;
+
     }
 
     /**
@@ -385,6 +396,10 @@ public class DmpCfgOutputDTO implements Serializable {
          */
         private String appId;
         /**
+         * restcloud应用名称
+         */
+        private String appName;
+        /**
          * restcloud流程编码
          */
         private String flowCode;
@@ -421,6 +436,18 @@ public class DmpCfgOutputDTO implements Serializable {
          * 更新人【可排序】
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 业务类型：单据类型，来源:sourceType
+         * 来源名称
+         * /api/sys/common/enumDropDown?type=SourceType
+         */
+        private String billType;
+
+        /**
+         * 业务类型名称
+         */
+        private String billTypeName;
     }
 
     /**

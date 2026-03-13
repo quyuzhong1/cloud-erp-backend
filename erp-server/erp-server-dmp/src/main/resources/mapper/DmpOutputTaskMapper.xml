@@ -44,6 +44,11 @@
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpOutputTaskDTO$ListDTO">
         SELECT
             dot.id AS id,
+            dco.flow_name AS flowName,
+            dco.system_id as targetSystemId,
+            bs.name as targetSystemName,
+            dco.bill_type as billType,
+            dci.name as inputTaskName,
             dot.cfg_output_id AS cfgOutputId,
             dot.next_level_id AS nextLevelId,
             dot.start_time AS startTime,
@@ -66,6 +71,10 @@
             dot.instance_id AS instanceId
             from dmp_output_task dot
             left join dmp_cfg_output dco on dot.cfg_output_id = dco.id
+            left join dmp_basic_system bs on dco.system_id = bs.id
+            left join dmp_input_task dit ON dot.input_task_id = dit.id AND dot.input_task_id != ''
+            left join dmp_input_task_his dith ON dot.input_task_id = dith.id AND dot.input_task_id != ''
+            left join dmp_cfg_input dci ON dci.id = COALESCE(dit.cfg_input_id, dith.cfg_input_id)
         where
         ${params.sqlMap.default}
         and dot.is_deleted = false
@@ -84,7 +93,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dot.create_time DESC
+        dot.id DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

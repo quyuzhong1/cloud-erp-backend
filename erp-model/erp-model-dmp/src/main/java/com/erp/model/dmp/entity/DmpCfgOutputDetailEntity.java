@@ -90,6 +90,11 @@ public class DmpCfgOutputDetailEntity extends BaseEntity<DmpCfgOutputDetailEntit
      */
     @TableField("remark")
     private String remark;
+    /**
+     * 维度类型:next_level_id类型：来源中台字典:dmpInputNextLevelType
+     */
+    @TableField("next_level_type")
+    private String nextLevelType;
 
 
     public static final String MAIN_ID = "main_id";
