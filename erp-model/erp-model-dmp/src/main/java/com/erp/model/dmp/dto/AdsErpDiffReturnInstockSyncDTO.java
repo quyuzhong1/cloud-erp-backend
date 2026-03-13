@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -1119,7 +1120,7 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
         /**
          * sku明细
          */
-        private List<PlateformReturnInstockNotExistRelationDTO> list;
+        private List< @Valid PlateformReturnInstockNotExistRelationDTO> list;
 
     }
 

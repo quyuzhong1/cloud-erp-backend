@@ -15,6 +15,7 @@ import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
 import com.erp.model.dmp.entity.CfgDiffStrategyDetailEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.dmp.service.CfgDiffStrategyService;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import jodd.util.StringUtil;
@@ -356,6 +357,9 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
         }
+        AdsErpDiffReturnInstockSyncEntity old = new AdsErpDiffReturnInstockSyncEntity();
+        BeanMapper.copy(entity, old);
+
         AdsErpDiffReturnInstockSyncEntity detailEntity = lambdaQuery().eq(AdsErpDiffReturnInstockSyncEntity::getId, dto.getDetailId())
                 .eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus,"finish")
                 .eq(AdsErpDiffReturnInstockSyncEntity::getDiffTag,"erp")
@@ -413,19 +417,6 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         }else {
             sb.append("仓库不匹配;");
         }
-
-        if(Objects.nonNull(platformQty) && Objects.nonNull(qty) ){
-            if(Objects.equals(platformQty,qty)){
-                isQtySame = true;
-            }else {
-                diffQty = platformQty - qty;
-                sb.append("数量不匹配;");
-            }
-        }else {
-            sb.append("数量不匹配;");
-        }
-
-
         if(!isDateSame || !isStatusSame || !isQtySame || !isWarehouseSame){
             diffTag ="diff";
             diffTagName ="字段差异";
@@ -470,6 +461,12 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
                 }
             }
         }
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录退货同步差异日志数据，单号：【{}】", entity.getReturnInstockCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getReturnInstockCode(), "退货同步差异");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC.getCode(), entity.getId(), msg);
+
         return BatchResultDTO.success(entity.getId(), entity.getPlatformReturnInstockCode(), OperationTypeEnum.UPDATE);
     }
 
