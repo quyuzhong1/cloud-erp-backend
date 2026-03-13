@@ -324,7 +324,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'awd') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))", shopPermissionSql, warehousePermissionSql,shopPermissionSql);
+        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'awd' or ra.type = 'fbt' or ra.type = 'AliExpress') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))", shopPermissionSql, warehousePermissionSql);
     }
 
     @Override
@@ -1275,6 +1275,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
 
             if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType()) ||
+                    RequisitionApplicationTypeEnum.FBT.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.AWD.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getType())) {
                 ShopInfoEntity shopInfo = shopInfoEntities.stream()
@@ -1361,8 +1362,10 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
     @Override
     public List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(String id) {
         RequisitionApplicationEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()-> new ServiceException("要货申请不存在"));
-        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) && !entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())){
-            throw new ServiceException("非FBA/AWD来源无法绑定货件");
+        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())
+                && !entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())
+                && !entity.getType().equals(RequisitionApplicationTypeEnum.FBT.getCode())){
+            throw new ServiceException("非FBA/AWD/FBT来源无法绑定货件");
         }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(packingTaskService.getBySourceCode(entity.getCode())).orElseThrow(()-> new ServiceException("未生成装箱任务"));
@@ -1463,6 +1466,14 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
     @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryWithFba(RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList = dto.getFbaBindShipmentViewDTOS();
+        RequisitionApplicationEntity entity = this.getById(detailList.get(0).getId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("要货申请不存在");
+        }
+        if (RequisitionApplicationTypeEnum.FBT.getCode().equals(entity.getType())) {
+            generateDeliveryWithFbt(entity, detailList);
+            return;
+        }
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> releaseList = detailList.stream().filter(e -> Objects.nonNull(e.getIsReleaseInventory()) && e.getIsReleaseInventory()).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(releaseList)){
             throw new ServiceException("存在已释放库存的装箱，请重新选择");
@@ -1481,7 +1492,6 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         }
         List<String> fbaShipmentIdList = detailList.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getFbaShipmentId).distinct().collect(Collectors.toList());
 
-        RequisitionApplicationEntity entity = this.getById(detailList.get(0).getId());
         List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         RequisitionApplicationDetailEntity detailEntity = detailEntityList.get(0);
         //根据货件生成发货单
@@ -1615,10 +1625,161 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         });
     }
 
+    private void generateDeliveryWithFbt(RequisitionApplicationEntity entity, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList) {
+        if (!ThirdDeliveryTypeEnum.SELF_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
+            throw new ServiceException("当前FBT要货单发货类型不支持按装箱绑定货件下推");
+        }
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> releaseList = detailList.stream()
+                .filter(e -> Objects.nonNull(e.getIsReleaseInventory()) && e.getIsReleaseInventory())
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(releaseList)) {
+            throw new ServiceException("存在已释放库存的装箱，请重新选择");
+        }
+        detailList = detailList.stream()
+                .filter(v -> CharSequenceUtil.isBlank(v.getDeliveryCode()) && CharSequenceUtil.isNotBlank(v.getFbaShipmentId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("请先绑定货件再下推");
+        }
+        if (detailList.stream().anyMatch(v -> CharSequenceUtil.isBlank(v.getFbaBoxNo()))) {
+            throw new ServiceException("货件箱号不能为空");
+        }
+        if (detailList.stream().anyMatch(v -> !v.getFbaBoxNo().matches("^[A-Za-z0-9]+$"))) {
+            throw new ServiceException("货件箱号只允许输入英文字母、数字");
+        }
+        List<String> cartonIds = detailList.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getCartonId).distinct().collect(Collectors.toList());
+        List<FbaShipmentPackingEntity> existsPackingList = fbaShipmentPackingService.listByCartonIds(cartonIds);
+        if (CollUtil.isNotEmpty(existsPackingList)) {
+            throw new ServiceException("装箱已绑定货件，不允许重复下推");
+        }
+        List<RequisitionApplicationChangeEntity> changeEntityList = requisitionApplicationChangeService.listNotHandleByBusinessIds(Collections.singletonList(entity.getId()));
+        if(CollectionUtils.isNotEmpty(changeEntityList)){
+            throw new ServiceException("存在待处理的要货申请变更单【{}】",changeEntityList.stream().map(RequisitionApplicationChangeEntity::getCode).collect(Collectors.toList()));
+        }
+        List<String> shipmentIdList = detailList.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getFbaShipmentId).distinct().collect(Collectors.toList());
+        List<FbaShipmentEntity> shipmentEntityList = fbaShipmentService.listByIds(shipmentIdList);
+        Map<String, FbaShipmentEntity> shipmentMap = shipmentEntityList.stream().collect(Collectors.toMap(FbaShipmentEntity::getId, v -> v));
+        for (RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO bindDTO : detailList) {
+            FbaShipmentEntity shipmentEntity = shipmentMap.get(bindDTO.getFbaShipmentId());
+            if (Objects.isNull(shipmentEntity)) {
+                throw new ServiceException("FBT货件不存在");
+            }
+            if (!ShipmentSourceTypeEnum.FBT.getCode().equals(shipmentEntity.getSourceType())) {
+                throw new ServiceException("仅允许绑定FBT货件");
+            }
+            if (!CharSequenceUtil.equals(entity.getChannelId(), shipmentEntity.getShopId())) {
+                throw new ServiceException("仅允许选择要货申请绑定店铺拉取的货件");
+            }
+        }
+        List<String> shipmentCodes = shipmentEntityList.stream().map(FbaShipmentEntity::getCode).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> boundDetailList = firstMileDeliveryDetailService.list(
+                Wrappers.<FirstMileDeliveryDetailEntity>lambdaQuery()
+                        .in(FirstMileDeliveryDetailEntity::getFbaShipmentCode, shipmentCodes)
+        );
+        if (CollUtil.isNotEmpty(boundDetailList)) {
+            List<String> boundCodes = boundDetailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).distinct().collect(Collectors.toList());
+            throw new ServiceException("{}已绑定头程发货单，不允许修改", boundCodes);
+        }
+
+        List<RequisitionApplicationDTO.GenerateDeliverViewDTO> deliveryViewList = generateDeliverView(Collections.singletonList(entity.getId()));
+        if (CollUtil.isEmpty(deliveryViewList)) {
+            throw new ServiceException("未找到可下推的发货明细");
+        }
+        List<RequisitionApplicationDetailEntity> requisitionDetailList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        Map<String, RequisitionApplicationDetailEntity> requisitionDetailMap = requisitionDetailList.stream().collect(Collectors.toMap(RequisitionApplicationDetailEntity::getId, v -> v));
+        List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailService.listByMainIds(cartonIds);
+        List<String> skuIdList = deliveryViewList.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
+        Map<String, Integer> deliveryQtyMap = new HashMap<>();
+
+        for (FbaShipmentEntity shipmentEntity : shipmentEntityList) {
+            List<String> shipmentCartonIds = detailList.stream()
+                    .filter(v -> CharSequenceUtil.equals(v.getFbaShipmentId(), shipmentEntity.getId()))
+                    .map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getCartonId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<WmsCartonDetailEntity> currentCartonDetails = cartonDetailEntityList.stream()
+                    .filter(v -> shipmentCartonIds.contains(v.getMainId()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isEmpty(currentCartonDetails)) {
+                throw new ServiceException("货件{}未关联装箱明细，无法下推发货单", shipmentEntity.getCode());
+            }
+
+            RequisitionApplicationDTO.GenerateDeliverViewDTO headView = deliveryViewList.get(0);
+            FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateDeliverFDD(headView);
+            addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+
+            List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+            for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : deliveryViewList) {
+                Integer deliveryQty = currentCartonDetails.stream()
+                        .filter(cartonDetail -> CharSequenceUtil.equals(cartonDetail.getSkuId(), viewDTO.getSkuId()))
+                        .filter(cartonDetail -> CharSequenceUtil.isBlank(viewDTO.getFnSku())
+                                || CharSequenceUtil.equals(cartonDetail.getFnSku(), viewDTO.getFnSku())
+                                || CharSequenceUtil.equals(cartonDetail.getFnSku(), viewDTO.getPlatformSku()))
+                        .map(WmsCartonDetailEntity::getPackQty)
+                        .filter(Objects::nonNull)
+                        .reduce(0, Integer::sum);
+                if (deliveryQty <= 0) {
+                    continue;
+                }
+                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
+                List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
+                detailAddDto.setIsCombination(CollectionUtils.isNotEmpty(sonSkuList));
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                if (ObjectUtil.isNotEmpty(skuVO)) {
+                    detailAddDto.setNetWeight(skuVO.getNetWeight());
+                    detailAddDto.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
+                    detailAddDto.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
+                    detailAddDto.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
+                }
+                RequisitionApplicationDetailEntity requisitionDetailEntity = requisitionDetailMap.get(viewDTO.getSourceDetailId());
+                if (Objects.nonNull(requisitionDetailEntity) && CharSequenceUtil.equals(viewDTO.getDeliveryWarehouseId(), requisitionDetailEntity.getToWarehouseId())) {
+                    CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                            .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
+                            .filter(staging -> staging.getWarehouseId().equals(requisitionDetailEntity.getToWarehouseId()))
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND));
+                    detailAddDto.setWarehouseLocation(pickingStaging.getWarehouseLocation());
+                } else {
+                    detailAddDto.setWarehouseLocation("");
+                }
+                detailAddDto.setDeliveryQty(deliveryQty);
+                detailAddDto.setPlanQty(deliveryQty);
+                detailAddDto.setFbaShipmentCode(shipmentEntity.getCode());
+                detailAddList.add(detailAddDto);
+                deliveryQtyMap.merge(viewDTO.getSourceDetailId(), deliveryQty, Integer::sum);
+            }
+            if (CollUtil.isEmpty(detailAddList)) {
+                throw new ServiceException("货件{}关联不到要货申请装箱明细", shipmentEntity.getCode());
+            }
+            addDTO.setDetailList(detailAddList);
+            firstMileDeliveryService.add(addDTO);
+        }
+
+        List<RequisitionApplicationDetailEntity> updateDetailList = requisitionDetailList.stream()
+                .filter(v -> deliveryQtyMap.containsKey(v.getId()))
+                .peek(v -> v.setDeliveryQty(deliveryQtyMap.get(v.getId())))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(updateDetailList)) {
+            requisitionApplicationDetailService.updateBatchById(updateDetailList);
+        }
+        fbaShipmentPackingService.generateByBindDTO(detailList);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                writeBackRequisitionDeliveryPushDownStatus(entity.getId());
+            }
+        });
+    }
+
     @Override
     public List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id) {
         RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("要货申请为空"));
-        if(requisitionApplicationEntity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())){
+        if(requisitionApplicationEntity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())
+                || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())
+                || RequisitionApplicationTypeEnum.FBT.getCode().equals(requisitionApplicationEntity.getType())){
             return baseMapper.listFbaDeliverRecord(id);
         }else{
             return baseMapper.listWarehouseDeliverRecord(id);
@@ -1861,7 +2022,10 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         for (Map.Entry<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<RequisitionApplicationDTO.GenerateDeliverViewDTO> value = entry.getValue();
             RequisitionApplicationDTO.GenerateDeliverViewDTO view = value.get(MathUtil.ZERO);
-            if((RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())) && CharSequenceUtil.isBlank(view.getFbaShipmentCode())){
+            if((RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())
+                    || RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())
+                    || (RequisitionApplicationTypeEnum.FBT.getCode().equals(view.getType())
+                    && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(view.getDeliveryType()))) && CharSequenceUtil.isBlank(view.getFbaShipmentCode())){
                 throw new ServiceException(CharSequenceUtil.format("要货申请{}未绑定货件单号，无法下推发货单",view.getSourceCode()));
             }
             //映射主表信息
@@ -1869,6 +2033,8 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
 
             //备货类型
             if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
@@ -2401,6 +2567,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             }
             String channelName = "";
             if((RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+                    || RequisitionApplicationTypeEnum.FBT.getCode().equals(requisitionApplicationEntity.getType())
                     || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType()))
                     || RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());

@@ -658,7 +658,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         ListingInfoDTO.PagingParamDTO listingParamDTO = new ListingInfoDTO.PagingParamDTO();
         listingParamDTO.setAdvanceQueryDTOList(new ArrayList<>());
         listingParamDTO.setSqlMap(param.getSqlMap());
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())) {
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+                || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())
+                || RequisitionApplicationTypeEnum.FBT.getCode().equals(requisitionApplicationEntity.getType())) {
             listingParamDTO.setShopId(requisitionApplicationEntity.getChannelId());
         } else {
             listingParamDTO.setWarehouseId(requisitionApplicationEntity.getChannelId());
