@@ -87,13 +87,13 @@ public class OverseasOutboundCreateRequest {
     private String postcode;
 
     /**
-     *是否签名服务
+     *是否签名服务 -1=>否,1=>是
      */
     @JSONField(name = "isSign")
     private Integer  isSign;
 
     /**
-     *是否保险服务
+     *是否保险服务 -1=>否,1=>是
      */
     @JSONField(name = "isInsure")
     private Integer isInsure;

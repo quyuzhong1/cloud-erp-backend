@@ -6,16 +6,25 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.erp.server.wms.service.B2bThirdDeliveryService;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
@@ -26,12 +35,10 @@ import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCreateResponse;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
-import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
@@ -39,7 +46,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -54,6 +60,19 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Resource
     private ZhongbaoService zhongbaoService;
+
+    @Resource
+    private B2bThirdDeliveryService b2bThirdDeliveryService;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
     @Resource
     private FileFeign fileFeign;
 
@@ -334,6 +353,32 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
 
         Set<String> skuIds = new HashSet<>();
+        B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
+        if (Objects.nonNull(b2bThirdDelivery)) {
+            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
+            if (Objects.nonNull(logisticsChannel)) {
+                overseasOutboundCreateRequest.setIsSign(logisticsChannel.getIsApiSign() ? 1 : -1);
+                overseasOutboundCreateRequest.setIsInsure(logisticsChannel.getIsApiInsurance() ? 1 : -1);
+            }
+
+            //取订单金额和汇率（明细行取第一行汇率）换算成人民币金额，在取系统最新美元汇率换算成美元
+            SoInfoEntity soInfo = soInfoFeign.getSoInfoById(b2bThirdDelivery.getSoId());
+            if (Objects.nonNull(soInfo)) {
+                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainId(soInfo.getId());
+                if (!soDetails.isEmpty()) {
+                    SoDetailEntity soDetail = soDetails.get(0);
+                    BigDecimal exchangeRate = soDetail.getExchangeRate();
+                    if (exchangeRate.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal cnAmount = MathUtil.multiplyWithTwo(soInfo.getOrderAmount(), exchangeRate);
+                        exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                        BigDecimal usAmount = cnAmount.divide(exchangeRate);
+                        overseasOutboundCreateRequest.setInsurePrice(usAmount);
+                    }
+                }
+            }
+
+        }
+
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : items) {
             if (item.getSkuId() != null) {
                 skuIds.add(item.getSkuId());
@@ -362,6 +407,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             //一票多件
             overseasOutboundCreateRequest.setPickType(3);
         }
+
+        //明细
         List<OverseasOutboundCreateRequest.ItemDTOs> itemDTOs = new ArrayList<>();
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
             OverseasOutboundCreateRequest.ItemDTOs itemDTO = new OverseasOutboundCreateRequest.ItemDTOs();
@@ -370,9 +417,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             itemDTO.setPlatformSku(item.getPlatformSkuNo());
             itemDTOs.add(itemDTO);
         }
-
         overseasOutboundCreateRequest.setItemDTOs(itemDTOs);
-
         return overseasOutboundCreateRequest;
     }
 
