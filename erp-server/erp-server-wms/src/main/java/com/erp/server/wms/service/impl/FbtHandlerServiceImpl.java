@@ -71,10 +71,6 @@ public class FbtHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return failure("FBT仓暂不支持该接口");
     }
 
-    @Override
-    protected ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        return failure("FBT仓暂不支持该接口");
-    }
 
     @Override
     protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
