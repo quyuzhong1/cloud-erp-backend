@@ -199,6 +199,12 @@ public class B2bThirdDeliveryDTO implements Serializable {
         * 是否API发货
         */
         private Boolean isApiDelivery;
+
+        /**
+         * 三方仓编码
+         */
+        private String thirdWarehouseCode;
+
         /**
          * 产品明细
          */

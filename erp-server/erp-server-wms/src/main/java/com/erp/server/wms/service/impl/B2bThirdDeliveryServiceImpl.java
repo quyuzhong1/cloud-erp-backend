@@ -20,7 +20,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.CustomerAddressEntity;
@@ -105,6 +104,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
+    private OverseasProviderService overseasProviderService;
+    @Resource
     private SyncB2bThirdWarehouseService syncB2bThirdWarehouseService;
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
@@ -127,7 +128,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private CfgThirdWarehouseOperationDescriptionService cfgThirdWarehouseOperationDescriptionService;
     @Resource
     private CfgThirdWarehouseOperationDescriptionValueService cfgThirdWarehouseOperationDescriptionValueService;
-
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
 
@@ -392,6 +392,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     item.setSaleQty(soDetailMap.getOrDefault(item.getSoDetailId(), 0));
                 });
             }
+            OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
+            if (Objects.nonNull(overseasProviderWarehouse)) {
+                OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
+                if (Objects.nonNull(overseasProvider)) {
+                    viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+                }
+            }
+
             return viewDTO;
         }
     }

@@ -145,7 +145,7 @@ public class OverseasOutboundCreateRequest {
      * 附件列表
      */
     @JSONField(name = "attachmentOpenDTOs")
-    private List<attachmentOpenDTOs> attachmentOpenDTOs;
+    private List<AttachmentOpenDTOs> attachmentOpenDTOs;
 
     @Data
     @AllArgsConstructor
@@ -182,7 +182,7 @@ public class OverseasOutboundCreateRequest {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class attachmentOpenDTOs {
+    public static class AttachmentOpenDTOs {
 
         /**
          *文件

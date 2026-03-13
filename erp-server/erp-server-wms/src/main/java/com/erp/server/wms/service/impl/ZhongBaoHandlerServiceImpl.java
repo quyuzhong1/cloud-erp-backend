@@ -346,6 +346,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     public OverseasOutboundCreateRequest buildCreateFbaOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachmentOpenDTOs = new ArrayList<>();
+        OverseasOutboundCreateRequest.AttachmentOpenDTOs attachmentOpenDTO = new OverseasOutboundCreateRequest.AttachmentOpenDTOs();
         OverseasOutboundCreateRequest overseasOutboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToZhongBao(createOutboundReq);
         List<ThirdWarehouseCreateFbaOutboundReq.Item> items = createOutboundReq.getItems();
         if (items == null || items.isEmpty()) {
@@ -418,6 +420,10 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             itemDTOs.add(itemDTO);
         }
         overseasOutboundCreateRequest.setItemDTOs(itemDTOs);
+
+        //附件
+        attachmentOpenDTO.setBase64(createOutboundReq.getFileUrl());
+        attachmentOpenDTOs.add(attachmentOpenDTO);
         return overseasOutboundCreateRequest;
     }
 
