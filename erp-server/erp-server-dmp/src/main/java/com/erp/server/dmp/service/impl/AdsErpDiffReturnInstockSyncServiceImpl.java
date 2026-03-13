@@ -438,6 +438,7 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
         entity.setDiffTag(diffTag);
         entity.setDiffTagName(diffTagName);
         entity.setSuggestType(suggestType);
+        entity.setDiffDesc(sb.toString());
         //erp其余字段补充道平台
         entity.setBillName(detailEntity.getBillName());
         entity.setBillStatusName(detailEntity.getBillStatusName());
