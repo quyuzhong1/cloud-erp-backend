@@ -47,11 +47,6 @@ public interface ThirdWarehouseService {
     ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq, String authId);
 
     /**
-     * 入库单编辑接口
-     * @return 入库单号
-     */
-    ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq,String authId);
-    /**
      * 订单发货对接海外仓出库创建接口
      * @return 出库单号
      */

@@ -22,13 +22,13 @@ public class OverseasOutboundCreateResponse {
     /**
      * 状态码
      */
-    @JSONField(name = "referenceNo")
+    @JSONField(name = "code")
     private String code;
 
     /**
      * 成功与否
      */
-    @JSONField(name = "referenceNo")
+    @JSONField(name = "success")
     private boolean success;
 
     /**

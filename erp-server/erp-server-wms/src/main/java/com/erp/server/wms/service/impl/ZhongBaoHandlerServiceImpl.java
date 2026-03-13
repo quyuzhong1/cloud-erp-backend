@@ -19,13 +19,10 @@ import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
-import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCancelRequest;
-import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCreateRequest;
+import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.BaseResponse;
 import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCancelResponse;
 import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCreateResponse;
-import com.sdk.wms.zhongbao.dto.request.OverseasInboundCancelRequest;
-import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
@@ -38,6 +35,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -115,16 +113,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
         // 创建入库单
         BaseResponse<OverseasInboundApproveResponse> responseBaseResponse = zhongbaoService.overseasInboundApprove(overseasInboundCreateRequest);
-        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage() + ":" + responseBaseResponse.getErrors().stream().collect(Collectors.joining(", ")));
+        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage() + ":" + String.join(", ", responseBaseResponse.getErrors()));
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-        // 编辑入库单
-        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
-
-        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
+        return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
+//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+//        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
+//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
 
     @Override
@@ -135,23 +132,6 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .build();
         BaseResponse<OverseasInboundCancelResponse> responseBaseResponse = zhongbaoService.overseasInboundCancel(overseasInboundCancelRequest);
         return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getSuccessList().get(0).getOrderNo()) : failure(responseBaseResponse.getData().getFailList().get(0).getMessage());
-    }
-
-    /***
-     * B2C发货单下推海外仓
-     * @param createInboundReq
-     * @return
-     */
-    @Override
-    public ApiResult<String> approveInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        createInboundReq.setReceivingCode(null);
-        // 众包推送需要默认ERP的头程发货单号-HH+MM+SS
-        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
-        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-        // 创建入库单
-        BaseResponse<OverseasInboundApproveResponse> responseBaseResponse = zhongbaoService.overseasInboundApprove(overseasInboundCreateRequest);
-        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
 
     @Override
@@ -280,7 +260,34 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
-        return failure("ERP功能暂不支持");
+        OverseasOutboundQueryRequest overseasOutboundQueryRequest = new OverseasOutboundQueryRequest();
+        List<ThirdWarehouseQueryFbaOutboundResponse> thirdWarehouseQueryFbaOutboundResponses = new ArrayList<>();
+        //一个半小时到现在的订单
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Calendar now = Calendar.getInstance();
+        String endUpdateTime = sdf.format(now.getTime());
+        Calendar oneAndHalfHourAgo = Calendar.getInstance();
+        oneAndHalfHourAgo.add(Calendar.MINUTE, -90);
+        String startUpdateTime = sdf.format(oneAndHalfHourAgo.getTime());
+        overseasOutboundQueryRequest.setStartUpdateTime(startUpdateTime);
+        overseasOutboundQueryRequest.setEndUpdateTime(endUpdateTime);
+
+        String token = AuthUtils.getToken(apiKey, apiSecret);
+        log.warn(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundQueryRequest));
+        BaseResponse<OverseasOutboundQueryResponse> response = zhongbaoService.queryOutboundBill(token, overseasOutboundQueryRequest);
+        log.warn(getPlatForm().getName() + "创建b2b出库单结果:{}", JSONUtil.toJsonStr(response));
+        if (response.getData().getCode().equals("20000")  && !response.getData().getResponseData().getList().isEmpty()) {
+            for (OverseasOutboundQueryResponse.DataList dataList : response.getData().getResponseData().getList()) {
+                ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
+                thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
+                thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
+                thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
+                thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
+                thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
+            }
+        }
+
+        return !thirdWarehouseQueryFbaOutboundResponses.isEmpty() ? success(thirdWarehouseQueryFbaOutboundResponses) : failure(response.getMessage());
     }
 
     @Override

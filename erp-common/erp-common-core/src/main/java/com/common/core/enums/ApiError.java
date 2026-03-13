@@ -1435,6 +1435,9 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
 
+    WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+
+
     /**
      * 头程发货单 错误 信息 11500-12000
      */
