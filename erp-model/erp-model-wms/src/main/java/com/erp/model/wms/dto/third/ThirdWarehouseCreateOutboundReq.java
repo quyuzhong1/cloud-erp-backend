@@ -1,8 +1,11 @@
 package com.erp.model.wms.dto.third;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.ReceiverDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,6 +120,26 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 是否签名同步，是,否
      */
     private String isApiSignName;
+    /**
+     * 是否推送海外仓面单
+     */
+    private Boolean isPushLabel;
+    /**
+     * 销售订单id
+     */
+    private String soId;
+    /**
+     * 是否签名服务
+     */
+    private Boolean isApiSign;
+    /**
+     * 是否保险
+     */
+    private Boolean isApiInsurance;
+    /**
+     * 保险金额
+     */
+    private BigDecimal insurePrice;
 
     @Data
     @AllArgsConstructor
@@ -173,7 +196,7 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         /**
          * 邮编
          */
-        private String zipcode;
+        private String zipCode;
 
         /**
          * 地址1
@@ -194,6 +217,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 收件人税号
          */
         private String taxNumber;
+        /**
+         * 门牌号
+         */
+        private String houseNumber;
 
         @Override
         public String getAddressFirst() {
@@ -217,12 +244,12 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
 
         @Override
         public String getZipCode() {
-            return zipcode;
+            return zipCode;
         }
 
         @Override
         public void setZipCode(String zipCode) {
-            this.zipcode = zipCode;
+            this.zipCode = zipCode;
         }
 
         @Override

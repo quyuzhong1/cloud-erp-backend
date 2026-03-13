@@ -14,12 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.stereotype.Component;
 
-import javax.validation.Valid;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author zdy
@@ -462,6 +460,57 @@ public class ZhongbaoService {
             }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
+            throw new ServiceException("请求失败,异常: " + e.getMessage());
+        }
+    }
+
+    public BaseResponse<List<OutboundB2cQueryResponse>> queryB2cOutboundBill(OutboundB2cQueryRequest queryRequest) {
+        String token = getToken(ThirdWarehouseContext.getAuthMap());
+        log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(queryRequest));
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(queryRequest));
+        Request request = new Request.Builder()
+                .url(getPreUrl() + "/open/outbound-order-data/b2c/list")
+                .method("POST", body)
+                .addHeader("Authorization", token)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            String bodyStr = response.body().string();
+            log.warn("bodyStr: {}", bodyStr);
+            ThirdWarehouseContext.setResponseJson(bodyStr);
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<List<OutboundB2cQueryResponse>>>() {
+            }.getType());
+        } catch (IOException e) {
+            log.error("请求失败,异常: {}", e);
+            ThirdWarehouseContext.setResponseJson("请求失败,异常: {}" + e.getMessage());
+            throw new ServiceException("请求失败,异常: " + e.getMessage());
+        }
+    }
+    public BaseResponse<OutboundB2cCreateResponse> createB2cOutboundBill(OutboundB2cCreateRequest createRequest) {
+        String token = getToken(ThirdWarehouseContext.getAuthMap());
+        log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(createRequest));
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(createRequest));
+        Request request = new Request.Builder()
+                .url(getPreUrl() + "/open/outbound-order-data/b2c/create-review")
+                .method("POST", body)
+                .addHeader("Authorization", token)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            String bodyStr = response.body().string();
+            log.warn("bodyStr: {}", bodyStr);
+            ThirdWarehouseContext.setResponseJson(bodyStr);
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cCreateResponse>>() {
+            }.getType());
+        } catch (IOException e) {
+            log.error("请求失败,异常: {}", e);
+            ThirdWarehouseContext.setResponseJson("请求失败,异常: {}" + e.getMessage());
             throw new ServiceException("请求失败,异常: " + e.getMessage());
         }
     }

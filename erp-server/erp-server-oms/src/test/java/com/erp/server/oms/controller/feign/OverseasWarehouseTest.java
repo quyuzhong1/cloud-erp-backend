@@ -5,6 +5,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryOutboundResponse;
 import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.CfgOperateLogFieldService;
@@ -33,7 +34,7 @@ public class OverseasWarehouseTest {
                 .authId("1726457716430561281")
                 .thirdWarehouseProvideCode(OmsPlatformEnum.OMS_GOOD_CANG.getCode())
                 .build();
-        ApiResult<String> result = feign.createOutboundOrder(createOutboundReq);
+        ApiResult<ThirdWarehouseQueryOutboundResponse> result = feign.createOutboundOrder(createOutboundReq);
         System.out.println(result);
     }
 

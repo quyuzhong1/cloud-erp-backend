@@ -65,6 +65,10 @@ public class TypeConversionWorker {
         return value.setScale(2, RoundingMode.HALF_UP);
     }
 
+    @Named("booleanToInt")
+    public Integer booleanToInt(Boolean value){
+        return Boolean.TRUE.equals(value) ? 1 : -1;
+    }
      /**
      * 转换sourceType到demandType
      */

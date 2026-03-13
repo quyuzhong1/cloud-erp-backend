@@ -645,7 +645,7 @@ public class SoB2cFeignController extends BaseController {
      */
     @GetMapping("/updateLogisticsBySoId")
     public void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo) {
-        soB2cLogisticsService.updateLogisticsBySoId(soId, trackNo);
+        soB2cLogisticsService.updateLogisticsBySoId(soId, trackNo, Boolean.TRUE);
     }
 
     /**

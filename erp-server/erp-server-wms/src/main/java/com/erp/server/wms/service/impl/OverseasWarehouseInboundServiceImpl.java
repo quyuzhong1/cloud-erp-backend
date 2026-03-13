@@ -223,7 +223,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 mainEntity.setFileName(addDTO.getAttachNameList().get(0));
             }
         }
-
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(mainEntity.getId()));
+        mainEntity.setAttachmentList(attachmentList);
         // 推送到第三方草稿
         if (null != providerEntity && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())) {
             // 推送到第三方草稿
@@ -514,7 +515,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     throw new ServiceException("未找到中转仓");
                 }
                 commonDTO.setTransferWarehouseName(transferWarehouse.getPlatformWarehouseName());
-            }else{
+            }else if (!OmsPlatformEnum.ZHONG_BAO.getCode().equalsIgnoreCase(dictPlatform)){
                 transferEntity = overseasTransferWarehouseService.getById(commonDTO.getTransferWarehouseId());
                 if (null == transferEntity) {
                     if (OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
