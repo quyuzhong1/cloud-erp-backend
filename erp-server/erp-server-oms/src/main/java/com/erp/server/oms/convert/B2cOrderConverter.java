@@ -86,13 +86,12 @@ public interface B2cOrderConverter {
             @Mapping(target = "countryName", source = "countryName"),
             @Mapping(target = "province", source = "provinceName"),
             @Mapping(target = "city", source = "cityName"),
-            @Mapping(target = "zipcode", source = "postCode"),
+            @Mapping(target = "zipCode", source = "postCode"),
             @Mapping(target = "address1", source = "firstAddress"),
             @Mapping(target = "address2", source = "secondAddress"),
-            @Mapping(target = "email", source = "email"),
             @Mapping(target = "district", source = "districtName"),
             @Mapping(target = "taxNumber", source = "receiverTaxNo"),
-
+            @Mapping(target = "address3", ignore = true)
     })
     ThirdWarehouseCreateOutboundReq.ReceiverInfo convertThirdWarehouseReceiver(SoB2cReceiverEntity receiverEntity);
 

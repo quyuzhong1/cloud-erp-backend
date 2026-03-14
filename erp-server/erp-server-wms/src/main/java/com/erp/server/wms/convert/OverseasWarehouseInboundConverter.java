@@ -19,6 +19,7 @@ import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
+import com.sdk.wms.zhongbao.dto.request.OutboundB2cCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
 import org.mapstruct.Mapper;
@@ -146,21 +147,48 @@ public interface OverseasWarehouseInboundConverter {
 
 
     @Mappings({
-            @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "orderDesc",  source = "platformCode"),
-            @Mapping(target = "shippingMethod",  source = "shippingMethod"),
-            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
-            @Mapping(target = "verify",  source = "verify",defaultValue = "0"),
-            @Mapping(target = "name",  source = "receiverInfo.name"),
-            @Mapping(target = "phone",  source = "receiverInfo.phone"),
-            @Mapping(target = "countryCode",  source = "receiverInfo.countryCode"),
-            @Mapping(target = "province",  source = "receiverInfo.province"),
-            @Mapping(target = "city",  source = "receiverInfo.city"),
-            @Mapping(target = "address1",  source = "receiverInfo.address1"),
-            @Mapping(target = "address2",  source = "receiverInfo.address2"),
-            @Mapping(target = "zipcode",  source = "receiverInfo.zipCode"),
-            @Mapping(target = "itemList",  source = "items"),
-            @Mapping(target = "vatChangeInfo.shipperEori",  source = "eoriTaxNo"),
+            @Mapping(target = "referenceNo", source = "referenceNo"),
+            @Mapping(target = "orderDesc", source = "platformCode"),
+            @Mapping(target = "shippingMethod", source = "shippingMethod"),
+            @Mapping(target = "warehouseCode", source = "warehouseCode"),
+            @Mapping(target = "verify", source = "verify", defaultValue = "0"),
+            @Mapping(target = "name", source = "receiverInfo.name"),
+            @Mapping(target = "phone", source = "receiverInfo.phone"),
+            @Mapping(target = "countryCode", source = "receiverInfo.countryCode"),
+            @Mapping(target = "province", source = "receiverInfo.province"),
+            @Mapping(target = "city", source = "receiverInfo.city"),
+            @Mapping(target = "address1", source = "receiverInfo.address1"),
+            @Mapping(target = "address2", source = "receiverInfo.address2"),
+            @Mapping(target = "zipcode", source = "receiverInfo.zipCode"),
+            @Mapping(target = "doorplate", source = "receiverInfo.houseNumber"),
+            @Mapping(target = "itemList", source = "items"),
+            @Mapping(target = "vatChangeInfo.shipperEori", source = "eoriTaxNo"),
+            @Mapping(target = "ageDetection", ignore = true),
+            @Mapping(target = "attachmentIds", ignore = true),
+            @Mapping(target = "businessType", ignore = true),
+            @Mapping(target = "cartonInfo", ignore = true),
+            @Mapping(target = "cellPhone", ignore = true),
+            @Mapping(target = "company", ignore = true),
+            @Mapping(target = "customerPackageRequirement", ignore = true),
+            @Mapping(target = "distributorType", ignore = true),
+            @Mapping(target = "email", ignore = true),
+            @Mapping(target = "estimatedArrivalDate", ignore = true),
+            @Mapping(target = "estimatedArrivalTime", ignore = true),
+            @Mapping(target = "fbaShipmentId", ignore = true),
+            @Mapping(target = "fbaShipmentIdCreateTime", ignore = true),
+            @Mapping(target = "insuranceValue", ignore = true),
+            @Mapping(target = "isChangeLabel", ignore = true),
+            @Mapping(target = "isInsurance", ignore = true),
+            @Mapping(target = "isOptionalBoard", ignore = true),
+            @Mapping(target = "isShippingMethodNotAllowUpdate", ignore = true),
+            @Mapping(target = "isSignature", ignore = true),
+            @Mapping(target = "isWarehousePacking", ignore = true),
+            @Mapping(target = "lastName", ignore = true),
+            @Mapping(target = "liftGate", ignore = true),
+            @Mapping(target = "paymentTime", ignore = true),
+            @Mapping(target = "propertyLabel", ignore = true),
+            @Mapping(target = "senderInfo", ignore = true),
+            @Mapping(target = "truckInfo", ignore = true)
     })
     GoodCangCreateOutboundReq outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
@@ -326,4 +354,37 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "isMixedBox", ignore = true)
     @Mapping(target = "height", source = "boxHeight")
     OverseasInboundCreateRequest.Item inboundItemToZhongbao(ThirdWarehouseCreateInboundReq.Item item);
+
+    @Mapping(target = "signType", ignore = true)
+    @Mapping(target = "shippingMethodCode", source = "shippingMethod")
+    @Mapping(target = "remark", ignore = true)
+    @Mapping(target = "province", source = "receiverInfo.province")
+    @Mapping(target = "primeType", ignore = true)
+    @Mapping(target = "postcode", source = "receiverInfo.zipCode")
+    @Mapping(target = "pickType", ignore = true)
+    @Mapping(target = "isSign", source = "isApiSign", qualifiedByName = "booleanToInt")
+    @Mapping(target = "isInsure", source = "isApiInsurance", qualifiedByName = "booleanToInt")
+    @Mapping(target = "inventoryType", ignore = true)
+    @Mapping(target = "insurePrice", source = "insurePrice")
+    @Mapping(target = "doorplate", source = "receiverInfo.houseNumber")
+    @Mapping(target = "district", source = "receiverInfo.district")
+    @Mapping(target = "contactName", source = "receiverInfo.name")
+    @Mapping(target = "contactMobile", source = "receiverInfo.phone")
+    @Mapping(target = "contactEmail", source = "receiverInfo.email")
+    @Mapping(target = "contactCellMobile", ignore = true)
+    @Mapping(target = "companyName", ignore = true)
+    @Mapping(target = "code2", source = "receiverInfo.countryCode")
+    @Mapping(target = "city", source = "receiverInfo.city")
+    @Mapping(target = "b2cDto", ignore = true)
+    @Mapping(target = "attachmentOpenDTOs", ignore = true)
+    @Mapping(target = "address3", source = "receiverInfo.address3")
+    @Mapping(target = "address2", source = "receiverInfo.address2")
+    @Mapping(target = "address", source = "receiverInfo.address1")
+    @Mapping(target = "itemDTOs", source = "items")
+    OutboundB2cCreateRequest b2coutboundDtoToZhongbao(ThirdWarehouseCreateOutboundReq createOutboundReq);
+
+    @Mapping(target = "platformSku", ignore = true)
+    @Mapping(target = "boxNo", ignore = true)
+    @Mapping(target = "qty", source = "quantity")
+    OutboundB2cCreateRequest.Item b2coutboundItemToZhongbao(ThirdWarehouseCreateOutboundReq.Item item);
 }

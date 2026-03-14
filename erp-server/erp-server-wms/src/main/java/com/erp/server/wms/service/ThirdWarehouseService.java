@@ -50,7 +50,7 @@ public interface ThirdWarehouseService {
      * 订单发货对接海外仓出库创建接口
      * @return 出库单号
      */
-    ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId);
+    ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId);
 
     /**
      * b2b发货对接海外仓出库创建接口
@@ -80,7 +80,7 @@ public interface ThirdWarehouseService {
      * @param authId
      * @return
      */
-    ApiResult<String> queryOutboundBill(ThirdWarehouseQueryOutboundReq queryOutboundReq, String authId);
+    ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(ThirdWarehouseQueryOutboundReq queryOutboundReq, String authId);
 
     /**
      * 查询FBA出库单
