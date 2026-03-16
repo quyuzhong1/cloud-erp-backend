@@ -474,12 +474,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setSupplierName(supplierEntity.getName());
             }
         }
-        poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
         if (CharSequenceUtil.isNotBlank(dto.getSupplierContactId())) {
+            poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             if (ObjectUtil.isNotEmpty(supplierContactById)) {
                 poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
             }
+        }else {
+            poReturnEntity.setSupplierContactId("");
+            poReturnEntity.setSupplierContactName("");
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
         //退货组织名称
@@ -3200,7 +3203,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (Objects.nonNull(supplierEntity)) {
                 pushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
                 pushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
-                pushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
+                pushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                 pushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
             }
 
@@ -3236,7 +3239,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (Objects.nonNull(supplierEntity)) {
                 childPushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
                 childPushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
-                childPushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
+                childPushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                 childPushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
             }
 

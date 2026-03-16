@@ -267,4 +267,7 @@ public interface BusinessNoConstant {
     String DZ="DZ";
     //费用配置
     String FYPZ="FYPZ";
+
+    String BG = "BG";
+
 }

@@ -224,8 +224,8 @@ public interface PlmTaskFeign {
      * @param
      * @return 新增结果
      */
-    @PostMapping("feign/plmWorkOption/productChangeApprove")
-    void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
+    @PostMapping("feign/plmWorkOption/bomChangeApprove")
+    void bomChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
 
     /**
      * @param skuIds

@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -215,7 +216,18 @@ public class StocktakingTaskDTO implements Serializable {
          */
         private String approveUserName;
 
+        /**
+         * 盘点日期
+         */
+        private LocalDate billDate;
 
+
+        private String pushStocktakingProfitLossStatus;
+
+        /**
+         * 是否下推盘盈盘亏单
+         */
+        private Boolean isPushStocktakingProfitLoss;
     }
 
 

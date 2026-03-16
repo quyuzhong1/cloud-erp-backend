@@ -415,10 +415,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return;
         }
         CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
-        if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) ){
-            String country = customerInfo.getCountryId();
-
-            addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+        if (Objects.nonNull(customerInfo)) {
+            // 优先使用 CustomerInfo 中的 partitionId
+            if (StringUtils.isNotBlank(customerInfo.getPartitionId())) {
+                addEntity.setPartitionId(customerInfo.getPartitionId());
+                return;
+            }
+            // 若 partitionId 不存在，则按原逻辑通过 countryId 获取分区 ID
+            if (StringUtils.isNotBlank(customerInfo.getCountryId())) {
+                String country = customerInfo.getCountryId();
+                addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+            }
         }
     }
 
@@ -698,9 +705,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isNotBlank(customerId)) {
 
             CustomerAddressEntity customerAddressEntity = customerAddressService.getById(addressId);
-
-            String countryId = customerAddressEntity.getCountryId();
-            view.setCountryId(countryId);
+            if(Objects.nonNull(customerAddressEntity)){
+                String countryId = customerAddressEntity.getCountryId();
+                view.setCountryId(countryId);
+            }
             // 国家
             List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
             //国家

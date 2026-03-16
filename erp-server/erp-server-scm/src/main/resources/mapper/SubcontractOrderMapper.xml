@@ -294,7 +294,8 @@
             sod.bom_version as bomVersion,
             sod.warehouse_location,
             sod.first_mass_product  as firstMassProduct,
-            sod.repair_qty as repairQty
+            sod.repair_qty as repairQty,
+            sod.repair_price as repairPrice
         from subcontract_order so
         inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
         left join supplier s on sod.supplier_id = s.id and s.is_deleted = false
