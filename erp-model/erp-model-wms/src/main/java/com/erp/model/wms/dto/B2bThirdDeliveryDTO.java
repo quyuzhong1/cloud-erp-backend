@@ -729,6 +729,11 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String operationType;
 
         /**
+         * 操作类型名称
+         */
+        private String operationTypeName;
+
+        /**
          * 输入类型:下拉框,输入框
          */
         private String inputType;

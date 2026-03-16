@@ -202,6 +202,10 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          * PASTE_PACKAGE：贴箱唛
          * OTHER：其他
          */
+        /**
+         * zhongbao：
+         * ThirdWarehouseOperationDescriptionEnum
+         */
         private String warehouseOperationType;
         /**
          * 仓库操作描述

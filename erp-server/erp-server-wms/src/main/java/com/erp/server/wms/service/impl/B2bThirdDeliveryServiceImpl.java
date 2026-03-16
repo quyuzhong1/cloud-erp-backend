@@ -887,6 +887,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO resultDTO = new B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO();
             BeanUtils.copyProperties(entity,resultDTO);
             resultDTO.setThirdWarehouse(entity.getThirdWarehouseCode());
+            resultDTO.setOperationTypeName(ThirdWarehouseOperationDescriptionEnum.getName(entity.getOperationType()));
             // 过滤出当前主表ID对应的下拉框值
             List<CfgThirdWarehouseOperationDescriptionValueEntity> currentValues = valueList.stream()
                     .filter(value -> Objects.equals(value.getMainId(), entity.getId()))
