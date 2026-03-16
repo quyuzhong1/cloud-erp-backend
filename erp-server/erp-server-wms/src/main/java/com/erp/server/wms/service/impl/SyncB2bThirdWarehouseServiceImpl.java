@@ -147,7 +147,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                         // 从映射中获取 platformSkuNo
                         String platformSkuNo = soDetailSkuMap.get(soDetailId);
                         if (platformSkuNo != null) {
-                            item.setPlatformSkuNo(platformSkuNo);
+                            item.setSkuNo(platformSkuNo);
                         }
                     }
                     item.setPlatformSkuNo(item.getWarehousePlatformSku());
