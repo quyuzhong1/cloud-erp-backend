@@ -6,15 +6,16 @@
     <select id="findTree" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
         WITH RECURSIVE T ( ID, NAME, parent_id, PATH ) AS (
             SELECT ID,NAME,PARENT_ID,ID::text AS PATH FROM sys_department
-            WHERE parent_id = '0'
+            WHERE parent_id = '0' and is_deleted = false
             UNION ALL
             SELECT st.ID,st.NAME,st.PARENT_ID,T.PATH ||','|| st.ID
             FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+            where st.is_deleted = false
         )
         SELECT ID,NAME,PARENT_ID,PATH FROM T ORDER BY 	PATH;
     </select>
     <select id="getDeptList" resultType="com.erp.model.sys.dto.SysDepartmentDTO">
-         SELECT id,name,type,parent_id FROM sys_department
+         SELECT id,name,type,parent_id FROM sys_department where is_deleted = false
     </select>
 
     <select id="getByDeptNames" resultType="com.erp.model.sys.dto.SysUserDeptDTO">
@@ -24,9 +25,9 @@
             sd.id as deptId,
             sd.name as deptName
         from sys_department sd
-        inner join sys_department_user sdu on sd.id = sdu.department_id
-        inner join sys_user_info sui on sdu.user_id = sui.uid
-        where sdu.lead_state = 1 and sui.is_deleted = false
+        inner join sys_department_user sdu on sd.id = sdu.department_id and sdu.is_deleted = false
+        inner join sys_user_info sui on sdu.user_id = sui.uid and sui.is_deleted = false
+        where sdu.lead_state = 1 and sd.is_deleted = false
         <if test="deptNames != null and deptNames.size() > 0">
             and sd.name in
             <foreach collection="deptNames" open="(" separator="," close=")" item="item">
@@ -39,10 +40,11 @@
     <select id="getDeptByParentId" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
         WITH RECURSIVE T ( ID, NAME, parent_id ) AS (
             SELECT ID,NAME,PARENT_ID FROM sys_department
-            WHERE parent_id = #{deptId}
+            WHERE is_deleted = false and parent_id = #{deptId}
             UNION ALL
             SELECT st.ID,st.NAME,st.PARENT_ID
             FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+            where st.is_deleted = false
         )
         SELECT ID,NAME,PARENT_ID FROM T
     </select>

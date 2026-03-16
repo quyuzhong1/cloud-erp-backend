@@ -140,6 +140,14 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         if (flag) {
             List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(approvalList)) {
+                List<UserSuperiorDTO> userSuperiorDTOS = new ArrayList<>();
+                if (CollectionUtils.isNotEmpty(dto.getChargeIds())) {
+                    List<String> ids = dto.getChargeIds();
+                    List<UserSuperiorDTO> userSuperiorDTOList = sysUserFeign.listSuperiorByUserIds(ids);
+                    if (!userSuperiorDTOList.isEmpty()) {
+                        userSuperiorDTOS.addAll(userSuperiorDTOList);
+                    }
+                }
                 approvalList.forEach(obj -> obj.setCharges(String.join(",", obj.getChargeList())));
                 taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
                 //根据分配类型查询模板中的数据
@@ -152,8 +160,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
                         //查询对应负责人的上级
-                        List<String> ids = dto.getChargeIds();
-                        List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
                         if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
                             List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                             for (String superiorType : superiorTypeList) {

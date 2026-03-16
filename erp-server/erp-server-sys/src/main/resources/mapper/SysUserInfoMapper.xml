@@ -149,7 +149,7 @@ sui.third_auth_type AS thirdAuthType
     <select id="findDepartmentIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_department_user sdu
-        where sdu.user_id=sui.uid AND sdu.department_id=#{params.flagId} limit 1),0) AS flagState
+        where sdu.is_deleted = false and sdu.user_id=sui.uid AND sdu.department_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
         WHERE sui.is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
@@ -180,7 +180,7 @@ sui.third_auth_type AS thirdAuthType
         SELECT
             du.user_id
         FROM sys_department_user du
-        WHERE 1 = 1
+        WHERE 1 = 1 and du.is_deleted = false
         <if test="deptList != null and deptList.size() > 0">
             AND du.department_id IN
             <foreach collection="deptList" item="dept" open="(" separator="," close=")">
@@ -194,7 +194,7 @@ sui.third_auth_type AS thirdAuthType
         SELECT
         du.department_id
         FROM sys_department_user du
-        WHERE du.user_id = #{userId}
+        WHERE du.user_id = #{userId} and du.is_deleted = false
         GROUP BY du.department_id
     </select>
 
@@ -206,8 +206,8 @@ sui.third_auth_type AS thirdAuthType
             sd."name" AS deptName,
             sui.user_state as userState
         FROM sys_user_info sui
-        LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
-        LEFT JOIN sys_department sd ON sd."id" = sdu.department_id
+        LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid and sdu.is_deleted = false
+        LEFT JOIN sys_department sd ON sd."id" = sdu.department_id and sd.is_deleted = false
         where sui.user_type = 'erp'
     </select>
     <select id="getListByRoleIds" resultType="com.common.business.dto.FindUserDTO">
@@ -251,7 +251,7 @@ sui.third_auth_type AS thirdAuthType
         sui.code,
         sui.sync_kingdee_id
         from sys_user_info sui
-        LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
+        LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id and sdu.is_deleted = false
         where sui.user_type = 'erp'
         <if test="deptIds != null and deptIds.size() > 0">
             and sdu.department_id in
@@ -269,6 +269,7 @@ sui.third_auth_type AS thirdAuthType
         UNION ALL
         SELECT st.ID,st.NAME,st.PARENT_ID,T.PATH ||','|| st.ID
         FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+        where st.is_deleted = false
         )
         SELECT ID,NAME,PARENT_ID,PATH FROM T ORDER BY 	PATH;
     </select>
