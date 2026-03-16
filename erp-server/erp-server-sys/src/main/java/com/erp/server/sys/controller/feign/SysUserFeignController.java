@@ -136,7 +136,14 @@ public class SysUserFeignController extends BaseController {
 
     @GetMapping("/getUserList")
     public List<FindUserDTO> getUserList() {
-        List<FindUserDTO> list = sysUserInfoService.getAllUserList();
+        Integer userState = 1;
+        List<FindUserDTO> list = sysUserInfoService.getAllUserList(userState);
+        return list;
+    }
+
+    @GetMapping("/getAllUserList")
+    public List<FindUserDTO> getAllUserList() {
+        List<FindUserDTO> list = sysUserInfoService.getAllUserList(null);
         return list;
     }
 

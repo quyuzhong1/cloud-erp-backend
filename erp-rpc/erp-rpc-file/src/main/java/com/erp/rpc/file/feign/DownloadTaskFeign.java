@@ -19,4 +19,7 @@ public interface DownloadTaskFeign {
 
     @PostMapping("/feign/downloadTask/updateTask")
     void updateTask(@RequestBody BaseDTO.ImportResultDTO importResultDTO);
+
+    @PostMapping("/feign/downloadTask/saveImportNewTask")
+    String saveImportNewTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params);
 }

@@ -224,8 +224,8 @@ public interface PlmTaskFeign {
      * @param
      * @return 新增结果
      */
-    @PostMapping("feign/plmWorkOption/productChangeApprove")
-    void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
+    @PostMapping("feign/plmWorkOption/bomChangeApprove")
+    void bomChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
 
     /**
      * @param skuIds
@@ -740,4 +740,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/moldRefSkuApprove")
     void moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto);
+
+    /**
+     * 根据金蝶id查询sku
+     */
+    @PostMapping("feign/productDetail/getSkuBySyncKingdeeId")
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
 }

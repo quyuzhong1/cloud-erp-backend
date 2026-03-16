@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -16,6 +17,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ConfirmStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -28,6 +30,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -48,7 +53,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.listener.FirstMileCostChangeExcelListener;
@@ -59,6 +63,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -67,6 +73,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -161,6 +168,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private LogisticsBillCostService logisticsBillCostService;
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
+    @Resource
+    private AsyncTaskRecordService asyncTaskRecordService;
+    @Resource
+    private AsyncTaskDetailRecordService asyncTaskDetailRecordService;
+    @Resource
+    private MQProducerService mQProducerService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -587,10 +600,37 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     .collect(Collectors.toList());
         }
         //当前组织
-        String orgId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstOrgId()) ? allocationSettingDTO.getFirstOrgId() : reportPeriodMonth.getOrgId();
+        String orgId = "";
+        if(CharSequenceUtil.isBlank(allocationSettingDTO.getFirstOrgId()) || Objects.equals(CostAllocationOrgTypeEnum.BILL_ORG.getCode(),allocationSettingDTO.getFirstOrgId())){
+            //单据成本组织
+            orgId = reportPeriodMonth.getOrgId();
+        }else if(Objects.equals(CostAllocationOrgTypeEnum.LOGISTICS_SUPPLIER_ORG.getCode(),allocationSettingDTO.getFirstOrgId())){
+            //物流组织
+            String supplierId = entity.getSupplierId();
+            if(StringUtils.isBlank(supplierId)){
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.LOGISTICS_SUPPLIER_NOT_FOUND.getMsg());
+            }
+            LogisticsSupplierEntity LogisticsSupplierEntity = logisticsSupplierService.getById(supplierId);
+            if(Objects.isNull(LogisticsSupplierEntity)){
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.LOGISTICS_SUPPLIER_NOT_EXIST.getMsg());
+            }
+            orgId = LogisticsSupplierEntity.getOrgId();
+        }else {
+            orgId = allocationSettingDTO.getFirstOrgId();
+        }
+
+        if(StringUtils.isBlank(orgId)){
+            throw new RuntimeException(ApiError.FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED.getMsg());
+        }
         String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
         List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(orgId, skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth(),toWarehouseId);
+
+        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(orgId);
+        if (ObjectUtil.isNotNull(company)) {
+            entity.setOrgName(company.getCompanyName());
+        }
+        entity.setOrgId(orgId);
         //保存分摊主表记录
         service.saveOrUpdate(entity);
         // 操作日志
@@ -610,6 +650,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList = new ArrayList<>(firstMileDeliveryDetailEntityList.size());
         //遍历计算sku分摊
         for (FirstMileDeliveryDetailEntity deliveryDetailEntity : firstMileDeliveryDetailEntityList) {
+            List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream()
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                            && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
+                    ).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(weightAllocationEntityList1)) {
+                //装箱任务明细存在是否取消发货字段， 若取消发货则不下推重量分摊，因此必然存在发货单明细sku存在但重量分摊不存在的情况
+                continue;
+            }
+
             //上期账单是实际账单 并且对应sku所有费用分类的期末在途费用为0则不进行费用分摊
             BatchResultDTO batchResultDTO2 = checkCostAllocationBySku(voList, entity.getReportPeriodMonth(), entity.getReconciliationMonth(),deliveryDetailEntity);
             if (!batchResultDTO2.getSuccess()) {
@@ -657,7 +706,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     .setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol())
                     .setWeightUnit(UnitEnum.WeightUnitEnum.KG.code)
                     .setPlatformSkuNo(deliveryDetailEntity.getPlatformSkuNo())
-                    .setDeliveryQty(Objects.nonNull(deliveryDetailEntity.getDeliveryQty()) ? deliveryDetailEntity.getDeliveryQty() : MathUtil.ZERO)
+//                    .setDeliveryQty(Objects.nonNull(deliveryDetailEntity.getDeliveryQty()) ? deliveryDetailEntity.getDeliveryQty() : MathUtil.ZERO)
+                    .setDeliveryQty(weightAllocationEntityList1.stream()
+                            .map(e -> Objects.nonNull(e.getDeliveryQty()) ? e.getDeliveryQty() : MathUtil.ZERO)
+                            .reduce(MathUtil.ZERO, Integer::sum))
                     .setLastDetailEntityList(lastDetailEntityList);
 
             InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity = initFirstMileAllocationDetailEntityList.stream()
@@ -807,11 +859,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                                 && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
                         ).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(weightAllocationEntityList1)) {
-                    throw new ServiceException(CharSequenceUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在", entity.getSourceCode(), deliveryDetailEntity.getSkuNo()));
+                      //装箱任务明细存在是否取消发货字段， 若取消发货则不下推重量分摊，因此必然存在发货单明细sku存在但重量分摊不存在的情况
+                    //throw new ServiceException(CharSequenceUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在", entity.getSourceCode(), deliveryDetailEntity.getSkuNo()));
+                }else{
+                    firstMileSkuCostAllocationEntity.setAllocatedWeight(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add));
+                    firstMileSkuCostAllocationEntity.setWeightAllocationId(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getId).distinct().collect(Collectors.joining(",")));
                 }
-                firstMileSkuCostAllocationEntity.setAllocatedWeight(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add));
-                firstMileSkuCostAllocationEntity.setWeightAllocationId(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getId).distinct().collect(Collectors.joining(",")));
-
             }
         }
     }
@@ -1502,9 +1555,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                                                                                     TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity, FirstMileCostAllocationEntity entity) {
         List<FirstMileSkuCostAllocationDetailEntity> firstMileSkuCostAllocationDetailEntityList = new ArrayList<>();
         //SKU单位成本合计
-        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getProductTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getProductTotalCost).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         //sku总重量
-        BigDecimal weightTotal = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getAllocatedWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal weightTotal = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getAllocatedWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         //头程总金额
         for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : firstMileSkuCostAllocationEntityList) {
             //当前sku总分摊重量
@@ -2093,10 +2146,47 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 continue;
             }
             try {
-                this.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
+                BatchResultDTO result = this.calcAllocatedCost(entity, firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
             }catch (Exception e){
                 log.error("费用分摊异常：",e);
             }
+        }
+    }
+    @Override
+    public FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto){
+        FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCountDTO = new FirstMileCostAllocationDTO.PushAllocatedCostCountDTO();
+        int count = 0;
+        if (CollUtil.isNotEmpty(dto.getIds())){
+            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
+            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+            count = sourceIds.size();
+        }else if (CharSequenceUtil.isNotBlank(dto.getReportDate())){
+            List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listBySourceIds(null, null);
+            List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+            count = sourceIds.size();
+        }
+        pushAllocatedCostCountDTO.setCount(count);
+        return pushAllocatedCostCountDTO;
+    }
+
+    @Override
+    public void asyncBatchPushAllocatedCost(FirstMileCostAllocationDTO.IdsDTO idsDTO){
+        //新建一个任务
+        String jsonStr = JSONUtil.toJsonStr(idsDTO);
+        String taskId = asyncTaskRecordService.addTask(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(), jsonStr);
+        if(StringUtils.isBlank(taskId)){
+            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
+        }
+        AsyncTaskRecordDTO.TaskDTO taskDTO = new AsyncTaskRecordDTO.TaskDTO();
+        taskDTO.setIds(idsDTO.getIds());
+        taskDTO.setReportDate(idsDTO.getReportDate());
+        taskDTO.setTaskId(taskId);
+        taskDTO.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
+        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, taskDTO, taskId);
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+        }else {
+            log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
         }
     }
 

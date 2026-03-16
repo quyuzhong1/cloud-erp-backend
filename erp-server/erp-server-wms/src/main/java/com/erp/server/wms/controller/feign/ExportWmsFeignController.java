@@ -596,7 +596,7 @@ public class ExportWmsFeignController {
             menuCode = "wms:picking-lists:paging",
             tableAlias = "pl"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PickingListsQueryHandler.class)
     public PagingVO<PickingListsDTO.ExportInfoDTO> exportPickingLists(@RequestBody PagingDTO<PickingListsDTO.ExportDTO> dto) {
         return pickingListsService.exportPickingLists(dto);
     }

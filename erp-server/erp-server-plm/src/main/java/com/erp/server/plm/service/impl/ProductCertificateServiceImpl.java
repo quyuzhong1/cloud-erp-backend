@@ -106,6 +106,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Transactional(rollbackFor = Exception.class)
     public void add(ProductCertificateDTO.AddDTO dto) {
         List<ProductCertificateEntity> resultList = handleAdd(dto);
+        // 新增场景必须保证每条证书都有有效文件，避免主表落库但无附件
+        checkAddFile(resultList);
 
         //数据验证
         checkProductCertificate(resultList);
@@ -120,6 +122,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             operateLogEntityList.add(
                     new OperateLogEntity().setContent("新增了一个【产品证书】")
                             .setBusinessId(obj.getSkuId())
+                            .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(obj.getId())
                             .setOperation("新增操作")
             );
@@ -177,6 +180,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setProductId(productDetailEntity.getProductId());
             resultList.add(entity);
         }
+        // 与证书管理上传保持一致：新增/编辑时都校验证书项目唯一性（编辑排除自身）
+        checkProductCertificateForProductAddOrUpdate(resultList, productDetailEntityList);
         //新增数据
         this.saveOrUpdateBatch(resultList);
         //绑定附件id
@@ -330,15 +335,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
         //删除附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(ids);
-        if (CollectionUtils.isEmpty(attachmentList)) {
-            throw new ServiceException("附件信息为空");
-        }
-        //删除附件表数据
-        List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
-        plmAttachmentService.removeByIds(attachmentIdList);
-        for (PlmAttachmentEntity entity : attachmentList) {
-            //fastdfs删除附件
-            fileFeign.deleteFile(entity.getAttachUrl());
+        if (CollectionUtils.isNotEmpty(attachmentList)) {
+            //删除附件表数据
+            List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
+            plmAttachmentService.removeByIds(attachmentIdList);
+            for (PlmAttachmentEntity entity : attachmentList) {
+                //fastdfs删除附件
+                fileFeign.deleteFile(entity.getAttachUrl());
+            }
+        } else {
+            log.warn("产品证书删除时未找到附件，按无附件脏数据兼容处理, certificateIds={}", ids);
         }
         Map<String, ProductDetailEntity> stringProductDetailEntityMap = productDetailService.getByIdList(entityList.stream().map(ProductCertificateEntity::getSkuId).collect(Collectors.toList())).stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(),(v1,v2)->v1));
         return entityList.stream()
@@ -467,7 +473,15 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             try {
                 multipartFile = getMulFileByPath(pathUrl,cfgSettingList);
             } catch (Exception e) {
+                errorMsgList.add(isBlank(e.getMessage()) ? "文件路径下未找到文件" : e.getMessage());
+            }
+            if ((ObjectUtil.isEmpty(multipartFile) || multipartFile.isEmpty())
+                    && errorMsgList.stream().noneMatch(msg -> CharSequenceUtil.contains(msg, "未找到文件")
+                    || CharSequenceUtil.contains(msg, "获取共享文件失败"))) {
                 errorMsgList.add("文件路径下未找到文件");
+            }
+            if (!ObjectUtil.isEmpty(multipartFile) && isBlank(multipartFile.getOriginalFilename())) {
+                errorMsgList.add("导入文件名称未找到");
             }
             //存在错误信息则
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -498,12 +512,28 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 errorList.add(excelDTO);
                 continue;
             }
-            //新增数据
-            this.saveOrUpdate(entity);
-            resultList.add(excelDTO);
-
-            //上传附件
-            uploadFile (Arrays.asList(entity));
+            try {
+                //新增数据
+                this.saveOrUpdate(entity);
+                //上传附件
+                uploadFile(Arrays.asList(entity));
+                //操作日志
+                operateLogService.addSysLogByBatchSave(Collections.singletonList(
+                        new OperateLogEntity().setContent("新增了一个【产品证书】")
+                                .setBusinessId(entity.getSkuId())
+                                .setClassPath(String.valueOf(ProductCertificateEntity.class))
+                                .setPid(entity.getId())
+                                .setOperation("新增操作")
+                ));
+                resultList.add(excelDTO);
+            } catch (Exception e) {
+                if (!isBlank(entity.getId())) {
+                    this.removeById(entity.getId());
+                }
+                errorMsgList.add(e.getMessage());
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+            }
         }
     }
 
@@ -511,27 +541,157 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * 获取MultipartFile
      */
     private  MultipartFile getMulFileByPath(String filePath,Map<SettingEnum, String> cfgSettingMap) {
+        String normalizedPath = normalizeImportPath(filePath);
         //查询配置进行转换
-        String urlPath = toFilePath(filePath, cfgSettingMap);
-        if (CharSequenceUtil.equals(filePath,urlPath)) {
-            return FileUtil.toMultipartFile(filePath);
+        String urlPath = toFilePath(normalizedPath, cfgSettingMap);
+        if (!isSambaPath(urlPath)) {
+            String finalUrlPath = urlPath;
+            if (isWindowsDrivePath(finalUrlPath)) {
+                finalUrlPath = "file:///".concat(finalUrlPath.replace("\\", "/"));
+            }
+            return FileUtil.toMultipartFile(finalUrlPath);
         }
+        return getSambaMultipartFile(urlPath);
+    }
+
+    /**
+     * 获取共享目录文件
+     */
+    private MultipartFile getSambaMultipartFile(String filePath) {
         //配置信息
         Map<SettingEnum, String> nasUserMap = dmpTaskFeign.getCfgSettingList(SettingEnum.NAS_USERNAME_PWD);
-        if (ObjectUtil.isEmpty(nasUserMap)) {
-            throw new ServiceException("未找到共享文件配置信息");
+        if (ObjectUtil.isEmpty(nasUserMap) || isBlank(nasUserMap.get(SettingEnum.PLM_NAS_USERNAME_PWD))) {
+            throw new ServiceException("未找到共享文件配置信息: PLM_NAS_USERNAME_PWD");
         }
-        List<String> nasUserList = Arrays.stream(nasUserMap.get(SettingEnum.PLM_NAS_USERNAME_PWD).split(",")).collect(Collectors.toList());
-        if (nasUserList.size() != 2) {
-            throw new ServiceException("未找到共享文件配置信息");
+        List<String> nasUserList = Arrays.stream(nasUserMap.get(SettingEnum.PLM_NAS_USERNAME_PWD).split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
+        if (nasUserList.size() != 2 || isBlank(nasUserList.get(0)) || isBlank(nasUserList.get(1))) {
+            throw new ServiceException("共享文件配置格式错误: PLM_NAS_USERNAME_PWD");
         }
-        MultipartFile multipartFile = null;
         try {
-             multipartFile = SambaUtil.toMultipartFile(urlPath, nasUserList.get(0), nasUserList.get(1));
+            return SambaUtil.toMultipartFile(normalizeSambaPath(filePath), nasUserList.get(0), nasUserList.get(1));
         } catch (Exception e) {
-           throw new ServiceException("获取共享文件失败");
+            String errorMsg = buildSambaErrorMsg(e);
+            log.error("读取共享文件失败,path={},msg={}", normalizeSambaPath(filePath), errorMsg, e);
+            throw new ServiceException(errorMsg);
         }
-        return multipartFile;
+    }
+
+    /**
+     * 构建共享文件读取错误信息
+     */
+    private String buildSambaErrorMsg(Exception e) {
+        String rawMsg = getRootCauseMessage(e);
+        if (isBlank(rawMsg)) {
+            return "获取共享文件失败";
+        }
+        String msg = rawMsg.toLowerCase();
+        if (msg.contains("logon failure")
+                || msg.contains("status_logon_failure")
+                || msg.contains("authentication")) {
+            return "获取共享文件失败: 共享账号或密码错误";
+        }
+        if (msg.contains("access is denied")
+                || msg.contains("status_access_denied")
+                || msg.contains("permission denied")) {
+            return "获取共享文件失败: 共享目录无读取权限";
+        }
+        if (msg.contains("unknown host")
+                || msg.contains("unknownhostexception")) {
+            return "获取共享文件失败: 共享服务器地址无法解析";
+        }
+        if (msg.contains("network name cannot be found")
+                || msg.contains("bad network name")
+                || msg.contains("status_bad_network_name")) {
+            return "获取共享文件失败: 共享名称错误";
+        }
+        if (msg.contains("connection refused")
+                || msg.contains("connect timed out")
+                || msg.contains("no route to host")
+                || msg.contains("network is unreachable")
+                || msg.contains("failed to connect")) {
+            return "获取共享文件失败: 共享服务器网络不可达";
+        }
+        if (msg.contains("object name not found")
+                || msg.contains("status_object_name_not_found")
+                || msg.contains("no such file")
+                || msg.contains("file not found")
+                || msg.contains("cannot find the path specified")
+                || msg.contains("path not found")) {
+            return "共享路径下未找到文件";
+        }
+        return "获取共享文件失败: " + rawMsg;
+    }
+
+    /**
+     * 获取最底层异常信息
+     */
+    private String getRootCauseMessage(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause != null && cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+        return cause == null ? "" : cause.getMessage();
+    }
+
+    /**
+     * 是否走共享目录读取
+     */
+    private boolean isSambaPath(String filePath) {
+        if (isBlank(filePath)) {
+            return false;
+        }
+        String path = normalizeImportPath(filePath).replace("\\", "/");
+        if (StringUtils.startsWithIgnoreCase(path, "smb://") || path.startsWith("//")) {
+            return true;
+        }
+        // 带协议(http/https/file)按URL读取
+        if (path.matches("^[a-zA-Z][a-zA-Z0-9+\\-.]*://.*")) {
+            return false;
+        }
+        // 盘符路径按URL/file读取
+        if (path.matches("^[a-zA-Z]:/.*")) {
+            return false;
+        }
+        if (!path.contains("/")) {
+            return false;
+        }
+        String hostPart = StringUtils.substringBefore(path, "/");
+        return hostPart.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$") || hostPart.contains(".");
+    }
+
+    /**
+     * 是否是Windows盘符路径
+     */
+    private boolean isWindowsDrivePath(String filePath) {
+        if (isBlank(filePath)) {
+            return false;
+        }
+        String path = normalizeImportPath(filePath).replace("\\", "/");
+        return path.matches("^[a-zA-Z]:/.*");
+    }
+
+    /**
+     * 共享路径标准化
+     */
+    private String normalizeSambaPath(String filePath) {
+        String path = normalizeImportPath(filePath).replace("\\", "/");
+        path = StringUtils.removeStartIgnoreCase(path, "smb://");
+        while (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        return path;
+    }
+
+    /**
+     * 导入路径标准化
+     */
+    private String normalizeImportPath(String filePath) {
+        if (filePath == null) {
+            return null;
+        }
+        return filePath.trim().replace('￥', '\\').replace('¥', '\\');
     }
 
     /**
@@ -543,22 +703,40 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * @return String
      */
     private String toFilePath (String filePath,Map<SettingEnum, String> cfgSettingMap) {
+        String normalizedPath = normalizeImportPath(filePath);
         if (ObjectUtil.isEmpty(cfgSettingMap)) {
-            return  filePath;
+            return  normalizedPath;
         }
-        if (isBlank(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL))) {
-            return  filePath;
+        String importUrlSetting = cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL);
+        if (isBlank(importUrlSetting)) {
+            return  normalizedPath;
         }
-        List<String> urlList = Arrays.stream(cfgSettingMap.get(SettingEnum.PLM_PRODUCT_CERTIFICATE_IMPORT_URL).split(",")).collect(Collectors.toList());
-        if (urlList.size() != 2) {
-            return  filePath;
+        String[] urlArr = importUrlSetting.split(",", 2);
+        if (urlArr.length != 2 || isBlank(urlArr[0]) || isBlank(urlArr[1])) {
+            return  normalizedPath;
         }
-        //判断路径是否以正则开头
-        if (!filePath.matches(urlList.get(0).concat(".*"))) {
-            return  filePath;
+        String sourcePrefix = normalizeImportPath(urlArr[0]).replace("\\", "/");
+        String targetPrefix = normalizeImportPath(urlArr[1]).replace("\\", "/");
+        String currentPath = normalizedPath.replace("\\", "/");
+        // 去掉末尾斜杠，避免因为配置斜杠差异匹配不上
+        sourcePrefix = StringUtils.removeEnd(sourcePrefix, "/");
+        if (!StringUtils.startsWithIgnoreCase(currentPath, sourcePrefix)) {
+            return  normalizedPath;
         }
-        String removePath = SambaUtil.removePrefix(filePath,urlList.get(0));
-        return  urlList.get(1).concat(removePath);
+        if (currentPath.length() > sourcePrefix.length() && currentPath.charAt(sourcePrefix.length()) != '/') {
+            return normalizedPath;
+        }
+        String removePath = currentPath.substring(sourcePrefix.length());
+        if (isBlank(removePath)) {
+            return targetPrefix;
+        }
+        if (targetPrefix.endsWith("/") && removePath.startsWith("/")) {
+            return targetPrefix.concat(removePath.substring(1));
+        }
+        if (!targetPrefix.endsWith("/") && !removePath.startsWith("/")) {
+            return targetPrefix.concat("/").concat(removePath);
+        }
+        return targetPrefix.concat(removePath);
     }
 
     @Override
@@ -725,6 +903,25 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     /**
+     * 产品管理页面保存证书时的重复校验：
+     * 1. 校验请求内重复
+     * 2. 校验与库内重复（更新场景排除自身id）
+     */
+    private void checkProductCertificateForProductAddOrUpdate(List<ProductCertificateEntity> resultList, List<ProductDetailEntity> productDetailEntityList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        List<String> skuIdList = resultList.stream().map(ProductCertificateEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> dictProductList = resultList.stream().map(ProductCertificateEntity::getDictProject).distinct().collect(Collectors.toList());
+        List<ProductCertificateEntity> productCertificateList = listBySkuListAndDictProductList(skuIdList, dictProductList);
+        Set<String> currentIdSet = resultList.stream().map(ProductCertificateEntity::getId).filter(id -> !isBlank(id)).collect(Collectors.toSet());
+        if (CollectionUtils.isNotEmpty(productCertificateList) && CollectionUtils.isNotEmpty(currentIdSet)) {
+            productCertificateList = productCertificateList.stream().filter(obj -> !currentIdSet.contains(obj.getId())).collect(Collectors.toList());
+        }
+        checkProductCertificateParam(resultList, productDetailEntityList, productCertificateList);
+    }
+
+    /**
      * @description: 查询认证
      * @author Will
      * @date: 2024/2/27 18:27
@@ -736,7 +933,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         List<ProductCertificateEntity> list = lambdaQuery().in(CollectionUtils.isNotEmpty(skuIdList),ProductCertificateEntity::getSkuId, skuIdList)
                 .in(CollectionUtils.isNotEmpty(dictProductList),ProductCertificateEntity::getDictProject, dictProductList)
                 .list();
-        return list;
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        List<String> businessIds = list.stream().map(ProductCertificateEntity::getId).collect(Collectors.toList());
+        List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(businessIds);
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            return Collections.emptyList();
+        }
+        Set<String> validBusinessIdSet = attachmentList.stream().map(PlmAttachmentEntity::getBusinessId).collect(Collectors.toSet());
+        return list.stream().filter(obj -> validBusinessIdSet.contains(obj.getId())).collect(Collectors.toList());
     }
 
     /**
@@ -773,6 +979,21 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
         }
         return resultList;
+    }
+
+    /**
+     * 新增上传时，证书文件必填且不可为空文件
+     */
+    private void checkAddFile(List<ProductCertificateEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        for (ProductCertificateEntity entity : resultList) {
+            MultipartFile multipartFile = entity.getMultipartFile();
+            if (ObjectUtil.isEmpty(multipartFile) || multipartFile.isEmpty()) {
+                throw new ServiceException("证书文件不能为空");
+            }
+        }
     }
     public static String chineseToUnicode(String str) {
         String result = "";

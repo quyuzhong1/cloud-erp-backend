@@ -280,15 +280,23 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         } else {
 
-            // 无来源的订单，直接删除旧数据 + 保存新数据
+            //先从价表取价
+            List<PurchasePriceDTO.PriceDTO> priceDTOS = getPurchasePrices(updateDTO, detailList);
+
+            //构建明细实体
+            List<AssetPurchaseOrderDetailEntity> detailEntityList = buildDetailEntities(updateDTO, detailList, priceDTOS);
+
+            //检查总金额是否为 0
+            checkTotalAmount(detailEntityList);
+
+            //删除旧数据
             deleteOldDetails(assetPurchaseOrderId, detailList);
 
-            List<AssetPurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailEntity.class, detailList);
+            //补充关联关系
+            fillDetaillList(detailEntityList, assetPurchaseOrderId);
 
-            // 补充关联关系
-            fillDetaillList(newList,assetPurchaseOrderId);
-
-            this.saveOrUpdateBatch(newList);
+            //保存新数据
+            this.saveOrUpdateBatch(detailEntityList);
         }
     }
 

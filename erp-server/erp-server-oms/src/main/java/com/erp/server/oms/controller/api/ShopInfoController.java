@@ -628,4 +628,13 @@ public class ShopInfoController extends BaseController {
         }
         return success(shopInfoService.pagingSelect(dto));
     }
+
+    /**
+     * 根据平台列表批量获取店铺
+     * @param platformList 平台
+     */
+    @PostMapping("/listShopInfoByPlatformList")
+    public ApiResult<List<ShopDTO.ListShopInfoDTO>> listShopInfoByPlatformList(@RequestBody List<String> platformList){
+        return success(shopInfoService.listShopInfoByPlatformList(platformList));
+    }
 }

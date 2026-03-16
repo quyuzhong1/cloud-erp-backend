@@ -80,7 +80,8 @@
             t.create_time createTime,
             t.update_user_name updateUserName,
             t.update_time updateTime,
-            h.allocated_currency currency
+            h.allocated_currency currency,
+            k.platform_code as platformCode
         from small_bag_cost_allocation_main t
         left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
         left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false

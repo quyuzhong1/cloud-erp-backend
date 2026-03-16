@@ -10,6 +10,7 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -20,6 +21,7 @@ import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.SupplierCategoryEnum;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -885,8 +887,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         List<CfgMouldSettingEntity> cfgMouldSettingEntites = cfgMouldSettingService.mouldList();
         Map<String, String> cfgMouldSettingMap = cfgMouldSettingEntites.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId));
 
-        //用户
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //用户（包括启用和未启用）
+        List<FindUserDTO> userList = sysUserFeign.getAllUserList();
 
         //设置操作人
         FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);

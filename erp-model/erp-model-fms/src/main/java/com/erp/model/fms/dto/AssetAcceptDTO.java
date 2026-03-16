@@ -43,7 +43,7 @@ public class AssetAcceptDTO implements Serializable {
          private String tabFlag;
 
          /**
-          * 类型名臣
+          * 类型名称
           */
          private String tabFlagName;
 
@@ -301,6 +301,7 @@ public class AssetAcceptDTO implements Serializable {
          * 是否需要盖章
          */
         private String isNeedSealStr;
+
         /**
         * 验收组织ID
         */
@@ -655,12 +656,12 @@ public class AssetAcceptDTO implements Serializable {
         /**
          * 单据状态
          */
-        private String approveStatuts;
+        private String approveStatus;
 
         /**
          * 单据状态名称
          */
-        private String approveStatutsName;
+        private String approveStatusName;
 
         /**
          * 作废状态

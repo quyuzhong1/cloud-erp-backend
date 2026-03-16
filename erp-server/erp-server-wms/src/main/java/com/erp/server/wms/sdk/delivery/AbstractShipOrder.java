@@ -53,8 +53,23 @@ public abstract class AbstractShipOrder implements IPlatformService {
         }
         String mainId = detailList.get(0).getMainId();
         Map<String, List<SoB2cDetailEntity>> splitDetailMap = detailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getSplitDetailId));
+
+        //提前收集所有需要查询的 splitDetailId
+        List<String> allSplitDetailIds = new ArrayList<>(splitDetailMap.keySet());
+
+        //批量查询所有 splitDetailId 对应的原始明细
+        Map<String, SoB2cDetailEntity> originalDetailMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(allSplitDetailIds)) {
+            List<SoB2cDetailEntity> originalDetailList = soB2cFeign.listDetailContainDeleted(allSplitDetailIds);
+            if (CollectionUtils.isNotEmpty(originalDetailList)) {
+                originalDetailMap = originalDetailList.stream()
+                        .collect(Collectors.toMap(SoB2cDetailEntity::getId, e -> e));
+            }
+        }
+
         List<String> filterDetailList = new ArrayList<>();
         List<SoB2cEntity> allEntityList = new ArrayList<>();
+        Map<String, SoB2cDetailEntity> finalOriginalDetailMap = originalDetailMap;
         splitDetailMap.forEach((key, value) -> {
             //查询关联的捆绑商品对应明细
             SoB2cDTO.CombinationDTO soCombinationDTO = soB2cFeign.listRefBomSplit(key);
@@ -70,9 +85,9 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     filterDetailList.addAll(value.stream().map(v -> v.getId()).collect(Collectors.toList()));
                 } else {
                     //将数量设置为拆分前的数量
-                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Collections.singletonList(key));
-                    if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
-                        value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
+                    SoB2cDetailEntity originalDetail = finalOriginalDetailMap.get(key);
+                    if (originalDetail != null) {
+                        value.forEach(v -> v.setQty(originalDetail.getQty()));
                     }
                     allEntityList.addAll(soCombinationDTO.getSoB2cEntityList());
                 }
@@ -82,9 +97,9 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     filterDetailList.addAll(value.stream().map(v -> v.getId()).collect(Collectors.toList()));
                 } else {
                     //将数量设置为拆分前的数量
-                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Collections.singletonList(key));
-                    if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
-                        value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
+                    SoB2cDetailEntity originalDetail = finalOriginalDetailMap.get(key);
+                    if (originalDetail != null) {
+                        value.forEach(v -> v.setQty(originalDetail.getQty()));
                     }
                     allEntityList.addAll(soCombinationDTO.getSoB2cEntityList());
                 }

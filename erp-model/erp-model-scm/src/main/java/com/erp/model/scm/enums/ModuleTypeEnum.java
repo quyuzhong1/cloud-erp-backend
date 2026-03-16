@@ -177,6 +177,7 @@ public enum ModuleTypeEnum {
     SO_B2C_REFUND("146", "售后订单"),
     AWD_OUTSTOCK("156", "AWD出库"),
     AWD_INVENTORY("157","AWD库存"),
+    CFG_AFTER_PLATFORM_SHOP("164","售后平台店铺配置"),
     // ==================== 资产相关模块 ====================
     ASSET_LOCATION("146", "资产位置"),
     ASSET_ACCEPTANCE("147", "资产验收单"),
@@ -199,8 +200,11 @@ public enum ModuleTypeEnum {
     KOL_PARTNER_INFO("157", "企业达人库"),
     KOL_B2C_APPLICATION("158", "B2C寄样申请单"),
     KOL_KOL_SAMPLE_COST("159", "寄样费用单"),
+    CFG_LOGISTICS_COST_IMPORT("160", "费用配置"),
 
     PRODUCT_BU("160", "产品BU线"),
+
+    PRODUCT_CHANGE("161", "产品变更单"),
 
 
 

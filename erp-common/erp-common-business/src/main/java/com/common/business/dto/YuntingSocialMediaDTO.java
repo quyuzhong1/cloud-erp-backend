@@ -73,6 +73,11 @@ public class YuntingSocialMediaDTO extends UniqueDto {
     private String repostCount;
 
     /**
+     * 播放
+     */
+    private String playCount;
+
+    /**
      * 分组
      */
     private String group;

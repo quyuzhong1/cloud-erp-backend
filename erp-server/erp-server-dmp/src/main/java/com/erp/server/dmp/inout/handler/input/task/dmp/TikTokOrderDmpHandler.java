@@ -162,6 +162,13 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put("logisticsChannelName", isSelfDeliveryOrder(fulfillmentType, shippingType) ? "" : shippingProvider);
                 }
 
+                Object orderTypeObj = dmpDataMap.get("orderType");
+                if (orderTypeObj != null) {
+                    String orderType = String.valueOf(orderTypeObj);
+                    if("BACK_ORDER".equals(orderType)){
+                        lableMap.put("orderType", "preOrder");
+                    }
+                }
                 // 是否明细退款
                 boolean hasRefundLineItems = false;
                 Object lineItemsObj = dmpDataMap.get("lineItems");

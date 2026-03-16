@@ -61,6 +61,12 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 费用名称
+     */
+    @TableField(exist = false)
+    private String costName;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String COST_CODE = "cost_code";

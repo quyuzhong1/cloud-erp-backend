@@ -476,6 +476,11 @@ public class WmsCartonDTO {
          * 尺寸单位
          */
         private String sizeUnit;
+
+        /**
+         * 是否取消重量分摊
+         */
+        private Boolean isCancelRequired;
     }
     @Data
     @Builder

@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -32,14 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 尾程费用
+ * 尾程费用(平台发货)
  *
  * @author Will
  * @since 2023-11-06
  */
 @Slf4j
 @RestController
-@LogSystemModule("尾程费用")
+@LogSystemModule("尾程费用(平台发货)")
 @RequestMapping("/logisticsLastMileCost")
 public class LogisticsLastMileCostController extends BaseController {
 
@@ -117,7 +118,7 @@ public class LogisticsLastMileCostController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "尾程费用修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "尾程费用(平台发货)修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "tms:logisticsLastMileCost:update",
@@ -162,10 +163,10 @@ public class LogisticsLastMileCostController extends BaseController {
             try {
                 submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus(),dto.getConfirmTime());
             }catch (Exception e){
-                log.error("尾程费用 状态变更",e);
+                log.error("尾程费用(平台发货) 状态变更",e);
                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "尾程费用不存在, 状态变更");
+                    submit = BatchResultDTO.fail(id, id, "尾程费用(平台发货)不存在, 状态变更");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -197,10 +198,10 @@ public class LogisticsLastMileCostController extends BaseController {
     		try {
     			submit = logisticsBillCostService.updatePayStatus(id,dto.getPayStatus(),dto.getPayTime());
     		}catch (Exception e){
-    			log.error("尾程费用 状态变更",e);
+    			log.error("尾程费用(平台发货) 状态变更",e);
     			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "尾程费用不存在, 状态变更");
+    				submit = BatchResultDTO.fail(id, id, "尾程费用(平台发货)不存在, 状态变更");
     				resultDTOS.add(submit);
     				continue;
     			}
@@ -218,7 +219,7 @@ public class LogisticsLastMileCostController extends BaseController {
      * @param response
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载尾程费用模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载尾程费用(平台发货)模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
     	logisticsLastMileCostService.downloadTemplate(response);
@@ -232,7 +233,7 @@ public class LogisticsLastMileCostController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入尾程费用模板")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入尾程费用(平台发货)模板")
     @PostMapping(value = "/importExcel")
     public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean flag = logisticsLastMileCostService.importExcel(dto);
@@ -246,7 +247,7 @@ public class LogisticsLastMileCostController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出尾程费用模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出尾程费用(平台发货)模板")
     @PostMapping(value = "/exportExcel")
     public ApiResult<Object>exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
         Boolean flag = logisticsLastMileCostService.exportExcel(dto);
@@ -322,6 +323,18 @@ public class LogisticsLastMileCostController extends BaseController {
      	logisticsBillCostService.edit(dtoList);
      	return success();
      }
+
+    /**
+     * 下推分摊统计
+     * @author jack
+     * @date:  2025-01-29
+     * @return ApiResult
+     */
+    @PostMapping("/pushAllocationCount")
+    public ApiResult<LogisticsBillCostDTO.PushAllocatedCostCountDTO> pushAllocationCount(@RequestBody @Validated PushDTO dto) {
+        dto.setType(DictCostAttributionEnum.LAST_MILE.getCode());
+        return success(logisticsBillCostService.pushAllocationCount(dto));
+    }
      
      /**
       * 下推分摊
@@ -338,24 +351,30 @@ public class LogisticsLastMileCostController extends BaseController {
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
-    	 List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-         for (String id : dto.getIds()) {
-             BatchResultDTO submit;
-             try {
-                 submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
-             }catch (Exception e){
-                 log.error("尾程费用 状态变更",e);
-                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
-                 if (ObjectUtil.isEmpty(entity)) {
-                     submit = BatchResultDTO.fail(id, id, "尾程费用不存在, 下推分摊");
-                     resultDTOS.add(submit);
-                     continue;
+         if(CollUtil.isEmpty(dto.getIds())){
+             dto.setType(DictCostAttributionEnum.LAST_MILE.getCode());
+             logisticsBillCostService.batchAsyncPushAllocation(dto);
+             return success();
+         }else {
+             List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+             for (String id : dto.getIds()) {
+                 BatchResultDTO submit;
+                 try {
+                     submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
+                 }catch (Exception e){
+                     log.error("尾程费用(平台发货) 状态变更",e);
+                     LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+                     if (ObjectUtil.isEmpty(entity)) {
+                         submit = BatchResultDTO.fail(id, id, "尾程费用(平台发货)不存在, 下推分摊");
+                         resultDTOS.add(submit);
+                         continue;
+                     }
+                     submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
                  }
-                 submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+                 resultDTOS.add(submit);
              }
-             resultDTOS.add(submit);
+             return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
          }
-         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
      }
      
      /**
@@ -379,10 +398,10 @@ public class LogisticsLastMileCostController extends BaseController {
      		try {
      			submit = logisticsBillCostService.delete(id);
      		}catch (Exception e){
-     			log.error("尾程费用 状态变更",e);
+     			log.error("尾程费用(平台发货) 状态变更",e);
      			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
      			if (ObjectUtil.isEmpty(entity)) {
-     				submit = BatchResultDTO.fail(id, id, "尾程费用不存在, 状态变更");
+     				submit = BatchResultDTO.fail(id, id, "尾程费用(平台发货)不存在, 状态变更");
      				resultDTOS.add(submit);
      				continue;
      			}
@@ -392,4 +411,25 @@ public class LogisticsLastMileCostController extends BaseController {
      	}
      	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
      }
+
+
+
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:17
+     * @param dto
+     * @return ApiResult<TotalCountDTO>
+     */
+    @PostMapping("/listTotalCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:logisticsLastMileCost:paging",
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
+    public ApiResult<LogisticsBillCostDTO.TotalCountDTO> listTotalCount(@RequestBody @Validated LogisticsBillCostDTO.PagingParamDTO dto){
+        return success(logisticsBillCostService.listTotalCount(dto));
+    }
 }
