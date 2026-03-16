@@ -236,56 +236,17 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             deleteOldKolSampleCost(oldList);
             return;
         }
-        List<String> soDetailIdList = soOutstockDTOList.stream().map(SoOutstockDTO.KolSoOutstockDTO::getSoDetailId).distinct().collect(Collectors.toList());
-
         List<KolSampleCostEntity> thisMonthList = new ArrayList<>();
-        List<List<String>> partition = Lists.partition(soDetailIdList, 5000);
-        for(List<String> partitionIdLIst : partition) {
-            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostBySoDetailIdList(partitionIdLIst);
-            if (CollUtil.isEmpty(kolSampleCostEntityList)) {
-                continue;
-            }
-            for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList = soOutstockDTOList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoDetailId(), sampleCostEntity.getSoDetailId())).collect(Collectors.toList());
-                if (CollUtil.isEmpty(kolSoOutstockDTOList)) {
-                    continue;
-                }
-                for (SoOutstockDTO.KolSoOutstockDTO kolSoOutstockDTO : kolSoOutstockDTOList) {
-                    KolSampleCostEntity  costEntity = new KolSampleCostEntity();
-                    BeanMapperUtils.copy(kolSoOutstockDTO, costEntity);
+        List<SoOutstockDTO.KolSoOutstockDTO> regularSoOutstockDTOList = soOutstockDTOList.stream()
+                .filter(obj -> !isWdtKolSoOutstock(obj))
+                .collect(Collectors.toList());
+        List<SoOutstockDTO.KolSoOutstockDTO> wdtKolSoOutstockDTOList = soOutstockDTOList.stream()
+                .filter(this::isWdtKolSoOutstock)
+                .collect(Collectors.toList());
 
-                    KolSampleCostEntity oldEntity = oldOutstockDetailCostMap.get(kolSoOutstockDTO.getSoOutstockDetailId());
-                    if (ObjUtil.isNotEmpty(oldEntity)) {
-                        costEntity.setId(oldEntity.getId());
-                        // 更新费用时如果拿不到新的SKU成本/尾程分摊，保持历史费用不变
-                        costEntity.setProductCost(ObjUtil.defaultIfNull(oldEntity.getProductCost(), BigDecimal.ZERO));
-                        costEntity.setFirstMileShippingCost(ObjUtil.defaultIfNull(oldEntity.getFirstMileShippingCost(), BigDecimal.ZERO));
-                        costEntity.setClearanceCustomsTax(ObjUtil.defaultIfNull(oldEntity.getClearanceCustomsTax(), BigDecimal.ZERO));
-                        costEntity.setShippingCost(ObjUtil.defaultIfNull(oldEntity.getShippingCost(), BigDecimal.ZERO));
-                        costEntity.setCustomsTax(ObjUtil.defaultIfNull(oldEntity.getCustomsTax(), BigDecimal.ZERO));
-                        costEntity.setOtherCost(ObjUtil.defaultIfNull(oldEntity.getOtherCost(), BigDecimal.ZERO));
-                        costEntity.setTotalCost(ObjUtil.defaultIfNull(oldEntity.getTotalCost(), BigDecimal.ZERO));
-                        costEntity.setExchangeRate(oldEntity.getExchangeRate());
-                        costEntity.setCurrency(CharSequenceUtil.blankToDefault(oldEntity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode()));
-                        costEntity.setCurrencySymbol(CharSequenceUtil.blankToDefault(oldEntity.getCurrencySymbol(), CurrencyEnum.CNY.getCurrencySymbol()));
-                    }
-                    costEntity.setType(sampleCostEntity.getType());
-                    costEntity.setSourceCode(sampleCostEntity.getSourceCode());
-                    costEntity.setSourceId(sampleCostEntity.getSourceId());
-                    costEntity.setSourceType(sampleCostEntity.getSourceType());
-                    costEntity.setPartitionId(sampleCostEntity.getPartitionId());
-                    costEntity.setPartitionName(partitionMap.get(sampleCostEntity.getPartitionId()));
-                    costEntity.setPartnerId(sampleCostEntity.getPartnerId());
-                    costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
-                    costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
-                    costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
-                    costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
-                    costEntity.setQty(kolSoOutstockDTO.getActualQty());
-                    costEntity.setSoOutstockDate(kolSoOutstockDTO.getSoOutstockDate());
-                    thisMonthList.add(costEntity);
-                }
-            }
-        }
+        appendRegularKolSampleCost(thisMonthList, regularSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap);
+        appendWdtKolSampleCost(thisMonthList, wdtKolSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap);
+
         if (CollUtil.isEmpty(thisMonthList)) {
             return;
         }
@@ -352,6 +313,131 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
         super.saveOrUpdateBatch(thisMonthList);
 
+    }
+
+    private void appendRegularKolSampleCost(List<KolSampleCostEntity> thisMonthList,
+                                            List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList,
+                                            Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
+                                            Map<String, String> partitionMap) {
+        if (CollUtil.isEmpty(soOutstockDTOList)) {
+            return;
+        }
+        Map<String, List<SoOutstockDTO.KolSoOutstockDTO>> soOutstockMap = soOutstockDTOList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getSoDetailId()))
+                .collect(Collectors.groupingBy(SoOutstockDTO.KolSoOutstockDTO::getSoDetailId));
+        List<String> soDetailIdList = new ArrayList<>(soOutstockMap.keySet());
+        if (CollUtil.isEmpty(soDetailIdList)) {
+            return;
+        }
+        List<List<String>> partitionList = Lists.partition(soDetailIdList, 5000);
+        for (List<String> partitionIdList : partitionList) {
+            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostBySoDetailIdList(partitionIdList);
+            if (CollUtil.isEmpty(kolSampleCostEntityList)) {
+                continue;
+            }
+            for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, false);
+            }
+        }
+    }
+
+    private void appendWdtKolSampleCost(List<KolSampleCostEntity> thisMonthList,
+                                        List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList,
+                                        Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
+                                        Map<String, String> partitionMap) {
+        if (CollUtil.isEmpty(soOutstockDTOList)) {
+            return;
+        }
+        Map<String, List<SoOutstockDTO.KolSoOutstockDTO>> soOutstockMap = soOutstockDTOList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getSoDetailId()))
+                .collect(Collectors.groupingBy(SoOutstockDTO.KolSoOutstockDTO::getSoDetailId));
+        List<String> sourceDetailIdList = new ArrayList<>(soOutstockMap.keySet());
+        if (CollUtil.isEmpty(sourceDetailIdList)) {
+            return;
+        }
+        List<List<String>> partitionList = Lists.partition(sourceDetailIdList, 5000);
+        for (List<String> partitionIdList : partitionList) {
+            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostByWdtSourceDetailIdList(partitionIdList);
+            Set<String> hitSourceDetailIdSet = CollUtil.isEmpty(kolSampleCostEntityList)
+                    ? new HashSet<>()
+                    : kolSampleCostEntityList.stream()
+                    .map(KolSampleCostEntity::getSourceDetailId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .collect(Collectors.toSet());
+            for (String sourceDetailId : partitionIdList) {
+                if (hitSourceDetailIdSet.contains(sourceDetailId)) {
+                    continue;
+                }
+                List<SoOutstockDTO.KolSoOutstockDTO> missList = soOutstockMap.get(sourceDetailId);
+                if (CollUtil.isEmpty(missList)) {
+                    continue;
+                }
+                missList.forEach(obj -> log.warn("KOL寄样费用统计跳过WDT出库，未命中寄样申请明细，sourceCode:{}, soOutstockCode:{}, soOutstockDetailId:{}, sourceDetailId:{}",
+                        obj.getSourceCode(), obj.getSoOutstockCode(), obj.getSoOutstockDetailId(), obj.getSoDetailId()));
+            }
+            if (CollUtil.isEmpty(kolSampleCostEntityList)) {
+                continue;
+            }
+            for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSourceDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, true);
+            }
+        }
+    }
+
+    private void appendKolSampleCost(List<KolSampleCostEntity> thisMonthList,
+                                     List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList,
+                                     KolSampleCostEntity sampleCostEntity,
+                                     Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
+                                     Map<String, String> partitionMap,
+                                     boolean useOutstockSourceCodeAsSoCode) {
+        if (CollUtil.isEmpty(kolSoOutstockDTOList) || ObjUtil.isEmpty(sampleCostEntity)) {
+            return;
+        }
+        for (SoOutstockDTO.KolSoOutstockDTO kolSoOutstockDTO : kolSoOutstockDTOList) {
+            KolSampleCostEntity costEntity = new KolSampleCostEntity();
+            BeanMapperUtils.copy(kolSoOutstockDTO, costEntity);
+            fillHistoryCost(costEntity, oldOutstockDetailCostMap.get(kolSoOutstockDTO.getSoOutstockDetailId()));
+            costEntity.setType(sampleCostEntity.getType());
+            costEntity.setSourceCode(sampleCostEntity.getSourceCode());
+            costEntity.setSourceId(sampleCostEntity.getSourceId());
+            costEntity.setSourceType(sampleCostEntity.getSourceType());
+            costEntity.setSourceDetailId(sampleCostEntity.getSourceDetailId());
+            costEntity.setPartitionId(sampleCostEntity.getPartitionId());
+            costEntity.setPartitionName(partitionMap.get(sampleCostEntity.getPartitionId()));
+            costEntity.setPartnerId(sampleCostEntity.getPartnerId());
+            costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
+            costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
+            if (useOutstockSourceCodeAsSoCode) {
+                costEntity.setSoCode(kolSoOutstockDTO.getSourceCode());
+            }
+            costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
+            costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
+            costEntity.setQty(kolSoOutstockDTO.getActualQty());
+            costEntity.setSoOutstockDate(kolSoOutstockDTO.getSoOutstockDate());
+            thisMonthList.add(costEntity);
+        }
+    }
+
+    private void fillHistoryCost(KolSampleCostEntity costEntity, KolSampleCostEntity oldEntity) {
+        if (ObjUtil.isEmpty(oldEntity)) {
+            return;
+        }
+        costEntity.setId(oldEntity.getId());
+        // 更新费用时如果拿不到新的SKU成本/尾程分摊，保持历史费用不变
+        costEntity.setProductCost(ObjUtil.defaultIfNull(oldEntity.getProductCost(), BigDecimal.ZERO));
+        costEntity.setFirstMileShippingCost(ObjUtil.defaultIfNull(oldEntity.getFirstMileShippingCost(), BigDecimal.ZERO));
+        costEntity.setClearanceCustomsTax(ObjUtil.defaultIfNull(oldEntity.getClearanceCustomsTax(), BigDecimal.ZERO));
+        costEntity.setShippingCost(ObjUtil.defaultIfNull(oldEntity.getShippingCost(), BigDecimal.ZERO));
+        costEntity.setCustomsTax(ObjUtil.defaultIfNull(oldEntity.getCustomsTax(), BigDecimal.ZERO));
+        costEntity.setOtherCost(ObjUtil.defaultIfNull(oldEntity.getOtherCost(), BigDecimal.ZERO));
+        costEntity.setTotalCost(ObjUtil.defaultIfNull(oldEntity.getTotalCost(), BigDecimal.ZERO));
+        costEntity.setExchangeRate(oldEntity.getExchangeRate());
+        costEntity.setCurrency(CharSequenceUtil.blankToDefault(oldEntity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode()));
+        costEntity.setCurrencySymbol(CharSequenceUtil.blankToDefault(oldEntity.getCurrencySymbol(), CurrencyEnum.CNY.getCurrencySymbol()));
+    }
+
+    private boolean isWdtKolSoOutstock(SoOutstockDTO.KolSoOutstockDTO dto) {
+        return CharSequenceUtil.isNotBlank(dto.getSourceCode()) && StrUtil.startWithIgnoreCase(dto.getSourceCode(), "KOL");
     }
 
     /**

@@ -2024,6 +2024,11 @@ public class SoOutstockDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
         /**
          * 销售出库单id
          */

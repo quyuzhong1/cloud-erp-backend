@@ -149,6 +149,7 @@
             so.so_id as soId,
             so.so_code as soCode,
             so.source_type as sourceType,
+            so.source_code as sourceCode,
             so.sales_org_id as salesOrgId,
             so.sales_org_name as salesOrgName,
             so.bill_date as soOutstockDate,
