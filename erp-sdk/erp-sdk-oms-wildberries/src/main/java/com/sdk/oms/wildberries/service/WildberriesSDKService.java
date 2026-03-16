@@ -12,9 +12,7 @@ import com.sdk.oms.wildberries.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author zdy
@@ -317,11 +315,14 @@ public class WildberriesSDKService {
     public AddOrderToSupplyResponse addOrderToSupply(String token, AddOrderToSupplyRequest request) throws InterruptedException {
         Thread.sleep(1000);
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_ADD_ORDER_TO_SUPPLY,getSandbox(),request.getSupplyId(),request.getOrderId());
+        Map<String,Object> body = new HashMap<>();
+        body.put("orders", Collections.singletonList(request.getOrderId()));
+        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_ADD_ORDER_TO_SUPPLY,getSandbox(),request.getSupplyId());
         String bodyStr = HttpRequest.patch(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
                 .header("locale", "zh")
+                .body(JSONUtil.toJsonStr(body))
                 .execute().body();
         log.error("接口返回：{}", bodyStr);
         AddOrderToSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<AddOrderToSupplyResponse>() {}.getType());
