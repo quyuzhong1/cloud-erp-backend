@@ -389,7 +389,7 @@ public class ZhongbaoService {
     /**
      * 创建出库单
      */
-    public BaseResponse<OverseasOutboundCreateResponse> createOutboundBill(String token, OverseasOutboundCreateRequest overseasOutboundCreateRequest){
+    public OverseasOutboundCreateResponse createOutboundBill(String token, OverseasOutboundCreateRequest overseasOutboundCreateRequest){
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundCreateRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
@@ -404,8 +404,7 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasOutboundCreateResponse>>() {
-            }.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<OverseasOutboundCreateResponse>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -441,7 +440,7 @@ public class ZhongbaoService {
     /**
      * 查询出库单
      */
-    public BaseResponse<OverseasOutboundQueryResponse> queryOutboundBill(String token, OverseasOutboundQueryRequest overseasOutboundQueryRequest){
+    public OverseasOutboundQueryResponse queryOutboundBill(String token, OverseasOutboundQueryRequest overseasOutboundQueryRequest){
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundQueryRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
@@ -456,14 +455,18 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasOutboundCancelResponse>>() {
-            }.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<OverseasOutboundQueryResponse>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
         }
     }
 
+    /**
+     * B2C出库单查询
+     * @param queryRequest
+     * @return
+     */
     public BaseResponse<List<OutboundB2cQueryResponse>> queryB2cOutboundBill(OutboundB2cQueryRequest queryRequest) {
         String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(queryRequest));
@@ -489,6 +492,12 @@ public class ZhongbaoService {
             throw new ServiceException("请求失败,异常: " + e.getMessage());
         }
     }
+
+    /**
+     * B2C出库单创建
+     * @param createRequest
+     * @return
+     */
     public BaseResponse<OutboundB2cCreateResponse> createB2cOutboundBill(OutboundB2cCreateRequest createRequest) {
         String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(createRequest));
@@ -507,6 +516,37 @@ public class ZhongbaoService {
             log.warn("bodyStr: {}", bodyStr);
             ThirdWarehouseContext.setResponseJson(bodyStr);
             return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cCreateResponse>>() {
+            }.getType());
+        } catch (IOException e) {
+            log.error("请求失败,异常: {}", e);
+            ThirdWarehouseContext.setResponseJson("请求失败,异常: {}" + e.getMessage());
+            throw new ServiceException("请求失败,异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * B2C出库单取消
+     * @param cancelRequest
+     * @return
+     */
+    public BaseResponse<OutboundB2cCancelResponse> cancelB2cOutboundBill(OutboundB2cCancelRequest cancelRequest) {
+        String token = getToken(ThirdWarehouseContext.getAuthMap());
+        log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(cancelRequest));
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(cancelRequest));
+        Request request = new Request.Builder()
+                .url(getPreUrl() + "/open/outbound-order-data/cancel")
+                .method("POST", body)
+                .addHeader("Authorization", token)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            String bodyStr = response.body().string();
+            log.warn("bodyStr: {}", bodyStr);
+            ThirdWarehouseContext.setResponseJson(bodyStr);
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cCancelResponse>>() {
             }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);

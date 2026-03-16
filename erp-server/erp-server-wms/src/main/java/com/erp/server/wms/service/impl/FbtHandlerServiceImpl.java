@@ -116,7 +116,7 @@ public class FbtHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         ShopInfoEntity shopInfo = findAuthorizedShopByAccount(shopAccount);
         if (shopInfo == null || StrUtil.isBlank(shopInfo.getId())) {
-            throw new ServiceException("未找到已授权的TikTok店铺");
+            throw new ServiceException("未找到已授权的TikTok店铺，FBT不支持TikTok Fully店铺授权");
         }
 
         authJson.put("shopAccount", shopAccount);
@@ -127,17 +127,9 @@ public class FbtHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private ShopInfoEntity findAuthorizedShopByAccount(String account) {
-        ShopInfoEntity preferredTikTok = pickPreferredShop(FeignQuery.create(ShopInfoEntity.class)
-                .eq(ShopInfoEntity::getAccount, account)
-                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.TIK_TOK.getCode())
-                .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                .list());
-        if (preferredTikTok != null) {
-            return preferredTikTok;
-        }
         return pickPreferredShop(FeignQuery.create(ShopInfoEntity.class)
                 .eq(ShopInfoEntity::getAccount, account)
-                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.TIK_TOK_FULLY.getCode())
+                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.TIK_TOK.getCode())
                 .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
                 .list());
     }

@@ -34,12 +34,16 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.dto.AuthUserShopDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.CfgCountryPartitionEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.oms.enums.ShopOrderRouteEnum;
@@ -1462,6 +1466,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public List<ShopInfoEntity> listByPlatformListAuth(List<String> platformList) {
+        List<ShopInfoEntity> shopList = this.listByPlatformList(platformList, "");
+        fillHasWarehouseAuth(shopList, UserContext.getDefaultLoginUser().getUid());
+        return shopList;
+    }
+
+    @Override
     public List<ShopInfoEntity> listShopByAmazon() {
         List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode()).list();
         return list;
@@ -1473,6 +1484,128 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         dto.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         return shopSysUserAuthService.listUserAuthShop(dto);
+    }
+
+    private void fillHasWarehouseAuth(List<ShopInfoEntity> shopList, String userId) {
+        if (CollectionUtils.isEmpty(shopList)) {
+            return;
+        }
+        shopList.forEach(shop -> shop.setHasWarehouseAuth(true));
+        List<SysUserDTO.WarehouseDTO> warehouseUserList = authDataFeign.getWarehouseUserList(userId);
+        if (CollUtil.isEmpty(warehouseUserList)) {
+            return;
+        }
+        boolean hasAllWarehouseAuth = warehouseUserList.stream()
+                .anyMatch(item -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(item.getAuthType()));
+        if (hasAllWarehouseAuth) {
+            return;
+        }
+        Set<String> warehouseIdSet = warehouseUserList.stream()
+                .map(SysUserDTO.WarehouseDTO::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        shopList.forEach(shop -> shop.setHasWarehouseAuth(warehouseIdSet.contains(shop.getWarehouseId())));
+        fillFbtWarehouseAuth(shopList, warehouseIdSet);
+    }
+
+    private void fillFbtWarehouseAuth(List<ShopInfoEntity> shopList, Set<String> warehouseIdSet) {
+        if (CollectionUtils.isEmpty(shopList) || CollUtil.isEmpty(warehouseIdSet)) {
+            return;
+        }
+        Map<String, String> tiktokAccountMap = shopList.stream()
+                .filter(Objects::nonNull)
+                .filter(shop -> PlatformDictEnum.TIK_TOK.getCode().equals(shop.getDictPlatform()))
+                .filter(shop -> CharSequenceUtil.isNotBlank(shop.getAccount()))
+                .collect(Collectors.toMap(
+                        shop -> shop.getAccount().toLowerCase(Locale.ROOT),
+                        ShopInfoEntity::getId,
+                        (first, second) -> first
+                ));
+        if (tiktokAccountMap.isEmpty()) {
+            return;
+        }
+        Set<String> shopIdSet = shopList.stream()
+                .map(ShopInfoEntity::getId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
+                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.FBT.getCode())
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .list();
+        if (CollectionUtils.isEmpty(providerList)) {
+            return;
+        }
+        Map<String, List<String>> shopProviderIdsMap = new HashMap<>();
+        for (OverseasProviderEntity provider : providerList) {
+            String shopId = resolveFbtShopId(provider, tiktokAccountMap);
+            if (!shopIdSet.contains(shopId)) {
+                continue;
+            }
+            shopProviderIdsMap.computeIfAbsent(shopId, key -> new ArrayList<>()).add(provider.getId());
+        }
+        if (shopProviderIdsMap.isEmpty()) {
+            return;
+        }
+        Set<String> providerIdSet = shopProviderIdsMap.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        List<OverseasProviderWarehouseEntity> providerWarehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .in(OverseasProviderWarehouseEntity::getMainId, providerIdSet)
+                .list();
+        if (CollectionUtils.isEmpty(providerWarehouseList)) {
+            return;
+        }
+        Map<String, Boolean> providerWarehouseAuthMap = providerWarehouseList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getWarehouseId()))
+                .collect(Collectors.groupingBy(
+                        OverseasProviderWarehouseEntity::getMainId,
+                        Collectors.collectingAndThen(Collectors.toList(),
+                                list -> list.stream().anyMatch(item -> warehouseIdSet.contains(item.getWarehouseId())))
+                ));
+        if (providerWarehouseAuthMap.isEmpty()) {
+            return;
+        }
+        Map<String, Boolean> shopFbtWarehouseAuthMap = new HashMap<>();
+        shopProviderIdsMap.forEach((shopId, providerIds) -> shopFbtWarehouseAuthMap.put(
+                shopId,
+                providerIds.stream().anyMatch(providerId -> Boolean.TRUE.equals(providerWarehouseAuthMap.get(providerId)))
+        ));
+        shopList.forEach(shop -> {
+            if (Boolean.TRUE.equals(shopFbtWarehouseAuthMap.get(shop.getId()))) {
+                shop.setHasWarehouseAuth(true);
+            }
+        });
+    }
+
+    private String resolveFbtShopId(OverseasProviderEntity provider, Map<String, String> tiktokAccountMap) {
+        if (Objects.isNull(provider)) {
+            return null;
+        }
+        Map<String, Object> authJson = provider.getAuthJson();
+        String shopId = firstMeaningful(authJson == null ? null : authJson.get("shopId"));
+        if (CharSequenceUtil.isNotBlank(shopId)) {
+            return shopId;
+        }
+        String shopAccount = firstMeaningful(authJson == null ? null : authJson.get("shopAccount"));
+        if (CharSequenceUtil.isBlank(shopAccount)) {
+            return null;
+        }
+        return tiktokAccountMap.get(shopAccount.toLowerCase(Locale.ROOT));
+    }
+
+    private String firstMeaningful(Object... values) {
+        for (Object value : values) {
+            if (Objects.isNull(value)) {
+                continue;
+            }
+            String text = String.valueOf(value).trim();
+            if (CharSequenceUtil.isNotBlank(text) && !"null".equalsIgnoreCase(text)) {
+                return text;
+            }
+        }
+        return null;
     }
 
 

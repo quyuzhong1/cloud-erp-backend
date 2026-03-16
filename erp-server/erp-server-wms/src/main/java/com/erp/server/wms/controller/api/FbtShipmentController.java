@@ -454,6 +454,31 @@ public class FbtShipmentController extends BaseController {
     }
 
     /**
+     * 上传标签回显
+     *
+     * @return ApiResult
+     * @author codex
+     * @date 2026-03-13
+     */
+    @PostMapping("/uploadLabelView")
+    public ApiResult<List<FbaShipmentDTO.UploadLabelViewDTO>> uploadLabelView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(fbaShipmentService.uploadLabelView(dto.getIds()));
+    }
+
+    /**
+     * 上传标签
+     *
+     * @return ApiResult
+     * @author codex
+     * @date 2026-03-13
+     */
+    @PostMapping("/uploadLabel")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "FBT货件上传标签")
+    public ApiResult<Boolean> uploadLabel(@RequestBody @Validated List<FbaShipmentDTO.UploadLabelDTO> dtoList) {
+        return success(fbaShipmentService.uploadLabel(dtoList));
+    }
+
+    /**
      * 打印标签
      *
      * @return ApiResult

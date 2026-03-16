@@ -227,6 +227,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if (StringUtils.isNotBlank(entity.getPlatformSkuId())) {
                         oldEntity.setPlatformSkuId(entity.getPlatformSkuId());
                     }
+                    if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                            && OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())
+                            && StringUtils.isNotBlank(entity.getPlatformSkuNo())) {
+                        oldEntity.setPlatformSkuNo(entity.getPlatformSkuNo());
+                    }
                     oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
                     listingInfoService.updateById(oldEntity);
 //                    if (!listingInfoService.updateById(oldEntity)) {

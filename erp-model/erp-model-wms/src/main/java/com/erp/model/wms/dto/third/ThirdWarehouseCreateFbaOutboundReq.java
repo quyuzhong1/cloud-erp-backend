@@ -34,6 +34,10 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      */
     private String thirdWarehouseCode;
     /**
+     * 取B2B三方发货单的发货仓库映射的众包仓库代码
+     */
+    private String mappingWarehouseCode;
+    /**
      * 收货国家，取发货通知的客户的收货国家二字码
      */
     private String receiverCountryCode;

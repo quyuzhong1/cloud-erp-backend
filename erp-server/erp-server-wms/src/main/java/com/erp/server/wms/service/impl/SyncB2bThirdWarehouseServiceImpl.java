@@ -25,10 +25,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
-import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
-import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
@@ -118,6 +115,12 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
+
+        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(entity.getDeliveryWarehouseId());
+        if (Objects.nonNull(overseasProviderWarehouse)) {
+            req.setMappingWarehouseCode(overseasProviderWarehouse.getPlatformWarehouseCode());
+        }
+
         List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO.convert(
                 entity.getWarehouseOperationType(),
                 entity.getOperationDesc()
@@ -144,9 +147,10 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                         // 从映射中获取 platformSkuNo
                         String platformSkuNo = soDetailSkuMap.get(soDetailId);
                         if (platformSkuNo != null) {
-                            item.setPlatformSkuNo(platformSkuNo);
+                            item.setSkuNo(platformSkuNo);
                         }
                     }
+                    item.setPlatformSkuNo(item.getWarehousePlatformSku());
                 }
             }
         }
