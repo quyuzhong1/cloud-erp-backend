@@ -876,15 +876,29 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      **/
     private void fillList(List<? extends FbaShipmentDTO.ListDTO> records) {
         List<String> codes = records.stream().map(req -> req.getCode()).distinct().collect(Collectors.toList());
+        List<String> mainIds = records.stream().map(FbaShipmentDTO.ListDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<String> skuNos = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         //根据来源详情id查询发货详情
         List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listApprovedByFbaShipmentCodes(codes);
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(mainIds);
+        Map<String, FirstMileDeliveryEntity> firstMileDeliveryMap = new HashMap<>();
+        for (FirstMileDeliveryEntity firstMileDeliveryEntity : firstMileDeliveryEntities) {
+            if (ObjectUtil.isNull(firstMileDeliveryEntity) || CharSequenceUtil.isBlank(firstMileDeliveryEntity.getSourceId())
+                    || Boolean.TRUE.equals(firstMileDeliveryEntity.getInvalidStatus())) {
+                continue;
+            }
+            firstMileDeliveryMap.putIfAbsent(firstMileDeliveryEntity.getSourceId(), firstMileDeliveryEntity);
+        }
         //根据sku获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         for (FbaShipmentDTO.ListDTO record : records) {
             record.setPackingDownload(record.getIsPackingDownload()?"已下载":"未下载");
             //设置发货状态中文
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryMap.get(record.getId());
+            if (ObjectUtil.isNotNull(firstMileDeliveryEntity) && CharSequenceUtil.isNotBlank(firstMileDeliveryEntity.getCode())) {
+                record.setDeliveryCode(firstMileDeliveryEntity.getCode());
+            }
 
             //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
             Integer deliveryQty = fbaDeliveryDetailEntities.stream()

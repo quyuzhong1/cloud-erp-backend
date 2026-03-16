@@ -10,10 +10,12 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TiktokFbtDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
+import com.erp.model.wms.entity.OperateLogEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.enums.*;
@@ -22,6 +24,7 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.service.FbaShipmentStatusService;
 import com.erp.server.wms.service.FbtInboundService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.TiktokFbtApiService;
 import com.erp.server.wms.service.repository.FbtInboundRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +66,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Resource
     private FbaShipmentStatusService fbaShipmentStatusService;
+    @Resource
+    private OperateLogService operateLogService;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -278,6 +283,10 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         } else {
             updateFbtStatus(current, inboundOrder);
         }
+        ensureCreateOperateLog(current);
+        if (!created && !StrUtil.equals(beforeStatus, current.getPlatformShipmentStatus())) {
+            addStatusChangeOperateLog(current, beforeStatus, current.getPlatformShipmentStatus());
+        }
         String afterStatus = current.getPlatformShipmentStatus();
         syncInventoryRecord(current, inboundOrder);
         log.info("FBT货件同步完成, inboundOrderId={}, isNew={}, statusBefore={}, statusAfter={}, costMs={}",
@@ -393,15 +402,38 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     }
 
     private void updateFbtStatus(FbaShipmentEntity entity, TiktokFbtDTO.InboundOrderDTO inboundOrder) {
+        String oldPlatformShipmentStatus = entity.getPlatformShipmentStatus();
         String newPlatformShipmentStatus = StrUtil.blankToDefault(inboundOrder.getStatus(), "");
-        boolean statusChanged = !StrUtil.equals(entity.getPlatformShipmentStatus(), newPlatformShipmentStatus);
         entity.setPlatformShipmentStatus(newPlatformShipmentStatus);
         entity.setShipmentReceiveTime(LocalDateTime.now());
         fbtInboundRepository.updateShipment(entity);
-        if (statusChanged) {
+        if (!StrUtil.equals(oldPlatformShipmentStatus, newPlatformShipmentStatus)) {
             fbaShipmentStatusService.saveByFbaShipment(entity);
         }
         syncShipmentDetails(entity, inboundOrder);
+    }
+
+    private void ensureCreateOperateLog(FbaShipmentEntity entity) {
+        if (entity == null || StrUtil.isBlank(entity.getId())) {
+            return;
+        }
+        Integer count = operateLogService.lambdaQuery()
+                .eq(OperateLogEntity::getBusinessId, entity.getId())
+                .eq(OperateLogEntity::getOperation, "新增FBT货件")
+                .count();
+        if (count != null && count > 0) {
+            return;
+        }
+        String msg = StrUtil.format("新增了FBT货件【{}】", entity.getFbaShipmentId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "新增FBT货件");
+    }
+
+    private void addStatusChangeOperateLog(FbaShipmentEntity entity, String oldStatus, String newStatus) {
+        String msg = StrUtil.format("FBT货件【{}】平台状态由【{}】变更为【{}】",
+                entity.getFbaShipmentId(),
+                StrUtil.blankToDefault(oldStatus, ""),
+                StrUtil.blankToDefault(newStatus, ""));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "FBT货件状态变更");
     }
 
     private void syncShipmentDetails(FbaShipmentEntity shipment, TiktokFbtDTO.InboundOrderDTO inboundOrder) {
