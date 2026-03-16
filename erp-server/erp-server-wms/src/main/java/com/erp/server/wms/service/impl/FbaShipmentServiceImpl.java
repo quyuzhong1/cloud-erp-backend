@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.DictKindgeeConstant;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformAwdShipmentReceiveDTO;
@@ -113,6 +114,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMEN
 @Slf4j
 @Service
 public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, FbaShipmentEntity> implements FbaShipmentService {
+    private static final String FBT_UPLOAD_LABEL_TYPE = "fbtUploadLabel";
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -2242,6 +2245,59 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    public List<FbaShipmentDTO.UploadLabelViewDTO> uploadLabelView(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<FbaShipmentEntity> entityList = this.listByIds(ids);
+        validateFbtShipmentList(ids, entityList);
+        List<FbaShipmentDTO.UploadLabelViewDTO> resultList = BeanUtil.copyToList(entityList, FbaShipmentDTO.UploadLabelViewDTO.class);
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(ids, FBT_UPLOAD_LABEL_TYPE);
+        resultList.forEach(item -> {
+            WmsAttachmentDTO.UpdateDTO updateDTO = attachmentList.stream()
+                    .filter(attach -> Objects.equals(attach.getBusinessId(), item.getId()))
+                    .findFirst()
+                    .orElse(new WmsAttachmentDTO.UpdateDTO());
+            AttachDTO attachDTO = new AttachDTO();
+            attachDTO.setAttachName(updateDTO.getAttachName());
+            attachDTO.setAttachUrl(updateDTO.getAttachUrl());
+            attachDTO.setBusinessId(updateDTO.getBusinessId());
+            item.setAttachDTO(attachDTO);
+        });
+        return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean uploadLabel(List<FbaShipmentDTO.UploadLabelDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return true;
+        }
+        List<String> ids = dtoList.stream().map(FbaShipmentDTO.UploadLabelDTO::getId).distinct().collect(Collectors.toList());
+        List<FbaShipmentEntity> entityList = this.listByIds(ids);
+        validateFbtShipmentList(ids, entityList);
+        Map<String, FbaShipmentEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(FbaShipmentEntity::getId, Function.identity()));
+        for (FbaShipmentDTO.UploadLabelDTO dto : dtoList) {
+            FbaShipmentEntity entity = entityMap.get(dto.getId());
+            AttachDTO attachDTO = dto.getAttachDTO();
+            if (Objects.isNull(attachDTO) || CharSequenceUtil.isBlank(attachDTO.getAttachUrl()) || CharSequenceUtil.isBlank(attachDTO.getAttachName())) {
+                throw new ServiceException("货件【{}】上传标签失败：文件不能为空", entity.getCode());
+            }
+            if (!StringUtils.endsWithIgnoreCase(attachDTO.getAttachName(), ".pdf")) {
+                throw new ServiceException("货件【{}】上传标签失败：仅支持PDF格式", entity.getCode());
+            }
+            wmsAttachmentService.batchSave(
+                    Collections.singletonList(attachDTO.getAttachUrl()),
+                    Collections.singletonList(attachDTO.getAttachName()),
+                    FBT_UPLOAD_LABEL_TYPE,
+                    entity.getId()
+            );
+        }
+        return true;
+    }
+
+    @Override
     public WmsAttachmentDTO.UpdateDTO printLabel(FbaShipmentDTO.PrintLabelDTO dto) {
         if (CharSequenceUtil.isAllBlank(dto.getId(), dto.getFbaShipmentCode())){
             throw new ServiceException("货件ID或货件单号不能同时为空");
@@ -2255,6 +2311,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         if (Objects.isNull(entity)){
             throw new ServiceException("货件不存在");
+        }
+        if (ShipmentSourceTypeEnum.FBT.getCode().equals(entity.getSourceType())) {
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), FBT_UPLOAD_LABEL_TYPE);
+            if (CollUtil.isEmpty(attachmentList)) {
+                throw new ServiceException("货件【{}】未上传标签", entity.getCode());
+            }
+            return attachmentList.get(0);
         }
         String type = (ShipmentSourceTypeEnum.FBA.getCode().equals(entity.getSourceType()) || ShipmentSourceTypeEnum.FBT.getCode().equals(entity.getSourceType())) ? FbaPageTypeEnum.FBA_A4_2.getType() : FbaPageTypeEnum.AWD_LETTER_6.getType();
         String pageType = dto.getPageType();
@@ -2342,6 +2405,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             return updateDTO;
         }else {
             throw new ServiceException("货件【{}】打印标签失败：未获取到标签下载URL", entity.getFbaShipmentId());
+        }
+    }
+
+    private void validateFbtShipmentList(List<String> ids, List<FbaShipmentEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList) || entityList.size() != ids.size()) {
+            throw new ServiceException("FBT货件不存在");
+        }
+        boolean hasNonFbtShipment = entityList.stream()
+                .anyMatch(entity -> !ShipmentSourceTypeEnum.FBT.getCode().equals(entity.getSourceType()));
+        if (hasNonFbtShipment) {
+            throw new ServiceException("仅支持FBT货件上传标签");
         }
     }
 
