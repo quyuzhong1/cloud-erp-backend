@@ -631,10 +631,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
         // 数帝云子平台映射
         List<DictBasicEntity> dictList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(), Collections.emptyList());
-        // 数帝云军区一级部门映射
-        List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
-        // 数帝云平台二级部门映射
-        List<DictBasicEntity> sdyPlatformDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType(), Collections.emptyList());
 
         List<String> soDetailIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailEntityList.stream().filter(req -> soDetailIds.contains(req.getSoDetailId())).collect(Collectors.toList());
@@ -843,6 +839,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         String departmentCode = "";
         // 部门名称
         String departmentName= "";
+        // 部门ID
+        String deptId = soInfoEntity.getSalesDeptId();
 
 
         DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(partitionId)).findFirst().orElse(null);
@@ -851,24 +849,19 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             militaryRegionCode = dictPartitionEntity.getCode();
             // 军区名称
             militaryRegionName = dictPartitionEntity.getName();
-            // 军区一级部门映射
-            DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
-            // 销售平台二级部门映射
-            List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
-            if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
-                List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-                SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
-                                e.getPath().contains(sdyPartitionDeptEntity.getValue())
-                                        && deptLevel2Ids.contains(e.getId())
-                        )
-                        .findFirst()
-                        .orElse(null);
-                if (null != departmentDTO){
-                    // 部门编码
-                    departmentCode = departmentDTO.getCode();
-                    // 部门名称
-                    departmentName = departmentDTO.getName();
-                }
+        }
+
+        if (StringUtils.isNotBlank(deptId)){
+            SysDepartmentEntity departmentDTO = deptList
+                    .stream()
+                    .filter(e -> e.getId().equals(deptId))
+                    .findFirst()
+                    .orElse(null);
+            if (null != departmentDTO){
+                // 部门编码
+                departmentCode = departmentDTO.getCode();
+                // 部门名称
+                departmentName = departmentDTO.getName();
             }
         }
 

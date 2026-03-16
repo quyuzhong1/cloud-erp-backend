@@ -1188,10 +1188,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
         // 数帝云子平台映射
         List<DictBasicEntity> dictList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(), Collections.emptyList());
-        // 数帝云军区一级部门映射
-        List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
-        // 数帝云平台二级部门映射
-        List<DictBasicEntity> sdyPlatformDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType(), Collections.emptyList());
         // 对应客户信息
         CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(null);
 
@@ -1199,8 +1195,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         String country = entity.getCountry();
         // 军区
         String partitionId = "";
-        // 当前数帝云平台二级部门映射
-        List<DictBasicEntity> sdyPlatformDeptEntityList = new LinkedList<>();
+        // 关联部门
+        String deptId = entity.getSalesDeptId();
 
         String transactionSubType = "";
         String orderPlatformCode = entity.getSoCode();
@@ -1215,7 +1211,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 } else {
                     orderPlatformCode = soB2cEntity.getPlatformCode();
                 }
-                sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).collect(Collectors.toList());
             }
             SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(entity.getSoId())).findFirst().orElse(null);
             if (null != receiverEntity){
@@ -1234,7 +1229,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 partitionId = soInfoEntity.getPartitionId();
             }
             if(null != customerInfo){
-                sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+                deptId = customerInfo.getSalesDeptId();
             }
         }
 
@@ -1261,7 +1256,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         DictPartitionEntity dictPartitionEntity = null;
         if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
             dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getCode().equalsIgnoreCase("china")).findFirst().orElse(null);
-            sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+            if(customerInfo != null) {
+                deptId = customerInfo.getSalesDeptId();
+            }
         } else {
             dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
         }
@@ -1271,23 +1268,17 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
             // 军区名称
             shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
-            // 军区一级部门映射
-            DictPartitionEntity finalDictPartitionEntity = dictPartitionEntity;
-            DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPartitionEntity.getCode())).findFirst().orElse(null);
-            if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
-                List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-                SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
-                                e.getPath().contains(sdyPartitionDeptEntity.getValue())
-                                        && deptLevel2Ids.contains(e.getId())
-                        )
+            if (null != dictPartitionEntity && StringUtils.isNotBlank(deptId)){
+                String finalDeptId = deptId;
+                deptList.stream()
+                        .filter(e -> e.getId().equals(finalDeptId))
                         .findFirst()
-                        .orElse(null);
-                if (null != departmentDTO){
-                    // 部门编码
-                    shudiyunB2cOrderDTO.setDepartment_code(departmentDTO.getCode());
-                    // 部门名称
-                    shudiyunB2cOrderDTO.setDepartment_name(departmentDTO.getName());
-                }
+                        .ifPresent(departmentDTO -> {
+                            // 部门编码
+                            shudiyunB2cOrderDTO.setDepartment_code(departmentDTO.getCode());
+                            // 部门名称
+                            shudiyunB2cOrderDTO.setDepartment_name(departmentDTO.getName());
+                        });
             }
         }
 
@@ -1439,10 +1430,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
     	// 销售平台
     	List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
-    	// 数帝云军区一级部门映射
-    	List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
-    	// 数帝云平台二级部门映射
-    	List<DictBasicEntity> sdyPlatformDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType(), Collections.emptyList());
     	// 对应客户信息
     	CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(null);
     	
@@ -1450,9 +1437,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	String country = entity.getCountry();
     	// 军区
     	String partitionId = "";
-    	// 当前数帝云平台二级部门映射
-    	List<DictBasicEntity> sdyPlatformDeptEntityList = new LinkedList<>();
-    	
+    	// 关联部门
+        String deptId = entity.getSalesDeptId();
+
     	String transactionSubType = "";
     	String orderPlatformCode = entity.getSoCode();
     	if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
@@ -1466,7 +1453,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     			} else {
     				orderPlatformCode = soB2cEntity.getPlatformCode();
     			}
-    			sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).collect(Collectors.toList());
     		}
     		SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(entity.getSoId())).findFirst().orElse(null);
     		if (null != receiverEntity){
@@ -1485,7 +1471,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     			partitionId = soInfoEntity.getPartitionId();
     		}
     		if(null != customerInfo){
-    			sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+                deptId = customerInfo.getSalesDeptId();
     		}
     	}
     	
@@ -1506,8 +1492,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	DictPartitionEntity dictPartitionEntity = null;
     	if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
     		dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getCode().equalsIgnoreCase("china")).findFirst().orElse(null);
-    		if(CollUtil.isNotEmpty(sdyPlatformDeptList) && customerInfo != null) {
-    			sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+    		if(customerInfo != null) {
+                deptId = customerInfo.getSalesDeptId();
     		}
     	} else {
     		dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
@@ -1516,23 +1502,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	if (null != dictPartitionEntity){
     		// 军区编码
     		viewDto.setDistrict(dictPartitionEntity.getCode());
-    		// 军区一级部门映射
-    		DictPartitionEntity finalDictPartitionEntity = dictPartitionEntity;
-    		DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPartitionEntity.getCode())).findFirst().orElse(null);
-    		if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
-    			List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-    			SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
-    			e.getPath().contains(sdyPartitionDeptEntity.getValue())
-    			&& deptLevel2Ids.contains(e.getId())
-    					)
-    					.findFirst()
-    					.orElse(null);
-    			if (null != departmentDTO){
-    				// 部门编码
-    				detailView.setSaleDeptName(departmentDTO.getCode());
-    			}
-    		}
     	}
+
+        if (StringUtils.isNotBlank(deptId)){
+            String finalDeptId = deptId;
+            deptList.stream()
+                    .filter(e -> e.getId().equals(finalDeptId))
+                    .findFirst()
+                    .ifPresent(departmentDTO ->
+                            detailView.setSaleDeptName(departmentDTO.getCode()));
+        }
     	
     	String thirdCode = entity.getId();
     	viewDto.setThirdCode(thirdCode);
@@ -1770,9 +1749,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         // OMS字典信息
         List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
                 .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
-                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType()
                 ))
                 .list();
 

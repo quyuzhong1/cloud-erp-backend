@@ -698,9 +698,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         }
         List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
                 .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
-                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType()
                 )).list();
 
         // 军区信息
@@ -803,9 +801,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
                 .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
-                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType()
                 )).list();
 
         // 军区信息
@@ -959,9 +955,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
                 .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
-                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType()
                 )).list();
 
         // 军区信息
@@ -1142,9 +1136,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
                 .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
-                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
-                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType()
                 )).list();
 
         // 军区信息
