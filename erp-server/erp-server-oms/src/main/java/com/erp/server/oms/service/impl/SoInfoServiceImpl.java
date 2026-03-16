@@ -4251,6 +4251,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 e.setWarehousePlatformSku(p.getPlatformSkuNo());
             });
         });
+        OverseasProviderEntity overseasProvider = overseasProviderFeign.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
+        if (Objects.nonNull(overseasProvider)) {
+            viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+        }
+
         viewDTO.setRemark("Customer PO: " + soInfoEntity.getCustomerOrderNo());
         return viewDTO;
     }
