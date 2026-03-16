@@ -105,16 +105,16 @@ public class FbtInventoryInitHandler extends DmpInputInitHandler {
                 source.get("name"),
                 getMapValue(goods, "name")));
         row.put("seller_sku", firstNotBlank(
-                source.get("goods_id"),
-                source.get("id"),
-                getMapValue(goods, "id"),
+                source.get("reference_code"),
+                getMapValue(goods, "reference_code"),
                 source.get("seller_sku"),
                 source.get("sku"),
-                source.get("reference_code"),
                 getMapValue(sku, "seller_sku"),
                 getMapValue(sku, "sku"),
                 getMapValue(sku, "code"),
-                getMapValue(goods, "reference_code")));
+                source.get("goods_id"),
+                source.get("id"),
+                getMapValue(goods, "id")));
         row.put("available_quantity", firstNotBlank(
                 source.get("available_quantity"),
                 source.get("sellable_quantity"),
