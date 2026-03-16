@@ -235,6 +235,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
                         break; // 成功则跳出循环
                     } catch (Exception e) {
+                        log.error("TikTok获取物流面单失败, attempt: {}, packageId: {}", attempt, vo.getPackageId(), e);
                         lastException = e;
                         if (attempt < maxRetries) { // 非最后一次尝试时等待
                             try {
