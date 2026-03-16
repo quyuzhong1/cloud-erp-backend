@@ -23,9 +23,10 @@ import java.util.*;
  * 将FBT商品DMP数据转换为PlatformProductDTO并发送到RocketMQ
  * 
  * 字段映射：
- * - platformSkuNo: 库存SKU (goods/id)
- * - platformSkuName: 库存产品名称 (goods/name)
- * - thirdBarcode: 三方仓商品条码 (goods/code)
+ * - platformSkuId: 产品ID (id)
+ * - platformSkuNo: 库存SKU (reference_code)
+ * - platformSkuName: 库存产品名称 (goods.name)
+ * - thirdBarcode: 商品条码 (code)
  * - type: WAREHOUSE (仓库类型)
  *
  * @author System
@@ -105,10 +106,11 @@ public class FbtProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler 
     /**
      * 将FBT商品数据转换为PlatformProductDTO
      * 
-     * 字段对应关系（根据图片）：
-     * - 库存SKU -> goods/id -> platformSkuNo
-     * - 库存产品名称 -> goods/name -> platformSkuName
-     * - 三方仓商品条码 -> goods/code -> thirdBarcode
+     * 字段对应关系（根据确认口径）：
+     * - 产品ID -> id -> platformSkuId
+     * - 库存SKU -> reference_code -> platformSkuNo
+     * - 库存产品名称 -> goods.name -> platformSkuName
+     * - 商品条码 -> code -> thirdBarcode
      * - 仓库 -> 中台配置绑定的FBT仓库名称
      * - 服务商 -> FBT仓
      */
@@ -124,12 +126,14 @@ public class FbtProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler 
 
         // 平台代码 - FBT仓库商品
         product.setPlatform(OmsPlatformEnum.FBT.getCode());
-        
-        // 库存SKU (goods/id) -> 通过DMP配置映射到skuId字段
-        String skuId = dmpSkuInfoEntity.getSkuId();
-        product.setPlatformSkuNo(StringUtils.isBlank(skuId) ? "" : skuId);
-        // 需求“库存产品ID为-”，这里保持空值
-        product.setPlatformSkuId("");
+
+        // 产品ID -> id
+        String productId = dmpSkuInfoEntity.getSkuId();
+        product.setPlatformSkuId(StringUtils.isBlank(productId) ? "" : productId);
+
+        // 库存SKU -> reference_code
+        String referenceCode = dmpSkuInfoEntity.getSkuNo();
+        product.setPlatformSkuNo(StringUtils.isBlank(referenceCode) ? "" : referenceCode);
         
         // 库存产品名称 (goods/name) -> 通过DMP配置映射到name字段
         String skuName = dmpSkuInfoEntity.getName();
@@ -143,10 +147,12 @@ public class FbtProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler 
         product.setPlatformProductNo(dmpSkuInfoEntity.getSpuId());
         product.setPlatformProductName(dmpProductInfoEntity.getSpuName());
 
-        // 三方仓商品条码 (goods/code) -> 通过DMP配置映射到skuNo字段 -> platformProductBarcode映射到ListingInfoEntity.thirdBarcode
-        String referenceCode = dmpSkuInfoEntity.getSkuNo();
-        if (StringUtils.isNotBlank(referenceCode)) {
-            product.setPlatformProductBarcode(referenceCode);
+        // 商品条码 -> code
+        String barcode = StringUtils.isNotBlank(dmpSkuInfoEntity.getThirdId())
+                ? dmpSkuInfoEntity.getThirdId()
+                : "";
+        if (StringUtils.isNotBlank(barcode)) {
+            product.setPlatformProductBarcode(barcode);
         }
 
         // 类型：WAREHOUSE (仓库类型，区别于平台类型)
@@ -182,9 +188,9 @@ public class FbtProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler 
         // 更新时间
         product.setPlatformUpdateTime(dmpSkuInfoEntity.getPlatformUpdateTime());
 
-        // 平台唯一标识 = 库存SKU(goods/id) + 授权ID (FBT仓)
+        // 平台唯一标识优先使用产品ID，避免库存SKU(reference_code)调整造成重复新增
         String uniqueId = StrUtil.format("{}_{}", 
-                StringUtils.isNotBlank(skuId) ? skuId : referenceCode, 
+                StringUtils.isNotBlank(productId) ? productId : referenceCode,
                 authId);
         product.setUniqueId(uniqueId);
 

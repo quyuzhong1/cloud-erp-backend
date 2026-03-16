@@ -336,7 +336,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 continue;
             }
             for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, false);
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap);
             }
         }
     }
@@ -348,38 +348,40 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         if (CollUtil.isEmpty(soOutstockDTOList)) {
             return;
         }
-        Map<String, List<SoOutstockDTO.KolSoOutstockDTO>> soOutstockMap = soOutstockDTOList.stream()
-                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getSoDetailId()))
-                .collect(Collectors.groupingBy(SoOutstockDTO.KolSoOutstockDTO::getSoDetailId));
-        List<String> sourceDetailIdList = new ArrayList<>(soOutstockMap.keySet());
-        if (CollUtil.isEmpty(sourceDetailIdList)) {
+        List<SoOutstockDTO.KolSoOutstockDTO> validSoOutstockDTOList = soOutstockDTOList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getPlatformCode()) && CharSequenceUtil.isNotBlank(obj.getSkuNo()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(validSoOutstockDTOList)) {
             return;
         }
-        List<List<String>> partitionList = Lists.partition(sourceDetailIdList, 5000);
+        Map<String, List<SoOutstockDTO.KolSoOutstockDTO>> soOutstockMap = validSoOutstockDTOList.stream()
+                .collect(Collectors.groupingBy(this::buildWdtKolMatchKey));
+        List<String> platformCodeList = validSoOutstockDTOList.stream()
+                .map(SoOutstockDTO.KolSoOutstockDTO::getPlatformCode)
+                .distinct()
+                .collect(Collectors.toList());
+        List<List<String>> partitionList = Lists.partition(platformCodeList, 5000);
         for (List<String> partitionIdList : partitionList) {
-            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostByWdtSourceDetailIdList(partitionIdList);
-            Set<String> hitSourceDetailIdSet = CollUtil.isEmpty(kolSampleCostEntityList)
-                    ? new HashSet<>()
+            Set<String> platformCodeSet = new HashSet<>(partitionIdList);
+            List<SoOutstockDTO.KolSoOutstockDTO> partitionSoOutstockDTOList = validSoOutstockDTOList.stream()
+                    .filter(obj -> platformCodeSet.contains(obj.getPlatformCode()))
+                    .collect(Collectors.toList());
+            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostByWdtPlatformCodeList(partitionIdList);
+            Map<String, KolSampleCostEntity> hitMap = CollUtil.isEmpty(kolSampleCostEntityList)
+                    ? new HashMap<>()
                     : kolSampleCostEntityList.stream()
-                    .map(KolSampleCostEntity::getSourceDetailId)
-                    .filter(CharSequenceUtil::isNotBlank)
-                    .collect(Collectors.toSet());
-            for (String sourceDetailId : partitionIdList) {
-                if (hitSourceDetailIdSet.contains(sourceDetailId)) {
+                    .filter(obj -> CharSequenceUtil.isNotBlank(obj.getSourceCode()) && CharSequenceUtil.isNotBlank(obj.getSkuNo()))
+                    .collect(Collectors.toMap(this::buildWdtKolMatchKey, obj -> obj, (v1, v2) -> v1));
+            for (SoOutstockDTO.KolSoOutstockDTO kolSoOutstockDTO : partitionSoOutstockDTOList) {
+                String matchKey = buildWdtKolMatchKey(kolSoOutstockDTO);
+                if (hitMap.containsKey(matchKey)) {
                     continue;
                 }
-                List<SoOutstockDTO.KolSoOutstockDTO> missList = soOutstockMap.get(sourceDetailId);
-                if (CollUtil.isEmpty(missList)) {
-                    continue;
-                }
-                missList.forEach(obj -> log.warn("KOL寄样费用统计跳过WDT出库，未命中寄样申请明细，sourceCode:{}, soOutstockCode:{}, soOutstockDetailId:{}, sourceDetailId:{}",
-                        obj.getSourceCode(), obj.getSoOutstockCode(), obj.getSoOutstockDetailId(), obj.getSoDetailId()));
+                log.warn("KOL寄样费用统计跳过WDT出库，未命中寄样申请明细，platformCode:{}, skuNo:{}, soOutstockCode:{}, soOutstockDetailId:{}",
+                        kolSoOutstockDTO.getPlatformCode(), kolSoOutstockDTO.getSkuNo(), kolSoOutstockDTO.getSoOutstockCode(), kolSoOutstockDTO.getSoOutstockDetailId());
             }
-            if (CollUtil.isEmpty(kolSampleCostEntityList)) {
-                continue;
-            }
-            for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSourceDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, true);
+            for (Map.Entry<String, KolSampleCostEntity> entry : hitMap.entrySet()) {
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(entry.getKey()), entry.getValue(), oldOutstockDetailCostMap, partitionMap);
             }
         }
     }
@@ -388,8 +390,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                                      List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList,
                                      KolSampleCostEntity sampleCostEntity,
                                      Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
-                                     Map<String, String> partitionMap,
-                                     boolean useOutstockSourceCodeAsSoCode) {
+                                     Map<String, String> partitionMap) {
         if (CollUtil.isEmpty(kolSoOutstockDTOList) || ObjUtil.isEmpty(sampleCostEntity)) {
             return;
         }
@@ -407,9 +408,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             costEntity.setPartnerId(sampleCostEntity.getPartnerId());
             costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
             costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
-            if (useOutstockSourceCodeAsSoCode) {
-                costEntity.setSoCode(kolSoOutstockDTO.getSourceCode());
-            }
             costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
             costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
             costEntity.setQty(kolSoOutstockDTO.getActualQty());
@@ -437,7 +435,15 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     }
 
     private boolean isWdtKolSoOutstock(SoOutstockDTO.KolSoOutstockDTO dto) {
-        return CharSequenceUtil.isNotBlank(dto.getSourceCode()) && StrUtil.startWithIgnoreCase(dto.getSourceCode(), "KOL");
+        return CharSequenceUtil.isNotBlank(dto.getPlatformCode()) && StrUtil.startWithIgnoreCase(dto.getPlatformCode(), "KOL");
+    }
+
+    private String buildWdtKolMatchKey(SoOutstockDTO.KolSoOutstockDTO dto) {
+        return StrUtil.format("{}#{}", dto.getPlatformCode(), dto.getSkuNo());
+    }
+
+    private String buildWdtKolMatchKey(KolSampleCostEntity entity) {
+        return StrUtil.format("{}#{}", entity.getSourceCode(), entity.getSkuNo());
     }
 
     /**

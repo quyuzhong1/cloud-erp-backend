@@ -208,8 +208,8 @@
          </foreach>
     </select>
 
-    <!-- 根据旺店通KOL来源明细ID列表查询样品费用映射 -->
-    <select id="listKolSampleCostByWdtSourceDetailIdList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
+    <!-- 根据旺店通KOL平台单号列表查询样品费用映射 -->
+    <select id="listKolSampleCostByWdtPlatformCodeList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
         WITH kolFeedback as (
             select
                 array_to_string(array_agg(DISTINCT partner_id),',') as partner_id,
@@ -227,6 +227,7 @@
             wdt.source_type,
             wdt.type,
             wdt.partition_id,
+            wdt.sku_no,
             kfb.partner_id,
             kfb.partner_nickname,
             kfb.url as feedback_url
@@ -238,6 +239,7 @@
                 'kolB2bApplication' as source_type,
                 kba.type,
                 '' as partition_id,
+                kbad.sku_no,
                 kbad.id as detail_id
             from kol_b2b_application kba
             inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
@@ -253,6 +255,7 @@
                 'kolB2cApplication' as source_type,
                 kba.sample_type as type,
                 '' as partition_id,
+                ksbad.sku_no,
                 kbad.id as detail_id
             from kol_b2c_application kba
             inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
@@ -261,9 +264,9 @@
               and kba.approve_status = 'approve'
         ) wdt
         left join kolFeedback kfb on wdt.detail_id = kfb.source_detail_id
-        where wdt.source_detail_id in
-        <foreach collection="sourceDetailIdList" item="id" open="(" separator="," close=")">
-            #{id}
+        where wdt.source_code in
+        <foreach collection="platformCodeList" item="code" open="(" separator="," close=")">
+            #{code}
         </foreach>
     </select>
 
