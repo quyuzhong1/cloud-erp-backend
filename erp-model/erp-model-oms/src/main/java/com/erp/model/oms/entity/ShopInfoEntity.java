@@ -251,6 +251,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private String accessToken;
 
     /**
+     * 是否有仓库权限
+     */
+    @TableField(exist = false)
+    private Boolean hasWarehouseAuth;
+
+    /**
      * 时区
      */
     @TableField("time_zone")
