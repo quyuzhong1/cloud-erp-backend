@@ -475,25 +475,13 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             for (ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO warehouseOperationTypeDTO : warehouseOperationTypeDTOList) {
                 if (StringUtils.isNotBlank(warehouseOperationTypeDTO.getWarehouseOperationType())
                         && StringUtils.isNotBlank(warehouseOperationTypeDTO.getOperationDesc())) {
-
-                    // 分割字符串，得到数组
-                    String[] warehouseOperationTypes = warehouseOperationTypeDTO.getWarehouseOperationType().split(",");
-                    String[] operationDescs = warehouseOperationTypeDTO.getOperationDesc().split(",");
-
-                    // 确保两个数组长度一致，避免越界
-                    int length = Math.min(warehouseOperationTypes.length, operationDescs.length);
-
-                    // 遍历数组，匹配枚举并设置 b2bDto 属性
-                    for (int i = 0; i < length; i++) {
-                        String type = warehouseOperationTypes[i].trim();
-                        String desc = operationDescs[i].trim();
-
-                        try {
-                            WarehouseOperationTypeEnum operationEnum =
-                                    WarehouseOperationTypeEnum.valueOf(type);
-
+                    String type = warehouseOperationTypeDTO.getWarehouseOperationType();
+                    String desc = warehouseOperationTypeDTO.getOperationDesc();
+                    try {
+                        WarehouseOperationTypeEnum operationTypeEnum = WarehouseOperationTypeEnum.fromCode(type);
+                        if (Objects.nonNull(operationTypeEnum)) {
                             // 根据枚举值设置 b2bDto 的不同属性
-                            switch (operationEnum) {
+                            switch (operationTypeEnum) {
                                 case IS_CHANGE_PACKAGE:
                                     b2bDto.setBatchBolNo(desc);
                                     break;
@@ -537,9 +525,10 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                                     // 不处理未知枚举
                                     break;
                             }
-                        } catch (IllegalArgumentException e) {
-                            log.info("未知的仓库操作类型: {}",type);
                         }
+
+                    } catch (IllegalArgumentException e) {
+                        log.info("未知的仓库操作类型: {}",type);
                     }
                 }
             }
