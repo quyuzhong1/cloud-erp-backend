@@ -150,6 +150,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                             item.setPlatformSkuNo(platformSkuNo);
                         }
                     }
+                    item.setPlatformSkuNo(item.getWarehousePlatformSku());
                 }
             }
         }
