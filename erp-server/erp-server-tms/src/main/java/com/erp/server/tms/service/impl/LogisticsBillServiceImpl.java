@@ -1146,11 +1146,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             log.error("多线程获取面单超时或异常", e);
             throw new RuntimeException("获取面单失败", e);
         }
-        // 记录错误信息
-        if (!errorList.isEmpty()) {
-            log.warn("以下订单面单获取失败: {}", errorList);
-            throw new ServiceException("获取面单失败: 【{}】", String.join(",", errorList));
-        }
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
             for (String labelBase : waybillDTO.getDistributeBase64Url()) {
@@ -1161,6 +1156,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         soB2cFeign.saveSoB2cLabel(dtoList);
+        // 记录错误信息
+        if (!errorList.isEmpty()) {
+            log.warn("以下订单面单获取失败: {}", errorList);
+            throw new ServiceException("获取面单失败: 【{}】", String.join(",", errorList));
+        }
         return waybillDTOList;
     }
 
@@ -1243,6 +1243,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //校验是否请求成功
         if (!labelList.isSuccess()) {
+            log.warn("获取物流面单失败,{}", JSONUtil.toJsonStr(labelList));
             throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED,b2cSoId, labelList.getMsg());
         }
         for (LogisticsPrintLabelResponse datum : labelList.getData()) {
