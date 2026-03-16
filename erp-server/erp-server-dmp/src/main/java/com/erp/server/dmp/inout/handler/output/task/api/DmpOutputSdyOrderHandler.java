@@ -389,8 +389,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                                     // 部门名称
                                     String departmentName= "";
 
-                                    if (null != cfgCountryPartitionEntity){
-                                        SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, militaryRegionCode, subPlatformType);
+                                    if (null != customerInfo){
+                                        SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, customerInfo.getSalesDeptId());
                                         if (null != departmentDTO){
                                         	KingdeeDepartmentEntity kingdeeDepartment = queryAndCacheKingdeeDepartment(cacheMap, departmentDTO.getId(), customerInfo.getUseOrgId());
                                             // 部门编码
@@ -684,8 +684,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 // 部门名称
                 String departmentName= "";
 
-                if (null != cfgCountryPartitionEntity){
-                    SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, militaryRegionCode, subPlatformType);
+                if (null != customerInfo){
+                    SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, customerInfo.getSalesDeptId());
                     if (null != departmentDTO){
                     	KingdeeDepartmentEntity kingdeeDepartment = queryAndCacheKingdeeDepartment(cacheMap, departmentDTO.getId(), customerInfo.getUseOrgId());
                         // 部门编码
@@ -1166,31 +1166,15 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     }
 
 
-    private SysDepartmentEntity queryAndCacheOmsDictBasic(Map<String, Map<String, Object>> cacheMap, String partitionCode, String dictPlatform) {
-        if (StringUtils.isBlank(partitionCode) || StringUtils.isBlank(dictPlatform)){
+    private SysDepartmentEntity queryAndCacheOmsDictBasic(Map<String, Map<String, Object>> cacheMap, String deptId) {
+        if (StringUtils.isBlank(deptId)){
             return null;
         }
         Map<String, Object> dictBasicMap = cacheMap.getOrDefault("omsDictBasic", new HashMap<>());
-        List<DictBasicEntity> sdyPartitionDeptList = new ArrayList<>();
-        List<DictBasicEntity> sdyPlatformDeptList = new ArrayList<>();
-        List<SysDepartmentEntity> deptList = new LinkedList<>();
+        List<SysDepartmentEntity> deptList;
 
-        Object level1ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
-        Object level2ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
         Object deptListObj = dictBasicMap.get("deptList");
-        if (null == level2ListObj || null == level1ListObj || null == deptListObj) {
-            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
-                    .in(DictBasicEntity::getType, Arrays.asList(
-                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
-                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
-                    ))
-                    .list();
-            if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
-                Map<String, List<DictBasicEntity>> groupMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
-                sdyPartitionDeptList = groupMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
-                sdyPlatformDeptList = groupMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
-                dictBasicMap.putAll(groupMap);
-            }
+        if (null == deptListObj) {
             // 部门信息
             deptList = sysUserFeign.getDeptEntityList();
             if (CollectionUtils.isNotEmpty(deptList)){
@@ -1198,20 +1182,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             cacheMap.put("omsDictBasic", dictBasicMap);
         } else {
-            sdyPartitionDeptList = (List<DictBasicEntity>) level1ListObj;
-            sdyPlatformDeptList = (List<DictBasicEntity>) level2ListObj;
             deptList = (List<SysDepartmentEntity>) deptListObj;
         }
 
-        // 军区一级部门映射
-        DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(partitionCode)).findFirst().orElse(null);
-        // 销售平台二级部门映射
-        List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
-        if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)) {
-            List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-            return deptList.stream().filter(e -> e.getPath().contains(sdyPartitionDeptEntity.getValue())
-                                    && deptLevel2Ids.contains(e.getId())
-                    )
+        if (!CollectionUtils.isEmpty(deptList)) {
+            return deptList.stream().filter(e -> e.getId().equals(deptId))
                     .findFirst()
                     .orElse(null);
         }
