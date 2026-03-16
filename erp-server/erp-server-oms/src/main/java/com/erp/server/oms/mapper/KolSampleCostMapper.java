@@ -50,11 +50,11 @@ public interface KolSampleCostMapper extends BaseMapper<KolSampleCostEntity> {
     List<KolSampleCostEntity> listKolSampleCostBySoDetailIdList(@Param("soDetailIdList") List<String> soDetailIdList);
 
     /**
-     * 根据旺店通KOL出库来源明细id集合查询寄样费用映射
+     * 根据旺店通KOL平台单号集合查询寄样费用映射
      * @author codex
      * @date 2026/3/16
-     * @param sourceDetailIdList
+     * @param platformCodeList
      * @return List<KolSampleCostEntity>
      */
-    List<KolSampleCostEntity> listKolSampleCostByWdtSourceDetailIdList(@Param("sourceDetailIdList") List<String> sourceDetailIdList);
+    List<KolSampleCostEntity> listKolSampleCostByWdtPlatformCodeList(@Param("platformCodeList") List<String> platformCodeList);
 }
