@@ -148,6 +148,7 @@
             so.code as soOutstockCode,
             so.so_id as soId,
             so.so_code as soCode,
+            sod.platform_code as platformCode,
             so.source_type as sourceType,
             so.source_code as sourceCode,
             so.sales_org_id as salesOrgId,
