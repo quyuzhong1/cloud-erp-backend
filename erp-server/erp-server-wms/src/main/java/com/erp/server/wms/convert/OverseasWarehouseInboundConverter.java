@@ -211,6 +211,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "postcode",  source = "postCode"),
             @Mapping(target = "remark",  source = "remark"),
             @Mapping(target = "shippingMethodCode",  source = "channelCode"),
+            @Mapping(target = "warehouseCode",  source = "mappingWarehouseCode"),
             @Mapping(target = "code2",  source = "receiverCountryCode"),
             @Mapping(target = "itemDTOs",  source = "items"),
     })
