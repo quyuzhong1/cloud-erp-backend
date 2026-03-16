@@ -389,7 +389,7 @@ public class ZhongbaoService {
     /**
      * 创建出库单
      */
-    public BaseResponse<OverseasOutboundCreateResponse> createOutboundBill(String token, OverseasOutboundCreateRequest overseasOutboundCreateRequest){
+    public OverseasOutboundCreateResponse createOutboundBill(String token, OverseasOutboundCreateRequest overseasOutboundCreateRequest){
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundCreateRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
@@ -404,8 +404,7 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasOutboundCreateResponse>>() {
-            }.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<OverseasOutboundCreateResponse>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
@@ -441,7 +440,7 @@ public class ZhongbaoService {
     /**
      * 查询出库单
      */
-    public BaseResponse<OverseasOutboundQueryResponse> queryOutboundBill(String token, OverseasOutboundQueryRequest overseasOutboundQueryRequest){
+    public OverseasOutboundQueryResponse queryOutboundBill(String token, OverseasOutboundQueryRequest overseasOutboundQueryRequest){
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundQueryRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
@@ -456,8 +455,7 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasOutboundCancelResponse>>() {
-            }.getType());
+            return JSON.parseObject(bodyStr, new TypeReference<OverseasOutboundQueryResponse>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new ServiceException("请求失败,异常: " + e.getMessage());
