@@ -70,4 +70,13 @@ public enum WarehouseOperationTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static WarehouseOperationTypeEnum fromCode(String code) {
+        for (WarehouseOperationTypeEnum type : values()) {
+            if (type.getCode().equals(code)) {
+                return type;
+            }
+        }
+        return null;
+    }
 }
