@@ -19,6 +19,7 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.server.wms.service.FbaShipmentStatusService;
 import com.erp.server.wms.service.FbtInboundService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
 import com.erp.server.wms.service.TiktokFbtApiService;
@@ -60,6 +61,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private FbaShipmentReceiveService fbaShipmentReceiveService;
+    @Resource
+    private FbaShipmentStatusService fbaShipmentStatusService;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -268,14 +271,14 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         long start = System.currentTimeMillis();
         FbaShipmentEntity current = fbtInboundRepository.findShipmentByInboundOrderId(inboundOrderId);
         boolean created = false;
-        String beforeStatus = current == null ? null : current.getDeliveryStatus();
+        String beforeStatus = current == null ? null : current.getPlatformShipmentStatus();
         if (current == null) {
             current = createFbtInbound(inboundOrder);
             created = true;
         } else {
             updateFbtStatus(current, inboundOrder);
         }
-        String afterStatus = current.getDeliveryStatus();
+        String afterStatus = current.getPlatformShipmentStatus();
         syncInventoryRecord(current, inboundOrder);
         log.info("FBT货件同步完成, inboundOrderId={}, isNew={}, statusBefore={}, statusAfter={}, costMs={}",
                 inboundOrderId, created, beforeStatus, afterStatus, System.currentTimeMillis() - start);
@@ -366,6 +369,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         entity.setPlatformShipmentStatus(inboundOrder.getStatus());
         entity.setDeliveryStatus(DeliveryStatusEnum.UN_SHIPPED.getCode());
         fbtInboundRepository.saveShipment(entity);
+        fbaShipmentStatusService.saveByFbaShipment(entity);
         syncShipmentDetails(entity, inboundOrder);
         return entity;
     }
@@ -389,9 +393,14 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     }
 
     private void updateFbtStatus(FbaShipmentEntity entity, TiktokFbtDTO.InboundOrderDTO inboundOrder) {
-        entity.setPlatformShipmentStatus(inboundOrder.getStatus());
+        String newPlatformShipmentStatus = StrUtil.blankToDefault(inboundOrder.getStatus(), "");
+        boolean statusChanged = !StrUtil.equals(entity.getPlatformShipmentStatus(), newPlatformShipmentStatus);
+        entity.setPlatformShipmentStatus(newPlatformShipmentStatus);
         entity.setShipmentReceiveTime(LocalDateTime.now());
         fbtInboundRepository.updateShipment(entity);
+        if (statusChanged) {
+            fbaShipmentStatusService.saveByFbaShipment(entity);
+        }
         syncShipmentDetails(entity, inboundOrder);
     }
 

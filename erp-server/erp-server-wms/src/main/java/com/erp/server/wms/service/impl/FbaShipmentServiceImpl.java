@@ -434,6 +434,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public List<FbaShipmentDTO.ShipmentStatusRecordView> listShipmentStatusRecord(String id) {
         List<FbaShipmentStatusEntity> fbaShipmentStatusEntities = fbaShipmentStatusService.listByMainIds(Collections.singletonList(id));
+        if (CollectionUtils.isEmpty(fbaShipmentStatusEntities)) {
+            FbaShipmentEntity shipmentEntity = this.getById(id);
+            if (ObjectUtil.isNotNull(shipmentEntity) && CharSequenceUtil.isNotBlank(shipmentEntity.getPlatformShipmentStatus())) {
+                FbaShipmentDTO.ShipmentStatusRecordView shipmentStatusRecordView = new FbaShipmentDTO.ShipmentStatusRecordView();
+                shipmentStatusRecordView.setShipmentStatus(shipmentEntity.getPlatformShipmentStatus());
+                shipmentStatusRecordView.setUpdateTime(ObjectUtil.defaultIfNull(shipmentEntity.getUpdateTime(), shipmentEntity.getCreateTime()));
+                return Collections.singletonList(shipmentStatusRecordView);
+            }
+            return Collections.emptyList();
+        }
         List<FbaShipmentDTO.ShipmentStatusRecordView> list = new ArrayList<>();
         for (FbaShipmentStatusEntity fbaShipmentReceiveEntity : fbaShipmentStatusEntities) {
             //映射字段
