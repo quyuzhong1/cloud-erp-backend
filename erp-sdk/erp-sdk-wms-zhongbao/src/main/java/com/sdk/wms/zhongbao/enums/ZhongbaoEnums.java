@@ -227,8 +227,8 @@ public enum ZhongbaoEnums {
         EXPRESS(2,"快递", LogisticsMethodEnum.EXPRESS),
         SEA_FREIGHT_BULK_CARGO(3,"托盘", LogisticsMethodEnum.OCEAN_FREIGHT_BULK),
         OCEAN_FREIGHT_FULL_CONTAINER(1,"整柜", LogisticsMethodEnum.OCEAN_FREIGHT_FCL),
-        RAIL_TRANSPORT_FULL_CONTAINER(3,"托盘", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL),
-        RAIL_FREIGHT_BULK_CARGO(1,"整柜", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK)
+        RAIL_TRANSPORT_FULL_CONTAINER(1,"整柜", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL),
+        RAIL_FREIGHT_BULK_CARGO(3,"托盘", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK)
         ;
         private final Integer code;
         private final String name;

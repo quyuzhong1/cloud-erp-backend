@@ -280,14 +280,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        GoodCangResponse<String> response = goodCangService.cancelOutboundBill(cancelOutboundReq.getOrderCode(), cancelOutboundReq.getReason());
-        if (Objects.isNull(response.getCancelStatus())) {
+        BaseResponse<OutboundB2cCancelResponse> response = zhongbaoService.cancelB2cOutboundBill(OutboundB2cCancelRequest.builder().orderNos(Collections.singletonList(cancelOutboundReq.getOrderCode())).cancelRemark(cancelOutboundReq.getReason()).build());
+        if (!response.getSuccess()) {
             return failure(response.getMessage());
+        }else {
+            if (Objects.nonNull(response.getData().getFailQty()) && response.getData().getFailQty() > 0){
+                return failure(response.getData().getFailList().get(0).getMessage());
+            }
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
         }
-        if (response.getCancelStatus().equals(3)) {
-            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
-        }
-        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
