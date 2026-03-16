@@ -2,9 +2,9 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.model.plm.entity.ProductChangeDetailsEntity;
-import com.erp.server.plm.mapper.ProductChangeDetailsMapper;
-import com.erp.server.plm.service.ProductChangeDetailsService;
+import com.erp.model.plm.entity.BomChangeDetailsEntity;
+import com.erp.server.plm.mapper.BomChangeDetailsMapper;
+import com.erp.server.plm.service.BomChangeDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @since 2023-01-11 14:05:03
  */
 @Service
-public class ProductChangeDetailsServiceImpl extends ServiceImpl<ProductChangeDetailsMapper, ProductChangeDetailsEntity> implements ProductChangeDetailsService {
+public class BomChangeDetailsServiceImpl extends ServiceImpl<BomChangeDetailsMapper, BomChangeDetailsEntity> implements BomChangeDetailsService {
 
 
     /**
@@ -29,25 +29,25 @@ public class ProductChangeDetailsServiceImpl extends ServiceImpl<ProductChangeDe
     public void saveChangeDetails(String changeInfoId, String detailsJson) {
         //先删除 有保存
         deleteByChangeInfoId(changeInfoId);
-        ProductChangeDetailsEntity changeDetailsEntity = new ProductChangeDetailsEntity();
+        BomChangeDetailsEntity changeDetailsEntity = new BomChangeDetailsEntity();
         changeDetailsEntity.setChangeInfoId(changeInfoId);
         changeDetailsEntity.setDetailsJson(detailsJson);
         this.save(changeDetailsEntity);
     }
 
     public void deleteByChangeInfoId(String changeInfoId) {
-        LambdaQueryWrapper<ProductChangeDetailsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductChangeDetailsEntity::getChangeInfoId, changeInfoId);
+        LambdaQueryWrapper<BomChangeDetailsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BomChangeDetailsEntity::getChangeInfoId, changeInfoId);
         this.remove(queryWrapper);
 
     }
 
     @Override
     public String getDetailsJson(String changeId) {
-        LambdaQueryWrapper<ProductChangeDetailsEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductChangeDetailsEntity::getChangeInfoId, changeId);
+        LambdaQueryWrapper<BomChangeDetailsEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(BomChangeDetailsEntity::getChangeInfoId, changeId);
         queryWrapper.last("LIMIT 1");
-        ProductChangeDetailsEntity entity = this.getOne(queryWrapper);
+        BomChangeDetailsEntity entity = this.getOne(queryWrapper);
         if (entity != null) {
             return entity.getDetailsJson();
         }

@@ -2,18 +2,14 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.erp.model.sys.dto.DepartmentDTO;
-import com.erp.model.sys.dto.DeptUserDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 部门表
@@ -35,9 +31,9 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     /**
      * 根据id 集合 删除部门信息
      *
-     * @param ids
+     * @param id
      */
-    List<BatchResultDTO> removeByIdList(List<String> ids);
+    BatchResultDTO remove(String id);
 
 
     /**
@@ -162,5 +158,11 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     List<DeptUserDTO.Tree> cascadeTree();
 
     void updateDisabled(SysDepartmentDTO.UpdateDisabledDTO dto);
+    /**
+     * 根据部门id集合获取部门信息map
+     * @param ids
+     * @return
+     */
+    Map<String, SysDepartmentEntity> mapByIds(List<String> ids);
 }
 

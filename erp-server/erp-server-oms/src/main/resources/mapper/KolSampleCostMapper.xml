@@ -167,6 +167,7 @@
         inner join so_info si on si.source_id = kba.id and si.is_deleted = false
         inner join so_detail sd on sd.source_detail_id = kbad.id and sd.is_deleted = false
         where kba.is_deleted = false
+        and kba.approve_status = 'approve'
 
         union
 
@@ -198,6 +199,7 @@
         sbd.main_id = sbr.main_id
         and sbr.is_deleted = false
         where kba.is_deleted = false
+        and kba.approve_status = 'approve'
         ) sba
         left join kolFeedback kfb on sba.detail_id = kfb.source_detail_id
         where sba.so_detail_id in 

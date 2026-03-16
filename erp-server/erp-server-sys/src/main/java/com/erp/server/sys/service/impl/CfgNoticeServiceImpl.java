@@ -265,7 +265,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
         //人员
-        List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList();
+        List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList(1);
 
         //飞书群
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.listByType(DictBasicEnum.FS_GROUP.getKey());

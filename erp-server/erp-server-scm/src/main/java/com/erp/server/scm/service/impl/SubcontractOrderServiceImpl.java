@@ -751,43 +751,54 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     }
                     dto.setQuantity(bomChildrenSkuDTO.getQuantity());
                 }
+
+                //报价信息查询
+                if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId()) && MathUtil.compareTo(dto.getQty(), MathUtil.ZERO) > 0) {
+                    //采购单价赋值
+                    PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                            obj.getSkuId().equals(dto.getSkuId())
+                                    && obj.getSupplierId().equals(dto.getSupplierId())
+                                    && obj.getQty().equals(dto.getQty())
+                                    && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
+                            .findFirst().orElse(null);
+                    if (ObjUtil.isEmpty(viewDTO)) {
+                        throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
+                    }
+                    dto.setPrice(viewDTO.getTaxPrice());
+                    dto.setTaxRate(viewDTO.getTaxRate());
+                    dto.setCurrency(viewDTO.getCurrency());
+                    dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                    dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+                }
+            } else {
+                //委外返修父行
+                if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isBlank(dto.getParentId()) && MathUtil.compareTo(dto.getRepairQty(), MathUtil.ZERO) > 0) {
+                    dto.setPrice(dto.getRepairPrice());
+                    dto.setTaxRate(dto.getTaxRate());
+                    dto.setCurrency(dto.getCurrency());
+                    dto.setCurrencySymbol(dto.getCurrencySymbol());
+                    dto.setAmount(MathUtil.multiplyWithTwo(dto.getRepairPrice(),dto.getRepairQty()).setScale(4, RoundingMode.DOWN));
+                } else if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId()) && MathUtil.compareTo(dto.getQty(), MathUtil.ZERO) > 0){
+                    //委外返修子行
+                    PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                            obj.getSkuId().equals(dto.getSkuId())
+                                    && obj.getSupplierId().equals(dto.getSupplierId())
+                                    && obj.getQty().equals(dto.getQty())
+                                    && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
+                            .findFirst().orElse(null);
+                    if (ObjUtil.isEmpty(viewDTO)) {
+                        throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
+                    }
+                    dto.setPrice(viewDTO.getTaxPrice());
+                    dto.setTaxRate(viewDTO.getTaxRate());
+                    dto.setCurrency(viewDTO.getCurrency());
+                    dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                    dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+                }
             }
 
             dto.setFirstMassProductName(FirstMassProductTypeEnum.getName(dto.getFirstMassProduct()));
-            //报价信息查询
-            if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId()) && MathUtil.compareTo(dto.getQty(), MathUtil.ZERO) > 0) {
-                //采购单价赋值
-                PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
-                                obj.getSkuId().equals(dto.getSkuId())
-                                && obj.getSupplierId().equals(dto.getSupplierId())
-                                && obj.getQty().equals(dto.getQty())
-                                && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
-                        .findFirst().orElse(null);
-                if (ObjUtil.isEmpty(viewDTO)) {
-                    throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
-                }
-                dto.setPrice(viewDTO.getTaxPrice());
-                dto.setTaxRate(viewDTO.getTaxRate());
-                dto.setCurrency(viewDTO.getCurrency());
-                dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
-            } else if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isBlank(dto.getParentId()) && MathUtil.compareTo(dto.getRepairQty(), MathUtil.ZERO) > 0){
-                //采购单价赋值
-                PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
-                        obj.getSkuId().equals(dto.getSkuId())
-                                && obj.getSupplierId().equals(dto.getSupplierId())
-                                && obj.getQty().equals(dto.getRepairQty())
-                                && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
-                        .findFirst().orElse(null);
-                if (ObjUtil.isEmpty(viewDTO)) {
-                    throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
-                }
-                dto.setPrice(viewDTO.getTaxPrice());
-                dto.setTaxRate(viewDTO.getTaxRate());
-                dto.setCurrency(viewDTO.getCurrency());
-                dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getRepairQty()).setScale(4, RoundingMode.DOWN));
-            }
+
             //仓位名称
             String locationName = warehouseLocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),dto.getWarehouseId()) && StrUtil.equals(obj.getCode(), dto.getWarehouseLocation()))
                     .map(WarehouseLocationEntity::getName).findFirst().orElse("");

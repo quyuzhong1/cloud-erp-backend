@@ -351,7 +351,12 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                     .distinct()
                     .collect(Collectors.joining(","));
             if(StringUtils.isNotBlank(propertyIds)){
-                String productProperty = propertytList.stream().filter(obj -> childrenLPropertyIds.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+                // 使用处理后的propertyIds来生成productProperty
+                List<String> propertyIdList = Arrays.asList(propertyIds.split(","));
+                String productProperty = propertytList.stream()
+                        .filter(obj -> propertyIdList.contains(obj.getId()))
+                        .map(BasicDictEntity::getName)
+                        .collect(Collectors.joining(","));
                 productLogisticsEntity.setProductProperty(productProperty);
                 //物流属性名称
                 productLogisticsEntity.setProductPropertyId(propertyIds);

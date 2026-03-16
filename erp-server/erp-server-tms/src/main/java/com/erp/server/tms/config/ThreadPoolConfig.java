@@ -69,12 +69,18 @@ public class ThreadPoolConfig {
     }
     @Bean(name = "tmsLogisticsLabelPool")
     public ExecutorService tmsLogisticsLabelPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(1, 10,
-                60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE));
-        //设置线城池的饱和策略
-        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
-        service.setRejectedExecutionHandler(handler);
-        return service;
+        return new ThreadPoolExecutor(
+                10,
+                20,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(200),
+                r -> {
+                    Thread t = new Thread(r);
+                    t.setName("tms-label-" + t.getId());
+                    return t;
+                },
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
     }
 }

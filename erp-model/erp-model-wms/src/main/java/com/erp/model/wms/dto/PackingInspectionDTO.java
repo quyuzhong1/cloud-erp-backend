@@ -43,6 +43,12 @@ public class PackingInspectionDTO implements Serializable {
 
 
         /**
+         * 验货完成自动打印面单
+         */
+        @NotNull(message = "验货完成自动打印面单不能为空")
+        private Boolean isPrint;
+
+        /**
          * 业务单号：运单号或销售订单编号
          */
         @NotBlank(message = "业务单号不能为空")
