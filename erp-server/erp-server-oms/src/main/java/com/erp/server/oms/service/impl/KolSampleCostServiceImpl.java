@@ -336,7 +336,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 continue;
             }
             for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, false);
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap);
             }
         }
     }
@@ -379,7 +379,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 continue;
             }
             for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSourceDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, true);
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSourceDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap);
             }
         }
     }
@@ -388,8 +388,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                                      List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList,
                                      KolSampleCostEntity sampleCostEntity,
                                      Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
-                                     Map<String, String> partitionMap,
-                                     boolean useOutstockSourceCodeAsSoCode) {
+                                     Map<String, String> partitionMap) {
         if (CollUtil.isEmpty(kolSoOutstockDTOList) || ObjUtil.isEmpty(sampleCostEntity)) {
             return;
         }
@@ -407,9 +406,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             costEntity.setPartnerId(sampleCostEntity.getPartnerId());
             costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
             costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
-            if (useOutstockSourceCodeAsSoCode) {
-                costEntity.setSoCode(kolSoOutstockDTO.getSourceCode());
-            }
             costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
             costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
             costEntity.setQty(kolSoOutstockDTO.getActualQty());
@@ -437,7 +433,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     }
 
     private boolean isWdtKolSoOutstock(SoOutstockDTO.KolSoOutstockDTO dto) {
-        return CharSequenceUtil.isNotBlank(dto.getSourceCode()) && StrUtil.startWithIgnoreCase(dto.getSourceCode(), "KOL");
+        return CharSequenceUtil.isNotBlank(dto.getPlatformCode()) && StrUtil.startWithIgnoreCase(dto.getPlatformCode(), "KOL");
     }
 
     /**

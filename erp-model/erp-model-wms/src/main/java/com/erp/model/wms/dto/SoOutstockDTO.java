@@ -2020,6 +2020,12 @@ public class SoOutstockDTO implements Serializable {
          * 销售订单明细id
          */
         private String soDetailId;
+
+        /**
+         * 出库单平台订单号
+         */
+        private String platformCode;
+
         /**
          * 来源类型
          */
