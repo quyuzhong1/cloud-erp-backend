@@ -1116,30 +1116,32 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 创建任务列表
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    SoB2cDTO.WaybillDTO waybillDTO = processSingleWaybill(dto, soB2cEntities, logisticsEntityList,
-                            soB2cDetailEntityList,logisticsPrintTypeEntities,logisticsChannelEntities);
-                    if (waybillDTO != null) {
-                        waybillDTOList.add(waybillDTO);
-                    }
-                } catch (Exception e) {
-                    log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
-                    errorList.add(codeMap.get(dto.getB2cSoId()));
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
-                    addError.setMainId(dto.getB2cSoId());
-                    addError.setMessage(e.getMessage());
-                    addError.setParamJson(JSONUtil.toJsonStr(dto));
-                    soB2cFeign.addSoB2cError(addError);
-                }
-            }, tmsLogisticsLabelPool);
+            CompletableFuture<Void> future = CompletableFuture
+                    .runAsync(() -> {
+                        SoB2cDTO.WaybillDTO waybillDTO =
+                                processSingleWaybill(dto, soB2cEntities, logisticsEntityList,
+                                        soB2cDetailEntityList, logisticsPrintTypeEntities, logisticsChannelEntities);
+                        if (waybillDTO != null) {
+                            waybillDTOList.add(waybillDTO);
+                        }
+                    }, tmsLogisticsLabelPool)
+                    .exceptionally(e -> {
+                        log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
+                        errorList.add(codeMap.get(dto.getB2cSoId()));
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+                        addError.setMainId(dto.getB2cSoId());
+                        addError.setMessage(e.getMessage());
+                        addError.setParamJson(JSONUtil.toJsonStr(dto));
+                        soB2cFeign.addSoB2cError(addError);
+                        return null;
+                    });
             futures.add(future);
         }
         // 等待所有任务完成
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(60, TimeUnit.SECONDS); // 设置超时时间
+                    .get(300, TimeUnit.SECONDS); // 设置超时时间
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             log.error("多线程获取面单超时或异常", e);
             throw new RuntimeException("获取面单失败", e);
