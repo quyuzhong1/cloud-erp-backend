@@ -6,16 +6,26 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
+import com.erp.model.wms.enums.ThirdWarehouseOperationDescriptionEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.erp.server.wms.service.B2bThirdDeliveryService;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
@@ -26,12 +36,10 @@ import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCreateResponse;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
-import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
@@ -39,7 +47,8 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static com.erp.model.wms.enums.ThirdWarehouseOperationDescriptionEnum.IS_CHANGE_PACKAGE;
 
 /**
  * @author liuruipeng
@@ -54,6 +63,19 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Resource
     private ZhongbaoService zhongbaoService;
+
+    @Resource
+    private B2bThirdDeliveryService b2bThirdDeliveryService;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
     @Resource
     private FileFeign fileFeign;
 
@@ -183,19 +205,49 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        GoodCangCreateOutboundReq cangCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToGoodCang(createOutboundReq);
-        if (StringUtils.isNotBlank(createOutboundReq.getCarrierType())) {
-            cangCreateOutboundReq.setDistributorType(Integer.valueOf(createOutboundReq.getCarrierType()));
-        }
-        log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(cangCreateOutboundReq));
-        GoodCangResponse<String> response = goodCangService.createOutboundBill(cangCreateOutboundReq);
+    public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        OutboundB2cCreateRequest createRequest = OverseasWarehouseInboundConverter.INSTANCE.b2coutboundDtoToZhongbao(createOutboundReq);
+        //设置拣货类型
+        setPickType(createOutboundReq, createRequest);
+        //设置附件
+        setAttachment(createOutboundReq, createRequest);
+        log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(createRequest));
+        BaseResponse<OutboundB2cCreateResponse> response = zhongbaoService.createB2cOutboundBill(createRequest);
         log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(response));
-        if (response.getMessage().contains("参考号重复")) {
-            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
-            return success(orderCode.getData());
+//        if (response.getMessage().contains("参考号重复")) {
+//            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
+//            return success(orderCode.getData());
+//        }
+        return response.getSuccess() ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getOrderNo()).trackNo(response.getData().getTrackingNo()).build()) : failure(response.getMessage());
+    }
+
+    private void setAttachment(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
+        List<OutboundB2cCreateRequest.Attachment> attachments = new ArrayList<>();
+        if (CharSequenceUtil.isNotBlank(createOutboundReq.getLabelData())) {
+            attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(createOutboundReq.getLabelData()).fileName(createOutboundReq.getReferenceNo()+"面单.pdf").build());
         }
-        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
+        if (CharSequenceUtil.isNotBlank(createOutboundReq.getInvoiceData())) {
+            attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(createOutboundReq.getInvoiceData()).fileName(createOutboundReq.getReferenceNo()+"发票.pdf").build());
+        }
+        createRequest.setAttachmentOpenDTOs(attachments);
+    }
+
+    private static void setPickType(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
+        List<ThirdWarehouseCreateOutboundReq.Item> items = createOutboundReq.getItems();
+        /**
+         * 订单只有一个SKU，数量为1时：1=>一票一件
+         * 订单只有一个SKU，数量大于1时：2=>一票一件多个
+         * 订单SKU大于1个时：3=>一票多件
+         */
+        if (CollUtil.isEmpty(items)) {
+            createRequest.setPickType(1);
+        } else if (items.size() == 1 && items.get(0).getQuantity() == 1) {
+            createRequest.setPickType(1);
+        } else if (items.size() == 1 && items.get(0).getQuantity() > 1) {
+            createRequest.setPickType(2);
+        } else {
+            createRequest.setPickType(3);
+        }
     }
 
     @Override
@@ -253,9 +305,12 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
-        GoodCangResponse<String> response = goodCangService.getOutboundCode(queryOutboundReq.getErpOrderCode());
-        return CharSequenceUtil.isNotBlank(response.getData()) ? success(response.getData()) : failure(response.getMessage());
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
+        OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().referenceNo(queryOutboundReq.getErpOrderCode()).build();
+        BaseResponse<List<OutboundB2cQueryResponse>> response = zhongbaoService.queryB2cOutboundBill(queryRequest);
+        return response.getSuccess() ?
+                success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().get(0).getOrderNo()).trackNo(response.getData().get(0).getTrackingNo()).build())
+                : failure(response.getMessage() + ":" + String.join(", ", response.getErrors()));
     }
 
     @Override
@@ -327,6 +382,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     public OverseasOutboundCreateRequest buildCreateFbaOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachmentOpenDTOs = new ArrayList<>();
+        OverseasOutboundCreateRequest.AttachmentOpenDTOs attachmentOpenDTO = new OverseasOutboundCreateRequest.AttachmentOpenDTOs();
         OverseasOutboundCreateRequest overseasOutboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToZhongBao(createOutboundReq);
         List<ThirdWarehouseCreateFbaOutboundReq.Item> items = createOutboundReq.getItems();
         if (items == null || items.isEmpty()) {
@@ -334,6 +391,32 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
 
         Set<String> skuIds = new HashSet<>();
+        B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
+        if (Objects.nonNull(b2bThirdDelivery)) {
+            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
+            if (Objects.nonNull(logisticsChannel)) {
+                overseasOutboundCreateRequest.setIsSign(logisticsChannel.getIsApiSign() ? 1 : -1);
+                overseasOutboundCreateRequest.setIsInsure(logisticsChannel.getIsApiInsurance() ? 1 : -1);
+            }
+
+            //取订单金额和汇率（明细行取第一行汇率）换算成人民币金额，在取系统最新美元汇率换算成美元
+            SoInfoEntity soInfo = soInfoFeign.getSoInfoById(b2bThirdDelivery.getSoId());
+            if (Objects.nonNull(soInfo)) {
+                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainId(soInfo.getId());
+                if (!soDetails.isEmpty()) {
+                    SoDetailEntity soDetail = soDetails.get(0);
+                    BigDecimal exchangeRate = soDetail.getExchangeRate();
+                    if (exchangeRate.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal cnAmount = MathUtil.multiplyWithTwo(soInfo.getOrderAmount(), exchangeRate);
+                        exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                        BigDecimal usAmount = cnAmount.divide(exchangeRate);
+                        overseasOutboundCreateRequest.setInsurePrice(usAmount);
+                    }
+                }
+            }
+
+        }
+
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : items) {
             if (item.getSkuId() != null) {
                 skuIds.add(item.getSkuId());
@@ -362,6 +445,12 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             //一票多件
             overseasOutboundCreateRequest.setPickType(3);
         }
+
+        //仓库操作指令类型
+        List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList =
+                createOutboundReq.getWarehouseOperationTypeDTOList();
+
+        //明细
         List<OverseasOutboundCreateRequest.ItemDTOs> itemDTOs = new ArrayList<>();
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
             OverseasOutboundCreateRequest.ItemDTOs itemDTO = new OverseasOutboundCreateRequest.ItemDTOs();
@@ -370,9 +459,90 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             itemDTO.setPlatformSku(item.getPlatformSkuNo());
             itemDTOs.add(itemDTO);
         }
-
         overseasOutboundCreateRequest.setItemDTOs(itemDTOs);
 
+        //仓库操作指令
+        OverseasOutboundCreateRequest.B2bDto b2bDto = new OverseasOutboundCreateRequest.B2bDto();
+        if (!warehouseOperationTypeDTOList.isEmpty()) {
+            for (ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO warehouseOperationTypeDTO : warehouseOperationTypeDTOList) {
+                if (StringUtils.isNotBlank(warehouseOperationTypeDTO.getWarehouseOperationType())
+                        && StringUtils.isNotBlank(warehouseOperationTypeDTO.getOperationDesc())) {
+
+                    // 分割字符串，得到数组
+                    String[] warehouseOperationTypes = warehouseOperationTypeDTO.getWarehouseOperationType().split(",");
+                    String[] operationDescs = warehouseOperationTypeDTO.getOperationDesc().split(",");
+
+                    // 确保两个数组长度一致，避免越界
+                    int length = Math.min(warehouseOperationTypes.length, operationDescs.length);
+
+                    // 遍历数组，匹配枚举并设置 b2bDto 属性
+                    for (int i = 0; i < length; i++) {
+                        String type = warehouseOperationTypes[i].trim();
+                        String desc = operationDescs[i].trim();
+
+                        try {
+                            ThirdWarehouseOperationDescriptionEnum operationEnum =
+                                    ThirdWarehouseOperationDescriptionEnum.valueOf(type);
+
+                            // 根据枚举值设置 b2bDto 的不同属性
+                            switch (operationEnum) {
+                                case IS_CHANGE_PACKAGE:
+                                    b2bDto.setBatchBolNo(desc);
+                                    break;
+                                case CHANGE_BARCODE_TYPE:
+                                    b2bDto.setChangeBarcodeType(Integer.parseInt(desc));
+                                    break;
+                                case IS_COVER_BARCODE:
+                                    b2bDto.setIsCoverBarcode(Integer.parseInt(desc));
+                                    break;
+                                case CHANGE_SHIPPING_MARK_TYPE:
+                                    b2bDto.setChangeShippingMarkType(Integer.parseInt(desc));
+                                    break;
+                                case IS_COVER_SHIPPING_MARK:
+                                    b2bDto.setIsCoverShippingMark(Integer.parseInt(desc));
+                                    break;
+                                case IS_PALLET:
+                                    b2bDto.setIsPallet(Integer.parseInt(desc));
+                                    break;
+                                case IS_DOUBLE_PALLET:
+                                    b2bDto.setIsDoublePallet(Integer.parseInt(desc));
+                                    break;
+                                case IS_MIXED_PALLET:
+                                    b2bDto.setIsMixedPallet(Integer.parseInt(desc));
+                                    break;
+                                case PASTE_CARTON_MARK_TYPE:
+                                    b2bDto.setPasteCartonMarkType(Integer.parseInt(desc));
+                                    break;
+                                case IS_PALLET_SCHEME:
+                                    b2bDto.setIsPalletScheme(Integer.parseInt(desc));
+                                    break;
+                                case LIMIT_PLATE_NUM:
+                                    b2bDto.setLimitPlateNum(Integer.parseInt(desc));
+                                    break;
+                                case LIMIT_PLATE_HEIGHT:
+                                    b2bDto.setLimitPlateHeight(new BigDecimal(desc));
+                                    break;
+                                case LIMIT_PLATE_WEIGHT:
+                                    b2bDto.setLimitPlateWeight(new BigDecimal(desc));
+                                    break;
+                                default:
+                                    // 不处理未知枚举
+                                    break;
+                            }
+                        } catch (IllegalArgumentException e) {
+                            // 如果 type 不匹配任何枚举，可以记录日志或忽略
+                            System.err.println("未知的仓库操作类型: " + type);
+                        }
+                    }
+                }
+            }
+        }
+        overseasOutboundCreateRequest.setB2bDto(b2bDto);
+
+
+        //附件
+        attachmentOpenDTO.setBase64(createOutboundReq.getFileUrl());
+        attachmentOpenDTOs.add(attachmentOpenDTO);
         return overseasOutboundCreateRequest;
     }
 

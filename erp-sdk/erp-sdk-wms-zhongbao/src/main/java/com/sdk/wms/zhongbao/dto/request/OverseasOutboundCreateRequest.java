@@ -87,13 +87,13 @@ public class OverseasOutboundCreateRequest {
     private String postcode;
 
     /**
-     *是否签名服务
+     *是否签名服务 -1=>否,1=>是
      */
     @JSONField(name = "isSign")
     private Integer  isSign;
 
     /**
-     *是否保险服务
+     *是否保险服务 -1=>否,1=>是
      */
     @JSONField(name = "isInsure")
     private Integer isInsure;
@@ -145,7 +145,7 @@ public class OverseasOutboundCreateRequest {
      * 附件列表
      */
     @JSONField(name = "attachmentOpenDTOs")
-    private List<attachmentOpenDTOs> attachmentOpenDTOs;
+    private List<AttachmentOpenDTOs> attachmentOpenDTOs;
 
     @Data
     @AllArgsConstructor
@@ -182,7 +182,7 @@ public class OverseasOutboundCreateRequest {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class attachmentOpenDTOs {
+    public static class AttachmentOpenDTOs {
 
         /**
          *文件

@@ -162,7 +162,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         JiFengCreateOutboundRequest jiFengCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(jiFengCreateOutboundRequest));
         JiFengBaseResp<String> resp = jiFengService.createOutbound(ThirdWarehouseContext.getAuthMap(),jiFengCreateOutboundRequest);
@@ -170,7 +170,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(resp)){
             return failure(resp.getMessage());
         }
-        return success(createOutboundReq.getReferenceNo());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(createOutboundReq.getReferenceNo()).build());
     }
 
     private JiFengCreateOutboundRequest buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
@@ -230,12 +230,12 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         JiFengBaseResp<JiFengOutboundResp> outBound = jiFengService.getOutBound(ThirdWarehouseContext.getAuthMap(), queryOutboundReq.getErpOrderCode());
         if(!isSuccess(outBound)){
             return failure(outBound.getMessage());
         }
-        return Objects.nonNull(outBound.getData()) ? success(outBound.getData().getOrderNo()) : failure(outBound.getMessage());
+        return Objects.nonNull(outBound.getData()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(outBound.getData().getOrderNo()).build()) : failure(outBound.getMessage());
     }
 
     @Override

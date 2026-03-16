@@ -153,7 +153,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         GoodCangCreateOutboundReq cangCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToGoodCang(createOutboundReq);
         if(StringUtils.isNotBlank(createOutboundReq.getCarrierType())){
             cangCreateOutboundReq.setDistributorType(Integer.valueOf(createOutboundReq.getCarrierType()));
@@ -163,9 +163,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(response));
         if(response.getMessage().contains("参考号重复")){
             GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
-            return success(orderCode.getData());
+            return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(orderCode.getData()).build());
         }
-        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
+        return isSuccess(response.getAsk(), "") ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData()).build()) : failure(response.getMessage());
     }
 
     @Override
@@ -211,9 +211,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         GoodCangResponse<String> response = goodCangService.getOutboundCode(queryOutboundReq.getErpOrderCode());
-        return CharSequenceUtil.isNotBlank(response.getData()) ? success(response.getData()) : failure(response.getMessage());
+        return CharSequenceUtil.isNotBlank(response.getData()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData()).build()) : failure(response.getMessage());
     }
 
     @Override
