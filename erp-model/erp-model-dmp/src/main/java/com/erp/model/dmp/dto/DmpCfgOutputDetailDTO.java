@@ -133,6 +133,17 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         private String nextLevelId;
 
         /**
+         * 维度类型:next_level_id类型：来源中台字典:dmpInputNextLevelType
+         */
+        private String nextLevelType;
+
+        /**
+         * 维度类型:next_level_id类型名称：来源中台字典:dmpInputNextLevelType
+         */
+        private String nextLevelTypeName;
+
+
+        /**
         * 最后成功时间
         */
         private LocalDateTime lastTime;
@@ -251,6 +262,16 @@ public class DmpCfgOutputDetailDTO implements Serializable {
         * 下一层级id
         */
         private String nextLevelId;
+
+        /**
+         * 维度类型:next_level_id类型：来源中台字典:dmpInputNextLevelType
+         */
+        private String nextLevelType;
+
+        /**
+         * 维度类型名称
+         */
+        private String nextLevelTypeName;
 
         /**
         * 最后成功时间
@@ -415,6 +436,12 @@ public class DmpCfgOutputDetailDTO implements Serializable {
          * 备注
          */
         private String remark = "";
+
+        /**
+        * 维度类型:next_level_id类型：来源中台字典:dmpInputNextLevelType
+        * /api/dmp/dict/list?type=dmpInputNextLevelType
+        */
+        private String nextLevelType;
 
 
     }

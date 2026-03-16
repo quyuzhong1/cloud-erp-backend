@@ -100,6 +100,12 @@ public class DmpCfgInputDetailEntity extends BaseEntity<DmpCfgInputDetailEntity>
     @TableField("max_interval_time")
     private Integer maxIntervalTime;
 
+    /**
+     * 维度类型:next_level_id类型：来源中台字典:dmpInputNextLevelType
+     */
+    @TableField("next_level_type")
+    private String nextLevelType;
+
 
     public static final String MAIN_ID = "main_id";
 

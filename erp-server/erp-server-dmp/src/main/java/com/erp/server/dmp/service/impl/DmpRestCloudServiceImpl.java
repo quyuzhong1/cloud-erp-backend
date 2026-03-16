@@ -76,7 +76,8 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
                                 e.getString("mapUrl").toLowerCase(),
                                 CharSequenceUtil.subAfter(e.getString("mapUrl").toLowerCase(), "/", true),
                                 e.getString("appId").toLowerCase(),
-                                parseAppCategory(e.getString("appId"))
+                                parseAppCategory(e.getString("appId")),
+                                e.getString("appName")
                         )).collect(Collectors.toList());
                 return new PagingVO<>(resultList,
                         responseJson.getInteger("total"),
@@ -175,7 +176,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         data.put("ids", dto.getParams().getIds().stream()
                 .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_platform")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_self")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)
@@ -213,7 +214,7 @@ public class DmpRestCloudServiceImpl implements DmpRestCloudService {
         data.put("ids", dto.getParams().getIds().stream()
                 .collect(Collectors.joining("','", "'", "'")));
         map.put("data", Collections.singletonList(data));
-        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_self")
+        HttpResponse response = HttpRequest.post("http://"+ restcloudUrl + ":" + restcloudPort + "/restcloud/ods_dmp_clean/clean_inventory_source_platform")
                 .header("Content-Type", "application/json")
                 .body(JSON.toJSONString(map))
                 .timeout(60000)

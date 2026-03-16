@@ -1573,6 +1573,11 @@ public class RequisitionApplicationDTO implements Serializable {
 
         private String type;
 
+        /**
+         * 发货类型
+         */
+        private String deliveryType;
+
         private String status;
 
 

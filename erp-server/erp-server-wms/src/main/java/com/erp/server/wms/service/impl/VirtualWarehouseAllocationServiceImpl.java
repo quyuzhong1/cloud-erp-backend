@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -19,9 +20,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -31,7 +30,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -44,6 +46,7 @@ import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -58,6 +61,7 @@ import org.apache.commons.collections.FastArrayList;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -122,6 +126,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
     @Resource
     private CfgSettingVirtualService cfgSettingVirtualService;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -373,6 +383,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setStatus(code);
         allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
+        //异步触发库存比对任务
+        service.asyncCompareInventory(allocationEntity, detailEntityList);
+
         //处理分货推送
         this.submitHandlePush(allocationEntity,detailEntityList,transferWarehouseList,warehouseMap);
 
@@ -381,6 +394,34 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         String msg = CharSequenceUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    public Boolean asyncCompareInventory(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailEntityList) {
+        List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey("wdtCompareWarehouse");
+        List<String> needCompareWarehouse = CollUtil.isEmpty(list) ? Collections.emptyList() : list.stream().map(DictBasicDTO.ListDTO::getValue).collect(Collectors.toList());
+        if(CollUtil.isEmpty(needCompareWarehouse)){
+            return false;
+        }
+        //如果明细的调入调出仓库都不在需要比对的仓库列表中，则不触发库存比对任务
+        List<String> allDetailWarehouseList = Stream.concat(detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getWarehouseId), detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getToWarehouseId)).distinct().collect(Collectors.toList());
+        boolean needTrigger = allDetailWarehouseList.stream().anyMatch(needCompareWarehouse::contains);
+        if(!needTrigger){
+            return false;
+        }
+        //要比对的SKU
+        List<String> skuIdList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = new ArrayList<>();
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(PlatformDictEnum.WDT.getCode());
+        dto.setBillType("queryInventory");
+        dto.setNextLevelId("1");
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        Map<String, Object> map = new HashMap<>();
+        map.put("erpWarehouseIdList", allDetailWarehouseList);
+        map.put("skuIdList", skuIdList);
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+        createDTOList.add(dto);
+        return dmpInoutTaskFeign.doInputTask(createDTOList);
     }
 
 

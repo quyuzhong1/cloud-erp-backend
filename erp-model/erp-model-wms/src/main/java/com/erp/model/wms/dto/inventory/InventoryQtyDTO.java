@@ -258,6 +258,9 @@ public class InventoryQtyDTO implements Serializable {
          */
         @NotEmpty(message = "结束时间不能为空")
         private LocalDateTime endTime;
+
+
+        private List<String> skuIds;
     }
 
     @Data
