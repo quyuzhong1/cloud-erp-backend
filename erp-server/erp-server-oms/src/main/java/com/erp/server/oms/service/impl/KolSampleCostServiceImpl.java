@@ -336,7 +336,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 continue;
             }
             for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap);
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, false);
             }
         }
     }
@@ -381,7 +381,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                         kolSoOutstockDTO.getPlatformCode(), kolSoOutstockDTO.getSkuNo(), kolSoOutstockDTO.getSoOutstockCode(), kolSoOutstockDTO.getSoOutstockDetailId());
             }
             for (Map.Entry<String, KolSampleCostEntity> entry : hitMap.entrySet()) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(entry.getKey()), entry.getValue(), oldOutstockDetailCostMap, partitionMap);
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(entry.getKey()), entry.getValue(), oldOutstockDetailCostMap, partitionMap, true);
             }
         }
     }
@@ -390,7 +390,8 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                                      List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList,
                                      KolSampleCostEntity sampleCostEntity,
                                      Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
-                                     Map<String, String> partitionMap) {
+                                     Map<String, String> partitionMap,
+                                     boolean useWdtSourceCodeAsSoCode) {
         if (CollUtil.isEmpty(kolSoOutstockDTOList) || ObjUtil.isEmpty(sampleCostEntity)) {
             return;
         }
@@ -408,6 +409,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             costEntity.setPartnerId(sampleCostEntity.getPartnerId());
             costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
             costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
+            if (useWdtSourceCodeAsSoCode) {
+                costEntity.setSoCode(kolSoOutstockDTO.getSourceCode());
+            }
             costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
             costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
             costEntity.setQty(kolSoOutstockDTO.getActualQty());
