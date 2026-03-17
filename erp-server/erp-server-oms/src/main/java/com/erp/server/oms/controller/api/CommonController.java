@@ -9,6 +9,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.EnumCacheUtils;
 import com.erp.server.oms.service.OmsAttachmentService;
 import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +28,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("common")
+@Slf4j
 public class CommonController extends BaseController {
 
     @Resource
@@ -52,6 +55,7 @@ public class CommonController extends BaseController {
      */
     @GetMapping("enumDropDown")
     public ApiResult<List<Map<String,Object>>> enumSelect(@RequestParam(value = "type")String type) {
+        log.error("skywalking tid:{}",MDC.get("tid"));
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
         return success(enumMaps.get(type));
 
