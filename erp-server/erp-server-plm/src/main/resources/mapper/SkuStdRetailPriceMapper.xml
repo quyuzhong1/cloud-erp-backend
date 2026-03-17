@@ -35,8 +35,44 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.SkuStdRetailPriceDTO$ListDTO">
-
-    </select>
+		SELECT
+		CASE WHEN G.ID IS NULL THEN
+					T.ID ELSE G.ID 
+					END ID,
+				T.ID sku_id,
+				T.sku_no,
+				T.NAME,
+				T.status,
+				h.sale_state,
+				G.currency,
+				G.std_retail_price_vat,
+				G.vat_rate,
+				G.std_retail_price,
+				j.last_outstock_date,
+				G.update_user_name,
+				G.update_time 
+			FROM
+				product_detail
+				T LEFT JOIN sku_std_retail_price G ON T.ID = G.sku_id 
+				AND G.is_deleted =
+				FALSE LEFT JOIN product_sale h ON T.ID = h.sku_id 
+				AND h.is_deleted =
+				FALSE LEFT JOIN sku_biz_statistics j ON T.ID = j.sku_id 
+				AND j.is_deleted = FALSE 
+		WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc    
+	</select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from sku_std_retail_price where is_deleted = false group by approve_status

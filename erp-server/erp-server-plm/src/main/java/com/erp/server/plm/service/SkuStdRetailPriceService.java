@@ -1,13 +1,17 @@
 package com.erp.server.plm.service;
-import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.common.business.dto.base.BaseIdsDTO.IdsDTO;
-import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.ApproveDTO;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
+import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
 
 /**
  * <p>
@@ -28,7 +32,7 @@ public interface SkuStdRetailPriceService extends SuperService<SkuStdRetailPrice
     */
     BaseResultDTO.AddDTO add(SkuStdRetailPriceDTO.AddDTO dto);
     
-    List<BaseResultDTO.AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList);
+    List<BaseResultDTO.AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList , boolean isValidateCNY);
 
     /**
     * 修改
@@ -76,4 +80,10 @@ public interface SkuStdRetailPriceService extends SuperService<SkuStdRetailPrice
     * @return
     */
     void exportList(SkuStdRetailPriceDTO.ExportDTO dto, HttpServletResponse response);
+    
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception;
+    
+    Boolean exportExcel(SkuStdRetailPriceDTO.ExportDTO dto);
+    
+    Boolean setting(SkuStdRetailPriceDTO.SettingDTO dto);
 }

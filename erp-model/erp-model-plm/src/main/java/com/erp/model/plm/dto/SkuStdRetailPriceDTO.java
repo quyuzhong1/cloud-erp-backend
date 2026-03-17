@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
+import com.erp.model.plm.enums.SkuStdSettingEnum;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -48,6 +49,11 @@ public class SkuStdRetailPriceDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         
+         /**
+         * 名称
+         */
+        private String tabFlagName;
 
          /**
          * 数量
@@ -181,6 +187,19 @@ public class SkuStdRetailPriceDTO implements Serializable {
     }
 
     /**
+     * 分摊设置
+     */
+     @Data
+     @NoArgsConstructor
+     public static class SettingDTO {
+         /**
+         * 分摊类型，http://172.16.100.11:3002/project/47/interface/api/28979	type传SkuStdSetting
+         */
+    	 @NotNull(message = "分摊类型不能为空")
+         private String skuStdSetting;
+     }
+    
+    /**
     * 详情
     */
     @Data
@@ -294,7 +313,10 @@ public class SkuStdRetailPriceDTO implements Serializable {
         @Digits(integer = 12, fraction = 4, message = "标准零售价(不含税)整数位不能超过12位，小数位不能超过4位")
         private BigDecimal stdRetailPrice;
 
-
+        /**
+         * 是否删除，内部用，前端无需处理
+         */
+        private Boolean isDeleted = false;
     }
 
 
