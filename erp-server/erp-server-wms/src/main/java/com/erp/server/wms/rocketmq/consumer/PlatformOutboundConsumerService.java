@@ -186,7 +186,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             Boolean isSignShipped = true;
             if (!referenceNo.contains(BusinessNoConstant.WFHD)
                     && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())
-                    && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))) {
+                    && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.ZHONG_BAO.getCode().equals(dto.getPlatform()))) {
                 map = checkAndBuildMap(dto);
 
                 //不标发
