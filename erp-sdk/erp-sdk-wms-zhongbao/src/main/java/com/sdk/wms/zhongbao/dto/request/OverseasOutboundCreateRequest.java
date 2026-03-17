@@ -184,11 +184,11 @@ public class OverseasOutboundCreateRequest {
     @Builder
     public static class AttachmentOpenDTOs {
 
-        /**
-         *文件
-         */
-        @JSONField(name = "base64")
+        //附件类型:SHIPMENT_LABEL（物流运单）、CARDBOARD_LABEL（卡板唛）、BOX_MARK（箱唛）、BOL、OTHER（其他）
+        private String attachmentType;
         private String base64;
+        //文件名称
+        private String fileName;
     }
 
 
