@@ -43,6 +43,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.file.dto.FileDTO;
+import com.erp.model.file.dto.FileDTO.FileSizeInfo;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO.AddDTO;
 import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
@@ -149,8 +151,8 @@ public class SkuStdRetailPriceController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     @PostMapping(value = "/importExcel")
-    public ApiResult<Boolean> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response)  throws Exception{
-        return success(skuStdRetailPriceService.importExcel(excelFile, response));
+    public ApiResult<Boolean> importExcel(@RequestBody @Validated FileSizeInfo info, HttpServletResponse response)  throws Exception{
+        return success(skuStdRetailPriceService.importExcel(info, response));
     }
     
     /**

@@ -38,7 +38,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.file.dto.FileDTO.FileSizeInfo;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO.ExportDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO.SettingDTO;
@@ -304,10 +306,10 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
    	}
    	
    	@Override
-	public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception {
+	public Boolean importExcel(FileSizeInfo excelFile, HttpServletResponse response) throws Exception {
    		SkuStdRetailPriceExcelListener billListener = new SkuStdRetailPriceExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), SkuStdRetailPriceExcelDTO.class, billListener).sheet(0).doRead();
+            EasyExcel.read(FastDFSClientUtil.getInputStream(excelFile.getFileUrl()), SkuStdRetailPriceExcelDTO.class, billListener).sheet(0).doRead();
             List<SkuStdRetailPriceExcelDTO> errorList = billListener.getErrorList();
             if (!errorList.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
@@ -323,15 +325,9 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
                 }
                 return Boolean.FALSE;
             }
-        }catch (SocketTimeoutException e) {
-            log.error("导入超时错误！>>>{}", e);
-            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
-        } catch (IOException e) {
-            log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
-        } catch (ExcelCommonException e) {
-            log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }catch (Exception e) {
+        	log.error("导入失败" , e);
+            throw new ServiceException("导入失败");
         }
         return Boolean.TRUE;
 	}

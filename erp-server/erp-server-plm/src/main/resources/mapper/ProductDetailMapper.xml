@@ -872,6 +872,7 @@
         pd.sku_no,
         pd.images_url,
         pd.name AS productName,
+        pd.name AS skuName,
         pd.variant_property,
         pl.declare_chinese_name,
         pl.declare_model,
@@ -1825,7 +1826,7 @@
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
     <select id="listSku" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
-        select id,sku_id,spu_no,sku_no,productName ,retailPrice,variantProperty,property,property_id from
+        select id,sku_id,spu_no,sku_no,sku_name,productName ,retailPrice,variantProperty,property,property_id from
        (
             select
                 pi."id",
@@ -1833,6 +1834,7 @@
                 pi.spu_no,
                 pi.name as productName,
                 pd.sku_no,
+                pd.name sku_name,
                 pi.property,
                 pi.property_id,
                 pc.retail_price as retailPrice,

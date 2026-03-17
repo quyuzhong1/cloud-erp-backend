@@ -10,6 +10,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.file.dto.FileDTO.FileSizeInfo;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
 import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
 
@@ -81,7 +82,7 @@ public interface SkuStdRetailPriceService extends SuperService<SkuStdRetailPrice
     */
     void exportList(SkuStdRetailPriceDTO.ExportDTO dto, HttpServletResponse response);
     
-    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception;
+    Boolean importExcel(FileSizeInfo excelFile, HttpServletResponse response) throws Exception;
     
     Boolean exportExcel(SkuStdRetailPriceDTO.ExportDTO dto);
     
