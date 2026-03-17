@@ -467,7 +467,7 @@ public class ZhongbaoService {
      * @param queryRequest
      * @return
      */
-    public BaseResponse<List<OutboundB2cQueryResponse>> queryB2cOutboundBill(OutboundB2cQueryRequest queryRequest) {
+    public BaseResponse<OutboundB2cQueryResponse> queryB2cOutboundBill(OutboundB2cQueryRequest queryRequest) {
         String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(queryRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
@@ -484,7 +484,7 @@ public class ZhongbaoService {
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
             ThirdWarehouseContext.setResponseJson(bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<List<OutboundB2cQueryResponse>>>() {
+            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cQueryResponse>>() {
             }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
