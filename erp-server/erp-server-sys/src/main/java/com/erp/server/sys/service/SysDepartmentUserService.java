@@ -110,6 +110,8 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
     List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(List<String> deptIdList);
 
     void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd);
+
+    List<SysDepartmentUserNumberDTO> listDeptByUserIdWithDisabledFilter(String userId);
     /**
      * 删除用户部门关联关系
      * @author will
@@ -118,6 +120,4 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return  void
      */
     void deleteByUserIds(List<String> uids);
-
-    List<SysDepartmentUserNumberDTO> listDeptByUserIdWithDisabledFilter(String userId);
 }
