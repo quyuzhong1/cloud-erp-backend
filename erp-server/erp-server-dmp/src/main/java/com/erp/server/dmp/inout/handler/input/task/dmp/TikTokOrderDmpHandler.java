@@ -19,6 +19,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
+import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
@@ -137,9 +138,11 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
 
                 String fulfillmentType = getStringValue(dmpDataMap, "fulfillmentType", "fulfillment_type");
+                String rawLogisticType = getStringValue(dmpDataMap, "logisticType");
                 String shippingType = getStringValue(dmpDataMap, "shippingType", "shipping_type", "logisticType");
                 boolean isPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder(fulfillmentType);
                 boolean hasDeliveryType = StringUtils.isNotBlank(fulfillmentType) || StringUtils.isNotBlank(shippingType);
+                String normalizedLogisticType = normalizeTikTokLogisticType(fulfillmentType, shippingType, rawLogisticType);
                 if (StringUtils.isNotBlank(fulfillmentType)) {
                     lableMap.put("fulfillmentType", fulfillmentType);
                 }
@@ -147,6 +150,7 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     lableMap.put("shippingType", shippingType);
                 }
                 lableMap.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
+                dmpDataMap.put("logisticType", normalizedLogisticType);
 
                 //渠道Id
                 Object shippingProviderIdObj = dmpDataMap.get("shippingProviderId");
@@ -268,5 +272,20 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     private boolean isSelfDeliveryOrder(String fulfillmentType, String shippingType) {
         return TIKTOK_FULFILLMENT_BY_SELLER.equalsIgnoreCase(fulfillmentType)
                 || TIKTOK_SHIPPING_TYPE_SELLER.equalsIgnoreCase(shippingType);
+    }
+
+    private String normalizeTikTokLogisticType(String fulfillmentType, String shippingType, String rawLogisticType) {
+        if (isTikTokPlatformWarehouseOrder(fulfillmentType)) {
+            return OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+        }
+        if (isSelfDeliveryOrder(fulfillmentType, shippingType)) {
+            return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+        }
+        if (OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode().equalsIgnoreCase(rawLogisticType)
+                || OrderLogisticTypeEnum.SELF_SHIPMENT.getCode().equalsIgnoreCase(rawLogisticType)
+                || OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode().equalsIgnoreCase(rawLogisticType)) {
+            return rawLogisticType;
+        }
+        return "";
     }
 }
