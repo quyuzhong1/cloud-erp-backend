@@ -77,6 +77,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
     private String fileUrl;
 
     /**
+     * 文件base64
+     */
+    private String fileBase64;
+
+    /**
      * 是否为FBA地址 1：是 0：否
      * 默认0
      */
