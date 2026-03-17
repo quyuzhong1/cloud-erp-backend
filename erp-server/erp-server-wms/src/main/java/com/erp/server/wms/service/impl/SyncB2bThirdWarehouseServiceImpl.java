@@ -55,8 +55,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private DmpMqFeign dmpMqFeign;
     @Resource
     private SoInfoFeign soInfoFeign;
-    @Resource
-    private FileFeign fileFeign;
 
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
@@ -159,9 +157,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
         String url = CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null;
         req.setFileUrl(url);
-        byte[] bytes = fileFeign.downloadFile(url);
-        String fileBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
-        req.setFileBase64(fileBase64);
+        String encodedString = Base64.getEncoder().encodeToString(url.getBytes());;
+        req.setFileBase64(encodedString);
         return BeanUtil.beanToMap(req);
     }
     /**
