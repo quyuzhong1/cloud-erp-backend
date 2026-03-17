@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
 import com.erp.server.plm.mapper.SkuStdRetailPriceMapper;
 import com.erp.server.plm.service.SkuStdRetailPriceService;
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
+import com.erp.model.plm.dto.SkuStdRetailPriceDTO.ViewDTO;
+
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -35,6 +38,7 @@ import com.google.common.collect.Lists;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO.IdsDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
@@ -197,4 +201,10 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
         // TODO 其他如需要显示名称的字段赋值
         }
    }
+
+	@Override
+	public List<AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList) {
+		return null;
+	}
+
 }

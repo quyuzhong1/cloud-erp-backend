@@ -1,21 +1,26 @@
 package com.erp.model.plm.dto;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
-import com.common.business.dto.base.SortDTO;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.SuperDTO;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import com.common.business.dto.base.SuperDTO;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
-import java.util.Map;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -90,9 +95,35 @@ public class SkuStdRetailPriceDTO implements Serializable {
         private String skuId;
 
         /**
-        * sku编号
+        * sku
         */
         private String skuNo;
+        
+        
+        /**
+         * 产品名称
+         */
+         private String name;
+        
+        /**
+         * SKU审核状态
+         */
+        private Integer status;
+        
+        /**
+         * SKU审核状态名称
+         */
+        private String statusName;
+        
+        /**
+         * 销售状态
+         */
+        private Integer saleState;
+        
+        /**
+         * 销售状态名称
+         */
+        private String saleStateName;
 
         /**
         * 币别
@@ -108,28 +139,31 @@ public class SkuStdRetailPriceDTO implements Serializable {
         * 税率
         */
         private BigDecimal vatRate;
+        
+        /**
+         * 税率，带%的
+         */
+        private String vatRateStr;
 
         /**
         * 标准零售价(不含税)
         */
         private BigDecimal stdRetailPrice;
-
+        
+        /**
+         * 最近出库日期
+         */
+        private LocalDate lastOutstockDate;
+        
+        /**
+         * 更新人
+         */
+         private String updateUserName;
 
         /**
-        * 审核状态名称
+        * 更新时间
         */
-        private String approveStatusName;
-
-
-        /**
-        * 创建时间
-        */
-        private LocalDateTime createTime;
-
-        /**
-        * 创建人名称
-        */
-        private String createUserName;
+        private LocalDateTime updateTime;
 
     }
 
@@ -167,6 +201,11 @@ public class SkuStdRetailPriceDTO implements Serializable {
         * sku编号
         */
         private String skuNo;
+        
+        /**
+         * 产品名称
+         */
+         private String name;
 
         /**
         * 币别
@@ -221,14 +260,14 @@ public class SkuStdRetailPriceDTO implements Serializable {
     public static class CommonDTO extends SuperDTO {
 
         /**
-        * skuId
+        * skuId,参考仓位移动菜单，新增仓位移动的获取SKU下拉接口，product/detail/listSku，参数的statusList传空即可，不需要传2
         */
         @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
 
         /**
-        * 币别
+        * 币别，get方法，路径api/sys/currency/list，显示和提交都使用id
         */
         @NotBlank(message = "币别不能为空")
         @Size(max = 64,message = "币别最大长度不能超过64位")

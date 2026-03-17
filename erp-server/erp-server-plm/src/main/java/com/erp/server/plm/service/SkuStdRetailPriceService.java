@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO.IdsDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.ApproveDTO;
@@ -26,6 +27,8 @@ public interface SkuStdRetailPriceService extends SuperService<SkuStdRetailPrice
     * @return
     */
     BaseResultDTO.AddDTO add(SkuStdRetailPriceDTO.AddDTO dto);
+    
+    List<BaseResultDTO.AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList);
 
     /**
     * 修改
@@ -63,8 +66,7 @@ public interface SkuStdRetailPriceService extends SuperService<SkuStdRetailPrice
     * @return
     */
     SkuStdRetailPriceDTO.ViewDTO view(String id);
-
-
+    
     /**
     * 导出Excel
     * @author shukai
