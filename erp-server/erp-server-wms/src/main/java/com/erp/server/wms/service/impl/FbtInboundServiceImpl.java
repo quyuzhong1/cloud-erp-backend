@@ -14,6 +14,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TiktokFbtDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
+import com.erp.model.wms.entity.FbaShipmentExtendEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.OperateLogEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
@@ -22,12 +23,14 @@ import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.service.FbaShipmentStatusService;
+import com.erp.server.wms.service.FbaShipmentExtendService;
 import com.erp.server.wms.service.FbtInboundService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.TiktokFbtApiService;
 import com.erp.server.wms.service.repository.FbtInboundRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,15 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -66,6 +61,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Resource
     private FbaShipmentStatusService fbaShipmentStatusService;
+    @Resource
+    private FbaShipmentExtendService fbaShipmentExtendService;
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -378,6 +375,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         entity.setPlatformShipmentStatus(inboundOrder.getStatus());
         entity.setDeliveryStatus(DeliveryStatusEnum.UN_SHIPPED.getCode());
         fbtInboundRepository.saveShipment(entity);
+        saveOrUpdateFbtExtend(entity.getId(), inboundOrder);
         fbaShipmentStatusService.saveByFbaShipment(entity);
         syncShipmentDetails(entity, inboundOrder);
         return entity;
@@ -407,10 +405,35 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         entity.setPlatformShipmentStatus(newPlatformShipmentStatus);
         entity.setShipmentReceiveTime(LocalDateTime.now());
         fbtInboundRepository.updateShipment(entity);
+        saveOrUpdateFbtExtend(entity.getId(), inboundOrder);
         if (!StrUtil.equals(oldPlatformShipmentStatus, newPlatformShipmentStatus)) {
             fbaShipmentStatusService.saveByFbaShipment(entity);
         }
         syncShipmentDetails(entity, inboundOrder);
+    }
+
+    private void saveOrUpdateFbtExtend(String mainId, TiktokFbtDTO.InboundOrderDTO inboundOrder) {
+        if (StrUtil.isBlank(mainId) || inboundOrder == null) {
+            return;
+        }
+        TiktokFbtDTO.CarrierDTO firstCarrier = Optional.ofNullable(inboundOrder.getCarriers())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        String carrierName = firstCarrier == null ? "" : StrUtil.blankToDefault(firstCarrier.getCarrierName(), "");
+        String trackingNo = firstCarrier == null ? "" : StrUtil.blankToDefault(firstCarrier.getTrackingNumber(), "");
+        List<FbaShipmentExtendEntity> extendEntityList = fbaShipmentExtendService.listByMainIds(Collections.singletonList(mainId));
+        FbaShipmentExtendEntity extendEntity = CollectionUtils.isNotEmpty(extendEntityList) ? extendEntityList.get(0) : new FbaShipmentExtendEntity();
+        extendEntity.setMainId(mainId);
+        extendEntity.setCarrierName(carrierName);
+        extendEntity.setTrackingNo(trackingNo);
+        if (StrUtil.isNotBlank(extendEntity.getId())) {
+            fbaShipmentExtendService.updateById(extendEntity);
+        } else {
+            fbaShipmentExtendService.save(extendEntity);
+        }
     }
 
     private void ensureCreateOperateLog(FbaShipmentEntity entity) {
