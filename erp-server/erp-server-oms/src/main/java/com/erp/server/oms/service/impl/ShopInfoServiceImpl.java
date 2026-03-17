@@ -22,6 +22,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
@@ -85,6 +86,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -1724,6 +1726,40 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .eq(ShopInfoEntity::getDisabled, false));
         return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
     }
+
+    @Override
+    public List<ShopDTO.ListShopInfoDTO> listShopInfoByPlatformList(List<String> platformList) {
+        List<ShopInfoEntity> shopInfoEntities = this.lambdaQuery()
+                .in(ShopInfoEntity::getDictPlatform, platformList)
+                .eq(ShopInfoEntity::getDisabled, Boolean.FALSE)
+                .list();
+
+        Map<String, List<ShopInfoEntity>> platformGroupedMap = shopInfoEntities.stream()
+                .collect(Collectors.groupingBy(ShopInfoEntity::getDictPlatform));
+
+        List<ShopDTO.ListShopInfoDTO> result = new ArrayList<>();
+        for (Map.Entry<String, List<ShopInfoEntity>> entry : platformGroupedMap.entrySet()) {
+            String platform = entry.getKey();
+            List<ShopInfoEntity> entities = entry.getValue();
+
+            List<ShopDTO.ShopInfoDTO> shopInfoDTOList = entities.stream()
+                    .map(entity -> {
+                        ShopDTO.ShopInfoDTO dto = new ShopDTO.ShopInfoDTO();
+                        dto.setId(entity.getId());
+                        dto.setName(entity.getName());
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+
+            ShopDTO.ListShopInfoDTO listShopInfoDTO = new ShopDTO.ListShopInfoDTO();
+            listShopInfoDTO.setDictPlatform(platform);
+            listShopInfoDTO.setShopInfoDTOLists(shopInfoDTOList);
+            result.add(listShopInfoDTO);
+        }
+
+        return result;
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

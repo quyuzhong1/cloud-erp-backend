@@ -13,6 +13,7 @@ import com.common.business.wrapper.QueryParam;
 import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -457,6 +458,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
         			DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
                     request.setCfgOutputId("1859427581292469023");
                     List<QueryParam> queryParams = new ArrayList<>();
+                    queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", DmpBasicSystemCodeEnum.WDT.getCode()));
+                    queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
                     queryParams.add(new QueryParam(QueryTypeEnum.IN, "platform_code", tidList));
                     request.setQueryParams(queryParams);
                     dmpOutputCreateFactory.doHotfixOutputTask(request);

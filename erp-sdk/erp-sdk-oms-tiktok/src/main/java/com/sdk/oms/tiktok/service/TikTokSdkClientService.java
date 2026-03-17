@@ -1075,7 +1075,8 @@ public class TikTokSdkClientService {
 
         //加入sign签名入参
         params.put("sign", sign);
-
+        //打印日志
+        log.warn("调用url={},入参params={}, TikTok查询包裹明细请求参数", url + path, params.toString());
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
@@ -1083,6 +1084,7 @@ public class TikTokSdkClientService {
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询包裹明细失败，返回值 responseMap={}",
                     url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }
+        log.warn("调用url={},入参params={}, TikTok查询包裹明细返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
         //解析数据
         PackageDocumentDTO result = null;
         try {

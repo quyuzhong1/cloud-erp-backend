@@ -150,15 +150,15 @@ public class CommonServiceImpl implements CommonService {
         if (ObjectUtil.isNotEmpty(cfgSettingEntity) && ObjectUtil.isNotNull(cfgSettingEntity.getValue())) {
             size = Long.valueOf(cfgSettingEntity.getValue());
         }
-        List<String> list = new ArrayList<>();
-        for (MultipartFile multipartFile : multipartFileList) {
+        MultipartFile[] multipartFileArr = new MultipartFile[multipartFileList.length];
+        for (int i = 0; i < multipartFileList.length; i++) {
             //图片压缩
-            MultipartFile newMultipartFile = compressImage(multipartFile, size);
-            //上传fastdfs
-            String filePath = fileFeign.uploadFile(newMultipartFile);
-            list.add(filePath);
+            MultipartFile newMultipartFile = compressImage(multipartFileList[i], size);
+            multipartFileArr[i] = newMultipartFile;
         }
-        return list;
+        //上传fastdfs
+        List<String> filePathList = fileFeign.batchUploadFiles(multipartFileArr);
+        return filePathList;
     }
 
     /**

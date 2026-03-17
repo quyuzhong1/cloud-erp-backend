@@ -311,5 +311,5 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
      */
     void mouldInfoNotice(NoticeEnum noticeEnum, MouldInfoDTO.NoticeDTO noticeDTO, String message);
 
-    void productChangeNotice(NoticeEnum noticeEnum, List<ProductDetailDTO.SkuChangeFieldsDTO> skuChangeFieldsDTO);
+    void bomChangeNotice(NoticeEnum noticeEnum, List<ProductDetailDTO.SkuChangeFieldsDTO> skuChangeFieldsDTO);
 }

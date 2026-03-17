@@ -11,6 +11,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * @description: samba工具类
@@ -156,8 +158,8 @@ public class SambaUtil {
      * 转换MultipartFile
      */
     public static MultipartFile toMultipartFile(String filepath, String username, String pwd) throws Exception {
-        //字符转义
-        String fileUrl = filepath.replace("\\","/");
+        // 按路径段做编码，兼容中文、空格、+ 等字符
+        String fileUrl = encodeSmbPath(filepath);
 
         SmbFile smbFile = new SmbFile("smb://" + username + ":" + pwd + "@"
                 + fileUrl);
@@ -181,8 +183,56 @@ public class SambaUtil {
         // 关闭 ByteArrayOutputStream
         outputStream.close();
 
-        // 创建 MockMultipartFile 对象
-        return new MockMultipartFile(smbFile.getName(), new ByteArrayInputStream(bytes));
+        // 创建 MockMultipartFile 对象，并设置 originalFilename
+        return new MockMultipartFile(
+                "file",
+                smbFile.getName(),
+                null,
+                new ByteArrayInputStream(bytes)
+        );
+    }
+
+    /**
+     * SMB路径编码（仅编码host之后的路径段）
+     */
+    private static String encodeSmbPath(String filepath) {
+        String path = filepath.replace("\\", "/").trim();
+        path = path.replaceFirst("(?i)^smb://", "");
+        while (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        int firstSlashIdx = path.indexOf('/');
+        if (firstSlashIdx <= 0 || firstSlashIdx >= path.length() - 1) {
+            return path;
+        }
+        String host = path.substring(0, firstSlashIdx);
+        String[] subSegments = path.substring(firstSlashIdx + 1).split("/");
+        if (subSegments.length == 0) {
+            return path;
+        }
+        // share name 不能编码，否则 treeConnect 可能报参数错误
+        String shareName = subSegments[0];
+        if (subSegments.length == 1) {
+            return host + "/" + shareName;
+        }
+        String encodedSubPath = Arrays.stream(subSegments)
+                .skip(1)
+                .filter(segment -> segment != null && !segment.isEmpty())
+                .map(SambaUtil::escapeSmbSegment)
+                .collect(Collectors.joining("/"));
+        if (encodedSubPath.isEmpty()) {
+            return host + "/" + shareName;
+        }
+        return host + "/" + shareName + "/" + encodedSubPath;
+    }
+
+    /**
+     * 仅转义SMB URL中必要字符，保留中文等可读字符
+     */
+    private static String escapeSmbSegment(String segment) {
+        return segment
+                .replace("#", "%23")
+                .replace("?", "%3F");
     }
 
     /**

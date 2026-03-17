@@ -152,6 +152,7 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 			}
 		}
 		
+		int count = 0;
 		while(CollUtil.isNotEmpty(firstWdtMap)) {
 			Map<String, String> tidRawMaps = dmpSoReturnDetailService.lambdaQuery().in(DmpSoReturnDetailEntity::getRawRefundNos, 
 					firstWdtMap.values().stream().map(ShudiyunB2cOrderDTO::getRoot_node_no_initial).collect(Collectors.toSet()))
@@ -159,6 +160,7 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 				.ne(DmpSoReturnDetailEntity::getRawRefundNos, "")
 				.isNotNull(DmpSoReturnDetailEntity::getTid)
 				.ne(DmpSoReturnDetailEntity::getTid, "")
+				.last(" and tid != raw_refund_nos ")
 				.list().stream().collect(Collectors.toMap(DmpSoReturnDetailEntity::getRawRefundNos, DmpSoReturnDetailEntity::getTid , (m1 , m2) -> m1));
 			Map<String, ShudiyunB2cOrderDTO> newWdtMap = new HashMap<>();
 			
@@ -188,6 +190,10 @@ public abstract class DmpOutputSdyBaseTaskHandler extends DmpOutputTaskHandler {
 				}
 			}
 			firstWdtMap = newWdtMap;
+			count = count + 1;
+			if(count > 5) {
+				break;
+			}
 		}
 	}
 }

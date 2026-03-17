@@ -37,6 +37,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
@@ -1143,6 +1144,21 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                                             Collections.addAll(resultList, data.get(field).split(","));
                                         }
                                     }
+                                } else if (classPath.contains("listCsAgent")) {
+                                    //售后申请获取售后人员
+                                    String[] split = classPath.split("#");
+                                    String controller = split[0];
+                                    String methodName = split[1];
+                                    AfterSaleDTO.ListCsAgentDTO dto = new AfterSaleDTO.ListCsAgentDTO();
+                                    dto.setAfterSaleIds(Arrays.asList(businessId));
+                                    ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
+                                    if(Objects.nonNull(select) && select.getCode() == 200 && Objects.nonNull(select.getData())){
+                                        // 转换为 Map
+                                        Map<String, String> data = JSON.parseObject(JSON.toJSONString(select.getData()), Map.class);
+                                        if(CollUtil.isNotEmpty(data) && Objects.nonNull(data.get(field))){
+                                            Collections.addAll(resultList, data.get(field).split(","));
+                                        }
+                                    }
                                 } else {
                                     //获取查询配置
                                     DictNoticeRoleOptionDTO.SelectDTO dto = gson.fromJson(
@@ -1527,13 +1543,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //根据通知方式查找人员 目前只有飞书
         String noticeMethod = noticeEntity.getNoticeMethod();
         if (StringUtils.isNotBlank(noticeMethod)) {
+            List<ThirdUnionDTO> unionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(), userIdList);
+            Map<String, ThirdUnionDTO> unionMap = unionList.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e));
             List<String> noticeMethodList = Arrays.asList(noticeMethod.split(","));
             for (String str : noticeMethodList) {
                 //获取飞书的unionid 与用户关系
                 if (CfgApproveSyncSyncPlatformEnum.FEISHU.getCode().equals(str)) {
-                    List<ThirdUnionDTO> unionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode() , userIdList);
-                    Map<String, ThirdUnionDTO> unionMap = unionList.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e));
-
                     //根据用户id + businessType + noticeMethod + noticeType 判断是否已经在发送中。
                     ThirdNoticePushRecordDTO.ParamsDTO paramsDTO = new ThirdNoticePushRecordDTO.ParamsDTO();
                     paramsDTO.setBusinessType(noticeEntity.getBusinessType());

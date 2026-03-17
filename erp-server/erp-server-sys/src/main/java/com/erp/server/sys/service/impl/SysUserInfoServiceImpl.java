@@ -1000,14 +1000,20 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
 
     @Override
-    public List<FindUserDTO> getAllUserList() {
+    public List<FindUserDTO> getAllUserList(Integer userState) {
         List<FindUserDTO> resultList = new LinkedList<>();
-        List<SysUserInfoEntity> list = this.lambdaQuery().eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode()).list();;
+
+        //如果userState 不等null 则作为参数
+        List<SysUserInfoEntity> list = this.lambdaQuery()
+                .eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode())
+                .eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE)
+                .eq(userState != null, SysUserInfoEntity::getUserState, userState)
+                .list();
         for (SysUserInfoEntity item : list) {
-            Integer userState = item.getUserState();
-            if (userState == 0) {
-                continue;
-            }
+//            Integer userState = item.getUserState();
+//            if (userState == 0) {
+//                continue;
+//            }
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
@@ -1396,6 +1402,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return;
         }
         this.removeByIds(uids);
+
+        //删除用户部门关系
+        sysDepartmentUserService.deleteByUserIds(uids);
+
         //同步金蝶员工数据
         List<DmpPushTaskEntity> restList = new ArrayList<>();
         list.forEach(obj -> {

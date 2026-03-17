@@ -10,7 +10,6 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import org.springframework.http.ResponseEntity;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -353,6 +352,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param platform 平台
      */
     List<String> listShopInfoByPlatform(String platform);
+
+    /**
+     * 根据平台获取店铺
+     * @param platformList 平台
+     */
+    List<ShopDTO.ListShopInfoDTO> listShopInfoByPlatformList(List<String> platformList);
+
     void saveCustom(ShopInfoEntity shopInfoEntity);
 
     /**
