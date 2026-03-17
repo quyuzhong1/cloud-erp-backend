@@ -8,6 +8,10 @@ public class SkyWalkingSpanIdConverter extends ClassicConverter {
 
     @Override
     public String convert(ILoggingEvent event) {
-        return TraceContext.segmentId();
+        String segmentId = TraceContext.segmentId();
+        if("N/A".equals(segmentId)) {
+            segmentId = "";
+        }
+        return segmentId;
     }
 }
