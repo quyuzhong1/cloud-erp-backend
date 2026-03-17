@@ -1364,9 +1364,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 && !entity.getType().equals(RequisitionApplicationTypeEnum.FBT.getCode())){
             throw new ServiceException("非FBA/AWD/FBT来源无法绑定货件");
         }
-        if (entity.getType().equals(RequisitionApplicationTypeEnum.FBT.getCode())) {
-            return buildFbtBindShipmentView(entity);
-        }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(packingTaskService.getBySourceCode(entity.getCode())).orElseThrow(()-> new ServiceException("未生成装箱任务"));
         if(!PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus()) && !PackingTaskStatusEnum.PACKING.getCode().equals(packingTaskEntity.getPackingStatus())){
@@ -1388,73 +1385,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException("要货申请所有装箱已关联货件，无法再次绑定");
         }
         return resultList;
-    }
-
-    private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> buildFbtBindShipmentView(RequisitionApplicationEntity entity) {
-        RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO dto = new RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO();
-        dto.setId(entity.getId());
-        dto.setType(entity.getType());
-        PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(entity.getCode());
-        if (Objects.nonNull(packingTaskEntity)) {
-            dto.setTaskId(packingTaskEntity.getId());
-        }
-        dto.setBoxNo(entity.getCode());
-        dto.setIsReleaseInventory(Boolean.FALSE);
-
-        List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        dto.setPackingSku(buildFbtPackingInfo(detailEntityList, false));
-        dto.setPackingFnSku(buildFbtPackingInfo(detailEntityList, true));
-
-        if (CharSequenceUtil.isBlank(entity.getFbaShipmentCode())) {
-            return Collections.singletonList(dto);
-        }
-
-        FbaShipmentEntity shipmentEntity = fbaShipmentService.getByCode(entity.getFbaShipmentCode());
-        if (Objects.nonNull(shipmentEntity)) {
-            dto.setFbaShipmentId(shipmentEntity.getId());
-        }
-        dto.setFbaShipmentCode(entity.getFbaShipmentCode());
-
-        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByFbaShipmentCodes(Collections.singletonList(entity.getFbaShipmentCode()));
-        if (CollUtil.isNotEmpty(deliveryDetailEntityList)) {
-            FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(deliveryDetailEntityList.get(0).getMainId());
-            if (Objects.nonNull(deliveryEntity)) {
-                dto.setDeliveryCode(deliveryEntity.getCode());
-            }
-        }
-        if (Objects.nonNull(shipmentEntity)) {
-            List<FbaShipmentPackingEntity> packingEntityList = fbaShipmentPackingService.listByMains(Collections.singletonList(shipmentEntity.getId()));
-            packingEntityList.stream()
-                    .filter(v -> CharSequenceUtil.isBlank(v.getCartonId()))
-                    .filter(v -> CharSequenceUtil.isBlank(v.getSkuId()))
-                    .filter(v -> CharSequenceUtil.isBlank(v.getSkuNo()))
-                    .filter(v -> CharSequenceUtil.isBlank(v.getFnSku()))
-                    .map(FbaShipmentPackingEntity::getBoxNo)
-                    .filter(CharSequenceUtil::isNotBlank)
-                    .findFirst()
-                    .ifPresent(dto::setFbaBoxNo);
-        }
-        return Collections.singletonList(dto);
-    }
-
-    private String buildFbtPackingInfo(List<RequisitionApplicationDetailEntity> detailEntityList, boolean useFnSku) {
-        if (CollUtil.isEmpty(detailEntityList)) {
-            return "";
-        }
-        return detailEntityList.stream()
-                .map(detail -> {
-                    String code = useFnSku
-                            ? CharSequenceUtil.blankToDefault(detail.getPlatformFnSku(), detail.getPlatformSku())
-                            : detail.getSkuNo();
-                    Integer qty = Optional.ofNullable(detail.getPickingQty()).orElse(detail.getApproveQty());
-                    qty = Optional.ofNullable(qty).orElse(0);
-                    if (CharSequenceUtil.isBlank(code)) {
-                        return null;
-                    }
-                    return code + "*" + qty;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining(";"));
     }
 
     @Override
