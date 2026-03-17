@@ -60,6 +60,7 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
 
             List<TiktokFbtDTO.PlannedGoodDTO> plannedGoods = parsePlannedGoods(item.get("planned_goods"));
             dto.setPlannedGoods(plannedGoods);
+            dto.setCarriers(parseCarriers(item.get("carriers")));
             dto.setReceivedBatches(parseReceivedBatches(item.get("received_batches")));
             dto.setShipmentName(resolveShipmentName(dto.getInboundOrderId(), plannedGoods));
             if (CollUtil.isNotEmpty(plannedGoods)) {
@@ -302,6 +303,21 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
             if (item.get("sku_ids") instanceof List) {
                 dto.setSkuIds((List<String>) item.get("sku_ids"));
             }
+            result.add(dto);
+        }
+        return result;
+    }
+
+    private List<TiktokFbtDTO.CarrierDTO> parseCarriers(Object carriersObj) {
+        if (!(carriersObj instanceof List)) {
+            return Collections.emptyList();
+        }
+        List<Map<String, Object>> carriers = (List<Map<String, Object>>) carriersObj;
+        List<TiktokFbtDTO.CarrierDTO> result = new ArrayList<>();
+        for (Map<String, Object> item : carriers) {
+            TiktokFbtDTO.CarrierDTO dto = new TiktokFbtDTO.CarrierDTO();
+            dto.setCarrierName(stringVal(item.get("carrier_name")));
+            dto.setTrackingNumber(stringVal(item.get("tracking_number")));
             result.add(dto);
         }
         return result;

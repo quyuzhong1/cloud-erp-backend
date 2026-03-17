@@ -145,6 +145,19 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
                 }
             }
+            if (oldEntity == null
+                    && RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                    && OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())
+                    && StringUtils.isNotBlank(dto.getAuthId())
+                    && StringUtils.isNotBlank(dto.getPlatformSkuId())) {
+                oldEntity = listingInfoService.lambdaQuery()
+                        .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
+                        .eq(ListingInfoEntity::getType, RuleTypeEnum.WAREHOUSE.getCode())
+                        .eq(ListingInfoEntity::getAuthId, dto.getAuthId())
+                        .eq(ListingInfoEntity::getPlatformSkuId, dto.getPlatformSkuId())
+                        .last("limit 1")
+                        .one();
+            }
 
             // 转换
             if(dto.getMatchResult() != null){
