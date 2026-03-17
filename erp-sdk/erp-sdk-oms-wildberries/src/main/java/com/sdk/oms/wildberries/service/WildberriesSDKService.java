@@ -330,12 +330,14 @@ public class WildberriesSDKService {
                 bodyStr,  // 假设 bodyStr 已经是 JSON 字符串
                 new TypeReference<List<AddOrderToSupplyResponse>>() {}
         );
-        if(!response.isEmpty()){
+        if(response != null && !response.isEmpty()){
             return response.get(0);
         }else{
             return null;
         }
     }
+
+
     public String getSupplyOrders(String token, String supplyId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
         String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_ORDER,WildberriesConstant.SANDBOX_STR,supplyId);
