@@ -333,7 +333,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			if (!soB2cDetails.isEmpty()) {
 
 				SoB2cDetailEntity soB2cDetailEntity = soB2cDetails.stream()
-						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
+						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getPlatformSkuNo()))
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soB2cDetailEntity)) {
@@ -347,7 +347,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 			} else if (!soDetails.isEmpty()){
 				SoDetailEntity soDetailEntity = soDetails.stream()
-						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
+						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getPlatformSkuNo()))
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soDetailEntity)) {
