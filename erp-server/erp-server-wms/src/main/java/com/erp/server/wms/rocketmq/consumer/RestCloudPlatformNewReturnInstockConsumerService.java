@@ -293,6 +293,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	private List<SoReturnInstockDetailEntity> buildZhongBaoSoReturnInstockDetail(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,WarehouseEntity warehouseEntity) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
+		List<SoB2cDetailEntity> soB2cDetails = new ArrayList<>();
+		List<SoDetailEntity> soDetails = new ArrayList<>();
 		if(CollectionUtils.isEmpty(details)){
 			throw new ServiceException("明细为空");
 		}
@@ -303,8 +305,11 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
-		List<SoB2cDetailEntity> soB2cDetails = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
-		List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
+		if (Objects.nonNull(soB2cEntity)) {
+			soB2cDetails.addAll(soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId())));
+		} else {
+			soDetails.addAll(soInfoFeign.listSoDetailByMainId(soInfoEntity.getId()));
+		}
 		for (PlatformReturnInstockDTO.Detail detail : details) {
 			SkuMappingDTO.MappingSkuViewDTO skuViewDTO = mappingSkuViewDTOList.stream().filter(v->v.getPlatformSkuNo().equals(detail.getProductSku())).findFirst().orElse(null);
 			if(Objects.isNull(skuViewDTO)){
@@ -316,7 +321,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockDetailEntity.setMustQty(0);
 			soReturnInstockDetailEntity.setReceiveQty(detail.getReceiveQty());
 			soReturnInstockDetailEntity.setRealQty(detail.getRealQty());
-			if (Objects.nonNull(soB2cEntity)) {
+			if (!soB2cDetails.isEmpty()) {
 
 				SoB2cDetailEntity soB2cDetailEntity = soB2cDetails.stream()
 						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
@@ -331,7 +336,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
 				}
 
-			} else if (Objects.nonNull(soInfoEntity)){
+			} else if (!soDetails.isEmpty()){
 				SoDetailEntity soDetailEntity = soDetails.stream()
 						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
 						.findFirst()
