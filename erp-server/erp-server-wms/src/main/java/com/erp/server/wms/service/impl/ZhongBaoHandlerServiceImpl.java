@@ -310,9 +310,9 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
         OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().referenceNo(queryOutboundReq.getErpOrderCode()).build();
-        BaseResponse<List<OutboundB2cQueryResponse>> response = zhongbaoService.queryB2cOutboundBill(queryRequest);
+        BaseResponse<OutboundB2cQueryResponse> response = zhongbaoService.queryB2cOutboundBill(queryRequest);
         return response.getSuccess() ?
-                success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().get(0).getOrderNo()).trackNo(response.getData().get(0).getTrackingNo()).build())
+                success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getList().get(0).getOrderNo()).trackNo(response.getData().getList().get(0).getTrackingNo()).build())
                 : failure(response.getMessage() + ":" + String.join(", ", response.getErrors()));
     }
 
