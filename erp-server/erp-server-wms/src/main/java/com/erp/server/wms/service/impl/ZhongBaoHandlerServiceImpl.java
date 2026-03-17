@@ -18,6 +18,7 @@ import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
+import com.erp.model.wms.enums.WarehouseOperationTypeValueEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -483,34 +484,34 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                             // 根据枚举值设置 b2bDto 的不同属性
                             switch (operationTypeEnum) {
                                 case IS_CHANGE_PACKAGE:
-                                    b2bDto.setBatchBolNo(desc);
+                                    b2bDto.setIsChangePackage(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case CHANGE_BARCODE_TYPE:
-                                    b2bDto.setChangeBarcodeType(Integer.parseInt(desc));
+                                    b2bDto.setChangeBarcodeType(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case IS_COVER_BARCODE:
-                                    b2bDto.setIsCoverBarcode(Integer.parseInt(desc));
+                                    b2bDto.setIsCoverBarcode(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case CHANGE_SHIPPING_MARK_TYPE:
-                                    b2bDto.setChangeShippingMarkType(Integer.parseInt(desc));
+                                    b2bDto.setChangeShippingMarkType(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case IS_COVER_SHIPPING_MARK:
-                                    b2bDto.setIsCoverShippingMark(Integer.parseInt(desc));
+                                    b2bDto.setIsCoverShippingMark(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case IS_PALLET:
-                                    b2bDto.setIsPallet(Integer.parseInt(desc));
+                                    b2bDto.setIsPallet(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case IS_DOUBLE_PALLET:
-                                    b2bDto.setIsDoublePallet(Integer.parseInt(desc));
+                                    b2bDto.setIsDoublePallet(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case IS_MIXED_PALLET:
-                                    b2bDto.setIsMixedPallet(Integer.parseInt(desc));
+                                    b2bDto.setIsMixedPallet(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case PASTE_CARTON_MARK_TYPE:
-                                    b2bDto.setPasteCartonMarkType(Integer.parseInt(desc));
+                                    b2bDto.setPasteCartonMarkType(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case IS_PALLET_SCHEME:
-                                    b2bDto.setIsPalletScheme(Integer.parseInt(desc));
+                                    b2bDto.setIsPalletScheme(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
                                     break;
                                 case LIMIT_PLATE_NUM:
                                     b2bDto.setLimitPlateNum(Integer.parseInt(desc));
