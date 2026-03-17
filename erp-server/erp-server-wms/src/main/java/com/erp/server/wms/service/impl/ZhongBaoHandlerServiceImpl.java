@@ -538,8 +538,11 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
 
         //附件
-        attachmentOpenDTO.setBase64(createOutboundReq.getFileUrl());
-        attachmentOpenDTOs.add(attachmentOpenDTO);
+        if (StringUtils.isNotBlank(createOutboundReq.getFileUrl())) {
+            attachmentOpenDTO.setBase64(createOutboundReq.getFileUrl());
+            attachmentOpenDTOs.add(attachmentOpenDTO);
+            overseasOutboundCreateRequest.setAttachmentOpenDTOs(attachmentOpenDTOs);
+        }
         return overseasOutboundCreateRequest;
     }
 
