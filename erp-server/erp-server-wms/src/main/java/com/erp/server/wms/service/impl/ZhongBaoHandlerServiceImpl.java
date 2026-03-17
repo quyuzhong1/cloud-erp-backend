@@ -539,8 +539,16 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         //附件
         List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachments = new ArrayList<>();
-        if (CharSequenceUtil.isNotBlank(createOutboundReq.getFileBase64())) {
-            attachments.add(OverseasOutboundCreateRequest.AttachmentOpenDTOs.builder().base64(createOutboundReq.getFileBase64()).fileName(createOutboundReq.getReferenceNo()+"附件.pdf").build());
+        if (CharSequenceUtil.isNotBlank(createOutboundReq.getFileBase64())
+                && CharSequenceUtil.isNotBlank(createOutboundReq.getFileUrl())) {
+            int lastSlashIndex = createOutboundReq.getFileUrl().lastIndexOf('/');
+            String fileName = createOutboundReq.getFileUrl().substring(lastSlashIndex + 1);
+
+            attachments.add(OverseasOutboundCreateRequest.AttachmentOpenDTOs.builder()
+                    .attachmentType("OTHER")
+                    .base64(createOutboundReq.getFileBase64())
+                    .fileName(fileName)
+                    .build());
         }
         overseasOutboundCreateRequest.setAttachmentOpenDTOs(attachments);
 
