@@ -314,7 +314,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
 		if (Objects.nonNull(soB2cEntity)) {
 			soB2cDetails.addAll(soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId())));
-		} else {
+		} else if (Objects.nonNull(soInfoEntity)){
 			soDetails.addAll(soInfoFeign.listSoDetailByMainId(soInfoEntity.getId()));
 		}
 		for (PlatformReturnInstockDTO.Detail detail : details) {
