@@ -100,6 +100,13 @@ public interface SoInfoFeign {
     List<SoInfoEntity> listByCodes(List<String> list);
 
     /**
+     * 根据code查询
+     * @param soCode
+     */
+    @PostMapping("feign/soInfo/getByCode")
+    SoInfoEntity getByCode(String soCode);
+
+    /**
      * 修改单据审批状态
      * @param updateApprovalStatusDTO
      */

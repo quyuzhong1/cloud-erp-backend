@@ -169,18 +169,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					String soCode = thirdWarehouseDeliveryEntity.getSoCode();
 					soB2cEntity = soB2cFeign.getSoCode(soCode);
 
-					List<SoInfoEntity> soInfos = soInfoFeign.listByCodes(Collections.singletonList(soCode));
-					if (!soInfos.isEmpty()) {
-						soInfoEntity = soInfos.get(0);
-					}
+					soInfoEntity = soInfoFeign.getByCode(dto.getOrderReferenceNo());
 				}
 			}else{
 				soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
 
-				List<SoInfoEntity> soInfos = soInfoFeign.listByCodes(Collections.singletonList(dto.getOrderReferenceNo()));
-				if (!soInfos.isEmpty()) {
-					soInfoEntity = soInfos.get(0);
-				}
+				soInfoEntity = soInfoFeign.getByCode(dto.getOrderReferenceNo());
+
 			}
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
