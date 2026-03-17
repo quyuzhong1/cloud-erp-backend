@@ -22,8 +22,10 @@ public class OutboundB2cQueryRequest implements Serializable {
     private List<String> referenceNos;
     //起始创建时间（与修改时间互斥）格式：yyyy-MM-dd HH:mm:ss
     private String startCreateTime;
+    private String endCreateTime;
     //结束修改时间（与创建时间互斥）格式：yyyy-MM-dd HH:mm:ss
     private String startUpdateTime;
+    private String endUpdateTime;
     //订单号
     private String orderNo;
     //自定义编号

@@ -81,8 +81,8 @@ class ZhongbaoServiceTest {
     @Test
     public void outboundTest(){
         ThirdWarehouseContext.setAuthMap(authMap);
-        OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().build();
-        BaseResponse<List<OutboundB2cQueryResponse>> listBaseResponse = zhongbaoService.queryB2cOutboundBill(queryRequest);
+        OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().startUpdateTime("2026-03-11 00:00:00").endUpdateTime("2026-03-17 00:00:00").build();
+        BaseResponse<OutboundB2cQueryResponse> listBaseResponse = zhongbaoService.queryB2cOutboundBill(queryRequest);
         System.out.println(JSONUtil.toJsonStr(listBaseResponse));
     }
 }
