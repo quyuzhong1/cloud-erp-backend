@@ -26,7 +26,7 @@ import java.util.*;
 public class WildberriesSDKService {
 
     private String getSandbox(){
-        if (BusinessCommonConstants.hasProfile("prod")) {
+        if (BusinessCommonConstants.hasProfile("prod") || BusinessCommonConstants.hasProfile("uat")) {
             return CharSequenceUtil.EMPTY;
         } else {
             return "-sandbox";
