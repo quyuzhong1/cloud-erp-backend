@@ -413,7 +413,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	private SoReturnInstockEntity buildZhongBaoSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,SoOutstockEntity soOutstock){
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
-		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+		CustomerInfoEntity customerInfo = null;
+			if(StringUtils.isNotBlank(warehouseEntity.getId())){
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
 		}
@@ -437,7 +438,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setSalesOrgId(soB2cEntity.getOrgId());
 			soReturnInstockEntity.setSalesOrgName(soB2cEntity.getOrgName());
 			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
-			CustomerInfoEntity customerInfo = customerFeign.getCustomerById(shopInfoEntity.getCustomerId());
+			customerInfo = customerFeign.getCustomerById(shopInfoEntity.getCustomerId());
 			soReturnInstockEntity.setCustomerId(shopInfoEntity.getCustomerId());
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
@@ -449,7 +450,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setType("B2B");
 			soReturnInstockEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
 			soReturnInstockEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
-			CustomerInfoEntity customerInfo = customerFeign.getCustomerById(soInfoEntity.getCustomerId());
+			customerInfo = customerFeign.getCustomerById(soInfoEntity.getCustomerId());
 			soReturnInstockEntity.setCustomerId(soInfoEntity.getCustomerId());
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
@@ -469,8 +470,11 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					soReturnInstockEntity.setSalesDeptName(department.getName());
 				}
 			}
-			soReturnInstockEntity.setSellerId(soOutstock.getSellerId());
-			soReturnInstockEntity.setSellerName(soOutstock.getSellerName());
+		}
+
+		if (Objects.nonNull(customerInfo)) {
+			soReturnInstockEntity.setSellerId(customerInfo.getSellerId());
+			soReturnInstockEntity.setSellerName(customerInfo.getSellerName());
 		}
 		return soReturnInstockEntity;
 	}
