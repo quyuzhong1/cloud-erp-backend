@@ -463,7 +463,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             String fnSku = plannedGood.getGoodsId();
             String msku = resolveMsku(plannedGood);
             SkuMappingDTO.MappingSkuViewDTO mappingDTO = findMappingByFnSkuAndMsku(skuMapping, fnSku, msku);
-            String resolvedSkuNo = resolveDetailSkuNo(mappingDTO, msku, fnSku, plannedGood.getGoodsId());
+            String resolvedSkuNo = resolveDetailSkuNo(mappingDTO);
             if (detailKeys.contains(detailKey)) {
                 FbaShipmentDetailEntity detail = existsMap.get(detailKey);
                 if (detail != null) {
@@ -475,22 +475,21 @@ public class FbtInboundServiceImpl implements FbtInboundService {
                     detail.setMsku(msku);
                     detail.setFnSku(fnSku);
                     detail.setDeclareQty(plannedGood.getQuantity());
-                    if (detail.getDeliveryQty() == null) {
-                        detail.setDeliveryQty(plannedGood.getQuantity());
-                    }
                     if (mappingDTO != null) {
                         detail.setSkuId(mappingDTO.getProductSkuId());
+                        detail.setSkuNo(resolveDetailSkuNo(mappingDTO));
+                    } else if (shouldClearFallbackSku(detail, msku, fnSku, plannedGood.getGoodsId())) {
+                        detail.setSkuId(null);
+                        detail.setSkuNo("");
                     }
-                    if (StrUtil.isBlank(detail.getSkuNo())) {
-                        detail.setSkuNo(resolvedSkuNo);
-                    }
+                    detail.setDeliveryQty(0);
                     detail.setPlatformProductName(plannedGood.getName());
                     detail.setIsCombination(false);
                     if (receiveQty != null) {
                         detail.setReceiveQty(receiveQty);
                         detail.setReceiveDate(receiveTime);
                     }
-                    detail.setDiffQty(calcDiffQty(detail.getReceiveQty(), detail.getDeliveryQty()));
+                    detail.setDiffQty(0);
                     fbtInboundRepository.updateShipmentDetail(detail);
                 }
                 continue;
@@ -505,14 +504,14 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             }
             detail.setSkuNo(resolvedSkuNo);
             detail.setDeclareQty(plannedGood.getQuantity());
-            detail.setDeliveryQty(plannedGood.getQuantity());
+            detail.setDeliveryQty(0);
             detail.setPlatformProductName(plannedGood.getName());
             detail.setIsCombination(false);
             if (receiveQty != null) {
                 detail.setReceiveQty(receiveQty);
                 detail.setReceiveDate(receiveTime);
             }
-            detail.setDiffQty(calcDiffQty(detail.getReceiveQty(), detail.getDeliveryQty()));
+            detail.setDiffQty(0);
             fbtInboundRepository.saveShipmentDetail(detail);
             detailKeys.add(detailKey);
         }
@@ -536,12 +535,6 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             result.put(batch.getGoodsId(), result.getOrDefault(batch.getGoodsId(), 0) + qty);
         }
         return result;
-    }
-
-    private Integer calcDiffQty(Integer receiveQty, Integer deliveryQty) {
-        int receive = receiveQty == null ? 0 : receiveQty;
-        int delivery = deliveryQty == null ? 0 : deliveryQty;
-        return receive - delivery;
     }
 
     private String buildDetailKey(FbaShipmentDetailEntity detail) {
@@ -638,20 +631,21 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         return null;
     }
 
-    private String resolveDetailSkuNo(SkuMappingDTO.MappingSkuViewDTO mappingDTO,
-                                      String msku,
-                                      String fnSku,
-                                      String goodsId) {
+    private String resolveDetailSkuNo(SkuMappingDTO.MappingSkuViewDTO mappingDTO) {
         if (mappingDTO != null && StrUtil.isNotBlank(mappingDTO.getProductSkuNo())) {
             return mappingDTO.getProductSkuNo();
         }
-        if (StrUtil.isNotBlank(msku)) {
-            return msku;
+        return "";
+    }
+
+    private boolean shouldClearFallbackSku(FbaShipmentDetailEntity detail,
+                                           String msku,
+                                           String fnSku,
+                                           String goodsId) {
+        if (detail == null || StrUtil.isNotBlank(detail.getSkuId()) || StrUtil.isBlank(detail.getSkuNo())) {
+            return false;
         }
-        if (StrUtil.isNotBlank(fnSku)) {
-            return fnSku;
-        }
-        return StrUtil.blankToDefault(goodsId, "");
+        return StrUtil.equalsAny(detail.getSkuNo(), StrUtil.blankToDefault(msku, ""), StrUtil.blankToDefault(fnSku, ""), StrUtil.blankToDefault(goodsId, ""));
     }
 
     private void syncInventoryRecord(FbaShipmentEntity shipment, TiktokFbtDTO.InboundOrderDTO inboundOrder) {

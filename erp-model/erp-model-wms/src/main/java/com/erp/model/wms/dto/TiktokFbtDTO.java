@@ -53,8 +53,16 @@ public class TiktokFbtDTO {
         private LocalDateTime updatedTime;
         private List<String> goodsIds = new ArrayList<>();
         private List<String> fbtWarehouseIds = new ArrayList<>();
+        private List<CarrierDTO> carriers = new ArrayList<>();
         private List<PlannedGoodDTO> plannedGoods = new ArrayList<>();
         private List<ReceivedBatchDTO> receivedBatches = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CarrierDTO {
+        private String carrierName;
+        private String trackingNumber;
     }
 
     @Data
