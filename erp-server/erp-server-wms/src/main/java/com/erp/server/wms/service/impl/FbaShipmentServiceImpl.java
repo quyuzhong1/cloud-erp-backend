@@ -187,6 +187,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private WmsCartonService wmsCartonService;
     @Resource
     private FbtInboundService fbtInboundService;
+    @Resource
+    private TiktokFbtApiService tiktokFbtApiService;
 
 
 
@@ -471,9 +473,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         //根据主表id查询详情信息
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(id));
-        List<String> skuNos = fbaShipmentDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        boolean isFbtShipment = ShipmentSourceTypeEnum.FBT.getCode().equals(entity.getSourceType());
+        Map<String, SkuMappingDTO.MappingSkuViewDTO> fbtSkuMapping = isFbtShipment ? buildFbtViewSkuMapping(entity, fbaShipmentDetailEntities) : Collections.emptyMap();
+        List<String> skuNos = fbaShipmentDetailEntities.stream()
+                .map(detail -> resolveViewSkuNo(detail, isFbtShipment, fbtSkuMapping))
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         //根据sku获取产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<SkuVO> skuVOList = CollectionUtils.isEmpty(skuNos) ? Collections.emptyList() : plmTaskFeign.listBySkuNoList(skuNos);
 
         //设置详情信息
         List<FbaShipmentDetailDTO.ViewDTO> detailViewList = new ArrayList<>();
@@ -482,9 +490,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //映射详情字段
             FbaShipmentDetailDTO.ViewDTO detailViewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentDetailToViewDTO(fbaShipmentDetailEntity);
 
+            String displaySkuNo = resolveViewSkuNo(fbaShipmentDetailEntity, isFbtShipment, fbtSkuMapping);
+            detailViewDTO.setSkuNo(displaySkuNo);
+            if (isFbtShipment) {
+                detailViewDTO.setDeliveryQty(0);
+                detailViewDTO.setDiffQty(0);
+            }
+
             //产品名称
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaShipmentDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
-            detailViewDTO.setProductName(skuVO.getSkuName());
+            String productName = resolveViewProductName(fbaShipmentDetailEntity, displaySkuNo, isFbtShipment, fbtSkuMapping, skuVOList);
+            detailViewDTO.setProductName(productName);
 
             //组装详情信息
             detailViewList.add(detailViewDTO);
@@ -492,6 +507,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         //给产品信息赋值
         viewDTO.setDetailList(detailViewList);
+        if (isFbtShipment) {
+            fillFbtCarrierInfo(entity, viewDTO);
+        }
 
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(id));
@@ -499,6 +517,142 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         viewDTO.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
 
         return viewDTO;
+    }
+
+    private Map<String, SkuMappingDTO.MappingSkuViewDTO> buildFbtViewSkuMapping(FbaShipmentEntity entity,
+                                                                                List<FbaShipmentDetailEntity> detailEntities) {
+        if (entity == null || CollectionUtils.isEmpty(detailEntities)) {
+            return Collections.emptyMap();
+        }
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
+        if (shopInfoEntity == null) {
+            return Collections.emptyMap();
+        }
+        List<String> platformSkuNoList = detailEntities.stream()
+                .filter(Objects::nonNull)
+                .flatMap(detail -> java.util.stream.Stream.of(detail.getFnSku(), detail.getMsku()))
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(platformSkuNoList)) {
+            return Collections.emptyMap();
+        }
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatform(StringUtils.defaultIfBlank(shopInfoEntity.getDictPlatform(), PlatformDictEnum.TIK_TOK.getCode()));
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
+        listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        if (CollectionUtils.isEmpty(mappingList)) {
+            return Collections.emptyMap();
+        }
+        Map<String, SkuMappingDTO.MappingSkuViewDTO> result = new HashMap<>();
+        for (SkuMappingDTO.MappingSkuViewDTO mapping : mappingList) {
+            if (mapping == null) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(mapping.getPlatformSkuNo())) {
+                result.putIfAbsent(mapping.getPlatformSkuNo(), mapping);
+            }
+            if (StringUtils.isNotBlank(mapping.getPlatformFnSku())) {
+                result.putIfAbsent(mapping.getPlatformFnSku(), mapping);
+            }
+        }
+        return result;
+    }
+
+    private String resolveViewSkuNo(FbaShipmentDetailEntity detailEntity,
+                                    boolean isFbtShipment,
+                                    Map<String, SkuMappingDTO.MappingSkuViewDTO> fbtSkuMapping) {
+        if (!isFbtShipment) {
+            return detailEntity.getSkuNo();
+        }
+        SkuMappingDTO.MappingSkuViewDTO mappingDTO = findFbtMapping(fbtSkuMapping, detailEntity);
+        if (mappingDTO != null && StringUtils.isNotBlank(mappingDTO.getProductSkuNo())) {
+            return mappingDTO.getProductSkuNo();
+        }
+        if (shouldPreserveExistingSku(detailEntity)) {
+            return detailEntity.getSkuNo();
+        }
+        return "";
+    }
+
+    private String resolveViewProductName(FbaShipmentDetailEntity detailEntity,
+                                          String displaySkuNo,
+                                          boolean isFbtShipment,
+                                          Map<String, SkuMappingDTO.MappingSkuViewDTO> fbtSkuMapping,
+                                          List<SkuVO> skuVOList) {
+        if (isFbtShipment) {
+            SkuMappingDTO.MappingSkuViewDTO mappingDTO = findFbtMapping(fbtSkuMapping, detailEntity);
+            if (mappingDTO != null && StringUtils.isNotBlank(mappingDTO.getProductName())) {
+                return mappingDTO.getProductName();
+            }
+        }
+        if (StringUtils.isBlank(displaySkuNo) || CollectionUtils.isEmpty(skuVOList)) {
+            return "";
+        }
+        SkuVO skuVO = skuVOList.stream().filter(req -> StringUtils.equals(req.getSkuNo(), displaySkuNo)).findFirst().orElse(new SkuVO());
+        return StringUtils.defaultIfBlank(skuVO.getSkuName(), "");
+    }
+
+    private SkuMappingDTO.MappingSkuViewDTO findFbtMapping(Map<String, SkuMappingDTO.MappingSkuViewDTO> mappingMap,
+                                                           FbaShipmentDetailEntity detailEntity) {
+        if (mappingMap == null || mappingMap.isEmpty() || detailEntity == null) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(detailEntity.getMsku()) && mappingMap.containsKey(detailEntity.getMsku())) {
+            return mappingMap.get(detailEntity.getMsku());
+        }
+        if (StringUtils.isNotBlank(detailEntity.getFnSku()) && mappingMap.containsKey(detailEntity.getFnSku())) {
+            return mappingMap.get(detailEntity.getFnSku());
+        }
+        return null;
+    }
+
+    private boolean shouldPreserveExistingSku(FbaShipmentDetailEntity detailEntity) {
+        if (detailEntity == null || StringUtils.isBlank(detailEntity.getSkuNo())) {
+            return false;
+        }
+        if (StringUtils.isNotBlank(detailEntity.getSkuId())) {
+            return true;
+        }
+        return !StringUtils.equalsAny(detailEntity.getSkuNo(),
+                StringUtils.defaultIfBlank(detailEntity.getMsku(), ""),
+                StringUtils.defaultIfBlank(detailEntity.getFnSku(), ""),
+                StringUtils.defaultString(detailEntity.getAsin(), ""));
+    }
+
+    private void fillFbtCarrierInfo(FbaShipmentEntity entity, FbaShipmentDTO.ViewDTO viewDTO) {
+        if (entity == null || viewDTO == null || StringUtils.isBlank(entity.getShopId())) {
+            return;
+        }
+        String inboundOrderId = StringUtils.defaultIfBlank(entity.getFbaShipmentId(), entity.getCode());
+        if (StringUtils.isBlank(inboundOrderId)) {
+            return;
+        }
+        try {
+            List<TiktokFbtDTO.InboundOrderDTO> inboundOrders =
+                    tiktokFbtApiService.queryInboundOrders(entity.getShopId(), Collections.singletonList(inboundOrderId), null);
+            if (CollectionUtils.isEmpty(inboundOrders)) {
+                return;
+            }
+            TiktokFbtDTO.InboundOrderDTO inboundOrder = inboundOrders.stream()
+                    .filter(Objects::nonNull)
+                    .filter(item -> StringUtils.equals(inboundOrderId, item.getInboundOrderId()))
+                    .findFirst()
+                    .orElse(inboundOrders.get(0));
+            if (CollectionUtils.isEmpty(inboundOrder.getCarriers())) {
+                return;
+            }
+            TiktokFbtDTO.CarrierDTO carrierDTO = inboundOrder.getCarriers().get(0);
+            if (carrierDTO == null) {
+                return;
+            }
+            viewDTO.setTrackingNo(StringUtils.defaultIfBlank(carrierDTO.getTrackingNumber(), ""));
+            viewDTO.setCarrierName(StringUtils.defaultIfBlank(carrierDTO.getCarrierName(), ""));
+        } catch (Exception e) {
+            log.warn("查询FBT货件物流信息失败, shipmentId={}, inboundOrderId={}, err={}",
+                    entity.getId(), inboundOrderId, e.getMessage());
+        }
     }
 
     @Override

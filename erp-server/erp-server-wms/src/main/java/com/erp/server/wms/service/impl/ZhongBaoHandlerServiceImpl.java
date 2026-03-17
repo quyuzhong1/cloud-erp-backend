@@ -311,9 +311,9 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
         OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().referenceNo(queryOutboundReq.getErpOrderCode()).build();
-        BaseResponse<List<OutboundB2cQueryResponse>> response = zhongbaoService.queryB2cOutboundBill(queryRequest);
+        BaseResponse<OutboundB2cQueryResponse> response = zhongbaoService.queryB2cOutboundBill(queryRequest);
         return response.getSuccess() ?
-                success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().get(0).getOrderNo()).trackNo(response.getData().get(0).getTrackingNo()).build())
+                success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getList().get(0).getOrderNo()).trackNo(response.getData().getList().get(0).getTrackingNo()).build())
                 : failure(response.getMessage() + ":" + String.join(", ", response.getErrors()));
     }
 
@@ -538,8 +538,12 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
 
         //附件
-        attachmentOpenDTO.setBase64(createOutboundReq.getFileUrl());
-        attachmentOpenDTOs.add(attachmentOpenDTO);
+        List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachments = new ArrayList<>();
+        if (CharSequenceUtil.isNotBlank(createOutboundReq.getFileBase64())) {
+            attachments.add(OverseasOutboundCreateRequest.AttachmentOpenDTOs.builder().base64(createOutboundReq.getFileBase64()).fileName(createOutboundReq.getReferenceNo()+"附件.pdf").build());
+        }
+        overseasOutboundCreateRequest.setAttachmentOpenDTOs(attachments);
+
         return overseasOutboundCreateRequest;
     }
 

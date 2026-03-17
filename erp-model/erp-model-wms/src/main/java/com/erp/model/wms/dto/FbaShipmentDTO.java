@@ -350,6 +350,16 @@ public class FbaShipmentDTO implements Serializable {
         private String deliveryToAddress;
 
         /**
+         * 跟踪号
+         */
+        private String trackingNo;
+
+        /**
+         * 物流承运商
+         */
+        private String carrierName;
+
+        /**
          * 详情
          */
         private List<FbaShipmentDetailDTO.ViewDTO> detailList;
