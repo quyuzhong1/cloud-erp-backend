@@ -383,6 +383,9 @@ public enum ApiError implements Serializable {
     DMP_THIRD_SYS_TYPE_SINGLE_BINDING(3510,"同一个第三方平台只能绑定一个{0}"),
     DMP_THIRD_LOGISTICS_NOT_FOUND(3511,"第三方渠道不存在"),
     DMP_PUSH_CFG_NOT_FOUND(3512,"未找到推送配置项【{0}】"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL(3513,"仓库操作类型不允许为空"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM(3514,"缺少必要的仓库操作类型【{0}】"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
 
 
     /**

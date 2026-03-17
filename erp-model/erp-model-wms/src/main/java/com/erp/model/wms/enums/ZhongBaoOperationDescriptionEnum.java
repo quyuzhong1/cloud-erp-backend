@@ -5,6 +5,10 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @Author: wtr
  * @Date: 2026/3/13 19:06
@@ -12,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
  * @Return:
  * @Description:
  **/
-public enum ThirdWarehouseOperationDescriptionEnum implements EnumMessage {
+public enum ZhongBaoOperationDescriptionEnum implements EnumMessage {
     IS_CHANGE_PACKAGE("isChangePackage", "不开箱换SKU标"),
     CHANGE_BARCODE_TYPE("changeBarcodeType", "开箱换SKU标"),
     IS_COVER_BARCODE("isCoverBarcode", "贴板标"),
@@ -23,9 +27,9 @@ public enum ThirdWarehouseOperationDescriptionEnum implements EnumMessage {
     IS_MIXED_PALLET("isMixedPallet", "混托"),
     PASTE_CARTON_MARK_TYPE("pasteCartonMarkType", "贴托唛"),
     IS_PALLET_SCHEME("isPalletScheme", "主动SKU打托方案"),
-    LIMIT_PLATE_NUM("limitPlateNum", "限板数"),
-    LIMIT_PLATE_HEIGHT("limitPlateHeight", "限板高"),
-    LIMIT_PLATE_WEIGHT("limitPlateWeight", "限板重"),
+//    LIMIT_PLATE_NUM("limitPlateNum", "限板数"),
+//    LIMIT_PLATE_HEIGHT("limitPlateHeight", "限板高"),
+//    LIMIT_PLATE_WEIGHT("limitPlateWeight", "限板重"),
     ;
     /**
      * 类型
@@ -40,7 +44,7 @@ public enum ThirdWarehouseOperationDescriptionEnum implements EnumMessage {
 
 
 
-    ThirdWarehouseOperationDescriptionEnum(String code, String name) {
+    ZhongBaoOperationDescriptionEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -61,11 +65,22 @@ public enum ThirdWarehouseOperationDescriptionEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (ThirdWarehouseOperationDescriptionEnum billTypeEnum : ThirdWarehouseOperationDescriptionEnum.values()) {
+        for (ZhongBaoOperationDescriptionEnum billTypeEnum : ZhongBaoOperationDescriptionEnum.values()) {
             if (code.equals(billTypeEnum.getCode())) {
                 return billTypeEnum.getName();
             }
         }
         return "";
+    }
+
+    /**
+     * 根据 code 集合获取对应的 name 集合（批量）
+     */
+    public static List<String> getNamesByCodes(Set<String> codes) {
+        List<String> names = new ArrayList<>();
+        for (String code : codes) {
+            names.add(getName(code));
+        }
+        return names;
     }
 }
