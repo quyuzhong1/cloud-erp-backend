@@ -10,6 +10,7 @@ import com.common.core.utils.EnumCacheUtils;
 import com.erp.server.oms.service.OmsAttachmentService;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -60,6 +61,18 @@ public class CommonController extends BaseController {
         return success(enumMaps.get(type));
 
     }
+
+    /**
+     */
+    @GetMapping("testSkyWalking")
+    public ApiResult<String> enumSelect() {
+        // 获取 SkyWalking TraceId
+        String traceId = TraceContext.traceId();
+        String segmentId = TraceContext.segmentId();
+        return success("skywalking tid:"+traceId+"segmentId:"+segmentId);
+
+    }
+
     /**
      * 新增附件
      * @return
