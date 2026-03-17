@@ -69,6 +69,7 @@ public class CommonController extends BaseController {
         // 获取 SkyWalking TraceId
         String traceId = TraceContext.traceId();
         String segmentId = TraceContext.segmentId();
+        log.error("skywalking tid:{}",MDC.get("traceId"));
         return success("skywalking tid:"+traceId+"segmentId:"+segmentId);
 
     }
