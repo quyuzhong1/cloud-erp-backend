@@ -187,8 +187,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private WmsCartonService wmsCartonService;
     @Resource
     private FbtInboundService fbtInboundService;
-    @Resource
-    private TiktokFbtApiService tiktokFbtApiService;
 
 
 
@@ -470,6 +468,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         //映射字段
         FbaShipmentDTO.ViewDTO viewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentToViewDTO(entity);
+        List<FbaShipmentExtendEntity> extendEntityList = fbaShipmentExtendService.listByMainIds(Collections.singletonList(id));
 
         //根据主表id查询详情信息
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(id));
@@ -508,7 +507,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //给产品信息赋值
         viewDTO.setDetailList(detailViewList);
         if (isFbtShipment) {
-            fillFbtCarrierInfo(entity, viewDTO);
+            fillFbtCarrierInfo(extendEntityList, viewDTO);
         }
 
         //附件信息
@@ -621,38 +620,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 StringUtils.defaultString(detailEntity.getAsin(), ""));
     }
 
-    private void fillFbtCarrierInfo(FbaShipmentEntity entity, FbaShipmentDTO.ViewDTO viewDTO) {
-        if (entity == null || viewDTO == null || StringUtils.isBlank(entity.getShopId())) {
+    private void fillFbtCarrierInfo(List<FbaShipmentExtendEntity> extendEntityList, FbaShipmentDTO.ViewDTO viewDTO) {
+        if (viewDTO == null || CollectionUtils.isEmpty(extendEntityList)) {
             return;
         }
-        String inboundOrderId = StringUtils.defaultIfBlank(entity.getFbaShipmentId(), entity.getCode());
-        if (StringUtils.isBlank(inboundOrderId)) {
-            return;
-        }
-        try {
-            List<TiktokFbtDTO.InboundOrderDTO> inboundOrders =
-                    tiktokFbtApiService.queryInboundOrders(entity.getShopId(), Collections.singletonList(inboundOrderId), null);
-            if (CollectionUtils.isEmpty(inboundOrders)) {
-                return;
-            }
-            TiktokFbtDTO.InboundOrderDTO inboundOrder = inboundOrders.stream()
-                    .filter(Objects::nonNull)
-                    .filter(item -> StringUtils.equals(inboundOrderId, item.getInboundOrderId()))
-                    .findFirst()
-                    .orElse(inboundOrders.get(0));
-            if (CollectionUtils.isEmpty(inboundOrder.getCarriers())) {
-                return;
-            }
-            TiktokFbtDTO.CarrierDTO carrierDTO = inboundOrder.getCarriers().get(0);
-            if (carrierDTO == null) {
-                return;
-            }
-            viewDTO.setTrackingNo(StringUtils.defaultIfBlank(carrierDTO.getTrackingNumber(), ""));
-            viewDTO.setCarrierName(StringUtils.defaultIfBlank(carrierDTO.getCarrierName(), ""));
-        } catch (Exception e) {
-            log.warn("查询FBT货件物流信息失败, shipmentId={}, inboundOrderId={}, err={}",
-                    entity.getId(), inboundOrderId, e.getMessage());
-        }
+        FbaShipmentExtendEntity extendEntity = extendEntityList.get(0);
+        viewDTO.setTrackingNo(StringUtils.defaultIfBlank(extendEntity.getTrackingNo(), ""));
+        viewDTO.setCarrierName(StringUtils.defaultIfBlank(extendEntity.getCarrierName(), ""));
     }
 
     @Override
@@ -1052,6 +1026,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryMap.get(record.getId());
             if (ObjectUtil.isNotNull(firstMileDeliveryEntity) && CharSequenceUtil.isNotBlank(firstMileDeliveryEntity.getCode())) {
                 record.setDeliveryCode(firstMileDeliveryEntity.getCode());
+            } else if (ShipmentSourceTypeEnum.FBT.getCode().equals(record.getSourceType())) {
+                record.setDeliveryCode("");
+            }
+            if (ShipmentSourceTypeEnum.FBT.getCode().equals(record.getSourceType())) {
+                record.setCarrierName(StringUtils.defaultString(record.getCarrierName()));
+                record.setTrackingNo(StringUtils.defaultString(record.getTrackingNo()));
             }
 
             //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总

@@ -25,6 +25,8 @@
        <result column="delivery_from_post_code" property="deliveryFromPostCode" />
        <result column="delivery_to_warehouse_id" property="deliveryToWarehouseId" />
        <result column="shipment_delivery_time" property="shipmentDeliveryTime" />
+       <result column="carrier_name" property="carrierName" />
+       <result column="tracking_no" property="trackingNo" />
        <result column="delivery_to_mobile" property="deliveryToMobile" />
        <result column="delivery_to_name" property="deliveryToName" />
        <result column="delivery_to_post_code" property="deliveryToPostCode" />
@@ -46,7 +48,7 @@
         update_user_id,
         version,
         is_deleted,
-        main_id, plan_code, delivery_code, delivery_id, preferred_region, delivery_from_name, delivery_from_mobile, delivery_from_city, delivery_from_province, delivery_from_area, delivery_from_post_code, delivery_to_warehouse_id, shipment_delivery_time, delivery_to_mobile, delivery_to_name, delivery_to_post_code, delivery_to_area, delivery_to_province, delivery_to_city, delivery_to_country_id, delivery_to_country_name
+        main_id, plan_code, delivery_code, delivery_id, preferred_region, delivery_from_name, delivery_from_mobile, delivery_from_city, delivery_from_province, delivery_from_area, delivery_from_post_code, delivery_to_warehouse_id, shipment_delivery_time, carrier_name, tracking_no, delivery_to_mobile, delivery_to_name, delivery_to_post_code, delivery_to_area, delivery_to_province, delivery_to_city, delivery_to_country_id, delivery_to_country_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentExtendDTO$ListDTO">

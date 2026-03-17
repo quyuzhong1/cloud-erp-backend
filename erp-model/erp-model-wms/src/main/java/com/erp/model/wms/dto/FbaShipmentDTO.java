@@ -689,9 +689,21 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String deliveryCode;
         /**
+         * 物流承运商
+         */
+        private String carrierName;
+        /**
+         * 跟踪单号
+         */
+        private String trackingNo;
+        /**
          * 平台货件状态
          */
         private String platformShipmentStatus;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
         /**
          * 平台产品id
          */

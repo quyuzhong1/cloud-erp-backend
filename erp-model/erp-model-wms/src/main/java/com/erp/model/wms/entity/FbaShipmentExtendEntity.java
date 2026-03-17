@@ -88,6 +88,16 @@ public class FbaShipmentExtendEntity extends BaseEntity<FbaShipmentExtendEntity>
     @TableField("shipment_delivery_time")
     private LocalDateTime shipmentDeliveryTime;
     /**
+    * 物流承运商
+    */
+    @TableField("carrier_name")
+    private String carrierName;
+    /**
+    * 跟踪单号
+    */
+    @TableField("tracking_no")
+    private String trackingNo;
+    /**
     * 收货电话号码
     */
     @TableField("delivery_to_mobile")
@@ -154,6 +164,10 @@ public class FbaShipmentExtendEntity extends BaseEntity<FbaShipmentExtendEntity>
     public static final String DELIVERY_TO_WAREHOUSE_ID = "delivery_to_warehouse_id";
 
     public static final String SHIPMENT_DELIVERY_TIME = "shipment_delivery_time";
+
+    public static final String CARRIER_NAME = "carrier_name";
+
+    public static final String TRACKING_NO = "tracking_no";
 
     public static final String DELIVERY_TO_MOBILE = "delivery_to_mobile";
 
