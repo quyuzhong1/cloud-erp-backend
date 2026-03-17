@@ -14,6 +14,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -55,6 +56,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private DmpMqFeign dmpMqFeign;
     @Resource
     private SoInfoFeign soInfoFeign;
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
@@ -155,10 +158,13 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
-        String url = CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null;
-        req.setFileUrl(url);
-        String encodedString = Base64.getEncoder().encodeToString(url.getBytes());;
-        req.setFileBase64(encodedString);
+        if (CollUtil.isNotEmpty(attachmentList)) {
+            String url = FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl();
+            byte[] bytes = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
+            String fileBase64 = Base64.getEncoder().encodeToString(bytes);
+            req.setFileUrl(url);
+            req.setFileBase64(fileBase64);
+        }
         return BeanUtil.beanToMap(req);
     }
     /**
