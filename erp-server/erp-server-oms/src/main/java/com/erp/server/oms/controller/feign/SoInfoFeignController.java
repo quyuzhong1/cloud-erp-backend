@@ -224,6 +224,11 @@ public class SoInfoFeignController extends BaseController {
         return soInfoService.listByCodes(list);
     }
 
+    @PostMapping("/getByCode")
+    public SoInfoEntity getByCode(String soCode) {
+        return soInfoService.getByCode(soCode);
+    }
+
     @PostMapping("/updateApproveStatus")
     public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         soInfoService.updateApproveStatus(updateApprovalStatusDTO);
