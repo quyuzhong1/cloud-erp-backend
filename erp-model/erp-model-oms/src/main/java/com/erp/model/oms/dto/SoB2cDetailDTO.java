@@ -19,6 +19,14 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class SoB2cDetailDTO implements Serializable {
+    @Data
+    @NoArgsConstructor
+    public static class MainDTO {
+        //销售订单id
+        private String id;
+        // 明细列表
+        private List<ListDTO> detailList;
+    }
 
     /**
      * 列表

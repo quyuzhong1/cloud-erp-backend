@@ -5034,14 +5034,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             //明细信息
             List<SoB2cDetailEntity> detailList = allDetailList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
+            if (CollectionUtils.isNotEmpty(detailList)) {
+                List<String> warehouseList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
+                long warehouseCount = overseasProviderWarehouseList.stream().filter(o -> warehouseList.contains(o.getWarehouseId())).count();
+                Boolean isOverseasProviderWarehouse = warehouseCount > 0;
+                data.setIsOverseasProviderWarehouse(isOverseasProviderWarehouse);
             }
-            List<String> warehouseList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
-            long warehouseCount = overseasProviderWarehouseList.stream().filter(o -> warehouseList.contains(o.getWarehouseId())).count();
-            Boolean isOverseasProviderWarehouse = warehouseCount > 0;
-            data.setIsOverseasProviderWarehouse(isOverseasProviderWarehouse);
-//            List<SoB2cDetailDTO.ListDTO> soB2cDetailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ListDTO.class, detailList);
 
             //手动标发标记
             data.setTag(Boolean.FALSE);
