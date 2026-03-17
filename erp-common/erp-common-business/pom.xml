@@ -33,17 +33,17 @@
             <artifactId>spring-cloud-starter-openfeign</artifactId>
             <version>2.2.6.RELEASE</version>
         </dependency>
-        <dependency>
-	        <groupId>org.springframework.cloud</groupId>
-	        <artifactId>spring-cloud-starter-sleuth</artifactId>
-	        <version>2.2.8.RELEASE</version>
-    	</dependency>
-    	<dependency>
-		    <groupId>org.springframework.cloud</groupId>
-		    <artifactId>spring-cloud-starter-zipkin</artifactId>
-		    <version>2.2.4.RELEASE</version>
-  		</dependency>
 
+        <dependency>
+            <groupId>org.apache.skywalking</groupId>
+            <artifactId>apm-toolkit-logback-1.x</artifactId>
+            <version>9.6.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.skywalking</groupId>
+            <artifactId>apm-toolkit-trace</artifactId>
+            <version>9.6.0</version>
+        </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-common-core</artifactId>
