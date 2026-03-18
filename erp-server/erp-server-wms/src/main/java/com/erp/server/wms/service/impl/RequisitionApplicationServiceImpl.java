@@ -2168,6 +2168,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
         if (RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
             addDTO.setBillType(PickingBillTypeEnum.AWD.getCode());
+        }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(application.getType())){
+            addDTO.setBillType(PickingBillTypeEnum.FBT.getCode());
         }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())){
             addDTO.setBillType(PickingBillTypeEnum.FBA.getCode());
         }else {
