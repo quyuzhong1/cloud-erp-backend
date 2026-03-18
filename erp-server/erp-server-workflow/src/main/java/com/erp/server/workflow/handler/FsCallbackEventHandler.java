@@ -10,10 +10,13 @@ import com.common.business.constant.DmpPullConstant;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.sys.entity.SysUserThirdEntity;
+import com.erp.model.sys.enums.SysUserInfoThirdAuthTypeEnum;
 import com.erp.model.workflow.dto.FsCallbackEventDTO;
 import com.erp.model.workflow.dto.FsCallbackUserEventDTO;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.server.workflow.constant.FsEventConstant;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,6 +49,8 @@ public class FsCallbackEventHandler {
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     private EventDispatcher eventDispatcher;
+
+    private SysUserFeign sysUserFeign;
 
 
     @PostConstruct
@@ -161,6 +166,15 @@ public class FsCallbackEventHandler {
             log.warn("收到员工{}事件，事件类型未匹配，跳过处理", bean.getHeader().getEventType());
             return;
         }
+
+        if(Objects.equals(FsEventConstant.USER_DELETED_EVENT,type)){
+            SysUserThirdEntity SysUserThirdEntity = sysUserFeign.getUserByThird(SysUserInfoThirdAuthTypeEnum.FS.getCode(), bean.getEvent().getObject().getUserId());
+            if(Objects.isNull(SysUserThirdEntity)){
+                log.warn("收到员工{}事件，用户未绑定飞书，跳过处理", bean.getHeader().getEventType());
+                return;
+            }
+        }
+
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
