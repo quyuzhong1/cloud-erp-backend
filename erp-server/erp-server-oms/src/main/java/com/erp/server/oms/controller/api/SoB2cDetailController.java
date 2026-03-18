@@ -49,4 +49,19 @@ public class SoB2cDetailController extends BaseController {
     public ApiResult<List<SoB2cDetailDTO.ListDTO>> listDetailByMainId(@RequestBody @Validated BaseIdDTO dto) {
         return success(soB2cDetailService.listDetailByMainId(dto.getId()));
     }
+
+
+    /**
+     * 批量明细查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < SoB2cDTO.ListDTO>>
+     * @author zdy
+     * @date: 2023-08-18
+     */
+    @PostMapping("/listDetailByIds")
+    public ApiResult<List<SoB2cDetailDTO.MainDTO>> listDetailByMainIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soB2cDetailService.listDetailByMainIds(dto.getIds()));
+    }
+
 }
