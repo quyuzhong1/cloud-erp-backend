@@ -46,10 +46,8 @@
 		<!--			<charset>UTF-8</charset> &lt;!&ndash; 此处设置字符集 &ndash;&gt;-->
 		<!--		</encoder>-->
 		<withJansi>true</withJansi>
-		<encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-			<layout class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.mdc.TraceIdMDCPatternLogbackLayout">
-				<pattern>${ENCODER_PATTERN_COLOR}</pattern>
-			</layout>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${ENCODER_PATTERN_COLOR}</pattern>
 			<charset>UTF-8</charset>
 		</encoder>
 	</appender>
@@ -68,10 +66,8 @@
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>
 		</rollingPolicy>
-		<encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-			<layout class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.mdc.TraceIdMDCPatternLogbackLayout">
-				<pattern>${ENCODER_PATTERN}</pattern>
-			</layout>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${ENCODER_PATTERN}</pattern>
 			<charset>UTF-8</charset>
 		</encoder>
 	</appender>
@@ -90,10 +86,8 @@
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>
 		</rollingPolicy>
-		<encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-			<layout class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.mdc.TraceIdMDCPatternLogbackLayout">
-				<pattern>${ENCODER_PATTERN}</pattern>
-			</layout>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${ENCODER_PATTERN}</pattern>
 			<charset>UTF-8</charset>
 		</encoder>
 	</appender>
@@ -111,10 +105,8 @@
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>
 		</rollingPolicy>
-		<encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-			<layout class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.mdc.TraceIdMDCPatternLogbackLayout">
-				<pattern>${ENCODER_PATTERN}</pattern>
-			</layout>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${ENCODER_PATTERN}</pattern>
 			<charset>UTF-8</charset>
 		</encoder>
 	</appender>
@@ -132,13 +124,12 @@
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>
 		</rollingPolicy>
-		<encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-			<layout class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.mdc.TraceIdMDCPatternLogbackLayout">
-				<pattern>${ENCODER_PATTERN}</pattern>
-			</layout>
-			<charset>UTF-8</charset>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${ENCODER_PATTERN}</pattern>
+			<charset>UTF-8</charset> <!-- 此处设置字符集 -->
 		</encoder>
 	</appender>
+
 	<appender name="ASYNC_LOG_DEBUG" class="ch.qos.logback.classic.AsyncAppender">
 		<!-- 不丢失日志.默认的,如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
 		<discardingThreshold>0</discardingThreshold>
