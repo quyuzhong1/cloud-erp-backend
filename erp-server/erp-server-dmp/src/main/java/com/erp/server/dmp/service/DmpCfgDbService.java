@@ -1,8 +1,9 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.DmpCfgDbEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpCfgDbDTO;
+import com.erp.model.dmp.entity.DmpCfgDbEntity;
 
 /**
  * <p>
@@ -32,5 +33,15 @@ public interface DmpCfgDbService extends SuperService<DmpCfgDbEntity> {
     */
     Boolean update(DmpCfgDbDTO.UpdateDTO dto);
 
+
+    /**
+     * 详情
+     *
+     * @param id
+     * @return
+     * @author shukai
+     * @date: 2026-03-17
+     */
+    DmpCfgDbDTO.ViewDTO view(String id);
 
 }

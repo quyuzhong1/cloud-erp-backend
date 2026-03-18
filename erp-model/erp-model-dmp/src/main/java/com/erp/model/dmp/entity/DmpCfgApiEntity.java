@@ -7,9 +7,8 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 import com.common.business.enums.ApproveStatusEnum;
-
-import javax.validation.constraints.NotBlank;
 
 
 /**
@@ -18,11 +17,12 @@ import javax.validation.constraints.NotBlank;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2026-03-17
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("dmp_cfg_api")
 public class DmpCfgApiEntity extends BaseEntity<DmpCfgApiEntity> {
 
@@ -32,7 +32,7 @@ public class DmpCfgApiEntity extends BaseEntity<DmpCfgApiEntity> {
     @TableField("system_id")
     private String systemId;
     /**
-    * 输入输出类型：input=输入，output=输出  枚举：DmpCfgApiTypeEnum
+    * 输入输出类型：input=输入，output=输出
     */
     @TableField("type")
     private String type;
@@ -77,6 +77,8 @@ public class DmpCfgApiEntity extends BaseEntity<DmpCfgApiEntity> {
     public static final String API_CLASS = "api_class";
 
     public static final String DISABLED = "disabled";
+
+    public static final String BILL_TYPE = "bill_type";
 
     @Override
     public Serializable pkVal() {
