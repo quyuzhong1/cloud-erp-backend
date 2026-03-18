@@ -234,14 +234,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             sysDepartmentUserService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getDepartmentIdList(),true);
 
             //同步金蝶员工数据
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
     @Override
