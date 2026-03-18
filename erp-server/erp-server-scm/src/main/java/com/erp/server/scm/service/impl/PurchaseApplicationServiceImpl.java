@@ -52,10 +52,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationMainExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
-import com.erp.model.scm.enums.PurchaseTableFlagEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -1011,6 +1008,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setSubcontractOrgId(subcontractOrderDTO.getPurchaseOrgId());
             addDTO.setPurchaserId(userInfo.getUid());
             addDTO.setDeptId(findUserDTO.getDepartmentId());
+            addDTO.setType(SubcontractOrderTypeEnum.COMMON_SUBCONTRACT.getCode());
 
             //委外订单明细数据
             List<SubcontractOrderDetailDTO.AddDTO> detailList = new ArrayList<>();
