@@ -4267,6 +4267,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         OverseasProviderEntity overseasProvider = overseasProviderFeign.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
         if (Objects.nonNull(overseasProvider)) {
             viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+            if (Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),overseasProvider.getCode())) {
+                viewDTO.setWarehouseOperationTypeDTOList(new ArrayList<>());
+            }
         }
 
         viewDTO.setRemark("Customer PO: " + soInfoEntity.getCustomerOrderNo());

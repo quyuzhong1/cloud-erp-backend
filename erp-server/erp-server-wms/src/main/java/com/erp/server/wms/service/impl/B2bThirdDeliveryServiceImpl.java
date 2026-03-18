@@ -396,10 +396,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
                 if (Objects.nonNull(overseasProvider)) {
                     viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
-                    if (Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),overseasProvider.getCode())) {
-                        viewDTO.setWarehouseOperationTypeDTOList(new ArrayList<>());
-                    }
-
                 }
             }
 
