@@ -27,9 +27,9 @@ public enum ZhongBaoOperationDescriptionEnum implements EnumMessage {
     IS_MIXED_PALLET("isMixedPallet", "混托"),
     PASTE_CARTON_MARK_TYPE("pasteCartonMarkType", "贴托唛"),
     IS_PALLET_SCHEME("isPalletScheme", "主动SKU打托方案"),
-//    LIMIT_PLATE_NUM("limitPlateNum", "限板数"),
-//    LIMIT_PLATE_HEIGHT("limitPlateHeight", "限板高"),
-//    LIMIT_PLATE_WEIGHT("limitPlateWeight", "限板重"),
+    LIMIT_PLATE_NUM("limitPlateNum", "限板数"),
+    LIMIT_PLATE_HEIGHT("limitPlateHeight", "限板高"),
+    LIMIT_PLATE_WEIGHT("limitPlateWeight", "限板重"),
     ;
     /**
      * 类型

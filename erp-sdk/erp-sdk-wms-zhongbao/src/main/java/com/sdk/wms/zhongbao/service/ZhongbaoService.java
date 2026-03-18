@@ -153,7 +153,8 @@ public class ZhongbaoService {
     /*
      * 产品列表
      */
-    public BaseResponse<ProductResponse> productList(String token, ProductRequest productRequest) {
+    public BaseResponse<ProductResponse> productList(ProductRequest productRequest) {
+        String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(productRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
