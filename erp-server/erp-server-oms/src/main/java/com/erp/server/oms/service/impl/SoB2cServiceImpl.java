@@ -6453,13 +6453,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(soId);
         b2cCustomer.setShopId(shopId);
-        if (Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())) {
-            CustomerInfoEntity customer = customerInfoService.getCustomerById(shopInfo.getCustomerId());
-            b2cCustomer.setSellerId(customer.getSellerId());
-            b2cCustomer.setSellerName(customer.getSellerName());
-            b2cCustomer.setSalesDeptId(customer.getSalesDeptId());
-            b2cCustomer.setCustomerName(customer.getName());
+        if (Objects.nonNull(shopInfo)) {
             b2cCustomer.setShopName(shopInfo.getName());
+            if (CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())) {
+                CustomerInfoEntity customer = customerInfoService.getCustomerById(shopInfo.getCustomerId());
+                if (Objects.nonNull(customer)) {
+                    b2cCustomer.setSellerId(customer.getSellerId());
+                    b2cCustomer.setSellerName(customer.getSellerName());
+                    b2cCustomer.setSalesDeptId(customer.getSalesDeptId());
+                    b2cCustomer.setCustomerName(customer.getName());
+                } else {
+                    throw new ServiceException(CharSequenceUtil.format("店铺【{}】关联客户【{}】不存在", shopInfo.getName(), shopInfo.getCustomerId()));
+                }
+            }
         }
         String country = "";
         String countryName = "";
