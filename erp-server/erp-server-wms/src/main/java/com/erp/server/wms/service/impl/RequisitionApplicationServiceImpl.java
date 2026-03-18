@@ -1960,7 +1960,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(view.getType())){
-                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(view.getType())){

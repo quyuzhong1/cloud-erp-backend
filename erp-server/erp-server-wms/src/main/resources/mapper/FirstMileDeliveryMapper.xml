@@ -139,7 +139,7 @@
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatusName,
         SUM(fdd.delivery_qty) AS deliveryQty,
         fd.approve_time AS deliveryTime,
-        CASE WHEN fd.demand_type = 'demandPlatformWarehouse'
+        CASE WHEN fd.demand_type in ('demandPlatformWarehouse','demandFbtWarehouse')
             THEN (select fdd2.fba_shipment_code from first_mile_delivery_detail fdd2 where fdd2.main_id = fd.id and fdd2.is_deleted = false  limit 1)
             ELSE(SELECT owi.code from overseas_warehouse_inbound owi where owi.is_deleted = false and owi.source_code =  fd.code limit 1 ) END as refCode
         FROM  first_mile_delivery fd
@@ -487,7 +487,7 @@
         wc.ID,
         wc.packing_task_id AS taskId,
         CASE
-        WHEN fmd.demand_type = 'demandPlatformWarehouse'  THEN
+        WHEN fmd.demand_type in ('demandPlatformWarehouse','demandFbtWarehouse') THEN
         CONCAT ( COALESCE ( fmdd.fba_shipment_code ), LPAD( CAST ( fsp.box_no AS TEXT ), 5, '0' ) )
         ELSE
         CONCAT ( COALESCE (  owi.code ), LPAD( CAST ( fsp.box_no AS TEXT ), 5, '0' ) )
@@ -520,7 +520,7 @@
         wcd.sku_no AS sku,
         fmd.code AS deliveryCode,
         CASE
-        WHEN fmd.demand_type = 'demandPlatformWarehouse'  THEN
+        WHEN fmd.demand_type in ('demandPlatformWarehouse','demandFbtWarehouse') THEN
         fmdd.fba_shipment_code
         ELSE
         owi.code

@@ -887,7 +887,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(pagingViewDTO.getSourceId()) || v.getId().equals(pagingViewDTO.getSourceId())).findFirst().orElse(new FirstMileDeliveryEntity());
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId()) && v.getSkuId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
             pagingViewDTO.setDeliveryCode(firstMileDeliveryEntity.getCode());
-            if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())) {
+            if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())) {
                 pagingViewDTO.setBusinessCode(firstMileDeliveryDetailEntity.getFbaShipmentCode());
             }else{
                 OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntityList.stream().filter(v->v.getSourceId().equals(firstMileDeliveryEntity.getId())).findFirst().orElse(new OverseasWarehouseInboundEntity());
@@ -2188,6 +2190,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String sourceType;
         if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)){
             sourceType =  PickingSourceTypeEnum.THIRD.getCode();
+        }else if (FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.FBT.getCode();
         }else if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)){
             sourceType = PickingSourceTypeEnum.FBA.getCode();
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(firstMileDeliveryEntity.getSourceType())) {
@@ -2237,7 +2241,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         taskDetailList.forEach(packingTaskDetailEntity -> {
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
-            if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
+            if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())
+                    || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode())
+                    || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
                 packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getFnSku());
             }else{
                 packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());

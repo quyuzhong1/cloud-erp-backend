@@ -836,6 +836,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getName());
             viewDTO.setDestWarehouseId(shopInfoEntity.getAwdWarehouseId());
             viewDTO.setDestWarehouseName(shopInfoEntity.getAwdWarehouseName());
+        }else if (entity.getSourceType().equals(ShipmentSourceTypeEnum.FBT.getCode())) {
+            viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
+            viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getName());
+            viewDTO.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+            viewDTO.setDestWarehouseName(shopInfoEntity.getWarehouseName());
         }else {
             viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
             viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getName());
@@ -942,6 +947,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (ShipmentSourceTypeEnum.AWD.getCode().equals(sourceType)) {
                 addDTO.setSourceType(SourceTypeEnum.AWD_SHIPMENT.getCode());
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
+            }else if (ShipmentSourceTypeEnum.FBT.getCode().equals(sourceType)) {
+                addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
             }else {
                 addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
