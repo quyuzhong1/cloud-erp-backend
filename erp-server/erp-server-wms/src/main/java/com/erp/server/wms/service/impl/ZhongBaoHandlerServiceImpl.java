@@ -442,14 +442,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         // 拣货类型
         if (skuIds.size() == 1) {
-            // 只有一个SKU
-            if (totalQuantity == 1) {
-                //一票一件
-                overseasOutboundCreateRequest.setPickType(1);
-            } else {
-                //一票一件多个
-                overseasOutboundCreateRequest.setPickType(2);
-            }
+//            // 只有一个SKU
+//            if (totalQuantity == 1) {
+//                //一票一件
+//                overseasOutboundCreateRequest.setPickType(1);
+//            } else {
+//                //一票一件多个
+//                overseasOutboundCreateRequest.setPickType(2);
+//            }
+            overseasOutboundCreateRequest.setPickType(1);
         } else {
             //一票多件
             overseasOutboundCreateRequest.setPickType(3);
