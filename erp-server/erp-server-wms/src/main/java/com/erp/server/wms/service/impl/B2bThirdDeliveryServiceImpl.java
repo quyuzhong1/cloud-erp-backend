@@ -61,7 +61,6 @@ import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -71,7 +70,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -398,6 +396,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
                 if (Objects.nonNull(overseasProvider)) {
                     viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+                    if (Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),overseasProvider.getCode())) {
+                        viewDTO.setWarehouseOperationTypeDTOList(new ArrayList<>());
+                    }
+
                 }
             }
 
@@ -927,71 +929,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
      */
     private void handleData(B2bThirdDeliveryEntity b2bThirdDeliveryEntity, B2bThirdDeliveryDTO.CommonDTO commonDTO) {
         List<B2bThirdDeliveryDTO.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = commonDTO.getWarehouseOperationTypeDTOList();
-
-        boolean isZhongBao = Boolean.FALSE;
-        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(commonDTO.getDeliveryWarehouseId());
-        if (Objects.nonNull(overseasProviderWarehouse)) {
-            OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
-            if (Objects.nonNull(overseasProvider)) {
-                if (Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),overseasProvider.getCode())) {
-                    isZhongBao = Boolean.TRUE;
-                }
-            }
-        }
-
-        if (isZhongBao) {
-            if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
-                // 获取所有 zhongbao 相关的枚举 code
-                Set<String> expectedZhongBaoCodes = Arrays.stream(ZhongBaoOperationDescriptionEnum.values())
-                        .filter(enumItem -> isZhongBaoEnum(enumItem))
-                        .map(ZhongBaoOperationDescriptionEnum::getCode)
-                        .collect(Collectors.toSet());
-
-                // 获取实际传入的 code 集合
-                Set<String> actualCodes = warehouseOperationTypeDTOList.stream()
-                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
-                        .collect(Collectors.toSet());
-
-                // 检查是否有缺失的枚举 code
-                Set<String> missingCodes = new HashSet<>(expectedZhongBaoCodes);
-                missingCodes.removeAll(actualCodes);
-
-                if (!missingCodes.isEmpty()) {
-                    List<String> missingNames = ZhongBaoOperationDescriptionEnum.getNamesByCodes(missingCodes);
-                    String errorMessage = String.join(",", missingNames);
-                    throw new ServiceException(
-                            ApiError.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM,
-                            errorMessage
-                    );
-                }
-
-                // 检查每个枚举是否有值
-                for (B2bThirdDeliveryDTO.WarehouseOperationTypeDTO dto : warehouseOperationTypeDTOList) {
-                    if (StringUtils.isBlank(dto.getWarehouseOperationType()) ||
-                            StringUtils.isBlank(dto.getOperationDesc())) {
-                        throw new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY);
-                    }
-                }
-
-                String operationDesc = warehouseOperationTypeDTOList.stream()
-                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
-                        .collect(Collectors.joining(","));
-                b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
-
-            } else {
-                throw new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL);
-            }
-        } else {
-            if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
-                String operationDesc = warehouseOperationTypeDTOList.stream()
-                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
-                        .collect(Collectors.joining(","));
-                String warehouseOperationType = warehouseOperationTypeDTOList.stream()
-                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
-                        .collect(Collectors.joining(","));
-                b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
-                b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
-            }
+        if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
+            String operationDesc = warehouseOperationTypeDTOList.stream()
+                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
+                    .collect(Collectors.joining(","));
+            String warehouseOperationType = warehouseOperationTypeDTOList.stream()
+                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
+                    .collect(Collectors.joining(","));
+            b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
+            b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
         }
 
         if (CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getCountryName()) && CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getCountryId())) {
