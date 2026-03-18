@@ -118,4 +118,10 @@ public class SkuMappingFeignController extends BaseController {
     public Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(@RequestBody SkuMappingDTO.PlatformSkuNoParamDTO paramDTO){
         return skuMappingService.mapListingByPlatformSkuNo(paramDTO.getPlatformSkuList(), paramDTO.getPlatformSpuList(), paramDTO.getDictPlatform(), paramDTO.getShopId(), null, null);
     }
+
+    @PostMapping("/listByWarehouseAndPlatformSku")
+    public List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@RequestParam("warehouseId") String warehouseId,
+                                                                              @RequestBody List<String> platformSkuNoList) {
+        return skuMappingService.listByWarehouseAndPlatformSku(warehouseId, platformSkuNoList);
+    }
 }
