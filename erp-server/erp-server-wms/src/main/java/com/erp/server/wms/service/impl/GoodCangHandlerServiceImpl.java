@@ -296,7 +296,13 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()){
             GoodCangCreateB2bReq.Item productItem = new GoodCangCreateB2bReq.Item();
             productItem.setProductSku(item.getWarehousePlatformSku());
-            productItem.setQuantity(item.getBoxQty() * item.getPerBoxQty());
+            Integer quantity = item.getDeliveryQty();
+            if (Objects.isNull(quantity)) {
+                Integer boxQty = Objects.nonNull(item.getBoxQty()) ? item.getBoxQty() : 0;
+                Integer perBoxQty = Objects.nonNull(item.getPerBoxQty()) ? item.getPerBoxQty() : 0;
+                quantity = boxQty * perBoxQty;
+            }
+            productItem.setQuantity(quantity);
             itemList.add(productItem);
         }
         goodCangCreateB2bReq.setWarehouseService(GoodCangCreateB2bReq.WarehouseService.builder()
