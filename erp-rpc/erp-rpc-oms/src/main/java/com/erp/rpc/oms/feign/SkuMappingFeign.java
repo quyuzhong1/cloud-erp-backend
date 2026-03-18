@@ -94,4 +94,8 @@ public interface SkuMappingFeign {
 
     @PostMapping("feign/skuMapping/mapListingByPlatformSkuNo")
     Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(@RequestBody SkuMappingDTO.PlatformSkuNoParamDTO paramDTO);
+
+    @PostMapping("feign/skuMapping/listByWarehouseAndPlatformSku")
+    List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@RequestParam("warehouseId") String warehouseId,
+                                                                      @RequestBody List<String> platformSkuNoList);
 }

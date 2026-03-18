@@ -620,6 +620,25 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         if (platformSkuNoList.isEmpty()) {
             return result;
         }
+        String warehouseId = shopInfo.getWarehouseId();
+        if (StrUtil.isNotBlank(warehouseId)) {
+            List<SkuMappingDTO.WarehouseSkuDTO> warehouseMappingList =
+                    skuMappingFeign.listByWarehouseAndPlatformSku(warehouseId, platformSkuNoList);
+            if (CollectionUtils.isNotEmpty(warehouseMappingList)) {
+                for (SkuMappingDTO.WarehouseSkuDTO mapping : warehouseMappingList) {
+                    if (mapping == null) {
+                        continue;
+                    }
+                    SkuMappingDTO.MappingSkuViewDTO converted = convertWarehouseSkuMapping(mapping);
+                    if (StrUtil.isNotBlank(converted.getPlatformSkuNo())) {
+                        result.putIfAbsent(converted.getPlatformSkuNo(), converted);
+                    }
+                    if (StrUtil.isNotBlank(converted.getPlatformFnSku())) {
+                        result.putIfAbsent(converted.getPlatformFnSku(), converted);
+                    }
+                }
+            }
+        }
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(StrUtil.blankToDefault(shopInfo.getDictPlatform(), PlatformDictEnum.TIK_TOK.getCode()));
         paramDTO.setShopIdList(Collections.singletonList(inboundOrder.getShopId()));
@@ -637,6 +656,22 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             }
         }
         return result;
+    }
+
+    private SkuMappingDTO.MappingSkuViewDTO convertWarehouseSkuMapping(SkuMappingDTO.WarehouseSkuDTO mapping) {
+        SkuMappingDTO.MappingSkuViewDTO converted = new SkuMappingDTO.MappingSkuViewDTO();
+        converted.setId(mapping.getTableId());
+        converted.setProductSkuId(mapping.getProductSkuId());
+        converted.setProductSkuNo(mapping.getProductSkuNo());
+        converted.setProductName(mapping.getProductName());
+        converted.setWarehouseId(mapping.getWarehouseId());
+        converted.setListingId(mapping.getListingId());
+        converted.setPlatformSkuNo(mapping.getPlatformSkuNo());
+        converted.setPlatformProductName(mapping.getPlatformSkuName());
+        converted.setPlatformSpuNo(mapping.getPlatformSpuNo());
+        converted.setPlatformSpuName(mapping.getPlatformSpuName());
+        converted.setPlatformFnSku(mapping.getPlatformFnSku());
+        return converted;
     }
 
     private SkuMappingDTO.MappingSkuViewDTO findMappingByFnSkuAndMsku(Map<String, SkuMappingDTO.MappingSkuViewDTO> mappingMap,

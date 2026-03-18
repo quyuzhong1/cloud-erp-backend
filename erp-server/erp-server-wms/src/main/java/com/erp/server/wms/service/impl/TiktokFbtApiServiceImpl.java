@@ -224,7 +224,7 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
 
     private String firstNotBlank(Object... values) {
         for (Object value : values) {
-            String text = stringVal(value);
+            String text = normalizeTextValue(value);
             if (StrUtil.isNotBlank(text)) {
                 return text;
             }
@@ -316,11 +316,34 @@ public class TiktokFbtApiServiceImpl implements TiktokFbtApiService {
         List<TiktokFbtDTO.CarrierDTO> result = new ArrayList<>();
         for (Map<String, Object> item : carriers) {
             TiktokFbtDTO.CarrierDTO dto = new TiktokFbtDTO.CarrierDTO();
-            dto.setCarrierName(stringVal(item.get("carrier_name")));
-            dto.setTrackingNumber(stringVal(item.get("tracking_number")));
+            dto.setCarrierName(firstNotBlank(
+                    item.get("carrier_name"),
+                    item.get("carrierName"),
+                    item.get("name"),
+                    item.get("carrier")));
+            dto.setTrackingNumber(firstNotBlank(
+                    item.get("tracking_number"),
+                    item.get("trackingNumber"),
+                    item.get("track_no"),
+                    item.get("trackNo")));
+            if (StrUtil.isBlank(dto.getCarrierName()) && StrUtil.isBlank(dto.getTrackingNumber())) {
+                continue;
+            }
             result.add(dto);
         }
         return result;
+    }
+
+    private String normalizeTextValue(Object obj) {
+        String text = stringVal(obj);
+        if (StrUtil.isBlank(text)) {
+            return null;
+        }
+        text = text.trim();
+        if ("0".equals(text) || "null".equalsIgnoreCase(text) || "undefined".equalsIgnoreCase(text)) {
+            return null;
+        }
+        return text;
     }
 
     private Map<String, Object> mapVal(Object value) {
