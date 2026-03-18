@@ -193,6 +193,25 @@ public class GoodCangService {
         }
         return respDto;
     }
+
+    /**
+     * 创建B2b订单
+     */
+    public GoodCangResponse<String> createB2bBill(@Valid GoodCangCreateB2bReq goodCangCreateB2bReq){
+        String json = JSON.toJSONString(goodCangCreateB2bReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CREATE_B2B_BILL,json);
+        //处理返回值
+        GoodCangResponse<String> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓创建B2B订单返回数据为空,返回值:{}", response);
+            throw new ServiceException(GOOG_CANG_RESPONSE + ":" +response);
+        }
+        if(Objects.nonNull(respDto.getOrderCode())){
+            respDto.setData(respDto.getOrderCode());
+        }
+        return respDto;
+    }
+
     /**
      * 获取出库单号
      */

@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -15,9 +14,6 @@ import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
-import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
-import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
@@ -271,8 +267,49 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return failure("ERP功能暂不支持");
+        GoodCangCreateB2bReq cangCreateOutboundReq = this.buildB2bOrderReq(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建B2B订单请求:{}", JSONUtil.toJsonStr(cangCreateOutboundReq));
+        GoodCangResponse<String> response = goodCangService.createB2bBill(cangCreateOutboundReq);
+        log.warn(getPlatForm().getName()+"创建B2B订单结果:{}", JSONUtil.toJsonStr(response));
+        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
     }
+
+    private GoodCangCreateB2bReq buildB2bOrderReq(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        GoodCangCreateB2bReq goodCangCreateB2bReq = new GoodCangCreateB2bReq();
+        goodCangCreateB2bReq.setReferenceNo(createOutboundReq.getReferenceNo());
+        goodCangCreateB2bReq.setPackingType("0");
+        goodCangCreateB2bReq.setVerify(1);
+        goodCangCreateB2bReq.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
+        goodCangCreateB2bReq.setRecipientInfo(GoodCangCreateB2bReq.RecipientInfo.builder()
+                        .address1(createOutboundReq.getAddress1())
+                        .city(createOutboundReq.getCity())
+                        .countryCode(createOutboundReq.getReceiverCountryCode())
+                        .name(createOutboundReq.getReceiverName())
+                        .phone(createOutboundReq.getTelNumber())
+                        .province(createOutboundReq.getProvince())
+                        .zipcode(createOutboundReq.getPostCode()).build());
+        goodCangCreateB2bReq.setDeliveryService(GoodCangCreateB2bReq.DeliveryService.builder()
+                        .isInsurance(createOutboundReq.getIsInsurance()?1:0)
+                        .isSignature(createOutboundReq.getIsSignature()?1:0)
+                        .smCode(createOutboundReq.getChannelCode()).build());
+        List<GoodCangCreateB2bReq.Item> itemList = new ArrayList<>();
+        for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()){
+            GoodCangCreateB2bReq.Item productItem = new GoodCangCreateB2bReq.Item();
+            productItem.setProductSku(item.getWarehousePlatformSku());
+            productItem.setQuantity(item.getBoxQty() * item.getPerBoxQty());
+            itemList.add(productItem);
+        }
+        goodCangCreateB2bReq.setWarehouseService(GoodCangCreateB2bReq.WarehouseService.builder()
+                        .boxMarkNum(0)
+                        .isChangeLabel(0)
+                        .itemList(itemList).build());
+        goodCangCreateB2bReq.setOtherInfo(GoodCangCreateB2bReq.OtherInfo.builder()
+                        .orderDesc(createOutboundReq.getRemark())
+                        .packingFileId(StringUtils.isNotBlank(createOutboundReq.getFileId())?Integer.valueOf(createOutboundReq.getFileId()):null)
+                        .build());
+        return goodCangCreateB2bReq;
+    }
+
     public boolean isSuccess(String ask, String message){
         return "Success".equals(ask) ||"success".equals(message);
     }

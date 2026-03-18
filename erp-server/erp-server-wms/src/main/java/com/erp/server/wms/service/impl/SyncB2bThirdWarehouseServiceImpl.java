@@ -21,6 +21,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
@@ -29,6 +30,7 @@ import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +57,10 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private WmsAttachmentService wmsAttachmentService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
         //生成任务
@@ -120,6 +126,12 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
         req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null);
+        List<LogisticsChannelEntity> list = logisticsFeign.getChannelByCode(req.getChannelCode());
+        if(CollUtil.isNotEmpty(list)){
+            LogisticsChannelEntity logisticsChannelEntity = list.get(0);
+            req.setIsInsurance(logisticsChannelEntity.getIsApiInsurance());
+            req.setIsSignature(logisticsChannelEntity.getIsApiSign());
+        }
         return BeanUtil.beanToMap(req);
     }
     /**
