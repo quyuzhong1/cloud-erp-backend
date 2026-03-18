@@ -1204,8 +1204,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryMap.get(record.getId());
             if (ObjectUtil.isNotNull(firstMileDeliveryEntity) && CharSequenceUtil.isNotBlank(firstMileDeliveryEntity.getCode())) {
                 record.setDeliveryCode(firstMileDeliveryEntity.getCode());
-            } else if (ShipmentSourceTypeEnum.FBT.getCode().equals(record.getSourceType())) {
-                record.setDeliveryCode("");
             }
             if (ShipmentSourceTypeEnum.FBT.getCode().equals(record.getSourceType())) {
                 record.setCarrierName(StringUtils.defaultString(record.getCarrierName()));
