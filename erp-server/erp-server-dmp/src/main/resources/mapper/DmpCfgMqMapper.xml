@@ -22,6 +22,7 @@
        <result column="topic" property="topic" />
        <result column="tag" property="tag" />
        <result column="disabled" property="disabled" />
+       <result column="mq_group" property="mqGroup" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -35,8 +36,30 @@
         update_user_id,
         version,
         is_deleted,
-        system_id, type, mq_type, host, port, user_name, pass_word, topic, tag, disabled
+        system_id, type, mq_type, host, port, user_name, pass_word, topic, tag, disabled, mq_group
     </sql>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgMqDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_cfg_mq where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgMqDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgMqDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  dmp_cfg_mq
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
 
 </mapper>

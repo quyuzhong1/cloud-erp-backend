@@ -7,6 +7,7 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 import com.common.business.enums.ApproveStatusEnum;
 
 
@@ -16,11 +17,12 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2026-03-17
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("dmp_cfg_db")
 public class DmpCfgDbEntity extends BaseEntity<DmpCfgDbEntity> {
 
@@ -30,12 +32,12 @@ public class DmpCfgDbEntity extends BaseEntity<DmpCfgDbEntity> {
     @TableField("system_id")
     private String systemId;
     /**
-    * 输入输出类型：input=输入，output=输出  枚举：DmpCfgDbTypeEnum
+    * 输入输出类型：input=输入，output=输出
     */
     @TableField("type")
     private String type;
     /**
-    * db类型:pg=pg，mysql=mysql  枚举：DmpCfgDbDbTypeEnum
+    * db类型:pg=pg，mysql=mysql
     */
     @TableField("db_type")
     private String dbType;
@@ -74,16 +76,14 @@ public class DmpCfgDbEntity extends BaseEntity<DmpCfgDbEntity> {
     */
     @TableField("disabled")
     private Boolean disabled;
-    
     /**
-     * 最小连接数量
-     */
+    * 最小连接数量
+    */
     @TableField("min_connection_size")
     private Integer minConnectionSize;
-     
-     /**
-      * 最大连接数量
-      */
+    /**
+    * 最大连接数量
+    */
     @TableField("max_connection_size")
     private Integer maxConnectionSize;
 
@@ -107,6 +107,10 @@ public class DmpCfgDbEntity extends BaseEntity<DmpCfgDbEntity> {
     public static final String TABLE_NAME = "table_name";
 
     public static final String DISABLED = "disabled";
+
+    public static final String MIN_CONNECTION_SIZE = "min_connection_size";
+
+    public static final String MAX_CONNECTION_SIZE = "max_connection_size";
 
     @Override
     public Serializable pkVal() {

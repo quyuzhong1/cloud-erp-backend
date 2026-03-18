@@ -7,6 +7,7 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 import com.common.business.enums.ApproveStatusEnum;
 
 
@@ -16,11 +17,12 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2026-03-17
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("dmp_cfg_mq")
 public class DmpCfgMqEntity extends BaseEntity<DmpCfgMqEntity> {
 
@@ -30,12 +32,12 @@ public class DmpCfgMqEntity extends BaseEntity<DmpCfgMqEntity> {
     @TableField("system_id")
     private String systemId;
     /**
-    * 输入输出类型：input=输入，output=输出  枚举：DmpCfgMqTypeEnum
+    * 输入输出类型：input=输入，output=输出
     */
     @TableField("type")
     private String type;
     /**
-    * mq类型:rocketmq=rocketmq,kafka=kafka  枚举：DmpCfgMqMqTypeEnum
+    * mq类型:rocketmq=rocketmq,kafka=kafka
     */
     @TableField("mq_type")
     private String mqType;
@@ -74,12 +76,12 @@ public class DmpCfgMqEntity extends BaseEntity<DmpCfgMqEntity> {
     */
     @TableField("disabled")
     private Boolean disabled;
-
     /**
-     * mq分组
-     */
+    * mq分组
+    */
     @TableField("mq_group")
     private String mqGroup;
+
 
     public static final String SYSTEM_ID = "system_id";
 
@@ -100,6 +102,8 @@ public class DmpCfgMqEntity extends BaseEntity<DmpCfgMqEntity> {
     public static final String TAG = "tag";
 
     public static final String DISABLED = "disabled";
+
+    public static final String MQ_GROUP = "mq_group";
 
     @Override
     public Serializable pkVal() {

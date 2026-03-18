@@ -18,6 +18,7 @@
        <result column="name" property="name" />
        <result column="api_class" property="apiClass" />
        <result column="disabled" property="disabled" />
+       <result column="bill_type" property="billType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -31,8 +32,30 @@
         update_user_id,
         version,
         is_deleted,
-        system_id, type, api_type, name, api_class, disabled
+        system_id, type, api_type, name, api_class, disabled, bill_type
     </sql>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgApiDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_cfg_api where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgApiDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgApiDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  dmp_cfg_api
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
 
 </mapper>

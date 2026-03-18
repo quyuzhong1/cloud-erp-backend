@@ -22,6 +22,8 @@
        <result column="db_name" property="dbName" />
        <result column="table_name" property="tableName" />
        <result column="disabled" property="disabled" />
+       <result column="min_connection_size" property="minConnectionSize" />
+       <result column="max_connection_size" property="maxConnectionSize" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -35,8 +37,30 @@
         update_user_id,
         version,
         is_deleted,
-        system_id, type, db_type, host, port, user_name, pass_word, db_name, table_name, disabled
+        system_id, type, db_type, host, port, user_name, pass_word, db_name, table_name, disabled, min_connection_size, max_connection_size
     </sql>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpCfgDbDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_cfg_db where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.DmpCfgDbDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgDbDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  dmp_cfg_db
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
 
 </mapper>
