@@ -9,8 +9,12 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
+import org.slf4j.MDC;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,10 +35,14 @@ import java.util.Map;
 @RestController
 @LogSystemModule("SYS通用")
 @RequestMapping("common")
+@Slf4j
 public class CommonController extends BaseController {
 
     @Resource
     private FileFeign fileFeign;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     /**
      * 上传图片
@@ -116,4 +124,11 @@ public class CommonController extends BaseController {
         return this.success(list);
     }
 
+    @GetMapping("testSkyWalking")
+    public ApiResult<String> testSkyWalking() {
+        // 获取 SkyWalking TraceId
+        Map<String, String> mdcMap = MDC.getCopyOfContextMap();
+        ApiResult<String> apiResult = soB2cFeign.testSkyWalking();
+        return success("OMS:"+apiResult.getData()+";TraceContext.traceId:"+ TraceContext.traceId(),"MDC  :" + mdcMap);
+    }
 }

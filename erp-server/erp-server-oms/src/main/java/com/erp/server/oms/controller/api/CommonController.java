@@ -56,7 +56,6 @@ public class CommonController extends BaseController {
      */
     @GetMapping("enumDropDown")
     public ApiResult<List<Map<String,Object>>> enumSelect(@RequestParam(value = "type")String type) {
-        log.error("skywalking tid:{}",MDC.get("tid"));
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
         return success(enumMaps.get(type));
 
@@ -67,12 +66,9 @@ public class CommonController extends BaseController {
     @GetMapping("testSkyWalking")
     public ApiResult<String> enumSelect() {
         // 获取 SkyWalking TraceId
-        String traceId = TraceContext.traceId();
-        String segmentId = TraceContext.segmentId();
         log.error("skywalking tid:{}",MDC.get("tid"));
         Map<String, String> mdcMap = MDC.getCopyOfContextMap();
-        return success("skywalking tid:"+traceId+"segmentId:"+segmentId+"MDC  :" + mdcMap);
-
+        return success("TraceContext.traceId:"+TraceContext.traceId(),"MDC  :" + mdcMap);
     }
 
     /**

@@ -731,4 +731,7 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2c/updateB2cByPlatformOutbound")
     void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
+
+    @GetMapping("common/testSkyWalking")
+    ApiResult<String> testSkyWalking();
 }
