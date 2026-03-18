@@ -56,6 +56,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.listener.SkuStdRetailPriceExcelListener;
 import com.erp.server.plm.mapper.SkuStdRetailPriceMapper;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.CfgSettingService;
 import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.ProductDetailService;
@@ -90,6 +91,9 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
     
     @Resource
     private CfgSettingService cfgSettingService;
+    
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -267,6 +271,11 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
 	public List<AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList , boolean isValidateCNY) {
    		List<AddDTO> result = new ArrayList<>();
    		
+   		Set<String> CNYSkuSet = dtoList.stream().filter(d -> d.getCurrency().equals("CNY")).map(SkuStdRetailPriceDTO.AddDTO::getSkuId).collect(Collectors.toSet());
+   		Map<String, BigDecimal> beforeCNYRetailPriceMap = lambdaQuery().in(SkuStdRetailPriceEntity::getSkuId, CNYSkuSet)
+   				.eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
+   				.list().stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+   		
    		Set<String> skuIdSet = dtoList.stream().map(SkuStdRetailPriceDTO.AddDTO::getSkuId).collect(Collectors.toSet());
    		Set<String> currencySet = dtoList.stream().map(SkuStdRetailPriceDTO.AddDTO::getCurrency).collect(Collectors.toSet());
    		Map<String , String> dbSkuIdCurrencyMap = lambdaQuery().in(SkuStdRetailPriceEntity::getSkuId, skuIdSet)
@@ -287,6 +296,26 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
    		if(isValidateCNY) {
    			validateCNY(skuIdSet);
    		}
+   		
+   		if(CollUtil.isNotEmpty(CNYSkuSet)) {
+   			Map<String, BigDecimal> afterCNYRetailPriceMap = lambdaQuery().in(SkuStdRetailPriceEntity::getSkuId, CNYSkuSet)
+   	   				.eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
+   	   				.list().stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+   			Set<String> pushSkuSet = new HashSet<>();
+   			for(String cnySku : CNYSkuSet) {
+   				BigDecimal beforeRetailPrice = beforeCNYRetailPriceMap.get(cnySku);
+   				BigDecimal afterRetailPrice = afterCNYRetailPriceMap.get(cnySku);
+   				if((beforeRetailPrice == null && afterRetailPrice != null) 
+   						|| (beforeRetailPrice != null && afterRetailPrice == null)
+   						|| (beforeRetailPrice != null && afterRetailPrice != null && beforeRetailPrice.compareTo(afterRetailPrice) != 0)) {
+   					pushSkuSet.add(cnySku);
+   				}
+   			}
+   			if(CollUtil.isNotEmpty(pushSkuSet)) {
+   				syncWangDianProductDetailService.syncDataToWangDian(productDetailService.listByIds(pushSkuSet));
+   			}
+   		}
+   		
 		return result;
 	}
 
