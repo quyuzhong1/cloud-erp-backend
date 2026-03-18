@@ -14,10 +14,12 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.wms.mapper.OtherOutstockCustomerMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.OtherOutstockCustomerService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,16 +54,20 @@ public class OtherOutstockCustomerServiceImpl extends SuperServiceImpl<OtherOuts
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(OtherOutstockCustomerDTO.UpdateDTO otherOutstockCustomer,String mainId) {
-        OtherOutstockCustomerEntity entity = new OtherOutstockCustomerEntity();
-        BeanMapperUtils.copy(otherOutstockCustomer,entity);
+        if (StringUtils.isBlank(otherOutstockCustomer.getId())) {
+            this.removeByMainIds(Collections.singletonList(mainId));
+        }else {
+            OtherOutstockCustomerEntity entity = new OtherOutstockCustomerEntity();
+            BeanMapperUtils.copy(otherOutstockCustomer,entity);
 
-        //数据处理
-        handleData(entity);
+            //数据处理
+            handleData(entity);
 
-        //添加操作日志
-        OtherOutstockCustomerEntity old = this.getById(otherOutstockCustomer.getId());
-        operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(),mainId,"",null);
-        this.updateById(entity);
+            //添加操作日志
+            OtherOutstockCustomerEntity old = this.getById(otherOutstockCustomer.getId());
+            operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(),mainId,"",null);
+            this.updateById(entity);
+        }
     }
 
     @Override
