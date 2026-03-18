@@ -381,7 +381,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         //创建-重算费用分摊主表 发货单与物流单=1：1
         entity.setReportPeriodId(reportPeriodId);
-        //业务单号取值 FBA：取值FBA货件单号  第三方仓：海外仓入库单号
+        //业务单号取值 FBA/FBT/AWD/速卖通：取值货件单号  第三方仓：海外仓入库单号
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(firstMileDeliveryEntity.getId()));
         if (!CollectionUtils.isEmpty(businessDTOList)) {
             entity.setBusinessCode(businessDTOList.get(0).getBusinessCode());

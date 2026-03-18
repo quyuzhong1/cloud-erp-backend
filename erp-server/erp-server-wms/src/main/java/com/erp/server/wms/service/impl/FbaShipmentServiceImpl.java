@@ -29,6 +29,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -43,6 +44,7 @@ import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -215,6 +217,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_EXIST);
         }
+        if (ShipmentSourceTypeEnum.FBT.getCode().equals(entity.getSourceType())) {
+            return skuMappingFbt(detailEntity, entity, dto);
+        }
         //根据平台sku查询映射信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(Collections.singletonList(detailEntity.getMsku()));
@@ -306,6 +311,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(deliveryEntities)) {
             throw new ServiceException(ApiError.SO_DELIVERY_ALREADY_PUSHED_NOT_UPDATE_MAPPING);
+        }
+
+        if (ShipmentSourceTypeEnum.FBT.getCode().equals(entity.getSourceType())) {
+            return skuMappingBatchFbt(entity, fbaShipmentDetailEntities);
         }
 
 
@@ -519,28 +528,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     private Map<String, SkuMappingDTO.MappingSkuViewDTO> buildFbtViewSkuMapping(FbaShipmentEntity entity,
-                                                                                List<FbaShipmentDetailEntity> detailEntities) {
-        if (entity == null || CollectionUtils.isEmpty(detailEntities)) {
-            return Collections.emptyMap();
-        }
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
-        if (shopInfoEntity == null) {
-            return Collections.emptyMap();
-        }
-        List<String> platformSkuNoList = detailEntities.stream()
+                                                                           List<FbaShipmentDetailEntity> detailEntities) {
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingList = listFbtShipmentMappings(entity, detailEntities == null
+                ? Collections.emptyList()
+                : detailEntities.stream()
                 .filter(Objects::nonNull)
                 .flatMap(detail -> java.util.stream.Stream.of(detail.getFnSku(), detail.getMsku()))
                 .filter(StringUtils::isNotBlank)
                 .distinct()
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(platformSkuNoList)) {
-            return Collections.emptyMap();
-        }
-        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
-        listingInfoParamDTO.setPlatform(StringUtils.defaultIfBlank(shopInfoEntity.getDictPlatform(), PlatformDictEnum.TIK_TOK.getCode()));
-        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
-        listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
-        List<SkuMappingDTO.MappingSkuViewDTO> mappingList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+                .collect(Collectors.toList()));
         if (CollectionUtils.isEmpty(mappingList)) {
             return Collections.emptyMap();
         }
@@ -559,9 +555,183 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return result;
     }
 
+    private Boolean skuMappingFbt(FbaShipmentDetailEntity detailEntity,
+                                  FbaShipmentEntity entity,
+                                  FbaShipmentDTO.SkuMappingParamDTO dto) {
+        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = listFbtShipmentMappings(entity, Collections.singletonList(detailEntity.getMsku()));
+        if (CollectionUtils.isEmpty(skuDTOS)) {
+            throw new ServiceException("FBT库存SKU不存在");
+        }
+        SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = skuDTOS.stream()
+                .filter(req -> StringUtils.equals(req.getPlatformSkuNo(), detailEntity.getMsku()))
+                .findFirst()
+                .orElse(skuDTOS.get(0));
+        SkuVO skuVO = getShipmentMappingSku(dto);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(skuVO.getSkuId()));
+
+        SkuMappingDTO.UpdateWarehouseSkuDTO updateDTO = new SkuMappingDTO.UpdateWarehouseSkuDTO();
+        updateDTO.setId(mappingSkuViewDTO.getId());
+        updateDTO.setWarehouseSkuNo(StringUtils.defaultIfBlank(mappingSkuViewDTO.getPlatformSkuNo(), detailEntity.getMsku()));
+        updateDTO.setWarehouseProductName(StringUtils.defaultIfBlank(
+                mappingSkuViewDTO.getPlatformProductName(),
+                StringUtils.defaultIfBlank(detailEntity.getPlatformProductName(), detailEntity.getMsku())));
+        updateDTO.setProductSkuId(skuVO.getSkuId());
+        updateDTO.setEffectiveTime(LocalDateTime.now());
+        updateDTO.setThirdBarcode("");
+        updateDTO.setAuthId(StringUtils.defaultIfBlank(mappingSkuViewDTO.getAuthId(), resolveFbtAuthIdByShopId(entity.getShopId())));
+        updateDTO.setHasMappingAll(Boolean.TRUE);
+        skuMappingFeign.updateWarehouseSku(updateDTO);
+
+        fillShipmentDetailMapping(detailEntity, mappingSkuViewDTO, skuVO, bomChildrenSkuDTOS);
+
+        List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(detailEntity.getMainId(),
+                detailEntity.getMsku() + " 映射 " + skuVO.getSkuNo()));
+        operateLogService.batchAddModuleOperateLog("映射了一个sku【%s】", ModuleTypeEnum.FBA_SHIPMENT.getCode(), pairList, "编辑信息");
+        fbaShipmentDetailService.updateById(detailEntity);
+        return Boolean.TRUE;
+    }
+
+    private BatchResultDTO skuMappingBatchFbt(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> detailEntityList) {
+        List<String> mskuList = detailEntityList.stream()
+                .map(FbaShipmentDetailEntity::getMsku)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = listFbtShipmentMappings(entity, mskuList);
+        Map<String, SkuMappingDTO.MappingSkuViewDTO> mappingMap = skuDTOS.stream()
+                .filter(Objects::nonNull)
+                .filter(req -> StringUtils.isNotBlank(req.getPlatformSkuNo()))
+                .collect(Collectors.toMap(
+                        SkuMappingDTO.MappingSkuViewDTO::getPlatformSkuNo,
+                        Function.identity(),
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+        List<String> skuIds = skuDTOS.stream()
+                .map(SkuMappingDTO.MappingSkuViewDTO::getProductSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = CollectionUtils.isEmpty(skuIds)
+                ? Collections.emptyList()
+                : plmTaskFeign.listBomChildBySkuIds(skuIds);
+        for (FbaShipmentDetailEntity detailEntity : detailEntityList) {
+            FbaShipmentDetailEntity old = new FbaShipmentDetailEntity();
+            BeanMapper.copy(detailEntity, old);
+
+            SkuMappingDTO.MappingSkuViewDTO skuDTO = mappingMap.get(detailEntity.getMsku());
+            if (skuDTO == null || StringUtils.isBlank(skuDTO.getProductSkuId()) || StringUtils.isBlank(skuDTO.getProductSkuNo())) {
+                return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getMsku(), "更新失败，无库存SKU对照关系！");
+            }
+            SkuVO skuVO = new SkuVO();
+            skuVO.setSkuId(skuDTO.getProductSkuId());
+            skuVO.setSkuNo(skuDTO.getProductSkuNo());
+            fillShipmentDetailMapping(detailEntity, skuDTO, skuVO, bomChildrenSkuDTOS);
+
+            operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(),
+                    detailEntity.getMainId(), "", String.format("【%s】", old.getSkuNo()));
+            fbaShipmentDetailService.updateById(detailEntity);
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
+    }
+
+    private List<SkuMappingDTO.MappingSkuViewDTO> listFbtShipmentMappings(FbaShipmentEntity entity, List<String> platformSkuNoList) {
+        if (entity == null || CollectionUtils.isEmpty(platformSkuNoList) || StringUtils.isBlank(entity.getShopId())) {
+            return Collections.emptyList();
+        }
+        List<String> filteredPlatformSkuNoList = platformSkuNoList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(filteredPlatformSkuNoList)) {
+            return Collections.emptyList();
+        }
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatform(PlatformDictEnum.FBT.getCode());
+        listingInfoParamDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
+        listingInfoParamDTO.setPlatformSkuNoList(filteredPlatformSkuNoList);
+        listingInfoParamDTO.setIsExpire(Boolean.FALSE);
+        String authId = resolveFbtAuthIdByShopId(entity.getShopId());
+        if (StringUtils.isNotBlank(authId)) {
+            listingInfoParamDTO.setAuthId(authId);
+        }
+        return skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+    }
+
+    private SkuVO getShipmentMappingSku(FbaShipmentDTO.SkuMappingParamDTO dto) {
+        if (StringUtils.isNotBlank(dto.getSkuId())) {
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(dto.getSkuId()));
+            if (CollectionUtils.isNotEmpty(skuVOList)) {
+                return skuVOList.get(0);
+            }
+        }
+        if (StringUtils.isBlank(dto.getSkuNo())) {
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(dto.getSkuNo()));
+        return skuVOList.stream()
+                .filter(req -> StringUtils.equals(req.getSkuNo(), dto.getSkuNo()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND));
+    }
+
+    private void fillShipmentDetailMapping(FbaShipmentDetailEntity detailEntity,
+                                           SkuMappingDTO.MappingSkuViewDTO skuDTO,
+                                           SkuVO skuVO,
+                                           List<BomChildrenSkuDTO> bomChildrenSkuDTOS) {
+        detailEntity.setSkuNo(skuVO.getSkuNo());
+        detailEntity.setSkuId(skuVO.getSkuId());
+        detailEntity.setAsin(StringUtils.defaultString(skuDTO.getPlatformSpuNo()));
+        List<BomChildrenSkuDTO> sonSkuList = CollectionUtils.isEmpty(bomChildrenSkuDTOS) ? Collections.emptyList() : bomChildrenSkuDTOS.stream()
+                .filter(req -> StringUtils.equals(req.getParentSkuId(), skuVO.getSkuId()))
+                .collect(Collectors.toList());
+        detailEntity.setIsCombination(CollectionUtils.isNotEmpty(sonSkuList));
+    }
+
+    private String resolveFbtAuthIdByShopId(String shopId) {
+        if (StringUtils.isBlank(shopId)) {
+            return null;
+        }
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+        String shopAccount = shopInfoEntity == null ? null : shopInfoEntity.getAccount();
+        List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.FBT.getCode())
+                .list();
+        if (CollectionUtils.isEmpty(providerList)) {
+            return null;
+        }
+        for (OverseasProviderEntity provider : providerList) {
+            String providerShopId = firstMeaningful(provider.getAuthJson() == null ? null : provider.getAuthJson().get("shopId"));
+            if (StringUtils.equals(providerShopId, shopId)) {
+                return provider.getId();
+            }
+            String providerShopAccount = firstMeaningful(
+                    provider.getAuthJson() == null ? null : provider.getAuthJson().get("shopAccount"),
+                    provider.getPlatformAccount());
+            if (StringUtils.isNotBlank(shopAccount) && StringUtils.equalsIgnoreCase(providerShopAccount, shopAccount)) {
+                return provider.getId();
+            }
+        }
+        return null;
+    }
+
+    private String firstMeaningful(Object... values) {
+        for (Object value : values) {
+            if (value == null) {
+                continue;
+            }
+            String text = String.valueOf(value);
+            if (StringUtils.isNotBlank(text) && !"null".equalsIgnoreCase(text)) {
+                return text;
+            }
+        }
+        return null;
+    }
+
     private String resolveViewSkuNo(FbaShipmentDetailEntity detailEntity,
-                                    boolean isFbtShipment,
-                                    Map<String, SkuMappingDTO.MappingSkuViewDTO> fbtSkuMapping) {
+                           boolean isFbtShipment,
+                           Map<String, SkuMappingDTO.MappingSkuViewDTO> fbtSkuMapping) {
         if (!isFbtShipment) {
             return detailEntity.getSkuNo();
         }
@@ -836,6 +1006,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getName());
             viewDTO.setDestWarehouseId(shopInfoEntity.getAwdWarehouseId());
             viewDTO.setDestWarehouseName(shopInfoEntity.getAwdWarehouseName());
+        }else if (entity.getSourceType().equals(ShipmentSourceTypeEnum.FBT.getCode())) {
+            viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
+            viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getName());
+            viewDTO.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+            viewDTO.setDestWarehouseName(shopInfoEntity.getWarehouseName());
         }else {
             viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
             viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getName());
@@ -942,6 +1117,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (ShipmentSourceTypeEnum.AWD.getCode().equals(sourceType)) {
                 addDTO.setSourceType(SourceTypeEnum.AWD_SHIPMENT.getCode());
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
+            }else if (ShipmentSourceTypeEnum.FBT.getCode().equals(sourceType)) {
+                addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
             }else {
                 addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());

@@ -854,7 +854,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //如果是FBA货件来源，反审核修改货件发货状态和发货数量
-        if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(entity.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+        if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(entity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(entity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(entity.getDemandType())) {
             fbaShipmentService.deliveryDisApprove(entity);
         }
 
@@ -1069,8 +1071,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
                 RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
                 if (ObjectUtil.isNotEmpty(application)) {
-                    //如果是FBA货件来源，审核通过修改货件发货状态为已发货
-                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
+                    //如果是FBA/FBT/AWD货件来源，审核通过修改货件发货状态和发货数量
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())
+                            || RequisitionApplicationTypeEnum.FBT.getCode().equals(application.getType())
+                            || RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
                         fbaShipmentService.deliveryStatus(entity);
                     } else {
                         //如果是发货计划来源
@@ -2001,7 +2005,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
                 data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
             }
-            if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(data.getDemandType())){
+            if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(data.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(data.getDemandType())){
                 List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailEntityList.stream().filter(v->v.getTaskId().equals(data.getTaskId()) && v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getFnSku())).collect(Collectors.toList());
                 data.setPackingQty(cartonDetailEntityList.stream().mapToInt(v->v.getPackQty()).sum());
             }else{
@@ -2384,7 +2390,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         PackingTaskEntity packingTaskEntity = packingTaskEntityList.get(0);
         PackingTaskDTO.PackedDetailDTO packedDetailDTO = new PackingTaskDTO.PackedDetailDTO();
-        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
+        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
             List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(id);
             String fbaShipmentCode = detailEntityList.get(0).getFbaShipmentCode();
             List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(fbaShipmentCode));
