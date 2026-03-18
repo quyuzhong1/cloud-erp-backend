@@ -54,8 +54,16 @@ public class OtherOutstockCustomerServiceImpl extends SuperServiceImpl<OtherOuts
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(OtherOutstockCustomerDTO.UpdateDTO otherOutstockCustomer,String mainId) {
-        if (StringUtils.isBlank(otherOutstockCustomer.getId())) {
-            this.removeByMainIds(Collections.singletonList(mainId));
+        if (StringUtils.isBlank(otherOutstockCustomer.getCustomerId())) {
+            this.lambdaUpdate()
+                    .set(OtherOutstockCustomerEntity::getCustomerId,"")
+                    .set(OtherOutstockCustomerEntity::getCustomerCode,"")
+                    .set(OtherOutstockCustomerEntity::getName,"")
+                    .set(OtherOutstockCustomerEntity::getReceiveAddress,"")
+                    .set(OtherOutstockCustomerEntity::getReceiverName,"")
+                    .set(OtherOutstockCustomerEntity::getTelNumber,"")
+                    .eq(OtherOutstockCustomerEntity::getMainId,mainId)
+                    .update();
         }else {
             OtherOutstockCustomerEntity entity = new OtherOutstockCustomerEntity();
             BeanMapperUtils.copy(otherOutstockCustomer,entity);

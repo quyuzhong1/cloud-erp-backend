@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -62,6 +63,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     public ApiResult<?> handle(Object ext) {
+        log.warn("PlatformOrderConsumerService traceID:{}", TraceContext.traceId());
         log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
         //TIKTOK判断是否拆单或取消拆单，需要作废原单并且根据包裹号重新生成订单

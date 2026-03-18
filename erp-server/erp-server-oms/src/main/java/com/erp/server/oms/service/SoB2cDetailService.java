@@ -221,4 +221,6 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     void updateExtendData(String id,SoB2cDTO.ExtendDataDTO extendDataDTO);
 
     List<SoB2cDetailDTO.ListDTO> listDetailByMainId(String id);
+
+    List<SoB2cDetailDTO.MainDTO> listDetailByMainIds(List<String> ids);
 }
