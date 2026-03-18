@@ -7740,6 +7740,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             dto.setTrackNo(trackNo);
             dto.setTransportNo(soB2cLogistics.getCode());
+            // TikTok平台仓自动生成销售出库单时，时间口径按平台发货时间(rts_time)统一下发
+            if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())
+                    && entity.hasPlatformWarehouseOrder()
+                    && Objects.nonNull(soB2cLogistics.getDeliveryTime())) {
+                LocalDateTime deliveryTime = soB2cLogistics.getDeliveryTime();
+                dto.setBillDate(deliveryTime.toLocalDate());
+                dto.setPlanDeliveryDate(deliveryTime.toLocalDate());
+                dto.setActualDeliveryDate(deliveryTime);
+            }
         }
 
         //根据主表id 查询出库的信息

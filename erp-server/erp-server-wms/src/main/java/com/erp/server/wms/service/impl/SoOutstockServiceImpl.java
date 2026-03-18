@@ -3358,12 +3358,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             billDate = LocalDate.now();
         }
         dto.setBillDate(billDate);
+        boolean isTikTokPlatformOutstock = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(sourceType)
+                && PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform());
         // 出库日期
         soOutstock.setBillDate(billDate);
-        soOutstock.setPlanDeliveryDate(billDate);
-        // 实际发货实际
-        if (null != dto.getActualDeliveryDate()){
-            soOutstock.setActualDeliveryDate(dto.getActualDeliveryDate());
+        LocalDate planDeliveryDate = billDate;
+        LocalDateTime actualDeliveryDate = dto.getActualDeliveryDate();
+        LocalDate packDate = billDate;
+        if (isTikTokPlatformOutstock) {
+            if (Objects.nonNull(dto.getPlanDeliveryDate())) {
+                planDeliveryDate = dto.getPlanDeliveryDate();
+            }
+            if (Objects.nonNull(actualDeliveryDate)) {
+                packDate = actualDeliveryDate.toLocalDate();
+            } else if (Objects.nonNull(planDeliveryDate)) {
+                packDate = planDeliveryDate;
+            }
+        }
+        soOutstock.setPlanDeliveryDate(planDeliveryDate);
+        // 实际发货时间
+        if (null != actualDeliveryDate){
+            soOutstock.setActualDeliveryDate(actualDeliveryDate);
         } else {
             soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
         }
@@ -3382,7 +3397,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setBatchNo(transferInfoList.get(0).getBatchNo());
             }
         }
-        soOutstock.setPackDate(billDate);
+        soOutstock.setPackDate(packDate);
         //销售员
         if (CharSequenceUtil.isBlank(soOutstock.getSellerId()) && CharSequenceUtil.isNotBlank(soOutstock.getCustomerId())){
             CustomerInfoEntity customer = customerFeign.getCustomerById(soOutstock.getCustomerId());
