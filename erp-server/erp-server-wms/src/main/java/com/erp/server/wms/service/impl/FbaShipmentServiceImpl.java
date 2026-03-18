@@ -645,6 +645,31 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isEmpty(filteredPlatformSkuNoList)) {
             return Collections.emptyList();
         }
+        LinkedHashMap<String, SkuMappingDTO.MappingSkuViewDTO> mappingMap = new LinkedHashMap<>();
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Collections.singletonList(entity.getShopId()));
+        ShopInfoEntity shopInfo = shopInfoEntities.stream()
+                .filter(Objects::nonNull)
+                .filter(req -> StringUtils.equals(entity.getShopId(), req.getId()))
+                .findFirst()
+                .orElse(null);
+        if (shopInfo != null && StringUtils.isNotBlank(shopInfo.getWarehouseId())) {
+            List<SkuMappingDTO.WarehouseSkuDTO> warehouseMappings =
+                    skuMappingFeign.listByWarehouseAndPlatformSku(shopInfo.getWarehouseId(), filteredPlatformSkuNoList);
+            if (CollectionUtils.isNotEmpty(warehouseMappings)) {
+                for (SkuMappingDTO.WarehouseSkuDTO warehouseMapping : warehouseMappings) {
+                    if (warehouseMapping == null) {
+                        continue;
+                    }
+                    SkuMappingDTO.MappingSkuViewDTO converted = convertWarehouseSkuMapping(warehouseMapping);
+                    if (StringUtils.isNotBlank(converted.getPlatformSkuNo())) {
+                        mappingMap.putIfAbsent(converted.getPlatformSkuNo(), converted);
+                    }
+                    if (StringUtils.isNotBlank(converted.getPlatformFnSku())) {
+                        mappingMap.putIfAbsent(converted.getPlatformFnSku(), converted);
+                    }
+                }
+            }
+        }
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatform(PlatformDictEnum.FBT.getCode());
         listingInfoParamDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
@@ -655,7 +680,37 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (StringUtils.isNotBlank(authId)) {
             listingInfoParamDTO.setAuthId(authId);
         }
-        return skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        if (CollectionUtils.isNotEmpty(mappingList)) {
+            for (SkuMappingDTO.MappingSkuViewDTO mapping : mappingList) {
+                if (mapping == null) {
+                    continue;
+                }
+                if (StringUtils.isNotBlank(mapping.getPlatformSkuNo())) {
+                    mappingMap.putIfAbsent(mapping.getPlatformSkuNo(), mapping);
+                }
+                if (StringUtils.isNotBlank(mapping.getPlatformFnSku())) {
+                    mappingMap.putIfAbsent(mapping.getPlatformFnSku(), mapping);
+                }
+            }
+        }
+        return new ArrayList<>(mappingMap.values());
+    }
+
+    private SkuMappingDTO.MappingSkuViewDTO convertWarehouseSkuMapping(SkuMappingDTO.WarehouseSkuDTO mapping) {
+        SkuMappingDTO.MappingSkuViewDTO converted = new SkuMappingDTO.MappingSkuViewDTO();
+        converted.setId(mapping.getTableId());
+        converted.setProductSkuId(mapping.getProductSkuId());
+        converted.setProductSkuNo(mapping.getProductSkuNo());
+        converted.setProductName(mapping.getProductName());
+        converted.setWarehouseId(mapping.getWarehouseId());
+        converted.setListingId(mapping.getListingId());
+        converted.setPlatformSkuNo(mapping.getPlatformSkuNo());
+        converted.setPlatformProductName(mapping.getPlatformSkuName());
+        converted.setPlatformSpuNo(mapping.getPlatformSpuNo());
+        converted.setPlatformSpuName(mapping.getPlatformSpuName());
+        converted.setPlatformFnSku(mapping.getPlatformFnSku());
+        return converted;
     }
 
     private SkuVO getShipmentMappingSku(FbaShipmentDTO.SkuMappingParamDTO dto) {
