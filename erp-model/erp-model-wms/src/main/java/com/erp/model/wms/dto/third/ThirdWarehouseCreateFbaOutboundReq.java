@@ -71,7 +71,7 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
     private String fileUrl;
 
     /**
-     * 三房产的文件ID
+     * 三方仓的文件ID
      */
     private String fileId;
 
