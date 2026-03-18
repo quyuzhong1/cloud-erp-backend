@@ -3605,7 +3605,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (BAD_GATEWAY.equals(apiResult.getMsg())){
                     throw new ServiceException("调用三方仓出库单异常，状态码502");
                 }
-                String message = "创建出库单异常" + apiResult.getMsg();
+                String message = "创建三方仓出库单异常" + apiResult.getMsg();
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                 //标记三方仓发货单为删除

@@ -190,14 +190,28 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private void setAttachment(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
         List<OutboundB2cCreateRequest.Attachment> attachments = new ArrayList<>();
         if (CharSequenceUtil.isNotBlank(createOutboundReq.getLabelData())) {
-            attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(createOutboundReq.getLabelData()).fileName(createOutboundReq.getReferenceNo()+"面单.pdf").build());
+               attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(dropPrefix(createOutboundReq.getLabelData())).fileName(createOutboundReq.getReferenceNo()+"面单.pdf").build());
         }
         if (CharSequenceUtil.isNotBlank(createOutboundReq.getInvoiceData())) {
-            attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(createOutboundReq.getInvoiceData()).fileName(createOutboundReq.getReferenceNo()+"发票.pdf").build());
+            attachments.add(OutboundB2cCreateRequest.Attachment.builder().base64(dropPrefix(createOutboundReq.getInvoiceData())).fileName(createOutboundReq.getReferenceNo()+"发票.pdf").build());
         }
         createRequest.setAttachmentOpenDTOs(attachments);
     }
 
+    /**
+     * 根据，去掉参数base64需去掉前缀
+     */
+    private String dropPrefix(String base64) {
+        if (CharSequenceUtil.isBlank(base64)) {
+            return base64;
+        }
+        //根据逗号去掉前缀，不存在逗号直接返回
+        if (!base64.contains(",")) {
+            return base64;
+        }else {
+            return base64.split(",")[1];
+        }
+    }
     private static void setPickType(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
         List<ThirdWarehouseCreateOutboundReq.Item> items = createOutboundReq.getItems();
         /**
