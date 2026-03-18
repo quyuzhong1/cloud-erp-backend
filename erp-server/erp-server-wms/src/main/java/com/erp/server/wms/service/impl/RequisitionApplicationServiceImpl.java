@@ -1569,6 +1569,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntityList) {
             //映射主表信息
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(fbaShipmentEntity,entity,shopInfo);
+            fillDestWarehouseFromRequisition(addDTO, entity);
             List<FbaShipmentDetailEntity> fbaDetailList = allFbaDetailList.stream().filter(v->v.getMainId().equals(fbaShipmentEntity.getId())).collect(Collectors.toList());
             //查询关联发货数量
             List<String> cartonIds = detailList.stream().filter(v->v.getFbaShipmentId().equals(fbaShipmentEntity.getId())).map(v->v.getCartonId()).collect(Collectors.toList());
@@ -1724,6 +1725,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     .collect(Collectors.groupingBy(WmsCartonDetailEntity::getSkuNo, Collectors.summingInt(v -> ObjectUtil.defaultIfNull(v.getPackQty(), 0))));
 
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(shipmentEntity, entity, shopInfo);
+            fillDestWarehouseFromRequisition(addDTO, entity);
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (FbaShipmentDetailEntity shipmentDetail : shipmentDetailList) {
                 SkuVO skuVO = skuVOList.stream().filter(v -> CharSequenceUtil.equals(v.getSkuId(), shipmentDetail.getSkuId())).findFirst().orElse(new SkuVO());
@@ -3531,6 +3533,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         //映射主表信息（默认要货类型为FBA要货）
         FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(shipmentEntity,entity,shopInfo);
+        fillDestWarehouseFromRequisition(addDTO, entity);
         if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
         }
@@ -3586,5 +3589,19 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         lambdaUpdate().set(RequisitionApplicationEntity::getDeliveryPushDownStatus, BillPushDownStatusEnum.FINISH.getCode())
                 .eq(RequisitionApplicationEntity::getId, entity.getId())
                 .update();
+    }
+
+    private void fillDestWarehouseFromRequisition(FirstMileDeliveryDTO.AddDTO addDTO, RequisitionApplicationEntity entity) {
+        if (Objects.isNull(addDTO)
+                || Objects.isNull(entity)
+                || !RequisitionApplicationTypeEnum.FBT.getCode().equals(entity.getType())
+                || CharSequenceUtil.isBlank(entity.getToWarehouseId())) {
+            return;
+        }
+        addDTO.setDestWarehouseId(entity.getToWarehouseId());
+        WarehouseEntity warehouseEntity = warehouseService.getById(entity.getToWarehouseId());
+        if (Objects.nonNull(warehouseEntity) && CharSequenceUtil.isNotBlank(warehouseEntity.getName())) {
+            addDTO.setDestWarehouseName(warehouseEntity.getName());
+        }
     }
 }
