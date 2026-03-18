@@ -171,6 +171,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
         private String warehousePlatformSku;
 
         /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
          * 单箱数量
          */
         private Integer perBoxQty;
