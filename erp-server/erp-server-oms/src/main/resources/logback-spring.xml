@@ -20,14 +20,11 @@
 					converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
 	<conversionRule conversionWord="wEx"
 					converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
-	<!-- SkyWalking TraceId 转换器 -->
-	<conversionRule conversionWord="tid"
-					converterClass="org.apache.skywalking.apm.toolkit.log.logback.v1.x.LogbackPatternConverter"/>
 
 	<property name="ENCODER_PATTERN_COLOR"
-			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%clr(%tid){yellow},%clr(%X{spanId}){yellow}] %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%level){blue} %clr(${PID}){magenta} %clr([%thread]){orange} %clr(%logger){cyan} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%clr(%X{traceId}){yellow},%clr(%X{spanId}){yellow}] %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%level){blue} %clr(${PID}){magenta} %clr([%thread]){orange} %clr(%logger){cyan} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 	<property name="ENCODER_PATTERN"
-			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%tid,%X{spanId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} [%thread] %logger %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%X{traceId},%X{spanId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} [%thread] %logger %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 	<!-- 超过最大天数会清理日志 -->
 	<property name="maxHistory" value="10"/>
 	<!-- 文件达到 最大xxMB时会被切割 -->

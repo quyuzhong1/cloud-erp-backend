@@ -11,7 +11,6 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -54,7 +53,6 @@ public class SoB2cRetryLabelJob {
      **/
     @XxlJob("SoB2cRetryLabelJob")
     public ReturnT<String> soB2cRetryJob() {
-        log.warn("SoB2cRetryLabelJob traceID:{}", TraceContext.traceId());
         XxlJobHelper.log("SoB2cRetryLabelJob 执行开始");
         String jobParam = XxlJobHelper.getJobParam();
         //查询三天内没有获取到面单的数据
