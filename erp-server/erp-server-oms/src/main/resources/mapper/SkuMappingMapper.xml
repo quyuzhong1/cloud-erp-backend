@@ -316,6 +316,7 @@
     <select id="listByPlatformSkuNoAndPlatform" resultType="com.erp.model.oms.dto.SkuMappingDTO$MappingSkuViewDTO">
         SELECT li.id AS listingId,
         sm.id,
+        sm.warehouse_id as warehouseId,
         li.auth_id as authId,
         sm.product_sku_id,
         sm.product_sku_no,

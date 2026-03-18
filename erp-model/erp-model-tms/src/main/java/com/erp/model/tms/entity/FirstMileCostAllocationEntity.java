@@ -96,13 +96,13 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     private String supplierType;
     /**
     * {业务单号}取值发货单关联的业务单号
-        FBA：取值FBA货件单号
+        FBA/FBT/AWD/速卖通：取值货件单号
         第三方仓：海外仓入库单号
     */
     @TableField("business_code")
     private String businessCode;
     /**
-    * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA
+    * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=备货FBA仓，demandFbtWarehouse=备货FBT仓
     */
     @TableField("business_type")
     private String businessType;

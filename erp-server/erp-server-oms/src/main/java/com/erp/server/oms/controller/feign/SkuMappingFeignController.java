@@ -59,6 +59,14 @@ public class SkuMappingFeignController extends BaseController {
         return skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
     }
 
+    /**
+     * 更改库存sku 对照
+     */
+    @PostMapping("/updateWarehouseSku")
+    public String updateWarehouseSku(@RequestBody SkuMappingDTO.UpdateWarehouseSkuDTO dto) {
+        return skuMappingService.updateWarehouseSku(dto);
+    }
+
 
     /**
      * 通过条件查询sku映射信息
