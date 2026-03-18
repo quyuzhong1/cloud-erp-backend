@@ -70,8 +70,8 @@ public class CommonController extends BaseController {
         String traceId = TraceContext.traceId();
         String segmentId = TraceContext.segmentId();
         log.error("skywalking tid:{}",MDC.get("tid"));
-        log.error("skywalking tid:{}",MDC.get("traceId"));
-        return success("skywalking tid:"+traceId+"segmentId:"+segmentId+"MDC tid :" + MDC.get("tid"));
+        Map<String, String> mdcMap = MDC.getCopyOfContextMap();
+        return success("skywalking tid:"+traceId+"segmentId:"+segmentId+"MDC  :" + mdcMap);
 
     }
 
