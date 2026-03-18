@@ -61,7 +61,6 @@ import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -71,12 +70,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT;
@@ -941,45 +942,43 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         if (isZhongBao) {
             if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
-                // 获取所有 zhongbao 相关的枚举 code
-                Set<String> expectedZhongBaoCodes = Arrays.stream(ZhongBaoOperationDescriptionEnum.values())
-                        .filter(enumItem -> isZhongBaoEnum(enumItem))
-                        .map(ZhongBaoOperationDescriptionEnum::getCode)
-                        .collect(Collectors.toSet());
+                for (B2bThirdDeliveryDTO.WarehouseOperationTypeDTO warehouseOperationTypeDTO : warehouseOperationTypeDTOList) {
+                    if (Objects.equals(warehouseOperationTypeDTO.getWarehouseOperationType(), ZhongBaoOperationDescriptionEnum.LIMIT_PLATE_NUM.getCode())) {
+                        // 正则表达式：匹配正整数（无前导零）
+                        if (!Pattern.matches("^[1-9]\\d*$", warehouseOperationTypeDTO.getOperationDesc())) {
+                            throw new IllegalArgumentException("操作值必须是正整数（如：1, 2, 3...）");
+                        }
+                    }
 
-                // 获取实际传入的 code 集合
-                Set<String> actualCodes = warehouseOperationTypeDTOList.stream()
-                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
-                        .collect(Collectors.toSet());
+                    if (Objects.equals(warehouseOperationTypeDTO.getWarehouseOperationType(), ZhongBaoOperationDescriptionEnum.LIMIT_PLATE_HEIGHT.getCode())
+                            || Objects.equals(warehouseOperationTypeDTO.getWarehouseOperationType(), ZhongBaoOperationDescriptionEnum.LIMIT_PLATE_WEIGHT.getCode())) {
+                        try {
+                            BigDecimal number = new BigDecimal(warehouseOperationTypeDTO.getOperationDesc());
 
-                // 检查是否有缺失的枚举 code
-                Set<String> missingCodes = new HashSet<>(expectedZhongBaoCodes);
-                missingCodes.removeAll(actualCodes);
+                            // 检查是否大于0
+                            if (number.compareTo(BigDecimal.ZERO) <= 0) {
+                                throw new IllegalArgumentException("操作值必须大于0");
+                            }
 
-                if (!missingCodes.isEmpty()) {
-                    List<String> missingNames = ZhongBaoOperationDescriptionEnum.getNamesByCodes(missingCodes);
-                    String errorMessage = String.join(",", missingNames);
-                    throw new ServiceException(
-                            ApiError.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM,
-                            errorMessage
-                    );
-                }
+                            //保留三位小数
+                            BigDecimal processedNumber = number.setScale(3, RoundingMode.DOWN);
+                            warehouseOperationTypeDTO.setOperationDesc(processedNumber.toString());
 
-                // 检查每个枚举是否有值
-                for (B2bThirdDeliveryDTO.WarehouseOperationTypeDTO dto : warehouseOperationTypeDTOList) {
-                    if (StringUtils.isBlank(dto.getWarehouseOperationType()) ||
-                            StringUtils.isBlank(dto.getOperationDesc())) {
-                        throw new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY);
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("操作值必须是有效的数字格式");
+                        }
                     }
                 }
 
                 String operationDesc = warehouseOperationTypeDTOList.stream()
                         .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
                         .collect(Collectors.joining(","));
+                String warehouseOperationType = warehouseOperationTypeDTOList.stream()
+                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
+                        .collect(Collectors.joining(","));
                 b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
+                b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
 
-            } else {
-                throw new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL);
             }
         } else {
             if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
@@ -1048,13 +1047,5 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             b2bThirdDeliveryEntity.setCountryId(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryId() : "");
             b2bThirdDeliveryEntity.setCountryName(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryName() : "");
         }
-    }
-
-    private boolean isZhongBaoEnum(ZhongBaoOperationDescriptionEnum enumItem) {
-        String code = enumItem.getCode();
-        return code.startsWith("is") ||
-                code.startsWith("change") ||
-                code.startsWith("paste") ||
-                code.startsWith("limit");
     }
 }

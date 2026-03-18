@@ -19,7 +19,7 @@ public enum WarehouseOperationTypeEnum implements EnumMessage {
     CHANGE_BARCODE_TYPE("changeBarcodeType", "开箱换SKU标"),
     IS_COVER_BARCODE("isCoverBarcode", "贴板标"),
     CHANGE_SHIPPING_MARK_TYPE("changeShippingMarkType", "贴箱唛"),
-    IS_COVER_SHIPPING_MARK("isCoverShippingMark", "其他"),
+    IS_COVER_SHIPPING_MARK("isCoverShippingMark", "是否覆盖箱唛"),
     IS_PALLET("isPallet", "打托"),
     IS_DOUBLE_PALLET("isDoublePallet", "双板打托"),
     IS_MIXED_PALLET("isMixedPallet", "混托"),
