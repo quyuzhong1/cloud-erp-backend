@@ -421,5 +421,17 @@ public class BomInfoController extends BaseController {
     public ApiResult<List<BomChildrenSkuDTO>> combinationSkuChildDetail(@RequestBody ProductBomInfoDTO.SkuIdParams dto) {
         return success(bomSkuService.listBomChildBySoB2cDetailId(dto));
     }
+    
+    /**
+     * 发送飞书，BOM管理和捆绑产品用这同一个接口
+     * @Author Luo_WG
+     * @Date 2023/11/16 17:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasDeliveryPlanDTO.DeliverRecordDTO>>
+     **/
+    @PostMapping("/sendFeishu")
+    public ApiResult<Boolean> sendFeishu(@RequestBody ProductBomInfoDTO.FeiShuDto dto) {
+        return success(null);
+    }
 }
 

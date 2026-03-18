@@ -8,6 +8,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @author Will
@@ -73,5 +74,10 @@ public class BomCombinationDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        
+        /**
+         * 标准零售价(含税)
+         */
+        private BigDecimal stdRetailPriceVat;
     }
 }
