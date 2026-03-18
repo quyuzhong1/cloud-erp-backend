@@ -26,11 +26,12 @@ import java.util.*;
 public class WildberriesSDKService {
 
     private String getSandbox(){
-        if (BusinessCommonConstants.hasProfile("prod")) {
-            return CharSequenceUtil.EMPTY;
-        } else {
-            return "-sandbox";
-        }
+        return "";
+//        if (BusinessCommonConstants.hasProfile("prod") || BusinessCommonConstants.hasProfile("uat")) {
+//            return CharSequenceUtil.EMPTY;
+//        } else {
+//            return "-sandbox";
+//        }
     }
     public WildberriesResponse checkToken(String token) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));
@@ -325,9 +326,18 @@ public class WildberriesSDKService {
                 .body(JSONUtil.toJsonStr(body))
                 .execute().body();
         log.error("接口返回：{}", bodyStr);
-        AddOrderToSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<AddOrderToSupplyResponse>() {}.getType());
-        return response;
+        List<AddOrderToSupplyResponse> response = JSON.parseObject(
+                bodyStr,  // 假设 bodyStr 已经是 JSON 字符串
+                new TypeReference<List<AddOrderToSupplyResponse>>() {}
+        );
+        if(response != null && !response.isEmpty()){
+            return response.get(0);
+        }else{
+            return null;
+        }
     }
+
+
     public String getSupplyOrders(String token, String supplyId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
         String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_ORDER,WildberriesConstant.SANDBOX_STR,supplyId);
