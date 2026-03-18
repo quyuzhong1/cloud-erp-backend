@@ -71,10 +71,13 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT;
@@ -925,15 +928,69 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
      */
     private void handleData(B2bThirdDeliveryEntity b2bThirdDeliveryEntity, B2bThirdDeliveryDTO.CommonDTO commonDTO) {
         List<B2bThirdDeliveryDTO.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = commonDTO.getWarehouseOperationTypeDTOList();
-        if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
-            String operationDesc = warehouseOperationTypeDTOList.stream()
-                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
-                    .collect(Collectors.joining(","));
-            String warehouseOperationType = warehouseOperationTypeDTOList.stream()
-                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
-                    .collect(Collectors.joining(","));
-            b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
-            b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
+
+        boolean isZhongBao = Boolean.FALSE;
+        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(commonDTO.getDeliveryWarehouseId());
+        if (Objects.nonNull(overseasProviderWarehouse)) {
+            OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
+            if (Objects.nonNull(overseasProvider)) {
+                if (Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),overseasProvider.getCode())) {
+                    isZhongBao = Boolean.TRUE;
+                }
+            }
+        }
+
+        if (isZhongBao) {
+            if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
+                for (B2bThirdDeliveryDTO.WarehouseOperationTypeDTO warehouseOperationTypeDTO : warehouseOperationTypeDTOList) {
+                    if (Objects.equals(warehouseOperationTypeDTO.getWarehouseOperationType(), ZhongBaoOperationDescriptionEnum.LIMIT_PLATE_NUM.getCode())) {
+                        // 正则表达式：匹配正整数（无前导零）
+                        if (!Pattern.matches("^[1-9]\\d*$", warehouseOperationTypeDTO.getOperationDesc())) {
+                            throw new IllegalArgumentException("操作值必须是正整数（如：1, 2, 3...）");
+                        }
+                    }
+
+                    if (Objects.equals(warehouseOperationTypeDTO.getWarehouseOperationType(), ZhongBaoOperationDescriptionEnum.LIMIT_PLATE_HEIGHT.getCode())
+                            || Objects.equals(warehouseOperationTypeDTO.getWarehouseOperationType(), ZhongBaoOperationDescriptionEnum.LIMIT_PLATE_WEIGHT.getCode())) {
+                        try {
+                            BigDecimal number = new BigDecimal(warehouseOperationTypeDTO.getOperationDesc());
+
+                            // 检查是否大于0
+                            if (number.compareTo(BigDecimal.ZERO) <= 0) {
+                                throw new IllegalArgumentException("操作值必须大于0");
+                            }
+
+                            //保留三位小数
+                            BigDecimal processedNumber = number.setScale(3, RoundingMode.DOWN);
+                            warehouseOperationTypeDTO.setOperationDesc(processedNumber.toString());
+
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("操作值必须是有效的数字格式");
+                        }
+                    }
+                }
+
+                String operationDesc = warehouseOperationTypeDTOList.stream()
+                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
+                        .collect(Collectors.joining(","));
+                String warehouseOperationType = warehouseOperationTypeDTOList.stream()
+                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
+                        .collect(Collectors.joining(","));
+                b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
+                b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
+
+            }
+        } else {
+            if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
+                String operationDesc = warehouseOperationTypeDTOList.stream()
+                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
+                        .collect(Collectors.joining(","));
+                String warehouseOperationType = warehouseOperationTypeDTOList.stream()
+                        .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
+                        .collect(Collectors.joining(","));
+                b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
+                b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
+            }
         }
 
         if (CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getCountryName()) && CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getCountryId())) {
@@ -990,13 +1047,5 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             b2bThirdDeliveryEntity.setCountryId(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryId() : "");
             b2bThirdDeliveryEntity.setCountryName(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryName() : "");
         }
-    }
-
-    private boolean isZhongBaoEnum(ZhongBaoOperationDescriptionEnum enumItem) {
-        String code = enumItem.getCode();
-        return code.startsWith("is") ||
-                code.startsWith("change") ||
-                code.startsWith("paste") ||
-                code.startsWith("limit");
     }
 }
