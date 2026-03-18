@@ -174,9 +174,9 @@ public class WildberriesSDKServiceTest {
     }
     @Test
     public void addOrderToSupply() throws InterruptedException {
-        String supplyId = "WB-GI-224171466";
+        String supplyId = "WB-GI-224317574";
         //{"id": "1978713068531814402", "barcode": "WB-TRBX-SAND-8317", "errorType": "getLogisticsCode", "packageNo": "WB-GI-SAND-8316", "packagePlanId": "1979031327613415426"}
-        AddOrderToSupplyRequest request = AddOrderToSupplyRequest.builder().supplyId(supplyId).orderId(4788871455L).build();
+        AddOrderToSupplyRequest request = AddOrderToSupplyRequest.builder().supplyId(supplyId).orderId(478999383l).build();
         AddOrderToSupplyResponse addOrderToSupplyResponse = wildberriesSDKService.addOrderToSupply(WildberriesConstant.TOKEN, request);
         System.out.println(JSONUtil.toJsonStr(addOrderToSupplyResponse));
         //{"trbxIds":["WB-TRBX-SAND-7947"]}

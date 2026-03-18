@@ -2,9 +2,11 @@ package com.sdk.oms.wildberries.service;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.wildberries.constant.WildberriesConstant;
@@ -319,13 +321,24 @@ public class WildberriesSDKService {
         Map<String,Object> body = new HashMap<>();
         body.put("orders", Collections.singletonList(request.getOrderId()));
         String url = CharSequenceUtil.format(WildberriesConstant.PATCH_ADD_ORDER_TO_SUPPLY,getSandbox(),request.getSupplyId());
-        String bodyStr = HttpRequest.patch(url)
+        HttpResponse httpResponse = HttpRequest.patch(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
                 .header("locale", "zh")
                 .body(JSONUtil.toJsonStr(body))
-                .execute().body();
-        log.error("接口返回：{}", bodyStr);
+                .execute();
+        // 检查响应状态
+        String bodyStr = httpResponse.body();
+        log.error(" addOrderToSupply  响应头: {},HTTP状态码: {},接口返回：'{}",  httpResponse.headers(),httpResponse.getStatus(),bodyStr);
+        if(StringUtils.isBlank(bodyStr)){
+            int status = httpResponse.getStatus();
+            if(204 == status){
+                AddOrderToSupplyResponse response = new AddOrderToSupplyResponse();
+                response.setCode("204");
+                response.setMessage("添加订单到组包成功");
+                return response;
+        }
+
         List<AddOrderToSupplyResponse> response = JSON.parseObject(
                 bodyStr,  // 假设 bodyStr 已经是 JSON 字符串
                 new TypeReference<List<AddOrderToSupplyResponse>>() {}
