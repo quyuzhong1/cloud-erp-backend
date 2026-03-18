@@ -332,11 +332,12 @@ public class WildberriesSDKService {
         log.error(" addOrderToSupply  响应头: {},HTTP状态码: {},接口返回：'{}",  httpResponse.headers(),httpResponse.getStatus(),bodyStr);
         if(StringUtils.isBlank(bodyStr)){
             int status = httpResponse.getStatus();
-            if(204 == status){
+            if(204 == status) {
                 AddOrderToSupplyResponse response = new AddOrderToSupplyResponse();
                 response.setCode("204");
                 response.setMessage("添加订单到组包成功");
                 return response;
+            }
         }
 
         List<AddOrderToSupplyResponse> response = JSON.parseObject(
