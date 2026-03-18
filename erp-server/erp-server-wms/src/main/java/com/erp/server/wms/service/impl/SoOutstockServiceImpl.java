@@ -1229,6 +1229,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else {
                 //表示是b2c
                 if (ObjectUtil.isNotEmpty(soId)) {
+
                     SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
                     if(Objects.nonNull(soB2cEntity)){
                         addDTO.setPlatformCode(soB2cEntity.getPlatformCode());
