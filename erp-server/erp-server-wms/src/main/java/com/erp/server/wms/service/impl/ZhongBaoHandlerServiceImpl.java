@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
@@ -28,13 +27,8 @@ import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
-import com.sdk.wms.goodcang.dto.request.*;
-import com.sdk.wms.goodcang.dto.response.*;
-import com.sdk.wms.goodcang.service.GoodCangService;
+import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.zhongbao.dto.request.*;
-import com.sdk.wms.zhongbao.dto.response.BaseResponse;
-import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCancelResponse;
-import com.sdk.wms.zhongbao.dto.response.OverseasOutboundCreateResponse;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
@@ -42,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
@@ -57,9 +52,6 @@ import java.util.*;
 @Slf4j
 @Service
 public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
-
-    @Resource
-    private GoodCangService goodCangService;
 
     @Resource
     private ZhongbaoService zhongbaoService;
@@ -100,27 +92,30 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq) {
+        ProductRequest productRequest = ProductRequest.builder().commonParam(CommonRequest.builder()
+                .pageParam(PageRequest.builder().pageSize("1").pageNum("10").build()).build()).status(3).build();
+
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
                 .pageSize(100)
                 .productSkuArr(productReq.getSkuNoList())
                 .build();
-        List<GoodCangSkuResp> respList = new ArrayList<>();
-        int page = 1;
+        List<ProductResponse.Product> respList = new ArrayList<>();
+        int pageNum = 1;
         while (true) {
-            goodCangGetSkuReq.setPage(page);
-            GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
-            if (!isSuccess(goodCangResponse.getAsk(), "")) {
-                log.error("谷仓查询产品信息异常" + goodCangResponse);
-                return failure(goodCangResponse.getMessage());
+         productRequest.getCommonParam().setPageParam(PageRequest.builder().pageSize("100").pageNum(String.valueOf(pageNum)).build());
+            BaseResponse<ProductResponse> response = zhongbaoService.productList(productRequest);
+            if (!response.getSuccess()) {
+                log.error(getPlatForm() +"查询产品信息异常" + response);
+                return failure(response.getMessage());
             }
-            respList.addAll(goodCangResponse.getData());
-            if (goodCangResponse.getCount() <= page * 100) {
+            respList.addAll(response.getData().getList());
+            if (Integer.parseInt(response.getData().getTotalCount()) <= pageNum * 100) {
                 break;
             }
-            page++;
+            pageNum++;
         }
-        List<ThirdWarehouseSkuResp> thirdWarehouseSkuRespList = BeanUtil.copyToList(respList, ThirdWarehouseSkuResp.class);
+        List<ThirdWarehouseSkuResp> thirdWarehouseSkuRespList = ThirdWarehouseConverter.INSTANCE.convertZhongbaoSku(respList);
         return success(thirdWarehouseSkuRespList);
     }
 
@@ -161,50 +156,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
-        GoodCangCalculateDeliveryFeeReq goodCangCalculateDeliveryFeeReq = ThirdWarehouseConverter.INSTANCE.reqToGucangCalculateFeeReq(calculateFeeReq);
-        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(goodCangCalculateDeliveryFeeReq);
-        List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList = response.getData();
-        String currency = response.getCurrency();
-        List<ThirdWarehouseCalculateFeeResponse> dataList = convertCalculateDeliveryFeeResp(currency, goodCangCalculateDeliveryFeeRespList);
-        return isSuccess(response.getAsk(), "") ? success(dataList) : failure(response.getMessage());
-    }
-
-    private List<ThirdWarehouseCalculateFeeResponse> convertCalculateDeliveryFeeResp(String currency, List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList) {
-        if (CollUtil.isEmpty(goodCangCalculateDeliveryFeeRespList)) {
-            return Collections.emptyList();
-        }
-        List<ThirdWarehouseCalculateFeeResponse> list = new ArrayList<>();
-        for (GoodCangCalculateDeliveryFeeResp resp : goodCangCalculateDeliveryFeeRespList) {
-            ThirdWarehouseCalculateFeeResponse response = ThirdWarehouseConverter.INSTANCE.gucangResToThirdWarehouseResponse(resp);
-            response.setCurrency(currency);
-            List<GoodCangCalculateDeliveryFeeResp.Income> income = resp.getIncome();
-            //设置其他费用
-            setOtherCostByIncome(response, income);
-            list.add(response);
-        }
-        return list;
-    }
-
-    private void setOtherCostByIncome(ThirdWarehouseCalculateFeeResponse response, List<GoodCangCalculateDeliveryFeeResp.Income> income) {
-        if (CollUtil.isEmpty(income)) {
-            response.setShippingCost(BigDecimal.ZERO);
-            response.setDeclareCost(BigDecimal.ZERO);
-            response.setOtherCost(BigDecimal.ZERO);
-            response.setRegistrationCost(BigDecimal.ZERO);
-            response.setOperatingCost(BigDecimal.ZERO);
-        } else {
-            for (GoodCangCalculateDeliveryFeeResp.Income cost : income) {
-                if (cost.getName().contains("运输费")) {
-                    response.setShippingCost(new BigDecimal(cost.getAmount()));
-                } else if (cost.getName().contains("关税") || cost.getName().contains("报关费") || cost.getName().contains("偏远住宅费") || cost.getName().contains("附加费")) {
-                    BigDecimal amount = new BigDecimal(cost.getAmount());
-                    BigDecimal declareCost = Objects.nonNull(response.getDeclareCost()) ? response.getDeclareCost() : BigDecimal.ZERO;
-                    response.setDeclareCost(MathUtil.add(amount, declareCost));
-                } else if (cost.getName().contains("操作费")) {
-                    response.setOperatingCost(new BigDecimal(cost.getAmount()));
-                }
-            }
-        }
+       return ApiResult.error(getPlatForm().getName() + "不支持查询运费");
     }
 
     @Override
@@ -214,6 +166,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         setPickType(createOutboundReq, createRequest);
         //设置附件
         setAttachment(createOutboundReq, createRequest);
+        //重置地址
+        setAddress(createRequest);
         log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(createRequest));
         BaseResponse<OutboundB2cCreateResponse> response = zhongbaoService.createB2cOutboundBill(createRequest);
         log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(response));
@@ -222,6 +176,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 //            return success(orderCode.getData());
 //        }
         return response.getSuccess() ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getOrderNo()).trackNo(response.getData().getTrackingNo()).build()) : failure(response.getMessage());
+    }
+
+    private void setAddress(OutboundB2cCreateRequest createRequest) {
+        if (CharSequenceUtil.isBlank(createRequest.getAddress())) {
+            createRequest.setAddress(createRequest.getAddress2());
+        }
+        if (CharSequenceUtil.isBlank(createRequest.getAddress())) {
+            createRequest.setAddress(createRequest.getAddress3());
+        }
     }
 
     private void setAttachment(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
@@ -238,45 +201,24 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static void setPickType(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
         List<ThirdWarehouseCreateOutboundReq.Item> items = createOutboundReq.getItems();
         /**
-         * 订单只有一个SKU，数量为1时：1=>一票一件
-         * 订单只有一个SKU，数量大于1时：2=>一票一件多个
-         * 订单SKU大于1个时：3=>一票多件
+         单SKU且数量为1，传1：一票一件
+         非单SKU，传3：一票多件
          */
-        if (CollUtil.isEmpty(items)) {
+        if (items.size() == 1 && items.get(0).getQuantity() == 1) {
             createRequest.setPickType(1);
-        } else if (items.size() == 1 && items.get(0).getQuantity() == 1) {
-            createRequest.setPickType(1);
-        } else if (items.size() == 1 && items.get(0).getQuantity() > 1) {
-            createRequest.setPickType(2);
-        } else {
+        }else {
             createRequest.setPickType(3);
         }
     }
 
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
-        GoodCangUploadFileReq goodCangUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
-        if (CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())) {
-            goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
-        }
-        GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(goodCangUploadFileReq);
-        GoodCangUploadFileResp goodCangUploadFileResp = response.getData();
-        ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);
-        return isSuccess(response.getAsk(), response.getMessage()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
-
+        return ApiResult.error(getPlatForm().getName() + "不支持上传文件");
     }
 
     @Override
     public ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq) {
-        GoodCangUploadOrderLabelReq goodCangUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadOrderLabelReq(uploadFileReq);
-        GoodCangResponse<GoodCangUploadOrderLabelResp> response = goodCangService.uploadOrderLabel(goodCangUploadFileReq);
-        GoodCangUploadOrderLabelResp resp = response.getData();
-        ThirdWarehouseUploadOrderLabelResponse uploadOrderLabelResponse = ThirdWarehouseConverter.INSTANCE.googCangResToThirdWarehouseUploadOrderLabelResponse(resp);
-        if (response.getMessage().contains("订单状态已确认")) {
-            return success(new ThirdWarehouseUploadOrderLabelResponse(uploadFileReq.getOrderCode()));
-        }
-        return isSuccess(response.getAsk(), response.getMessage()) ? success(uploadOrderLabelResponse) : failure(response.getMessage());
-
+        return ApiResult.error("暂不支持上传面单");
     }
 
     @Override
@@ -553,9 +495,5 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         overseasOutboundCreateRequest.setAttachmentOpenDTOs(attachments);
 
         return overseasOutboundCreateRequest;
-    }
-
-    public boolean isSuccess(String ask, String message) {
-        return "Success".equals(ask) || "success".equals(message);
     }
 }

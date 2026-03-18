@@ -53,7 +53,7 @@ class ZhongbaoServiceTest {
     public void productList() {
         String token = zhongbaoService.getToken(appKey, appSecret);
         ProductRequest productRequest = ProductRequest.builder().build();
-        BaseResponse<ProductResponse> response = zhongbaoService.productList(token, productRequest);
+        BaseResponse<ProductResponse> response = zhongbaoService.productList(productRequest);
         System.out.println(JSONUtil.toJsonStr(response));
     }
     @Test

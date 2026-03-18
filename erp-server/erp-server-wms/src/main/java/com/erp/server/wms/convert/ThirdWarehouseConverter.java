@@ -15,6 +15,7 @@ import com.sdk.wms.goodcang.dto.request.GoodCangUploadOrderLabelReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangCalculateDeliveryFeeResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangUploadFileResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangUploadOrderLabelResp;
+import com.sdk.wms.zhongbao.dto.response.ProductResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -119,4 +120,11 @@ public interface ThirdWarehouseConverter {
     GoodCangUploadOrderLabelReq reqToGoodCangUploadOrderLabelReq(ThirdWarehouseUploadOrderLabelReq uploadFileReq);
 
     ThirdWarehouseUploadOrderLabelResponse googCangResToThirdWarehouseUploadOrderLabelResponse(GoodCangUploadOrderLabelResp resp);
+
+    @Mapping(target = "productTitleEn", source = "nameEn")
+    @Mapping(target = "productTitleCn", source = "name")
+    @Mapping(target = "productStatus", ignore = true)
+    @Mapping(target = "importCountryList", ignore = true)
+    ThirdWarehouseSkuResp convertZhongbaoSku(ProductResponse.Product resp);
+    List<ThirdWarehouseSkuResp> convertZhongbaoSku(List<ProductResponse.Product> respList);
 }
