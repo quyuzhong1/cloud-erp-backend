@@ -229,6 +229,8 @@ public enum ModuleTypeEnum {
     CFG_DIFF_STRATEGY("150", "差异策略配置"),
     DELIVERY_BOX_RULE("156", "发货箱规"),
     B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_SYNC("158", "出库同步差异"),
+    DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("159", "退货同步差异"),
 
     // doris
     ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),
