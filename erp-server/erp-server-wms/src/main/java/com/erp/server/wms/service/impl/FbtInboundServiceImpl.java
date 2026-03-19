@@ -8,6 +8,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -22,6 +23,7 @@ import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.OperateLogEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
@@ -818,6 +820,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             return false;
         }
         String providerId = provider == null ? null : provider.getId();
+        OverseasProviderWarehouseEntity providerWarehouse = findProviderWarehouse(provider, snapshot);
         OverseasInventoryEntity inventory = fbtInboundRepository.findOverseasInventory(
                 snapshot.getWarehouseCode(), snapshot.getSkuCode(), providerId);
         if (inventory == null) {
@@ -829,6 +832,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         }
         inventory.setName(StrUtil.blankToDefault(snapshot.getWarehouseName(), snapshot.getWarehouseCode()));
         inventory.setPlatformSkuName(StrUtil.blankToDefault(snapshot.getGoodsName(), snapshot.getSkuCode()));
+        fillInventorySkuMapping(inventory, snapshot, provider, providerWarehouse);
         inventory.setSellableQty(defaultZero(snapshot.getAvailableQty()));
         inventory.setReservedQty(defaultZero(snapshot.getReservedQty()));
         inventory.setFrozenQty(defaultZero(snapshot.getReservedQty()));
@@ -842,6 +846,118 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             fbtInboundRepository.updateOverseasInventory(inventory);
         }
         return true;
+    }
+
+    private OverseasProviderWarehouseEntity findProviderWarehouse(OverseasProviderEntity provider,
+                                                                  TiktokFbtDTO.InventorySnapshotDTO snapshot) {
+        if (provider == null || StrUtil.isBlank(provider.getId()) || snapshot == null) {
+            return null;
+        }
+        List<OverseasProviderWarehouseEntity> warehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .eq(OverseasProviderWarehouseEntity::getMainId, provider.getId())
+                .list();
+        if (CollUtil.isEmpty(warehouseList)) {
+            return null;
+        }
+        String platformWarehouseCode = snapshot.getWarehouseCode();
+        String platformWarehouseName = snapshot.getWarehouseName();
+        return warehouseList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
+                .sorted(Comparator.comparingInt(item -> {
+                    if (StrUtil.isNotBlank(platformWarehouseCode)
+                            && StrUtil.equalsIgnoreCase(platformWarehouseCode, item.getPlatformWarehouseCode())) {
+                        return 0;
+                    }
+                    if (StrUtil.isNotBlank(platformWarehouseName)
+                            && StrUtil.equals(platformWarehouseName, item.getPlatformWarehouseName())) {
+                        return 1;
+                    }
+                    return 2;
+                }))
+                .filter(item -> (StrUtil.isNotBlank(platformWarehouseCode)
+                        && StrUtil.equalsIgnoreCase(platformWarehouseCode, item.getPlatformWarehouseCode()))
+                        || (StrUtil.isNotBlank(platformWarehouseName)
+                        && StrUtil.equals(platformWarehouseName, item.getPlatformWarehouseName())))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void fillInventorySkuMapping(OverseasInventoryEntity inventory,
+                                         TiktokFbtDTO.InventorySnapshotDTO snapshot,
+                                         OverseasProviderEntity provider,
+                                         OverseasProviderWarehouseEntity providerWarehouse) {
+        if (inventory == null || snapshot == null || StrUtil.isBlank(snapshot.getSkuCode())) {
+            return;
+        }
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(OmsPlatformEnum.FBT.getCode());
+        paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        paramDTO.setIsExpire(false);
+        paramDTO.setPlatformSkuNoList(Collections.singletonList(snapshot.getSkuCode()));
+        if (provider != null && StrUtil.isNotBlank(provider.getId())) {
+            paramDTO.setAuthId(provider.getId());
+        }
+        if (providerWarehouse != null && StrUtil.isNotBlank(providerWarehouse.getWarehouseId())) {
+            paramDTO.setWarehouseIdList(Collections.singletonList(providerWarehouse.getWarehouseId()));
+        }
+        List<ListingInfoWithSkuMappingDTO> mappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        if (CollUtil.isEmpty(mappingList)
+                && CollUtil.isNotEmpty(paramDTO.getWarehouseIdList())
+                && StrUtil.isNotBlank(paramDTO.getAuthId())) {
+            ListingInfoParamDTO fallbackParam = new ListingInfoParamDTO();
+            fallbackParam.setPlatform(paramDTO.getPlatform());
+            fallbackParam.setType(paramDTO.getType());
+            fallbackParam.setIsExpire(paramDTO.getIsExpire());
+            fallbackParam.setPlatformSkuNoList(paramDTO.getPlatformSkuNoList());
+            fallbackParam.setAuthId(paramDTO.getAuthId());
+            mappingList = skuMappingFeign.listingInfoWithSkuMappingList(fallbackParam);
+        }
+        if (CollUtil.isEmpty(mappingList)) {
+            return;
+        }
+        ListingInfoWithSkuMappingDTO mappingDTO = selectInventoryMapping(mappingList, providerWarehouse);
+        if (mappingDTO == null) {
+            return;
+        }
+        if (StrUtil.isNotBlank(mappingDTO.getPlatformSkuName())) {
+            inventory.setPlatformSkuName(mappingDTO.getPlatformSkuName().trim());
+        }
+        if (StrUtil.isNotBlank(mappingDTO.getProductName())) {
+            inventory.setProductName(mappingDTO.getProductName().trim());
+        }
+        if (StrUtil.isNotBlank(mappingDTO.getProductSkuId())) {
+            inventory.setSkuId(mappingDTO.getProductSkuId().trim());
+        }
+        if (StrUtil.isNotBlank(mappingDTO.getProductSkuNo())) {
+            inventory.setSkuNo(mappingDTO.getProductSkuNo().trim());
+        }
+    }
+
+    private ListingInfoWithSkuMappingDTO selectInventoryMapping(List<ListingInfoWithSkuMappingDTO> mappingList,
+                                                                OverseasProviderWarehouseEntity providerWarehouse) {
+        if (CollUtil.isEmpty(mappingList)) {
+            return null;
+        }
+        if (providerWarehouse != null && StrUtil.isNotBlank(providerWarehouse.getWarehouseId())) {
+            ListingInfoWithSkuMappingDTO warehouseMatched = mappingList.stream()
+                    .filter(Objects::nonNull)
+                    .filter(item -> StrUtil.equals(providerWarehouse.getWarehouseId(), item.getWarehouseId()))
+                    .findFirst()
+                    .orElse(null);
+            if (warehouseMatched != null) {
+                return warehouseMatched;
+            }
+        }
+        ListingInfoWithSkuMappingDTO allWarehouseMatched = mappingList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> Boolean.TRUE.equals(item.getHasMappingAll()))
+                .findFirst()
+                .orElse(null);
+        if (allWarehouseMatched != null) {
+            return allWarehouseMatched;
+        }
+        return mappingList.stream().filter(Objects::nonNull).findFirst().orElse(null);
     }
 
     private Integer defaultZero(Integer value) {
