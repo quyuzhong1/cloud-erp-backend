@@ -339,9 +339,9 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         OverseasOutboundCreateRequest overseasOutboundCreateRequest = buildCreateFbaOutboundDto(createOutboundReq);
         String token = AuthUtils.getToken(apiKey, apiSecret);
-        log.warn(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCreateRequest));
+        log.info(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCreateRequest));
         OverseasOutboundCreateResponse response = zhongbaoService.createOutboundBill(token, overseasOutboundCreateRequest);
-        log.warn(getPlatForm().getName() + "创建b2b出库单结果:{}", JSONUtil.toJsonStr(response));
+        log.info(getPlatForm().getName() + "创建b2b出库单结果:{}", JSONUtil.toJsonStr(response));
         return response.getCode() == "20000" ? success(response.getResponseData().getOrderNo()) : failure(response.getMessage());
     }
 
@@ -397,7 +397,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .sum();
 
         // 拣货类型
-        if (skuIds.size() == 1) {
+        if (skuIds.size() == 1 && totalQuantity == 1) {
 //            // 只有一个SKU
 //            if (totalQuantity == 1) {
 //                //一票一件
