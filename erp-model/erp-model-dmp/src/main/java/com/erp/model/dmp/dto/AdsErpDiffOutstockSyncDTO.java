@@ -215,7 +215,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
          * 平台库存SKU数量
          */
-        private String stockQty;
+        private Integer stockQty;
 
         /**
          * 平台库存SKU数量
@@ -230,7 +230,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
          * 平台ERP_SKU数量
          */
-        private String platformQty;
+        private Integer platformQty;
 
         /**
         * 平台ERP_SKU数量
@@ -294,7 +294,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
         * ERP_SKU数量
         */
-        private String qty;
+        private Integer qty;
         /**
         * ERP_SKU数量
         */
