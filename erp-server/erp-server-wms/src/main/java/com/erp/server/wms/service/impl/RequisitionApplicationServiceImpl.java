@@ -2174,7 +2174,8 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         if (RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
             addDTO.setBillType(PickingBillTypeEnum.AWD.getCode());
         }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(application.getType())){
-            addDTO.setBillType(PickingBillTypeEnum.FBT.getCode());
+            // FBT 下推拣货单沿用速卖通/三方仓的拣货策略口径，避免现有规则因新 billType 未配置而失效。
+            addDTO.setBillType(PickingBillTypeEnum.THIRD.getCode());
         }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())){
             addDTO.setBillType(PickingBillTypeEnum.FBA.getCode());
         }else {

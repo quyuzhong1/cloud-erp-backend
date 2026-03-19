@@ -312,7 +312,7 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
         /**
         * 差异数量
         */
-        private String diffQty;
+        private Integer diffQty;
 
         /**
         * 差异标签
