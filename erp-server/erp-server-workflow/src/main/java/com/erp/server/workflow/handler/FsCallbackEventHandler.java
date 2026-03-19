@@ -168,6 +168,7 @@ public class FsCallbackEventHandler {
         }
 
         if(Objects.equals(FsEventConstant.USER_DELETED_EVENT,type)){
+            log.warn("bean.getEvent().getObject().getUserId()", bean.getEvent().getObject().getUserId());
             SysUserThirdEntity SysUserThirdEntity = sysUserFeign.getUserByThird(SysUserInfoThirdAuthTypeEnum.FS.getCode(), bean.getEvent().getObject().getUserId());
             if(Objects.isNull(SysUserThirdEntity)){
                 log.warn("收到员工{}事件，用户未绑定飞书，跳过处理", bean.getHeader().getEventType());
