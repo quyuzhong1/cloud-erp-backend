@@ -5,19 +5,24 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.CreateJobDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.DmpInputNextLevelType;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -34,10 +39,7 @@ import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -165,7 +167,7 @@ public class TbTaskTypeService {
     @Transactional(rollbackFor = Exception.class)
     public void addTask(ShopInfoEntity shopInfo) {
         // 查询需要当前平台需要增加的任务
-        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(),shopInfo.getDictPlatform()));
+//        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(),shopInfo.getDictPlatform()));
 
         // 添加新中台任务
         addNewDmpTask(shopInfo);
@@ -245,9 +247,10 @@ public class TbTaskTypeService {
      **/
     private void addNewDmpTask(ShopInfoEntity shopInfo) {
         //根据授权的系统编码查询新中台系统表
-        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(shopInfo.getDictPlatform());
+        // pgsql改成忽略大小写查询
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(shopInfo.getDictPlatform().toLowerCase());
         if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
-            log.error("店铺授权编码【" + shopInfo.getDictPlatform() + "】 在新中台系统表中不存在！");
+            log.error("店铺授权编码【{}】 在新中台系统表中不存在！", shopInfo.getDictPlatform());
             return;
         }
 
@@ -260,18 +263,52 @@ public class TbTaskTypeService {
                 .eq(DmpCfgInputEntity::getIsMainTask, Boolean.TRUE)
                 .list();
 
-        List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<String> cfgInputIds = cfgInputEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(cfgInputIds)) {
+            log.info("店铺授权编码【{}】 在新中台系统表中不存在！", shopInfo.getDictPlatform());
             return;
         }
+        //根据主任务id查询所有主任务详情
         List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery().in(DmpCfgInputDetailEntity::getMainId, cfgInputIds).list();
 
-        //每一个主任务都需要添加任务详情
-        for (DmpCfgInputEntity dmpCfgInputEntity : cfgInputEntityList) {
-            DmpCfgInputDetailEntity dmpCfgInputDetailEntity = list.stream().filter(req -> req.getNextLevelId().equals(shopInfo.getId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(dmpCfgInputDetailEntity)) {
-                //添加输入任务
-                addInputDetail(shopInfo, dmpCfgInputEntity);
+        // 用nextLevelId分组，取记录数量最多的分组
+        Map<String, List<DmpCfgInputDetailEntity>> groupByNextLevelId = list.stream().collect(Collectors.groupingBy(DmpCfgInputDetailEntity::getNextLevelId));
+        String maxCountNextLevelId = groupByNextLevelId.entrySet().stream().max(Comparator.comparingInt(entry -> entry.getValue().size())).map(Map.Entry::getKey).orElse(null);
+        List<DmpCfgInputDetailEntity> dmpCfgInputDetailList = groupByNextLevelId.get(maxCountNextLevelId);
+
+        if (CollectionUtil.isNotEmpty(dmpCfgInputDetailList)) {
+            List<String> sameAccountShopId = new ArrayList<>();
+            // 判断是否存在账号相同的任务
+            boolean hasSameAccountTask = list.stream().anyMatch(e -> DmpInputNextLevelType.OMS_ACCOUNT.getCode().equals(e.getNextLevelType()));
+            if (hasSameAccountTask) {
+                // 获取当前店铺的账号
+                String currentShopAccount = shopInfo.getPlatformShopCode();
+                // 获取账号相同的任务的店铺信息
+                List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+                sameAccountShopId = shopList.stream()
+                        .filter(shop -> currentShopAccount.equals(shop.getPlatformShopCode()))
+                        .map(BaseEntity::getId)
+                        .collect(Collectors.toList());
+            }
+
+            // 判断当前店是否已经存在记录，如果存在则不复制
+            List<String> finalSameAccountShopId = sameAccountShopId;
+            Map<String, List<DmpCfgInputDetailEntity>> existCfgInputIdMap = list.stream()
+                    .filter(e ->
+                            e.getNextLevelId().equals(shopInfo.getId()) || (DmpInputNextLevelType.OMS_ACCOUNT.getCode().equals(e.getNextLevelType()) && finalSameAccountShopId.contains(e.getNextLevelId()))
+                    )
+                    .collect(Collectors.groupingBy(DmpCfgInputDetailEntity::getMainId));
+
+            // 不存在的任务复制记录到新的nextLevelId
+            List<DmpCfgInputDetailEntity> newInputDetails = dmpCfgInputDetailList
+                    .stream()
+                    .filter(e-> !existCfgInputIdMap.containsKey(e.getMainId()))
+                    .map(inputDetail -> convertNewDmpCfgInputDetailEntity(shopInfo, inputDetail))
+                    .collect(Collectors.toList());
+
+            if (CollectionUtil.isNotEmpty(newInputDetails)) {
+                // 批量插入新的记录
+                dmpCfgInputDetailService.saveBatch(newInputDetails);
             }
         }
 
@@ -280,16 +317,16 @@ public class TbTaskTypeService {
         List<DmpCfgInputEntity> listAll = dmpCfgInputService.lambdaQuery()
                 .eq(DmpCfgInputEntity::getSystemId, systemId)
                 .list();
-        List<String> inputIds = listAll.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<String> inputIds = listAll.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
 
         List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, inputIds).list();
-        List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> convertIds = cfgInputConvertEntities.stream().map(BaseEntity::getId).collect(Collectors.toList());
         if (CollUtil.isEmpty(convertIds)) {
             return;
         }
         List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getInputConvertId, convertIds).list();
 
-        List<String> outputIds = outputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<String> outputIds = outputEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(outputIds)) {
             return;
         }
@@ -308,40 +345,6 @@ public class TbTaskTypeService {
         }
     }
 
-    /**
-     * 添加输入任务
-     * @param shopInfo
-     * @param dmpCfgInputEntity
-     */
-    private void addInputDetail(ShopInfoEntity shopInfo, DmpCfgInputEntity dmpCfgInputEntity) {
-        //添加基础任务
-        DmpCfgInputDetailDTO.AddDTO addDTO = new DmpCfgInputDetailDTO.AddDTO();
-        addDTO.setMainId(dmpCfgInputEntity.getId());
-        addDTO.setNextLevelId(shopInfo.getId());
-        addDTO.setLastTime(LocalDateTime.now());
-        addDTO.setNextTime(LocalDateTime.now().plusSeconds(600));
-        addDTO.setIntervalTime(600);
-        addDTO.setOverrideTime(120);
-        addDTO.setMaxRetryCount(3);
-        addDTO.setExecTimeout(1200);
-        addDTO.setDealyTime(60);
-        addDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        dmpCfgInputDetailService.add(addDTO);
-
-        //添加历史任务
-        DmpCfgInputDetailDTO.AddDTO addHistoryDTO = new DmpCfgInputDetailDTO.AddDTO();
-        addHistoryDTO.setMainId(dmpCfgInputEntity.getId());
-        addHistoryDTO.setNextLevelId(shopInfo.getId());
-        addHistoryDTO.setLastTime(LocalDateTime.now().plusSeconds(3600));
-        addHistoryDTO.setNextTime(LocalDateTime.now());
-        addHistoryDTO.setIntervalTime(3600);
-        addHistoryDTO.setOverrideTime(0);
-        addHistoryDTO.setMaxRetryCount(3);
-        addHistoryDTO.setExecTimeout(1200);
-        addHistoryDTO.setDealyTime(86400);
-        addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
-        dmpCfgInputDetailService.add(addDTO);
-    }
 
     /**
      * 添加输入任务
@@ -449,5 +452,25 @@ public class TbTaskTypeService {
         if(CollectionUtils.isNotEmpty(cfgOutputDetailEntities)){
             dmpCfgOutputDetailService.removeByIds(cfgOutputDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         }
+    }
+
+    private static DmpCfgInputDetailEntity convertNewDmpCfgInputDetailEntity(ShopInfoEntity shopInfo, DmpCfgInputDetailEntity inputDetail) {
+        DmpCfgInputDetailEntity newInputDetail = new DmpCfgInputDetailEntity();
+        BeanUtils.copyProperties(inputDetail, newInputDetail);
+        // 生成新的ID
+        newInputDetail.setId(IdWorker.getIdStr());
+        newInputDetail.setCreateTime(LocalDateTime.now());
+        newInputDetail.setUpdateTime(LocalDateTime.now());
+        LocalDateTime lastTime = LocalDateTime.now();
+        if (DmpInputTaskTaskTypeEnum.HISTORY.getCode().equals(inputDetail.getTaskType()) && null != shopInfo.getInitPullTime()) {
+            lastTime = shopInfo.getInitPullTime();
+        }
+        // 如果是历史任务，按店铺配置类
+        newInputDetail.setLastTime(lastTime);
+        newInputDetail.setNextTime(lastTime.plusSeconds(inputDetail.getIntervalTime()));
+
+        // 设置新的nextLevelId
+        newInputDetail.setNextLevelId(shopInfo.getId());
+        return newInputDetail;
     }
 }

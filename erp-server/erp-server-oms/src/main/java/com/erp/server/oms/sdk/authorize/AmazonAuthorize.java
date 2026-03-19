@@ -288,13 +288,6 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
             redisUtil.set(tokenKey, redisShopInfoDTO, tokenDTO.getExpiresIn());
 
-            // 授权后添加任务和添加报告计划
-            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
-                    shopInfo.getName(),
-                    shopInfo.getDictPlatform(),
-                    false,
-                    shopInfo.getDictCountryCode(),
-                    shopInfo.getPlatformShopCode()));
         }
     }
 
