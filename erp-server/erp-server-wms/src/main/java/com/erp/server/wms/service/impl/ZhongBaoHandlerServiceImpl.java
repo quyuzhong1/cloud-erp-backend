@@ -337,7 +337,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+    public ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         OverseasOutboundCreateRequest overseasOutboundCreateRequest = buildCreateFbaOutboundDto(createOutboundReq);
         String token = AuthUtils.getToken(apiKey, apiSecret);
         log.warn(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCreateRequest));
