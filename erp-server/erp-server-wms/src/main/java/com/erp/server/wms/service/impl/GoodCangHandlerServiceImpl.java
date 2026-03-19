@@ -17,6 +17,7 @@ import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -221,7 +222,22 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
-        return failure("ERP功能暂不支持");
+        List<ThirdWarehouseQueryFbaOutboundResponse> responses = new ArrayList<>();
+        for (String code : req.getErpOrderCodeList()) {
+            GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode(code);
+            if(!isSuccess(response.getAsk(), response.getMessage())){
+                return failure(response.getMessage());
+            }
+            ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+            GoodCangOrderDTO goodCangOrderDTO = response.getData();
+            res.setCode(code);
+            res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
+            res.setTrackNo(goodCangOrderDTO.getTrackingNo());
+            res.setDeliveryTimeStr(goodCangOrderDTO.getShipperTime());
+            res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getShipStatus()));
+            responses.add(res);
+        }
+        return success(responses);
     }
 
     @Override

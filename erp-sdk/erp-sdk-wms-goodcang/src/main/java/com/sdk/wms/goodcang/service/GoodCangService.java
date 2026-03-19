@@ -233,6 +233,25 @@ public class GoodCangService {
         return respDto;
     }
 
+
+    /**
+     * 获取出库单号
+     */
+    public GoodCangResponse<GoodCangOrderDTO> getOrderByRefCode(@Valid @NotEmpty(message = "参考单号不能为空")String referenceNo){
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("reference_no",referenceNo);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_OUT_BOUND_CODE,paramsMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramsMap));
+        ThirdWarehouseContext.setResponseJson(response);
+        //处理返回值
+        GoodCangResponse<GoodCangOrderDTO> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangOrderDTO>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓获取订单号返回数据为空,返回值:{}", response);
+            return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+        }
+        return respDto;
+    }
+
     /**
      * 取消出库单
      */
