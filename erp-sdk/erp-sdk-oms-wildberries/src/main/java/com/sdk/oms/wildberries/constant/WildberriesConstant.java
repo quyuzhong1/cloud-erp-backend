@@ -46,7 +46,7 @@ public interface WildberriesConstant {
     String DEL_BOX_FROM_SUPPLY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/trbx";
     String GET_SUPPLY_BOX_LIST = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/trbx";
     //添加订单到组包
-    String PATCH_ADD_ORDER_TO_SUPPLY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/orders/{}";
+    String PATCH_ADD_ORDER_TO_SUPPLY = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/marketplace/v3/supplies/{}/orders";
     String GET_SUPPLY_ORDER = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/orders";
     String GET_SUPPLY_QR_CODE = "https://marketplace-api" + SANDBOX + ".wildberries.ru/api/v3/supplies/{}/barcode?type={}";
     //订单面单

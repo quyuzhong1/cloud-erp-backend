@@ -489,7 +489,11 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .build();
         try {
             AddOrderToSupplyResponse response = wildberriesSDKService.addOrderToSupply(authEntity.getToken(), request);
-            if (Objects.nonNull(response) && !"204".equals(response.getCode())) {
+            if(Objects.isNull(response)){
+                mqResponseDTO.setErrorMsg("添加订单到大包失败: 响应为空");
+                return mqResponseDTO;
+            }
+            if (!"204".equals(response.getCode())) {
                 mqResponseDTO.setErrorMsg(response.getCode());
                 return mqResponseDTO;
             }

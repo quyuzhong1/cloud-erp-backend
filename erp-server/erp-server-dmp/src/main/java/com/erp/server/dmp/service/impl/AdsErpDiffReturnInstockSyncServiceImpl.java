@@ -1,14 +1,25 @@
 package com.erp.server.dmp.service.impl;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
+import com.erp.model.dmp.entity.CfgDiffStrategyDetailEntity;
+import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
+import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.dmp.service.CfgDiffStrategyService;
+import com.erp.server.dmp.service.DmpRestCloudService;
+import jodd.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +27,6 @@ import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -28,14 +36,12 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO;
-import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffReturnInstockSyncMapper;
 import com.erp.server.dmp.service.AdsErpDiffReturnInstockSyncService;
@@ -64,6 +70,10 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
+    @Resource
+    private CfgDiffStrategyService cfgDiffStrategyService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -288,4 +298,213 @@ public class AdsErpDiffReturnInstockSyncServiceImpl extends SuperServiceImpl<Ads
 		downloadTaskFeign.saveDownloadTask("退货同步差异", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC.getCode(), dto);
 		return true;
 	}
+
+    @Override
+    public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<PagingParamDTO> dto) {
+        return  dmpRestCloudService.diffReturnInstockSourcePlatformPaging(dto);
+    }
+    @Override
+    public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<PagingParamDTO> dto) {
+        return  dmpRestCloudService.diffReturnInstockSourcePlatformPaging(dto);
+    }
+
+    @Override
+    public Boolean exportSourcePlatform(PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-平台退货单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_PLATFORM.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportSourceSelf(PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-ERP退货单", FileTaskEventEnum.EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC_SELF.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public List<AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO> listPlateformReturnInstockNotExistRelation(BaseIdsDTO.IdsDTO dto) {
+        List<AdsErpDiffReturnInstockSyncEntity> list = lambdaQuery().in(AdsErpDiffReturnInstockSyncEntity::getId, dto.getIds())
+                .ne(AdsErpDiffReturnInstockSyncEntity::getSourceSystemName,"")
+                .ne(AdsErpDiffReturnInstockSyncEntity::getCheckMonth,"")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, false)
+                .list();
+        if(CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<AdsErpDiffReturnInstockSyncEntity> notPlatform = list.stream().filter(e -> StringUtil.isBlank(e.getDiffTag()) || !e.getDiffTag().equals("platform")).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(notPlatform)){
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM);
+        }
+        //判断list集合中的sourceSystemName值是否全部一致
+        if (list.stream().map(AdsErpDiffReturnInstockSyncEntity::getSourceSystemName).distinct().count() > 1) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM);
+        }
+        //判断list集合中的checkMonth值是否全部一致
+        if (list.stream().map(AdsErpDiffReturnInstockSyncEntity::getCheckMonth).distinct().count() > 1) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD);
+        }
+        return BeanMapper.copyList(list, AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO.class);
+    }
+
+    @Override
+    public BatchResultDTO batchUpdateReturnInstockRelation(AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO dto) {
+        AdsErpDiffReturnInstockSyncEntity entity = lambdaQuery().eq(AdsErpDiffReturnInstockSyncEntity::getId, dto.getId())
+                .eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getDiffTag,"platform")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, false)
+                .one();
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
+        }
+        AdsErpDiffReturnInstockSyncEntity old = new AdsErpDiffReturnInstockSyncEntity();
+        BeanMapper.copy(entity, old);
+
+        AdsErpDiffReturnInstockSyncEntity detailEntity = lambdaQuery().eq(AdsErpDiffReturnInstockSyncEntity::getId, dto.getDetailId())
+                .eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getDiffTag,"erp")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, false)
+                .one();
+        if (Objects.isNull(detailEntity)) {
+            throw new ServiceException(ApiError.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND);
+        }
+        Integer diffQty = 0;
+        String diffTag ="same";
+        String diffTagName ="完全匹配";
+        String suggestType ="";
+        StringBuffer sb = new StringBuffer();
+
+        Boolean isDateSame = false;
+        Boolean isQtySame = false;
+        Boolean isStatusSame = false;
+        Boolean isWarehouseSame = false;
+
+        Date billDate = entity.getPlatformBillDate();
+        Date detailBillDate = detailEntity.getBillDate();
+        if (Objects.nonNull(billDate) && Objects.nonNull(detailBillDate) && billDate.getYear() == detailBillDate.getYear() && billDate.getMonth() == detailBillDate.getMonth()) {
+            isDateSame = true;
+        }else {
+            sb.append("单据日期不匹配;");
+        }
+
+        //平台-出库数量 、ERP-实发数量相等
+        Integer platformQty = entity.getPlatformQty();
+        Integer qty = detailEntity.getQty();
+        if(Objects.nonNull(platformQty) && Objects.nonNull(qty) ){
+            if(Objects.equals(platformQty,qty)){
+                isQtySame = true;
+            }else {
+                diffQty = platformQty - qty;
+                sb.append("数量不匹配;");
+            }
+        }else {
+            sb.append("数量不匹配;");
+        }
+
+        //平台-单据状态/ERP-ERP单据状态
+        String platformBillStatusName = entity.getPlatformBillStatusName();
+        String billStatusName = detailEntity.getBillStatusName();
+        if(StringUtils.isNotBlank(platformBillStatusName) && StringUtils.isNotBlank(billStatusName) && Objects.equals(platformBillStatusName,"已完成") && Objects.equals(billStatusName,"已审核")){
+            isStatusSame =true;
+        }else {
+            sb.append("单据状态不匹配;");
+        }
+
+        String platformWarehouseName = entity.getPlatformWarehouseName();
+        String erpWarehouseName = detailEntity.getErpWarehouseName();
+        if(Objects.equals(platformWarehouseName,erpWarehouseName)){
+            isWarehouseSame = true;
+        }else {
+            sb.append("仓库不匹配;");
+        }
+        if(!isDateSame || !isStatusSame || !isQtySame || !isWarehouseSame){
+            diffTag ="diff";
+            diffTagName ="字段差异";
+            suggestType ="请核实单据";
+        }
+
+
+        //获取diffQty的绝对值
+        entity.setDiffQty(Math.abs(diffQty)+"");
+        entity.setDiffTag(diffTag);
+        entity.setDiffTagName(diffTagName);
+        entity.setSuggestType(suggestType);
+        entity.setDiffDesc(sb.toString());
+        //erp其余字段补充道平台
+        entity.setBillName(detailEntity.getBillName());
+        entity.setBillStatusName(detailEntity.getBillStatusName());
+        entity.setShopName(detailEntity.getShopName());
+        entity.setSalesPlatformName(detailEntity.getSalesPlatformName());
+        entity.setOrderCode(detailEntity.getOrderCode());
+        entity.setSoCode(detailEntity.getSoCode());
+        entity.setReturnInstockCode(detailEntity.getReturnInstockCode());
+        entity.setSkuNo(detailEntity.getSkuNo());
+        entity.setQty(detailEntity.getQty());
+        entity.setSkuQty(detailEntity.getSkuNo()+"*"+detailEntity.getQty());
+        entity.setErpWarehouseName(detailEntity.getErpWarehouseName());
+        entity.setBillDate(detailEntity.getBillDate());
+        //更新平台记录
+        boolean save = updateById(entity);
+        //删除对应的erp记录
+        lambdaUpdate().set(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, true).eq(AdsErpDiffReturnInstockSyncEntity::getId, detailEntity.getId()).update();
+        if(save){
+            if(!Objects.equals(diffTag,"same")){
+                List<CfgDiffStrategyDTO.ListByBillTypeDTO> cfgDiffStrategyList = cfgDiffStrategyService.listByBillType("instock");
+                cfgDiffStrategyList = cfgDiffStrategyList.stream().filter(e -> Objects.equals(e.getDiffTag(),"diff")).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(cfgDiffStrategyList)){
+                    CfgDiffStrategyDTO.ListByBillTypeDTO listByBillTypeDTO = cfgDiffStrategyList.get(0);
+                    AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO updateSuggestTypeParamsDTO = new AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO();
+                    updateSuggestTypeParamsDTO.setSuggestType(listByBillTypeDTO.getSuggestType());
+                    updateSuggestTypeParamsDTO.setConditionSql(listByBillTypeDTO.getConditionSql());
+                    updateSuggestTypeParamsDTO.setId(dto.getId());
+                    baseMapper.updateSuggestType(updateSuggestTypeParamsDTO);
+                }
+            }
+        }
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录退货同步差异日志数据，单号：【{}】", entity.getReturnInstockCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getReturnInstockCode(), "退货同步差异");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC.getCode(), entity.getId(), msg);
+
+        return BatchResultDTO.success(entity.getId(), entity.getPlatformReturnInstockCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public List<AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDTO> listErpReturnInstockByParams(AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockParamsDTO dto) {
+        // 参数校验
+        if (dto == null || StringUtils.isBlank(dto.getCheckMonth()) || StringUtils.isBlank(dto.getSourceSystemName())) {
+            throw new IllegalArgumentException("参数不能为空");
+        }
+        List<AdsErpDiffReturnInstockSyncEntity> list = lambdaQuery()
+                .eq(AdsErpDiffReturnInstockSyncEntity::getCheckMonth, dto.getCheckMonth())
+                .eq(AdsErpDiffReturnInstockSyncEntity::getSourceSystemName, dto.getSourceSystemName())
+                .eq(AdsErpDiffReturnInstockSyncEntity::getDiffTag, "erp")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getExecStatus,"finish")
+                .eq(AdsErpDiffReturnInstockSyncEntity::getIsDeleted, false)
+                .list();
+
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+
+        List<AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDTO> result = new ArrayList<>();
+        Map<String, List<AdsErpDiffReturnInstockSyncEntity>> group = list.stream().filter(e -> StringUtils.isNotBlank(e.getReturnInstockCode())).collect(Collectors.groupingBy(AdsErpDiffReturnInstockSyncEntity::getReturnInstockCode));
+        for (Map.Entry<String, List<AdsErpDiffReturnInstockSyncEntity>> entry : group.entrySet()) {
+            AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDTO entity = new AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDTO();
+            List<AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDetailDTO> skuList = new ArrayList<>();
+            for (AdsErpDiffReturnInstockSyncEntity syncEntity : entry.getValue()) {
+                AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDetailDTO detail = new AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDetailDTO();
+                detail.setDetailId(syncEntity.getId());
+                detail.setSkuNo(syncEntity.getSkuNo());
+                skuList.add(detail);
+            }
+            entity.setReturnInstockCode(entry.getKey());
+            entity.setSkuList(skuList);
+            result.add(entity);
+        }
+        return result;
+    }
+
+
 }
