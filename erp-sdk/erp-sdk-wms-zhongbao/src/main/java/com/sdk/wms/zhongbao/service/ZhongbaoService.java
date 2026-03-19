@@ -390,7 +390,8 @@ public class ZhongbaoService {
     /**
      * 创建出库单
      */
-    public OverseasOutboundCreateResponse createOutboundBill(String token, OverseasOutboundCreateRequest overseasOutboundCreateRequest){
+    public OverseasOutboundCreateResponse createOutboundBill(OverseasOutboundCreateRequest overseasOutboundCreateRequest){
+        String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundCreateRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
@@ -415,7 +416,8 @@ public class ZhongbaoService {
     /**
      * 取消出库单
      */
-    public BaseResponse<OverseasOutboundCancelResponse> cancelOutboundBill(String token, OverseasOutboundCancelRequest overseasOutboundCancelRequest){
+    public BaseResponse<OverseasOutboundCancelResponse> cancelOutboundBill(OverseasOutboundCancelRequest overseasOutboundCancelRequest){
+        String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundCancelRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
@@ -441,7 +443,8 @@ public class ZhongbaoService {
     /**
      * 查询出库单
      */
-    public OverseasOutboundQueryResponse queryOutboundBill(String token, OverseasOutboundQueryRequest overseasOutboundQueryRequest){
+    public OverseasOutboundQueryResponse queryOutboundBill(OverseasOutboundQueryRequest overseasOutboundQueryRequest){
+        String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundQueryRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");

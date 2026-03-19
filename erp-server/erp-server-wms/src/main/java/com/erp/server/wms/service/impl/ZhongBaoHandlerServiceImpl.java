@@ -251,11 +251,10 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
         OverseasOutboundCancelRequest overseasOutboundCancelRequest = new OverseasOutboundCancelRequest();
-        String token = AuthUtils.getToken(apiKey, apiSecret);
         overseasOutboundCancelRequest.setCancelRemark(cancelOutboundReq.getRemark());
         overseasOutboundCancelRequest.setOrderNos(Collections.singletonList(cancelOutboundReq.getErpOrderCode()));
         log.warn(getPlatForm().getName() + "取消出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCancelRequest));
-        BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(token, overseasOutboundCancelRequest);
+        BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(overseasOutboundCancelRequest);
         log.warn(getPlatForm().getName() + "取消出库单结果:{}", JSONUtil.toJsonStr(response));
         if (!response.getData().getResponseData().getSuccessList().isEmpty()) {
             return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
@@ -288,9 +287,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 //        overseasOutboundQueryRequest.setEndUpdateTime(endUpdateTime);
         overseasOutboundQueryRequest.setReferenceNos(req.getErpOrderCodeList());
 
-        String token = AuthUtils.getToken(apiKey, apiSecret);
         log.warn(getPlatForm().getName() + "查询b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundQueryRequest));
-        OverseasOutboundQueryResponse response = zhongbaoService.queryOutboundBill(token, overseasOutboundQueryRequest);
+        OverseasOutboundQueryResponse response = zhongbaoService.queryOutboundBill(overseasOutboundQueryRequest);
         log.warn(getPlatForm().getName() + "查询b2b出库单结果:{}", JSONUtil.toJsonStr(response));
         if (response.getCode().equals("20000")) {
             if (Objects.nonNull(response.getResponseData())
@@ -339,16 +337,14 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         OverseasOutboundCreateRequest overseasOutboundCreateRequest = buildCreateFbaOutboundDto(createOutboundReq);
-        String token = AuthUtils.getToken(apiKey, apiSecret);
         log.warn(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCreateRequest));
-        OverseasOutboundCreateResponse response = zhongbaoService.createOutboundBill(token, overseasOutboundCreateRequest);
+        OverseasOutboundCreateResponse response = zhongbaoService.createOutboundBill(overseasOutboundCreateRequest);
         log.warn(getPlatForm().getName() + "创建b2b出库单结果:{}", JSONUtil.toJsonStr(response));
         return response.getCode() == "20000" ? success(response.getResponseData().getOrderNo()) : failure(response.getMessage());
     }
 
     public OverseasOutboundCreateRequest buildCreateFbaOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachmentOpenDTOs = new ArrayList<>();
-        OverseasOutboundCreateRequest.AttachmentOpenDTOs attachmentOpenDTO = new OverseasOutboundCreateRequest.AttachmentOpenDTOs();
+
         OverseasOutboundCreateRequest overseasOutboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToZhongBao(createOutboundReq);
         List<ThirdWarehouseCreateFbaOutboundReq.Item> items = createOutboundReq.getItems();
         if (items == null || items.isEmpty()) {
