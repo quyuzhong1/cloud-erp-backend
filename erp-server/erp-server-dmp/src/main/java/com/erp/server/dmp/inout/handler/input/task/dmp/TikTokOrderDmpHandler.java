@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -179,9 +180,22 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 if (null != lineItemsObj){
                     // 存在退款的明细ID
                     Set<String> refundedLineItemIds = new HashSet<>();
-                    JSONArray jsonArray = JSONUtil.parseArray(lineItemsObj.toString());
+                    JSONArray jsonArray = null;
+                    if (lineItemsObj instanceof List){
+                        List lineItemsList = (List) lineItemsObj;
+                        jsonArray = JSONUtil.parseArray(lineItemsList);
+                    } else if (lineItemsObj instanceof JSONArray){
+                        jsonArray = (JSONArray) lineItemsObj;
+                    } else {
+                        jsonArray = JSONUtil.parseArray(lineItemsObj.toString());
+                    }
                     for (Object itemObj : jsonArray) {
-                        JSONObject itemJsonObj = JSONUtil.parseObj(itemObj);
+                        JSONObject itemJsonObj = null;
+                        if (itemObj instanceof JSONObject){
+                            itemJsonObj = JSONUtil.parseObj(itemObj);
+                        } else if (JSONUtil.isTypeJSON(itemJsonObj.toString())){
+                            itemJsonObj = JSONUtil.parseObj(itemObj.toString());
+                        }
                         String cancelUser = itemJsonObj.getStr("cancelUser");
                         if (StringUtils.isNotBlank(cancelUser)) {
                             String sourceFundedLineItemId = itemJsonObj.getStr("fid");
