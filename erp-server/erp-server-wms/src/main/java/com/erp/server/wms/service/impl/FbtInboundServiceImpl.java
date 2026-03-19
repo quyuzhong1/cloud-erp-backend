@@ -621,11 +621,10 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(OmsPlatformEnum.FBT.getCode());
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
-        if (provider != null && StrUtil.isNotBlank(provider.getId())) {
-            paramDTO.setAuthId(provider.getId());
-        } else if (StrUtil.isNotBlank(inboundOrder.getShopId())) {
-            paramDTO.setShopIdList(Collections.singletonList(inboundOrder.getShopId()));
+        if (provider == null || StrUtil.isBlank(provider.getId())) {
+            return result;
         }
+        paramDTO.setAuthId(provider.getId());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         List<SkuMappingDTO.MappingSkuViewDTO> mappingList = skuMappingFeign.listByPlatformSkuNoAndPlatform(paramDTO);
         if (mappingList == null || mappingList.isEmpty()) {
