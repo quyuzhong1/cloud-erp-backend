@@ -184,14 +184,15 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     skuMappingEntity.setType(RuleTypeEnum.B2B_PLATFORM);
                 }
                 // FBT仓库类型设置为WAREHOUSE类型
-                if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())) {
-                    skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
-                    // 仓库类型需要设置authId作为关联标识
-                    if (StringUtils.isNotBlank(dto.getAuthId())) {
-                        // authId存储在warehouseId字段，用于关联overseas_provider
-                        skuMappingEntity.setWarehouseId(dto.getAuthId());
-                    }
-                }
+//                if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())) {
+//                    skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
+//                    // FBT库存SKU拉取时不占用仓库字段，保留为空。
+//                    // 其他仓库型商品维持原有逻辑，使用authId作为关联标识。
+//                    if (StringUtils.isNotBlank(dto.getAuthId())
+//                            && !OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())) {
+//                        skuMappingEntity.setWarehouseId(dto.getAuthId());
+//                    }
+//                }
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
                 }
