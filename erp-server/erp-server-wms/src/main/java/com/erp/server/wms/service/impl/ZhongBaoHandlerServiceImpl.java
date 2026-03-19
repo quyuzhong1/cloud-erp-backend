@@ -14,10 +14,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
-import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
-import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
-import com.erp.model.wms.enums.WarehouseOperationTypeValueEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -294,10 +291,17 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             if (Objects.nonNull(response.getResponseData())
                     && !response.getResponseData().getList().isEmpty()) {
                 for (OverseasOutboundQueryResponse.DataList dataList : response.getResponseData().getList()) {
+                    if (dataList.getStatus().equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode())) {
+                        return failure();
+                    }
                     ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
                     thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
                     thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
                     thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    Calendar now = Calendar.getInstance();
+                    String delievery = sdf.format(now.getTime());
+                    thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(delievery);
                     thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
                     thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
                 }
