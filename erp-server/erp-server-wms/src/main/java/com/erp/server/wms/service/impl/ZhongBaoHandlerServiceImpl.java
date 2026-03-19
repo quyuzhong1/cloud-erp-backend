@@ -435,9 +435,9 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<OverseasOutboundCreateRequest.ItemDTOs> itemDTOs = new ArrayList<>();
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
             OverseasOutboundCreateRequest.ItemDTOs itemDTO = new OverseasOutboundCreateRequest.ItemDTOs();
-            itemDTO.setProductSku(item.getSkuNo());
+            itemDTO.setProductSku(item.getPlatformSkuNo());
             itemDTO.setQty(item.getBoxQty());
-            itemDTO.setPlatformSku(item.getPlatformSkuNo());
+            itemDTO.setPlatformSku(item.getSkuNo());
             itemDTOs.add(itemDTO);
         }
         overseasOutboundCreateRequest.setItemDTOs(itemDTOs);
