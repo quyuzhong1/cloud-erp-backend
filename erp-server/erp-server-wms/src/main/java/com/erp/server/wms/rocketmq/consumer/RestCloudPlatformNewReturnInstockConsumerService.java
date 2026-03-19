@@ -104,7 +104,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	@Override
 	public void handle(String data) {
 		PlatformReturnInstockDTO dto = JSONUtil.toBean(data, PlatformReturnInstockDTO.class);
-		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())){
+		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) || PlatformDictEnum.NASDAQ_JD.getCode().equalsIgnoreCase(dto.getPlatform())){
+			String thisPlatform = PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) ?  PlatformDictEnum.AMAZON.getCode() : PlatformDictEnum.NASDAQ_JD.getCode();
+			dto.setPlatform(thisPlatform);
 			// 平台仓入库处理
 			platformWarehouseHandle(dto);
 		} else {
@@ -346,11 +348,21 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		// 查询对应店铺
 		String platformShopCode = dto.getAuthId();
-		List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
-		List<String> shopIds = shopList.stream()
-				.filter(e -> e.getPlatformShopCode().equalsIgnoreCase(platformShopCode))
-				.map(BaseEntity::getId)
-				.collect(Collectors.toList());
+		List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(),dto.getPlatform(), null));
+		List<String> shopIds ;
+		//京东取的是店铺ID
+		if (CharSequenceUtil.equals(dto.getPlatform(),PlatformDictEnum.NASDAQ_JD.getCode()) ) {
+			shopIds = shopList.stream()
+					.map(BaseEntity::getId)
+					.filter(id -> id.equals(platformShopCode))
+					.collect(Collectors.toList());
+		} else {
+			shopIds = shopList.stream()
+					.filter(e -> e.getPlatformShopCode().equalsIgnoreCase(platformShopCode))
+					.map(BaseEntity::getId)
+					.collect(Collectors.toList());
+		}
+
 		if (CollectionUtils.isEmpty(shopIds)){
 			log.warn("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
 			ServiceException.runError("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
@@ -430,12 +442,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
 		soReturnInstockEntity.setCreated(dto.getCreateTime());
 		soReturnInstockEntity.setType("B2C");
+		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		if(Objects.nonNull(soB2cEntity)) {
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else {
-			soReturnInstockEntity.setCurrency(shopInfoEntity.getSettlementCurrency());
+			soReturnInstockEntity.setCurrency(CharSequenceUtil.isBlank(shopInfoEntity.getSettlementCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : shopInfoEntity.getSettlementCurrency());
 		}
 		if (StringUtils.isBlank(shopInfoEntity.getCustomerId())){
 			ServiceException.runError("店铺对应客户信息为空:{}", shopInfoEntity.getName());
@@ -554,12 +567,18 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<String> platformSkuList = dto.getProductDetailList().stream().map(PlatformReturnInstockDTO.Detail::getProductSku).distinct().collect(Collectors.toList());
 		// 查询店铺映射:
 		ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-		paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
 		paramDTO.setPlatformSkuNoList(platformSkuList);
-		paramDTO.setShopIdList(shopIds);
-		paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
 		paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		paramDTO.setIsExpire(false);
+		//传参调整
+		if  (CharSequenceUtil.equals(dto.getPlatform(), PlatformDictEnum.NASDAQ_JD.getCode())) {
+			paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+			paramDTO.setWarehouseIdList(Collections.singletonList(warehouseEntity.getId()));
+		} else {
+			paramDTO.setPlatform(dto.getPlatform());
+			paramDTO.setShopIdList(shopIds);
+			paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
+		}
 		// 查询ListingInfo和skuMapping的关系
 		List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 		Map<String, List<ListingInfoWithSkuMappingDTO>> mappingRelationMap = listingedInfoWithSkuMappingList.stream()
@@ -575,6 +594,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
 			soReturnInstockDetailEntity.setSkuId(mappingDTO.getProductSkuId());
 			soReturnInstockDetailEntity.setSkuNo(mappingDTO.getProductSkuNo());
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
 			soReturnInstockDetailEntity.setMustQty(detail.getMustQty());
 			soReturnInstockDetailEntity.setReceiveQty(detail.getReceiveQty());
 			soReturnInstockDetailEntity.setRealQty(detail.getRealQty());

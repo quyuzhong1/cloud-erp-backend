@@ -3,9 +3,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
@@ -87,5 +85,18 @@ public interface AdsErpDiffOutstockSyncService extends SuperService<AdsErpDiffOu
     Boolean updateRemark(AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpDiffOutstockSyncDTO.ExpotParamDTO dto);
-    
+
+    PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
+
+    Boolean exportSourcePlatform(AdsErpDiffOutstockSyncDTO.PagingParamDTO dto);
+
+    Boolean exportSourceSelf(AdsErpDiffOutstockSyncDTO.PagingParamDTO dto);
+
+    BatchResultDTO batchUpdateOutstockRelation(AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO dto);
+
+    List<AdsErpDiffOutstockSyncDTO.ErpOutstockResultDTO> listErpOutstockByParams(AdsErpDiffOutstockSyncDTO.ErpOutstockParamsDTO dto);
+
+    List<AdsErpDiffOutstockSyncDTO.PlateformOutstockNotExistRelationDTO> listPlateformOutstockNotExistRelation(BaseIdsDTO.IdsDTO dto);
+
+    PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
 }

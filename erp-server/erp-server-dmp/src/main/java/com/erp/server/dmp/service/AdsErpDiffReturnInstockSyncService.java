@@ -3,9 +3,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
@@ -87,4 +85,18 @@ public interface AdsErpDiffReturnInstockSyncService extends SuperService<AdsErpD
     Boolean updateRemark(AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO dto);
+
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
+
+    Boolean exportSourcePlatform(AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto);
+
+    Boolean exportSourceSelf(AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto);
+
+    List<AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO> listPlateformReturnInstockNotExistRelation(BaseIdsDTO.IdsDTO dto);
+
+    List<AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockResultDTO> listErpReturnInstockByParams(AdsErpDiffReturnInstockSyncDTO.ErpReturnInstockParamsDTO dto);
+
+    BatchResultDTO batchUpdateReturnInstockRelation(AdsErpDiffReturnInstockSyncDTO.PlateformReturnInstockNotExistRelationDTO relationDTO);
+
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> sourceSelfPaging(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
 }
