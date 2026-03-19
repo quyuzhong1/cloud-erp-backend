@@ -248,7 +248,10 @@ public class TbTaskTypeService {
     private void addNewDmpTask(ShopInfoEntity shopInfo) {
         //根据授权的系统编码查询新中台系统表
         // pgsql改成忽略大小写查询
-        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(shopInfo.getDictPlatform().toLowerCase());
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.query()
+                .apply("code ILIKE {0}", shopInfo.getDictPlatform().toLowerCase())
+                .last("LIMIT 1")
+                .one();
         if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
             log.error("店铺授权编码【{}】 在新中台系统表中不存在！", shopInfo.getDictPlatform());
             return;
