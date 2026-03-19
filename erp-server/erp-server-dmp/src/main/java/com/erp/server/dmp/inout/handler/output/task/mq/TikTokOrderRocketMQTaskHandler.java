@@ -275,11 +275,12 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         //平台产品id
         detailDTO.setPlatformSpuNo(soDetailEntity.getPlatformSpuNo());
 
-        // 库存sku编号
-        detailDTO.setWarehouseName("");
+        // TikTok FBT订单需要把平台仓库编码/名称透传到OMS，
+        // 后续再按FBT授权仓库配置映射到ERP仓库。
+        detailDTO.setWarehouseName(soDetailEntity.getWarehouseName());
+        detailDTO.setWarehouseId(soDetailEntity.getWarehouseId());
         // 仓库名称
         // 库存是否扣除
-        detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(soDetailEntityList.size());
 
