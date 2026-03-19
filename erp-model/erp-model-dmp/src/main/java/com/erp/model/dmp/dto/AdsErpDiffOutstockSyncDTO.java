@@ -215,7 +215,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
          * 平台库存SKU数量
          */
-        private String stockQty;
+        private Integer stockQty;
 
         /**
          * 平台库存SKU数量
