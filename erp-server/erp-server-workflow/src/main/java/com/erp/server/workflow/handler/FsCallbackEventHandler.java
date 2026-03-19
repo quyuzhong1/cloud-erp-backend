@@ -49,7 +49,7 @@ public class FsCallbackEventHandler {
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     private EventDispatcher eventDispatcher;
-
+    @Resource
     private SysUserFeign sysUserFeign;
 
 
