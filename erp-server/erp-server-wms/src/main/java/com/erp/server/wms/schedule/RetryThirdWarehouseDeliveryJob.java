@@ -129,6 +129,7 @@ public class RetryThirdWarehouseDeliveryJob {
                 queryOutboundReq.setErpOrderCodeList(subList);
                 queryOutboundReq.setAuthId(mainId);
                 queryOutboundReq.setThirdWarehouseProvideCode(viewDTOS.get(0).getProviderCode());
+                XxlJobHelper.log("erp订单号 : {},第三方仓授权Id : {},第三方仓服务商编码 : {}",String.join(",",subList),mainId,viewDTOS.get(0).getProviderCode());
                 ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(viewDTOS.get(0).getProviderCode());
                 ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, mainId);
                 //处理返回结果
