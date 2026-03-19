@@ -70,4 +70,9 @@ public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
      */
     private String errorReason;
 
+    /**
+     * 平台：zhongbao用作判断订单状态是否需要解析数据
+     */
+    private String platform;
+
 }

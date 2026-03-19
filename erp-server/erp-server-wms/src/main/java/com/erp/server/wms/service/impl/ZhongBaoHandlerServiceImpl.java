@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -292,7 +293,19 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     && !response.getResponseData().getList().isEmpty()) {
                 for (OverseasOutboundQueryResponse.DataList dataList : response.getResponseData().getList()) {
                     if (dataList.getStatus().equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode())) {
-                        return failure();
+                        ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
+                        thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
+                        thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
+                        thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        Calendar now = Calendar.getInstance();
+                        String delievery = sdf.format(now.getTime());
+                        String isoFormatStr = delievery.replace(" ", "T");
+                        thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(isoFormatStr);
+                        thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
+                        thirdWarehouseQueryFbaOutboundResponse.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
+                        thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
+                        return success(thirdWarehouseQueryFbaOutboundResponses);
                     }
                     ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
                     thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
@@ -301,7 +314,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     Calendar now = Calendar.getInstance();
                     String delievery = sdf.format(now.getTime());
-                    thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(delievery);
+                    String isoFormatStr = delievery.replace(" ", "T");
+                    thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(isoFormatStr);
                     thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
                     thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
                 }
