@@ -277,15 +277,16 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
         OverseasOutboundQueryRequest overseasOutboundQueryRequest = new OverseasOutboundQueryRequest();
         List<ThirdWarehouseQueryFbaOutboundResponse> thirdWarehouseQueryFbaOutboundResponses = new ArrayList<>();
-        //一个半小时到现在的订单
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Calendar now = Calendar.getInstance();
-        String endUpdateTime = sdf.format(now.getTime());
-        Calendar oneAndHalfHourAgo = Calendar.getInstance();
-        oneAndHalfHourAgo.add(Calendar.MINUTE, -90);
-        String startUpdateTime = sdf.format(oneAndHalfHourAgo.getTime());
-        overseasOutboundQueryRequest.setStartUpdateTime(startUpdateTime);
-        overseasOutboundQueryRequest.setEndUpdateTime(endUpdateTime);
+//        //一个半小时到现在的订单
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        Calendar now = Calendar.getInstance();
+//        String endUpdateTime = sdf.format(now.getTime());
+//        Calendar oneAndHalfHourAgo = Calendar.getInstance();
+//        oneAndHalfHourAgo.add(Calendar.MINUTE, -90);
+//        String startUpdateTime = sdf.format(oneAndHalfHourAgo.getTime());
+//        overseasOutboundQueryRequest.setStartUpdateTime(startUpdateTime);
+//        overseasOutboundQueryRequest.setEndUpdateTime(endUpdateTime);
+        overseasOutboundQueryRequest.setReferenceNos(req.getErpOrderCodeList());
 
         String token = AuthUtils.getToken(apiKey, apiSecret);
         log.warn(getPlatForm().getName() + "查询b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundQueryRequest));

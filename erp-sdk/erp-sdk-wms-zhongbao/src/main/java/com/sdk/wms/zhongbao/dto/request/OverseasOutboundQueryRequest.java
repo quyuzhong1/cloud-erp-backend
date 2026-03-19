@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * @Author: wtr
  * @Date: 2026/3/12 15:51
@@ -30,4 +32,10 @@ public class OverseasOutboundQueryRequest {
      */
     @JSONField(name = "endUpdateTime")
     private String  endUpdateTime;
+
+    /**
+     * 自定义编号列表
+     */
+    @JSONField(name = "referenceNos")
+    private List<String> referenceNos;
 }
