@@ -288,9 +288,9 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         overseasOutboundQueryRequest.setEndUpdateTime(endUpdateTime);
 
         String token = AuthUtils.getToken(apiKey, apiSecret);
-        log.warn(getPlatForm().getName() + "查询b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundQueryRequest));
+        log.error(getPlatForm().getName() + "查询b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundQueryRequest));
         OverseasOutboundQueryResponse response = zhongbaoService.queryOutboundBill(token, overseasOutboundQueryRequest);
-        log.warn(getPlatForm().getName() + "查询b2b出库单结果:{}", JSONUtil.toJsonStr(response));
+        log.error(getPlatForm().getName() + "查询b2b出库单结果:{}", JSONUtil.toJsonStr(response));
         if (response.getCode().equals("20000")) {
             if (Objects.nonNull(response.getResponseData())
                     && !response.getResponseData().getList().isEmpty()) {
