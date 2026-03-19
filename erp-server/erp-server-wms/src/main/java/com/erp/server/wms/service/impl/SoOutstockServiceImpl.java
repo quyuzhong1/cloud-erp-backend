@@ -717,6 +717,29 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 result.setPartitionName(partitionEntity.get(0).getName());
             }
         }
+        //设置仓管员信息，如果没有则取仓库负责人
+        if (CharSequenceUtil.isBlank(result.getWarehouseKeeperId())
+                || CharSequenceUtil.isBlank(result.getWarehouseKeeperName())) {
+            WarehouseEntity warehouse = warehouseService.getById(soOutstock.getWarehouseId());
+            if (Objects.nonNull(warehouse) && CharSequenceUtil.isNotBlank(warehouse.getChargeId())) {
+                if (CharSequenceUtil.isBlank(result.getWarehouseKeeperId())) {
+                    result.setWarehouseKeeperId(warehouse.getChargeId());
+                }
+                if (CharSequenceUtil.isBlank(result.getWarehouseKeeperName())) {
+                    List<FindUserDTO> warehouseKeeperUsers = sysUserFeign.getUserListByUserIds(
+                            Collections.singletonList(warehouse.getChargeId()));
+                    if (CollectionUtils.isNotEmpty(warehouseKeeperUsers)) {
+                        String warehouseKeeperName = warehouseKeeperUsers.stream()
+                                .filter(user -> warehouse.getChargeId().equals(user.getUserId()))
+                                .findFirst()
+                                .flatMap(user -> Optional.ofNullable(user.getUserName()))
+                                .orElse("");
+                        result.setWarehouseKeeperName(warehouseKeeperName);
+                    }
+                }
+            }
+        }
+
 
         return result;
     }
