@@ -222,6 +222,7 @@
         )
         select
             wdt.source_code,
+            wdt.match_source_code as matchSourceCode,
             wdt.source_id,
             wdt.source_detail_id,
             wdt.source_type,
@@ -234,6 +235,7 @@
         from (
             select
                 kba.code as source_code,
+                kba.code as match_source_code,
                 kba.id as source_id,
                 kbad.id as source_detail_id,
                 'kolB2bApplication' as source_type,
@@ -250,6 +252,7 @@
 
             select
                 kba.code as source_code,
+                kba.code as match_source_code,
                 kba.id as source_id,
                 ksbad.id as source_detail_id,
                 'kolB2cApplication' as source_type,
@@ -266,7 +269,8 @@
             union
 
             select
-                ksba.code as source_code,
+                kba.code as source_code,
+                ksba.code as match_source_code,
                 kba.id as source_id,
                 ksbad.id as source_detail_id,
                 'kolB2cApplication' as source_type,
