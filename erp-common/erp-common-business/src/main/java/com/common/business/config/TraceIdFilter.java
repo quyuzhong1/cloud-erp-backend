@@ -2,6 +2,7 @@ package com.common.business.config;
 
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -11,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@Component
+@Configuration
 public class TraceIdFilter extends OncePerRequestFilter {
 
     private static final String TRACE_ID_KEY = "traceId";
