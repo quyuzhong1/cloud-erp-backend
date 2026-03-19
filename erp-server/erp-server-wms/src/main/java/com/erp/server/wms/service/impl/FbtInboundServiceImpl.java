@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -466,36 +468,38 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             return;
         }
         List<FbaShipmentDetailEntity> exists = fbtInboundRepository.listShipmentDetails(shipment.getId());
-        Map<String, FbaShipmentDetailEntity> existsMap = new HashMap<>();
-        Set<String> detailKeys = exists.stream()
-                .map(this::buildDetailKey)
-                .collect(Collectors.toSet());
+        Map<String, FbaShipmentDetailEntity> existsMap = new LinkedHashMap<>();
         for (FbaShipmentDetailEntity detail : exists) {
-            existsMap.put(buildDetailKey(detail), detail);
+            String detailKey = buildDetailKey(detail);
+            if (StrUtil.isBlank(detailKey)) {
+                continue;
+            }
+            FbaShipmentDetailEntity duplicate = existsMap.putIfAbsent(detailKey, detail);
+            if (duplicate != null && !StrUtil.equals(duplicate.getId(), detail.getId())) {
+                log.warn("FBT货件明细存在重复key, shipmentId={}, detailKey={}, keepId={}, skipId={}",
+                        shipment.getId(), detailKey, duplicate.getId(), detail.getId());
+            }
         }
 
         Map<String, Integer> receiveQtyByGoodsId = buildReceiveQtyByGoodsId(inboundOrder.getReceivedBatches());
         LocalDateTime receiveTime = inboundOrder.getUpdatedTime() == null ? LocalDateTime.now() : inboundOrder.getUpdatedTime();
         Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMapping = buildSkuMapping(inboundOrder);
+        List<TiktokFbtDTO.PlannedGoodDTO> mergedPlannedGoods = mergePlannedGoods(inboundOrder.getPlannedGoods());
 
-        for (TiktokFbtDTO.PlannedGoodDTO plannedGood : inboundOrder.getPlannedGoods()) {
+        for (TiktokFbtDTO.PlannedGoodDTO plannedGood : mergedPlannedGoods) {
             if (plannedGood == null) {
                 continue;
             }
             String detailKey = buildDetailKey(plannedGood);
             Integer receiveQty = receiveQtyByGoodsId.get(plannedGood.getGoodsId());
-            String fnSku = plannedGood.getGoodsId();
             String msku = resolveMsku(plannedGood);
+            String fnSku = StrUtil.blankToDefault(msku, plannedGood.getGoodsId());
             SkuMappingDTO.MappingSkuViewDTO mappingDTO = findMappingByFnSkuAndMsku(skuMapping, fnSku, msku);
             String resolvedSkuNo = resolveDetailSkuNo(mappingDTO);
-            if (detailKeys.contains(detailKey)) {
+            if (StrUtil.isNotBlank(detailKey)) {
                 FbaShipmentDetailEntity detail = existsMap.get(detailKey);
                 if (detail != null) {
-                    if (mappingDTO != null && StrUtil.isNotBlank(mappingDTO.getPlatformSpuNo())) {
-                        detail.setAsin(mappingDTO.getPlatformSpuNo());
-                    } else if (StrUtil.isBlank(detail.getAsin())) {
-                        detail.setAsin(plannedGood.getGoodsId());
-                    }
+                    detail.setAsin(StrUtil.blankToDefault(plannedGood.getGoodsId(), ""));
                     detail.setMsku(msku);
                     detail.setFnSku(fnSku);
                     detail.setDeclareQty(plannedGood.getQuantity());
@@ -520,7 +524,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             }
             FbaShipmentDetailEntity detail = new FbaShipmentDetailEntity();
             detail.setMainId(shipment.getId());
-            detail.setAsin(mappingDTO != null && StrUtil.isNotBlank(mappingDTO.getPlatformSpuNo()) ? mappingDTO.getPlatformSpuNo() : plannedGood.getGoodsId());
+            detail.setAsin(StrUtil.blankToDefault(plannedGood.getGoodsId(), ""));
             detail.setMsku(msku);
             detail.setFnSku(fnSku);
             if (mappingDTO != null) {
@@ -537,7 +541,9 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             }
             detail.setDiffQty(0);
             fbtInboundRepository.saveShipmentDetail(detail);
-            detailKeys.add(detailKey);
+            if (StrUtil.isNotBlank(detailKey)) {
+                existsMap.put(detailKey, detail);
+            }
         }
     }
 
@@ -562,15 +568,67 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     }
 
     private String buildDetailKey(FbaShipmentDetailEntity detail) {
-        return StrUtil.format("{}#{}",
-                StrUtil.blankToDefault(detail.getFnSku(), ""),
-                StrUtil.blankToDefault(detail.getMsku(), ""));
+        if (detail == null) {
+            return null;
+        }
+        return buildDetailKey(resolveSourceGoodsKey(detail.getAsin(), detail.getFnSku()), detail.getMsku());
     }
 
     private String buildDetailKey(TiktokFbtDTO.PlannedGoodDTO plannedGood) {
-        return StrUtil.format("{}#{}",
-                StrUtil.blankToDefault(plannedGood.getGoodsId(), ""),
-                StrUtil.blankToDefault(resolveMsku(plannedGood), ""));
+        if (plannedGood == null) {
+            return null;
+        }
+        return buildDetailKey(resolveSourceGoodsKey(plannedGood.getGoodsId(), firstSkuId(plannedGood.getSkuIds())),
+                resolveMsku(plannedGood));
+    }
+
+    private String buildDetailKey(String sourceGoodsKey, String msku) {
+        if (StrUtil.isBlank(sourceGoodsKey) || StrUtil.isBlank(msku)) {
+            return null;
+        }
+        return StrUtil.format("{}#{}", sourceGoodsKey, msku);
+    }
+
+    private String resolveSourceGoodsKey(String primary, String fallback) {
+        if (StrUtil.isNotBlank(primary)) {
+            return primary;
+        }
+        return StrUtil.blankToDefault(fallback, null);
+    }
+
+    private List<TiktokFbtDTO.PlannedGoodDTO> mergePlannedGoods(List<TiktokFbtDTO.PlannedGoodDTO> plannedGoods) {
+        if (CollUtil.isEmpty(plannedGoods)) {
+            return Collections.emptyList();
+        }
+        Map<String, TiktokFbtDTO.PlannedGoodDTO> result = new LinkedHashMap<>();
+        for (TiktokFbtDTO.PlannedGoodDTO plannedGood : plannedGoods) {
+            if (plannedGood == null) {
+                continue;
+            }
+            String detailKey = buildDetailKey(plannedGood);
+            if (StrUtil.isBlank(detailKey)) {
+                result.put(UUID.randomUUID().toString(), copyPlannedGood(plannedGood));
+                continue;
+            }
+            TiktokFbtDTO.PlannedGoodDTO exists = result.get(detailKey);
+            if (exists == null) {
+                result.put(detailKey, copyPlannedGood(plannedGood));
+                continue;
+            }
+            exists.setQuantity(ObjectUtil.defaultIfNull(exists.getQuantity(), 0)
+                    + ObjectUtil.defaultIfNull(plannedGood.getQuantity(), 0));
+        }
+        return new ArrayList<>(result.values());
+    }
+
+    private TiktokFbtDTO.PlannedGoodDTO copyPlannedGood(TiktokFbtDTO.PlannedGoodDTO plannedGood) {
+        TiktokFbtDTO.PlannedGoodDTO copied = new TiktokFbtDTO.PlannedGoodDTO();
+        copied.setGoodsId(plannedGood.getGoodsId());
+        copied.setReferenceCode(plannedGood.getReferenceCode());
+        copied.setName(plannedGood.getName());
+        copied.setQuantity(plannedGood.getQuantity());
+        copied.setSkuIds(plannedGood.getSkuIds() == null ? new ArrayList<>() : new ArrayList<>(plannedGood.getSkuIds()));
+        return copied;
     }
 
     private String firstSkuId(List<String> skuIds) {
