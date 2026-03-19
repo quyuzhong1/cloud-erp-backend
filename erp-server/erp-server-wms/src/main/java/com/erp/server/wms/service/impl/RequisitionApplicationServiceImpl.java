@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -1720,9 +1721,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     .filter(CharSequenceUtil::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
-            Map<String, Integer> shipmentQtyBySkuNo = cartonDetailEntityList.stream()
+            Map<String, Integer> shipmentQtyByFnSku = cartonDetailEntityList.stream()
                     .filter(v -> shipmentCartonIds.contains(v.getMainId()))
-                    .collect(Collectors.groupingBy(WmsCartonDetailEntity::getSkuNo, Collectors.summingInt(v -> ObjectUtil.defaultIfNull(v.getPackQty(), 0))));
+                    .filter(v -> CharSequenceUtil.isNotBlank(v.getFnSku()))
+                    .collect(Collectors.groupingBy(WmsCartonDetailEntity::getFnSku, Collectors.summingInt(v -> ObjectUtil.defaultIfNull(v.getPackQty(), 0))));
 
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(shipmentEntity, entity, shopInfo);
             fillDestWarehouseFromRequisition(addDTO, entity);
@@ -1733,7 +1735,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 detailAddDto.setFbaShipmentCode(shipmentEntity.getCode());
                 Integer deliveryQty;
                 if (ThirdDeliveryTypeEnum.SELF_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
-                    deliveryQty = shipmentQtyBySkuNo.getOrDefault(shipmentDetail.getSkuNo(), 0);
+                    deliveryQty = shipmentQtyByFnSku.getOrDefault(resolveFbtShipmentFnSku(shipmentDetail), 0);
                     if (deliveryQty <= 0) {
                         continue;
                     }
@@ -1749,8 +1751,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 detailAddList.add(detailAddDto);
 
                 RequisitionApplicationDetailEntity requisitionApplicationDetail = detailEntityList.stream()
-                        .filter(v -> CharSequenceUtil.equals(v.getSkuId(), shipmentDetail.getSkuId())
-                                && CharSequenceUtil.equals(v.getSkuNo(), shipmentDetail.getSkuNo()))
+                        .filter(v -> matchFbtRequisitionDetail(v, shipmentDetail))
                         .findFirst()
                         .orElse(null);
                 if (Objects.nonNull(requisitionApplicationDetail)) {
@@ -1785,6 +1786,29 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
         }
         writeBackRequisitionDeliveryPushDownStatus(entity.getId());
+    }
+
+    private String resolveFbtShipmentFnSku(FbaShipmentDetailEntity shipmentDetail) {
+        if (shipmentDetail == null) {
+            return "";
+        }
+        if (CharSequenceUtil.isNotBlank(shipmentDetail.getFnSku())) {
+            return shipmentDetail.getFnSku();
+        }
+        return CharSequenceUtil.blankToDefault(shipmentDetail.getMsku(), "");
+    }
+
+    private boolean matchFbtRequisitionDetail(RequisitionApplicationDetailEntity detailEntity,
+                                              FbaShipmentDetailEntity shipmentDetail) {
+        if (detailEntity == null || shipmentDetail == null) {
+            return false;
+        }
+        if (!CharSequenceUtil.equals(detailEntity.getSkuId(), shipmentDetail.getSkuId())) {
+            return false;
+        }
+        String shipmentFnSku = resolveFbtShipmentFnSku(shipmentDetail);
+        return CharSequenceUtil.equals(detailEntity.getPlatformFnSku(), shipmentFnSku)
+                || CharSequenceUtil.equals(detailEntity.getPlatformSku(), shipmentDetail.getMsku());
     }
 
     @Override
