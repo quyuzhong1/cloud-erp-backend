@@ -199,15 +199,29 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		soB2cReturnEntity.setCurrency(soB2cEntity.getCurrency());
 		soB2cReturnEntity.setType(ReturnTypeEnum.CUSTOMER_RETURNS.getCode());
 		soB2cReturnEntity.setReason(dto.getReason());
-		soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.RETURNED.code);
-		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())){
-			// 亚马逊默认空
+		if (isTikTokPlatform(dto)) {
+			soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.TO_BE_RETURNED.code);
 			soB2cReturnEntity.setSysReturnTime(null);
+			soB2cReturnEntity.setReturnLogisticCode(org.apache.commons.lang3.StringUtils.defaultString(dto.getTrackingNumber(), ""));
 		} else {
-			soB2cReturnEntity.setSysReturnTime(LocalDateTime.now());
+			soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.RETURNED.code);
+			if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())) {
+				// 亚马逊默认空
+				soB2cReturnEntity.setSysReturnTime(null);
+			} else {
+				soB2cReturnEntity.setSysReturnTime(LocalDateTime.now());
+			}
 		}
 		soB2cReturnEntity.setSourceType(SoB2cReturnSourceTypeEnum.AUTO_ADD.code);
 		return soB2cReturnEntity;
+	}
+
+	private boolean isTikTokPlatform(PlatformReturnOrderDTO dto) {
+		if (dto == null) {
+			return false;
+		}
+		String platform = org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
+		return PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(platform);
 	}
 
 }

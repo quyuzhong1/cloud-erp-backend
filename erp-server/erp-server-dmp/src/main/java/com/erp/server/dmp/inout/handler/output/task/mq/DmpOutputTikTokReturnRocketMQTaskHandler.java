@@ -102,6 +102,7 @@ public class DmpOutputTikTokReturnRocketMQTaskHandler extends DmpOutputRocketMQT
         dto.setDmpSyncTaskId(cfgOutputId);
         dto.setShopId(dmpEntity.getShopId());
         dto.setBatchNo(dmpEntity.getBatchNo());
+        dto.setTrackingNumber(StringUtils.defaultString(dmpEntity.getTrackingNumber()));
         dto.setDetailList(parseReturnDetailList(dmpDetailList));
         return dto;
     }
@@ -110,7 +111,7 @@ public class DmpOutputTikTokReturnRocketMQTaskHandler extends DmpOutputRocketMQT
         List<PlatformReturnOrderDTO.Detail> resultList = new LinkedList<>();
         for (DmpSoReturnDetailEntity dmpDetailEntity : dmpDetailList) {
             PlatformReturnOrderDTO.Detail detail = new PlatformReturnOrderDTO.Detail();
-            String platformSkuNo = StringUtils.defaultIfBlank(dmpDetailEntity.getSkuId(), dmpDetailEntity.getSkuNo());
+            String platformSkuNo = StringUtils.defaultIfBlank(dmpDetailEntity.getSkuNo(), dmpDetailEntity.getSkuId());
             detail.setPlatformSkuNo(StringUtils.defaultString(platformSkuNo));
             detail.setReturnQty(dmpDetailEntity.getQty());
             resultList.add(detail);
