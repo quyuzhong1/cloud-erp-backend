@@ -22,6 +22,8 @@ public enum  ZhongBaoB2BDeliveryStatusEnum {
     APPROVE(3,"已审核"),
     WAIT_OUTSTOCK(4,"待出库"),
     OUTSTOCK(5,"已出库"),
+
+    CREATE_FAIR(999,"创建失败"),
     ;
 
     /**
