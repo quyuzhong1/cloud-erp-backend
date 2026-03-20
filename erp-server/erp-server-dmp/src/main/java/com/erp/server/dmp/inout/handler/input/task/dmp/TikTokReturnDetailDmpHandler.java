@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.alibaba.fastjson.JSON;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,10 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             Map<String, Object> data = new HashMap<>();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+                String sellerSku = String.valueOf(dmpDataMap.getOrDefault("sellerSku", ""));
+                if (StringUtils.isNotBlank(sellerSku)) {
+                    dmpDataMap.put("skuNo", sellerSku);
+                }
                 Object refundAmountObj = dmpDataMap.get("refundAmount");
                 if (refundAmountObj != null) {
                     Map<String, Object> refundAmountMap = (Map<String, Object>) refundAmountObj;

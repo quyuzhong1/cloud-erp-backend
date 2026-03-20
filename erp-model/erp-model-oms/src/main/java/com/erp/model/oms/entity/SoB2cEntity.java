@@ -552,6 +552,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                     return true;
                 }
             }
+            return StrUtil.isNotBlank(this.platformDeliveryWarehouse);
         }
         if(PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(this.dictPlatform)
         ||PlatformDictEnum.RAKUTEN.getCode().equalsIgnoreCase(this.dictPlatform)
