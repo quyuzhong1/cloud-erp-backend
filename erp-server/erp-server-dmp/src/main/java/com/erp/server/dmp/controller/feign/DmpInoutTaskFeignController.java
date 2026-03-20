@@ -15,6 +15,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.controller.api.DmpCfgEtlController;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
@@ -144,7 +145,10 @@ public class DmpInoutTaskFeignController{
 			// 拉取时间
 			dmpInputCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
 			dmpInputCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
-			dmpInputCreateRequest.setTaskType(createDTO.getTaskType());
+            // restCloud系统热修复任务类型强制转换为normal，避免restCloud系统热修复任务无法执行
+            String enableTaskType = DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(listDTO.getExecSystem())
+                    && DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(createDTO.getTaskType()) ? DmpInputTaskTaskTypeEnum.NORMAL.getCode(): createDTO.getTaskType();
+			dmpInputCreateRequest.setTaskType(enableTaskType);
 			// 创建任务
 			DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputCreateRequest);
 			// 执行任务
@@ -201,7 +205,10 @@ public class DmpInoutTaskFeignController{
 			// 拉取时间
 			dmpInputCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
 			dmpInputCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
-			dmpInputCreateRequest.setTaskType(createDTO.getTaskType());
+            // restCloud系统热修复任务类型强制转换为normal，避免restCloud系统热修复任务无法执行
+            String enableTaskType = DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(listDTO.getExecSystem())
+                    && DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(createDTO.getTaskType()) ? DmpInputTaskTaskTypeEnum.NORMAL.getCode(): createDTO.getTaskType();
+			dmpInputCreateRequest.setTaskType(enableTaskType);
 			// 创建任务
 			DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputCreateRequest);
 			// 执行任务
