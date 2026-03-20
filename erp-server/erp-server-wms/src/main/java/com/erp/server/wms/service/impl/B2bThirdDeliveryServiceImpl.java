@@ -677,15 +677,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (StrUtil.isNotBlank(deliveryTimeStr)) {
             deliveryTime = LocalDateTime.parse(deliveryTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         }
-        if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.CANCEL.getCode(),response.getStatus())) {
+        if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.CANCEL.getCode().toString(),response.getStatus())) {
             //-1=>已取消：数大臣自动发起拦截，走拦截逻辑接口取消订单；
             // 如果订单已经是拦截中，则直接拦截成功，发货单变更为取消发货，订单变更为审核不通过-待配货
             service.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode(),response.getStatus())){
+        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode().toString(),response.getStatus())){
             //-2=>异常：数大臣单据不做状态变更，但是三方发货单需要增加操作日志记录详情：海外仓出库异常，系统应拦截，
             // 为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息【errorReason】
             operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.OUTSTOCK.getCode(),response.getStatus())){
+        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.OUTSTOCK.getCode().toString(),response.getStatus())){
             //5=>已出库：数大臣自动变更B2B三方发货单和订单已发货，并生成出库单
             BatchResultDTO resultDTO = service.updateStatus(id, ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
             if (Objects.nonNull(resultDTO) && resultDTO.getSuccess() && CharSequenceUtil.isNotBlank(resultDTO.getId())) {
@@ -696,10 +696,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     soOutstockService.updateRemarkById(resultDTO.getId(), "自动审核失败" + e.getMessage());
                 }
             }
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.DRAFT.getCode(),response.getStatus())
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVING.getCode(),response.getStatus())
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVE.getCode(),response.getStatus())
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.WAIT_OUTSTOCK.getCode(),response.getStatus())){
+        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.DRAFT.getCode().toString(),response.getStatus())
+                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVING.getCode().toString(),response.getStatus())
+                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVE.getCode().toString(),response.getStatus())
+                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.WAIT_OUTSTOCK.getCode().toString(),response.getStatus())){
             //1=>草稿,2=>待审核,3=>已审核,4=>待出库：数大臣单据不做状态变更
             XxlJobHelper.log("不操作的状态,id={},code={},status={}", id, response.getCode(), response.getStatus());
         }
