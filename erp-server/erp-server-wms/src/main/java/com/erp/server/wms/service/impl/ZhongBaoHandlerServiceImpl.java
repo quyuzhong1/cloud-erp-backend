@@ -294,6 +294,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 for (OverseasOutboundQueryResponse.DataList dataList : response.getResponseData().getList()) {
                     if (dataList.getStatus().equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode())) {
                         ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
+                        thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
                         thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
                         thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
                         thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
@@ -308,6 +309,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         return success(thirdWarehouseQueryFbaOutboundResponses);
                     }
                     ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
+                    thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
                     thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
                     thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
                     thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
