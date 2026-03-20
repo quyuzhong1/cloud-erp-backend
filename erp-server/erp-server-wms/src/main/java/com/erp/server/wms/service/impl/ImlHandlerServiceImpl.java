@@ -17,11 +17,14 @@ import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.damai.dto.request.DaMaiCalculateFeeRequest;
 import com.sdk.wms.damai.dto.response.DaMaiCalculateFeeResp;
 import com.sdk.wms.damai.dto.response.DaMaiPageBaseResp;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.iml.dto.ImlBaseResp;
 import com.sdk.wms.iml.dto.request.*;
 import com.sdk.wms.iml.dto.response.ImlCalculateFeeResp;
 import com.sdk.wms.iml.dto.response.ImlInboundResp;
 import com.sdk.wms.iml.dto.response.ImlOutboundResp;
+import com.sdk.wms.iml.dto.response.ImlQueryOutboundResp;
+import com.sdk.wms.iml.enums.ImlEnums;
 import com.sdk.wms.iml.service.ImlService;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -320,16 +324,56 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-        return failure("ERP功能暂不支持");
+        ImlCancelOutboundReq imlCancelOutboundReq = ImlCancelOutboundReq.builder().build();
+        imlCancelOutboundReq.setOrderNo(cancelOutboundReq.getOrderCode());
+        ImlBaseResp<String> response = imlService.cancelOutboundBill(imlCancelOutboundReq);
+        if(!isSuccess(response.getCode())){
+            return failure(response.getMessage());
+        }
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
-        return ApiResult.error("查询Iml出库单失败");
+        ImlQueryOutboundReq imlQueryOutboundReq = ImlQueryOutboundReq.builder()
+                .platformOrderNo(queryOutboundReq.getErpOrderCode())
+                .build();
+        ImlBaseResp<ImlQueryOutboundResp> imlQueryOutboundRespImlBaseResp = imlService.queryOutboundBill(imlQueryOutboundReq);
+        if(!isSuccess(imlQueryOutboundRespImlBaseResp.getCode())){
+            return failure(imlQueryOutboundRespImlBaseResp.getMessage());
+        }
+        return success(imlQueryOutboundRespImlBaseResp.getData().getOrderNo());
     }
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
+        List<ThirdWarehouseQueryFbaOutboundResponse> responseList = new ArrayList<>();
+        for (String code : req.getErpOrderCodeList()) {
+            ImlQueryOutboundReq imlQueryOutboundReq = ImlQueryOutboundReq.builder()
+                    .platformOrderNo(code)
+                    .build();
+            ImlBaseResp<ImlQueryOutboundResp> imlQueryOutboundRespImlBaseResp = imlService.queryOutboundBill(imlQueryOutboundReq);
+            if(isSuccess(imlQueryOutboundRespImlBaseResp.getCode())){
+                ImlQueryOutboundResp imlQueryOutboundResp = imlQueryOutboundRespImlBaseResp.getData();
+                ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
+                response.setCode(code);
+                response.setTrackNo(imlQueryOutboundResp.getTrackNumber());
+                if(Objects.nonNull(imlQueryOutboundResp.getOutTime())){
+                    Integer outTime = imlQueryOutboundResp.getOutTime();
+                    Instant instant = Instant.ofEpochSecond(outTime);
+                    // 2. 转换为 LocalDateTime
+                    LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+                    // 3. 格式化
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String deliveryTimeStr = dateTime.format(formatter);
+                    response.setDeliveryTimeStr(deliveryTimeStr);
+                }
+                response.setStatus(ImlEnums.B2BOrderStatusEnum.getErpOrderStatus(imlQueryOutboundResp.getOrderStatus()));
+                responseList.add(response);
+            }else{
+                return failure(imlQueryOutboundRespImlBaseResp.getMessage());
+            }
+        }
         return failure("ERP功能暂不支持");
     }
 
@@ -372,6 +416,37 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return failure("ERP功能暂不支持");
+        ImlCreateOutboundReq imlCreateOutboundReq =  this.buildB2BOutboundDto(createOutboundReq);
+        ImlBaseResp<ImlOutboundResp> imlInboundRespImlBaseResp = imlService.createOutboundBill(imlCreateOutboundReq);
+        if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
+            return failure(imlInboundRespImlBaseResp.getMessage());
+        }
+        return success(imlInboundRespImlBaseResp.getData().getOrderNo());
+    }
+
+    private ImlCreateOutboundReq buildB2BOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        ImlCreateOutboundReq imlCreateOutboundReq = new ImlCreateOutboundReq();
+        imlCreateOutboundReq.setPlatformOrderNo(createOutboundReq.getReferenceNo());
+        imlCreateOutboundReq.setLogisticsCode(createOutboundReq.getChannelCode());
+        imlCreateOutboundReq.setBizType("TOB");
+        imlCreateOutboundReq.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
+        imlCreateOutboundReq.setBuyerCountry(createOutboundReq.getReceiverCountryCode());
+        imlCreateOutboundReq.setBuyerProvince(createOutboundReq.getProvince());
+        imlCreateOutboundReq.setBuyerCity(createOutboundReq.getCity());
+        imlCreateOutboundReq.setBuyerAddress(createOutboundReq.getAddress1());
+        imlCreateOutboundReq.setBuyerName(createOutboundReq.getReceiverName());
+        imlCreateOutboundReq.setBuyerPhone(createOutboundReq.getTelNumber());
+        imlCreateOutboundReq.setBuyerPostcode(createOutboundReq.getPostCode());
+        imlCreateOutboundReq.setRemark(createOutboundReq.getRemark());
+        imlCreateOutboundReq.setInsuranceService(createOutboundReq.getIsInsurance()?"Y":"N");
+        List<ImlCreateOutboundReq.DetailListDTO> detailListDTOS = new ArrayList<>();
+        createOutboundReq.getItems().forEach(item -> {
+            ImlCreateOutboundReq.DetailListDTO detailListDTO = new ImlCreateOutboundReq.DetailListDTO();
+            detailListDTO.setSkuBarcode(item.getWarehousePlatformSku());
+            detailListDTO.setSkuCount(item.getDeliveryQty());
+            detailListDTOS.add(detailListDTO);
+        });
+        imlCreateOutboundReq.setDetailList(detailListDTOS);
+        return imlCreateOutboundReq;
     }
 }
