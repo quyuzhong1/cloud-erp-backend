@@ -583,6 +583,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (CollUtil.isEmpty(responses)) {
             return;
         }
+        responses.forEach(r -> {
+            XxlJobHelper.log("b2b出库单编码code={}", r.getCode());
+        });
+
         XxlJobHelper.log("开始更新{}平台B2B三方仓发货单状态", providerCode);
         if (OmsPlatformEnum.DA_MAI.getCode().equals(providerCode)) {
             List<B2bThirdDeliveryEntity> list = lambdaQuery().in(B2bThirdDeliveryEntity::getCode, codeList).list();
