@@ -292,4 +292,9 @@ public class RocketMqNewTag {
      */
     public static final String TMS_PUSH_ALLOCATION_COST_TAG = "tms_push_allocation_cost_tag";
 
+    /**
+     * 新中台B2B三方仓出库状态
+     */
+    public static final String RESTCLOUD_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_third_outbound_to_wms_tag";
+
 }
