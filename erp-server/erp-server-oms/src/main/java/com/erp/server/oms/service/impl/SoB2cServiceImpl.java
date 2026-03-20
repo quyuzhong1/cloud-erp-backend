@@ -7294,8 +7294,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 handleData(oldEntity, false, false);
             }
             ApproveStatusEnum oldApproveStatus = oldEntity.getApproveStatus();
+            boolean tikTokPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder(oldEntity, dto);
             // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
-            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())) {
+            if (!tikTokPlatformWarehouseOrder && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())) {
                 dto.setApproveStatusStr("");
             }
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
@@ -7369,17 +7370,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setBillStatus(oldEntity.getBillStatus());
-                }
-            }
-            boolean tikTokPlatformWarehouseOrder = oldEntity.hasPlatformWarehouseOrder();
-            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())
-                    && !tikTokPlatformWarehouseOrder
-                    && StringUtils.isNotBlank(dto.getLabelJson())) {
-                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
-                if (Objects.nonNull(labelJsonDTO.getIsPlatformWarehouseOrder())) {
-                    tikTokPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
-                } else if (isTikTokPlatformWarehouseByFulfillmentType(labelJsonDTO.getFulfillmentType())) {
-                    tikTokPlatformWarehouseOrder = true;
                 }
             }
             //TikTok
@@ -7469,6 +7459,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             return resultDTO;
         }
+    }
+
+    private boolean isTikTokPlatformWarehouseOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto) {
+        if (!PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return oldEntity.hasPlatformWarehouseOrder();
+        }
+        if (Objects.nonNull(oldEntity) && oldEntity.hasPlatformWarehouseOrder()) {
+            return true;
+        }
+        if (Objects.nonNull(oldEntity) && StringUtils.isNotBlank(oldEntity.getPlatformDeliveryWarehouse())) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(dto.getPlatformDeliveryWarehouse())) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            if (Objects.nonNull(labelJsonDTO.getIsPlatformWarehouseOrder())) {
+                return labelJsonDTO.getIsPlatformWarehouseOrder();
+            }
+            return isTikTokPlatformWarehouseByFulfillmentType(labelJsonDTO.getFulfillmentType());
+        }
+        return false;
     }
 
     private boolean isTikTokPlatformWarehouseByFulfillmentType(String fulfillmentType) {
