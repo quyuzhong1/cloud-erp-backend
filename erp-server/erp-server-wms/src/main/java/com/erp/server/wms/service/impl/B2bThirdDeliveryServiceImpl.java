@@ -776,22 +776,34 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
 
         ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
-        String platformOrderCode = getPlatformOrderCode(queryResult);
-        String trackNo = getTrackNo(queryResult);
-        LocalDateTime deliveryTime = getDeliveryTime(queryResult);
 
-        if(!queryResult.getData().isEmpty()
+        if(Objects.equals(queryResult.getCode(),"200")
+                && !queryResult.getData().isEmpty()
                 && Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),queryResult.getData().get(0).getPlatform())) {
-            updateZhongBaoStatus(sourceId, queryResult.getData().get(0).getStatus(), "", platformOrderCode, "", trackNo, deliveryTime);
-        } else {
-            if (CharSequenceUtil.isNotBlank(platformOrderCode)) {
+            B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
+            updateZhongBaoStatus(sourceId, queryResult.getData().get(0).getStatus(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+        }else if (!Objects.equals(queryResult.getCode(),"200")
+                && !queryResult.getData().isEmpty()
+                && Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),queryResult.getData().get(0).getPlatform())){
+            updateZhongBaoStatus(sourceId, ZhongBaoB2BDeliveryStatusEnum.CREATE_FAIR.getCode().toString(), fbaOutboundBill.getMsg(), "", "", "",null);
+        }else {
+            B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
+            if (CharSequenceUtil.isNotBlank(convertDTO.getPlatformOrderCode())) {
                 // 查询发现订单实际已创建成功
-                this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", platformOrderCode, "", trackNo, deliveryTime);
+                this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
             } else {
                 // 确认创建失败
-                this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", trackNo, deliveryTime);
+                this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
             }
         }
+    }
+
+    public B2bThirdDeliveryDTO.ConvertDTO convertData(ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult){
+        B2bThirdDeliveryDTO.ConvertDTO convertDTO = new B2bThirdDeliveryDTO.ConvertDTO();
+        convertDTO.setPlatformOrderCode(getPlatformOrderCode(queryResult));
+        convertDTO.setTrackNo(getTrackNo(queryResult));
+        convertDTO.setDeliveryTime(getDeliveryTime(queryResult));
+        return convertDTO;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -813,7 +825,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode().toString(),status)){
             //-2=>异常：数大臣单据不做状态变更，但是三方发货单需要增加操作日志记录详情：海外仓出库异常，系统应拦截，
             // 为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息【errorReason】
-            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
+            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交" + errorMsg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
         }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.OUTSTOCK.getCode().toString(),status)){
             //5=>已出库：数大臣自动变更B2B三方发货单和订单已发货，并生成出库单
             this.lambdaUpdate().set(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.SHIPPED.getCode())
@@ -841,6 +853,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.WAIT_OUTSTOCK.getCode().toString(),status)){
             //1=>草稿,2=>待审核,3=>已审核,4=>待出库：数大臣单据不做状态变更
             return BatchResultDTO.success();
+        } else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.CREATE_FAIR.getCode().toString(),status)){
+            //zhongbao创建失败
+            service.updateStatus(id, ThirdDeliveryStatusEnum.FAILED.getCode(), errorMsg, "", "", "", null);
+            log.warn("三方接口创建失败,id【{}】", id);
         }
         return BatchResultDTO.success();
     }

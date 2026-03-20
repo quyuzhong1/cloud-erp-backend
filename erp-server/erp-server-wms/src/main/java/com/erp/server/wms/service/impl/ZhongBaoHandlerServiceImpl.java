@@ -322,7 +322,10 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
                 }
             } else {
-                return success();
+                ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
+                thirdWarehouseQueryFbaOutboundResponse.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
+                thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
+                return failure(thirdWarehouseQueryFbaOutboundResponses);
             }
         }
         return !thirdWarehouseQueryFbaOutboundResponses.isEmpty() ? success(thirdWarehouseQueryFbaOutboundResponses) : failure(response.getMessage());
