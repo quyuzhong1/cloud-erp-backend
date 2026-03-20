@@ -6,6 +6,7 @@ import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
 		JSONObject jsonObject = JSON.parseObject(data);
         String dmpOutputTaskRecordId = jsonObject.getString("dmpOutputTaskRecordId");
         MDC.put("traceId", dmpOutputTaskRecordId);
+        log.warn("RocketMq traceId:{}" , TraceContext.traceId());
         String bizName = this.getBizName();
         log.warn("{}接收到输出id={} ，数据：{}" , bizName , dmpOutputTaskRecordId , ext);
         String dmpOutputTaskRecordDataId = jsonObject.getString("dmpOutputTaskRecordDataId");

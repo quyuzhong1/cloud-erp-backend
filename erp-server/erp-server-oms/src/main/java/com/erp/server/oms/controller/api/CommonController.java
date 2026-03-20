@@ -12,6 +12,8 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 下拉-枚举下拉
@@ -29,10 +32,15 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("common")
+@Slf4j
 public class CommonController extends BaseController {
 
     @Resource
     private OmsAttachmentService omsAttachmentService;
+
+    @Resource
+    @Lazy
+    private CommonController commonController;
     /**
      * 批量获取枚举下拉框，供前端调用，不用每个枚举类都提供一个单独的接口（每个服务都有专属自己的）
      * @param types
@@ -71,4 +79,26 @@ public class CommonController extends BaseController {
         }
         return failure(batchResultDTO);
     }
+
+    /**
+     */
+    @GetMapping("testSkyWalking")
+    public ApiResult<String> testSkyWalking() {
+        // 获取 SkyWalking TraceId
+        String traceId = TraceContext.traceId();
+        String threadName = Thread.currentThread().getName();
+        log.error("threadName {},traceId:{}",threadName,traceId);
+        commonController.printTraceId();
+        Map<String, String> mdcMap = MDC.getCopyOfContextMap();
+        return success("skywalking tid:"+traceId+"MDC  :" + mdcMap);
+
+    }
+
+    @Async
+    public void printTraceId(){
+        String threadName = Thread.currentThread().getName();
+        String traceId = TraceContext.traceId();
+        log.error("多线程 {}获取traceId:{}",threadName,traceId);
+    }
+
 }
