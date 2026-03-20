@@ -131,7 +131,8 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
                     .orElse(null);
             detailEntity.setReceiveQty(receiveQty);
             detailEntity.setReceiveDate(receiveDate);
-            int diffQty = receiveQty - detailEntity.getDeclareQty();
+            int deliveryQty = detailEntity.getDeliveryQty() == null ? 0 : detailEntity.getDeliveryQty();
+            int diffQty = receiveQty - deliveryQty;
             detailEntity.setDiffQty(diffQty);
             this.lambdaUpdate().eq(FbaShipmentDetailEntity::getId,detailEntity.getId())
                     .set(FbaShipmentDetailEntity::getReceiveQty,receiveQty)

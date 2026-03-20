@@ -541,7 +541,9 @@ public class FbtInboundServiceImpl implements FbtInboundService {
                         detail.setReceiveQty(receiveQty);
                         detail.setReceiveDate(receiveTime);
                     }
-                    detail.setDiffQty(0);
+                    int deliveryQty = ObjectUtil.defaultIfNull(detail.getDeliveryQty(), 0);
+                    int receivedQty = ObjectUtil.defaultIfNull(detail.getReceiveQty(), 0);
+                    detail.setDiffQty(receivedQty - deliveryQty);
                     fbtInboundRepository.updateShipmentDetail(detail);
                 }
                 continue;
@@ -563,7 +565,9 @@ public class FbtInboundServiceImpl implements FbtInboundService {
                 detail.setReceiveQty(receiveQty);
                 detail.setReceiveDate(receiveTime);
             }
-            detail.setDiffQty(0);
+            int deliveryQty = ObjectUtil.defaultIfNull(detail.getDeliveryQty(), 0);
+            int receivedQty = ObjectUtil.defaultIfNull(detail.getReceiveQty(), 0);
+            detail.setDiffQty(receivedQty - deliveryQty);
             fbtInboundRepository.saveShipmentDetail(detail);
             if (StrUtil.isNotBlank(detailKey)) {
                 existsMap.put(detailKey, detail);
