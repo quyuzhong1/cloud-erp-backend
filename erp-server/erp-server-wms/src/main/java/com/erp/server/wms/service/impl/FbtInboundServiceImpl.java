@@ -102,6 +102,28 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     }
 
     @Override
+    public void syncInboundOrderFromDmp(TiktokFbtDTO.InboundOrderDTO inboundOrder) {
+        if (inboundOrder == null || StrUtil.isBlank(inboundOrder.getInboundOrderId())) {
+            return;
+        }
+        String inboundOrderId = inboundOrder.getInboundOrderId();
+        String lockKey = LOCK_KEY_PREFIX + inboundOrderId;
+        Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, System.currentTimeMillis(), 5, TimeUnit.MINUTES);
+        if (!Boolean.TRUE.equals(locked)) {
+            log.info("FBT DMP同步跳过，锁已存在, inboundOrderId={}", inboundOrderId);
+            return;
+        }
+        long start = System.currentTimeMillis();
+        try {
+            syncInboundOrderInternal(inboundOrder);
+        } finally {
+            redisTemplate.delete(lockKey);
+            log.info("FBT DMP同步结束, inboundOrderId={}, costMs={}",
+                    inboundOrderId, System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
     public void syncRecentInboundOrders() {
         syncRecentInboundOrders(null, null);
     }

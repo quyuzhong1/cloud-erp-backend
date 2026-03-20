@@ -176,6 +176,7 @@ public class RocketMqNewTag {
      * 新中台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_tag";
+    public static final String DMP_FBT_SHIPMENT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fbt_shipment_to_wms_tag";
     public static final String DMP_AWD_SHIPMENT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_shipment_to_wms_tag";
     public static final String DMP_FULFILL_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fulfill_order_to_oms_tag";
 

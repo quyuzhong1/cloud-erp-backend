@@ -405,15 +405,21 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (CollUtil.isEmpty(dto.getShipmentCodeList())) {
                 throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "货件单号不能为空");
             }
-            String sellerOpenId = null;
-            if (shopInfoEntity.getExtendData() != null) {
-                Object openIdObj = shopInfoEntity.getExtendData().get("openId");
-                if (openIdObj != null) {
-                    sellerOpenId = String.valueOf(openIdObj);
-                }
+            String authId = resolveFbtAuthIdByShopId(dto.getShopId());
+            if (StringUtils.isBlank(authId)) {
+                throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "未找到FBT授权信息");
             }
-            for (String inboundOrderId : dto.getShipmentCodeList()) {
-                fbtInboundService.syncInboundOrder(inboundOrderId, sellerOpenId);
+            DmpInoutDTO.CreateInputDTO createInputDTO = new DmpInoutDTO.CreateInputDTO();
+            createInputDTO.setSystemCode(PlatformDictEnum.TIK_TOK.getCode());
+            createInputDTO.setBillType("fba_shipment");
+            createInputDTO.setNextLevelId(authId);
+            createInputDTO.setTaskType("hotfix");
+            Map<String, Object> detailExtendJson = new LinkedHashMap<>();
+            detailExtendJson.put("shopId", dto.getShopId());
+            detailExtendJson.put("shipmentCodeList", dto.getShipmentCodeList());
+            createInputDTO.setDetailExtendJson(JSONUtil.toJsonStr(detailExtendJson));
+            if (!Boolean.TRUE.equals(dmpInoutTaskFeign.doInputTask(Collections.singletonList(createInputDTO)))) {
+                throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "创建FBT货件同步任务失败");
             }
             return true;
         }
