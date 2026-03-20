@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -763,5 +764,17 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 输入值
          */
         private String value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConvertDTO{
+
+        private String platformOrderCode;
+
+        private String trackNo;
+
+        private LocalDateTime deliveryTime;
     }
 }

@@ -104,7 +104,7 @@ public class FbtInventoryInitHandler extends DmpInputInitHandler {
                 source.get("goods_name"),
                 source.get("name"),
                 getMapValue(goods, "name")));
-        row.put("seller_sku", firstNotBlank(
+        String referenceCode = firstNotBlank(
                 source.get("reference_code"),
                 getMapValue(goods, "reference_code"),
                 source.get("seller_sku"),
@@ -114,7 +114,12 @@ public class FbtInventoryInitHandler extends DmpInputInitHandler {
                 getMapValue(sku, "code"),
                 source.get("goods_id"),
                 source.get("id"),
-                getMapValue(goods, "id")));
+                getMapValue(goods, "id"));
+        row.put("reference_code", referenceCode);
+        row.put("seller_sku", referenceCode);
+        // FBT库存SKU统一使用 reference_code，避免后续dmp_third_inventory继续落成 goods_id
+        row.put("product_sku", referenceCode);
+        row.put("sku_code", referenceCode);
         row.put("available_quantity", firstNotBlank(
                 source.get("available_quantity"),
                 source.get("sellable_quantity"),

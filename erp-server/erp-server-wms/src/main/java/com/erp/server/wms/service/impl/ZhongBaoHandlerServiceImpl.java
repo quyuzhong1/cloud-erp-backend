@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -291,22 +292,26 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             if (Objects.nonNull(response.getResponseData())
                     && !response.getResponseData().getList().isEmpty()) {
                 for (OverseasOutboundQueryResponse.DataList dataList : response.getResponseData().getList()) {
-                    if (dataList.getStatus().equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode())) {
-                        return failure();
-                    }
                     ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
-                    thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
+                    thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
+                    thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getReferenceNo());
                     thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
                     thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     Calendar now = Calendar.getInstance();
                     String delievery = sdf.format(now.getTime());
-                    thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(delievery);
+                    String isoFormatStr = delievery.replace(" ", "T");
+                    thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(isoFormatStr);
                     thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
+                    thirdWarehouseQueryFbaOutboundResponse.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
                     thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
                 }
+                return success(thirdWarehouseQueryFbaOutboundResponses);
             } else {
-                return success();
+                ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
+                thirdWarehouseQueryFbaOutboundResponse.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
+                thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
+                return failure(thirdWarehouseQueryFbaOutboundResponses);
             }
         }
         return !thirdWarehouseQueryFbaOutboundResponses.isEmpty() ? success(thirdWarehouseQueryFbaOutboundResponses) : failure(response.getMessage());
@@ -421,9 +426,9 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<OverseasOutboundCreateRequest.ItemDTOs> itemDTOs = new ArrayList<>();
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
             OverseasOutboundCreateRequest.ItemDTOs itemDTO = new OverseasOutboundCreateRequest.ItemDTOs();
-            itemDTO.setProductSku(item.getSkuNo());
+            itemDTO.setProductSku(item.getPlatformSkuNo());
             itemDTO.setQty(item.getBoxQty());
-            itemDTO.setPlatformSku(item.getPlatformSkuNo());
+            itemDTO.setPlatformSku(item.getSkuNo());
             itemDTOs.add(itemDTO);
         }
         overseasOutboundCreateRequest.setItemDTOs(itemDTOs);
