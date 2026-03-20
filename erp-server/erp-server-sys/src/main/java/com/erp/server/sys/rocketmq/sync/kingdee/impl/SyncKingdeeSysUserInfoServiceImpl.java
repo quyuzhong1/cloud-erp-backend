@@ -75,26 +75,26 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
     	if(resultMap == null) {
     		return null;
     	}
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SYS_USER_INFO.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
-            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-            dmpSyncTaskDTO.setSourceId(entity.getUid());
-            dmpSyncTaskDTO.setSourceCode(entity.getCode());
-            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SYS_USER_INFO.getCode());
-            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName());
-            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskDTO.setSyncOperate(operate);
-            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-        }
+//    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+//        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+//        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SYS_USER_INFO.getCode())
+//        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+//        		.eq(CfgSettingEntity::getValue, "1")
+//        		.list();
+//        if(CollUtil.isEmpty(list)) {
+//        	//添加推送任务
+//            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+//            dmpSyncTaskDTO.setSourceId(entity.getUid());
+//            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+//            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SYS_USER_INFO.getCode());
+//            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+//            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName());
+//            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+//            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+//            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+//            dmpSyncTaskDTO.setSyncOperate(operate);
+//            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+//        }
         
         SysPushMsgEntity sysPushMsgEntity = new SysPushMsgEntity();
     	sysPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
