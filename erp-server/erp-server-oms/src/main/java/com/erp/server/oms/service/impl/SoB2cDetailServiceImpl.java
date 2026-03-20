@@ -11,20 +11,18 @@ import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.wrapper.FeignQuery;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -36,9 +34,8 @@ import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
-import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -114,6 +111,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Resource
     private ShopInfoService shopInfoService;
@@ -477,18 +476,27 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
-        boolean isFbtWarehouseOrder = Boolean.TRUE.equals(isShipped)
+        boolean isTikTokPlatformWarehouseOrder = Boolean.TRUE.equals(isShipped)
                 && mainEntity.hasPlatformWarehouseOrder()
                 && PlatformDictEnum.TIK_TOK.getCode().equals(mainEntity.getDictPlatform());
-        List<OverseasProviderWarehouseEntity> fbtWarehouseConfigList = listFbtWarehouseConfig(shopInfo, mainEntity, isShipped);
-        Map<String, WarehouseDTO.UpdateDTO> fbtWarehouseMap = buildFbtWarehouseMap(fbtWarehouseConfigList);
-        Map<String, BaseIdDTO.CodeDTO> fbtWarehouseOrgMap = buildFbtWarehouseOrgMap(fbtWarehouseMap);
+        Map<String, ThirdMappingDTO.ErpWarehouseDTO> tikTokErpWarehouseMap = new HashMap<>();
+        if (isTikTokPlatformWarehouseOrder) {
+            dto.getDetails().stream()
+                    .map(PlatformOrderDetailDTO::getWarehouseId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .forEach(warehouseId -> {
+                        ThirdMappingDTO.ErpWarehouseDTO warehouseDTO =
+                                dmpThirdMappingFeign.resolveErpWarehouseBySourceId(mainEntity.getDictPlatform(), warehouseId);
+                        if (ObjectUtils.isNotEmpty(warehouseDTO) && StringUtils.isNotBlank(warehouseDTO.getWarehouseId())) {
+                            tikTokErpWarehouseMap.put(warehouseId, warehouseDTO);
+                        }
+                    });
+        }
         // 新增或更新列表
         List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
-        boolean finalIsFbtWarehouseOrder = isFbtWarehouseOrder;
-        List<OverseasProviderWarehouseEntity> finalFbtWarehouseConfigList = fbtWarehouseConfigList;
-        Map<String, WarehouseDTO.UpdateDTO> finalFbtWarehouseMap = fbtWarehouseMap;
-        Map<String, BaseIdDTO.CodeDTO> finalFbtWarehouseOrgMap = fbtWarehouseOrgMap;
+        boolean finalIsTikTokPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder;
+        Map<String, ThirdMappingDTO.ErpWarehouseDTO> finalTikTokErpWarehouseMap = tikTokErpWarehouseMap;
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
@@ -550,25 +558,17 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     saveOrUpdateEntity.setWarehouseOrgId("");
                     saveOrUpdateEntity.setWarehouseOrgName("");
                 }
-            } else if (finalIsFbtWarehouseOrder) {
+            } else if (finalIsTikTokPlatformWarehouseOrder) {
                 saveOrUpdateEntity.setWarehouseId("");
                 saveOrUpdateEntity.setWarehouseName("");
                 saveOrUpdateEntity.setWarehouseOrgId("");
                 saveOrUpdateEntity.setWarehouseOrgName("");
-                OverseasProviderWarehouseEntity fbtWarehouseConfig = matchFbtWarehouseConfig(finalFbtWarehouseConfigList, detailDTO, mainEntity);
-                if (ObjectUtils.isNotEmpty(fbtWarehouseConfig) && StringUtils.isNotBlank(fbtWarehouseConfig.getWarehouseId())) {
-                    saveOrUpdateEntity.setWarehouseId(fbtWarehouseConfig.getWarehouseId());
-                    WarehouseDTO.UpdateDTO warehouseDTO = finalFbtWarehouseMap.get(fbtWarehouseConfig.getWarehouseId());
-                    if (ObjectUtils.isNotEmpty(warehouseDTO)) {
-                        saveOrUpdateEntity.setWarehouseName(warehouseDTO.getName());
-                        saveOrUpdateEntity.setWarehouseOrgId(warehouseDTO.getOrgId());
-                        BaseIdDTO.CodeDTO orgDTO = finalFbtWarehouseOrgMap.get(warehouseDTO.getOrgId());
-                        saveOrUpdateEntity.setWarehouseOrgName(ObjectUtils.isNotEmpty(orgDTO) ? orgDTO.getName() : "");
-                    } else {
-                        saveOrUpdateEntity.setWarehouseName(StringUtils.defaultString(fbtWarehouseConfig.getWarehouseName()));
-                        saveOrUpdateEntity.setWarehouseOrgId("");
-                        saveOrUpdateEntity.setWarehouseOrgName("");
-                    }
+                ThirdMappingDTO.ErpWarehouseDTO erpWarehouseDTO = finalTikTokErpWarehouseMap.get(detailDTO.getWarehouseId());
+                if (ObjectUtils.isNotEmpty(erpWarehouseDTO) && StringUtils.isNotBlank(erpWarehouseDTO.getWarehouseId())) {
+                    saveOrUpdateEntity.setWarehouseId(erpWarehouseDTO.getWarehouseId());
+                    saveOrUpdateEntity.setWarehouseName(StringUtils.defaultString(erpWarehouseDTO.getWarehouseName()));
+                    saveOrUpdateEntity.setWarehouseOrgId(StringUtils.defaultString(erpWarehouseDTO.getWarehouseOrgId()));
+                    saveOrUpdateEntity.setWarehouseOrgName(StringUtils.defaultString(erpWarehouseDTO.getWarehouseOrgName()));
                 }
             }
             return saveOrUpdateEntity;
@@ -590,143 +590,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
         }
         return saveOrUpdateList;
-    }
-
-    private List<OverseasProviderWarehouseEntity> listFbtWarehouseConfig(ShopInfoEntity shopInfo, SoB2cEntity mainEntity, Boolean isShipped) {
-        if (!Boolean.TRUE.equals(isShipped)
-                || ObjectUtils.isEmpty(mainEntity)
-                || !mainEntity.hasPlatformWarehouseOrder()
-                || !PlatformDictEnum.TIK_TOK.getCode().equals(mainEntity.getDictPlatform())
-                || ObjectUtils.isEmpty(shopInfo)) {
-            return Collections.emptyList();
-        }
-        List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
-                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.FBT.getCode())
-                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                .list();
-        if (CollectionUtils.isEmpty(providerList)) {
-            return Collections.emptyList();
-        }
-        String shopId = shopInfo.getId();
-        String shopAccount = StringUtils.trimToEmpty(shopInfo.getAccount());
-        List<String> providerIds = providerList.stream()
-                .filter(Objects::nonNull)
-                .filter(provider -> matchFbtProviderShop(provider, shopId, shopAccount))
-                .map(OverseasProviderEntity::getId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(providerIds)) {
-            return Collections.emptyList();
-        }
-        List<OverseasProviderWarehouseEntity> providerWarehouseList = FeignQuery.list(
-                FeignQuery.create(OverseasProviderWarehouseEntity.class)
-                        .in(OverseasProviderWarehouseEntity::getMainId, providerIds)
-        );
-        return providerWarehouseList.stream()
-                .filter(Objects::nonNull)
-                .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
-                .collect(Collectors.toList());
-    }
-
-    private boolean matchFbtProviderShop(OverseasProviderEntity provider, String shopId, String shopAccount) {
-        Map<String, Object> authJson = provider.getAuthJson();
-        String authShopId = firstNotBlank(authJson == null ? null : authJson.get("shopId"));
-        if (StringUtils.isNotBlank(authShopId) && StringUtils.equals(authShopId, shopId)) {
-            return true;
-        }
-        String authShopAccount = firstNotBlank(
-                authJson == null ? null : authJson.get("shopAccount"),
-                provider.getPlatformAccount());
-        return StringUtils.isNotBlank(shopAccount)
-                && StringUtils.isNotBlank(authShopAccount)
-                && StringUtils.equalsIgnoreCase(StringUtils.trim(authShopAccount), shopAccount);
-    }
-
-    private OverseasProviderWarehouseEntity matchFbtWarehouseConfig(List<OverseasProviderWarehouseEntity> configList,
-                                                                    PlatformOrderDetailDTO detailDTO,
-                                                                    SoB2cEntity mainEntity) {
-        if (CollectionUtils.isEmpty(configList)) {
-            return null;
-        }
-        String warehouseCode = StringUtils.trimToEmpty(detailDTO.getWarehouseId());
-        if (StringUtils.isBlank(warehouseCode)) {
-            warehouseCode = StringUtils.trimToEmpty(mainEntity.getPlatformDeliveryWarehouse());
-        }
-        if (StringUtils.isNotBlank(warehouseCode)) {
-            String finalWarehouseCode = warehouseCode;
-            OverseasProviderWarehouseEntity matchedByCode = configList.stream()
-                    .filter(item -> StringUtils.equals(item.getPlatformWarehouseCode(), finalWarehouseCode))
-                    .findFirst()
-                    .orElse(null);
-            if (ObjectUtils.isNotEmpty(matchedByCode)) {
-                return matchedByCode;
-            }
-        }
-        String warehouseName = StringUtils.trimToEmpty(detailDTO.getWarehouseName());
-        if (StringUtils.isBlank(warehouseName)) {
-            warehouseName = StringUtils.trimToEmpty(mainEntity.getPlatformDeliveryWarehouse());
-        }
-        if (StringUtils.isBlank(warehouseName)) {
-            return null;
-        }
-        String finalWarehouseName = warehouseName;
-        return configList.stream()
-                .filter(item -> StringUtils.equals(item.getPlatformWarehouseName(), finalWarehouseName))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Map<String, WarehouseDTO.UpdateDTO> buildFbtWarehouseMap(List<OverseasProviderWarehouseEntity> configList) {
-        List<String> warehouseIds = configList.stream()
-                .map(OverseasProviderWarehouseEntity::getWarehouseId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(warehouseIds)) {
-            return Collections.emptyMap();
-        }
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            return Collections.emptyMap();
-        }
-        return warehouseList.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, Function.identity(), (first, second) -> first));
-    }
-
-    private Map<String, BaseIdDTO.CodeDTO> buildFbtWarehouseOrgMap(Map<String, WarehouseDTO.UpdateDTO> warehouseMap) {
-        if (warehouseMap.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        List<String> orgIds = warehouseMap.values().stream()
-                .map(WarehouseDTO.UpdateDTO::getOrgId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(orgIds)) {
-            return Collections.emptyMap();
-        }
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
-        if (CollectionUtils.isEmpty(orgList)) {
-            return Collections.emptyMap();
-        }
-        return orgList.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, Function.identity(), (first, second) -> first));
-    }
-
-    private String firstNotBlank(Object... values) {
-        for (Object value : values) {
-            if (value == null) {
-                continue;
-            }
-            String text = String.valueOf(value);
-            if (StringUtils.isNotBlank(text) && !"null".equalsIgnoreCase(text)) {
-                return text;
-            }
-        }
-        return "";
     }
 
     @Override
