@@ -206,7 +206,7 @@ public enum ModuleTypeEnum {
 
     PRODUCT_CHANGE("161", "产品变更单"),
 
-
+    QC_APPLICATION("163", "质检申请单"),
 
 
 
