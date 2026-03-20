@@ -8,6 +8,8 @@ public interface FbtInboundService {
 
     void syncInboundOrder(String inboundOrderId, String sellerOpenId);
 
+    void syncInboundOrderFromDmp(TiktokFbtDTO.InboundOrderDTO inboundOrder);
+
     void syncRecentInboundOrders();
 
     void syncRecentInboundOrders(Long startTime, Long endTime);
