@@ -829,6 +829,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
                 .setSql(" response_data = ('" + remark + "' || response_data) " )
                 .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
+                .ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
                 .update();
     }
 

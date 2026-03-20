@@ -475,6 +475,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shop.setCountryName(countryName);
                 shop.setSalesOrgName(orgName);
                 shop.setChargeName(chargeName);
+                shop.setOrderRouteType(ShopOrderRouteEnum.B2C.getCode());
                 addList.add(shop);
             }
 
