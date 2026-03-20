@@ -295,7 +295,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     if (dataList.getStatus().equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode())) {
                         ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
                         thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
-                        thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
+                        thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getReferenceNo());
                         thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
                         thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -310,7 +310,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     }
                     ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
                     thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getOrderNo());
+                    thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getReferenceNo());
                     thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
                     thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

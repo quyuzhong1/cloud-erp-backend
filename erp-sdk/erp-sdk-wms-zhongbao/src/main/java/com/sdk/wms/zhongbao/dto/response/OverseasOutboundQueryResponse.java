@@ -79,6 +79,12 @@ public class OverseasOutboundQueryResponse {
         private String orderNo;
 
         /**
+         * 订单号
+         */
+        @JSONField(name = "referenceNo")
+        private String referenceNo;
+
+        /**
          * 物流跟踪号
          */
         @JSONField(name = "trackingNo")
