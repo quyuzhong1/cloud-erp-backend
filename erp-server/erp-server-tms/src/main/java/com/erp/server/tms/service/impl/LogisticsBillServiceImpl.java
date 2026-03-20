@@ -1116,38 +1116,35 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 创建任务列表
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    SoB2cDTO.WaybillDTO waybillDTO = processSingleWaybill(dto, soB2cEntities, logisticsEntityList,
-                            soB2cDetailEntityList,logisticsPrintTypeEntities,logisticsChannelEntities);
-                    if (waybillDTO != null) {
-                        waybillDTOList.add(waybillDTO);
-                    }
-                } catch (Exception e) {
-                    log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
-                    errorList.add(codeMap.get(dto.getB2cSoId()));
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
-                    addError.setMainId(dto.getB2cSoId());
-                    addError.setMessage(e.getMessage());
-                    addError.setParamJson(JSONUtil.toJsonStr(dto));
-                    soB2cFeign.addSoB2cError(addError);
-                }
-            }, tmsLogisticsLabelPool);
+            CompletableFuture<Void> future = CompletableFuture
+                    .runAsync(() -> {
+                        SoB2cDTO.WaybillDTO waybillDTO =
+                                processSingleWaybill(dto, soB2cEntities, logisticsEntityList,
+                                        soB2cDetailEntityList, logisticsPrintTypeEntities, logisticsChannelEntities);
+                        if (waybillDTO != null) {
+                            waybillDTOList.add(waybillDTO);
+                        }
+                    }, tmsLogisticsLabelPool)
+                    .exceptionally(e -> {
+                        log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
+                        errorList.add(codeMap.get(dto.getB2cSoId()));
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+                        addError.setMainId(dto.getB2cSoId());
+                        addError.setMessage(e.getMessage());
+                        addError.setParamJson(JSONUtil.toJsonStr(dto));
+                        soB2cFeign.addSoB2cError(addError);
+                        return null;
+                    });
             futures.add(future);
         }
         // 等待所有任务完成
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(60, TimeUnit.SECONDS); // 设置超时时间
+                    .get(300, TimeUnit.SECONDS); // 设置超时时间
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             log.error("多线程获取面单超时或异常", e);
             throw new RuntimeException("获取面单失败", e);
-        }
-        // 记录错误信息
-        if (!errorList.isEmpty()) {
-            log.warn("以下订单面单获取失败: {}", errorList);
-            throw new ServiceException("获取面单失败: 【{}】", String.join(",", errorList));
         }
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
@@ -1159,6 +1156,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         soB2cFeign.saveSoB2cLabel(dtoList);
+        // 记录错误信息
+        if (!errorList.isEmpty()) {
+            log.warn("以下订单面单获取失败: {}", errorList);
+            throw new ServiceException("获取面单失败: 【{}】", String.join(",", errorList));
+        }
         return waybillDTOList;
     }
 
@@ -1241,11 +1243,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //校验是否请求成功
         if (!labelList.isSuccess()) {
-            throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED, labelList.getMsg());
+            log.warn("获取物流面单失败,{}", JSONUtil.toJsonStr(labelList));
+            throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED,b2cSoId, labelList.getMsg());
         }
         for (LogisticsPrintLabelResponse datum : labelList.getData()) {
             if ("500".equals(datum.getCode())) {
-                throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED, datum.getMessage());
+                throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED,b2cSoId, datum.getMessage());
             }
         }
         //获取标签信息
