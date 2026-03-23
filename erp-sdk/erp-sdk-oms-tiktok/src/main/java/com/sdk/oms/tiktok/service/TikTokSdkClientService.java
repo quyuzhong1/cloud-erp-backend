@@ -37,6 +37,7 @@ import com.sdk.oms.tiktok.dto.tiktok.listing.ListingDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.DataBean;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.ListingViewDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.SkusBean;
+import com.sdk.oms.tiktok.dto.tiktok.order.GlobalWarehouseDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.OrderDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.WarehouseDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
@@ -96,10 +97,20 @@ public class TikTokSdkClientService {
     public static void main(String[] args) {
         TikTokSdkClientService tikTokSdkClientService = new TikTokSdkClientService();
         TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
-        String auth = "{\"@type\":\"com.sdk.oms.tiktok.dto.TikTokShopInfoDTO\",\"accessToken\":\"ROW_1rARVAAAAACj-JAAAriAWjVtF2MrUIFdiwpvtmvHXedAYA9cevCkZepCOiMyd4q0eyFfSnzeQNSPiYsbBmXgfkz3-MVFEcyD6QqmkIhMBjdTRnBo-Bw7DJLQhBfQclDuyJFobEG2ZV0DamkxSOUpgdFMisIF6tn2vDYDDz1xzzBPLVE7ds464g\",\"baseUrl\":\"https://auth.tiktok-shops.com\",\"clientId\":\"6buinkjt3hmld\",\"clientSecret\":\"8ff628de24faf70c24855de4d967fb6a17a47e3f\",\"id\":\"1820403424249143297\",\"sellerType\":\"null\",\"shopCipher\":\"TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d\",\"site\":\"US\"}";
+        String auth = "{\n" +
+                "  \"@type\": \"com.sdk.oms.tiktok.dto.TikTokShopInfoDTO\",\n" +
+                "  \"accessToken\": \"ROW_wAjA5wAAAACj-JAAAriAWjVtF2MrUIFdPkU8v2PwmslxLKqRdTTD6LC69bn3X7wtL1fvhLtlULbb9xoOJGkUBexq78KD43AkOaiNHMBhmGQF1fEt3fHZNKnY3sxdc4617Vh2RpPcVXZtVI7zkVsFuGVsHWB9sL2p3XNMQKsdLjSctX3NjUZNfCJEEfNtsoqulnyIw__WU8g\",\n" +
+                "  \"baseUrl\": \"https://auth.tiktok-shops.com\",\n" +
+                "  \"clientId\": \"6buinkjt3hmld\",\n" +
+                "  \"clientSecret\": \"8ff628de24faf70c24855de4d967fb6a17a47e3f\",\n" +
+                "  \"id\": \"1820403424249143297\",\n" +
+                "  \"sellerType\": \"CROSS_BORDER\",\n" +
+                "  \"shopCipher\": \"TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d\",\n" +
+                "  \"site\": \"US\"\n" +
+                "}";
         tikTokShopInfoDTO = JSONUtil.toBean(auth, TikTokShopInfoDTO.class);
-        WarehouseDTO packageDetailDTO = tikTokSdkClientService.getWarehouse(tikTokShopInfoDTO);
-        System.out.println(JSONUtil.toJsonStr(packageDetailDTO));
+        GlobalWarehouseDTO globalWarehouse = tikTokSdkClientService.getGlobalWarehouse(tikTokShopInfoDTO);
+        System.out.println(JSONUtil.toJsonStr(globalWarehouse));
     }
 
     /**
@@ -1187,7 +1198,24 @@ public class TikTokSdkClientService {
         }
         return warehouseDTO.getData().getWarehouses().stream()
                 .filter(Objects::nonNull)
-                .filter(warehouse -> CharSequenceUtil.equalsIgnoreCase("SALES_WAREHOUSE", warehouse.getType()))
+//                .filter(warehouse -> CharSequenceUtil.equalsIgnoreCase("SALES_WAREHOUSE", warehouse.getType()))
+                .collect(Collectors.toList());
+    }
+
+    public GlobalWarehouseDTO getGlobalWarehouse(TikTokShopInfoDTO tikTokShopInfoDTO) {
+        return requestGlobalWarehouseList(tikTokShopInfoDTO);
+    }
+
+    public List<GlobalWarehouseDTO.DataDTO.GlobalWarehousesDTO> getGlobalSellerWarehouses(TikTokShopInfoDTO tikTokShopInfoDTO) {
+        GlobalWarehouseDTO globalWarehouseDTO = requestGlobalWarehouseList(tikTokShopInfoDTO);
+        if (globalWarehouseDTO == null
+                || globalWarehouseDTO.getData() == null
+                || CollectionUtil.isEmpty(globalWarehouseDTO.getData().getGlobalWarehouses())) {
+            return Collections.emptyList();
+        }
+        return globalWarehouseDTO.getData().getGlobalWarehouses().stream()
+                .filter(Objects::nonNull)
+//                .filter(warehouse -> CharSequenceUtil.equalsIgnoreCase("SELLER", warehouse.getOwnership()))
                 .collect(Collectors.toList());
     }
 
@@ -1237,6 +1265,40 @@ public class TikTokSdkClientService {
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询仓库返回值 responseMap={}，转换成实体错误", apiResult.getData()));
         }
         return warehouseDTO;
+    }
+
+    private GlobalWarehouseDTO requestGlobalWarehouseList(TikTokShopInfoDTO tikTokShopInfoDTO) {
+        String url = TikTokConstant.URL;
+        String path = "/logistics/" + TikTokConstant.VERSION + "/global_warehouses";
+        String clientSecret = tikTokShopInfoDTO.getClientSecret();
+        String clientId = tikTokShopInfoDTO.getClientId();
+        String token = tikTokShopInfoDTO.getAccessToken();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("app_key", clientId);
+        Long timestamp = System.currentTimeMillis() / 1000;
+        params.put("timestamp", timestamp);
+
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("x-tts-access-token", token);
+        headerMap.put("content-type", "application/json");
+
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, "");
+        String sign = EncryptionUtils.generateSHA256(input, clientSecret);
+        params.put("sign", sign);
+
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, TikTok查询全球销售仓失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询全球销售仓失败，返回值 responseMap={}",
+                    url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        try {
+            return JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), GlobalWarehouseDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询全球销售仓返回值 responseMap={}，转换成实体错误",
+                    url + path, headerMap.toString(), apiResult.getData()));
+        }
     }
 
     /**
