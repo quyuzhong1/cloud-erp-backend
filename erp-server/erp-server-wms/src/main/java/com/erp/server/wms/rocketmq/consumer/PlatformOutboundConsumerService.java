@@ -642,6 +642,28 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 .map(SoB2cDetailEntity::getSkuId)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
+        List<String> uncoveredOrderSkuList = detailList.stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> validationContext.getMappingList().stream()
+                        .noneMatch(item -> (StringUtils.isNotBlank(detail.getSkuNo())
+                                && StringUtils.isNotBlank(item.getProductSkuNo())
+                                && StrUtil.equals(detail.getSkuNo(), item.getProductSkuNo()))
+                                || (StringUtils.isNotBlank(detail.getSkuId())
+                                && StringUtils.isNotBlank(item.getProductSkuId())
+                                && StrUtil.equals(detail.getSkuId(), item.getProductSkuId()))))
+                .map(detail -> StringUtils.isNotBlank(detail.getSkuNo()) ? detail.getSkuNo() : detail.getSkuId())
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(uncoveredOrderSkuList)) {
+            String providerWarehouseName = StrUtil.blankToDefault(validationContext.getPayload().getPlatformWarehouseName(), dto.getWarehouseCode());
+            return ThirdWarehouseSkuCheckResult.fail(StrUtil.format(
+                    "自动生成销售出库单失败：【{}】第三方仓SKU未覆盖订单SKU，订单SKU：【{}】，第三方仓SKU：【{}】",
+                    providerWarehouseName,
+                    String.join("、", uncoveredOrderSkuList),
+                    String.join("、", validationContext.getPayload().getProductSkuList())
+            ));
+        }
         List<String> mismatchSkuList = validationContext.getPayload().getProductSkuList().stream()
                 .filter(StringUtils::isNotBlank)
                 .filter(platformSku -> validationContext.getMappingList().stream()
