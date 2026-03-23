@@ -8,7 +8,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdWarehouseInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.sdk.wangdian.dto.ErpVirtualWarehouseDto;
+import com.sdk.wangdian.dto.ErpWarehouseDto;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import org.springframework.context.annotation.Scope;
@@ -23,7 +23,7 @@ import java.util.Set;
 
 @Service
 @Scope("prototype")
-public class DmpOutputTikTokVirtualWarehouseRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+public class DmpOutputTikTokWarehouseRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -59,7 +59,7 @@ public class DmpOutputTikTokVirtualWarehouseRocketMQTaskHandler extends DmpOutpu
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
             DmpThirdWarehouseInfoEntity dmpThirdWarehouseInfoEntity = dmpThirdWarehouseInfoEntityMap.get(changeId);
-            ErpVirtualWarehouseDto warehouse = this.convert(dmpThirdWarehouseInfoEntity, cfgOutputId);
+            ErpWarehouseDto warehouse = this.convert(dmpThirdWarehouseInfoEntity, cfgOutputId);
             if (warehouse != null) {
                 map.put(dmpThirdWarehouseInfoEntity.getId(), JSON.toJSONString(warehouse));
             }
@@ -68,20 +68,21 @@ public class DmpOutputTikTokVirtualWarehouseRocketMQTaskHandler extends DmpOutpu
     }
 
     /**
-     * TikTok 销售仓需要复用虚拟仓 MQ，但 sysType / warehouseId 不能沿用旺店通口径。
+     * TikTok 销售仓走普通仓口径，单独输出到 TikTok 专用 MQ。
      */
-    public ErpVirtualWarehouseDto convert(DmpThirdWarehouseInfoEntity dmpThirdWarehouseInfoEntity, String cfgOutputId) {
+    public ErpWarehouseDto convert(DmpThirdWarehouseInfoEntity dmpThirdWarehouseInfoEntity, String cfgOutputId) {
         if (this.validateDataBlack(dmpThirdWarehouseInfoEntity, cfgOutputId)) {
             return null;
         }
         String warehouseCode = dmpThirdWarehouseInfoEntity.getWarehouseCode();
         String authId = dmpThirdWarehouseInfoEntity.getAuthId();
-        ErpVirtualWarehouseDto warehouse = new ErpVirtualWarehouseDto();
-        warehouse.setUniqueId(StrUtil.format("{}:{}", authId, warehouseCode));
+        String warehouseId = StrUtil.format("{}:{}", authId, warehouseCode);
+        ErpWarehouseDto warehouse = new ErpWarehouseDto();
+        warehouse.setUniqueId(warehouseId);
         warehouse.setPlatform(PlatformDictEnum.TIK_TOK.getCode());
         warehouse.setDisabled(resolveDisabled(dmpThirdWarehouseInfoEntity));
         warehouse.setSysType(PlatformDictEnum.TIK_TOK.getCode());
-        warehouse.setWarehouseId(warehouseCode);
+        warehouse.setWarehouseId(warehouseId);
         warehouse.setType(dmpThirdWarehouseInfoEntity.getWarehousePlatformType());
         warehouse.setSubType(dmpThirdWarehouseInfoEntity.getSubType());
         warehouse.setCode(warehouseCode);
