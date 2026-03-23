@@ -104,8 +104,10 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
 		if(StringUtils.isNotBlank(dto.getPlatformOrderNo())){
 			List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
-            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && CollectionUtils.isNotEmpty(soB2cEntityList)) {
-                soB2cEntityList = soB2cEntityList.stream().filter(e->e.getShopId().equals(dto.getShopId())).collect(Collectors.toList());
+            if (StringUtils.isNotBlank(dto.getShopId()) && CollectionUtils.isNotEmpty(soB2cEntityList)) {
+                soB2cEntityList = soB2cEntityList.stream()
+                        .filter(e -> Objects.equals(e.getShopId(), dto.getShopId()))
+                        .collect(Collectors.toList());
             }
 			//过滤手工单
 			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
