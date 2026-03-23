@@ -259,7 +259,7 @@ public class SoInfoFeignController extends BaseController {
     /**
      * 根据平台订单号获取订单
      */
-    @PostMapping("feign/soInfo/getByPlatformOrderCode")
+    @PostMapping("/getByPlatformOrderCode")
     List<SoInfoEntity> getByPlatformOrderCode(@RequestBody String platformCode){
         return soInfoService.getByPlatformOrderCode(platformCode);
     }
