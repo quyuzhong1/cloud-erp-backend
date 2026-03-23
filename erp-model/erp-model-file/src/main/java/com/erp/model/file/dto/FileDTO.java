@@ -2,6 +2,7 @@ package com.erp.model.file.dto;
 
 import lombok.*;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.Map;
 
@@ -122,5 +123,18 @@ public class FileDTO {
          * 事件名称
          */
         private String event;
+    }
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UploadDTO {
+        //文件链接
+        @NotBlank(message = "文件链接不能为空")
+        private String fileUrl;
+        //文件名
+        private String fileName;
+        //文件类型
+        private String fileType;
     }
 }

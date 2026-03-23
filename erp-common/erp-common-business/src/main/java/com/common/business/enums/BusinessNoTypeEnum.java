@@ -166,7 +166,7 @@ public enum BusinessNoTypeEnum {
 
     CODE_BG(122 ,"BG","产品信息变更单",BusinessNoConstant.BG),
 
-
+    CODE_CYFA(123 ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
 
     ;
 

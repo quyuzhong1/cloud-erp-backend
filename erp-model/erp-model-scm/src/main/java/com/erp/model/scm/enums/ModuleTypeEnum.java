@@ -205,6 +205,7 @@ public enum ModuleTypeEnum {
     PRODUCT_BU("160", "产品BU线"),
 
     PRODUCT_CHANGE("161", "产品变更单"),
+    QC_SAMPLING_PLAN("162", "抽样方案单"),
 
 
 

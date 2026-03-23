@@ -903,6 +903,9 @@ public enum ApiError implements Serializable {
     PO_QC_CANCEL_ALLOWED_STATUS_ONLY(9554,"仅待质检状态的质检单允许执行取消操作"),
     PO_QC_DELETE_ALLOWED_STATUS_ONLY(9555,"仅待质检、已取消、暂存状态的质检单允许删除"),
     PO_QC_REVOKE_ALLOWED_STATUS_ONLY(9556,"仅免检或已质检状态的质检单允许撤销质检"),
+    PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS(9557,"质检类型【{0}】已存在全量的抽样方案，不能单独配置"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置全部SKU"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置相同SKU【{1}】"),
 
     PO_SUBCONTRACT_ORDER_NOT_FOUND(9557,"未找到委外订单"),
     PO_SUBCONTRACT_DETAIL_NOT_FOUND(9558,"未找到委外订单明细"),

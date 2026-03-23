@@ -11,6 +11,7 @@ import com.erp.model.file.dto.FileDTO;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileService;
+import com.erp.server.file.service.FileTaskService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -31,6 +33,8 @@ import java.util.List;
 public class FileController extends BaseController {
     @Resource
     private FileRegistry fileRegistry;
+    @Resource
+    private FileTaskService fileTaskService;
 
     /**
      * 上传文件
@@ -43,7 +47,7 @@ public class FileController extends BaseController {
         FileService fileService = fileRegistry.getHandler();
         String url = fileService.uploadFile(multipartFile);
         String fileName = multipartFile.getOriginalFilename();
-        return success(new SysCommonDTO.AttachmentDTO(fileName, url));
+        return success(new SysCommonDTO.AttachmentDTO(fileName, url, BigDecimal.valueOf(multipartFile.getSize() / 1024 / 1024).setScale(2)));
     }
 
     /**
@@ -85,7 +89,7 @@ public class FileController extends BaseController {
         for (MultipartFile file : multipartFile) {
             String filePath = fileService.uploadFile(file);
             String fileName = file.getOriginalFilename();
-            list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath));
+            list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath, BigDecimal.valueOf(file.getSize() / 1024 / 1024).setScale(2)));
         }
         return success(list);
     }
@@ -138,5 +142,22 @@ public class FileController extends BaseController {
     public String mergeFiles(@RequestBody List<String> fileIds){
         FileService fileService = fileRegistry.getHandler();
         return fileService.mergeFiles(fileIds);
+    }
+
+    /**
+     * 上传飞书文件链接
+     *
+     * @param uploadDTO
+     * @return
+     */
+    @PostMapping(value = "/getFeiShuFile")
+    public ApiResult<SysCommonDTO.AttachmentDTO> getFeiShuFile(@RequestBody FileDTO.UploadDTO uploadDTO){
+        SysCommonDTO.AttachmentDTO attachmentDTO = null;
+        try {
+            attachmentDTO = fileTaskService.getFeiShuFile(uploadDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return success(attachmentDTO);
     }
 }

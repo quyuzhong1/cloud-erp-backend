@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * 
@@ -26,5 +27,9 @@ public class SysCommonDTO implements Serializable {
          * 文件url
          */
         private String attachUrl;
+        /**
+         * 文件大小 MB
+         */
+        private BigDecimal attachSize;
     }
 }
