@@ -110,6 +110,11 @@ public class RocketMqNewTopic {
      * 新中台旺店通虚拟仓库
      */
     public static final String DMP_WDT_VIRTUALWAREHOUSE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_virtualwarehouse_to_dmp_topic";
+
+    /**
+     * 新中台 TikTok 销售仓库
+     */
+    public static final String DMP_TIKTOK_WAREHOUSE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_tiktok_warehouse_to_dmp_topic";
     
     /**
      * 新中台旺店通店铺

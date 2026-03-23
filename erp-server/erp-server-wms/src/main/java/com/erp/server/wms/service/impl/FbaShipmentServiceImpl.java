@@ -506,10 +506,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             String displaySkuNo = resolveViewSkuNo(fbaShipmentDetailEntity, isFbtShipment, fbtSkuMapping);
             detailViewDTO.setSkuNo(displaySkuNo);
-            if (isFbtShipment) {
-                detailViewDTO.setDeliveryQty(0);
-                detailViewDTO.setDiffQty(0);
-            }
 
             //产品名称
             String productName = resolveViewProductName(fbaShipmentDetailEntity, displaySkuNo, isFbtShipment, fbtSkuMapping, skuVOList);
@@ -2552,7 +2548,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 throw new ServiceException("货件单号【{}】该月【{}】已生成头程分摊，不可修改",entity.getCode(),date);
             }
             detailEntity.setReceiveQty(detailEntity.getReceiveQty() + dto.getReceivedQty());
-            detailEntity.setDiffQty(detailEntity.getDiffQty() + dto.getReceivedQty());
+            int deliveryQty = ObjectUtil.defaultIfNull(detailEntity.getDeliveryQty(), 0);
+            detailEntity.setDiffQty(detailEntity.getReceiveQty() - deliveryQty);
             detailEntity.setReceiveDate(dto.getReceiveDate().atStartOfDay());
             // 添加签收记录
             FbaShipmentReceiveEntity receivedEntity = FbaShipmentConverter.INSTANCE.receivedDTOToEntity(dto,entity, detailEntity,SignSourceTypeEnum.CHANGE.getCode());

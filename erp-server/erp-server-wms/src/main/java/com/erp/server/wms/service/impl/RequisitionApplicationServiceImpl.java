@@ -1632,14 +1632,12 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
                 && !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
             throw new ServiceException("当前FBT要货单发货类型不支持绑定货件下推");
         }
-        if (detailList.stream().anyMatch(v -> CharSequenceUtil.isNotBlank(v.getDeliveryCode()))) {
-            throw new ServiceException("货件已绑定头程发货单，不允许修改");
-        }
         detailList = detailList.stream()
+                .filter(v -> CharSequenceUtil.isBlank(v.getDeliveryCode()))
                 .filter(v -> CharSequenceUtil.isNotBlank(v.getFbaShipmentId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException("请先绑定货件再下推");
+            throw new ServiceException("当前选择的货件已全部绑定头程发货单，请刷新后重试");
         }
         List<String> shipmentIdList = detailList.stream()
                 .map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getFbaShipmentId)
@@ -1731,6 +1729,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
 
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(shipmentEntity, entity, shopInfo);
             fillDestWarehouseFromRequisition(addDTO, entity);
+            addDTO.setFulfillmentCenter(CharSequenceUtil.EMPTY);
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (FbaShipmentDetailEntity shipmentDetail : shipmentDetailList) {
                 SkuVO skuVO = skuVOList.stream().filter(v -> CharSequenceUtil.equals(v.getSkuId(), shipmentDetail.getSkuId())).findFirst().orElse(new SkuVO());
