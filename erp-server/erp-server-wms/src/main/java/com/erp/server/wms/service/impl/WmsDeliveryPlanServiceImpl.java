@@ -139,6 +139,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(WmsDeliveryPlanDTO.AddDTO addDTO) {
+        refreshDeliveryPlanFnSku(addDTO);
         WmsDeliveryPlanEntity wmsDeliveryPlanEntity = new WmsDeliveryPlanEntity();
         BeanMapperUtils.copy(addDTO, wmsDeliveryPlanEntity);
 
@@ -180,6 +181,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             throw new ServiceException("发货建议下推的发货计划不支持编辑!");
         }
 
+        refreshDeliveryPlanFnSku(updateDTO);
         WmsDeliveryPlanEntity wmsDeliveryPlanEntity =  BeanMapperUtils.map(WmsDeliveryPlanEntity.class, updateDTO);
 
         // 数据处理
@@ -196,6 +198,32 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDeliveryPlanEntity.getCode(), "发货计划");
         operateLogService.addModuleOperateLogByObj(old, wmsDeliveryPlanEntity, ModuleTypeEnum.DELIVERY_PLAN.getCode(), wmsDeliveryPlanEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private void refreshDeliveryPlanFnSku(WmsDeliveryPlanDTO.AddDTO dto) {
+        refreshDeliveryPlanFnSkuCommon(dto.getType(), dto.getDeliveryType(), dto.getDetailList());
+    }
+
+    private void refreshDeliveryPlanFnSku(WmsDeliveryPlanDTO.UpdateDTO dto) {
+        refreshDeliveryPlanFnSkuCommon(dto.getType(), dto.getDeliveryType(), dto.getDetailList());
+    }
+
+    private <T extends WmsDeliveryPlanDetailDTO.CommonDTO> void refreshDeliveryPlanFnSkuCommon(String type,
+                                                                                               String deliveryType,
+                                                                                               List<T> detailList) {
+        if (!DeliveryPlanTypeEnum.FBT.getCode().equalsIgnoreCase(type)
+                || !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equalsIgnoreCase(deliveryType)
+                || CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        for (T detailDTO : detailList) {
+            if (Objects.isNull(detailDTO) || StringUtils.isNotBlank(detailDTO.getFnSku())) {
+                continue;
+            }
+            detailDTO.setFnSku(StringUtils.defaultIfBlank(detailDTO.getMSKU(),
+                    StringUtils.defaultIfBlank(detailDTO.getPlatformSku(), "")));
+        }
     }
 
 

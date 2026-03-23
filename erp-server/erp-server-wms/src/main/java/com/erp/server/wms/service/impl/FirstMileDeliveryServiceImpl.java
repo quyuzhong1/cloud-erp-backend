@@ -212,6 +212,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO addDTO) {
+        normalizeFbtFnSku(addDTO.getDemandType(), addDTO.getDetailList());
         FirstMileDeliveryEntity firstMileDeliveryEntity = new FirstMileDeliveryEntity();
         BeanMapperUtils.copy(addDTO, firstMileDeliveryEntity);
         String idStr = IdWorker.getIdStr();
@@ -349,6 +350,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || old.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
+        normalizeFbtFnSku(updateDTO.getDemandType(), updateDTO.getDetailList());
         FirstMileDeliveryEntity firstMileDeliveryEntity =  BeanMapperUtils.map(FirstMileDeliveryEntity.class, updateDTO);
         if (CollectionUtils.isNotEmpty(updateDTO.getTransferWarehouseIdList())){
             firstMileDeliveryEntity.setTransferWarehouseIds(String.join(",", updateDTO.getTransferWarehouseIdList()));
@@ -376,6 +378,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), firstMileDeliveryEntity.getCode(), "发货单");
         operateLogService.addModuleOperateLogByObj(old, firstMileDeliveryEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstMileDeliveryEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private void normalizeFbtFnSku(String demandType, List<? extends FirstMileDeliveryDetailDTO.CommonDTO> detailList) {
+        if (!FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(demandType) || CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        for (FirstMileDeliveryDetailDTO.CommonDTO detailDTO : detailList) {
+            if (detailDTO == null || StrUtil.isNotBlank(detailDTO.getFnSku())) {
+                continue;
+            }
+            detailDTO.setFnSku(StrUtil.blankToDefault(detailDTO.getPlatformSkuNo(), ""));
+        }
     }
 
 
