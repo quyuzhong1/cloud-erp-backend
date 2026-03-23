@@ -104,6 +104,7 @@ public class DmpOutputTikTokRefundRocketMQTaskHandler extends DmpOutputRocketMQT
         String platform = StringUtils.defaultIfBlank(dmpEntity.getSourcePlatform(), dmpEntity.getSourceSystem());
         dto.setDictPlatform(platform);
         dto.setPlatform(platform);
+        dto.setShopId(dmpEntity.getShopId());
         dto.setRefundAmount(dmpEntity.getAmount());
         dto.setCurrency(dmpEntity.getCurrencyCode());
         dto.setDmpSyncTaskId(cfgOutputId);
@@ -120,8 +121,7 @@ public class DmpOutputTikTokRefundRocketMQTaskHandler extends DmpOutputRocketMQT
         List<PlatformRefundOrderDTO.Detail> resultList = new LinkedList<>();
         for (DmpSoRefundDetailEntity dmpDetailEntity : dmpDetailList) {
             PlatformRefundOrderDTO.Detail detail = new PlatformRefundOrderDTO.Detail();
-            String platformSkuNo = StringUtils.defaultIfBlank(dmpDetailEntity.getSkuNo(), dmpDetailEntity.getSkuId());
-            detail.setPlatformSkuNo(StringUtils.defaultString(platformSkuNo));
+            detail.setPlatformSkuNo(StringUtils.defaultString(dmpDetailEntity.getSkuNo()));
             detail.setRefundQty(dmpDetailEntity.getQty());
             resultList.add(detail);
         }

@@ -111,8 +111,7 @@ public class DmpOutputTikTokReturnRocketMQTaskHandler extends DmpOutputRocketMQT
         List<PlatformReturnOrderDTO.Detail> resultList = new LinkedList<>();
         for (DmpSoReturnDetailEntity dmpDetailEntity : dmpDetailList) {
             PlatformReturnOrderDTO.Detail detail = new PlatformReturnOrderDTO.Detail();
-            String platformSkuNo = StringUtils.defaultIfBlank(dmpDetailEntity.getSkuNo(), dmpDetailEntity.getSkuId());
-            detail.setPlatformSkuNo(StringUtils.defaultString(platformSkuNo));
+            detail.setPlatformSkuNo(StringUtils.defaultString(dmpDetailEntity.getSkuNo()));
             detail.setReturnQty(dmpDetailEntity.getQty());
             resultList.add(detail);
         }
