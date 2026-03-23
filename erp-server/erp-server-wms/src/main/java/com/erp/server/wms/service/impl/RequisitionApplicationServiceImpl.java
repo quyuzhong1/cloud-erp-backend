@@ -3638,7 +3638,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 continue;
             }
             RequisitionApplicationDetailEntity requisitionDetailEntity = requisitionDetailMap.get(planDetailEntity.getId());
-            String platformFnSku = requisitionDetailEntity == null ? "" : requisitionDetailEntity.getPlatformFnSku();
+            String platformFnSku = CharSequenceUtil.blankToDefault(planDetailEntity.getPlatformSku(), "");
+            if (CharSequenceUtil.isBlank(platformFnSku)) {
+                platformFnSku = requisitionDetailEntity == null ? "" : requisitionDetailEntity.getPlatformFnSku();
+            }
             if (CharSequenceUtil.isBlank(platformFnSku)) {
                 platformFnSku = resolveFnSkuFromShipment(planDetailEntity, fbaDetailMap.get(planDetailEntity.getPlatformSku()));
             }

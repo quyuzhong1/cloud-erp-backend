@@ -517,7 +517,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             String detailKey = buildDetailKey(plannedGood);
             Integer receiveQty = receiveQtyByGoodsId.get(plannedGood.getGoodsId());
             String msku = resolveMsku(plannedGood);
-            String fnSku = StrUtil.blankToDefault(msku, plannedGood.getGoodsId());
+            String fnSku = StrUtil.blankToDefault(msku, "");
             SkuMappingDTO.MappingSkuViewDTO mappingDTO = findMappingByFnSkuAndMsku(skuMapping, fnSku, msku);
             String resolvedSkuNo = resolveDetailSkuNo(mappingDTO);
             if (StrUtil.isNotBlank(detailKey)) {
@@ -994,7 +994,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         FbaShipmentReceiveEntity entity = new FbaShipmentReceiveEntity();
         entity.setFbaShipmentId(shipment.getFbaShipmentId());
         entity.setMsku(record.getSkuCode());
-        entity.setFnSku(record.getGoodsId());
+        entity.setFnSku(record.getSkuCode());
         entity.setAsin(record.getGoodsId());
         entity.setReceiveQty(record.getDeltaQty());
         entity.setReceiveDate(record.getEventTime() == null ? LocalDateTime.now() : record.getEventTime());
