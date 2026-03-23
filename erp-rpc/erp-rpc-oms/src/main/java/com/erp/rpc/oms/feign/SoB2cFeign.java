@@ -473,6 +473,12 @@ public interface SoB2cFeign {
                                          @RequestParam("shopId") String shopId,
                                          @RequestParam("sourceType") String sourceType);
 
+    /**
+     * 根据平台单号查询B2C销售订单
+     */
+    @GetMapping("/feign/soB2c/getByPlatformCode")
+    List<SoB2cEntity> getByPlatformCode(@RequestParam("platformCode") String platformCode);
+
     @PostMapping("/feign/soB2c/updateById")
     Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);
 

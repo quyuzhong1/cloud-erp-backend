@@ -150,7 +150,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 		} else {
 			SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
-			if(Objects.nonNull(existEntity)){
+			if (Objects.nonNull(existEntity)) {
 				return;
 			}
 		}
@@ -183,6 +183,22 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				soOutstock = soOutstockService.getBySoId(soInfoEntity.getId());
 			}
 		}
+
+
+		if(Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())
+				&& CharSequenceUtil.isNotBlank(dto.getPlatformOrderNo())){
+			List<SoInfoEntity> soInfoList = soInfoFeign.getByPlatformOrderCode(dto.getPlatformOrderNo());
+			List<SoB2cEntity> soB2CList = soB2cFeign.getByPlatformCode(dto.getPlatformOrderNo());
+			if (!soInfoList.isEmpty()) {
+				soInfoEntity = soInfoList.get(0);
+			}
+
+			if (!soB2CList.isEmpty()) {
+				soB2cEntity = soB2CList.get(0);
+			}
+
+		}
+
 		WarehouseEntity warehouseEntity = new WarehouseEntity();
 		//艾姆勒没有仓库，拿订单的仓库
 		if(PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform()) || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(dto.getPlatform())){
@@ -456,6 +472,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setCustomerId(shopInfoEntity.getCustomerId());
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
+			soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
@@ -468,10 +485,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setCustomerId(soInfoEntity.getCustomerId());
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
+			soReturnInstockEntity.setSourceCode(soInfoEntity.getCode());
 			soReturnInstockEntity.setSoId(soInfoEntity.getId());
 			soReturnInstockEntity.setCurrency(soInfoEntity.getCurrency());
 		} else {
-			soReturnInstockEntity.setSourceCode(dto.getOrderReferenceNo());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 			soReturnInstockEntity.setCurrencySymbol("¥");
