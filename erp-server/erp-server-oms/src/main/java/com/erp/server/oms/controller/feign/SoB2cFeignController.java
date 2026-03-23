@@ -682,7 +682,7 @@ public class SoB2cFeignController extends BaseController {
     /**
      * 根据第三方仓发货订单id查询B2C销售订单
      */
-    @GetMapping("/feign/soB2c/getByShippingOrderNo")
+    @GetMapping("/getByShippingOrderNo")
     public List<SoB2cEntity> getByShippingOrderNo(@RequestParam("shippingOrderNo") String shippingOrderNo){
         return soB2cService.getByShippingOrderNo(shippingOrderNo);
     }
