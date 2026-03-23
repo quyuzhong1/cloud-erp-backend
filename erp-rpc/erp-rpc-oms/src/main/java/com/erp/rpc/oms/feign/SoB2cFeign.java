@@ -335,6 +335,9 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/updateWarehouseByShopId")
     Boolean updateWarehouseByShopId(@RequestParam("id")String id,@RequestParam("shopId") String shopId);
 
+    @PostMapping("/feign/soB2c/updateTikTokOrderWarehouse")
+    Boolean updateTikTokOrderWarehouse(@RequestParam("soId") String soId);
+
     @GetMapping("/feign/soB2c/findMergeByTargetId")
     List<SoB2cRefEntity> findMergeByTargetId(@RequestParam("targetId")String targetId);
 

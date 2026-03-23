@@ -2,9 +2,11 @@ package com.erp.server.oms.sdk.sob2c;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
@@ -12,12 +14,14 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.ISoB2cHandleService;
 import com.erp.server.oms.service.PlatformOrderConsumerHandleService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,6 +46,8 @@ public class TikTokSoB2cHandle extends AbstractSoB2cHandle  {
     private SoB2cErrorService soB2cErrorService;
     @Resource
     private SoB2cService soB2cService;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {
@@ -67,6 +74,7 @@ public class TikTokSoB2cHandle extends AbstractSoB2cHandle  {
         //如果是已发货且是平台仓订单 就生成销售出库单
         if (isShipped && hasPlatformWarehouse) {
             try {
+                validateWarehouseMapping(dto, mainEntity);
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
                 LocalDate soOutstockDate = dto == null ? null : dto.getBillDate();
                 if (soOutstockDate == null) {
@@ -90,6 +98,22 @@ public class TikTokSoB2cHandle extends AbstractSoB2cHandle  {
             }
         }
         return true;
+    }
+
+    private void validateWarehouseMapping(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+        if (Objects.isNull(dto) || dto.getDetails() == null || dto.getDetails().isEmpty()) {
+            return;
+        }
+        List<String> missingWarehouseIds = dto.getDetails().stream()
+                .map(PlatformOrderDetailDTO::getWarehouseId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .filter(warehouseId -> Objects.isNull(
+                        dmpThirdMappingFeign.resolveErpWarehouseBySourceId(mainEntity.getDictPlatform(), warehouseId)))
+                .collect(Collectors.toList());
+        if (!missingWarehouseIds.isEmpty()) {
+            throw new ServiceException("未匹配到仓库映射关系，平台仓库id：{}", String.join("、", missingWarehouseIds));
+        }
     }
 
     /**

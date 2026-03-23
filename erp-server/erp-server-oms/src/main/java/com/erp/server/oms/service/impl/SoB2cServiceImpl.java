@@ -216,6 +216,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Lazy
     @Resource
+    private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
+
+    @Lazy
+    @Resource
     private SoB2cReturnService soB2cReturnService;
     @Lazy
     @Resource
@@ -6581,6 +6585,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateTikTokOrderWarehouse(String soId) {
+        SoB2cEntity entity = this.getById(soId);
+        if (Objects.isNull(entity)
+                || !PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())
+                || !Boolean.TRUE.equals(entity.hasPlatformWarehouseOrder())) {
+            return Boolean.FALSE;
+        }
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList =
+                dmpTaskFeign.getOutputTaskRecord(entity.getPlatformCode(), "TikTokOrderRocketMQTaskHandler");
+        if (CollectionUtils.isEmpty(dmpOutputTaskRecordEntityList)) {
+            return Boolean.FALSE;
+        }
+        DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.get(0);
+        PlatformOrderDTO dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
+        if (Objects.isNull(dto)) {
+            return Boolean.FALSE;
+        }
+        if (StringUtils.isBlank(dto.getShopId())) {
+            dto.setShopId(entity.getShopId());
+        }
+        if (StringUtils.isBlank(dto.getDictPlatform())) {
+            dto.setDictPlatform(entity.getDictPlatform());
+        }
+        SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
+        return Objects.nonNull(resultDTO) && !Boolean.TRUE.equals(resultDTO.getIsWarehouseEmpty());
     }
 
 
