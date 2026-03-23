@@ -556,8 +556,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
                     int receivedQty = ObjectUtil.defaultIfNull(detail.getReceiveQty(), 0);
                     detail.setDiffQty(receivedQty - deliveryQty);
                     fbtInboundRepository.updateShipmentDetail(detail);
+                    continue;
                 }
-                continue;
             }
             FbaShipmentDetailEntity detail = new FbaShipmentDetailEntity();
             detail.setMainId(shipment.getId());
