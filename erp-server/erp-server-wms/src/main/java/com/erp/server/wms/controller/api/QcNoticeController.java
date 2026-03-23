@@ -396,7 +396,7 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
-     * 下推质检单详情
+     * 完成质检（简易）详情
      * @author jack
      * @date:  2025-04-21
      * @param dto
@@ -410,6 +410,21 @@ public class QcNoticeController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<QcNoticeDTO.QcInfoView>> generateQcInfoView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(qcNoticeService.generateQcInfoView(dto.getIds()));
+    }
+
+    /**
+     * 完成质检（详细）详情
+     * @param qcNoticeParamDTO
+     * @return
+     */
+    @PostMapping("/generateQcInfoFullView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:generateQcInfoFullView",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<QcNoticeDTO.QcInfoView>> generateQcInfoFullView(@RequestBody @Validated QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
+        return success(qcNoticeService.generateQcInfoFullView(qcNoticeParamDTO));
     }
 
     /**
