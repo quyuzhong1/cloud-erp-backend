@@ -98,6 +98,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	@Resource
 	private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+	@Resource
+	private B2bThirdDeliveryService b2bThirdDeliveryService;
+
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -166,31 +170,29 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
 					String soCode = thirdWarehouseDeliveryEntity.getSoCode();
 					soB2cEntity = soB2cFeign.getSoCode(soCode);
-
-					soInfoEntity = soInfoFeign.getByCode(dto.getOrderReferenceNo());
 				}
 			}else{
 				soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
-
-				soInfoEntity = soInfoFeign.getByCode(dto.getOrderReferenceNo());
-
 			}
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
-			} else if (Objects.nonNull(soInfoEntity)){
-				soOutstock = soOutstockService.getBySoId(soInfoEntity.getId());
 			}
 		}
 
 
 		if(Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())
 				&& CharSequenceUtil.isNotBlank(dto.getPlatformOrderNo())){
-			List<SoInfoEntity> soInfoList = soInfoFeign.getByPlatformOrderCode(dto.getPlatformOrderNo());
-			List<SoB2cEntity> soB2CList = soB2cFeign.getSoB2cByPlatformCode(dto.getPlatformOrderNo());
-			if (!soInfoList.isEmpty()) {
-				soInfoEntity = soInfoList.get(0);
+			List<B2bThirdDeliveryEntity> list = b2bThirdDeliveryService.lambdaQuery()
+					.eq(B2bThirdDeliveryEntity::getPlatformOrderCode, dto.getPlatformOrderNo())
+					.list();
+			if (!list.isEmpty()) {
+				SoInfoEntity soInfo = soInfoFeign.getSoInfoById(list.get(0).getSoId());
+				if (Objects.nonNull(soInfo)) {
+					soInfoEntity = soInfo;
+				}
 			}
 
+			List<SoB2cEntity> soB2CList = soB2cFeign.getByShippingOrderNo(dto.getPlatformOrderNo());
 			if (!soB2CList.isEmpty()) {
 				soB2cEntity = soB2CList.get(0);
 			}
