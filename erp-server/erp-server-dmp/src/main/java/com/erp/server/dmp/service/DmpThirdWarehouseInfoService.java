@@ -38,4 +38,6 @@ public interface DmpThirdWarehouseInfoService extends SuperService<DmpThirdWareh
 
 
     List<DmpThirdWarehouseInfoEntity> getByPlatformAndCode(String platform, String name);
+
+    List<DmpThirdWarehouseInfoEntity> getByPlatformAndAuthIdAndCode(String platform, String authId, String code);
 }
