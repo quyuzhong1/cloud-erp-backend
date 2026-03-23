@@ -6,6 +6,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdWarehouseInfoEntity;
+import com.erp.model.dmp.enums.WdtWarehouseTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.sdk.wangdian.dto.ErpWarehouseDto;
@@ -83,8 +84,8 @@ public class DmpOutputTikTokWarehouseRocketMQTaskHandler extends DmpOutputRocket
         warehouse.setDisabled(resolveDisabled(dmpThirdWarehouseInfoEntity));
         warehouse.setSysType(PlatformDictEnum.TIK_TOK.getCode());
         warehouse.setWarehouseId(warehouseId);
-        warehouse.setType(dmpThirdWarehouseInfoEntity.getWarehousePlatformType());
-        warehouse.setSubType(dmpThirdWarehouseInfoEntity.getSubType());
+        warehouse.setType(WdtWarehouseTypeEnum.PLATFORM.getCode());
+        warehouse.setSubType(StrUtil.EMPTY);
         warehouse.setCode(warehouseCode);
         warehouse.setName(dmpThirdWarehouseInfoEntity.getWarehouseName());
         warehouse.setAddress(dmpThirdWarehouseInfoEntity.getAddress());

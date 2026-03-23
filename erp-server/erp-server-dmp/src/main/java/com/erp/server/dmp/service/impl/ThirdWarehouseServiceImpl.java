@@ -132,7 +132,10 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
 
     @Override
     public PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdWarehouseDTO.SelectDTO> dto) {
-        if (PlatformDictEnum.WDT.getCode().equals(dto.getParams().getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(dto.getParams().getSysType())|| PlatformDictEnum.DHT.getCode().equals(dto.getParams().getSysType()) || PlatformDictEnum.TIK_TOK.getCode().equals(dto.getParams().getSysType())) {
+        if (PlatformDictEnum.WDT.getCode().equals(dto.getParams().getSysType())
+                || PlatformDictEnum.TE_MU.getCode().equals(dto.getParams().getSysType())
+                || PlatformDictEnum.DHT.getCode().equals(dto.getParams().getSysType())
+                || PlatformDictEnum.TIK_TOK.getCode().equals(dto.getParams().getSysType())) {
             Page query = new Page(dto.getCurrPage(), dto.getPageSize());
             IPage<ThirdWarehouseDTO.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
             if (CollUtil.isEmpty(pageData.getRecords())) {
