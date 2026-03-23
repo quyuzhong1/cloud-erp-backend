@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformFbtShipmentDTO;
 import com.erp.model.wms.dto.TiktokFbtDTO;
 import com.erp.server.wms.service.FbtInboundService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
  * FBT货件消息处理器
  */
 @Component
+@Slf4j
 public class FbtShipmentMessageHandler {
 
     @Resource
@@ -26,6 +28,10 @@ public class FbtShipmentMessageHandler {
         if (dto == null || dto.getInboundOrderId() == null) {
             return;
         }
+        int plannedGoodsSize = dto.getPlannedGoods() == null ? 0 : dto.getPlannedGoods().size();
+        int receivedBatchSize = dto.getReceivedBatches() == null ? 0 : dto.getReceivedBatches().size();
+        log.info("FBT货件消费, inboundOrderId={}, shopId={}, plannedGoodsSize={}, receivedBatchSize={}",
+                dto.getInboundOrderId(), dto.getShopId(), plannedGoodsSize, receivedBatchSize);
         TiktokFbtDTO.InboundOrderDTO inboundOrderDTO = new TiktokFbtDTO.InboundOrderDTO();
         inboundOrderDTO.setShopId(dto.getShopId());
         inboundOrderDTO.setInboundOrderId(dto.getInboundOrderId());

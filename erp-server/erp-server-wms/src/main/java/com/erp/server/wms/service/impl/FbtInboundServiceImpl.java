@@ -102,6 +102,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncInboundOrderFromDmp(TiktokFbtDTO.InboundOrderDTO inboundOrder) {
         if (inboundOrder == null || StrUtil.isBlank(inboundOrder.getInboundOrderId())) {
             return;
@@ -489,6 +490,10 @@ public class FbtInboundServiceImpl implements FbtInboundService {
     private void syncShipmentDetails(FbaShipmentEntity shipment, TiktokFbtDTO.InboundOrderDTO inboundOrder) {
         if (shipment == null || StrUtil.isBlank(shipment.getId()) || inboundOrder == null
                 || inboundOrder.getPlannedGoods() == null || inboundOrder.getPlannedGoods().isEmpty()) {
+            log.warn("FBT货件同步明细跳过, shipmentId={}, inboundOrderId={}, plannedGoodsEmpty={}",
+                    shipment == null ? null : shipment.getId(),
+                    inboundOrder == null ? null : inboundOrder.getInboundOrderId(),
+                    inboundOrder == null || inboundOrder.getPlannedGoods() == null || inboundOrder.getPlannedGoods().isEmpty());
             return;
         }
         List<FbaShipmentDetailEntity> exists = fbtInboundRepository.listShipmentDetails(shipment.getId());
@@ -509,6 +514,12 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         LocalDateTime receiveTime = inboundOrder.getUpdatedTime() == null ? LocalDateTime.now() : inboundOrder.getUpdatedTime();
         Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMapping = buildSkuMapping(inboundOrder);
         List<TiktokFbtDTO.PlannedGoodDTO> mergedPlannedGoods = mergePlannedGoods(inboundOrder.getPlannedGoods());
+        log.info("FBT货件同步明细开始, shipmentId={}, inboundOrderId={}, existsSize={}, plannedGoodsSize={}, mergedPlannedGoodsSize={}",
+                shipment.getId(),
+                inboundOrder.getInboundOrderId(),
+                exists.size(),
+                inboundOrder.getPlannedGoods().size(),
+                mergedPlannedGoods.size());
 
         for (TiktokFbtDTO.PlannedGoodDTO plannedGood : mergedPlannedGoods) {
             if (plannedGood == null) {
@@ -568,6 +579,14 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             int deliveryQty = ObjectUtil.defaultIfNull(detail.getDeliveryQty(), 0);
             int receivedQty = ObjectUtil.defaultIfNull(detail.getReceiveQty(), 0);
             detail.setDiffQty(receivedQty - deliveryQty);
+            log.info("FBT货件新增明细, shipmentId={}, inboundOrderId={}, goodsId={}, referenceCode={}, msku={}, fnSku={}, declareQty={}",
+                    shipment.getId(),
+                    inboundOrder.getInboundOrderId(),
+                    plannedGood.getGoodsId(),
+                    plannedGood.getReferenceCode(),
+                    msku,
+                    fnSku,
+                    detail.getDeclareQty());
             fbtInboundRepository.saveShipmentDetail(detail);
             if (StrUtil.isNotBlank(detailKey)) {
                 existsMap.put(detailKey, detail);
