@@ -1,6 +1,11 @@
 package com.erp.server.plm.controller.api;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.ReUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -14,17 +19,28 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
+import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeNodeEnum;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.query.BomInfoHandler;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
+import com.erp.server.plm.service.SkuStdRetailPriceService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
@@ -38,7 +54,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * BOM 管理
@@ -64,6 +84,13 @@ public class BomInfoController extends BaseController {
 
     @Resource
     private BomSkuService bomSkuService;
+
+    @Resource
+    private SkuStdRetailPriceService skuStdRetailPriceService;
+
+    @Autowired
+    private MQProducerService mqProducerService;
+
 
     /**
      * 分页查询
@@ -431,7 +458,53 @@ public class BomInfoController extends BaseController {
      **/
     @PostMapping("/sendFeishu")
     public ApiResult<Boolean> sendFeishu(@RequestBody ProductBomInfoDTO.FeiShuDto dto) {
+        // 提取feishuText中的sku
+        // {SKU_NO1}{SKU_NO2}{SKU_NO3}无零售价，会导致订单无法分摊
+        List<String> skuNos = extractSkuNos(dto.getFeishuText());
+        if (CollectionUtils.isEmpty(skuNos)) {
+            ServiceException.runError(ApiError.PRODUCT_RETAIL_SKU_MISSING);
+        }
+        // 查询标准零售价记录
+        List<SkuStdRetailPriceEntity> skuList = skuStdRetailPriceService.lambdaQuery().in(SkuStdRetailPriceEntity::getSkuNo, skuNos).list();
+        if (CollectionUtils.isEmpty(skuList)){
+            ServiceException.runError(ApiError.PRODUCT_RETAIL_SKU_MISSING);
+        }
+        // 发送飞书消息MQ
+        skuList.forEach(item -> {
+            Map<String, Object> before = BeanUtil.beanToMap(item);
+            Map<String, Object> after = new HashMap<>(before);
+            after.put("table", "sku_std_retail_price");
+            after.put("P_TAG_IUD", "U");
+            after.put("db", "plm");
+            after.put(ThirdNoticePushRecordNoticeNodeEnum.SET_SKU_STD_RETAIL_PRICE.getCode(), Boolean.TRUE);
+
+            List<Map<String, Map<String, Object>>> list = new ArrayList<>();
+            Map<String, Map<String, Object>> map = new HashMap<>();
+            map.put("before", new JSONObject());
+            map.put("after", after);
+            list.add(map);
+
+            // 转换为JSON字符串
+            String jsonStr = JSONUtil.toJsonStr(list);
+            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(), jsonStr, item.getId());
+            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
+                throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+            }
+        });
         return success(null);
     }
-}
 
+    public static void main(String[] args) {
+        List<String> s = extractSkuNos("{SKU_NO1}{SKU_NO2}无零售价，会导致订单无法分摊");
+        System.out.println(s);
+    }
+
+    /**
+     * 动态提取字符串中所有花括号内的SKU编号为数组（Hutool实现）
+     * @param input 输入字符串，如"{SKU_NO1}{SKU_NO2}{SKU_NO3}无零售价，会导致订单无法分摊"
+     * @return SKU编号数组
+     */
+    public static List<String> extractSkuNos(String input) {
+        return ReUtil.findAll("\\{(.*?)}", input, 1);
+    }
+}
