@@ -680,8 +680,8 @@ public class SoB2cFeignController extends BaseController {
      * @date 2024-03-07
      * @author Jim
      */
-    @GetMapping("/getByPlatformCode")
-    public List<SoB2cEntity> getByPlatformCode(@RequestParam("platformCode") String platformCode){
+    @GetMapping("/getSoB2cByPlatformCode")
+    public List<SoB2cEntity> getSoB2cByPlatformCode(@RequestParam("platformCode") String platformCode){
         return soB2cService.getByPlatformCode(platformCode);
     }
 

@@ -186,7 +186,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if(Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())
 				&& CharSequenceUtil.isNotBlank(dto.getPlatformOrderNo())){
 			List<SoInfoEntity> soInfoList = soInfoFeign.getByPlatformOrderCode(dto.getPlatformOrderNo());
-			List<SoB2cEntity> soB2CList = soB2cFeign.getByPlatformCode(dto.getPlatformOrderNo());
+			List<SoB2cEntity> soB2CList = soB2cFeign.getSoB2cByPlatformCode(dto.getPlatformOrderNo());
 			if (!soInfoList.isEmpty()) {
 				soInfoEntity = soInfoList.get(0);
 			}
