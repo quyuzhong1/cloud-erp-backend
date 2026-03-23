@@ -480,7 +480,7 @@ public interface SoB2cFeign {
      * 根据第三方仓发货订单id查询B2C销售订单
      */
     @GetMapping("/feign/soB2c/getByShippingOrderNo")
-    List<SoB2cEntity> getByShippingOrderNo(@RequestParam("platformCode") String shippingOrderNo);
+    List<SoB2cEntity> getByShippingOrderNo(@RequestParam("shippingOrderNo") String shippingOrderNo);
 
     /**
      * 根据平台单号查询B2C销售订单
