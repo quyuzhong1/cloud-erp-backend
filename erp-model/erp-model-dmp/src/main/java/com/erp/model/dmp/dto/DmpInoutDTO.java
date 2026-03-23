@@ -122,6 +122,11 @@ public class DmpInoutDTO implements Serializable {
          * 业务类型
          */
         private String billType;
+
+        /**
+         * 执行系统
+         */
+        private String execSystem;
     }
 
 
