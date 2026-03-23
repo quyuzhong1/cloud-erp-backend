@@ -162,6 +162,8 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
 
     List<QcNoticeDTO.QcInfoView> generateQcInfoView(List<String> ids);
 
+    List<QcNoticeDTO.QcInfoView> generateQcInfoFullView(QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO);
+
     void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto);
 
     int getHoursDiff(LocalDateTime approveTime, LocalDateTime nowTime);

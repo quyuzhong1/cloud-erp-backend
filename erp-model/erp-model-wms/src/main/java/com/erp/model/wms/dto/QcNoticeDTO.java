@@ -273,8 +273,40 @@ public class QcNoticeDTO implements Serializable {
          */
         private LocalDateTime putawayDate;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
 
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
 
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单编码
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
     }
 
     /**
@@ -366,6 +398,36 @@ public class QcNoticeDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
         private List<QcNoticeDetailDTO.ViewDTO> detailList;
 
 
@@ -390,9 +452,25 @@ public class QcNoticeDTO implements Serializable {
          */
         private String code;
         /**
-         *
+         * 质检单号
+         */
+        private String qcBillCode;
+        /**
+         * 质检类型
          */
         private String qcType;
+        /**
+         * 质检类型
+         */
+        private String qcTypeName;
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
         /**
          *
          */
@@ -413,6 +491,10 @@ public class QcNoticeDTO implements Serializable {
          * 质检通知数量
          */
         private Integer qcNoticeQty;
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
         /**
          * 质检数量
          */
@@ -458,6 +540,144 @@ public class QcNoticeDTO implements Serializable {
         private List<String> attachNameList;
         private List<String> attachUrlList;
 
+        /**
+         * 检验结果 QcResultEnum
+         */
+        private String qcResult;
+        /**
+         * 检验结果名称
+         */
+        private String qcResultName;
+        /**
+         * 批次合格量
+         */
+        private Integer lotQualifiedQty;
+
+        /**
+         * 质检标准
+         */
+        private QcStandardView qcStandardViewList;
+
+        /**
+         * 缺陷信息
+         */
+        private List<DefectView> defectViewList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcStandardView{
+
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 附件url
+         */
+        private String attachUrl;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemView>  qcInspectItemViewDTOList;
+
+        /**
+         * 参考图片
+         */
+        private List<QcImageView>  qcImageViewDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DefectView{
+        /**
+         * 缺陷等级,枚举接口待定
+         */
+        private String defectLevl;
+        /**
+         * 缺陷数量
+         */
+        private String defectQty;
+        /**
+         * 问题属性
+         */
+        private String issueProperty;
+        /**
+         * 缺陷描述
+         */
+        private String defectDesc;
+        /**
+         * 不良图片url
+         */
+        private String imageUrl;
+
+        /**
+         * 不良图片名称
+         */
+        private String imageName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInspectItemView{
+
+        /**
+         * 质检项目
+         */
+        private String inspectItem;
+
+        /**
+         * 质检要求
+         */
+        private String inspectRequirement;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcImageView{
+
+        /**
+         * 图片类型
+         */
+        private String imageType;
+
+        /**
+         *
+         */
+        private String imageUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcNoticeParamDTO{
+
+        /**
+         * 质检通知单号
+         */
+        @NotBlank(message = "质检通知单号不允许为空")
+        private String qcNoticeCode;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不允许为空")
+        private String skuId;
     }
 
     /**
@@ -552,4 +772,72 @@ public class QcNoticeDTO implements Serializable {
         private String remark;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class QcStandardAddDTO{
+
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 附件url
+         */
+        private String attachUrl;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemAddDTO>  qcInspectItemAddDTOList;
+
+        /**
+         * 参考图片
+         */
+        private List<QcImageAddDTO>  qcImageAddDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInspectItemAddDTO{
+
+        /**
+         * 质检项目
+         */
+        private String inspectItem;
+
+        /**
+         * 质检要求
+         */
+        private String inspectRequirement;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcImageAddDTO{
+
+        /**
+         * 图片类型
+         */
+        private String imageType;
+
+        /**
+         *
+         */
+        private String imageUrl;
+    }
 }
