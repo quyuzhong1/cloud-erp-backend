@@ -131,4 +131,10 @@ public interface SoInfoFeign {
      */
     @PostMapping("feign/soInfo/getB2bThirdDeliveryView")
     B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto);
+
+    /**
+     * 根据平台订单号获取订单
+     */
+    @PostMapping("feign/soInfo/getByPlatformOrderCode")
+    List<SoInfoEntity> getByPlatformOrderCode(@RequestBody String platformCode);
 }

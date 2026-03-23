@@ -255,4 +255,12 @@ public class SoInfoFeignController extends BaseController {
     public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto){
         return soInfoService.getB2bThirdDeliveryView(dto);
     }
+
+    /**
+     * 根据平台订单号获取订单
+     */
+    @PostMapping("feign/soInfo/getByPlatformOrderCode")
+    List<SoInfoEntity> getByPlatformOrderCode(@RequestBody String platformCode){
+        return soInfoService.getByPlatformOrderCode(platformCode);
+    }
 }

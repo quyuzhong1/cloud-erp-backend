@@ -680,6 +680,17 @@ public class SoB2cFeignController extends BaseController {
      * @date 2024-03-07
      * @author Jim
      */
+    @GetMapping("/getByPlatformCode")
+    public List<SoB2cEntity> getByPlatformCode(@RequestParam("platformCode") String platformCode){
+        return soB2cService.getByPlatformCode(platformCode);
+    }
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
     @PostMapping("/updateById")
     public Boolean updateById(@RequestBody SoB2cEntity soB2cEntity) {
         return soB2cService.updateById(soB2cEntity);
