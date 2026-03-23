@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -122,7 +124,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			return;
 		}
 		SoB2cReturnEntity soB2cReturnEntity = this.buildReturn(dto,soB2cEntity);
-		List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = this.buildRefundDetail(dto,soB2cDetailEntityList);
+		List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = this.buildRefundDetail(dto, soB2cDetailEntityList, soB2cEntity);
 		soB2cReturnService.addByPlatform(soB2cReturnEntity,soB2cReturnDetailEntityList);
 
 		//关联销售退货入库单
@@ -172,21 +174,53 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		}
 	}
 
-	private List<SoB2cReturnDetailEntity> buildRefundDetail(PlatformReturnOrderDTO dto, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+	private List<SoB2cReturnDetailEntity> buildRefundDetail(PlatformReturnOrderDTO dto,
+			List<SoB2cDetailEntity> soB2cDetailEntityList,
+			SoB2cEntity soB2cEntity) {
 		List<SoB2cReturnDetailEntity> list = new ArrayList<>();
+		String shopId = Objects.nonNull(soB2cEntity) ? soB2cEntity.getShopId() : dto.getShopId();
 		for (PlatformReturnOrderDTO.Detail detail : dto.getDetailList()) {
 			SoB2cReturnDetailEntity refundOrderDetailEntity = new SoB2cReturnDetailEntity();
-			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(detail.getPlatformSkuNo())).findFirst().orElse(new SoB2cDetailEntity());
-			refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
-			refundOrderDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
 			refundOrderDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
-			refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
 			refundOrderDetailEntity.setReturnQty(detail.getReturnQty());
 			refundOrderDetailEntity.setRemark(detail.getRemark());
-			refundOrderDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
+			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+					.filter(v -> Objects.equals(v.getPlatformSkuNo(), detail.getPlatformSkuNo()))
+					.findFirst()
+					.orElse(null);
+			if (Objects.nonNull(soB2cDetailEntity)) {
+				refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
+				refundOrderDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
+				refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
+				refundOrderDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
+			} else {
+				ListingInfoWithSkuMappingDTO mappingDTO = resolveMappingByPlatformSku(detail.getPlatformSkuNo(), dto.getDictPlatform(), shopId);
+				if (Objects.nonNull(mappingDTO)) {
+					refundOrderDetailEntity.setSkuId(mappingDTO.getProductSkuId());
+					refundOrderDetailEntity.setSkuNo(mappingDTO.getProductSkuNo());
+				}
+			}
 			list.add(refundOrderDetailEntity);
 		}
 		return list;
+	}
+
+	private ListingInfoWithSkuMappingDTO resolveMappingByPlatformSku(String platformSkuNo, String dictPlatform, String shopId) {
+		if (StringUtils.isBlank(platformSkuNo) || StringUtils.isBlank(dictPlatform) || StringUtils.isBlank(shopId)) {
+			return null;
+		}
+		List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService
+				.mapListingByPlatformSkuNo(Collections.singletonList(platformSkuNo),
+						Collections.emptyList(),
+						dictPlatform,
+						shopId,
+						null,
+						null)
+				.get(platformSkuNo);
+		if (CollectionUtils.isEmpty(mappingDTOList)) {
+			return null;
+		}
+		return skuMappingService.checkAndMappingDTO(mappingDTOList, null, dictPlatform, platformSkuNo);
 	}
 
 	private SoB2cReturnEntity buildReturn(PlatformReturnOrderDTO dto, SoB2cEntity soB2cEntity) {
