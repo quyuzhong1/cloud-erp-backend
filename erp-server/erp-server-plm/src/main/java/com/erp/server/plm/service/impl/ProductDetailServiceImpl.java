@@ -335,6 +335,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductRefBuService productRefBuService;
+    
+    @Resource
+    private SkuStdRetailPriceService skuStdRetailPriceService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -670,6 +673,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.listBySkuId(skuId);
         productNoSpecDetailAllDTO.setProductCostShowDTOList(costShowDTOList);
+        productNoSpecDetailAllDTO.setProductRetailPriceShowDTOList(this.getProductRetailPriceShowDTOList(Arrays.asList(productDetailEntity)));
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.listBySkuId(skuId);
         if (CollUtil.isNotEmpty(purchaseShowDTOList)) {
@@ -865,8 +869,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> costDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_COST_SHOW_LIST, skuFiledConfigList);
             costShow.setDisableFieldList(costDisableFields);
         }
-
+        
         productManyDetail.setProductCostShowDTOList(costShowDTOList);
+        
+        productManyDetail.setProductRetailPriceShowDTOList(this.getProductRetailPriceShowDTOList(list));
+        
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -1034,7 +1041,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return productManyDetail;
     }
 
-
+    private List<ProductRetailPriceShowDTO> getProductRetailPriceShowDTOList(List<ProductDetailEntity> list) {
+    	List<ProductRetailPriceShowDTO> productRetailPriceShowDTOList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(list)) {
+        	Map<String, ProductDetailEntity> idProductMaps = list.stream().collect(Collectors.toMap(ProductDetailEntity::getId, p -> p));
+			List<SkuStdRetailPriceEntity> skuStdRetailPriceEntityList = skuStdRetailPriceService.lambdaQuery()
+        		.in(SkuStdRetailPriceEntity::getSkuId, idProductMaps.keySet())
+        		.orderByAsc(SkuStdRetailPriceEntity::getSkuId)
+        		.orderByAsc(SkuStdRetailPriceEntity::getCurrency)
+        		.list();
+			if(CollUtil.isNotEmpty(skuStdRetailPriceEntityList)) {
+				for(SkuStdRetailPriceEntity skuStdRetailPriceEntity : skuStdRetailPriceEntityList) {
+					ProductRetailPriceShowDTO productRetailPriceShowDTO = BeanUtil.copyProperties(skuStdRetailPriceEntity, ProductRetailPriceShowDTO.class);
+					ProductDetailEntity productDetailEntity = idProductMaps.get(skuStdRetailPriceEntity.getSkuId());
+					productRetailPriceShowDTO.setSkuNo(productDetailEntity.getSkuNo());
+					productRetailPriceShowDTO.setImagesUrl(productDetailEntity.getImagesUrl());
+					productRetailPriceShowDTO.setVatRateStr(productRetailPriceShowDTO.getVatRate() + "%");
+					productRetailPriceShowDTOList.add(productRetailPriceShowDTO);
+				}
+			}
+        }
+        return productRetailPriceShowDTOList;
+    }
     /**
      * 根据skuid  以及查询对应的任务字段关系
      *
@@ -4960,8 +4988,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
-        //已存在数据
-        skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+    	Boolean isNotPass = skuParamDTO.getIsNotPass();
+        if(isNotPass != null && isNotPass) {
+        	skuParamDTO.setStatusList(new ArrayList<>());
+        }else {
+        	//已存在数据
+            skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        }
         List<String> saleMethodList = skuParamDTO.getSaleMethodList();
         List<String> saleMethodParams = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(saleMethodList)) {

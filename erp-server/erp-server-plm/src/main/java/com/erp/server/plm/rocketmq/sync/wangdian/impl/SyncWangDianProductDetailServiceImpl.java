@@ -65,6 +65,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     private BasicDictService basicDictService;
     @Resource
     private BasicCategoryService basicCategoryService;
+    @Resource
+    private SkuStdRetailPriceService skuStdRetailPriceService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -104,6 +106,11 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         specList.setWidth(LengthConverterUtil.mmToCm(productPack.getProductWidth()));
         specList.setHeight(LengthConverterUtil.mmToCm(productPack.getProductHeight()));
         specList.setImgUrl(entity.getImagesUrl());
+        
+        List<SkuStdRetailPriceEntity> skuStdRetailPriceEntityList = skuStdRetailPriceService.lambdaQuery().eq(SkuStdRetailPriceEntity::getSkuId, entity.getId()).eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list();
+        if(CollUtil.isNotEmpty(skuStdRetailPriceEntityList)) {
+        	specList.setRetailPrice(skuStdRetailPriceEntityList.get(0).getStdRetailPriceVat());
+        }
 //        specList.setUnitName(entity.getUnitName());
 //        if (Objects.nonNull(productLogistics) && StringUtils.isNotBlank(productLogistics.getProductPropertyId())) {
 //            String[] split = productLogistics.getProductPropertyId().split(",");
