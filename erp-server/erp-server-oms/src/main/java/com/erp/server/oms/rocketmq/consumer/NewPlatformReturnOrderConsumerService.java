@@ -189,11 +189,16 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 					.findFirst()
 					.orElse(null);
 			if (Objects.nonNull(soB2cDetailEntity)) {
-				refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
-				refundOrderDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
 				refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
 				refundOrderDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
-			} else {
+				if (StringUtils.isNotBlank(soB2cDetailEntity.getSkuId())
+						|| StringUtils.isNotBlank(soB2cDetailEntity.getSkuNo())) {
+					refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
+					refundOrderDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
+				}
+			}
+			if (StringUtils.isBlank(refundOrderDetailEntity.getSkuId())
+					&& StringUtils.isBlank(refundOrderDetailEntity.getSkuNo())) {
 				ListingInfoWithSkuMappingDTO mappingDTO = resolveMappingByPlatformSku(detail.getPlatformSkuNo(), dto.getDictPlatform(), shopId);
 				if (Objects.nonNull(mappingDTO)) {
 					refundOrderDetailEntity.setSkuId(mappingDTO.getProductSkuId());
