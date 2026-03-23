@@ -9179,6 +9179,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public List<SoB2cEntity> getByShippingOrderNo(String shippingOrderNo) {
+        if (StringUtils.isBlank(shippingOrderNo)) {
+            return new ArrayList<>();
+        }
+        return lambdaQuery().eq(SoB2cEntity::getShippingOrderNo, shippingOrderNo).list();
+    }
+
+    @Override
     public List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = listByIds(ids);
         //订单更换发货SKU操作只能在待提交和审核不通过状态操作
