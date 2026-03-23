@@ -374,7 +374,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 return failure(imlQueryOutboundRespImlBaseResp.getMessage());
             }
         }
-        return failure("ERP功能暂不支持");
+        return success(responseList);
     }
 
     @Override

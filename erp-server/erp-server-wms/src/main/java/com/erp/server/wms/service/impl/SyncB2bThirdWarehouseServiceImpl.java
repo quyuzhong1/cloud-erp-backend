@@ -126,6 +126,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
         req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null);
+        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? attachmentList.get(0).getAttachName() : null);
         List<LogisticsChannelEntity> list = logisticsFeign.getChannelByCode(req.getChannelCode());
         if(CollUtil.isNotEmpty(list)){
             LogisticsChannelEntity logisticsChannelEntity = list.get(0);
