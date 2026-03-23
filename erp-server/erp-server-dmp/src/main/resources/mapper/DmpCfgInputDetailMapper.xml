@@ -73,7 +73,8 @@
             dcid.id,
             dcid.next_level_id,
             dcid.main_id,
-            dci.bill_type
+            dci.bill_type,
+            dci.exec_system
     </select>
 
     <!-- 查询配置明细信息 -->

@@ -8,6 +8,7 @@ import com.erp.model.dmp.entity.DmpFbtShipmentEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -61,6 +62,7 @@ public class FbtShipmentDetailDmpHandler extends DmpInputBaseDmpHandler {
                 }
                 Map<String, Object> plannedGood = (Map<String, Object>) plannedGoodObj;
                 Map<String, Object> detailRow = new LinkedHashMap<>();
+                detailRow.put(DmpInputMongoHandler.MONGO_BASE_ID, mongoRow.get(DmpInputMongoHandler.MONGO_BASE_ID));
                 detailRow.put("mainId", mainId);
                 detailRow.put("nextLevelId", authId);
                 detailRow.put("inboundOrderId", inboundOrderId);
