@@ -188,11 +188,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
      */
     private void sendB2bThirdWarehousePushTask(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
         entity = this.getById(entity.getId());
-        if (Objects.isNull(entity.getIsApiDelivery()) || !entity.getIsApiDelivery()) {
+        if (!isApiPushDelivery(entity)) {
             return;
         }
         //推送本地消息表
         DmpPushTaskEntity pushTaskEntity = syncB2bThirdWarehouseService.syncB2bThirdWarehouse(entity, detailEntityList, operate);
+        if (Objects.isNull(pushTaskEntity)) {
+            log.info("B2B三方发货单走本地消息模式，无需发送中台任务, code={}, operate={}", entity.getCode(), operate);
+            return;
+        }
         //推送中台
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -544,7 +548,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (!ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED);
         }
-        if (entity.getIsApiDelivery()) {
+        if (isApiPushDelivery(entity)) {
             createB2bDeliveryIntercept(entity, remark, Boolean.TRUE);
             //调三方仓
             sendB2bThirdWarehousePushTask(entity, null, SyncOperateEnum.OPERATE_INVALID.getCode());
@@ -560,7 +564,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     @Override
     public BatchResultDTO manualDelivery(B2bThirdDeliveryEntity entity) {
-        if (entity.getIsApiDelivery()) {
+        if (isApiPushDelivery(entity)) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED);
         }
         if (!ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())) {
@@ -1003,6 +1007,16 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     private boolean isFieldValueChanged(String oldValue, String newValue) {
         return CharSequenceUtil.isNotBlank(newValue) && !Objects.equals(oldValue, newValue);
+    }
+
+    private boolean isApiPushDelivery(B2bThirdDeliveryEntity entity) {
+        if (Objects.isNull(entity)) {
+            return false;
+        }
+        if (CharSequenceUtil.isNotBlank(entity.getPushType())) {
+            return Objects.equals(B2BDeliveryPushTypeEnum.API.getCode(), entity.getPushType());
+        }
+        return Boolean.TRUE.equals(entity.getIsApiDelivery());
     }
 
     private void createB2bDeliveryIntercept(B2bThirdDeliveryEntity entity, String remark, Boolean isApiType) {
