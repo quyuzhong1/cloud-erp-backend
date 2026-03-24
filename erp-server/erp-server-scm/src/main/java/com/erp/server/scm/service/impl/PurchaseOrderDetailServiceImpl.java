@@ -10,11 +10,13 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -784,6 +786,21 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             return Collections.emptyList();
         }
         return baseMapper.listAdjustPurchaseOrder(adjustParamList);
+    }
+
+    @Override
+    public PagingVO<PurchaseOrderDetailDTO.ListPushProductDTO> pagingPushProduct(PagingDTO<PurchaseOrderDetailDTO.ListPushProductParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<PurchaseOrderDetailDTO.SkuQuickPasteDTO> listSourceSkuQuickPaste(PurchaseOrderDetailDTO.SkuQuickPasteParamDTO dto) {
+        return Collections.emptyList();
     }
 
     /**

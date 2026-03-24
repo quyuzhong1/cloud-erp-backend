@@ -1,38 +1,37 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.QcApplicationDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcApplicationDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_QC_APPLICATION_DETAIL;
+
 
 /**
  * <p>
@@ -48,135 +47,122 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(QcApplicationDetailDTO.AddDTO addDTO) {
-        QcApplicationDetailEntity qcApplicationDetailEntity = new QcApplicationDetailEntity();
-        BeanMapperUtils.copy(addDTO, qcApplicationDetailEntity);
+    public Boolean add(List<QcApplicationDetailDTO.AddDTO> detailList, String mainId,String sourceId) {
+        List<QcApplicationDetailEntity> qcApplicationDetailList = BeanUtil.copyToList(detailList, QcApplicationDetailEntity.class);
 
         // 数据处理
-        handleData(qcApplicationDetailEntity);
+        handleData(qcApplicationDetailList,mainId,sourceId);
 
         log.info("开始新增质检申请单明细单");
-        boolean save = super.save(qcApplicationDetailEntity);
+        boolean save = super.saveBatch(qcApplicationDetailList);
         if(!save) {
             throw new ServiceException("质检申请单明细单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "质检申请单明细单" , qcApplicationDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, qcApplicationDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(qcApplicationDetailEntity.getId(), qcApplicationDetailEntity.getId());
+        return Boolean.TRUE;
     }
 
     /**
     * 修改
     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(QcApplicationDetailDTO.UpdateDTO addOrUpdateDTO) {
-        QcApplicationDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检申请单明细单"));
-        QcApplicationDetailEntity qcApplicationDetailEntity =  BeanMapperUtils.map(QcApplicationDetailEntity.class, addOrUpdateDTO);
+    public Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, String mainId,String sourceId) {
+        if (CollUtil.isNotEmpty(detailList)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
+        }
+        List<QcApplicationDetailEntity> qcApplicationDetailList = BeanUtil.copyToList(detailList, QcApplicationDetailEntity.class);
+
+        //原明细数据
+        List<QcApplicationDetailEntity> oldList = this.listByMainId(mainId);
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<QcApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.QC_APPLICATION.getCode(),pairList,"编辑操作");
+            List<QcApplicationDetailEntity> list = lambdaQuery().in(QcApplicationDetailEntity::getMainId, deleteIds).list();
+            list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+            this.removeByIds(deleteIds);
+        }
 
         // 数据处理
-        handleData(qcApplicationDetailEntity);
-        log.info("编辑 开始修改质检申请单明细单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(qcApplicationDetailEntity);
+        handleData(qcApplicationDetailList,mainId,sourceId);
+        log.info("编辑 开始修改质检申请单明细单数据，id：【{}】", mainId);
+        boolean save = super.updateBatchById(qcApplicationDetailList);
         if(!save) {
             throw new ServiceException("质检申请单明细单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录质检申请单明细单日志数据，id：【{}】", qcApplicationDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), qcApplicationDetailEntity.getId(), "质检申请单明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, qcApplicationDetailEntity, null, qcApplicationDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
-
     @Override
-    public PagingVO<QcApplicationDetailDTO.ListDTO> paging(PagingDTO<QcApplicationDetailDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<QcApplicationDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
-        }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("质检申请明细导入", IMPORT_WMS_QC_APPLICATION_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
     }
 
     @Override
-    public List<QcApplicationDetailDTO.TabListDTO> tabList(PermissionsDTO param) {
-        QcApplicationDetailDTO.PagingParamDTO searchParam = new QcApplicationDetailDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<QcApplicationDetailDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(QcApplicationDetailDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new QcApplicationDetailDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new QcApplicationDetailDTO.TabListDTO("all", list.stream().mapToInt(QcApplicationDetailDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+    public List<QcApplicationDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery().eq(QcApplicationDetailEntity::getMainId, mainId).list();
     }
 
-    @Override
-    public void exportList(QcApplicationDetailDTO.ExportDTO param, HttpServletResponse response) {
-        List<QcApplicationDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/qcApplicationDetail.xlsx";
-        String name = "质检申请单明细单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<QcApplicationDetailDTO.UpdateDTO> newList, List<QcApplicationDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(QcApplicationDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(QcApplicationDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
+
     /**
     * 新增修改处理数据
     */
-    private void handleData(QcApplicationDetailEntity qcApplicationDetailEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
-
-    @Override
-    public QcApplicationDetailDTO.ViewDTO view(String id) {
-    QcApplicationDetailEntity qcApplicationDetailEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到质检申请单明细单数据"));
-    QcApplicationDetailDTO.ViewDTO data = BeanMapperUtils.map(QcApplicationDetailDTO.ViewDTO.class, qcApplicationDetailEntity);
-    // 数据填充处理
-    fillOne(data);
-    // TODO 查询明细数据（如果有的话）
-    return data;
-    }
-
-    private void fillOne(QcApplicationDetailDTO.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
-          return;
+    private void handleData(List<QcApplicationDetailEntity> qcApplicationDetailList,String mainId,String sourceId) {
+        if (CollUtil.isEmpty(qcApplicationDetailList)) {
+            return;
         }
+
+        //添加操作日志
+        List<QcApplicationDetailEntity> addList = qcApplicationDetailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        //新增不需要添加新增SKU的日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "编辑操作");
+        }
+
+
+        //查询来源采购订单数据
+        PurchaseOrderSupplierEntity poSupplierEntity = CharSequenceUtil.isBlank(sourceId) ? new PurchaseOrderSupplierEntity() : FeignQuery.getById(PurchaseOrderSupplierEntity.class, sourceId);
+
+        for (QcApplicationDetailEntity data : qcApplicationDetailList) {
+               //校验供应商信息
+                if (CharSequenceUtil.isNotBlank(data.getSupplierId()) && !CharSequenceUtil.equals(data.getSupplierId(),poSupplierEntity.getSupplierId())) {
+                    throw new ServiceException(ApiError.QC_APPLICATION_SUPPLIER_NOT_DIFF);
+                }
+                //校验申请质检数量 TODO
+
+
+            //操作日志
+            if (StringUtils.isNotBlank(data.getId())) {
+                QcApplicationDetailEntity old = this.getById(data.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
+                }
+                operateLogService.addModuleOperateLogByObj(old,data, ModuleTypeEnum.QC_APPLICATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
+
+
     }
 
    /**

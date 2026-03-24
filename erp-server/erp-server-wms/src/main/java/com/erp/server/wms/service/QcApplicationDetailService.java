@@ -1,11 +1,10 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.QcApplicationDetailEntity;
+
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.ApproveDTO;
-import javax.servlet.http.HttpServletResponse;
+import com.erp.model.wms.entity.QcApplicationDetailEntity;
+
 import java.util.List;
 
 /**
@@ -22,56 +21,35 @@ public interface QcApplicationDetailService extends SuperService<QcApplicationDe
     * 新增
     * @author will
     * @date: 2026-03-20
-    * @param dto
-    * @return
+    * @param detailList
+    * @return BaseResultDTO.AddDTO
     */
-    BaseResultDTO.AddDTO add(QcApplicationDetailDTO.AddDTO dto);
+    Boolean add(List<QcApplicationDetailDTO.AddDTO> detailList, String mainId,String sourceId);
 
     /**
     * 修改
     * @author will
     * @date: 2026-03-20
-    * @param dto
-    * @return
+    * @param detailList
+    * @return Boolean
     */
-    Boolean update(QcApplicationDetailDTO.UpdateDTO dto);
-
+    Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, String mainId,String sourceId);
 
     /**
-    * 分页列表查询
-    * @author will
-    * @date: 2026-03-20
-    * @param pagingParamDTO
-    * @return PagingVO<QcApplicationDetailDTO.ListDTO>>
-    */
-    PagingVO<QcApplicationDetailDTO.ListDTO> paging(PagingDTO<QcApplicationDetailDTO.PagingParamDTO> pagingParamDTO);
+     * 导入excel
+     * @author will
+     * @date 2026/3/23 11:34
+     * @param  dto
+     * @return  Boolean
+     */
+    Boolean importExcel(BaseDTO.ImportDTO dto);
 
     /**
-    * 状态统计
-    * @author will
-    * @date: 2026-03-20
-    * @param dto
-    * @return List<QcApplicationDetailDTO.TabListDTO>>
-    */
-    List<QcApplicationDetailDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
-    * 详情
-    * @author will
-    * @date: 2026-03-20
-    * @param id
-    * @return
-    */
-    QcApplicationDetailDTO.ViewDTO view(String id);
-
-
-    /**
-    * 导出Excel
-    * @author will
-    * @date: 2026-03-20
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(QcApplicationDetailDTO.ExportDTO dto, HttpServletResponse response);
+     * 根据主表id查询明细列表
+     * @author will
+     * @date 2026/3/23 11:35
+     * @param  mainId
+     * @return  List<QcApplicationDetailEntity>
+     */
+    List<QcApplicationDetailEntity> listByMainId(String mainId);
 }

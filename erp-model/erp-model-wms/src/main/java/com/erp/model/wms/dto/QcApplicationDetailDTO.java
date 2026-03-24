@@ -175,7 +175,14 @@ public class QcApplicationDetailDTO implements Serializable {
         * sku编码
         */
         private String skuNo;
-
+        /**
+         * ean编码
+         */
+        private String ean;
+        /**
+         * 产品名称
+         */
+        private String productName;
         /**
         * 质检申请数量
         */
@@ -185,6 +192,10 @@ public class QcApplicationDetailDTO implements Serializable {
         * 供应商id
         */
         private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
         * 来源明细id

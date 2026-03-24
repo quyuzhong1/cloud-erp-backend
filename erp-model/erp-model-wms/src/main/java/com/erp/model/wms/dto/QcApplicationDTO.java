@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -124,12 +125,12 @@ public class QcApplicationDTO implements Serializable {
         /**
         * 质检类型
         */
-        private String type;
+        private String qcType;
 
         /**
          * 质检类型名称
          */
-        private String typeName;
+        private String qcTypeName;
 
         /**
         * 仓库id
@@ -209,7 +210,7 @@ public class QcApplicationDTO implements Serializable {
         /**
         * 期望质检日期
         */
-        private LocalDate planDate;
+        private LocalDate planQcDate;
 
         /**
         * 备注
@@ -279,19 +280,14 @@ public class QcApplicationDTO implements Serializable {
         private String approveStatus;
 
         /**
-        * 审核完成人id
-        */
-        private String approveUserId;
-
-        /**
-        * 审核完成时间
-        */
-        private LocalDate approveTime;
-
-        /**
         * 质检类型
         */
-        private String type;
+        private String qcType;
+
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
 
         /**
         * 仓库id
@@ -299,16 +295,24 @@ public class QcApplicationDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
         * 期望质检日期
         */
-        private LocalDate planDate;
+        private LocalDate planQcDate;
 
         /**
         * 备注
         */
         private String remark;
 
-
+        /**
+         * 明细数据
+         */
+        private List<QcApplicationDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -372,7 +376,7 @@ public class QcApplicationDTO implements Serializable {
         */
         @NotBlank(message = "质检类型不能为空")
         @Size(max = 32,message = "质检类型最大长度不能超过32位")
-        private String type;
+        private String qcType;
 
         /**
         * 仓库id
@@ -384,7 +388,7 @@ public class QcApplicationDTO implements Serializable {
         /**
         * 期望质检日期
         */
-        private LocalDate planDate;
+        private LocalDate planQcDate;
 
         /**
         * 备注
@@ -394,5 +398,63 @@ public class QcApplicationDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListPushQcNoticeDTO {
+        /**
+         * 质检申请单号
+         */
+        private String code;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 质检类型
+         */
+        private String qcType;
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class GenerateQcNoticeDTO {
+        /**
+         * 采购订单id
+         */
+        @NotBlank(message = "采购订单id不能为空")
+        private String poId;
+
+        /**
+         * 采购订单明细id
+         */
+        @NotBlank(message = "采购订单明细id不能为空")
+        private String podId;
+
+        /**
+         * 质检申请数量
+         */
+        @NotNull(message = "质检申请数量不能为空")
+        private Integer qty;
+
+        /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
+    }
 }

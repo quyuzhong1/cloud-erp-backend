@@ -431,4 +431,13 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/exportAwdInventory")
     PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto);
 
+    /**
+     * 质检申请单导出
+     * @author will
+     * @date 2026/3/24 10:41
+     * @param dto
+     * @return  QcApplicationDTO.ListDTO
+     */
+    @PostMapping("/feign/export/exportQcApplication")
+    PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(PagingDTO<QcApplicationDTO.PagingParamDTO> dto);
 }

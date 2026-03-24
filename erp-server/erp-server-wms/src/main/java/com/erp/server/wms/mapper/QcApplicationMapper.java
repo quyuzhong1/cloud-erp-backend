@@ -37,13 +37,6 @@ public interface QcApplicationMapper extends BaseMapper<QcApplicationEntity> {
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") QcApplicationDTO.PagingParamDTO params);
 
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<QcApplicationDTO.ListDTO> listExport(@Param("params") QcApplicationDTO.ExportDTO params);
-
 
     /**
     * 获取状态统计

@@ -1749,6 +1749,14 @@ public enum ApiError implements Serializable {
      */
     DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH(15500,"发货建议【{0}】未完成，不支持下推"),
     DELIVERY_SUGGESTION_INVALID_FORBIDDEN(15501,"发货建议【{0}】已作废，不支持下推"),
+
+
+    /**
+     * 质检申请 错误 信息 16000-16500
+      */
+    QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
+    QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
+    QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致")
     ;
     @Getter
     private final Integer code;

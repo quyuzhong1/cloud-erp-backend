@@ -1,11 +1,13 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.QcApplicationEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.QcApplicationDTO;
-import com.common.business.vo.PagingVO;
+
 import com.common.business.dto.ApproveDTO;
-import javax.servlet.http.HttpServletResponse;
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.QcApplicationDTO;
+import com.erp.model.wms.entity.QcApplicationEntity;
+
 import java.util.List;
 
 /**
@@ -122,8 +124,23 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
     * @author will
     * @date: 2026-03-20
     * @param dto
-    * @param response
     * @return
     */
-    void exportList(QcApplicationDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportList(QcApplicationDTO.PagingParamDTO dto);
+    /**
+     *  下推质检通知数据回显
+     * @author will
+     * @date 2026/3/23 12:25
+     * @param ids
+     * @return  List<QcApplicationDTO.ListPushQcNoticeDTO>
+     */
+    List<QcApplicationDTO.ListPushQcNoticeDTO> listPushQcNotice( List<String> ids);
+    /**
+     *  下推质检通知保存
+     * @author will
+     * @date 2026/3/23 12:25
+     * @param list
+     * @return  Boolean
+     */
+    Boolean generateQcNotice(ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list);
 }
