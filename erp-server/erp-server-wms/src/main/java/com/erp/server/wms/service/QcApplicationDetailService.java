@@ -61,4 +61,12 @@ public interface QcApplicationDetailService extends SuperService<QcApplicationDe
      * @param errorList 导入失败的数据列表
      */
     List<QcApplicationDetailDTO.ImportResultDTO> handleImportSuccessList(List<QcApplicationImportExcelDTO> successList, List<QcApplicationImportExcelDTO> errorList,String sourceId);
+    /**
+     * 根据主表id删除明细数据
+     * @author will
+     * @date 2026/3/23 11:36
+     * @param  mainId
+     * @return  void
+     */
+    void removeByMainId(String mainId);
 }

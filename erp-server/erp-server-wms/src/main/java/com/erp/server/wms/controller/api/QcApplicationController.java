@@ -370,8 +370,8 @@ public class QcApplicationController extends BaseController {
      * @return QcApplicationDTO.ListPushQcNoticeDTO
      */
     @PostMapping("/generatePoRefQcApplication")
-    public ApiResult<Object> generatePoRefQcApplication(@RequestBody @Validated ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
-        return success(qcApplicationService.generateQcNotice(list));
+    public ApiResult<Object> generatePoRefQcApplication(@RequestBody @Validated ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list) {
+        return success(qcApplicationService.generatePoRefQcApplication(list));
     }
 
 }

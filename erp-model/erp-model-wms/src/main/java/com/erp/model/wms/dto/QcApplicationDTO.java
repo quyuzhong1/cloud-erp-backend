@@ -1,8 +1,10 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,10 +47,32 @@ public class QcApplicationDTO implements Serializable {
          private String tabFlag;
 
          /**
+          * 类型名称
+          */
+         private String tabFlagName;
+
+         /**
          * 数量
          */
          private Integer count;
 
+
+         public TabListDTO(String tabFlag, Integer count) {
+             this.tabFlag = tabFlag;
+             this.count = count;
+         }
+
+         /**
+          * 获取tab名称
+          */
+         private void getTabFlagName() {
+             String name = ApproveStatusEnum.getName(tabFlag);
+            if (CharSequenceUtil.isBlank(name)) {
+                tabFlagName = "全部";
+            } else {
+                tabFlagName = name;
+            }
+         }
      }
 
 
@@ -459,6 +483,32 @@ public class QcApplicationDTO implements Serializable {
          * 质检申请数量
          */
         @NotNull(message = "质检申请数量不能为空")
+        private Integer qty;
+
+        /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class GeneratePoRefQcApplicationDTO {
+        /**
+         * 采购订单id
+         */
+        @NotBlank(message = "采购订单id不能为空")
+        private String poId;
+        /**
+         * 采购订单明细id
+         */
+        @NotBlank(message = "采购订单明细id不能为空")
+        private String podId;
+        /**
+         * 数量
+         */
+        @NotNull(message = "数量不能为空")
         private Integer qty;
 
         /**

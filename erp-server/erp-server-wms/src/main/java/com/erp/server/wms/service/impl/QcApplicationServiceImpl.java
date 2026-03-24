@@ -183,6 +183,16 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         return null;
     }
 
+    @Override
+    public Boolean generatePoRefQcApplication(ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> generate = list.getList();
+
+        return null;
+    }
+
 
     @Override
     public List<QcApplicationDTO.ListPushQcNoticeDTO> listPushQcNotice(List<String> ids) {
@@ -297,6 +307,11 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         // 删除主单数据
         log.info("删除 开始删除质检申请单主单主单数据，id：【{}】", id);
         super.removeById(id);
+
+        //删除明细数据
+        log.info("删除 开始删除质检申请单主单明细数据，id：【{}】", id);
+        qcApplicationDetailService.removeByMainId(id);
+
         // 删除日志数据
         log.info("删除 开始删除质检申请单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检申请单主单");
@@ -331,6 +346,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.QC_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
