@@ -57,6 +57,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -501,7 +502,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             if(platformWarehouseCodeNotExist){
                 addRetryPlatformOutboundError(mainEntity.getId(), dto, "自动生成销售出库单失败：三方仓代码warehouseCode为空");
                 continue;
-            }else if(overseasProviderNotExist){
+            }else if(overseasProviderNotExist || Objects.isNull(overseasWarehouse)){
                 addRetryPlatformOutboundError(mainEntity.getId(), dto, "自动生成销售出库单失败：三方仓库未映射");
                 continue;
             } else if (Objects.nonNull(skuValidationContext) && !skuValidationContext.getSuccess()) {
@@ -533,7 +534,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
             //4.更新B2C销售订单和明细
             SoB2cDTO.B2cByPlatformOutboundDTO updateDto = new SoB2cDTO.B2cByPlatformOutboundDTO();
-            updateDto.setSoOutstockDate(dto.getOutBoundTime().toLocalDate());
+            LocalDateTime outBoundTime = dto.getOutBoundTime();
+            if (Objects.nonNull(outBoundTime)) {
+                updateDto.setSoOutstockDate(outBoundTime.toLocalDate());
+            }
             updateDto.setWarehouseId(overseasWarehouse.getWarehouseId());
             updateDto.setWarehouseName(overseasWarehouse.getWarehouseName());
             if(Objects.nonNull(warehouseEntity)){
@@ -605,9 +609,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         paramDTO.setIsExpire(false);
         paramDTO.setPlatformSkuNoList(new ArrayList<>(payload.getProductSkuList()));
         List<ListingInfoWithSkuMappingDTO> mappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        if (CollUtil.isEmpty(mappingList)) {
+            mappingList = Collections.emptyList();
+        }
         List<ListingInfoWithSkuMappingDTO> effectiveMappingList = mappingList.stream()
                 .filter(Objects::nonNull)
-                .filter(item -> item.getHasMappingAll() || StrUtil.equals(item.getWarehouseId(), payload.getWarehouseId()))
+                .filter(item -> Boolean.TRUE.equals(item.getHasMappingAll())
+                        || StrUtil.equals(item.getWarehouseId(), payload.getWarehouseId()))
                 .collect(Collectors.toList());
         Set<String> mappedSkuSet = effectiveMappingList.stream()
                 .map(ListingInfoWithSkuMappingDTO::getPlatformSkuNo)
