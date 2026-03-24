@@ -145,6 +145,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/qcBill")
     PagingVO<QcBillExportExcelDTO> exportQcBill(@RequestBody PagingDTO<QcInfoDTO.ExportDTO> dto);
 
+    @PostMapping("/feign/export/qcStandard")
+    PagingVO<QcStandardDTO.ListDTO> exportQcStandard(@RequestBody PagingDTO<QcStandardDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/qcEffectivenessDocument")
     PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> exportQcEffectivenessDocument(@RequestBody PagingDTO<QcEffectivenessDTO.ExportExcelSearchParamDTO> dto);
 

@@ -140,6 +140,9 @@ public class ExportWmsFeignController {
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
 
+    @Resource
+    private QcStandardService qcStandardService;
+
 
     @Resource
     private ReportOrderDemandDetailService reportOrderDemandDetailService;
@@ -346,6 +349,17 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(@RequestBody PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         return inventoryService.getInventoryPageData(dto);
+    }
+
+    @PostMapping("/qcStandard")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:qcStandard:paging",
+            tableAlias = "s"
+    )
+    @WebAdvanceQuery(handler = QcStandardQueryHandler.class)
+    public PagingVO<QcStandardDTO.ListDTO> exportQcStandard(@RequestBody PagingDTO<QcStandardDTO.PagingParamDTO> dto) {
+        return qcStandardService.paging(dto);
     }
 
     @PostMapping("/getSampleRecipientPageData")
