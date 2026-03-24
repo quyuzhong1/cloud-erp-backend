@@ -173,7 +173,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 //            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
 //            return success(orderCode.getData());
 //        }
-        return response.getSuccess() ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getOrderNo()).trackNo(response.getData().getTrackingNo()).build()) : failure(response.getMessage());
+        return response.getSuccess() ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getOrderNo()).trackNo(response.getData().getTrackingNo()).build()) : failure(response.getMessage() + ":" + String.join(", ", response.getErrors()));
     }
 
     private void setAddress(OutboundB2cCreateRequest createRequest) {
