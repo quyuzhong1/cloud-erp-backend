@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.entity.QcStandardDetailEntity;
+import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -10,6 +11,6 @@ import org.springframework.stereotype.Repository;
  * @author ERPAgent
  * @since 2026-03-22
  */
-@Repository
+@Mapper
 public interface QcStandardDetailMapper extends BaseMapper<QcStandardDetailEntity> {
 }
