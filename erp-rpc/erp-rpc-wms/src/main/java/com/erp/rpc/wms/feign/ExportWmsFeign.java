@@ -145,6 +145,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/qcBill")
     PagingVO<QcBillExportExcelDTO> exportQcBill(@RequestBody PagingDTO<QcInfoDTO.ExportDTO> dto);
 
+    @PostMapping("/feign/export/qcStandard")
+    PagingVO<QcStandardDTO.ListDTO> exportQcStandard(@RequestBody PagingDTO<QcStandardDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/qcEffectivenessDocument")
     PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> exportQcEffectivenessDocument(@RequestBody PagingDTO<QcEffectivenessDTO.ExportExcelSearchParamDTO> dto);
 
@@ -431,4 +434,13 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/exportAwdInventory")
     PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto);
 
+    /**
+     * 质检申请单导出
+     * @author will
+     * @date 2026/3/24 10:41
+     * @param dto
+     * @return  QcApplicationDTO.ListDTO
+     */
+    @PostMapping("/feign/export/exportQcApplication")
+    PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(PagingDTO<QcApplicationDTO.PagingParamDTO> dto);
 }

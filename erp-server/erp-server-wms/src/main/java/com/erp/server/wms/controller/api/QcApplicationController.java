@@ -3,9 +3,11 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -15,13 +17,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.QcApplicationDTO;
 import com.erp.model.wms.entity.QcApplicationEntity;
+import com.erp.server.wms.query.QcApplicationQueryHandler;
 import com.erp.server.wms.service.QcApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +85,7 @@ public class QcApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:qcApplication:paging",
-            tableAlias = ""
+            tableAlias = "qa"
     )
     public ApiResult<List<QcApplicationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(qcApplicationService.tabList(dto));
@@ -100,8 +102,9 @@ public class QcApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:qcApplication:paging",
-            tableAlias = ""
+            tableAlias = "qa"
     )
+    @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
     public ApiResult<PagingVO<QcApplicationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
         return success(qcApplicationService.paging(dto));
     }
@@ -199,7 +202,6 @@ public class QcApplicationController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -239,7 +241,6 @@ public class QcApplicationController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -278,7 +279,6 @@ public class QcApplicationController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
         Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -323,19 +323,55 @@ public class QcApplicationController extends BaseController {
     * @author will
     * @date:  2026-03-20
     * @param dto
-    * @param response
     * @return
     */
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:qcApplication:export",
-            tableAlias = ""
+            tableAlias = "qa"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检申请单主表导出Excel数据")
-    public void exportList(@RequestBody @Validated QcApplicationDTO.ExportDTO dto, HttpServletResponse response) {
-        qcApplicationService.exportList(dto, response);
+    public ApiResult<Object>exportExcel(@RequestBody @Validated QcApplicationDTO.PagingParamDTO dto) {
+        Boolean flag = qcApplicationService.exportList(dto);
+        return flag ? success() : failure();
     }
 
+
+    /**
+     * 下推质检通知数据回显
+     * @author will
+     * @date 2026/3/23 12:24
+     * @param dto
+     * @return QcApplicationDTO.ListPushQcNoticeDTO
+     */
+    @PostMapping("/listPushQcNotice")
+    public ApiResult<List<QcApplicationDTO.ListPushQcNoticeDTO>> listPushQcNotice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(qcApplicationService.listPushQcNotice(dto.getIds()));
+    }
+
+    /**
+     * 下推质检通知数据保存
+     * @author will
+     * @date 2026/3/23 12:24
+     * @param list
+     * @return QcApplicationDTO.ListPushQcNoticeDTO
+     */
+    @PostMapping("/generateQcNotice")
+    public ApiResult<Object> generateQcNotice(@RequestBody @Validated ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
+        return success(qcApplicationService.generateQcNotice(list));
+    }
+
+    /**
+     * 采购订单下推质检申请数据保存
+     * @author will
+     * @date 2026/3/23 12:24
+     * @param list
+     * @return QcApplicationDTO.ListPushQcNoticeDTO
+     */
+    @PostMapping("/generatePoRefQcApplication")
+    public ApiResult<Object> generatePoRefQcApplication(@RequestBody @Validated ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
+        return success(qcApplicationService.generateQcNotice(list));
+    }
 
 }

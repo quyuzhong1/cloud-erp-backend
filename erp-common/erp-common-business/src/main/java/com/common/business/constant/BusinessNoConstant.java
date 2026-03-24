@@ -273,4 +273,6 @@ public interface BusinessNoConstant {
     //抽样方案
     String CYFA="CYFA";
 
+    //质检申请
+    String ZJSQ = "ZJSQ";
 }

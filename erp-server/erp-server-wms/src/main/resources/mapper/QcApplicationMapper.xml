@@ -19,9 +19,9 @@
        <result column="approve_status" property="approveStatus" />
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_time" property="approveTime" />
-       <result column="type" property="type" />
+       <result column="qc_type" property="qcType" />
        <result column="warehouse_id" property="warehouseId" />
-       <result column="plan_date" property="planDate" />
+       <result column="plan_qc_date" property="planQcDate" />
        <result column="remark" property="remark" />
     </resultMap>
 
@@ -36,20 +36,34 @@
         update_user_id,
         version,
         is_deleted,
-        code, source_id, source_code, source_type, approve_status, approve_user_id, approve_time, type, warehouse_id, plan_date, remark
+        code, source_id, source_code, source_type, approve_status, approve_user_id, approve_time, qc_type, warehouse_id, plan_qc_date, remark
     </sql>
 
+    <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.QcApplicationDTO$ListDTO">
-
+            select
+                <include refid="Base_Column_List" />
+            from qc_application qa
+            inner join qc_application_detail qad on qa.id = qad.qc_application_id
+            WHERE ${params.sqlMap.default}
+            and qa.is_deleted = FALSE
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+        qa.id DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from qc_application where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.QcApplicationDTO$ListDTO">
-
-    </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.QcApplicationDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,

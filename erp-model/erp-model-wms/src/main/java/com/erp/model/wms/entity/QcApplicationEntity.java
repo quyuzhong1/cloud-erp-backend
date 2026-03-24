@@ -71,8 +71,8 @@ public class QcApplicationEntity extends BaseEntity<QcApplicationEntity> {
     /**
     * 质检类型
     */
-    @TableField("type")
-    private String type;
+    @TableField("qc_type")
+    private String qcType;
     /**
     * 仓库id
     */
@@ -81,8 +81,8 @@ public class QcApplicationEntity extends BaseEntity<QcApplicationEntity> {
     /**
     * 期望质检日期
     */
-    @TableField("plan_date")
-    private LocalDate planDate;
+    @TableField("plan_qc_date")
+    private LocalDate planQcDate;
     /**
     * 备注
     */
