@@ -309,6 +309,11 @@ public class SoB2bDeliveryInterceptDTO implements Serializable {
         private String tabFlag;
 
         /**
+         * 标签名称
+         */
+        private String tabFlagName;
+
+        /**
          * 数量
          */
         private Integer count;

@@ -90,14 +90,15 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
         SoB2bDeliveryInterceptDTO.PagingParamDTO params = new SoB2bDeliveryInterceptDTO.PagingParamDTO();
         params.setPermissionSql(dto.getPermissionSql());
         List<SoB2bDeliveryInterceptDTO.TabListDTO> list = baseMapper.tabList(params);
+        list.forEach(item -> item.setTabFlagName(SoB2cDeliveryInterceptStatusEnum.getName(item.getTabFlag())));
         List<String> statusList = SoB2cDeliveryInterceptStatusEnum.getStatusList();
         List<String> existStatusList = list.stream().map(SoB2bDeliveryInterceptDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.forEach(status -> {
             if (!existStatusList.contains(status)) {
-                list.add(new SoB2bDeliveryInterceptDTO.TabListDTO(status, 0));
+                list.add(new SoB2bDeliveryInterceptDTO.TabListDTO(status, SoB2cDeliveryInterceptStatusEnum.getName(status), 0));
             }
         });
-        list.add(new SoB2bDeliveryInterceptDTO.TabListDTO("all", list.stream().mapToInt(SoB2bDeliveryInterceptDTO.TabListDTO::getCount).sum()));
+        list.add(new SoB2bDeliveryInterceptDTO.TabListDTO("all", "全部", list.stream().mapToInt(SoB2bDeliveryInterceptDTO.TabListDTO::getCount).sum()));
         return list;
     }
 
