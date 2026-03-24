@@ -211,7 +211,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
     }
 
     @PostMapping("/getDeliveryCodeBySourceId")
-    public Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds){
+    public Map<String,String> getDeliveryCodeBySourceId(@RequestBody List<String> sourceIds){
         return soB2cDeliveryService.getDeliveryCodeBySourceId(sourceIds);
     }
     /**
