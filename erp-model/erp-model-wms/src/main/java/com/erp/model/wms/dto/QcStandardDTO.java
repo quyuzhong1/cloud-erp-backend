@@ -235,7 +235,15 @@ public class QcStandardDTO {
          */
         private String inspectRequirement;
 
+        /**
+         * 产品实物
+         */
+        private String productPhysicalUrl;
 
+        /**
+         * 包装配件
+         */
+        private String packagingAccessoriesUrl;
     }
     /**
      * 详情返回 DTO

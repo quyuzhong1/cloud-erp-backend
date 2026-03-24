@@ -266,9 +266,35 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             return new PagingVO(pageData);
         }
 
+        List<String> ids = pageData.getRecords().stream().map(QcStandardDTO.ExportDTO::getId).distinct().collect(Collectors.toList());
+
+        // 载入附件图片 (标准化回显)
+        Map<String, String> qcStandardImageTypeMap = dictBasicService.getByKey("qcStandardImageType").stream().collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (o1, o2) -> o1));
+        Map<String, List<WmsAttachmentDTO.UpdateDTO>> grouped = new HashMap<>();
+        List<WmsAttachmentDTO.UpdateDTO> allAttachments = wmsAttachmentService.getByBusinessIds(ids);
+        if (CollectionUtils.isNotEmpty(allAttachments)) {
+            grouped = allAttachments.stream()
+                    .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
+
+
+        }
+
+
         for (QcStandardDTO.ExportDTO listDTO : pageData.getRecords()) {
             listDTO.setDisabledName(listDTO.getDisabled() ? "禁用" : "启用" );
+            List<WmsAttachmentDTO.UpdateDTO> updateDTOS = grouped.get(listDTO.getId());
+            if(CollectionUtils.isNotEmpty(updateDTOS)){
+                Map<String, List<WmsAttachmentDTO.UpdateDTO>> listMap = updateDTOS.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getType));
+
+                List<WmsAttachmentDTO.UpdateDTO> productPhysicalList = listMap.get("productPhysical");
+                //url用回车换行拼接
+                listDTO.setProductPhysicalUrl(productPhysicalList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.joining("\n")));
+
+                List<WmsAttachmentDTO.UpdateDTO> packagingAccessoriesList = listMap.get("packagingAccessories");
+                listDTO.setPackagingAccessoriesUrl(packagingAccessoriesList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.joining("\n")));
+            }
         }
+
         return new PagingVO(pageData);
     }
 
