@@ -25,4 +25,17 @@
         </if>
         ORDER BY qs.create_time DESC
     </select>
+    <select id="exportList" resultType="com.erp.model.wms.dto.QcStandardDTO$ExportDTO">
+        SELECT
+        qs.*,
+        qsd.inspect_item_name as inspectItemName,
+        qsd.inspect_requirement as inspectRequirement
+        FROM qc_standard qs
+        LEFT JOIN qc_standard_detail qsd ON qs.id = qsd.main_id and qsd.is_deleted = false
+        WHERE qs.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY qs.create_time DESC , qsd.sort
+    </select>
 </mapper>

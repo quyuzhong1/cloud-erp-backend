@@ -185,6 +185,10 @@ public class QcStandardDTO {
          * 是否禁用
          */
         private Boolean disabled;
+        /**
+         * 是否禁用
+         */
+        private String disabledName;
         
         /**
          * 创建人姓名id
@@ -215,6 +219,24 @@ public class QcStandardDTO {
         private String updateTime;
     }
 
+
+    /**
+     * 列表返回 DTO
+     */
+    @Data
+    public static class ExportDTO extends ListDTO implements Serializable {
+        /**
+         * 质检项目
+         */
+        private String inspectItemName;
+
+        /**
+         * 质检要求
+         */
+        private String inspectRequirement;
+
+
+    }
     /**
      * 详情返回 DTO
      */

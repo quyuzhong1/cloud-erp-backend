@@ -6,7 +6,6 @@ import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcApplicationDTO;
-import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
 import com.erp.model.wms.entity.QcApplicationEntity;
 
 import java.util.List;
@@ -107,7 +106,7 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
     * 撤销
     * @author will
     * @date: 2026-03-20
-    * @param id
+    * @param dto
     * @return
     */
     BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
@@ -144,4 +143,12 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
      * @return  Boolean
      */
     Boolean generateQcNotice(ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list);
+    /**
+     *  下推质检通知保存
+     * @author will
+     * @date 2026/3/23 12:25
+     * @param list
+     * @return  Boolean
+     */
+    Boolean generatePoRefQcApplication(ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list);
 }

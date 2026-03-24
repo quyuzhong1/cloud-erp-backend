@@ -20,6 +20,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
@@ -178,6 +179,10 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         List<SkuVO> skuVOS = plmTaskFeign.listSkuPurchaseBySkuNos(skuNoList);
         Map<String, SkuVO> skuMap = CollUtil.isEmpty(skuVOS) ? new HashMap<>() : skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, obj -> obj));
 
+        //供应商信息
+        List<String> supplierNameList = successList.stream().map(QcApplicationImportExcelDTO::getSupplierName).distinct().collect(Collectors.toList());
+        List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).in(SupplierEntity::getName, supplierNameList).list();
+
         for ( QcApplicationImportExcelDTO data : successList) {
             QcApplicationDetailDTO.ImportResultDTO resultDTO = new QcApplicationDetailDTO.ImportResultDTO();
             BeanUtil.copyProperties(data, resultDTO);
@@ -196,19 +201,22 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
                 continue;
             }
             if ( !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(skuVO.getStatus()))  {
-
+                data.setErrorMsg("SKU信息未审核通过");
+                errorList.add(data);
+                continue;
             }
-
             resultDTO.setProductName(skuVO.getSkuName());
             resultDTO.setEan(skuVO.getEan());
             resultDTO.setSourceDetailId(purchaseOrderDetailEntity.getId());
 
-
-
             resultList.add(resultDTO);
         }
-
         return resultList;
+    }
+
+    @Override
+    public void removeByMainId(String mainId) {
+        lambdaUpdate().eq(QcApplicationDetailEntity::getMainId,mainId).remove();
     }
 
     /**

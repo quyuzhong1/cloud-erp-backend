@@ -352,14 +352,9 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/qcStandard")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:qcStandard:paging",
-            tableAlias = "s"
-    )
     @WebAdvanceQuery(handler = QcStandardQueryHandler.class)
-    public PagingVO<QcStandardDTO.ListDTO> exportQcStandard(@RequestBody PagingDTO<QcStandardDTO.PagingParamDTO> dto) {
-        return qcStandardService.paging(dto);
+    public PagingVO<QcStandardDTO.ExportDTO> exportQcStandard(@RequestBody PagingDTO<QcStandardDTO.PagingParamDTO> dto) {
+        return qcStandardService.exportList(dto);
     }
 
     @PostMapping("/getSampleRecipientPageData")
