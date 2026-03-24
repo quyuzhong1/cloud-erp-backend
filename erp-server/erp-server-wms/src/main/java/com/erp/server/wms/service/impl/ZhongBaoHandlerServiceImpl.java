@@ -250,7 +250,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
         OverseasOutboundCancelRequest overseasOutboundCancelRequest = new OverseasOutboundCancelRequest();
         overseasOutboundCancelRequest.setCancelRemark(cancelOutboundReq.getRemark());
-        overseasOutboundCancelRequest.setOrderNos(Collections.singletonList(cancelOutboundReq.getErpOrderCode()));
+        overseasOutboundCancelRequest.setOrderNos(Collections.singletonList(cancelOutboundReq.getOrderCode()));
         log.warn(getPlatForm().getName() + "取消出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCancelRequest));
         BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(overseasOutboundCancelRequest);
         log.warn(getPlatForm().getName() + "取消出库单结果:{}", JSONUtil.toJsonStr(response));
@@ -349,7 +349,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCreateRequest));
         OverseasOutboundCreateResponse response = zhongbaoService.createOutboundBill(overseasOutboundCreateRequest);
         log.warn(getPlatForm().getName() + "创建b2b出库单结果:{}", JSONUtil.toJsonStr(response));
-        return response.getCode() == "20000" ? success(response.getResponseData().getOrderNo()) : failure(response.getMessage());
+        return response.getSuccess() ? success(response.getResponseData().getOrderNo()) : failure(response.getMessage());
     }
 
     public OverseasOutboundCreateRequest buildCreateFbaOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {

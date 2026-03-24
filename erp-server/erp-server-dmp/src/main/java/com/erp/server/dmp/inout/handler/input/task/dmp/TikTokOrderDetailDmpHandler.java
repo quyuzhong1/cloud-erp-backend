@@ -44,7 +44,10 @@ public class TikTokOrderDetailDmpHandler extends TikTokOrderGetDetailDmpHandler 
             List<Map<String, Object>> dmpDataKeyMaps = dmpInputDataDmpRelationMap.getKey();
             String warehouseId = "";
             for (Map<String, Object> keyMap : dmpDataKeyMaps){
-                warehouseId = keyMap.get("warehouseId").toString();
+                Object warehouseIdObj = keyMap.get("warehouseId");
+                if (ObjectUtil.isNotEmpty(warehouseIdObj)) {
+                    warehouseId = warehouseIdObj.toString();
+                }
             }
             String warehouseName = "";
             if(StringUtils.isNotBlank(warehouseId)){
@@ -86,6 +89,7 @@ public class TikTokOrderDetailDmpHandler extends TikTokOrderGetDetailDmpHandler 
                     }
                 }
                 dmpDataMap.put("warehouseName",warehouseName);
+                dmpDataMap.put("warehouseId", warehouseId);
                 Object itemTaxObj = dmpDataMap.get("itemTax");
                 if (itemTaxObj != null) {
                     List<Map<String, Object>> itemTaxMap = (List<Map<String, Object>>) itemTaxObj;

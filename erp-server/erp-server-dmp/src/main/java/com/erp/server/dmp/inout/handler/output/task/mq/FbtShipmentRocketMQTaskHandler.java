@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformFbtShipmentDTO;
 import com.common.core.entity.BaseEntity;
@@ -11,12 +12,15 @@ import com.erp.model.dmp.entity.DmpFbtShipmentDetailEntity;
 import com.erp.model.dmp.entity.DmpFbtShipmentEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpFbtShipmentDetailService;
+import com.erp.server.dmp.service.DmpFbtShipmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 /**
@@ -26,6 +30,11 @@ import java.util.*;
 @Service
 @Scope("prototype")
 public class FbtShipmentRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    @Resource
+    private DmpFbtShipmentService dmpFbtShipmentService;
+    @Resource
+    private DmpFbtShipmentDetailService dmpFbtShipmentDetailService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -74,16 +83,44 @@ public class FbtShipmentRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         }
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String mainId : changedMainIds) {
-            DmpFbtShipmentEntity mainEntity = mainEntityMap.get(mainId);
+            DmpFbtShipmentEntity mainEntity = resolveMainEntity(mainEntityMap, mainId);
             if (mainEntity == null) {
+                log.warn("FBT货件输出跳过，未找到主表数据, mainId={}, cfgOutputId={}", mainId, cfgOutputId);
                 continue;
             }
-            PlatformFbtShipmentDTO dto = convert(mainEntity, detailEntityMap.get(mainId), cfgOutputId);
+            PlatformFbtShipmentDTO dto = convert(mainEntity, resolveDetailEntities(detailEntityMap, mainId), cfgOutputId);
             if (dto != null) {
                 dataMap.put(dto.getUniqueId(), JSON.toJSONString(dto));
             }
         }
         return dataMap;
+    }
+
+    private DmpFbtShipmentEntity resolveMainEntity(Map<String, DmpFbtShipmentEntity> mainEntityMap, String mainId) {
+        DmpFbtShipmentEntity mainEntity = mainEntityMap.get(mainId);
+        if (mainEntity != null || StringUtils.isBlank(mainId)) {
+            return mainEntity;
+        }
+        mainEntity = dmpFbtShipmentService.getById(mainId);
+        if (mainEntity != null) {
+            mainEntityMap.put(mainId, mainEntity);
+        }
+        return mainEntity;
+    }
+
+    private List<DmpFbtShipmentDetailEntity> resolveDetailEntities(Map<String, List<DmpFbtShipmentDetailEntity>> detailEntityMap,
+                                                                   String mainId) {
+        List<DmpFbtShipmentDetailEntity> detailEntities = detailEntityMap.get(mainId);
+        if (CollectionUtils.isNotEmpty(detailEntities) || StringUtils.isBlank(mainId)) {
+            return detailEntities;
+        }
+        detailEntities = dmpFbtShipmentDetailService.list(Wrappers.<DmpFbtShipmentDetailEntity>lambdaQuery()
+                .eq(DmpFbtShipmentDetailEntity::getMainId, mainId));
+        if (detailEntities == null) {
+            detailEntities = Collections.emptyList();
+        }
+        detailEntityMap.put(mainId, detailEntities);
+        return detailEntities;
     }
 
     private PlatformFbtShipmentDTO convert(DmpFbtShipmentEntity mainEntity,

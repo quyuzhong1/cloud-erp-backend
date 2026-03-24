@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -104,8 +106,10 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
 		if(StringUtils.isNotBlank(dto.getPlatformOrderNo())){
 			List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
-            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && CollectionUtils.isNotEmpty(soB2cEntityList)) {
-                soB2cEntityList = soB2cEntityList.stream().filter(e->e.getShopId().equals(dto.getShopId())).collect(Collectors.toList());
+            if (StringUtils.isNotBlank(dto.getShopId()) && CollectionUtils.isNotEmpty(soB2cEntityList)) {
+                soB2cEntityList = soB2cEntityList.stream()
+                        .filter(e -> Objects.equals(e.getShopId(), dto.getShopId()))
+                        .collect(Collectors.toList());
             }
 			//过滤手工单
 			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
@@ -120,7 +124,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			return;
 		}
 		SoB2cReturnEntity soB2cReturnEntity = this.buildReturn(dto,soB2cEntity);
-		List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = this.buildRefundDetail(dto,soB2cDetailEntityList);
+		List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = this.buildRefundDetail(dto, soB2cDetailEntityList, soB2cEntity);
 		soB2cReturnService.addByPlatform(soB2cReturnEntity,soB2cReturnDetailEntityList);
 
 		//关联销售退货入库单
@@ -170,21 +174,58 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		}
 	}
 
-	private List<SoB2cReturnDetailEntity> buildRefundDetail(PlatformReturnOrderDTO dto, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+	private List<SoB2cReturnDetailEntity> buildRefundDetail(PlatformReturnOrderDTO dto,
+			List<SoB2cDetailEntity> soB2cDetailEntityList,
+			SoB2cEntity soB2cEntity) {
 		List<SoB2cReturnDetailEntity> list = new ArrayList<>();
+		String shopId = Objects.nonNull(soB2cEntity) ? soB2cEntity.getShopId() : dto.getShopId();
 		for (PlatformReturnOrderDTO.Detail detail : dto.getDetailList()) {
 			SoB2cReturnDetailEntity refundOrderDetailEntity = new SoB2cReturnDetailEntity();
-			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(detail.getPlatformSkuNo())).findFirst().orElse(new SoB2cDetailEntity());
-			refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
-			refundOrderDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
 			refundOrderDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
-			refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
 			refundOrderDetailEntity.setReturnQty(detail.getReturnQty());
 			refundOrderDetailEntity.setRemark(detail.getRemark());
-			refundOrderDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
+			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+					.filter(v -> Objects.equals(v.getPlatformSkuNo(), detail.getPlatformSkuNo()))
+					.findFirst()
+					.orElse(null);
+			if (Objects.nonNull(soB2cDetailEntity)) {
+				refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
+				refundOrderDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
+				if (StringUtils.isNotBlank(soB2cDetailEntity.getSkuId())
+						|| StringUtils.isNotBlank(soB2cDetailEntity.getSkuNo())) {
+					refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
+					refundOrderDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
+				}
+			}
+			if (StringUtils.isBlank(refundOrderDetailEntity.getSkuId())
+					&& StringUtils.isBlank(refundOrderDetailEntity.getSkuNo())) {
+				ListingInfoWithSkuMappingDTO mappingDTO = resolveMappingByPlatformSku(detail.getPlatformSkuNo(), dto.getDictPlatform(), shopId);
+				if (Objects.nonNull(mappingDTO)) {
+					refundOrderDetailEntity.setSkuId(mappingDTO.getProductSkuId());
+					refundOrderDetailEntity.setSkuNo(mappingDTO.getProductSkuNo());
+				}
+			}
 			list.add(refundOrderDetailEntity);
 		}
 		return list;
+	}
+
+	private ListingInfoWithSkuMappingDTO resolveMappingByPlatformSku(String platformSkuNo, String dictPlatform, String shopId) {
+		if (StringUtils.isBlank(platformSkuNo) || StringUtils.isBlank(dictPlatform) || StringUtils.isBlank(shopId)) {
+			return null;
+		}
+		List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService
+				.mapListingByPlatformSkuNo(Collections.singletonList(platformSkuNo),
+						Collections.emptyList(),
+						dictPlatform,
+						shopId,
+						null,
+						null)
+				.get(platformSkuNo);
+		if (CollectionUtils.isEmpty(mappingDTOList)) {
+			return null;
+		}
+		return skuMappingService.checkAndMappingDTO(mappingDTOList, null, dictPlatform, platformSkuNo);
 	}
 
 	private SoB2cReturnEntity buildReturn(PlatformReturnOrderDTO dto, SoB2cEntity soB2cEntity) {

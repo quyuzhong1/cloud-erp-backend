@@ -46,7 +46,7 @@
         pp.actual_arrival_qty,
         pp.arrival_state,
         pi.pirate_risk,
-        pc.retail_price,
+        ss.std_retail_price_vat AS retailPrice,
         pd.product_state,
         pd.status,
         pd.create_user_id,
@@ -104,6 +104,7 @@
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        LEFT JOIN sku_std_retail_price ss ON ss.sku_id = pd.id and ss.currency = 'CNY' and ss.is_deleted = FALSE
         LEFT join product_sale ps on pd.id = ps.sku_id AND ps.is_deleted = FALSE
         left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id and pl.is_deleted = FALSE
@@ -529,7 +530,7 @@
         pc.tax_rate,
         pc.target_tax_cost,
         pc.target_no_tax_cost,
-        pc.retail_price,
+        ss.std_retail_price_vat as retailPrice,
         pp.ean,
         pp.moq,
         pp.trial_production_qty,
@@ -589,6 +590,7 @@
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        LEFT JOIN sku_std_retail_price ss ON ss.sku_id = pd.id and ss.currency = 'CNY' and ss.is_deleted = FALSE
         LEFT JOIN product_sale ps ON ps.sku_id = pd."id" AND ps.is_deleted = FALSE
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
@@ -872,6 +874,7 @@
         pd.sku_no,
         pd.images_url,
         pd.name AS productName,
+        pd.name AS skuName,
         pd.variant_property,
         pl.declare_chinese_name,
         pl.declare_model,
@@ -1826,7 +1829,7 @@
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
     <select id="listSku" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
-        select id,sku_id,spu_no,sku_no,productName ,retailPrice,variantProperty,property,property_id from
+        select id,sku_id,spu_no,sku_no,sku_name,productName ,retailPrice,variantProperty,property,property_id from
        (
             select
                 pi."id",
@@ -1834,6 +1837,7 @@
                 pi.spu_no,
                 pi.name as productName,
                 pd.sku_no,
+                pd.name sku_name,
                 pi.property,
                 pi.property_id,
                 pc.retail_price as retailPrice,

@@ -93,7 +93,7 @@ public class DmpOutputTikTokReturnRocketMQTaskHandler extends DmpOutputRocketMQT
         }
         PlatformReturnOrderDTO dto = new PlatformReturnOrderDTO();
         BeanUtils.copyProperties(dmpEntity, dto);
-        dto.setUniqueId(CharSequenceUtil.format("return_{}_{}_{}", dmpEntity.getThirdCode(), dmpEntity.getSourceId(), dmpEntity.getBatchNo()));
+        dto.setUniqueId(buildUniqueId(dmpEntity));
         dto.setPlatformReturnNo(dmpEntity.getThirdCode());
         dto.setPlatformOrderNo(StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode()));
         dto.setReason(StringUtils.defaultIfBlank(dmpEntity.getRemark(), ""));
@@ -107,12 +107,20 @@ public class DmpOutputTikTokReturnRocketMQTaskHandler extends DmpOutputRocketMQT
         return dto;
     }
 
+    private String buildUniqueId(DmpSoReturnInfoEntity dmpEntity) {
+        String thirdCode = StringUtils.defaultString(dmpEntity.getThirdCode());
+        String batchNo = StringUtils.trimToEmpty(dmpEntity.getBatchNo());
+        if (StringUtils.isBlank(batchNo)) {
+            return CharSequenceUtil.format("return_{}", thirdCode);
+        }
+        return CharSequenceUtil.format("return_{}_{}", thirdCode, batchNo);
+    }
+
     private List<PlatformReturnOrderDTO.Detail> parseReturnDetailList(List<DmpSoReturnDetailEntity> dmpDetailList) {
         List<PlatformReturnOrderDTO.Detail> resultList = new LinkedList<>();
         for (DmpSoReturnDetailEntity dmpDetailEntity : dmpDetailList) {
             PlatformReturnOrderDTO.Detail detail = new PlatformReturnOrderDTO.Detail();
-            String platformSkuNo = StringUtils.defaultIfBlank(dmpDetailEntity.getSkuNo(), dmpDetailEntity.getSkuId());
-            detail.setPlatformSkuNo(StringUtils.defaultString(platformSkuNo));
+            detail.setPlatformSkuNo(StringUtils.defaultString(dmpDetailEntity.getSkuNo()));
             detail.setReturnQty(dmpDetailEntity.getQty());
             resultList.add(detail);
         }

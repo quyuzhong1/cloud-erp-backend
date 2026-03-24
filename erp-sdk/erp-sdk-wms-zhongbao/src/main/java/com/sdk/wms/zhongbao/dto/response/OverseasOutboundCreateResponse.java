@@ -31,7 +31,7 @@ public class OverseasOutboundCreateResponse {
      * 成功与否
      */
     @JSONField(name = "success")
-    private boolean success;
+    private Boolean success;
 
     /**
      * 返回数据

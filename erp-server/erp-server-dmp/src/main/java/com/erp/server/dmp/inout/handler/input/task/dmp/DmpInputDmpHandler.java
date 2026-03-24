@@ -274,7 +274,12 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					List<Map<String, Object>> newDmpInputMongoEntityList = dmpInputDataDmpRelationMap.getKey();
 					for(Map<String, Object> newDmpInputMongoEntity : newDmpInputMongoEntityList) {
 						dmpInputMongoDmpRelationEntity = new DmpInputMongoDmpRelationEntity();
-						dmpInputMongoDmpRelationEntity.setMongoId(newDmpInputMongoEntity.get(DmpInputMongoHandler.MONGO_BASE_ID).toString());
+						Object mongoIdObj = newDmpInputMongoEntity.get(DmpInputMongoHandler.MONGO_BASE_ID);
+						if (mongoIdObj == null) {
+							ServiceException.runError("DMP转换缺少mongoId, convertId={}, storageName={}, data={}",
+									convertId, storageName, JSON.toJSONString(newDmpInputMongoEntity));
+						}
+						dmpInputMongoDmpRelationEntity.setMongoId(mongoIdObj.toString());
 						dmpInputMongoDmpRelationEntity.setDmpId(id);
 						dmpInputMongoDmpRelationEntity.setConvertId(convertId);
 						dmpInputDataDmpRelationEntityList.add(dmpInputMongoDmpRelationEntity);

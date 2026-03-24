@@ -19,6 +19,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -1000,6 +1001,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
 
     List<SoB2cEntity> getByPlatformCode(String platformCode);
+
+    List<SoB2cEntity> getByShippingOrderNo(String shippingOrderNo);
 
     /**
      * 更换发货sku预览

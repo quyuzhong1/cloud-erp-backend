@@ -685,6 +685,9 @@ public enum ApiError implements Serializable {
     PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE(5115, "产品尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
     PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
     PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
+    PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
+    PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
+
 
     /**
      * BOM 错误信息 6000 - 6499
