@@ -12,7 +12,6 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,8 +22,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.entity.AfterSaleEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.AqlSamplingRequest;
+import com.erp.model.wms.dto.AqlSamplingResponse;
 import com.erp.model.wms.dto.SamplingPlanDTO;
 import com.erp.model.wms.dto.SamplingPlanSkuRefDTO;
 import com.erp.model.wms.entity.QcSamplingPlanDetailEntity;
@@ -35,6 +36,7 @@ import com.erp.model.wms.enums.AqlValueEnum;
 import com.erp.model.wms.enums.PlanTypeEnum;
 import com.erp.model.wms.enums.QcLevelEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.QcSamplingPlanConverter;
 import com.erp.server.wms.mapper.QcSamplingPlanMapper;
 import com.erp.server.wms.service.*;
@@ -70,7 +72,10 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
     private QcSamplingPlanSkuRefService qcSamplingPlanSkuRefService;
     @Resource
     private QcSamplingPlanDetailService qcSamplingPlanDetailService;
-
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private QcSamplingAqlRuleService qcSamplingAqlRuleService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -187,6 +192,124 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
             qcSamplingPlanDetailService.removeByMainId(entity.getId());
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public SamplingPlanDTO.PlanDTO getSamplingPlan(SamplingPlanDTO.PlanParamDTO planDTO) {
+        if (CharSequenceUtil.isBlank(planDTO.getSkuNo())){
+            List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(planDTO.getSkuId()));
+            if (CollUtil.isEmpty(skuVOS)){
+                throw new ServiceException("产品SKU不存在");
+            }
+            planDTO.setSkuNo(skuVOS.get(0).getSkuNo());
+        }
+        //根据质检类型获取方案列表
+        List<QcSamplingPlanQcTypeRefEntity> qcTypeRefEntityList = qcSamplingPlanQcTypeRefService.listByQcType(planDTO.getQcType());
+        if (CollUtil.isEmpty(qcTypeRefEntityList)){
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL, QcTypeEnum.getByCode(planDTO.getQcType()));
+        }
+        List<String> mainIds = qcTypeRefEntityList.stream().map(QcSamplingPlanQcTypeRefEntity::getMainId).distinct().collect(Collectors.toList());
+        List<QcSamplingPlanEntity> entityList = this.listByIds(mainIds);
+        List<QcSamplingPlanSkuRefEntity> skuRefEntityList = qcSamplingPlanSkuRefService.listByMainIds(mainIds);
+        //先按照sku进行匹配，sku不存在时，再按照全量进行匹配
+        QcSamplingPlanSkuRefEntity skuRefEntity = skuRefEntityList.stream().filter(e -> e.getSkuId().equals(planDTO.getSkuId())).findFirst().orElse(null);
+
+        // 新增代码：根据匹配结果获取抽样方案
+        QcSamplingPlanEntity matchedPlan = null;
+
+        // 1. 优先匹配特定SKU的方案
+        if (skuRefEntity != null) {
+            matchedPlan = entityList.stream()
+                    .filter(e -> e.getId().equals(skuRefEntity.getMainId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        // 2. 如果没有特定SKU的方案，则查找全量适配的方案（没有SKU限制的方案）
+        if (matchedPlan == null) {
+            // 获取没有SKU限制的方案（即skuRefEntityList中不包含该mainId的方案）
+            Set<String> plansWithSkuRestrictions = skuRefEntityList.stream()
+                    .map(QcSamplingPlanSkuRefEntity::getMainId)
+                    .collect(Collectors.toSet());
+
+            matchedPlan = entityList.stream()
+                    .filter(e -> !plansWithSkuRestrictions.contains(e.getId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (matchedPlan == null) {
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_NOT_FOUND,
+                    QcTypeEnum.getByCode(planDTO.getQcType()), planDTO.getSkuNo());
+        }
+
+        // 获取方案的详细信息
+        List<QcSamplingPlanDetailEntity> detailList = qcSamplingPlanDetailService.listByMainId(matchedPlan.getId());
+        return calcSamplingPlan(matchedPlan, detailList,planDTO);
+    }
+
+    /**
+     * 计算抽样方案
+     * @param matchedPlan
+     * @param detailList
+     * @param planDTO
+     * @return
+     */
+    private SamplingPlanDTO.PlanDTO calcSamplingPlan(QcSamplingPlanEntity matchedPlan, List<QcSamplingPlanDetailEntity> detailList, SamplingPlanDTO.PlanParamDTO planDTO) {
+        // 构建返回结果
+        SamplingPlanDTO.PlanDTO result = new SamplingPlanDTO.PlanDTO();
+        result.setId(matchedPlan.getId());
+        result.setCode(matchedPlan.getCode());
+        result.setQcType(planDTO.getQcType());
+        result.setPlanType(matchedPlan.getPlanType());
+        result.setQcLevel(matchedPlan.getQcLevel());
+        if (PlanTypeEnum.GB.getCode().equals(matchedPlan.getPlanType())){
+            AqlSamplingRequest request = AqlSamplingRequest.builder()
+                    .sampleQty(planDTO.getQty())
+                    .qcLevel(matchedPlan.getQcLevel())
+                    .aqlValue(matchedPlan.getGeneralAql())
+                    .build();
+            //根据方案类型获取抽样方案（一般缺陷）
+            AqlSamplingResponse generalSamplingResponse = qcSamplingAqlRuleService.calculateSamplingPlan(request);
+            if (generalSamplingResponse == null){
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL, matchedPlan.getGeneralAql());
+            }
+            result.setLotRange(generalSamplingResponse.getLotRange());
+            result.setRangFrom(generalSamplingResponse.getRangFrom());
+            result.setRangTo(generalSamplingResponse.getRangTo());
+            result.setGeneralAcceptQty(generalSamplingResponse.getAcceptQty());
+            result.setGeneralRejectQty(generalSamplingResponse.getRejectQty());
+            result.setSampleQty(generalSamplingResponse.getSampleQty());
+            //根据方案类型获取抽样方案（严重缺陷）
+            request.setAqlValue(matchedPlan.getMajorAql());
+            AqlSamplingResponse majorSamplingResponse = qcSamplingAqlRuleService.calculateSamplingPlan(request);
+            if (majorSamplingResponse == null){
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL, matchedPlan.getMajorAql());
+            }
+            result.setMajorAcceptQty(majorSamplingResponse.getAcceptQty());
+            result.setMajorRejectQty(majorSamplingResponse.getRejectQty());
+            return result;
+        }
+
+        //根据数量获取对应的抽样明细方案
+        QcSamplingPlanDetailEntity detailEntity = null;
+        if (CollUtil.isNotEmpty(detailList)){
+            detailEntity = detailList.stream().filter(e -> e.getRangFrom() <= planDTO.getQty() && planDTO.getQty() <= e.getRangTo()).findFirst().orElse(null);
+        }
+        if (detailEntity == null){
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_FOUND,
+                    QcTypeEnum.getByCode(planDTO.getQcType()), planDTO.getSkuNo());
+        }
+        result.setRate(detailEntity.getRate());
+        result.setRangFrom(detailEntity.getRangFrom());
+        result.setRangTo(detailEntity.getRangTo());
+        result.setLotRange(detailEntity.getRangFrom() + "~" + detailEntity.getRangTo());
+        result.setSampleQty(detailEntity.getQty());
+        result.setGeneralAcceptQty(detailEntity.getGeneralAcceptQty());
+        result.setGeneralRejectQty(detailEntity.getGeneralRejectQty());
+        result.setMajorAcceptQty(detailEntity.getMajorAcceptQty());
+        result.setMajorRejectQty(detailEntity.getMajorRejectQty());
+        return result;
     }
 
     /**

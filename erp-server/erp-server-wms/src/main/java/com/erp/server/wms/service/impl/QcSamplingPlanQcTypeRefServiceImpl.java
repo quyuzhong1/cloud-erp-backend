@@ -61,6 +61,21 @@ public class QcSamplingPlanQcTypeRefServiceImpl extends SuperServiceImpl<QcSampl
         this.removeByMainId(id, Collections.emptyList());
     }
 
+    /**
+     * 获取已启用的质检列表
+     * @param qcType
+     * @return
+     */
+    @Override
+    public List<QcSamplingPlanQcTypeRefEntity> listByQcType(String qcType) {
+        if (CharSequenceUtil.isBlank(qcType)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery()
+                .eq(QcSamplingPlanQcTypeRefEntity::getQcType,qcType)
+                .eq(QcSamplingPlanQcTypeRefEntity::getDisabled, Boolean.FALSE).list();
+    }
+
     private void removeByMainId(String mainId, List<String> idList) {
         this.lambdaUpdate().eq(QcSamplingPlanQcTypeRefEntity::getMainId, mainId)
                 .ne(CollUtil.isNotEmpty(idList), QcSamplingPlanQcTypeRefEntity::getId, idList).remove();

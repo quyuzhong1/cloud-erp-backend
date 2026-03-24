@@ -18,11 +18,11 @@ public class AqlSamplingResponse {
     /**
      * 批量下限
      */
-    private Integer minLotQty;
+    private Integer rangFrom;
     /**
      * 批量上限
      */
-    private Integer maxLotQty;
+    private Integer rangTo;
     /**
      * 样本量字码（如A/B/C...）
      */

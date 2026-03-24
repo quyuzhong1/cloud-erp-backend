@@ -13,10 +13,13 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.AqlSamplingRequest;
+import com.erp.model.wms.dto.AqlSamplingResponse;
 import com.erp.model.wms.dto.SamplingPlanDTO;
 import com.erp.model.wms.entity.QcSamplingPlanEntity;
 import com.erp.model.wms.entity.QcSamplingPlanQcTypeRefEntity;
 import com.erp.server.wms.query.QcSamplingPlanQueryHandler;
+import com.erp.server.wms.service.QcSamplingAqlRuleService;
 import com.erp.server.wms.service.QcSamplingPlanQcTypeRefService;
 import com.erp.server.wms.service.QcSamplingPlanService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +50,8 @@ public class QcSamplingPlanController extends BaseController {
     private QcSamplingPlanService qcSamplingPlanService;
     @Resource
     private QcSamplingPlanQcTypeRefService qcSamplingPlanQcTypeRefService;
-
+    @Resource
+    private QcSamplingAqlRuleService qcSamplingAqlRuleService;
     /**
     * 新增
     * @author zdy
@@ -185,5 +190,20 @@ public class QcSamplingPlanController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    /**
+     * 获取国标抽样方案
+     * （测试国标值使用）
+     */
+    @PostMapping("/calculate")
+    public ApiResult<AqlSamplingResponse> calculate(@Valid @RequestBody AqlSamplingRequest request) {
+        return ApiResult.success(qcSamplingAqlRuleService.calculateSamplingPlan(request));
+    }
 
+    /**
+     * 获取抽样方案
+     */
+    @PostMapping("/getSamplingPlan")
+    public ApiResult<SamplingPlanDTO.PlanDTO> getSamplingPlan(@Valid @RequestBody SamplingPlanDTO.PlanParamDTO planDTO) {
+        return ApiResult.success(qcSamplingPlanService.getSamplingPlan(planDTO));
+    }
 }

@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.*;
 
 import org.springframework.util.StringUtils;
@@ -48,14 +47,14 @@ public class QcSamplingAqlRuleServiceImpl extends SuperServiceImpl<QcSamplingAql
             }
 
             // 2. 根据批量数查询样本量字码映射
-            QcSamplingCodeRuleEntity lotMapping = qcSamplingCodeRuleMapper.selectByLotQty(request.getLotQty());
+            QcSamplingCodeRuleEntity lotMapping = qcSamplingCodeRuleMapper.selectByLotQty(request.getSampleQty());
             if (lotMapping == null) {
-                response.setErrorMsg("未匹配到[" + request.getLotQty() + "]对应的批量范围");
+                response.setErrorMsg("未匹配到[" + request.getSampleQty() + "]对应的批量范围");
                 return response;
             }
             response.setLotRange(lotMapping.getMinLotQty() + "~" + lotMapping.getMaxLotQty());
-            response.setMinLotQty(lotMapping.getMinLotQty());
-            response.setMaxLotQty(lotMapping.getMaxLotQty());
+            response.setRangFrom(lotMapping.getMinLotQty());
+            response.setRangTo(lotMapping.getMaxLotQty());
             // 3. 根据检验水平获取样本量字码
             String sampleCode = getSampleCodeByLevel(lotMapping, request.getQcLevel());
             if (!StringUtils.hasText(sampleCode)) {
@@ -100,7 +99,7 @@ public class QcSamplingAqlRuleServiceImpl extends SuperServiceImpl<QcSamplingAql
      */
     private void validateRequest(AqlSamplingRequest request, AqlSamplingResponse response) {
         // 批量数校验
-        if (request.getLotQty() == null || request.getLotQty() < 2) {
+        if (request.getSampleQty() == null || request.getSampleQty() < 2) {
             response.setErrorMsg("批量数必须≥2");
             return;
         }

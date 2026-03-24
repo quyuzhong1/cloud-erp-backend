@@ -74,4 +74,11 @@ public interface QcSamplingPlanService extends SuperService<QcSamplingPlanEntity
     BatchResultDTO updateStatus(String id, Boolean disabled, QcSamplingPlanEntity entity);
 
     BatchResultDTO delete(String id, QcSamplingPlanQcTypeRefEntity qcTypeRefEntity);
+
+    /**
+     * 获取抽样方案
+     * @param planDTO
+     * @return
+     */
+    SamplingPlanDTO.PlanDTO getSamplingPlan(SamplingPlanDTO.PlanParamDTO planDTO);
 }

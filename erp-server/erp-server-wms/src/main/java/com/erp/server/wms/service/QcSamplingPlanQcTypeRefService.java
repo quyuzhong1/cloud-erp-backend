@@ -22,4 +22,6 @@ public interface QcSamplingPlanQcTypeRefService extends SuperService<QcSamplingP
     void updateDetail(List<QcSamplingPlanQcTypeRefEntity> qcTypeList, QcSamplingPlanEntity qcSamplingPlanEntity);
 
     void removeByMainId(String id);
+
+    List<QcSamplingPlanQcTypeRefEntity> listByQcType(String qcType);
 }

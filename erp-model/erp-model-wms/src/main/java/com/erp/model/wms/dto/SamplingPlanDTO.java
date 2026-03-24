@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import java.math.BigDecimal;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -9,12 +11,10 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -330,4 +330,94 @@ public class SamplingPlanDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class PlanParamDTO {
+        /**
+         * 批量数
+         */
+        @NotNull(message = "抽样数量不能为空")
+        private Integer qty;
+        /**
+         * SkuId
+         */
+        @NotEmpty(message = "SKU编码不能为空")
+        private String skuId;
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+        /**
+         * 抽样类型
+         * QcTypeEnum
+         */
+        @NotEmpty(message = "抽样类型不能为空")
+        private String qcType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PlanDTO {
+        /**
+         * 方案id
+         */
+        private String id;
+        /**
+         * 方案编码（CYFA）
+         */
+        private String code;
+        /**
+         * 质检类型
+         * QcTypeEnum
+         */
+        private String qcType;
+        /**
+         * 方案类型
+         * PlanTypeEnum
+         */
+        private String planType;
+        /**
+         * 检验水平
+         * QcLevelEnum
+         */
+        private String qcLevel;
+        /**
+         * 批量范围（如2~8）
+         */
+        private String lotRange;
+        /**
+         * 样本量（如2/3/5...）
+         */
+        private Integer sampleQty;
+
+        /**
+         * 批量范围从
+         */
+        private Integer rangFrom;
+        /**
+         * 批量范围到
+         */
+        private Integer rangTo;
+        /**
+         * 抽样比例
+         */
+        private BigDecimal rate;
+
+        /**
+         * 一般缺陷允收数（Ac）
+         */
+        private Integer generalAcceptQty;
+        /**
+         * 一般缺陷拒收数(Re)
+         */
+        private Integer generalRejectQty;
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+        /**
+         * 严重缺陷拒收数(Re)
+         */
+        private Integer majorRejectQty;
+    }
 }
