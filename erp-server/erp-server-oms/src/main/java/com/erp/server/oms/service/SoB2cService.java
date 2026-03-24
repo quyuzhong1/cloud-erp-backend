@@ -560,6 +560,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean updateWarehouseByShopId(String id, String shopId);
 
     /**
+     * 重新按TikTok平台仓库映射回填订单仓库
+     */
+    Boolean updateTikTokOrderWarehouse(String soId);
+
+    /**
      * 撤销流程
      * @description
      * @param dto

@@ -120,4 +120,6 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
     ThirdMappingEntity getByThirdCodeAndType(String warehouseNo, String sysType, String type);
 
     ThirdMappingEntity getShopByThirdCode(String platformShop, String sysType);
+
+    ThirdMappingDTO.ErpWarehouseDTO resolveErpWarehouseBySourceId(String platform, String sourceWarehouseId);
 }

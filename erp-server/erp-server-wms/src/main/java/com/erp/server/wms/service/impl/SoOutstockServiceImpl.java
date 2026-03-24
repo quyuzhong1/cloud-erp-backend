@@ -714,6 +714,29 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 result.setPartitionName(partitionEntity.get(0).getName());
             }
         }
+        //设置仓管员信息，如果没有则取仓库负责人
+        if (CharSequenceUtil.isBlank(result.getWarehouseKeeperId())
+                || CharSequenceUtil.isBlank(result.getWarehouseKeeperName())) {
+            WarehouseEntity warehouse = warehouseService.getById(soOutstock.getWarehouseId());
+            if (Objects.nonNull(warehouse) && CharSequenceUtil.isNotBlank(warehouse.getChargeId())) {
+                if (CharSequenceUtil.isBlank(result.getWarehouseKeeperId())) {
+                    result.setWarehouseKeeperId(warehouse.getChargeId());
+                }
+                if (CharSequenceUtil.isBlank(result.getWarehouseKeeperName())) {
+                    List<FindUserDTO> warehouseKeeperUsers = sysUserFeign.getUserListByUserIds(
+                            Collections.singletonList(warehouse.getChargeId()));
+                    if (CollectionUtils.isNotEmpty(warehouseKeeperUsers)) {
+                        String warehouseKeeperName = warehouseKeeperUsers.stream()
+                                .filter(user -> warehouse.getChargeId().equals(user.getUserId()))
+                                .findFirst()
+                                .flatMap(user -> Optional.ofNullable(user.getUserName()))
+                                .orElse("");
+                        result.setWarehouseKeeperName(warehouseKeeperName);
+                    }
+                }
+            }
+        }
+
 
         return result;
     }
@@ -3358,12 +3381,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             billDate = LocalDate.now();
         }
         dto.setBillDate(billDate);
+        boolean isTikTokPlatformOutstock = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(sourceType)
+                && PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform());
         // 出库日期
         soOutstock.setBillDate(billDate);
-        soOutstock.setPlanDeliveryDate(billDate);
-        // 实际发货实际
-        if (null != dto.getActualDeliveryDate()){
-            soOutstock.setActualDeliveryDate(dto.getActualDeliveryDate());
+        LocalDate planDeliveryDate = billDate;
+        LocalDateTime actualDeliveryDate = dto.getActualDeliveryDate();
+        LocalDate packDate = billDate;
+        if (isTikTokPlatformOutstock) {
+            if (Objects.nonNull(dto.getPlanDeliveryDate())) {
+                planDeliveryDate = dto.getPlanDeliveryDate();
+            }
+            if (Objects.nonNull(actualDeliveryDate)) {
+                packDate = actualDeliveryDate.toLocalDate();
+            } else if (Objects.nonNull(planDeliveryDate)) {
+                packDate = planDeliveryDate;
+            }
+        }
+        soOutstock.setPlanDeliveryDate(planDeliveryDate);
+        // 实际发货时间
+        if (null != actualDeliveryDate){
+            soOutstock.setActualDeliveryDate(actualDeliveryDate);
         } else {
             soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
         }
@@ -3382,7 +3420,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setBatchNo(transferInfoList.get(0).getBatchNo());
             }
         }
-        soOutstock.setPackDate(billDate);
+        soOutstock.setPackDate(packDate);
         //销售员
         if (CharSequenceUtil.isBlank(soOutstock.getSellerId()) && CharSequenceUtil.isNotBlank(soOutstock.getCustomerId())){
             CustomerInfoEntity customer = customerFeign.getCustomerById(soOutstock.getCustomerId());
@@ -3648,7 +3686,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
          * 那么就要去找店铺的仓库 然后匹配上仓库
          * [排除速卖通订单]
          */
-        if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
+        if (Objects.nonNull(soB2c)
+                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())
+                && !PlatformDictEnum.TIK_TOK.getCode().equals(soB2c.getDictPlatform())) {
             soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
         }
 
@@ -3658,6 +3698,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
         if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
             flag = soB2cFeign.updateAliExpressOrderWarehouse(currentEntity.getId(), currentEntity.getShopId());
+        }
+        if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
+            flag = soB2cFeign.updateTikTokOrderWarehouse(currentEntity.getId());
         }
 
         Boolean result = false;
@@ -3674,6 +3717,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //速卖通平台仓订单的销售出库在处理类生成
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
                 result = flag;
+            } else if (PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
+                result = flag && this.generateB2cSoOutstock(id);
             }else{
                 result = this.generateB2cSoOutstock(id);
             }

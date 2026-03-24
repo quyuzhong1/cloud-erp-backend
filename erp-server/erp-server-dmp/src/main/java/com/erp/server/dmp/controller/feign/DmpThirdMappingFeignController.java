@@ -65,6 +65,12 @@ public class DmpThirdMappingFeignController {
         return thirdMappingService.listMappingBySysIds(warehouseIdList, sysType);
     }
 
+    @GetMapping("/resolveErpWarehouseBySourceId")
+    public ThirdMappingDTO.ErpWarehouseDTO resolveErpWarehouseBySourceId(@RequestParam("platform") String platform,
+                                                                         @RequestParam("sourceWarehouseId") String sourceWarehouseId) {
+        return thirdMappingService.resolveErpWarehouseBySourceId(platform, sourceWarehouseId);
+    }
+
     @PostMapping("/view")
     public ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         return thirdMappingService.view(viewParamDTO);

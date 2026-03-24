@@ -55,6 +55,10 @@ public interface DmpThirdMappingFeign {
      */
     @GetMapping("/listMappingBySysIds")
     List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(@RequestParam List<String> warehouseIdList, @RequestParam String sysType);
+
+    @GetMapping("/resolveErpWarehouseBySourceId")
+    ThirdMappingDTO.ErpWarehouseDTO resolveErpWarehouseBySourceId(@RequestParam("platform") String platform,
+                                                                  @RequestParam("sourceWarehouseId") String sourceWarehouseId);
     /**
      * 新增、编辑
      */

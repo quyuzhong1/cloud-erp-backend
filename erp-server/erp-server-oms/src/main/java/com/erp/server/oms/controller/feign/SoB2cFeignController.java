@@ -454,6 +454,11 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateWarehouseByShopId(id, shopId);
     }
 
+    @PostMapping("updateTikTokOrderWarehouse")
+    public Boolean updateTikTokOrderWarehouse(@RequestParam("soId") String soId) {
+        return soB2cService.updateTikTokOrderWarehouse(soId);
+    }
+
     /**
      * 查询合并来源关系
      *

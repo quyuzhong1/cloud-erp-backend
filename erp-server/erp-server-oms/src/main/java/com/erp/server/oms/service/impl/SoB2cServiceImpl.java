@@ -221,6 +221,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Lazy
     @Resource
+    private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
+
+    @Lazy
+    @Resource
     private SoB2cReturnService soB2cReturnService;
     @Lazy
     @Resource
@@ -6398,13 +6402,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(soId);
         b2cCustomer.setShopId(shopId);
-        if (Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())) {
-            CustomerInfoEntity customer = customerInfoService.getCustomerById(shopInfo.getCustomerId());
-            b2cCustomer.setSellerId(customer.getSellerId());
-            b2cCustomer.setSellerName(customer.getSellerName());
-            b2cCustomer.setSalesDeptId(customer.getSalesDeptId());
-            b2cCustomer.setCustomerName(customer.getName());
+        if (Objects.nonNull(shopInfo)) {
             b2cCustomer.setShopName(shopInfo.getName());
+            if (CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())) {
+                CustomerInfoEntity customer = customerInfoService.getCustomerById(shopInfo.getCustomerId());
+                if (Objects.nonNull(customer)) {
+                    b2cCustomer.setSellerId(customer.getSellerId());
+                    b2cCustomer.setSellerName(customer.getSellerName());
+                    b2cCustomer.setSalesDeptId(customer.getSalesDeptId());
+                    b2cCustomer.setCustomerName(customer.getName());
+                } else {
+                    throw new ServiceException(CharSequenceUtil.format("店铺【{}】关联客户【{}】不存在", shopInfo.getName(), shopInfo.getCustomerId()));
+                }
+            }
         }
         String country = "";
         String countryName = "";
@@ -6520,6 +6530,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateTikTokOrderWarehouse(String soId) {
+        SoB2cEntity entity = this.getById(soId);
+        if (Objects.isNull(entity)
+                || !PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())
+                || !Boolean.TRUE.equals(entity.hasPlatformWarehouseOrder())) {
+            return Boolean.FALSE;
+        }
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList =
+                dmpTaskFeign.getOutputTaskRecord(entity.getPlatformCode(), "TikTokOrderRocketMQTaskHandler");
+        if (CollectionUtils.isEmpty(dmpOutputTaskRecordEntityList)) {
+            return Boolean.FALSE;
+        }
+        DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.get(0);
+        PlatformOrderDTO dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
+        if (Objects.isNull(dto)) {
+            return Boolean.FALSE;
+        }
+        if (StringUtils.isBlank(dto.getShopId())) {
+            dto.setShopId(entity.getShopId());
+        }
+        if (StringUtils.isBlank(dto.getDictPlatform())) {
+            dto.setDictPlatform(entity.getDictPlatform());
+        }
+        SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
+        return Objects.nonNull(resultDTO) && !Boolean.TRUE.equals(resultDTO.getIsWarehouseEmpty());
     }
 
 
@@ -7232,8 +7271,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 handleData(oldEntity, false, false);
             }
             ApproveStatusEnum oldApproveStatus = oldEntity.getApproveStatus();
+            boolean tikTokPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder(oldEntity, dto);
             // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
-            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())) {
+            if (!tikTokPlatformWarehouseOrder && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())) {
                 dto.setApproveStatusStr("");
             }
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
@@ -7326,7 +7366,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
-                    dto.setBillStatus(oldEntity.getBillStatus());
+                    if (!tikTokPlatformWarehouseOrder) {
+                        dto.setBillStatus(oldEntity.getBillStatus());
+                    }
                     if ("平台作废".equals(oldEntity.getRemark())) {
                         oldEntity.setRemark("");
                     }
@@ -7334,12 +7376,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if ("CANCELLED".equalsIgnoreCase(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
-                    dto.setBillStatus(oldEntity.getBillStatus());
+                    if (!tikTokPlatformWarehouseOrder) {
+                        dto.setBillStatus(oldEntity.getBillStatus());
+                    }
                     dto.setIsCancel(Boolean.TRUE);
                 }
             }
             // 自发货订单状态不更新(由ERP系统决定)
-            if (!oldEntity.hasPlatformWarehouseOrder()) {
+            boolean platformWarehouseOrder = oldEntity.hasPlatformWarehouseOrder();
+            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                platformWarehouseOrder = tikTokPlatformWarehouseOrder;
+            }
+            if (!platformWarehouseOrder) {
                 //1、当ERP订单状态是待配货 或者 配货中  推过来冻结中的状态 就直接改订单状态为冻结中，增加冻结标识；
                 //2、当ERP订单状态是除了待配货和配货中  就不改为冻结中的状态
                 String oldStatus = oldEntity.getBillStatus();
@@ -7393,6 +7441,34 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             return resultDTO;
         }
+    }
+
+    private boolean isTikTokPlatformWarehouseOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto) {
+        if (!PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return oldEntity.hasPlatformWarehouseOrder();
+        }
+        if (Objects.nonNull(oldEntity) && oldEntity.hasPlatformWarehouseOrder()) {
+            return true;
+        }
+        if (Objects.nonNull(oldEntity) && StringUtils.isNotBlank(oldEntity.getPlatformDeliveryWarehouse())) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(dto.getPlatformDeliveryWarehouse())) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            if (Objects.nonNull(labelJsonDTO.getIsPlatformWarehouseOrder())) {
+                return labelJsonDTO.getIsPlatformWarehouseOrder();
+            }
+            return isTikTokPlatformWarehouseByFulfillmentType(labelJsonDTO.getFulfillmentType());
+        }
+        return false;
+    }
+
+    private boolean isTikTokPlatformWarehouseByFulfillmentType(String fulfillmentType) {
+        return StringUtils.isNotBlank(fulfillmentType)
+                && "FULFILLMENT_BY_TIKTOK".equalsIgnoreCase(fulfillmentType);
     }
 
     private void checkExchangeRate(SoB2cEntity entity) {
@@ -7710,6 +7786,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             dto.setTrackNo(trackNo);
             dto.setTransportNo(soB2cLogistics.getCode());
+            // TikTok平台仓自动生成销售出库单时，时间口径按平台发货时间(rts_time)统一下发
+            if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())
+                    && entity.hasPlatformWarehouseOrder()
+                    && Objects.nonNull(soB2cLogistics.getDeliveryTime())) {
+                LocalDateTime deliveryTime = soB2cLogistics.getDeliveryTime();
+                dto.setBillDate(deliveryTime.toLocalDate());
+                dto.setPlanDeliveryDate(deliveryTime.toLocalDate());
+                dto.setActualDeliveryDate(deliveryTime);
+            }
         }
 
         //根据主表id 查询出库的信息
