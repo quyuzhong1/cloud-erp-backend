@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.entity.QcStandardEntity;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
@@ -17,7 +18,7 @@ import java.util.List;
  * @author jack
  * @since 2026-03-22
  */
-@Repository
+@Mapper
 public interface QcStandardMapper extends BaseMapper<QcStandardEntity> {
 
     List<QcStandardDTO.TabListDTO> tabList(@Param("params") QcStandardDTO.PagingParamDTO params);

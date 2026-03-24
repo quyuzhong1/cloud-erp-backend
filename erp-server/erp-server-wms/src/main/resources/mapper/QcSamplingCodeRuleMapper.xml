@@ -45,7 +45,7 @@
             *
         FROM
             qc_sampling_code_rule
-                 WHERE is_valid = 1 AND min_lot_qty <= #{lotSize} AND max_lot_qty >= #{lotSize} LIMIT 1
+                 WHERE is_valid = 1 AND min_lot_qty &lt;= #{lotSize} AND max_lot_qty >= #{lotSize} LIMIT 1
     </select>
 
 </mapper>
