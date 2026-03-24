@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -13,13 +14,17 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.listener.QcApplicationExcelListener;
 import com.erp.server.wms.mapper.QcApplicationDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -35,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -55,7 +60,8 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
 
     @Resource
     private FileFeign fileFeign;
-
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -132,7 +138,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         //导出错误数据
         List<QcApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理数据
-        List<QcApplicationDetailDTO.ImportResultDTO> importResultList = doOpHandleQcApplication(successList, errorList,dto.getSourceId());
+        List<QcApplicationDetailDTO.ImportResultDTO> importResultList = handleImportSuccessList(successList, errorList,dto.getSourceId());
 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
@@ -147,19 +153,6 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         return importDTO;
     }
 
-    /**
-     *  处理质检申请单导入数据
-     *  @author will
-     * @date 2026/3/24 14:48
-     * @param successList
-     * @param errorList
-     * @return  List<QcApplicationDetailDTO.ImportResultDTO>
-     */
-    private  List<QcApplicationDetailDTO.ImportResultDTO> doOpHandleQcApplication (List<QcApplicationImportExcelDTO> successList,List<QcApplicationImportExcelDTO> errorList,String sourceId) {
-
-        return null;
-    }
-
     @Override
     public List<QcApplicationDetailEntity> listByMainId(String mainId) {
         return lambdaQuery().eq(QcApplicationDetailEntity::getMainId, mainId).list();
@@ -167,12 +160,50 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
 
 
     @Override
-    public void handleImportSuccessList(List<QcApplicationImportExcelDTO> successList, List<QcApplicationImportExcelDTO> errorList) {
+    public List<QcApplicationDetailDTO.ImportResultDTO> handleImportSuccessList(List<QcApplicationImportExcelDTO> successList, List<QcApplicationImportExcelDTO> errorList,String sourceId) {
         if (CollectionUtils.isEmpty(successList)) {
-            return;
+            return Collections.emptyList();
+        }
+        List<QcApplicationDetailDTO.ImportResultDTO> resultList = new ArrayList<>();
+
+        List<PurchaseOrderDetailEntity> detailList = new ArrayList<>();
+        if (CharSequenceUtil.isNotBlank(sourceId)) {
+            //查询采购订单数据
+             detailList = FeignQuery.create(PurchaseOrderDetailEntity.class).eq(PurchaseOrderDetailEntity::getPurchaseOrderId, sourceId).list();
         }
 
+        //SKU信息
+        List<String> skuNoList = successList.stream().map(QcApplicationImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuPurchaseBySkuNos(skuNoList);
+        Map<String, SkuVO> skuMap = CollUtil.isEmpty(skuVOS) ? new HashMap<>() : skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, obj -> obj));
 
+        for ( QcApplicationImportExcelDTO data : successList) {
+            QcApplicationDetailDTO.ImportResultDTO resultDTO = new QcApplicationDetailDTO.ImportResultDTO();
+            BeanUtil.copyProperties(data, resultDTO);
+
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), data.getSkuNo())).findFirst().orElse(null);
+            if ( ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+                data.setErrorMsg("采购订单中不存在该SKU");
+                errorList.add(data);
+                continue;
+            }
+            //sku信息
+            SkuVO skuVO = skuMap.get(data.getSkuNo());
+            if (ObjectUtil.isEmpty(skuVO)) {
+
+            }
+
+
+            resultDTO.setProductName(skuVO.getSkuName());
+            resultDTO.setEan(skuVO.getEan());
+            resultDTO.setSourceDetailId(purchaseOrderDetailEntity.getId());
+
+
+
+            resultList.add(resultDTO);
+        }
+
+        return resultList;
     }
 
     /**
@@ -201,6 +232,10 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "编辑操作");
         }
 
+        //sku信息
+        List<String> skuIdList = qcApplicationDetailList.stream().map(QcApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<String, String> skuMap = CollUtil.isEmpty(skuList) ? new HashMap<>() : skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getSkuNo));
 
         //查询来源采购订单数据
         PurchaseOrderSupplierEntity poSupplierEntity = CharSequenceUtil.isBlank(sourceId) ? new PurchaseOrderSupplierEntity() : FeignQuery.getById(PurchaseOrderSupplierEntity.class, sourceId);
@@ -210,6 +245,9 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
                 if (CharSequenceUtil.isNotBlank(data.getSupplierId()) && !CharSequenceUtil.equals(data.getSupplierId(),poSupplierEntity.getSupplierId())) {
                     throw new ServiceException(ApiError.QC_APPLICATION_SUPPLIER_NOT_DIFF);
                 }
+                //sku编码
+                data.setSkuNo(skuMap.get(data.getSkuId()));
+
                 //校验申请质检数量 TODO
 
 

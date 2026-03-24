@@ -23,14 +23,18 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDTO;
+import com.erp.model.wms.dto.QcApplicationDetailDTO;
+import com.erp.model.wms.entity.QcApplicationDetailEntity;
 import com.erp.model.wms.entity.QcApplicationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.QcApplicationMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -73,6 +77,8 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     @Resource
     private QcApplicationDetailService qcApplicationDetailService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -430,10 +436,51 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     return data;
     }
 
+    /**
+     * 数据处理
+     * @author will
+     * @date 2026/3/24 15:31
+     * @param data
+     */
     private void fillOne(QcApplicationDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
           return;
         }
+        //来源单号
+        data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
+         //审核状态
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        //质检类型
+        data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
+
+        //明细
+        List<QcApplicationDetailEntity> list = qcApplicationDetailService.listByMainId(data.getId());
+        if (CollUtil.isNotEmpty(list)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
+        }
+        //SKU
+        List<String> skuIdList = list.stream().map(QcApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
+        Map<String, SkuVO> skuMap = CollUtil.isEmpty(skuVOS) ? new HashMap<>() : skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, obj -> obj));
+        //供应商
+        List<String> supplierIdList = list.stream().map(QcApplicationDetailEntity::getSupplierId).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class, supplierIdList);
+        Map<String, String> supplierNameMap = CollUtil.isEmpty(supplierList)  ?   new HashMap<>() :  supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName));
+
+        List<QcApplicationDetailDTO.ViewDTO> detailList = new ArrayList<>();
+        for (QcApplicationDetailEntity detailEntity : list) {
+            QcApplicationDetailDTO.ViewDTO viewDetailEntity = BeanUtil.toBean(detailEntity, QcApplicationDetailDTO.ViewDTO.class);
+            //sku信息
+            SkuVO skuVO = skuMap.get(detailEntity.getSkuId());
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                viewDetailEntity.setProductName(skuVO.getSkuName());
+                viewDetailEntity.setEan(skuVO.getEan());
+            }
+            //供应商名称
+            viewDetailEntity.setSupplierName(supplierNameMap.get(detailEntity.getSupplierId()));
+            detailList.add(viewDetailEntity);
+        }
+        data.setDetailList(detailList);
     }
 
    /**

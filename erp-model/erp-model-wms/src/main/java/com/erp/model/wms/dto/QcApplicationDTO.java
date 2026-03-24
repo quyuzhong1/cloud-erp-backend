@@ -275,9 +275,18 @@ public class QcApplicationDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+
+        /**
         * 单据状态
         */
         private String approveStatus;
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
 
         /**
         * 质检类型
