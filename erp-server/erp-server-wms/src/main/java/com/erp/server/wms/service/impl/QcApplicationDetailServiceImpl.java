@@ -15,6 +15,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -190,9 +191,13 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             //sku信息
             SkuVO skuVO = skuMap.get(data.getSkuNo());
             if (ObjectUtil.isEmpty(skuVO)) {
+                data.setErrorMsg("未找到SKU信息");
+                errorList.add(data);
+                continue;
+            }
+            if ( !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(skuVO.getStatus()))  {
 
             }
-
 
             resultDTO.setProductName(skuVO.getSkuName());
             resultDTO.setEan(skuVO.getEan());
