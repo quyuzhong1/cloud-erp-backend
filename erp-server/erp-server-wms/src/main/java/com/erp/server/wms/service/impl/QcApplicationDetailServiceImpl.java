@@ -3,18 +3,24 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
+import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.server.wms.listener.QcApplicationExcelListener;
 import com.erp.server.wms.mapper.QcApplicationDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcApplicationDetailService;
@@ -27,10 +33,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_QC_APPLICATION_DETAIL;
 
 
 /**
@@ -48,7 +54,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     private OperateLogService operateLogService;
 
     @Resource
-    private DownloadTaskFeign downloadTaskFeign;
+    private FileFeign fileFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -103,15 +109,70 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     }
 
     @Override
-    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+    public QcApplicationDetailDTO.ImportDTO importExcel(QcApplicationDetailDTO.ImportParamDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("质检申请明细导入", IMPORT_WMS_QC_APPLICATION_DETAIL.getCode(), dto);
-        return Boolean.TRUE;
+
+        QcApplicationExcelListener excelListenerUtil = new QcApplicationExcelListener();
+
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes),  PurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        //验证导入数据是否为空
+        List<QcApplicationImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+        }
+        QcApplicationDetailDTO.ImportDTO importDTO = new QcApplicationDetailDTO.ImportDTO();
+        //导入数据处理
+        List<QcApplicationImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<QcApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理数据
+        List<QcApplicationDetailDTO.ImportResultDTO> importResultList = doOpHandleQcApplication(successList, errorList,dto.getSourceId());
+
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "质检申请单错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, QcApplicationImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importDTO.setSuccessList(importResultList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
+    }
+
+    /**
+     *  处理质检申请单导入数据
+     *  @author will
+     * @date 2026/3/24 14:48
+     * @param successList
+     * @param errorList
+     * @return  List<QcApplicationDetailDTO.ImportResultDTO>
+     */
+    private  List<QcApplicationDetailDTO.ImportResultDTO> doOpHandleQcApplication (List<QcApplicationImportExcelDTO> successList,List<QcApplicationImportExcelDTO> errorList,String sourceId) {
+
+        return null;
     }
 
     @Override
     public List<QcApplicationDetailEntity> listByMainId(String mainId) {
         return lambdaQuery().eq(QcApplicationDetailEntity::getMainId, mainId).list();
+    }
+
+
+    @Override
+    public void handleImportSuccessList(List<QcApplicationImportExcelDTO> successList, List<QcApplicationImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+
     }
 
     /**

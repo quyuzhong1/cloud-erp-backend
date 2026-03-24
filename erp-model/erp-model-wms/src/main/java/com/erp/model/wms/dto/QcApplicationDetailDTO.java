@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
 import lombok.AllArgsConstructor;
@@ -265,5 +266,62 @@ public class QcApplicationDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ImportParamDTO extends BaseDTO.ImportDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<QcApplicationDetailDTO.ImportResultDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportResultDTO {
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * ean
+         */
+        private String ean;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 总数量
+         */
+        private Integer qty;
+        /**
+         * 供应商
+         */
+        private String supplierId;
+        private String supplierName;
+
+    }
 
 }

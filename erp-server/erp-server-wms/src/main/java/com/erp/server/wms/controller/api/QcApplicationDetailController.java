@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.common.business.dto.base.BaseDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -9,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.server.wms.service.QcApplicationDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -49,7 +49,7 @@ public class QcApplicationDetailController extends BaseController {
     @GetMapping("/exportTemplate")
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载质检申请单模板")
     public ApiResult<Object>exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "excel/qcApplicationDetail.xlsx";
+        String path = "excel/qcApplicationDetailTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -79,9 +79,8 @@ public class QcApplicationDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "质检申请导入")
     @PostMapping(value = "/importExcel")
-    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
-        Boolean flag = qcApplicationDetailService.importExcel(dto);
-        return flag ? success() : failure();
+    public ApiResult<QcApplicationDetailDTO.ImportDTO> importExcel(@RequestBody QcApplicationDetailDTO.ImportParamDTO dto) {
+        return success(qcApplicationDetailService.importExcel(dto));
     }
 
 }

@@ -6,6 +6,7 @@ import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcApplicationDTO;
+import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
 import com.erp.model.wms.entity.QcApplicationEntity;
 
 import java.util.List;

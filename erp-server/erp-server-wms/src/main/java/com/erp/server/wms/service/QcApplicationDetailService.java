@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
+import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
 
 import java.util.List;
@@ -42,7 +42,7 @@ public interface QcApplicationDetailService extends SuperService<QcApplicationDe
      * @param  dto
      * @return  Boolean
      */
-    Boolean importExcel(BaseDTO.ImportDTO dto);
+    QcApplicationDetailDTO.ImportDTO importExcel(QcApplicationDetailDTO.ImportParamDTO dto);
 
     /**
      * 根据主表id查询明细列表
@@ -52,4 +52,13 @@ public interface QcApplicationDetailService extends SuperService<QcApplicationDe
      * @return  List<QcApplicationDetailEntity>
      */
     List<QcApplicationDetailEntity> listByMainId(String mainId);
+
+    /**
+     * 处理导入成功的数据
+     * @author will
+     * @date 2026/3/24 17:00
+     * @param successList 导入成功的数据列表
+     * @param errorList 导入失败的数据列表
+     */
+    void handleImportSuccessList(List<QcApplicationImportExcelDTO> successList, List<QcApplicationImportExcelDTO> errorList);
 }

@@ -177,6 +177,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         return null;
     }
 
+
     @Override
     public List<QcApplicationDTO.ListPushQcNoticeDTO> listPushQcNotice(List<String> ids) {
         return Collections.emptyList();
