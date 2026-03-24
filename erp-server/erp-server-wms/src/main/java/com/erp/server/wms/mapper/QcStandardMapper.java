@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -24,4 +26,6 @@ public interface QcStandardMapper extends BaseMapper<QcStandardEntity> {
     List<QcStandardDTO.TabListDTO> tabList(@Param("params") QcStandardDTO.PagingParamDTO params);
 
     IPage<QcStandardDTO.ListDTO> paging(Page query, @Param("params") QcStandardDTO.PagingParamDTO params);
+
+    IPage<QcStandardDTO.ExportDTO> exportList(Page query,  @Param("params")  QcStandardDTO.PagingParamDTO params);
 }

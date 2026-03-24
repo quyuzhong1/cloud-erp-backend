@@ -24,20 +24,20 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_STANDARD
  */
 @Component
 @Slf4j
-public class ExportWmsQcStandardHandler extends AbstractPageFileEventHandler<QcStandardDTO.ListDTO, QcStandardDTO.PagingParamDTO> {
+public class ExportWmsQcStandardHandler extends AbstractPageFileEventHandler<QcStandardDTO.ExportDTO, QcStandardDTO.PagingParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
     @Override
-    protected List<QcStandardDTO.ListDTO> getData(FileTask fileTask) {
+    protected List<QcStandardDTO.ExportDTO> getData(FileTask fileTask) {
         QcStandardDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<QcStandardDTO.PagingParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<QcStandardDTO.ListDTO> getPageData(PagingDTO<QcStandardDTO.PagingParamDTO> dto) {
+    protected PagingVO<QcStandardDTO.ExportDTO> getPageData(PagingDTO<QcStandardDTO.PagingParamDTO> dto) {
         return exportWmsFeign.exportQcStandard(dto);
     }
 

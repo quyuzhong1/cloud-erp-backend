@@ -256,6 +256,23 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         return list;
     }
 
+
+    @Override
+    public PagingVO<QcStandardDTO.ExportDTO> exportList(PagingDTO<QcStandardDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<QcStandardDTO.ExportDTO> pageData = this.baseMapper.exportList(query,pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+
+        for (QcStandardDTO.ExportDTO listDTO : pageData.getRecords()) {
+            listDTO.setDisabledName(listDTO.getDisabled() ? "禁用" : "启用" );
+        }
+        return new PagingVO(pageData);
+    }
+
+
     @Override
     public PagingVO<QcStandardDTO.ListDTO> paging(PagingDTO<QcStandardDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -272,6 +289,10 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
     private void fillList(List<QcStandardDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
             return;
+        }
+
+        for (QcStandardDTO.ListDTO listDTO : list) {
+            listDTO.setDisabledName(listDTO.getDisabled() ? "禁用" : "启用" );
         }
     }
 
@@ -300,7 +321,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         }
         return viewDTO;
     }
-
     /**
      * 构建完整的详情 DTO (包含明细和附件)
      */
