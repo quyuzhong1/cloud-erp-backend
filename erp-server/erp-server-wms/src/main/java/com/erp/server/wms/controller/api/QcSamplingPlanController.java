@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -14,6 +15,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SamplingPlanDTO;
 import com.erp.model.wms.entity.QcSamplingPlanEntity;
+import com.erp.model.wms.entity.QcSamplingPlanQcTypeRefEntity;
+import com.erp.server.wms.query.QcSamplingPlanQueryHandler;
+import com.erp.server.wms.service.QcSamplingPlanQcTypeRefService;
 import com.erp.server.wms.service.QcSamplingPlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +27,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -34,11 +39,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @LogSystemModule("抽样方案表")
-@RequestMapping("/samplingScheme")
+@RequestMapping("/samplingPlan")
 public class QcSamplingPlanController extends BaseController {
 
     @Resource
     private QcSamplingPlanService qcSamplingPlanService;
+    @Resource
+    private QcSamplingPlanQcTypeRefService qcSamplingPlanQcTypeRefService;
 
     /**
     * 新增
@@ -75,11 +82,7 @@ public class QcSamplingPlanController extends BaseController {
     * @return ApiResult<PagingVO<SamplingPlanDTO.ListDTO>>
     */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:samplingScheme:paging",
-            tableAlias = ""
-    )
+    @WebAdvanceQuery(handler = QcSamplingPlanQueryHandler.class)
     public ApiResult<PagingVO<SamplingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SamplingPlanDTO.PagingParamDTO> dto) {
         return success(qcSamplingPlanService.paging(dto));
     }
@@ -89,7 +92,7 @@ public class QcSamplingPlanController extends BaseController {
     * 详情
     * @author zdy
     * @date:  2026-03-20
-    * @param id
+    * @param id 取值 qcTypeId
     * @return ApiResult<SamplingPlanDTO.ViewDTO>>
     */
     @GetMapping("/view")
@@ -107,7 +110,7 @@ public class QcSamplingPlanController extends BaseController {
      * 启用禁用
      * @author zdy
      * @date:  2026-03-20
-     * @param dto
+     * @param dto ids 取值 qcTypeId
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/updateStatus")
@@ -115,15 +118,22 @@ public class QcSamplingPlanController extends BaseController {
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<QcSamplingPlanEntity> list = qcSamplingPlanService.lambdaQuery().in(QcSamplingPlanEntity::getId, ids).list();
-        Map<String, QcSamplingPlanEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcSamplingPlanEntity::getId, w -> w));
+        List<QcSamplingPlanQcTypeRefEntity> list = qcSamplingPlanQcTypeRefService.lambdaQuery().in(QcSamplingPlanQcTypeRefEntity::getId, ids).list();
+        List<String> mainIds = list.stream().map(QcSamplingPlanQcTypeRefEntity::getMainId).distinct().collect(Collectors.toList());
+        List<QcSamplingPlanEntity> entityList = qcSamplingPlanService.listByIds(mainIds);
+        Map<String, QcSamplingPlanEntity> idEntityMap = entityList.stream().collect(Collectors.toMap(QcSamplingPlanEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            QcSamplingPlanQcTypeRefEntity qcTypeRefEntity = list.stream().filter(e -> id.equals(e.getId())).findFirst().orElse(null);
             BatchResultDTO result;
             try {
-                result = qcSamplingPlanService.updateStatus(id,dto.getDisabled());
+                if (Objects.isNull(qcTypeRefEntity)){
+                    result = BatchResultDTO.fail(id, id, "质检类型关联表不存在");
+                }else {
+                    result = qcSamplingPlanService.updateStatus(id,dto.getDisabled(),idEntityMap.get(qcTypeRefEntity.getMainId()));
+                }
             }catch (Exception e){
                 log.error("抽样方案单启用/禁用失败",e);
-                QcSamplingPlanEntity entity = idEntityMap.get(id);
+                QcSamplingPlanEntity entity = idEntityMap.get(qcTypeRefEntity.getMainId());
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "抽样方案单不存在, 启用/禁用失败");
                     resultDTOS.add(result);
@@ -140,7 +150,7 @@ public class QcSamplingPlanController extends BaseController {
      * 删除
      * @author zdy
      * @date:  2026-03-20
-     * @param dto
+     * @param dto ids 取值 qcTypeId
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/delete")
@@ -148,15 +158,22 @@ public class QcSamplingPlanController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<QcSamplingPlanEntity> list = qcSamplingPlanService.lambdaQuery().in(QcSamplingPlanEntity::getId, ids).list();
-        Map<String, QcSamplingPlanEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcSamplingPlanEntity::getId, w -> w));
+        List<QcSamplingPlanQcTypeRefEntity> list = qcSamplingPlanQcTypeRefService.lambdaQuery().in(QcSamplingPlanQcTypeRefEntity::getId, ids).list();
+        List<String> mainIds = list.stream().map(QcSamplingPlanQcTypeRefEntity::getMainId).distinct().collect(Collectors.toList());
+        List<QcSamplingPlanEntity> entityList = qcSamplingPlanService.listByIds(mainIds);
+        Map<String, QcSamplingPlanEntity> idEntityMap = entityList.stream().collect(Collectors.toMap(QcSamplingPlanEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            QcSamplingPlanQcTypeRefEntity qcTypeRefEntity = list.stream().filter(e -> id.equals(e.getId())).findFirst().orElse(null);
             BatchResultDTO deleteResult;
             try {
-                deleteResult = qcSamplingPlanService.delete(id);
+                if (Objects.isNull(qcTypeRefEntity)){
+                    deleteResult = BatchResultDTO.fail(id, id, "质检类型关联表不存在");
+                }else {
+                    deleteResult = qcSamplingPlanService.delete(id,qcTypeRefEntity);
+                }
             }catch (Exception e){
                 log.error("抽样方案单删除失败",e);
-                QcSamplingPlanEntity entity = idEntityMap.get(id);
+                QcSamplingPlanEntity entity = idEntityMap.get(qcTypeRefEntity.getMainId());
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "抽样方案单不存在, 删除失败");
                     resultDTOS.add(deleteResult);

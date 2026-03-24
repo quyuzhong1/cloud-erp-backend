@@ -54,5 +54,17 @@
         </if>
         GROUP BY approve_status
     </select>
+    <select id="listSkuByMainIds" resultType="com.erp.model.wms.dto.SamplingPlanSkuRefDTO$SkuDTO">
+        SELECT
+            qspsr.main_id AS id,
+            COALESCE(STRING_AGG(DISTINCT qspsr.sku_no, ',' ORDER BY qspsr.sku_no),'all') AS skuNos
+        FROM qc_sampling_plan_sku_ref qspsr
+        WHERE qspsr.is_deleted = FALSE
+            and qspsr.main_id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        GROUP BY qspsr.main_id
+    </select>
 
 </mapper>

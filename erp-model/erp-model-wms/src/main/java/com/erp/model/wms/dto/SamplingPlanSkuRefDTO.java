@@ -222,4 +222,10 @@ public class SamplingPlanSkuRefDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO {
+        private String id;
+        private String skuNos;
+    }
 }

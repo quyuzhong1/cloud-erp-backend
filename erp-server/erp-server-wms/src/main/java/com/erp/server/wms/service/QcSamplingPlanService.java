@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SamplingPlanDTO;
 import com.erp.model.wms.entity.QcSamplingPlanEntity;
+import com.erp.model.wms.entity.QcSamplingPlanQcTypeRefEntity;
 
 /**
  * <p>
@@ -65,11 +66,12 @@ public interface QcSamplingPlanService extends SuperService<QcSamplingPlanEntity
      *
      * @param id
      * @param disabled
+     * @param entity
      * @return
      * @author zdy
      * @date: 2026-03-20
      */
-    BatchResultDTO updateStatus(String id, Boolean disabled);
+    BatchResultDTO updateStatus(String id, Boolean disabled, QcSamplingPlanEntity entity);
 
-    BatchResultDTO delete(String id);
+    BatchResultDTO delete(String id, QcSamplingPlanQcTypeRefEntity qcTypeRefEntity);
 }

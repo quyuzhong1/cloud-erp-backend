@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @author zdy
  * @ClassName AqlSamplingRequest
@@ -20,13 +22,15 @@ public class AqlSamplingRequest {
     /**
      * 批量数
      */
-    private Integer lotSize;
+    private Integer lotQty;
     /**
      * 检验水平（S-1/S-2/S-3/S-4/I/II/III）
+     * QcLevelEnum
      */
-    private String inspectionLevel;
+    private String qcLevel;
     /**
      * AQL值（0.010/0.015/.../100）
+     * AqlValueEnum
      */
     private String aqlValue;
 }

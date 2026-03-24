@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.SamplingPlanSkuRefDTO;
 import com.erp.model.wms.entity.QcSamplingPlanEntity;
 import com.erp.model.wms.entity.QcSamplingPlanSkuRefEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -74,6 +75,16 @@ public class QcSamplingPlanSkuRefServiceImpl extends SuperServiceImpl<QcSampling
             item.setMainId(qcSamplingPlanEntity.getId());
         });
         this.saveOrUpdateBatch(skuRefEntities);
+    }
+
+    @Override
+    public void removeByMainId(String id) {
+        this.removeByMainId(id, Collections.emptyList());
+    }
+
+    @Override
+    public List<SamplingPlanSkuRefDTO.SkuDTO> listSkuByMainIds(List<String> ids) {
+        return baseMapper.listSkuByMainIds(ids);
     }
 
     private void removeByMainId(String mainId, List<String> idList) {

@@ -19,5 +19,5 @@ public interface QcSamplingCodeRuleMapper extends BaseMapper<QcSamplingCodeRuleE
      * 根据批量数查询映射关系
      */
 
-    QcSamplingCodeRuleEntity selectByLotSize(@Param("lotSize") Integer lotSize);
+    QcSamplingCodeRuleEntity selectByLotQty(@Param("lotQty") Integer lotQty);
 }

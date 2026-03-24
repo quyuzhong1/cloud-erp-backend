@@ -122,12 +122,12 @@ public class SamplingPlanDTO implements Serializable {
         /**
         * 严重缺陷AQL[可排序]
         */
-        private BigDecimal majorAql;
+        private String majorAql;
 
         /**
         * 一般缺陷AQL[可排序]
         */
-        private BigDecimal generalAql;
+        private String generalAql;
 
         /**
         * 备注[可排序]
@@ -138,7 +138,7 @@ public class SamplingPlanDTO implements Serializable {
         /**
         * 状态[可排序]
         */
-        private String disable;
+        private Boolean disabled;
 
 
         /**
@@ -158,6 +158,10 @@ public class SamplingPlanDTO implements Serializable {
          * 更新人名称[可排序]
          */
         private String updateUserName;
+        /**
+         * sku列表
+         */
+        private String skuNos;
 
     }
 
@@ -207,12 +211,12 @@ public class SamplingPlanDTO implements Serializable {
         /**
         * 严重缺陷AQL
         */
-        private BigDecimal majorAql;
+        private String majorAql;
 
         /**
         * 一般缺陷AQL
         */
-        private BigDecimal generalAql;
+        private String generalAql;
 
         /**
         * 备注
@@ -308,18 +312,17 @@ public class SamplingPlanDTO implements Serializable {
         * 严重缺陷AQL
         */
         @Digits(integer = 12, fraction = 4, message = "严重缺陷AQL整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal majorAql;
+        private String majorAql;
 
         /**
         * 一般缺陷AQL
         */
         @Digits(integer = 8, fraction = 2, message = "一般缺陷AQL整数位不能超过8位，小数位不能超过2位")
-        private BigDecimal generalAql;
+        private String generalAql;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 

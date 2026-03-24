@@ -56,6 +56,11 @@ public class QcSamplingPlanDetailServiceImpl extends SuperServiceImpl<QcSampling
         this.saveOrUpdateBatch(detailList);
     }
 
+    @Override
+    public void removeByMainId(String id) {
+        this.removeByMainId(id, Collections.emptyList());
+    }
+
     private void removeByMainId(String mainId, List<String> idList) {
         this.lambdaUpdate().eq(QcSamplingPlanDetailEntity::getMainId, mainId)
                 .ne(CollUtil.isNotEmpty(idList), QcSamplingPlanDetailEntity::getId, idList).remove();

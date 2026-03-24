@@ -40,7 +40,7 @@ public class QcSamplingAqlRuleEntity extends BaseEntity<QcSamplingAqlRuleEntity>
     * AQL值（0.010/0.015/.../100）
     */
     @TableField("aql_value")
-    private BigDecimal aqlValue;
+    private String aqlValue;
     /**
     * 接收数Ac
     */

@@ -40,12 +40,12 @@
         min_lot_qty, max_lot_qty, code_s1, code_s2, code_s3, code_s4, code_i, code_ii, code_iii, sample_qty_code, sample_qty, disabled
     </sql>
 
-    <select id="selectByLotSize" resultType="com.erp.model.wms.entity.QcSamplingCodeRuleEntity">
+    <select id="selectByLotQty" resultType="com.erp.model.wms.entity.QcSamplingCodeRuleEntity">
         SELECT
             *
         FROM
             qc_sampling_code_rule
-                 WHERE is_valid = 1 AND min_lot_qty <= #{lotSize} AND max_lot_qty >= #{lotSize} LIMIT 1
+                 WHERE is_valid = 1 AND min_lot_qty <![CDATA[ <= ]]> #{lotQty} AND max_lot_qty >= #{lotQty} LIMIT 1
     </select>
 
 </mapper>

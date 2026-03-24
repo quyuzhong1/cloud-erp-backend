@@ -48,13 +48,13 @@ public class QcSamplingPlanEntity extends BaseEntity<QcSamplingPlanEntity> {
      * AqlValueEnum
     */
     @TableField("major_aql")
-    private BigDecimal majorAql;
+    private String majorAql;
     /**
     * 一般缺陷AQL
      * AqlValueEnum
     */
     @TableField("general_aql")
-    private BigDecimal generalAql;
+    private String generalAql;
     /**
     * 备注
     */

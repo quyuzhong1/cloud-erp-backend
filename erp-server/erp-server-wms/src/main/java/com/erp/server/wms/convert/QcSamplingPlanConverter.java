@@ -97,6 +97,7 @@ public interface QcSamplingPlanConverter {
     @Mapping(target = "detailList", ignore = true)
     SamplingPlanDTO.ViewDTO qcSamplingPlanEntityToViewDTO(QcSamplingPlanEntity qcSamplingPlanEntity);
 
+    @Mapping(target = "qcTypeName", expression = "java(com.common.core.constant.EnumMessage.getNameByCode(com.erp.model.wms.enums.QcTypeEnum.class, qcTypeEntity.getQcType()))")
     SamplingPlanQcTypeRefDTO.ViewDTO qcSamplingPlanQcTypeRefEntityToViewDTO(QcSamplingPlanQcTypeRefEntity qcTypeEntity);
     List<SamplingPlanQcTypeRefDTO.ViewDTO> qcSamplingPlanQcTypeRefEntityToViewDTO(List<QcSamplingPlanQcTypeRefEntity> qcTypeList);
 

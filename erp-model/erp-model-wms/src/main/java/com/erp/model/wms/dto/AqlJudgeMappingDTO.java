@@ -97,7 +97,7 @@ public class AqlJudgeMappingDTO implements Serializable {
         /**
         * AQL值（0.010/0.015/.../100）
         */
-        private BigDecimal aqlValue;
+        private String aqlValue;
 
         /**
         * 接收数Ac
@@ -171,7 +171,7 @@ public class AqlJudgeMappingDTO implements Serializable {
         /**
         * AQL值（0.010/0.015/.../100）
         */
-        private BigDecimal aqlValue;
+        private String aqlValue;
 
         /**
         * 接收数Ac
@@ -238,7 +238,7 @@ public class AqlJudgeMappingDTO implements Serializable {
         */
         @NotNull(message = "AQL值（0.010/0.015/.../100）不能为空")
         @Digits(integer = 3, fraction = 3, message = "AQL值（0.010/0.015/.../100）整数位不能超过3位，小数位不能超过3位")
-        private BigDecimal aqlValue;
+        private String aqlValue;
 
         /**
         * 接收数Ac

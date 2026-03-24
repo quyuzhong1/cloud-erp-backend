@@ -12,7 +12,9 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -20,12 +22,16 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SamplingPlanDTO;
+import com.erp.model.wms.dto.SamplingPlanSkuRefDTO;
 import com.erp.model.wms.entity.QcSamplingPlanDetailEntity;
 import com.erp.model.wms.entity.QcSamplingPlanEntity;
 import com.erp.model.wms.entity.QcSamplingPlanQcTypeRefEntity;
 import com.erp.model.wms.entity.QcSamplingPlanSkuRefEntity;
+import com.erp.model.wms.enums.AqlValueEnum;
 import com.erp.model.wms.enums.PlanTypeEnum;
 import com.erp.model.wms.enums.QcLevelEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
@@ -36,6 +42,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -143,13 +150,43 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
     }
 
     @Override
-    public BatchResultDTO updateStatus(String id, Boolean disabled) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateStatus(String id, Boolean disabled, QcSamplingPlanEntity entity) {
+        QcSamplingPlanQcTypeRefEntity qcTypeRefEntity = qcSamplingPlanQcTypeRefService.getById(id);
+        if (Objects.isNull(qcTypeRefEntity)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检类型关联表");
+        }
+        Boolean dbDisabled = qcTypeRefEntity.getDisabled();
+        if (dbDisabled.equals(disabled)) {
+            throw new ServiceException(ApiError.COMMON_STATUS_SAME);
+        }
+        qcTypeRefEntity.setDisabled(disabled);
+        qcSamplingPlanQcTypeRefService.updateById(qcTypeRefEntity);
+        String msg = CharSequenceUtil.format("用户【{}】修改【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), QcTypeEnum.getByCode(qcTypeRefEntity.getQcType()), disabled ? "停用" : "启用");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "启用/停用");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISABLED);
     }
 
     @Override
-    public BatchResultDTO delete(String id) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id, QcSamplingPlanQcTypeRefEntity qcTypeRefEntity) {
+        QcSamplingPlanEntity entity = super.getByIdOpt(qcTypeRefEntity.getMainId()).orElseThrow(() -> new ServiceException("未找到抽样方案单数据"));
+        // 删除主单数据
+        log.info("删除 开始删除售后申请单主单数据，id：【{}】", id);
+        qcSamplingPlanQcTypeRefService.removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除抽样方案单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), QcTypeEnum.getByCode(qcTypeRefEntity.getQcType()));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_SAMPLING_PLAN.getCode(), entity.getCode(), "删除抽样方案单数据");
+        //不存在对应的抽样类型时，删除全部明细
+        List<QcSamplingPlanQcTypeRefEntity> qcTypeRefEntityList = qcSamplingPlanQcTypeRefService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(qcTypeRefEntityList)) {
+            this.removeById(entity.getId());
+            // 删除明细数据
+            qcSamplingPlanSkuRefService.removeByMainId(entity.getId());
+            qcSamplingPlanDetailService.removeByMainId(entity.getId());
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     /**
@@ -189,62 +226,25 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
                 }
             });
         }
-
-        if (PlanTypeEnum.GB.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
-            if (CharSequenceUtil.isBlank(qcSamplingPlanEntity.getQcLevel())) {
-                throw new ServiceException("国标AQL表检验水平不能为空");
-            }
-            if (Objects.isNull(qcSamplingPlanEntity.getMajorAql())) {
-                throw new ServiceException("国标AQL表 严重缺陷AQL不能为空");
-            }
-            if (Objects.isNull(qcSamplingPlanEntity.getGeneralAql())) {
-                throw new ServiceException("国标AQL表 一般缺陷AQL 不能为空");
-            }
-            if (CollUtil.isNotEmpty(detailEntities)) {
-                throw new ServiceException("国标AQL表 抽样明细要为空");
-            }
-        } else if (PlanTypeEnum.FIXED.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
-            if (CollUtil.isEmpty(detailEntities)) {
-                throw new ServiceException("固定抽样方案表 不能为空");
-            }
-            //抽样数量不能为空
-            detailEntities.forEach(detail -> {
-                if (Objects.isNull(detail.getQty()) || detail.getQty() <= 0) {
-                    throw new ServiceException("固定抽样方案表 抽样数量只能输入大于0的整数");
+        //抽样数量校验
+        if (CollUtil.isNotEmpty(detailEntities)){
+            //明细范围必须连续，且为整数
+            //明细范围前后值不允许一致
+            //明细范围只能输入大于等于0的整数
+            //1.根据起始值排序
+            detailEntities.sort(Comparator.comparing(QcSamplingPlanDetailEntity::getRangFrom));
+            for (int i = 0; i < detailEntities.size(); i++) {
+                QcSamplingPlanDetailEntity detail = detailEntities.get(i);
+                // 2基础校验
+                validateRange(detail.getRangFrom(), detail.getRangTo());
+                //3连续性校验
+                if (i > 0) {
+                    QcSamplingPlanDetailEntity prev = detailEntities.get(i - 1);
+                    // 连续规则：前一个 end + 1 == 当前 start
+                    if (!detail.getRangFrom().equals(prev.getRangTo() + 1)) {
+                        throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS, prev.getRangFrom(), prev.getRangTo(), detail.getRangFrom(), detail.getRangTo());
+                    }
                 }
-                if (detail.getQty() > (detail.getRangTo() - detail.getRangFrom())) {
-                    throw new ServiceException("固定抽样方案表 抽样数量不能大于批量范围");
-                }
-                if (Objects.isNull(detail.getGeneralRejectQty())) {
-                    //缺陷拒收数默认等于缺陷允收数+1
-                    detail.setGeneralRejectQty(detail.getGeneralAcceptQty() + 1);
-                }
-                if (Objects.isNull(detail.getMajorRejectQty())) {
-                    //严重缺陷拒收数默认等于严重缺陷允收数+1
-                    detail.setMajorRejectQty(detail.getMajorAcceptQty() + 1);
-                }
-            });
-        } else if (PlanTypeEnum.RATE.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
-            if (CollUtil.isEmpty(detailEntities)) {
-                throw new ServiceException("百分比抽样方案表 不能为空");
-            }
-            //抽样比例不能为空
-            detailEntities.forEach(detail -> {
-                if (Objects.isNull(detail.getRate()) || detail.getRate().compareTo(BigDecimal.ZERO) <= 0 || detail.getRate().compareTo(BigDecimal.ONE) >= 0) {
-                    throw new ServiceException("百分比抽样方案表 抽样比例只能输入大于0的小数且小于1");
-                }
-                if (Objects.isNull(detail.getGeneralRejectQty())) {
-                    //缺陷拒收数默认等于缺陷允收数+1
-                    detail.setGeneralRejectQty(detail.getGeneralAcceptQty() + 1);
-                }
-                if (Objects.isNull(detail.getMajorRejectQty())) {
-                    //严重缺陷拒收数默认等于严重缺陷允收数+1
-                    detail.setMajorRejectQty(detail.getMajorAcceptQty() + 1);
-                }
-            });
-        } else if (PlanTypeEnum.ALL.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
-            if (CollUtil.isEmpty(detailEntities)) {
-                throw new ServiceException("全检抽样方案表 不能为空");
             }
             detailEntities.forEach(detail -> {
                 if (Objects.isNull(detail.getGeneralRejectQty())) {
@@ -257,12 +257,81 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
                 }
             });
         }
+        if (PlanTypeEnum.GB.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
+            if (CharSequenceUtil.isBlank(qcSamplingPlanEntity.getQcLevel())) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID);
+            }
+            if (!StringUtils.hasText(qcSamplingPlanEntity.getMajorAql())) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID);
+            }
+            if (!AqlValueEnum.isValidAql(qcSamplingPlanEntity.getMajorAql())) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID);
+            }
+            if (!StringUtils.hasText(qcSamplingPlanEntity.getGeneralAql())) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID);
+            }
+            if (!AqlValueEnum.isValidAql(qcSamplingPlanEntity.getGeneralAql())) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID);
+            }
+            if (CollUtil.isNotEmpty(detailEntities)) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY);
+            }
+        } else if (PlanTypeEnum.FIXED.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
+            if (CollUtil.isEmpty(detailEntities)) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY);
+            }
+            //抽样数量不能为空
+            detailEntities.forEach(detail -> {
+                if (Objects.isNull(detail.getQty()) || detail.getQty() <= 0) {
+                    throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID);
+                }
+                if (detail.getQty() > (detail.getRangTo() - detail.getRangFrom())) {
+                    throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS);
+                }
+
+            });
+        } else if (PlanTypeEnum.RATE.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
+            if (CollUtil.isEmpty(detailEntities)) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY);
+            }
+            //抽样比例不能为空
+            detailEntities.forEach(detail -> {
+                if (Objects.isNull(detail.getRate()) || detail.getRate().compareTo(BigDecimal.ZERO) <= 0 || detail.getRate().compareTo(MathUtil.BigDecimal_100) >= 0) {
+                    throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID);
+                }
+            });
+        } else if (PlanTypeEnum.ALL.getCode().equals(qcSamplingPlanEntity.getPlanType())) {
+            if (CollUtil.isEmpty(detailEntities)) {
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY);
+            }
+        }
 
     }
 
+    public static void validateRange(Integer start, Integer end) {
+        if (start == null || end == null) {
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID);
+        }
+
+        if (start < 0 || end < 0) {
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO);
+        }
+
+        if (start.equals(end)) {
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL);
+        }
+
+        if (start > end) {
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END);
+        }
+    }
     @Override
     public SamplingPlanDTO.ViewDTO view(String id) {
-        QcSamplingPlanEntity qcSamplingPlanEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到抽样方案单数据"));
+        QcSamplingPlanQcTypeRefEntity qcTypeRefEntity = qcSamplingPlanQcTypeRefService.getById(id);
+        if (ObjectUtil.isEmpty(qcTypeRefEntity)) {
+            throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND);
+        }
+        QcSamplingPlanEntity qcSamplingPlanEntity = super.getByIdOpt(qcTypeRefEntity.getMainId()).orElseThrow(() -> new ServiceException("未找到抽样方案单数据"));
         SamplingPlanDTO.ViewDTO data = QcSamplingPlanConverter.INSTANCE.qcSamplingPlanEntityToViewDTO(qcSamplingPlanEntity);
         // 数据填充处理
         fillOne(data);
@@ -288,11 +357,17 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        List<String> ids = list.stream().map(SamplingPlanDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<SamplingPlanSkuRefDTO.SkuDTO> skuRefList = qcSamplingPlanSkuRefService.listSkuByMainIds(ids);
+        Map<String, String> skuNosMap = CollUtil.isNotEmpty(skuRefList) ? skuRefList.stream().collect(Collectors.toMap(SamplingPlanSkuRefDTO.SkuDTO::getId, SamplingPlanSkuRefDTO.SkuDTO::getSkuNos)) : new HashMap<>();
+
         // 属性赋值
         for (SamplingPlanDTO.ListDTO data : list) {
             data.setQcTypeName(EnumMessage.getNameByCode(QcTypeEnum.class, data.getQcType()));
             data.setPlanTypeName(EnumMessage.getNameByCode(PlanTypeEnum.class, data.getPlanType()));
             data.setQcLevelName(EnumMessage.getNameByCode(QcLevelEnum.class, data.getQcLevel()));
+            String skuNos = skuNosMap.get(data.getId());
+            data.setSkuNos(CharSequenceUtil.isNotBlank(skuNos) ? skuNos : "全部");
         }
     }
 }

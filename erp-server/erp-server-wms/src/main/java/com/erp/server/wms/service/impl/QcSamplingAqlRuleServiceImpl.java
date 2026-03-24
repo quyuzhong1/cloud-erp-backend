@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 
 import org.springframework.util.StringUtils;
@@ -47,18 +48,18 @@ public class QcSamplingAqlRuleServiceImpl extends SuperServiceImpl<QcSamplingAql
             }
 
             // 2. 根据批量数查询样本量字码映射
-            QcSamplingCodeRuleEntity lotMapping = qcSamplingCodeRuleMapper.selectByLotSize(request.getLotSize());
+            QcSamplingCodeRuleEntity lotMapping = qcSamplingCodeRuleMapper.selectByLotQty(request.getLotQty());
             if (lotMapping == null) {
-                response.setErrorMsg("未匹配到[" + request.getLotSize() + "]对应的批量范围");
+                response.setErrorMsg("未匹配到[" + request.getLotQty() + "]对应的批量范围");
                 return response;
             }
             response.setLotRange(lotMapping.getMinLotQty() + "~" + lotMapping.getMaxLotQty());
             response.setMinLotQty(lotMapping.getMinLotQty());
             response.setMaxLotQty(lotMapping.getMaxLotQty());
             // 3. 根据检验水平获取样本量字码
-            String sampleCode = getSampleCodeByLevel(lotMapping, request.getInspectionLevel());
+            String sampleCode = getSampleCodeByLevel(lotMapping, request.getQcLevel());
             if (!StringUtils.hasText(sampleCode)) {
-                response.setErrorMsg("检验水平[" + request.getInspectionLevel() + "]无对应字码");
+                response.setErrorMsg("检验水平[" + request.getQcLevel() + "]无对应字码");
                 return response;
             }
             response.setSampleQtyCode(sampleCode);
@@ -99,13 +100,13 @@ public class QcSamplingAqlRuleServiceImpl extends SuperServiceImpl<QcSamplingAql
      */
     private void validateRequest(AqlSamplingRequest request, AqlSamplingResponse response) {
         // 批量数校验
-        if (request.getLotSize() == null || request.getLotSize() < 2) {
+        if (request.getLotQty() == null || request.getLotQty() < 2) {
             response.setErrorMsg("批量数必须≥2");
             return;
         }
         // 检验水平校验
-        if (!StringUtils.hasText(request.getInspectionLevel()) ||
-                QcLevelEnum.getByCode(request.getInspectionLevel()) == null) {
+        if (!StringUtils.hasText(request.getQcLevel()) ||
+                QcLevelEnum.getByCode(request.getQcLevel()) == null) {
             response.setErrorMsg("检验水平必须为：S-1/S-2/S-3/S-4/I/II/III");
             return;
         }

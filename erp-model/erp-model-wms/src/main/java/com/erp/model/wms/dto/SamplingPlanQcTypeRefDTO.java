@@ -149,6 +149,7 @@ public class SamplingPlanQcTypeRefDTO implements Serializable {
         * 质检类型
         */
         private String qcType;
+        private String qcTypeName;
 
         /**
         * 状态(禁用true启用false)

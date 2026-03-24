@@ -51,4 +51,6 @@ public interface QcSamplingPlanSkuRefMapper extends BaseMapper<QcSamplingPlanSku
     * @return
     */
     List<SamplingPlanSkuRefDTO.TabListDTO> tabList(@Param("params") SamplingPlanSkuRefDTO.PagingParamDTO searchParam);
+
+    List<SamplingPlanSkuRefDTO.SkuDTO> listSkuByMainIds(@Param("ids") List<String> ids);
 }

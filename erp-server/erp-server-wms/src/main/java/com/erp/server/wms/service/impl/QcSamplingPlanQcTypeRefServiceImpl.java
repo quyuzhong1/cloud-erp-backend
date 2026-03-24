@@ -56,6 +56,11 @@ public class QcSamplingPlanQcTypeRefServiceImpl extends SuperServiceImpl<QcSampl
         this.saveOrUpdateBatch(qcTypeList);
     }
 
+    @Override
+    public void removeByMainId(String id) {
+        this.removeByMainId(id, Collections.emptyList());
+    }
+
     private void removeByMainId(String mainId, List<String> idList) {
         this.lambdaUpdate().eq(QcSamplingPlanQcTypeRefEntity::getMainId, mainId)
                 .ne(CollUtil.isNotEmpty(idList), QcSamplingPlanQcTypeRefEntity::getId, idList).remove();
