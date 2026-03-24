@@ -148,6 +148,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 质检合格量
+         */
+        private Integer qcGoodQty;
+
+        /**
          * 报关型号
          */
         private String declareModel;
@@ -2148,5 +2153,44 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotEmpty(message = "主键明细id不能为空")
         private List<String> detailIdList;
+    }
+
+    /**
+     * 质检合格量更新DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QcQtyDTO implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * 采购订单明细ID
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 采购订单单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * SKU单号
+         */
+        private String skuNo;
+
+        /**
+         * 采购订单ID
+         */
+        private String purchaseOrderId;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * 质检合格量
+         */
+        private BigDecimal qcGoodQty;
     }
 }
