@@ -10,25 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
-import com.erp.model.wms.dto.third.ThirdWarehouseQueryOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
-import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
-import com.erp.model.wms.dto.third.ThirdWarehouseUploadHandoverFileReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseUploadHandoverFileResponse;
-import com.erp.model.wms.dto.third.ThirdWarehouseUploadOrderLabelReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseUploadOrderLabelResponse;
+import com.erp.model.wms.dto.third.*;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -92,7 +74,7 @@ public class FbtHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         return failure("FBT仓暂不支持该接口");
     }
 
@@ -112,7 +94,7 @@ public class FbtHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
         return failure("FBT仓暂不支持该接口");
     }
 
