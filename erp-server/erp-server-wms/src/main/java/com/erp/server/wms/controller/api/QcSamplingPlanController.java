@@ -60,6 +60,11 @@ public class QcSamplingPlanController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:samplingPlan:add",
+            serviceClass = QcSamplingPlanService.class,
+            keyIdName = "id")
     @LogAction(value = LogActionEnum.INSERT, desc = "抽样方案表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SamplingPlanDTO.AddDTO dto) {
         return success(qcSamplingPlanService.add(dto));
@@ -73,6 +78,12 @@ public class QcSamplingPlanController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:samplingPlan:update",
+            serviceClass = QcSamplingPlanService.class,
+            keyIdName = "id"
+    )
     public ApiResult<Boolean> update(@RequestBody @Validated SamplingPlanDTO.UpdateDTO dto) {
         Boolean update = qcSamplingPlanService.update(dto);
         return update ? success(true) : success(false);
@@ -87,6 +98,11 @@ public class QcSamplingPlanController extends BaseController {
     * @return ApiResult<PagingVO<SamplingPlanDTO.ListDTO>>
     */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:samplingPlan:paging",
+            tableAlias = "qsp"
+    )
     @WebAdvanceQuery(handler = QcSamplingPlanQueryHandler.class)
     public ApiResult<PagingVO<SamplingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SamplingPlanDTO.PagingParamDTO> dto) {
         return success(qcSamplingPlanService.paging(dto));
@@ -103,7 +119,7 @@ public class QcSamplingPlanController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:samplingScheme:view",
+            menuCode = "wms:samplingPlan:view",
             serviceClass = QcSamplingPlanService.class,
             keyIdName = "id")
     @LogViewService
@@ -119,6 +135,11 @@ public class QcSamplingPlanController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/updateStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:samplingPlan:updateStatus",
+            serviceClass = QcSamplingPlanService.class,
+            keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
@@ -159,6 +180,11 @@ public class QcSamplingPlanController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:samplingPlan:delete",
+            serviceClass = QcSamplingPlanService.class,
+            keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "抽样方案单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
