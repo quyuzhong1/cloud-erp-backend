@@ -58,6 +58,7 @@ public class QcStandardDTO {
 
         private  List<WmsAttachmentEntity> wmsAttachmentEntities;
 
+
     }
 
     /**
@@ -86,6 +87,10 @@ public class QcStandardDTO {
     @Data
     @EqualsAndHashCode(callSuper = true)
     public static class AddDTO extends CommonDTO {
+
+        private Boolean isAdd = true;
+
+        private List<WmsAttachmentEntity> wmsAttachmentEntities;
     }
 
     /**

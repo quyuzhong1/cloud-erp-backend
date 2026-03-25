@@ -328,4 +328,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     PagingVO<QcBillExportExcelDTO> exportQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto);
 
     String getFsQcNoticeTitle(String title);
+
+    QcInfoDTO.ListQcStandardResultDTO listQcStandard(QcInfoDTO.ListQcStandardParamDTO dto);
+
 }

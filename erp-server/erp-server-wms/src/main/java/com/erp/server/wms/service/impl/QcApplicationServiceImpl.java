@@ -107,7 +107,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             throw new ServiceException("质检申请单主单保存失败");
         }
         //添加质检明细信息
-        qcApplicationDetailService.add(addDTO.getDetailList(),qcApplicationEntity.getId(),addDTO.getSourceId());
+        qcApplicationDetailService.add(addDTO.getDetailList(),qcApplicationEntity);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "质检申请单主单" , qcApplicationEntity.getCode());
@@ -138,7 +138,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             throw new ServiceException("质检申请单主单保存失败");
         }
         //添加质检明细信息
-        qcApplicationDetailService.update(addOrUpdateDTO.getDetailList(),qcApplicationEntity.getId(),addOrUpdateDTO.getSourceId());
+        qcApplicationDetailService.update(addOrUpdateDTO.getDetailList(),qcApplicationEntity);
 
         // 记录主单操作日志
         log.info("编辑 开始记录质检申请单主单日志数据，单号：【{}】", qcApplicationEntity.getCode());
@@ -583,6 +583,10 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     * 新增修改处理数据
     */
     private void handleData(QcApplicationEntity qcApplicationEntity) {
+        if (qcApplicationEntity.getPlanQcDate().isBefore(LocalDate.now())) {
+            throw new ServiceException(ApiError.QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW);
+        }
+
     }
 
     @Override

@@ -47,15 +47,6 @@ public interface FileManagementService extends SuperService<FileManagementEntity
     PagingVO<FileManagementDTO.ListDTO> paging(PagingDTO<FileManagementDTO.PagingParamDTO> pagingParamDTO);
 
     /**
-    * 状态统计
-    * @author zdy
-    * @date: 2026-03-20
-    * @param dto
-    * @return List<FileManagementDTO.TabListDTO>>
-    */
-    List<FileManagementDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
     * 详情
     * @author zdy
     * @date: 2026-03-20
@@ -64,14 +55,10 @@ public interface FileManagementService extends SuperService<FileManagementEntity
     */
     FileManagementDTO.ViewDTO view(String id);
 
-
     /**
-    * 导出Excel
-    * @author zdy
-    * @date: 2026-03-20
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(FileManagementDTO.ExportDTO dto, HttpServletResponse response);
+     * 版本记录
+     * @param id
+     * @return
+     */
+    List<FileManagementDTO.VersionDTO> history(String id);
 }

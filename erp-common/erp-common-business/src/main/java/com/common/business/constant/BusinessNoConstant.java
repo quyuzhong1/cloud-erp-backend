@@ -277,4 +277,5 @@ public interface BusinessNoConstant {
 
     //质检申请
     String ZJSQ = "ZJSQ";
+    String WDGL = "WDGL";
 }

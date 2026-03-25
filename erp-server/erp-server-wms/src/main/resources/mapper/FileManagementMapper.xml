@@ -36,26 +36,38 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.FileManagementDTO$ListDTO">
-
-    </select>
-
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from file_management where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.wms.dto.FileManagementDTO$ListDTO">
-
-    </select>
-    <select id="tabList" resultType="com.erp.model.wms.dto.FileManagementDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  file_management
-        WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            fm.id,
+            fm.code as code,
+            fm.sku_id as skuId,
+            fm.sku_no as skuNo,
+            fm.file_type as fileType,
+            fm.first_category_id as firstCategoryId,
+            fm.first_category_name as firstCategoryName,
+            fm.product_name as productName,
+            a.attach_name as attachName,
+            a.attach_version as attachVersion,
+            a.attach_url as attachUrl,
+            fm.remark as remark,
+            fm.create_user_name as createUserName,
+            fm.update_user_name as updateUserName,
+            fm.create_time as createTime,
+            fm.update_time as updateTime
+        FROM file_management fm
+        LEFT JOIN attachment a on fm.file_id = a.business_id and a.is_deleted=false
+        where  ${params.sqlMap.default}
+        AND fm.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fm.create_time desc
     </select>
+
 
 </mapper>

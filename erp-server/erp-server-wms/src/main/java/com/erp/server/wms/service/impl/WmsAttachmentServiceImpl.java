@@ -17,8 +17,10 @@ import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.QcStandardService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -26,10 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -56,6 +55,9 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Resource
     private FileFeign fileFeign;
+
+    @Resource
+    private QcStandardService qcStandardService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -245,6 +247,37 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             this.remove(queryWrapper);
             //批量删除fastdfs 数据
             FastDFSClientUtil.deleteBatchFile(urlList);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String saveByVersion(WmsAttachmentEntity entity) {
+        //查询记录
+        List<WmsAttachmentEntity> list = this.lambdaQuery().eq(WmsAttachmentEntity::getBusinessId, entity.getBusinessId()).eq(WmsAttachmentEntity::getType, entity.getType()).list();
+        if (CollectionUtils.isEmpty(list)) {
+            entity.setAttachVersion(1);
+            this.saveOrUpdate(entity);
+        }else {
+            //取最大版本号记录比较url是否一致，一致则不保存，不一致则新增记录
+            WmsAttachmentEntity maxVersionEntity = list.stream().max(Comparator.comparingInt(WmsAttachmentEntity::getAttachVersion)).orElse(null);
+            if(Objects.nonNull(maxVersionEntity) && maxVersionEntity.getAttachUrl().equals(entity.getAttachUrl())){
+                return maxVersionEntity.getId();
+            }
+            entity.setAttachVersion(maxVersionEntity.getAttachVersion() + 1);
+            this.saveOrUpdate(entity);
+        }
+        //新增质检标准
+        qcStandardService.importFile(entity.getAttachUrl());
+        return entity.getId();
+    }
+
+    @Override
+    public List<WmsAttachmentEntity> getByBusinessId(String id, String fileType) {
+        if (CharSequenceUtil.isAllNotBlank(id, fileType)) {
+            return this.lambdaQuery().eq(WmsAttachmentEntity::getBusinessId, id).eq(WmsAttachmentEntity::getType, fileType).orderByDesc(WmsAttachmentEntity::getAttachVersion).list();
+        }else {
+            return Collections.emptyList();
         }
     }
 }

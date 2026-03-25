@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -65,24 +66,8 @@ public class FileManagementController extends BaseController {
         menuCode = "wms:fileManagement:update",
         serviceClass = FileManagementService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated FileManagementDTO.UpdateDTO dto) {
-        fileManagementService.update(dto);
-        return success();
-    }
-
-
-    /**
-    * 获取状态统计
-    * @return
-    */
-    @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:fileManagement:paging",
-            tableAlias = ""
-    )
-    public ApiResult<List<FileManagementDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(fileManagementService.tabList(dto));
+    public ApiResult<Boolean> update(@RequestBody @Validated FileManagementDTO.UpdateDTO dto) {
+        return success(fileManagementService.update(dto));
     }
 
     /**
@@ -98,6 +83,7 @@ public class FileManagementController extends BaseController {
             menuCode = "wms:fileManagement:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<FileManagementDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FileManagementDTO.PagingParamDTO> dto) {
         return success(fileManagementService.paging(dto));
     }
@@ -122,23 +108,12 @@ public class FileManagementController extends BaseController {
     }
 
     /**
-    * 导出Excel数据
-    * @author zdy
-    * @date:  2026-03-20
-    * @param dto
-    * @param response
-    * @return
-    */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:fileManagement:export",
-            tableAlias = ""
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "文件管理导出Excel数据")
-    public void exportList(@RequestBody @Validated FileManagementDTO.ExportDTO dto, HttpServletResponse response) {
-        fileManagementService.exportList(dto, response);
+     * 版本记录
+     * @param id
+     * @return
+     */
+    @GetMapping("/history")
+    public ApiResult<List<FileManagementDTO.VersionDTO>> history(@RequestParam("id") String id) {
+        return success(fileManagementService.history(id));
     }
-
-
 }

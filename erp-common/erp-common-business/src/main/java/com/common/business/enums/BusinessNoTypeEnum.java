@@ -169,6 +169,7 @@ public enum BusinessNoTypeEnum {
     CODE_ZJSQ(124 ,"ZJSQ","质检申请",BusinessNoConstant.ZJSQ),
 
     CODE_CYFA(123 ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
+    CODE_WDGL(124 ,"WDGL","文件管理",BusinessNoConstant.WDGL),
 
     ;
 

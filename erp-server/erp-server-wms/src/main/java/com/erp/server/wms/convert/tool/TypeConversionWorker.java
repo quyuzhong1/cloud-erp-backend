@@ -65,6 +65,14 @@ public class TypeConversionWorker {
         return value.setScale(2, RoundingMode.HALF_UP);
     }
 
+    @Named("decimalToPlainString")
+    public String decimalToPrintData(BigDecimal value){
+        if (Objects.isNull(value)){
+            return "";
+        }
+        return value.stripTrailingZeros().toPlainString();
+    }
+
     @Named("booleanToInt")
     public Integer booleanToInt(Boolean value){
         return Boolean.TRUE.equals(value) ? 1 : -1;
