@@ -1,10 +1,8 @@
 package com.erp.model.wms.dto;
 
-import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -56,23 +54,6 @@ public class QcApplicationDTO implements Serializable {
          */
          private Integer count;
 
-
-         public TabListDTO(String tabFlag, Integer count) {
-             this.tabFlag = tabFlag;
-             this.count = count;
-         }
-
-         /**
-          * 获取tab名称
-          */
-         private void getTabFlagName() {
-             String name = ApproveStatusEnum.getName(tabFlag);
-            if (CharSequenceUtil.isBlank(name)) {
-                tabFlagName = "全部";
-            } else {
-                tabFlagName = name;
-            }
-         }
      }
 
 
@@ -104,36 +85,36 @@ public class QcApplicationDTO implements Serializable {
     public static class ListDTO {
 
         /**
-        * 主键id
+        * 主键id【可排序】
         */
         private String  id;
         /**
-         * 质检申请单明细id
+         * 质检申请单明细id【可排序】
          */
         private String detailId;
 
         /**
-        * 质检申请单号
+        * 质检申请单号【可排序】
         */
         private String code;
 
         /**
-        * 来源id
+        * 来源id【可排序】
         */
         private String sourceId;
 
         /**
-        * 来源编码
+        * 来源编码【可排序】
         */
         private String sourceCode;
 
         /**
-        * 来源类型
+        * 来源类型【可排序】
         */
         private String sourceType;
 
         /**
-        * 单据状态
+        * 单据状态【可排序】
         */
         private String approveStatus;
         /**
@@ -142,12 +123,12 @@ public class QcApplicationDTO implements Serializable {
         private String approveStatusName;
 
         /**
-        * 审核完成时间
+        * 审核完成时间【可排序】
         */
         private LocalDate approveTime;
 
         /**
-        * 质检类型
+        * 质检类型【可排序】
         */
         private String qcType;
 
@@ -157,7 +138,7 @@ public class QcApplicationDTO implements Serializable {
         private String qcTypeName;
 
         /**
-        * 仓库id
+        * 仓库id【可排序】
         */
         private String warehouseId;
 
@@ -167,17 +148,17 @@ public class QcApplicationDTO implements Serializable {
         private String warehouseName;
 
         /**
-         * SKU
+         * SKU【可排序】
          */
         private String skuNo;
 
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
 
         /**
-         * 供应商id
+         * 供应商id【可排序】
          */
         private String supplierId;
 
@@ -207,7 +188,7 @@ public class QcApplicationDTO implements Serializable {
         private String qcResultName;
 
         /**
-         * 申请质检数量
+         * 申请质检数量【可排序】
          */
         private Integer qty;
 
@@ -232,22 +213,22 @@ public class QcApplicationDTO implements Serializable {
         private Integer qcBadQty;
 
         /**
-        * 期望质检日期
+        * 期望质检日期【可排序】
         */
         private LocalDate planQcDate;
 
         /**
-        * 备注
+        * 备注【可排序】
         */
         private String remark;
 
         /**
-        * 创建时间
+        * 创建时间【可排序】
         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
+        * 创建人名称【可排序】
         */
         private String createUserName;
 
@@ -438,6 +419,10 @@ public class QcApplicationDTO implements Serializable {
         /**
          * 质检申请单号
          */
+        private String id;
+        /**
+         * 质检申请单号
+         */
         private String code;
         /**
          * 来源单号
@@ -469,27 +454,21 @@ public class QcApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class GenerateQcNoticeDTO {
         /**
-         * 采购订单id
+         * 质检申请id
          */
-        @NotBlank(message = "采购订单id不能为空")
-        private String poId;
-
-        /**
-         * 采购订单明细id
-         */
-        @NotBlank(message = "采购订单明细id不能为空")
-        private String podId;
-
-        /**
-         * 质检申请数量
-         */
-        @NotNull(message = "质检申请数量不能为空")
-        private Integer qty;
+        @NotBlank(message = "质检申请id不能为空")
+        private String id;
 
         /**
          * 期望质检日期
          */
+        @NotNull(message = "期望质检日期不能为空")
         private LocalDate planQcDate;
+
+        /**
+        * 质检员id
+        */
+        private String qcUserId;
     }
 
 

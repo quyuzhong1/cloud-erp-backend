@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -14,7 +15,9 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.QcApplicationDTO;
 import com.erp.model.wms.entity.QcApplicationEntity;
 import com.erp.server.wms.query.QcApplicationQueryHandler;
@@ -359,8 +362,31 @@ public class QcApplicationController extends BaseController {
      * @return QcApplicationDTO.ListPushQcNoticeDTO
      */
     @PostMapping("/generateQcNotice")
-    public ApiResult<Object> generateQcNotice(@RequestBody @Validated ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
-        return success(qcApplicationService.generateQcNotice(list));
+    public ApiResult<List<BatchResultDTO>> generateQcNotice(@RequestBody @Validated ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        List<String> ids = list.stream().map(QcApplicationDTO.GenerateQcNoticeDTO::getId).collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<QcApplicationEntity> qcList = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
+        Map<String, QcApplicationEntity> idEntityMap = qcList.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
+        for (QcApplicationDTO.GenerateQcNoticeDTO generateQcNoticeDTO : list.getList()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = qcApplicationService.generateQcNotice(generateQcNoticeDTO);
+            }catch (Exception e){
+                log.error("质检申请单主单撤回流程失败",e);
+                QcApplicationEntity entity = idEntityMap.get(generateQcNoticeDTO.getId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(generateQcNoticeDTO.getId(), generateQcNoticeDTO.getId(), "质检申请单主单不存在, 撤回流程失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
