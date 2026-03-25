@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -53,6 +54,13 @@ public class QcApplicationDTO implements Serializable {
          * 数量
          */
          private Integer count;
+
+         public String getTabFlagName() {
+             if (this.tabFlag == null) {
+                 return null;
+             }
+             return ApproveStatusEnum.getName(this.tabFlag);
+         }
 
      }
 

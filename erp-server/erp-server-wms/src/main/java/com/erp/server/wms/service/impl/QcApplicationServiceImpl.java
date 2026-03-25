@@ -172,8 +172,8 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         List<String> existStatusList = list.stream().map(QcApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new QcApplicationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
-        }
+                list.add(new QcApplicationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
+            }
         });
         return list;
     }
@@ -618,7 +618,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
 
         //明细
         List<QcApplicationDetailEntity> list = qcApplicationDetailService.listByMainId(data.getId());
-        if (CollUtil.isNotEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
         }
         //SKU
