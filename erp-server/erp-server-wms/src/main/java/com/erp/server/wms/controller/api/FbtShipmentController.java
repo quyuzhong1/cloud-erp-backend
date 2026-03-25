@@ -366,7 +366,7 @@ public class FbtShipmentController extends BaseController {
     @PostMapping("/regenerateTransferOut")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:fbtShipment:delete",
+            menuCode = "wms:fbtShipment:regenerateTransferOut",
             serviceClass = FbaShipmentService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "重新生成调拨单:ids={ids}")

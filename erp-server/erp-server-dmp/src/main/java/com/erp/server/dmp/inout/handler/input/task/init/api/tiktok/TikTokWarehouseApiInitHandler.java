@@ -35,10 +35,13 @@ public class TikTokWarehouseApiInitHandler extends DmpInputInitHandler {
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-        String shopId = nextLevelId;
-        if (StringUtils.isBlank(shopId) && StringUtils.isNotBlank(dmpInputTaskEntity.getExtendJson())) {
+        String shopId = "";
+        if (StringUtils.isNotBlank(dmpInputTaskEntity.getExtendJson())) {
             JSONObject jsonObject = JSON.parseObject(dmpInputTaskEntity.getExtendJson());
             shopId = jsonObject.getString("nextLevelId");
+        }
+        if (StringUtils.isBlank(shopId)) {
+            shopId = nextLevelId;
         }
         TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(shopId);
         if (ObjectUtil.isEmpty(tikTokShopInfoDTO)) {

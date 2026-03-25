@@ -12000,11 +12000,115 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(Objects.isNull(b2cError)){
                 throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
             }
-            SendResult result = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC,  RocketMqNewTag.DMP_PLATFORM_OUTBOUND_TO_WMS_TAG,b2cError.getParamJson(),id);
+            String retryPayload = resolveRetryPlatformOutboundPayload(currentEntity, b2cError);
+            SendResult result = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC,  RocketMqNewTag.DMP_PLATFORM_OUTBOUND_TO_WMS_TAG,retryPayload,id);
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
+    }
+
+    private String resolveRetryPlatformOutboundPayload(SoB2cEntity currentEntity, SoB2cErrorEntity b2cError) {
+        String oldPayload = b2cError.getParamJson();
+        if (StringUtils.isBlank(oldPayload)) {
+            return oldPayload;
+        }
+        PlatformOutboundDTO oldDto;
+        try {
+            oldDto = JSONUtil.toBean(oldPayload, PlatformOutboundDTO.class);
+        } catch (Exception e) {
+            log.warn("平台出库异常重试解析旧paramJson失败, soB2cId={}", currentEntity.getId(), e);
+            return oldPayload;
+        }
+        String outputClass = resolvePlatformOutboundOutputClass(oldDto);
+        String sourceCode = StringUtils.isNotBlank(oldDto.getOrderCode()) ? oldDto.getOrderCode() : currentEntity.getPlatformCode();
+        if (StringUtils.isBlank(sourceCode)) {
+            return oldPayload;
+        }
+        if (StringUtils.isBlank(outputClass)) {
+            return resolveRetryPlatformOutboundFallbackPayload(oldDto, oldPayload, "未匹配到DMP出库处理器");
+        }
+        List<DmpOutputTaskRecordEntity> latestRecords = dmpTaskFeign.getOutputTaskRecord(sourceCode, outputClass);
+        if (CollectionUtils.isEmpty(latestRecords)) {
+            return resolveRetryPlatformOutboundFallbackPayload(oldDto, oldPayload, "未查询到最新DMP出库记录");
+        }
+        String latestRequestData = latestRecords.get(0).getRequestData();
+        return StringUtils.isNotBlank(latestRequestData)
+                ? latestRequestData
+                : resolveRetryPlatformOutboundFallbackPayload(oldDto, oldPayload, "最新DMP出库记录requestData为空");
+    }
+
+    private String resolveRetryPlatformOutboundFallbackPayload(PlatformOutboundDTO dto, String oldPayload, String reason) {
+        String provider = Objects.isNull(dto) ? null : dto.getProvider();
+        if (hasDmpOutputTaskRecordId(oldPayload)) {
+            return oldPayload;
+        }
+        if (isRetryPlatformOutboundManualSyncProvider(provider)) {
+            throw new ServiceException(StrUtil.format(
+                    "平台出库异常重试暂不支持服务商【{}】从DMP回查最新出库记录，且旧快照缺少dmpOutputTaskRecordId（{}），请使用中台单据同步批量同步",
+                    provider,
+                    reason
+            ));
+        }
+        throw new ServiceException(StrUtil.format(
+                "平台出库异常重试缺少dmpOutputTaskRecordId，且{}，请使用中台单据同步批量同步",
+                reason
+        ));
+    }
+
+    private boolean hasDmpOutputTaskRecordId(String payload) {
+        if (StringUtils.isBlank(payload)) {
+            return false;
+        }
+        try {
+            return StringUtils.isNotBlank(JSON.parseObject(payload).getString("dmpOutputTaskRecordId"));
+        } catch (Exception e) {
+            log.warn("平台出库异常重试校验dmpOutputTaskRecordId失败", e);
+            return false;
+        }
+    }
+
+    private boolean isRetryPlatformOutboundManualSyncProvider(String provider) {
+        if (StringUtils.isBlank(provider)) {
+            return false;
+        }
+        return OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(provider)
+                || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(provider);
+    }
+
+    private String resolvePlatformOutboundOutputClass(PlatformOutboundDTO dto) {
+        if (Objects.isNull(dto) || StringUtils.isBlank(dto.getProvider())) {
+            return null;
+        }
+        String provider = dto.getProvider();
+        if (OmsPlatformEnum.OMS_ANTU.getCode().equals(provider)) {
+            return "AntuOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.OMS_SPT.getCode().equals(provider)) {
+            return "SptOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.OMS_ECCANG.getCode().equals(provider)) {
+            return "EccangOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(provider)) {
+            return "DmpOutputGoodCangOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.OMS_IML.getCode().equals(provider)) {
+            return "DmpOutputImlOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.CAI_NIAO.getCode().equals(provider)) {
+            return "DmpOutputCaiNiaoOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.WEI_SHI.getCode().equals(provider)) {
+            return "WeiShiOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.DA_MAI.getCode().equals(provider)) {
+            return "DaMaiOutboundRocketMQTaskHandler";
+        }
+        if (OmsPlatformEnum.JIFENG.getCode().equals(provider)) {
+            return "JiFengOutboundRocketMQTaskHandler";
+        }
+        return null;
     }
 
     @Override
