@@ -27,6 +27,21 @@ import java.time.LocalDateTime;
 public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
 
     /**
+     * 采购订单id
+     */
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
+    /**
+     * 采购订单编码
+     */
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+    /**
     * 单据状态
     */
     @TableField("approve_status")
@@ -93,6 +108,36 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     */
     @TableField("invalid_remark")
     private String invalidRemark;
+
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 质检人id
+     */
+    @TableField("qc_user_id")
+    private String qcUserId;
+
+    /**
+     * 质检人名称
+     */
+    @TableField("qc_user_name")
+    private String qcUserName;
 
 
     public static final String APPROVE_STATUS = "approve_status";

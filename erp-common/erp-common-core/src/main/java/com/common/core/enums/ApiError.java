@@ -963,6 +963,7 @@ public enum ApiError implements Serializable {
     PO_INSTOCK_DETAIL_SKU_NOT_EXIST(9583,"sku【{0}】在采购收货单中未找到"),
     PO_PUSH_DOWN_CHANGE_EXISTS(9584,"采购订单已下推采购变更单"),
     PO_PUSH_DOWN_DELIVERY_EXISTS(9585,"采购订单已下推送货单"),
+    PO_PUSH_DOWN_QC_APPLICATION_EXISTS(9585,"采购订单已下质检申请单【{0}】"),
     PO_SUPPLIER_CONFIRM_NOT_ALLOWED(9586,"采购订单【{0}】未审核完成不支持确认"),
     PO_DETAIL_SUPPLIER_CONFIRM_NOT_ALLOWED(9587,"采购订单【{0}】非待确认不支持确认"),
     PO_SKU_PUSH_DOWN_NOT_ALLOWED(9588,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持下推"),
@@ -1048,6 +1049,7 @@ public enum ApiError implements Serializable {
     PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
     PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE(9668,"返修委外订单不允许反审核"),
     PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
+    PO_QC_DEFECT_INFO_INCOMPLETE(9666,"缺陷信息必须同时填写或同时不填写"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1781,7 +1783,9 @@ public enum ApiError implements Serializable {
       */
     QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
     QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
-    QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致")
+    QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致"),
+    QC_APPLICATION_NOT_APPROVE_PUSH(16003,"质检申请单未审核不支持下推")
+
     ;
     @Getter
     private final Integer code;

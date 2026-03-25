@@ -18,9 +18,9 @@ public class QcStandardQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         // 根据前端需要处理虚拟 tab 标签或其他复杂条件
         if ("tab".equals(field)) {
-            if ("ENABLE".equals(value)) {
+            if ("enable".equals(value)) {
                 super.buildDefaultDTO("qs.disabled", false);
-            } else if ("DISABLE".equals(value)) {
+            } else if ("disabled".equals(value)) {
                 super.buildDefaultDTO("qs.disabled", true);
             }
             return super.getSplicingSQL();

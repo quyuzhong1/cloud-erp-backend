@@ -63,9 +63,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -137,6 +137,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Resource
     private SrmDeliveryOrderFeign srmDeliveryOrderFeign;
+
+    @Resource
+    private QcNoticeService qcNoticeService;
+
     @Resource
     private CfgSettingService cfgSettingService;
     @Resource
@@ -567,7 +571,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     .eq(WarehouseReceiveEntity::getId, entity.getId())
                     .update();
             //根据条件生成质检单
-            createQcBill(Collections.singletonList(entity.getId()));
+            //createQcBill(Collections.singletonList(entity.getId()));
+
+            //生成质检通知单
+            createQcNotice(entity,receiveDetailList);
+
             // 更新库存数据
             updateInventoryTransCore(Collections.singletonList(entity));
             List<String> podIds = receiveDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
@@ -750,6 +758,31 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         qcInfoService.autoReceiveToQcDTO(addList);
         //恢复系统标识
         UserContext.setIsUserSystem(originalValue);
+    }
+
+
+    public void createQcNotice(WarehouseReceiveEntity entity,List<WarehouseReceiveDetailEntity> receiveDetailList){
+        QcNoticeDTO.AddDTO addDTO = new QcNoticeDTO.AddDTO();
+        List<QcNoticeDetailDTO.AddDTO> addDetailDTOs = new ArrayList<>();
+
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
+        addDTO.setQcWarehouseId(entity.getDeliveryWarehouseId());
+        addDTO.setPutawayWarehouseId(entity.getDeliveryWarehouseId());
+        addDTO.setQcType(QcTypeEnum.STOCK_IN.getCode());
+        addDTO.setPurchaseOrderId(entity.getPurchaseOrderId());
+        addDTO.setPurchaseOrderCode(entity.getPurchaseOrderCode());
+        addDTO.setSupplierId(entity.getSupplierId());
+        for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : receiveDetailList) {
+            QcNoticeDetailDTO.AddDTO addDetail = new QcNoticeDetailDTO.AddDTO();
+            BeanUtils.copyProperties(warehouseReceiveDetailEntity,addDetail);
+            addDetail.setSourceDetailId(warehouseReceiveDetailEntity.getId());
+            addDetail.setQcNoticeQty(warehouseReceiveDetailEntity.getReceiveQty());
+            addDetailDTOs.add(addDetail);
+        }
+        addDTO.setDetailList(addDetailDTOs);
+        qcNoticeService.add(addDTO);
     }
 
     /**

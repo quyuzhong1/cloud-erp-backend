@@ -530,6 +530,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 新品首批名称
          */
         private String firstMassProductName;
+        /**
+         * 采购供应商id
+         */
+        private String poSupplierId;
+        /**
+         * 采购供应商名称
+         */
+        private String poSupplierName;
     }
 
     /**
@@ -830,6 +838,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private String podId;
         /**
+         * 采购订单号
+         */
+        private String code;
+        /**
          * skuId
          */
         private String skuId;
@@ -838,7 +850,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private String skuNo;
         /**
-         * 数量
+         * 采购数量
+         */
+        private Integer poQty;
+        /**
+         * 待入库数量
          */
         private Integer qty;
         /**
@@ -865,6 +881,12 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         @NotEmpty(message = "sku编码列表不能为空")
         private List<String> skuNoList;
+
+
+        /**
+         * 远程搜索sku
+         */
+        private String remoteSearchSku;
     }
 
 

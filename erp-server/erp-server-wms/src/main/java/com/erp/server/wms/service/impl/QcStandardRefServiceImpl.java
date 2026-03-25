@@ -1,44 +1,26 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.common.business.dto.ApproveDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.core.toolkit.BeanUtils;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.entity.QcResultEntity;
 import com.erp.model.wms.entity.QcStandardRefEntity;
+import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcStandardRefMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.QcStandardImageRefService;
 import com.erp.server.wms.service.QcStandardRefService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.QcStandardRefDTO;
+
 import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -51,5 +33,6 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @Service
 public class QcStandardRefServiceImpl extends SuperServiceImpl<QcStandardRefMapper, QcStandardRefEntity> implements QcStandardRefService {
+
 
 }

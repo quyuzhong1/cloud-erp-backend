@@ -17,7 +17,6 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -124,7 +123,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
 
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes),  PurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(new ByteArrayInputStream(bytes),  QcApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
@@ -181,7 +180,9 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
 
         //供应商信息
         List<String> supplierNameList = successList.stream().map(QcApplicationImportExcelDTO::getSupplierName).distinct().collect(Collectors.toList());
-        List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).in(SupplierEntity::getName, supplierNameList).list();
+        List<SupplierEntity> supplierList = FeignQuery.create(SupplierEntity.class).in(SupplierEntity::getName, supplierNameList).list();
+        Map<String, SupplierEntity> supplierMap = CollUtil.isEmpty(supplierList) ? new HashMap<>() : supplierList.stream().collect(Collectors.toMap(SupplierEntity::getName, obj -> obj));
+
 
         for ( QcApplicationImportExcelDTO data : successList) {
             QcApplicationDetailDTO.ImportResultDTO resultDTO = new QcApplicationDetailDTO.ImportResultDTO();
@@ -205,10 +206,18 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
                 errorList.add(data);
                 continue;
             }
+            //供应商信息
+            SupplierEntity supplierEntity = supplierMap.get(data.getSupplierName());
+            if (CharSequenceUtil.isNotBlank(data.getSupplierName()) && ObjectUtil.isEmpty(supplierEntity)) {
+                data.setErrorMsg("未找到供应商信息");
+                errorList.add(data);
+                continue;
+            }
+            resultDTO.setSkuId(skuVO.getSkuId());
             resultDTO.setProductName(skuVO.getSkuName());
             resultDTO.setEan(skuVO.getEan());
             resultDTO.setSourceDetailId(purchaseOrderDetailEntity.getId());
-
+            resultDTO.setSupplierId(supplierEntity.getId());
             resultList.add(resultDTO);
         }
         return resultList;
