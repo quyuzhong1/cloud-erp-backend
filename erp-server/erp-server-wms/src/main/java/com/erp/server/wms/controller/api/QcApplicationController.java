@@ -332,6 +332,7 @@ public class QcApplicationController extends BaseController {
             tableAlias = "qa"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检申请单主表导出Excel数据")
+    @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
     public ApiResult<Object>exportExcel(@RequestBody @Validated QcApplicationDTO.PagingParamDTO dto) {
         Boolean flag = qcApplicationService.exportList(dto);
         return flag ? success() : failure();
