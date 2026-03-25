@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.common.core.controller.BaseController;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * 质检标准 Controller
  *
@@ -94,7 +96,7 @@ public class QcStandardController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检标准导出Excel数据")
     @WebAdvanceQuery(handler = QcStandardQueryHandler.class)
-    public ApiResult<Boolean> exportList(@RequestBody @Validated PagingDTO<QcStandardDTO.PagingParamDTO> dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated PagingDTO<QcStandardDTO.PagingParamDTO> dto, HttpServletResponse response) {
         qcStandardService.export(dto);
         return success(true);
     }

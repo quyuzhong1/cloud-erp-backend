@@ -34,10 +34,12 @@ import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.mapper.FileManagementMapper;
 import com.erp.server.wms.service.FileManagementService;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.QcStandardService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.bcel.generic.IF_ACMPEQ;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

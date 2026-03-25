@@ -577,7 +577,7 @@ public class QcInfoController extends BaseController {
      **/
     @PostMapping("/listQcStandard")
     public ApiResult<QcInfoDTO.ListQcStandardResultDTO> listQcStandard(@RequestBody QcInfoDTO.ListQcStandardParamDTO dto) {
-        return success(qcResultService.listQcStandard(dto));
+        return success(qcInfoService.listQcStandard(dto));
     }
 
 }

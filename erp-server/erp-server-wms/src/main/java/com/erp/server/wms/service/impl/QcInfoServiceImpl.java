@@ -145,6 +145,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private PoInstockDetailService poInstockDetailService;
 
+    @Resource
+    private  QcSamplingPlanService qcSamplingPlanService;
+
+    @Resource
+    private  QcStandardService qcStandardService;
+
+    @Resource
+    private  QcStandardDetailService qcStandardDetailService;
 
     @Resource
     private PoReturnService poReturnService;
@@ -2791,6 +2799,64 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String rate = MathUtil.divide(new BigDecimal(hasQcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString() + "%";
         title = CharSequenceUtil.format(title,totalCount,hasQcCount,rate,notQcCount,notQcTotalCount,timeOutTotalCount);
         return title;
+    }
+
+
+    @Override
+    public QcInfoDTO.ListQcStandardResultDTO listQcStandard(QcInfoDTO.ListQcStandardParamDTO dto) {
+        QcInfoDTO.ListQcStandardResultDTO listQcStandardResultDTO = new QcInfoDTO.ListQcStandardResultDTO();
+        List<QcInfoDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
+        List<QcInfoDTO.QcImageView> qcImageViews = new ArrayList<>();
+
+        //抽样方案
+        SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
+        planParamDTO.setQcType(dto.getQcType());
+        planParamDTO.setQty(dto.getQty());
+        planParamDTO.setSkuId(dto.getSkuId());
+
+        SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+
+        listQcStandardResultDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
+        listQcStandardResultDTO.setSamplingPlanId(samplingPlan.getId());
+        listQcStandardResultDTO.setSamplingPlanName(QcTypeEnum.getByCode(dto.getQcType()) + "通用抽样方案");
+        listQcStandardResultDTO.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
+        listQcStandardResultDTO.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
+        listQcStandardResultDTO.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
+        listQcStandardResultDTO.setMajorRejectQty(samplingPlan.getMajorRejectQty());
+
+        //质检项目
+        QcInfoDTO.QcInspectItemView qcInspectItemView = new QcInfoDTO.QcInspectItemView();
+        QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
+                .eq(QcStandardEntity::getSkuId, dto.getSkuId())
+                .one();
+        if (Objects.nonNull(qcStandardEntity)) {
+            List<QcStandardDetailEntity> list = qcStandardDetailService.lambdaQuery()
+                    .eq(QcStandardDetailEntity::getMainId, qcStandardEntity.getId())
+                    .list();
+            if (!list.isEmpty()) {
+                for (QcStandardDetailEntity qcStandardDetailEntity : list) {
+                    qcInspectItemView.setInspectItem(qcStandardDetailEntity.getInspectItemName());
+                    qcInspectItemView.setInspectRequirement(qcStandardDetailEntity.getInspectRequirement());
+                    qcInspectItemViews.add(qcInspectItemView);
+                }
+                listQcStandardResultDTO.setQcInspectItemViewDTOList(qcInspectItemViews);
+            }
+
+            //参考图片
+            List<WmsAttachmentEntity> imageAttachment = wmsAttachmentService.lambdaQuery()
+                    .eq(WmsAttachmentEntity::getBusinessId, qcStandardEntity.getId())
+                    .list();
+            if (!imageAttachment.isEmpty()) {
+                for (WmsAttachmentEntity wmsAttachmentEntity : imageAttachment) {
+                    QcInfoDTO.QcImageView qcImageView = new QcInfoDTO.QcImageView();
+                    qcImageView.setImageType(wmsAttachmentEntity.getType());
+                    qcImageView.setImageUrl(wmsAttachmentEntity.getAttachUrl());
+                    qcImageViews.add(qcImageView);
+                }
+                listQcStandardResultDTO.setQcImageViewDTOList(qcImageViews);
+            }
+        }
+        return listQcStandardResultDTO;
     }
 
     /**
