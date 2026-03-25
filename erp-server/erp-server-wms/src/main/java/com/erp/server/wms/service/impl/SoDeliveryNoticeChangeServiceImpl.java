@@ -484,7 +484,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 if(StringUtils.isNotBlank(soDeliveryNotice.getVirtualWarehouseId()) ){
                     SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(v -> v.getId().equals(detail.getSoDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到销售订单明细数据"));
                     if(soDetailEntity.getFrozenQty() < detail.getNewQty() - soDeliveryNoticeDetailEntity.getDeliveryQty()){
-                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN);
+                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN,soDetailEntity.getSkuNo());
                     }
                 }
                 soDeliveryNoticeDetailEntity.setChangeBeforeSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());

@@ -2444,6 +2444,10 @@ public class SoInfoDTO implements Serializable {
         private Integer effectiveNoticeQty;
 
         /**
+         * 每箱数量
+         */
+        private Integer perBoxQty;
+        /**
          * 要货日期
          */
         private LocalDate requireDate;

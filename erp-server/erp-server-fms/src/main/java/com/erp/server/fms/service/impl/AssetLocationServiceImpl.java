@@ -260,6 +260,25 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    public BaseResultDTO.AddDTO addAndSubmitAndApprove(AssetLocationDTO.AddDTO dto) {
+        // 新增并提交
+        BaseResultDTO.AddDTO result = this.addAndSubmit(dto);
+        // 审核（系统用户，绕过创建人和审核人不能一致校验）
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO(result.getId(), ApproveTypeEnum.PASS.getStatus(), "");
+            approveOneDTO.setIsUserSystem(Boolean.TRUE);
+            this.approve(approveOneDTO);
+        } finally {
+            UserContext.setIsUserSystem(originalValue);
+        }
+        return result;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public void updateAndSubmit(AssetLocationDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);

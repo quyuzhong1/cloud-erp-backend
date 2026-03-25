@@ -128,6 +128,16 @@ public interface MoldInfoService extends SuperService<MoldInfoEntity> {
     BatchResultDTO invalid(String id, String remark);
 
     /**
+    * 更新备注
+    * @author jack
+    * @date: 2026-03-10
+    * @param id
+    * @param remark
+    * @return
+    */
+    BatchResultDTO updateRemark(String id, String remark);
+
+    /**
     * 撤销
     * @author jack
     * @date: 2025-10-10

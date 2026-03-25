@@ -120,6 +120,13 @@ public class AssetPurchaseOrderImportExcelDTO implements Serializable {
     private String  planDeliveryDateStr;
 
     /**
+     * 是否赠品
+     */
+    @ExcelProperty("是否赠品")
+    @FieldValid(fieldName = "isGiftName", fieldValues = "是,否")
+    private String isGiftName;
+
+    /**
      * 是否加急
      */
     @ExcelProperty("*是否加急")

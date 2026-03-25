@@ -122,6 +122,20 @@ public class AssetLocationController extends BaseController {
     }
 
     /**
+    * 新增并提交且审核通过
+    * @author wuht
+    * @date:  2026-03-10
+    * @param dto
+    * @return ApiResult<BaseResultDTO.AddDTO>
+    */
+    @PostMapping("/addAndSubmitAndApprove")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "资产位置表新增并提交且审核通过")
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmitAndApprove(@RequestBody @Validated AssetLocationDTO.AddDTO dto) {
+        BaseResultDTO.AddDTO result = assetLocationService.addAndSubmitAndApprove(dto);
+        return success(result);
+    }
+
+    /**
     * 修改并提交审核
     * @author wuht
     * @date:  2025-10-11

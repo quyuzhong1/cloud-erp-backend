@@ -337,10 +337,11 @@
         sd.frozen_qty as frozenQty,
         sd.is_close,
         sd.box_qty AS salesQty,
+        sd.per_box_qty as perBoxQty,
         (select COALESCE(sum(sdnd.delivery_qty),0) from so_delivery_notice sdn
                 inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
                 where sdn.is_deleted = false and sdn.invalid_status = false and sdnd.source_detail_id = sd.id) as alreadyDeliveryQty,
-        COALESCE(sdnd.deliveryQty, 0) + COALESCE(btdd.deliveryQty, 0) as effectiveNoticeQty,
+        COALESCE(sdnd.deliveryQty* sd.per_box_qty, 0) + COALESCE(btdd.deliveryQty, 0) as effectiveNoticeQty,
         sd.remark
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE

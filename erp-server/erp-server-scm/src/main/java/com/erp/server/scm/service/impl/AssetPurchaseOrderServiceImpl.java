@@ -1086,6 +1086,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             dto.setProductName(detail.getAssetName());
             dto.setPurchaseQty(detail.getPurchaseQty() != null ? detail.getPurchaseQty().intValue() : 0);
             dto.setIsUrgent(detail.getIsUrgent());
+            dto.setIsGift(detail.getIsGift());
             dto.setRemark(detail.getRemark());
             dto.setMoldCode(detail.getAssetCode()); // 模具编码使用资产编码
             dto.setMoldName(detail.getAssetName()); // 模具名称使用资产名称
@@ -1221,12 +1222,15 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                         List<PurchasePriceDTO.PriceDTO> convertList = convertMoldDetailToPriceDTO(moldDetailImportDTOList,
                                 firstMoldImportDTO.getPurchaseOrgId(),
                                 firstMoldImportDTO.getSupplierImportDTO().getSupplierId());
-                        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+                        List<PurchasePriceDTO.PriceDTO> priceDTOList = CollectionUtils.isEmpty(convertList)
+                                ? Collections.emptyList()
+                                : purchasePriceService.batchGetPurchasePrice(convertList);
 
                         for (AssetPurchaseOrderDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldDetailImportDTOList) {
                             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
                             BeanMapperUtils.copy(moldDetailImportDTO, assetPurchaseOrderDetailEntity);
                             assetPurchaseOrderDetailEntity.setMainId(entity.getId()); // 关联主表ID
+                            assetPurchaseOrderDetailEntity.setIsGift(Boolean.TRUE.equals(moldDetailImportDTO.getIsGift()));
 
                             AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
                                     .eq(AssetNoticeDetailEntity::getMainId, firstMoldImportDTO.getSourceId())
@@ -1243,11 +1247,24 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                             MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(moldDetailImportDTO.getAssetCode());
                             assetPurchaseOrderDetailEntity.setTag(moldInfoEntity.getTag());
 
-                            assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                            assetPurchaseOrderDetailEntity.setTaxRate(priceDTO.getTaxRate());
-                            assetPurchaseOrderDetailEntity.setCurrency(priceDTO.getCurrency());
-                            assetPurchaseOrderDetailEntity.setCurrencySymbol(priceDTO.getCurrencySymbol());
-                            assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                            if (Boolean.TRUE.equals(assetPurchaseOrderDetailEntity.getIsGift())) {
+                                assetPurchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+                                assetPurchaseOrderDetailEntity.setTaxRate(BigDecimal.ZERO);
+                                if (StringUtils.isNotBlank(firstMoldImportDTO.getSupplierImportDTO().getPayCurrency())) {
+                                    assetPurchaseOrderDetailEntity.setCurrency(firstMoldImportDTO.getSupplierImportDTO().getPayCurrency());
+                                    assetPurchaseOrderDetailEntity.setCurrencySymbol(CurrencyEnum.getSymbolByCode(firstMoldImportDTO.getSupplierImportDTO().getPayCurrency()));
+                                }
+                                assetPurchaseOrderDetailEntity.setTotalAmount(BigDecimal.ZERO);
+                            } else {
+                                if (Objects.isNull(priceDTO)) {
+                                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND, assetPurchaseOrderDetailEntity.getAssetCode());
+                                }
+                                assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                                assetPurchaseOrderDetailEntity.setTaxRate(priceDTO.getTaxRate());
+                                assetPurchaseOrderDetailEntity.setCurrency(priceDTO.getCurrency());
+                                assetPurchaseOrderDetailEntity.setCurrencySymbol(priceDTO.getCurrencySymbol());
+                                assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                            }
                             assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
 
                             assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
@@ -1823,6 +1840,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             String supplierId) {
 
         return moldDetailImportDTOList.stream()
+                .filter(moldDetail -> !Boolean.TRUE.equals(moldDetail.getIsGift()))
                 .map(moldDetail -> PurchasePriceDTO.PriceDTO.builder()
                         .purchaseOrgId(purchaseOrgId)
                         .skuId(moldDetail.getAssetId())
