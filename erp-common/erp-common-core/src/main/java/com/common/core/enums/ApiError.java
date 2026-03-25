@@ -962,6 +962,7 @@ public enum ApiError implements Serializable {
     PO_INSTOCK_DETAIL_SKU_NOT_EXIST(9583,"sku【{0}】在采购收货单中未找到"),
     PO_PUSH_DOWN_CHANGE_EXISTS(9584,"采购订单已下推采购变更单"),
     PO_PUSH_DOWN_DELIVERY_EXISTS(9585,"采购订单已下推送货单"),
+    PO_PUSH_DOWN_QC_APPLICATION_EXISTS(9585,"采购订单已下质检申请单【{0}】"),
     PO_SUPPLIER_CONFIRM_NOT_ALLOWED(9586,"采购订单【{0}】未审核完成不支持确认"),
     PO_DETAIL_SUPPLIER_CONFIRM_NOT_ALLOWED(9587,"采购订单【{0}】非待确认不支持确认"),
     PO_SKU_PUSH_DOWN_NOT_ALLOWED(9588,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持下推"),

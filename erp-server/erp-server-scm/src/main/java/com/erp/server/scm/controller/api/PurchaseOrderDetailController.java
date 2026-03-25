@@ -1,8 +1,6 @@
 package com.erp.server.scm.controller.api;
 
 
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -33,20 +31,6 @@ public class PurchaseOrderDetailController extends BaseController {
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
-     * 分页查询可推送的SKU列表
-     * @author will
-     * @date 2026/3/23 17:00
-     * @param dto
-     * @return ApiResult<PagingVO<PurchaseOrderDetailDTO.ListPushProductDTO>>
-     */
-    @PostMapping("/pagingPushProduct")
-    public ApiResult<PagingVO<PurchaseOrderDetailDTO.ListPushProductDTO>> pagingPushProduct(@RequestBody @Validated PagingDTO<PurchaseOrderDetailDTO.ListPushProductParamDTO> dto) {
-        PagingVO<PurchaseOrderDetailDTO.ListPushProductDTO> pagingVO = purchaseOrderDetailService.pagingPushProduct(dto);
-        return success(pagingVO);
-    }
-
-
-    /**
      * 采购订单下推质检申请数据列表
      * @author will
      * @date 2026/3/23 17:00
@@ -54,22 +38,9 @@ public class PurchaseOrderDetailController extends BaseController {
      * @return ApiResult<PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO>>
      */
     @PostMapping("/listPushQcApplication")
-    public ApiResult<PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO>> listPushQcApplication(@RequestBody @Validated PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
-        PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> pagingVO = purchaseOrderDetailService.listPushQcApplication(dto);
+    public ApiResult<List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO>> listPushQcApplication(@RequestBody @Validated PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> pagingVO = purchaseOrderDetailService.listPushQcApplication(dto);
         return success(pagingVO);
-    }
-
-    /**
-     * SKU块粘贴接口
-     * @author will
-     * @date 2026/3/23 17:00
-     * @param dto
-     * @return ApiResult<PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO>>
-     */
-    @PostMapping("/listSourceSkuQuickPaste")
-    public ApiResult<List<PurchaseOrderDetailDTO.SkuQuickPasteDTO>> listSourceSkuQuickPaste(@RequestBody @Validated PurchaseOrderDetailDTO.SkuQuickPasteParamDTO dto) {
-        List<PurchaseOrderDetailDTO.SkuQuickPasteDTO> list = purchaseOrderDetailService.listSourceSkuQuickPaste(dto);
-        return success(list);
     }
 
 }

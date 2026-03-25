@@ -10,13 +10,11 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -789,18 +787,42 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     @Override
-    public PagingVO<PurchaseOrderDetailDTO.ListPushProductDTO> pagingPushProduct(PagingDTO<PurchaseOrderDetailDTO.ListPushProductParamDTO> dto) {
-        return null;
+    public List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplicationList = baseMapper.listPushQcApplication(dto);
+        //查询待入库数量
+        handlePushQcApplication(listPushQcApplicationList);
+        return listPushQcApplicationList;
     }
 
-    @Override
-    public PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
-        return null;
-    }
+    /**
+     * 数据处理，计算待入库数量=采购数量-有效入库数量+退货数量
+     * @author will
+     * @date 2026/3/25 14:52
+     * @param pushQcApplicationList
+     * @return void
+     */
+    private void handlePushQcApplication (List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> pushQcApplicationList ) {
+        if (CollUtil.isEmpty(pushQcApplicationList)) {
+            return;
+        }
+        List<String> podIdList = pushQcApplicationList.stream().map(PurchaseOrderDetailDTO.ListPushQcApplicationDTO::getPodId).distinct().collect(Collectors.toList());
 
-    @Override
-    public List<PurchaseOrderDetailDTO.SkuQuickPasteDTO> listSourceSkuQuickPaste(PurchaseOrderDetailDTO.SkuQuickPasteParamDTO dto) {
-        return Collections.emptyList();
+        //查询退货数据
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
+        //查询入库数据
+        List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
+
+        for ( PurchaseOrderDetailDTO.ListPushQcApplicationDTO viewProductDTO : pushQcApplicationList) {
+            Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            //有效入库数量（未审核通过）
+            Integer effectiveStockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                effectiveStockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //未入库数量
+            viewProductDTO.setQty(viewProductDTO.getPoQty() - effectiveStockInQty + returnQty );
+        }
     }
 
     /**
