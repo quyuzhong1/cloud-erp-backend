@@ -768,6 +768,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceCode(entity.getCode());
         addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
+        addDTO.setQcWarehouseId(entity.getDeliveryWarehouseId());
         addDTO.setPutawayWarehouseId(entity.getDeliveryWarehouseId());
         addDTO.setQcType(QcTypeEnum.STOCK_IN.getCode());
         addDTO.setPurchaseOrderId(entity.getPurchaseOrderId());
@@ -777,6 +778,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             QcNoticeDetailDTO.AddDTO addDetail = new QcNoticeDetailDTO.AddDTO();
             BeanUtils.copyProperties(warehouseReceiveDetailEntity,addDetail);
             addDetail.setSourceDetailId(warehouseReceiveDetailEntity.getId());
+            addDetail.setQcNoticeQty(warehouseReceiveDetailEntity.getReceiveQty());
             addDetailDTOs.add(addDetail);
         }
         addDTO.setDetailList(addDetailDTOs);
