@@ -27,32 +27,33 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_time as createTime,
-        update_time as updateTime,
-        create_user_name as createUserName,
-        create_user_id as createUserId,
-        update_user_name as updateUserName,
-        update_user_id as updateUserId,
-        version,
-        is_deleted as isDeleted,
-        code,
-        source_id as sourceId,
-        source_code as sourceCode,
-        source_type as sourceType,
-      approve_status as approveStatus,
-      approve_user_id as approveUserId,
-      approve_time as approveTime,
-      qc_type as qcType,
-      warehouse_id as warehouseId,
-      plan_qc_date as planQcDate,
-      remark
+        qa.id,
+        qa.create_time as createTime,
+        qa.update_time as updateTime,
+        qa.create_user_name as createUserName,
+        qa.create_user_id as createUserId,
+        qa.update_user_name as updateUserName,
+        qa.update_user_id as updateUserId,
+        qa.version,
+        qa.is_deleted as isDeleted,
+        qa.code,
+        qa.source_id as sourceId,
+        qa.source_code as sourceCode,
+        qa.source_type as sourceType,
+      qa.approve_status as approveStatus,
+      qa.approve_user_id as approveUserId,
+      qa.approve_time as approveTime,
+      qa.qc_type as qcType,
+      qa.warehouse_id as warehouseId,
+      qa.plan_qc_date as planQcDate,
+      qa.remark
     </sql>
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.QcApplicationDTO$ListDTO">
             select
                 <include refid="Base_Column_List" />
+                ,pd.name as productName
             from qc_application qa
             inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
             left join product_detail pd on pd.id = qad.sku_id and pd.is_deleted = FALSE

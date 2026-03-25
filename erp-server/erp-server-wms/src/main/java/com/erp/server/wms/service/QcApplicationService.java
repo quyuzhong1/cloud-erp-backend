@@ -139,10 +139,10 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
      *  下推质检通知保存
      * @author will
      * @date 2026/3/23 12:25
-     * @param list
+     * @param generateQcNoticeDTO
      * @return  Boolean
      */
-    Boolean generateQcNotice(ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list);
+    BatchResultDTO generateQcNotice(QcApplicationDTO.GenerateQcNoticeDTO generateQcNoticeDTO );
     /**
      *  下推质检通知保存
      * @author will

@@ -31,6 +31,8 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDTO;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
+import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.dto.QcNoticeDetailDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
 import com.erp.model.wms.entity.QcApplicationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -40,10 +42,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.QcApplicationMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.QcApplicationDetailService;
-import com.erp.server.wms.service.QcApplicationService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -82,6 +81,10 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private QcNoticeService qcNoticeService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -167,11 +170,9 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         List<String> existStatusList = list.stream().map(QcApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new QcApplicationDTO.TabListDTO(status, 0));
+            list.add(new QcApplicationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
         }
         });
-        list.add(new QcApplicationDTO.TabListDTO("all", list.stream().mapToInt(QcApplicationDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
 
@@ -182,8 +183,31 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     }
 
     @Override
-    public Boolean generateQcNotice(ValidList<QcApplicationDTO.GenerateQcNoticeDTO> list) {
-        return null;
+    @Transactional(rollbackFor = Exception.class ,timeout = 120000)
+    public BatchResultDTO generateQcNotice(QcApplicationDTO.GenerateQcNoticeDTO dto) {
+        QcApplicationEntity entity = getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
+        }
+        List<QcApplicationDetailEntity> detailList = qcApplicationDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
+        }
+
+        QcNoticeDTO.AddDTO addDTO = new QcNoticeDTO.AddDTO();
+        addDTO.setQcType(entity.getQcType());
+        addDTO.setQcWarehouseId(entity.getWarehouseId());
+        List<QcNoticeDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+        for (QcApplicationDetailEntity detailEntity : detailList) {
+            QcNoticeDetailDTO.AddDTO  addDetailDTO = new QcNoticeDetailDTO.AddDTO();
+            addDetailDTO.setSkuId(detailEntity.getSkuId());
+            addDetailDTO.setQcNoticeQty(detailEntity.getQty());
+            addDetailDTO.setQcUserId(dto.getQcUserId());
+            addDetailList.add(addDetailDTO);
+        }
+        addDTO.setDetailList(addDetailList);
+        qcNoticeService.add(addDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.GENERATE);
     }
 
     @Override
@@ -252,7 +276,34 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
 
     @Override
     public List<QcApplicationDTO.ListPushQcNoticeDTO> listPushQcNotice(List<String> ids) {
-        return Collections.emptyList();
+        List<QcApplicationEntity> qcApplicationList = this.listByIds(ids);
+        if (CollUtil.isEmpty(qcApplicationList)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
+        }
+        List<String> warehouseIdList = qcApplicationList.stream().map(QcApplicationEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        Map<String, WarehouseEntity> warehouseMap = warehouseService.mapByIds(warehouseIdList);
+
+
+        List<QcApplicationDTO.ListPushQcNoticeDTO> resultList = new ArrayList<>();
+        for (QcApplicationEntity entity :  qcApplicationList) {
+            QcApplicationDTO.ListPushQcNoticeDTO dto = new QcApplicationDTO.ListPushQcNoticeDTO();
+            dto.setId(entity.getId());
+            dto.setCode(entity.getCode());
+            dto.setSourceCode(entity.getSourceCode());
+            dto.setQcType(entity.getQcType());
+            dto.setQcTypeName(QcTypeEnum.getByCode(entity.getQcType()));
+            dto.setWarehouseId(entity.getWarehouseId());
+
+            //仓库
+            WarehouseEntity warehouseEntity = warehouseMap.get(entity.getWarehouseId());
+            if (ObjectUtil.isEmpty(warehouseEntity)) {
+                throw new ServiceException(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION);
+            }
+            dto.setWarehouseName(warehouseEntity.getName());
+            dto.setPlanQcDate(entity.getPlanQcDate());
+            resultList.add(dto);
+        }
+        return resultList;
     }
 
 
