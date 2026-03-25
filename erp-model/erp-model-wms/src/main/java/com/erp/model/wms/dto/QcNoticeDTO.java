@@ -1,23 +1,18 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
+
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-
-import com.common.business.dto.AdvanceQueryDTO;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -736,6 +731,21 @@ public class QcNoticeDTO implements Serializable {
         */
         @Size(max = 500,message = "质检类型最大长度不能超过255位")
         private String remark;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
     }
 

@@ -94,6 +94,24 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     @TableField("invalid_remark")
     private String invalidRemark;
 
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
