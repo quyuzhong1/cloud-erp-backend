@@ -423,10 +423,6 @@ public class QcApplicationDTO implements Serializable {
         /**
          * 质检申请单号
          */
-        private String id;
-        /**
-         * 质检申请单号
-         */
         private String code;
         /**
          * 来源单号
