@@ -27,6 +27,21 @@ import java.time.LocalDateTime;
 public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
 
     /**
+     * 采购订单id
+     */
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
+    /**
+     * 采购订单编码
+     */
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+    /**
     * 单据状态
     */
     @TableField("approve_status")

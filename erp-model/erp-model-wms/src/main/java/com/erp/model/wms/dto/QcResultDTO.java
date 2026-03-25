@@ -128,15 +128,15 @@ public class QcResultDTO {
         /**
          * 质检结果
          */
-        @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @StateEnumValue(clazz = QcResultEnum.class, message = "质检结果有误")
+//        @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
+//        @StateEnumValue(clazz = QcResultEnum.class, message = "质检结果有误")
         private String qcResult;
 
         /**
          * 处理措施
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
          */
-        @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
+//        @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String handleModeDict;
 
         /**

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
+import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -16,14 +17,14 @@ import lombok.NoArgsConstructor;
  * </p>
  *
  * @author wtr
- * @since 2026-03-23
+ * @since 2026-03-25
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
-@TableName("qc_standard_ref")
-public class QcStandardRefEntity extends BaseEntity<QcStandardRefEntity> {
+@TableName("qc_sampling_plan_ref")
+public class QcSamplingPlanRefEntity extends BaseEntity<QcSamplingPlanRefEntity> {
 
     /**
     * 质检单id
@@ -31,15 +32,25 @@ public class QcStandardRefEntity extends BaseEntity<QcStandardRefEntity> {
     @TableField("main_id")
     private String mainId;
     /**
-    * 质检项目
+    * 抽样方案id
     */
-    @TableField("inspect_item")
-    private String inspectItem;
+    @TableField("sampling_plan_id")
+    private String samplingPlanId;
     /**
-    * 质检要求
+    * 建议抽样数量
     */
-    @TableField("inspect_requirement")
-    private String inspectRequirement;
+    @TableField("suggest_sampling_qty")
+    private Integer suggestSamplingQty;
+    /**
+    * 附件url
+    */
+    @TableField("attach_url")
+    private String attachUrl;
+    /**
+    * 附件名称
+    */
+    @TableField("attach_name")
+    private String attachName;
 
 
     public static final String MAIN_ID = "main_id";
@@ -47,10 +58,6 @@ public class QcStandardRefEntity extends BaseEntity<QcStandardRefEntity> {
     public static final String SAMPLING_PLAN_ID = "sampling_plan_id";
 
     public static final String SUGGEST_SAMPLING_QTY = "suggest_sampling_qty";
-
-    public static final String INSPECT_ITEM = "inspect_item";
-
-    public static final String INSPECT_REQUIREMENT = "inspect_requirement";
 
     public static final String ATTACH_URL = "attach_url";
 

@@ -143,7 +143,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 质检标准
          */
-        private QcNoticeDTO.QcStandardAddDTO qcStandardView;
+        private QcNoticeDTO.QcStandardAddDTO qcStandardAddDTO;
     }
 
 
@@ -1569,6 +1569,124 @@ public class QcInfoDTO implements Serializable {
          */
         private String remark;
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListQcStandardParamDTO{
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "sku不允许为空")
+        private String skuId;
+
+        /**
+         * 质检类型
+         */
+        @NotBlank(message = "质检类型不允许为空")
+        private String qcType;
+
+        /**
+         * 总数量
+         */
+        @NotBlank(message = "总数量不允许为空")
+        private Integer qty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListQcStandardResultDTO{
+
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 抽样比例%
+         */
+        private BigDecimal samplingRate;
+
+        /**
+         * 一般缺陷允收数（Ac）
+         */
+        private Integer generalAcceptQty;
+
+        /**
+         * 一般缺陷拒收数(Re)
+         */
+        private Integer generalRejectQty;
+
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+
+        /**
+         * 严重缺陷拒收数(Re)
+         */
+        private Integer majorRejectQty;
+
+        /**
+         * 附件url
+         */
+        private String attachUrl;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemView>  qcInspectItemViewDTOList;
+
+        /**
+         * 参考图片
+         */
+        private List<QcImageView>  qcImageViewDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInspectItemView{
+
+        /**
+         * 质检项目
+         */
+        private String inspectItem;
+
+        /**
+         * 质检要求
+         */
+        private String inspectRequirement;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcImageView{
+
+        /**
+         * 图片类型
+         */
+        private String imageType;
+
+        /**
+         * 图片url
+         */
+        private String imageUrl;
     }
 
 }

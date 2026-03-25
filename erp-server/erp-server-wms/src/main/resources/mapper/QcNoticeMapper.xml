@@ -182,4 +182,38 @@
         ORDER BY
         qn.code
     </select>
+
+    <select id="listQcInfoViewByCodeAndSku" resultType="com.erp.model.wms.dto.QcNoticeDTO$QcInfoFullView">
+        SELECT
+        qn.ID AS id,
+        qn.code AS code,
+        qn.qc_type AS qcType,
+        qn.qc_status AS qcStatus,
+        qn.qc_warehouse_id AS qcWarehouseId,
+        qnd.id AS detailId,
+        qnd.sku_id AS skuId,
+        qnd.sku_no AS skuNo,
+        qnd.product_name AS productName,
+        qnd.qc_notice_qty AS qcNoticeQty,
+        qnd.qc_qty AS qcQty,
+        qnd.qc_diff_qty AS qcDiffQty,
+        qnd.qc_good_qty AS qcGoodQty,
+        qnd.qc_bad_qty AS qcBadQty,
+        qnd.putaway_qty AS putawayQty,
+        qnd.bad_desc AS badDesc,
+        qnd.qc_problem_dict AS qcProblemDict,
+        qnd.qc_date AS qcDate
+        FROM
+        qc_notice AS qn
+        LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+        WHERE
+        qn.is_deleted = FALSE
+        AND qn.approve_status = 'approve'
+        AND qnd.is_deleted = FALSE
+        AND qnd.qc_status = 'wait'
+        AND qn.code = #{code}
+        AND qnd.sku_id = #{skuId}
+        ORDER BY
+        qn.code
+    </select>
 </mapper>
