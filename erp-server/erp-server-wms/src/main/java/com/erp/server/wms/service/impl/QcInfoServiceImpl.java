@@ -219,21 +219,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         QcInfoEntity bill = new QcInfoEntity();
         String code = "";
         String billId = dto.getId();
-//        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
-//        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
-//        if (ObjectUtils.isNotEmpty(qcProduct)) {
-//            String skuNo = qcProduct.getSkuNo();
-//            if(StringUtils.isNotBlank(skuNo)){
-//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
-//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
-//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-//            }else {
-//                compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-//                compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-//                compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-//            }
-//
-//        }
         QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
             billId = IdWorker.getIdStr();
@@ -318,6 +303,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcReportDetailService.add(billId, dto.getReportDetailList());
             //质检备注暂存
             qcRemarkService.add(billId, dto.getRemarkList());
+            //质检标准
+            qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
             //操作日志
             if (Objects.isNull(qc)) {
                 operateLogService.addModuleOperateLog(String.format("新增了质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");

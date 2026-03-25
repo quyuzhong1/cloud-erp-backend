@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -32,16 +31,6 @@ public class QcStandardRefEntity extends BaseEntity<QcStandardRefEntity> {
     @TableField("main_id")
     private String mainId;
     /**
-    * 抽样方案id
-    */
-    @TableField("sampling_plan_id")
-    private String samplingPlanId;
-    /**
-    * 建议抽样数量
-    */
-    @TableField("suggest_sampling_qty")
-    private Integer suggestSamplingQty;
-    /**
     * 质检项目
     */
     @TableField("inspect_item")
@@ -51,16 +40,6 @@ public class QcStandardRefEntity extends BaseEntity<QcStandardRefEntity> {
     */
     @TableField("inspect_requirement")
     private String inspectRequirement;
-    /**
-    * 附件url
-    */
-    @TableField("attach_url")
-    private String attachUrl;
-    /**
-    * 附件名称
-    */
-    @TableField("attach_name")
-    private String attachName;
 
 
     public static final String MAIN_ID = "main_id";

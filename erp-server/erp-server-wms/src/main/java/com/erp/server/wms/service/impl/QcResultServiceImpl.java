@@ -31,10 +31,10 @@ import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.NoticeItemRoleEnum;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.QcResultEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -43,10 +43,7 @@ import com.erp.rpc.sys.feign.MessageUserReadFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.QcResultService;
-import com.erp.server.wms.service.WmsAttachmentService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -80,10 +77,17 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private QcSamplingPlanService qcSamplingPlanService;
+
+    @Resource
+    private QcSamplingPlanDetailService qcSamplingPlanDetailService;
+
+    @Resource
+    private QcSamplingPlanSkuRefService qcSamplingPlanSkuRefService;
 
     @Resource
     private SysUserFeign sysUserFeign;
-
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -475,6 +479,86 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             resulst.put("productCharge",String.join(",", productCharge));
         }
         return resulst;
+    }
+
+    @Override
+    public QcInfoDTO.ListQcStandardResultDTO listQcStandard(QcInfoDTO.ListQcStandardParamDTO dto) {
+        boolean foundMatchingDetail = false;
+        QcInfoDTO.ListQcStandardResultDTO listQcStandardResultDTO = new QcInfoDTO.ListQcStandardResultDTO();
+        List<QcInfoDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
+        List<QcInfoDTO.QcImageView> qcImageViews = new ArrayList<>();
+
+        List<QcSamplingPlanEntity> plans = qcSamplingPlanService.lambdaQuery()
+                .eq(QcSamplingPlanEntity::getPlanType, dto.getQcType())
+                .list();
+
+        if (!plans.isEmpty()) {
+            for (QcSamplingPlanEntity plan : plans) {
+                //通过数量和sku匹配抽样方案
+                List<QcSamplingPlanSkuRefEntity> skuRefs =
+                        qcSamplingPlanSkuRefService.listByMainId(plan.getId());
+
+                if (!skuRefs.isEmpty() && skuRefs.stream()
+                        .anyMatch(ref -> ref.getSkuId().equals(dto.getSkuId()))) {
+
+                    List<QcSamplingPlanDetailEntity> planDetails =
+                            qcSamplingPlanDetailService.listByMainId(plan.getId());
+
+                    for (QcSamplingPlanDetailEntity detail : planDetails) {
+                        if (dto.getQty() != null && detail.getRangFrom() != null
+                                && detail.getRangTo() != null
+                                && dto.getQty() >= detail.getRangFrom()
+                                && dto.getQty() <= detail.getRangTo()) {
+                            listQcStandardResultDTO.setSamplingPlanId(plan.getId());
+                            listQcStandardResultDTO.setSamplingPlanName(QcTypeEnum.getByCode(dto.getQcType()) + "抽样方案");
+                            listQcStandardResultDTO.setSuggestSamplingQty(detail.getQty());
+                            listQcStandardResultDTO.setSamplingRate(MathUtil.multiplyWithTwo(detail.getRate(),MathUtil.BigDecimal_100));
+                            listQcStandardResultDTO.setGeneralAcceptQty(detail.getGeneralAcceptQty());
+                            listQcStandardResultDTO.setGeneralRejectQty(detail.getGeneralRejectQty());
+                            listQcStandardResultDTO.setMajorAcceptQty(detail.getMajorAcceptQty());
+                            listQcStandardResultDTO.setMajorRejectQty(detail.getMajorRejectQty());
+                            foundMatchingDetail = true;
+                            break;
+                        }
+                    }
+                    if (foundMatchingDetail) break;
+                }
+            }
+
+            //匹配通用抽样方案
+            if (!foundMatchingDetail) {
+                List<QcSamplingPlanEntity> emptyPlans = plans.stream()
+                        .filter(plan -> qcSamplingPlanSkuRefService.listByMainId(plan.getId()).isEmpty())
+                        .collect(Collectors.toList());
+                if (!emptyPlans.isEmpty()) {
+                    for (QcSamplingPlanEntity emptyPlan : emptyPlans) {
+                        List<QcSamplingPlanDetailEntity> planDetails =
+                                qcSamplingPlanDetailService.listByMainId(emptyPlan.getId());
+
+                        for (QcSamplingPlanDetailEntity detail : planDetails) {
+                            if (dto.getQty() != null
+                                    && detail.getRangFrom() != null
+                                    && detail.getRangTo() != null
+                                    && dto.getQty() >= detail.getRangFrom()
+                                    && dto.getQty() <= detail.getRangTo()) {
+                                listQcStandardResultDTO.setSamplingPlanId(emptyPlan.getId());
+                                listQcStandardResultDTO.setSamplingPlanName(QcTypeEnum.getByCode(dto.getQcType()) + "抽样方案");
+                                listQcStandardResultDTO.setSuggestSamplingQty(detail.getQty());
+                                listQcStandardResultDTO.setSamplingRate(MathUtil.multiplyWithTwo(detail.getRate(),MathUtil.BigDecimal_100));
+                                listQcStandardResultDTO.setGeneralAcceptQty(detail.getGeneralAcceptQty());
+                                listQcStandardResultDTO.setGeneralRejectQty(detail.getGeneralRejectQty());
+                                listQcStandardResultDTO.setMajorAcceptQty(detail.getMajorAcceptQty());
+                                listQcStandardResultDTO.setMajorRejectQty(detail.getMajorRejectQty());
+                                foundMatchingDetail = true;
+                                break;
+                            }
+                        }
+                        if (foundMatchingDetail) break;
+                    }
+                }
+            }
+        }
+        return listQcStandardResultDTO;
     }
 
     @Override

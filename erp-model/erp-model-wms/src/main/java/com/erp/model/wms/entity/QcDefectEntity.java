@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -39,8 +38,8 @@ public class QcDefectEntity extends BaseEntity<QcDefectEntity> {
     /**
     * 缺陷数量
     */
-    @TableField("defect_qty")
-    private Integer defectQty;
+    @TableField("bad_qty")
+    private Integer badQty;
     /**
     * 不良描述
     */

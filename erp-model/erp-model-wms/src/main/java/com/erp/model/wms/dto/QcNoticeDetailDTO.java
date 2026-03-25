@@ -139,7 +139,10 @@ public class QcNoticeDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
     }
 
     /**

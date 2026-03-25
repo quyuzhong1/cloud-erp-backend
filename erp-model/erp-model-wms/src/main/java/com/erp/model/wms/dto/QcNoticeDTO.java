@@ -435,53 +435,32 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class QcInfoView  {
         /**
-         *
+         * id
          */
+        @NotBlank(message = "id不允许为空")
         private String id;
         /**
-         *
+         * 明细id
          */
         private String detailId;
         /**
          * 通知单号
          */
         private String code;
+
         /**
-         * 质检单号
-         */
-        private String qcBillCode;
-        /**
-         * 质检类型
-         */
-        private String qcType;
-        /**
-         * 质检类型
-         */
-        private String qcTypeName;
-        /**
-         * 抽样方案id
-         */
-        private String samplingPlanId;
-        /**
-         * 抽样方案名称
-         */
-        private String samplingPlanName;
-        /**
-         *
+         *skuid
          */
         private String skuId;
         /**
-         *
+         *sku编码
          */
         private String skuNo;
         /**
-         *
+         *产品名称
          */
         private String productName;
-        /**
-         *
-         */
-        private String qcWarehouseId;
+
         /**
          * 质检通知数量
          */
@@ -498,65 +477,106 @@ public class QcNoticeDTO implements Serializable {
          *差异数量
          */
         private Integer qcDiffQty;
+
         /**
-         *
+         * 质检单id
+         */
+        private String qcBillId;
+
+        /**
+         * 质检单号
+         */
+        private String qcBillCode;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 一般缺陷允收数（Ac）
+         */
+        private Integer generalAcceptQty;
+
+        /**
+         * 一般缺陷拒收数(Re)
+         */
+        private Integer generalRejectQty;
+
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+
+        /**
+         * 严重缺陷拒收数(Re)
+         */
+        private Integer majorRejectQty;
+
+        /**
+         *良品数量
          */
         @NotNull(message = "良品数量不能为空")
         @Min(value = 0, message = "良品数量不能小于0")
         private Integer qcGoodQty;
         /**
-         *
+         *不良品数量
          */
         @NotNull(message = "不良品数量不能为空")
         @Min(value = 0, message = "不良品数量不能小于0")
         private Integer qcBadQty;
+
         /**
-         *问题属性
-         */
-        private String qcProblemDict;
-        private String qcProblemDictName;
-        /**
-         * 不良描述
-         */
-        private String badDesc;
-        /**
-         *
+         * 质检员id
          */
         private String qcUserId;
+
+        /**
+         * 质检员名称
+         */
         private String qcUserName;
         /**
-         *
+         * 质检日期
          */
         @NotNull(message = "质检日期不能为空")
         private LocalDate qcDate;
-        /**
-         *
-         */
-        private List<String> attachNameList;
-        private List<String> attachUrlList;
-
-        /**
-         * 检验结果 QcResultEnum
-         */
-        private String qcResult;
-        /**
-         * 检验结果名称
-         */
-        private String qcResultName;
-        /**
-         * 批次合格量
-         */
-        private Integer lotQualifiedQty;
 
         /**
          * 质检标准
          */
-        private QcStandardView qcStandardViewList;
+        private QcStandardView qcStandardView;
 
         /**
          * 缺陷信息
          */
         private List<DefectView> defectViewList;
+
+        /**
+         * 检验结果 QcResultEnum
+         */
+        @NotBlank(message = "检验结果不允许为空")
+        private String qcResult;
+
+        /**
+         * 批次合格量
+         */
+        @NotNull(message = "批次合格量不允许为空")
+        private Integer lotQualifiedQty;
     }
 
     @Data
@@ -608,9 +628,9 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 缺陷数量
          */
-        private String defectQty;
+        private Integer badQty;
         /**
-         * 问题属性
+         * 问题属性type=qcProblemType
          */
         private String issueProperty;
         /**
@@ -618,14 +638,24 @@ public class QcNoticeDTO implements Serializable {
          */
         private String defectDesc;
         /**
-         * 不良图片url
+         * 不良图片
          */
-        private String imageUrl;
+        private List<BadImageView> badImageViewList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BadImageView{
+        /**
+         * 附件名称
+         */
+        private String attachName;
 
         /**
-         * 不良图片名称
+         *
          */
-        private String imageName;
+        private String attachUrl;
     }
 
     @Data
@@ -681,6 +711,20 @@ public class QcNoticeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
         @NotEmpty
         private List<QcNoticeDetailDTO.@Valid AddDTO> detailList;
@@ -732,21 +776,6 @@ public class QcNoticeDTO implements Serializable {
         @Size(max = 500,message = "质检类型最大长度不能超过255位")
         private String remark;
 
-        /**
-         * 来源id
-         */
-        private String sourceId;
-
-        /**
-         * 来源编码
-         */
-        private String sourceCode;
-
-        /**
-         * 来源类型
-         */
-        private String sourceType;
-
     }
 
     @Data
@@ -786,6 +815,7 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class QcStandardAddDTO{
 
+        private String id;
         /**
          * 抽样方案id
          */
@@ -849,5 +879,138 @@ public class QcNoticeDTO implements Serializable {
          *
          */
         private String imageUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInfoFullView {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 通知单号
+         */
+        private String code;
+
+        /**
+         * 质检单id
+         */
+        private String qcBillId;
+
+        /**
+         * 质检单号
+         */
+        private String qcBillCode;
+
+        /**
+         * 质检通知数量
+         */
+        private Integer qcNoticeQty;
+
+        /**
+         * 质检单状态
+         */
+        private String qcInfoStatus;
+
+        /**
+         * 质检单状态名称
+         */
+        private String qcInfoStatusName;
+
+        /**
+         * 抽象方案id
+         */
+        private String samplingPlanId;
+
+        /**
+         * 抽象方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 一般缺陷允收数（Ac）
+         */
+        private Integer generalAcceptQty;
+
+        /**
+         * 一般缺陷拒收数(Re)
+         */
+        private Integer generalRejectQty;
+
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+
+        /**
+         * 严重缺陷拒收数(Re)
+         */
+        private Integer majorRejectQty;
+
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+        /**
+         * 质检标准
+         */
+        @NotNull(message = "质检标准不允许为空")
+        private QcStandardView qcStandardView;
+
+        /**
+         * 缺陷信息
+         */
+        private List<DefectView> defectViewList;
+
+        /**
+         * 产品信息
+         */
+        @NotNull(message = "产品信息不允许为空")
+        private QcProductDTO.ViewDTO qcProductView;
+
+        /**
+         * 备注
+         */
+        private List<QcRemarkDTO.ViewDTO> remarkViewList;
+
+        /**
+         * 质检结果
+         */
+        @NotNull(message = "质检结果不允许为空")
+        private QcRemarkDTO.QcResultView qcResultView;
+
     }
 }
