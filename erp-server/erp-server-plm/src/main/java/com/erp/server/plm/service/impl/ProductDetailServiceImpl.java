@@ -6972,6 +6972,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         });
     }
+
+    @Override
+    public List<SkuVO> listSkuPurchaseBySkuNos(List<String> skuNos) {
+        if(CollectionUtils.isEmpty(skuNos)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuPurchaseBySkuNos(skuNos);
+    }
+
     /**
      * @description: 推送金蝶
      * @author Will

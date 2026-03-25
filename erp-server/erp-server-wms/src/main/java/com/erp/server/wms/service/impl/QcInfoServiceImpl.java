@@ -608,6 +608,16 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
+            //累加质检合格量
+            if (CharSequenceUtil.isNotBlank(purchaseOrderDetailId)) {
+                PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
+                qcQtyDTO.setPurchaseOrderDetailId(purchaseOrderDetailId);
+                qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? new BigDecimal(qcInfo.getQcGoodQty()) : BigDecimal.ZERO);
+                if (qcQtyDTO.getQcGoodQty().compareTo(BigDecimal.ZERO) > 0) {
+                    scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                }
+            }
+
             operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
         } else {
             return null;

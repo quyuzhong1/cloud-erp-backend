@@ -4073,4 +4073,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             adjustListDTO.setIsSameName(adjustListDTO.getIsSame() ? "一致" : "不一致");
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addQcGoodQty(List<PurchaseOrderDTO.QcQtyDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return true;
+        }
+        for (PurchaseOrderDTO.QcQtyDTO dto : dtoList) {
+            baseMapper.addQcGoodQty(dto);
+        }
+        return true;
+    }
 }

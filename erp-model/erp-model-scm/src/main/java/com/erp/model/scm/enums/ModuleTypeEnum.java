@@ -200,13 +200,15 @@ public enum ModuleTypeEnum {
     KOL_PARTNER_INFO("157", "企业达人库"),
     KOL_B2C_APPLICATION("158", "B2C寄样申请单"),
     KOL_KOL_SAMPLE_COST("159", "寄样费用单"),
+    QC_STANDARD("167", "质检标准"),
     CFG_LOGISTICS_COST_IMPORT("160", "费用配置"),
 
     PRODUCT_BU("160", "产品BU线"),
 
     PRODUCT_CHANGE("161", "产品变更单"),
+    QC_SAMPLING_PLAN("162", "抽样方案单"),
 
-
+    QC_APPLICATION("163", "质检申请单"),
 
 
 

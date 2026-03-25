@@ -83,7 +83,13 @@
         qnd.qc_status AS qcDetailStatus,
         qnd.qc_date AS qcDate,
         qnd.putaway_status AS putawayStatus,
-        qnd.putaway_date AS putawayDate
+        qnd.putaway_date AS putawayDate,
+        qn.source_id as sourceId,
+        qn.source_code as sourceCode,
+        qn.source_type as sourceType,
+        qn.purchase_order_id as purchaseOrderId,
+        qn.purchase_order_code as purchaseOrderCode,
+        qn.supplier_id as supplierId
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id

@@ -7,7 +7,6 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
@@ -21,7 +20,6 @@ import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -570,6 +568,20 @@ public class ProductSkuFeignController {
     @PostMapping("/listSkuPurchaseByIds")
     public List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds){
         List<SkuVO> skuList = productDetailService.listSkuPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author will
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("/listSkuPurchaseBySkuNos")
+    public List<SkuVO> listSkuPurchaseBySkuNos(@RequestBody List<String> skuNos){
+        List<SkuVO> skuList = productDetailService.listSkuPurchaseBySkuNos(skuNos);
         return skuList;
     }
 

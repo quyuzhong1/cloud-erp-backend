@@ -204,7 +204,8 @@ public enum ApiError implements Serializable {
     COMMON_NO_SKU(98128,"SKU不存在"),
     COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
-
+    COMMON_STATUS_SAME(92134,"存在相同状态"),
+    COMMON_NO_SKU(98128,"SKU不存在"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -870,6 +871,8 @@ public enum ApiError implements Serializable {
     PO_SUBMIT_OR_REJECT_EXPORT_CONTRACT_FORBIDDEN(9517,"待提交和审核不通过采购订单不支持导出采购合同"),
 
     PO_APPROVED_ONLY_CAN_PUSH_RECEIPT(9518,"只有已审核采购订单能下推签收单"),
+    PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION(9518,"只有已审核采购订单能下推质检申请单"),
+
     PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT(9519,"只有已确认或送货中的采购订单明细允许下推签收单"),
     PO_APPROVED_ONLY_CAN_PUSH_INBOUND(9520,"只有已审核采购订单支持下推采购入库单"),
     PO_RECEIVE_ALREADY_PUSHED_REVERSE_FORBIDDEN(9521,"已存在下推收货单，不支持反审核"),
@@ -914,6 +917,30 @@ public enum ApiError implements Serializable {
     PO_QC_CANCEL_ALLOWED_STATUS_ONLY(9554,"仅待质检状态的质检单允许执行取消操作"),
     PO_QC_DELETE_ALLOWED_STATUS_ONLY(9555,"仅待质检、已取消、暂存状态的质检单允许删除"),
     PO_QC_REVOKE_ALLOWED_STATUS_ONLY(9556,"仅免检或已质检状态的质检单允许撤销质检"),
+    PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS(9557,"质检类型【{0}】已存在全量的抽样方案，不能单独配置"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置全部SKU"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置相同SKU【{1}】"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS(9559,"抽样方案明细区间不连续【{0},{1}】->【{2},{3}】"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID(9560,"抽样方案明细抽样数量只能输入大于0的整数"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS(9561,"抽样方案明细抽样数量不能大于批量范围"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID(9562,"检验水平不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID(9563,"严重缺陷AQL不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID(9564,"一般缺陷AQL不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID(9564,"严重缺陷AQL枚举不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID(9565,"一般缺陷AQL枚举不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY(9566,"抽样方案明细要为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY(9567,"抽样方案明细不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID(9568,"抽样方案明细范围不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO(9569,"范围必须大于等于0"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL(9570,"范围前后值不能相同"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END(9571,"起始值不能大于结束值"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND(9572,"未找到抽样方案质检类型单数据"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID(9573,"抽样比例明细抽样比例只能输入大于0的小数且小于100"),
+    PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL(9574,"质检类型【{0}】不存在抽样方案"),
+    PO_QC_SAMPLING_PLAN_NOT_FOUND(9575,"未找到抽样方案【{0}】，SKU【{1}】不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_FOUND(9576,"未找到抽样方案明细【{0}】，SKU【{1}】不存在"),
+    PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL(9577,"一般缺陷AQL【{0}】方案不存在"),
+    PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL(9578,"严重缺陷AQL【{0}】方案不存在"),
 
     PO_SUBCONTRACT_ORDER_NOT_FOUND(9557,"未找到委外订单"),
     PO_SUBCONTRACT_DETAIL_NOT_FOUND(9558,"未找到委外订单明细"),
@@ -1440,6 +1467,7 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE(11135,"下推生成的盘盈盘亏单不允许修改"),
     WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
+    QC_STANDARD_SKU_NOT_FOUND(11140,  "SKU【{0}】未查得质检标准"),
 
     WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
 
@@ -1765,6 +1793,14 @@ public enum ApiError implements Serializable {
      */
     DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH(15500,"发货建议【{0}】未完成，不支持下推"),
     DELIVERY_SUGGESTION_INVALID_FORBIDDEN(15501,"发货建议【{0}】已作废，不支持下推"),
+
+
+    /**
+     * 质检申请 错误 信息 16000-16500
+      */
+    QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
+    QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
+    QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致")
     ;
     @Getter
     private final Integer code;

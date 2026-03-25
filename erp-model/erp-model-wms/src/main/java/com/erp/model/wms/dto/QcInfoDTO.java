@@ -115,6 +115,10 @@ public class QcInfoDTO implements Serializable {
         @Valid
         private QcProductDTO.AddDTO qcProduct;
 
+        /**
+         * 不良信息
+         */
+        private List<QcDefectDTO.AddDTO> qcDefectList;
 
         /**
          * 质检信息
@@ -136,6 +140,10 @@ public class QcInfoDTO implements Serializable {
         private List<QcRemarkDTO.AddDTO> remarkList;
 
 
+        /**
+         * 质检标准
+         */
+        private QcNoticeDTO.QcStandardAddDTO qcStandardView;
     }
 
 
@@ -558,6 +566,11 @@ public class QcInfoDTO implements Serializable {
         @Valid
         private QcProductDTO.ViewDTO qcProduct;
 
+        /**
+         * 不良信息
+         */
+        private List<QcDefectDTO.ViewDTO> qcDefectList;
+
 
         /**
          * 质检信息
@@ -578,7 +591,10 @@ public class QcInfoDTO implements Serializable {
          */
         private List<QcRemarkDTO.AddDTO> remarkList;
 
-
+        /**
+         * 质检标准
+         */
+        private QcNoticeDTO.QcStandardView qcStandardView;
     }
 
 

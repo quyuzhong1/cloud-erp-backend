@@ -115,6 +115,7 @@
         pod.currency_symbol as currencySymbol,
         pod.purchase_qty as purchaseQty,
         pod.purchase_amount as purchaseAmount,
+        pod.qc_good_qty as qcGoodQty,
         pod.remark,
         po.subcontract_type as subcontractType,
         po.approve_user_name as approveUserName,
@@ -740,6 +741,7 @@
         pod.currency_symbol,
         pod.purchase_qty as purchaseQty,
         pod.purchase_amount as purchaseAmount,
+        pod.qc_good_qty as qcGoodQty,
         pod.remark,
         po.approve_user_name as approveUserName,
         po.purchase_user_name as purchaseUserName,
@@ -982,4 +984,11 @@
             po.create_time desc
         </where>
     </select>
+
+    <update id="addQcGoodQty">
+        update purchase_order_detail
+        set qc_good_qty = coalesce(qc_good_qty, 0) + #{dto.qcGoodQty}
+        where is_deleted = false
+        and id = #{dto.purchaseOrderDetailId}
+    </update>
 </mapper>

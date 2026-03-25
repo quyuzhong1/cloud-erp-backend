@@ -166,8 +166,9 @@ public enum BusinessNoTypeEnum {
     CODE_Z(124, "Z","tms异步任务记录", BusinessNoConstant.Z),
 
     CODE_BG(122 ,"BG","产品信息变更单",BusinessNoConstant.BG),
+    CODE_ZJSQ(124 ,"ZJSQ","质检申请",BusinessNoConstant.ZJSQ),
 
-
+    CODE_CYFA(123 ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
 
     ;
 

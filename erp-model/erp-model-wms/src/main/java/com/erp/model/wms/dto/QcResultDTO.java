@@ -271,6 +271,11 @@ public class QcResultDTO {
         private String qcResultName;
 
         /**
+         * 批次合格量
+         */
+        private Integer lotQualifiedQty;
+
+        /**
          * 处理措施
          */
         private String handleModeDict;

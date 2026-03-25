@@ -272,4 +272,9 @@ public interface BusinessNoConstant {
 
     //tms异步任务记录
     String Z="Z";
+    //抽样方案
+    String CYFA="CYFA";
+
+    //质检申请
+    String ZJSQ = "ZJSQ";
 }
