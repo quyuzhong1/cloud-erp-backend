@@ -24,6 +24,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDTO;
@@ -184,13 +187,66 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class ,timeout = 120000)
     public Boolean generatePoRefQcApplication(ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
-        List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> generate = list.getList();
+        List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> generateList = list.getList();
+        Map<String, List<QcApplicationDTO.GeneratePoRefQcApplicationDTO>> map = generateList.stream().collect(Collectors.groupingBy(QcApplicationDTO.GeneratePoRefQcApplicationDTO::getPoId));
 
-        return null;
+        //查询采购订单信息
+        List<String> poIdList = generateList.stream().map(QcApplicationDTO.GeneratePoRefQcApplicationDTO::getPoId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderEntity> poList = FeignQuery.getByIds(PurchaseOrderEntity.class, poIdList);
+
+        //查询采购订单明细信息
+        List<String> podIdList = generateList.stream().map(QcApplicationDTO.GeneratePoRefQcApplicationDTO::getPodId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> podList = FeignQuery.getByIds(PurchaseOrderDetailEntity.class, podIdList);
+
+        //采购供应商信息
+        List<PurchaseOrderSupplierEntity> poSupplierList = FeignQuery.create(PurchaseOrderSupplierEntity.class).in(PurchaseOrderSupplierEntity::getPurchaseOrderId, poIdList).list();
+
+        for ( Map.Entry<String, List<QcApplicationDTO.GeneratePoRefQcApplicationDTO>> entry : map.entrySet()) {
+            List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> value = entry.getValue();
+
+            //采购订单
+            PurchaseOrderEntity purchaseOrderEntity = poList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entry.getKey())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.PO_NOT_FOUND);
+            }
+            if (!CharSequenceUtil.equals(purchaseOrderEntity.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())) {
+                throw new ServiceException(ApiError.PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION);
+            }
+            //采购供应商信息
+            PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = poSupplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPurchaseOrderId(), purchaseOrderEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderSupplierEntity)) {
+                throw new ServiceException(ApiError.PO_SUPPLIER_INFO_NOT_FOUND);
+            }
+            QcApplicationDTO.AddDTO addDTO = new QcApplicationDTO.AddDTO();
+            addDTO.setSourceId(purchaseOrderEntity.getId());
+            addDTO.setSourceCode(purchaseOrderEntity.getCode());
+            addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            addDTO.setPlanQcDate(value.get(0).getPlanQcDate());
+            addDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
+
+            List<QcApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (QcApplicationDTO.GeneratePoRefQcApplicationDTO refDTO : value) {
+                //采购订单明细
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = podList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entry.getKey())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                    throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
+                }
+                QcApplicationDetailDTO.AddDTO detailDTO = new QcApplicationDetailDTO.AddDTO();
+                detailDTO.setQty(refDTO.getQty());
+                detailDTO.setSourceDetailId(purchaseOrderDetailEntity.getId());
+                detailDTO.setSkuId(purchaseOrderDetailEntity.getSkuId());
+                detailDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+                detailList.add(detailDTO);
+            }
+            addDTO.setDetailList(detailList);
+             this.add(addDTO);
+        }
+        return Boolean.TRUE;
     }
 
 

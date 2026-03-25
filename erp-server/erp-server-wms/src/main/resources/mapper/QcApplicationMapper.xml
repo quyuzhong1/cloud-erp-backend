@@ -28,15 +28,25 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
+        create_time as createTime,
+        update_time as updateTime,
+        create_user_name as createUserName,
+        create_user_id as createUserId,
+        update_user_name as updateUserName,
+        update_user_id as updateUserId,
         version,
-        is_deleted,
-        code, source_id, source_code, source_type, approve_status, approve_user_id, approve_time, qc_type, warehouse_id, plan_qc_date, remark
+        is_deleted as isDeleted,
+        code,
+        source_id as sourceId,
+        source_code as sourceCode,
+        source_type as sourceType,
+      approve_status as approveStatus,
+      approve_user_id as approveUserId,
+      approve_time as approveTime,
+      qc_type as qcType,
+      warehouse_id as warehouseId,
+      plan_qc_date as planQcDate,
+      remark
     </sql>
 
     <!-- 分页查询 -->
@@ -44,7 +54,8 @@
             select
                 <include refid="Base_Column_List" />
             from qc_application qa
-            inner join qc_application_detail qad on qa.id = qad.qc_application_id
+            inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
+            left join product_detail pd on pd.id = qad.sku_id and pd.is_deleted = FALSE
             WHERE ${params.sqlMap.default}
             and qa.is_deleted = FALSE
             <!--权限-->

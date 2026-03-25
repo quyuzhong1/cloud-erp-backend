@@ -353,6 +353,7 @@ public class QcApplicationDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class AddDTO extends CommonDTO {
 
         /**

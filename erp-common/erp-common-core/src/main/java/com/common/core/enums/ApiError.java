@@ -859,6 +859,8 @@ public enum ApiError implements Serializable {
     PO_SUBMIT_OR_REJECT_EXPORT_CONTRACT_FORBIDDEN(9517,"待提交和审核不通过采购订单不支持导出采购合同"),
 
     PO_APPROVED_ONLY_CAN_PUSH_RECEIPT(9518,"只有已审核采购订单能下推签收单"),
+    PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION(9518,"只有已审核采购订单能下推质检申请单"),
+
     PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT(9519,"只有已确认或送货中的采购订单明细允许下推签收单"),
     PO_APPROVED_ONLY_CAN_PUSH_INBOUND(9520,"只有已审核采购订单支持下推采购入库单"),
     PO_RECEIVE_ALREADY_PUSHED_REVERSE_FORBIDDEN(9521,"已存在下推收货单，不支持反审核"),
