@@ -1,20 +1,51 @@
 package com.erp.server.wms.query;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+
 /**
- * @Author: wtr
- * @Date: 2025/12/26 16:58
- * @Param:
- * @Return:
- * @Description:
+ * @Author: will
+ * @Date: 2026/03/25 09:58
  **/
 @Component
 public class QcApplicationQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if("tab".equals(field)){
+            return getTabSql(value);
+        }
         return null;
+    }
+
+
+    /**
+     * @description: tabSql拼接
+     * @author Will
+     * @date: 2026/03/25 09:58
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        // 待提交
+        if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(value)) {
+            super.buildDefaultDTO("qa.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+        }
+        //审核中
+        if (ApproveStatusEnum.APPROVE_ING.getCode().equals(value)) {
+            super.buildDefaultDTO("qa.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getCode()));
+        }
+        //审核通过
+        if (ApproveStatusEnum.APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("qa.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getCode()));
+        }
+        //不通过
+        if (ApproveStatusEnum.REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("qa.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+        }
+        return super.getSplicingSQL();
     }
 }
