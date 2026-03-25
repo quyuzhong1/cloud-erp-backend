@@ -65,7 +65,7 @@ public class TypeConversionWorker {
         return value.setScale(2, RoundingMode.HALF_UP);
     }
 
-    @Named("decimalToPrintData")
+    @Named("decimalToPlainString")
     public String decimalToPrintData(BigDecimal value){
         if (Objects.isNull(value)){
             return "";
