@@ -1049,6 +1049,7 @@ public enum ApiError implements Serializable {
     PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE(9668,"返修委外订单不允许反审核"),
     PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
     PO_QC_DEFECT_INFO_INCOMPLETE(9666,"缺陷信息必须同时填写或同时不填写"),
+    PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9667,"采购收货单待质检数量不允许小于0"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
