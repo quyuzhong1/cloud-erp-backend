@@ -107,11 +107,11 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES);
+                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES,soDetailEntity.getSkuNo());
             }
             if(StringUtils.isNotBlank(soInfoEntity.getVirtualWarehouseId())){
                 if (soDetailEntity.getFrozenQty() < detailDto.getDeliveryQty() ) {
-                    throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN);
+                    throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN,soDetailEntity.getSkuNo());
                 }
             }
             String idStr = IdWorker.getIdStr();
@@ -199,7 +199,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             }
              */
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES);
+                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES,soDetailEntity.getSkuNo());
             }
 
             soDeliveryNoticeDetailEntity.setMainId(dto.getId());
