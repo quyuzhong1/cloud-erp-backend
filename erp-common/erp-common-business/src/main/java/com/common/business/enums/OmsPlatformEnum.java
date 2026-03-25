@@ -26,6 +26,7 @@ public enum OmsPlatformEnum {
     DA_MAI("damai","大卖仓"),
     TONG_YOU("tongyou","通邮"),
     FBT("fbt","FBT仓"),
+    ZHONG_BAO("zhongbao","众包"),
     ;
 
     @EnumValue

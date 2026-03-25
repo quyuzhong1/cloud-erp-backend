@@ -126,10 +126,7 @@ import com.erp.rpc.wms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
-import com.erp.server.oms.convert.B2cOrderConsumerConverter;
-import com.erp.server.oms.convert.B2cOrderConverter;
-import com.erp.server.oms.convert.CustomerInfoConverter;
-import com.erp.server.oms.convert.WalmartShipOrderConverter;
+import com.erp.server.oms.convert.*;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.kingdee.SyncThirdWarehouseService;
 import com.erp.server.oms.listener.B2CSoImportExcelListener;
@@ -2850,26 +2847,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CharSequenceUtil.isBlank(logisticsBase64)) {
             throw new ServiceException("base64不能为空");
         }
-        ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
-        thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
-        thirdWarehouseUploadFileReq.setFileData(logisticsBase64);
-        thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
-        thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
-        //速派通采用other_documents_invoice
-        if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
-            thirdWarehouseUploadFileReq.setModule("other_documents_invoice");
+        if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+            ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
+            thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
+            thirdWarehouseUploadFileReq.setFileData(logisticsBase64);
+            thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
+            thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
+            //速派通采用other_documents_invoice
+            if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+                thirdWarehouseUploadFileReq.setModule("other_documents_invoice");
+            }
+            ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
+            if(!uploadFileResponse.isSuccess()){
+                throw new ServiceException("上传发票失败{}",uploadFileResponse.getMsg());
+            }
+            Integer attachId = uploadFileResponse.getData().getAttachId();
+            List<ThirdWarehouseCreateOutboundReq.Attach> attachList = CollUtil.isEmpty(createOutboundReq.getAttach()) ? new ArrayList<>() : new ArrayList<>(createOutboundReq.getAttach());
+            ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
+            attach.setFileType(FileTypeEnum.PDF.getCode());
+            attach.setAttachId(attachId);
+            attachList.add(attach);
+            createOutboundReq.setAttach(attachList);
         }
-        ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
-        if(!uploadFileResponse.isSuccess()){
-            throw new ServiceException("上传发票失败{}",uploadFileResponse.getMsg());
-        }
-        Integer attachId = uploadFileResponse.getData().getAttachId();
-        List<ThirdWarehouseCreateOutboundReq.Attach> attachList = CollUtil.isEmpty(createOutboundReq.getAttach()) ? new ArrayList<>() : new ArrayList<>(createOutboundReq.getAttach());
-        ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
-        attach.setFileType(FileTypeEnum.PDF.getCode());
-        attach.setAttachId(attachId);
-        attachList.add(attach);
-        createOutboundReq.setAttach(attachList);
         createOutboundReq.setInvoiceData(logisticsBase64);
     }
 
@@ -3288,9 +3287,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //速派通地址3赋值
         if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+         ||PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
             receiverInfo.setAddress2(receiver.getSecondAddress());
-
             receiverInfo.setAddress3(receiver.getFullAddress());
         }
         createOutboundReq.setReceiverInfo(receiverInfo);
@@ -3369,6 +3368,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setVerify(MathUtil.ONE);
         createOutboundReq.setShopId(entity.getShopId());
         createOutboundReq.setSoCode(entity.getCode());
+        createOutboundReq.setSoId(entity.getId());
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
         createOutboundReq.setShopName(shopInfoEntity.getName());
         // 设置EORI税号
@@ -3379,11 +3379,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setPlatformCode(entity.getPlatformCode());
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
         createOutboundReq.setAuthId(overseasProviderWarehouse.getMainId());
-        createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
+        createOutboundReq.setShippingMethod(channelEntity.getCode());
         createOutboundReq.setShippingMethodName(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getCnName());
         createOutboundReq.setShippingMethodId(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getPlatformChannelId());
         createOutboundReq.setLastMileCarrier(channelEntity.getLastMileCarrier());
-        createOutboundReq.setIsApiSignName(Objects.isNull(channelEntity) ? "否" : channelEntity.getIsApiSign() ? "是" : "否");
+        createOutboundReq.setIsApiSignName(channelEntity.getIsApiSign() ? "是" : "否");
+        createOutboundReq.setCarrierType(channelEntity.getCarrierType());
+        createOutboundReq.setIsPushLabel(channelEntity.getIsPushLabel());
+        createOutboundReq.setIsApiSign(channelEntity.getIsApiSign());
+        createOutboundReq.setIsApiInsurance(channelEntity.getIsApiInsurance());
+        if (Objects.nonNull(channelEntity.getIsApiInsurance()) && channelEntity.getIsApiInsurance()){
+            //设置保险金额USD
+            setInsurePrice(entity, createOutboundReq);
+        }
         createOutboundReq.setItems(itemList);
         createOutboundReq.setFilterItemList(filterItemList);
         createOutboundReq.setTrackingNo(logisticsEntity.getCode());
@@ -3405,50 +3413,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //查询配置是否推送面单
-        if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
-            String logisticsLabelUrl = soB2cLabelEntity.getLogisticsLabelUrl();
-            if (CharSequenceUtil.isBlank(logisticsLabelUrl)){
-                throw new ServiceException("未找到面单信息");
-            }
-            byte[] bytes = fileFeign.downloadFile(logisticsLabelUrl);
-            String logisticsLabelBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
-            ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
-            thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
-            thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
-            thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
-            thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
-            ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
-            if(!uploadFileResponse.isSuccess()){
-                throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());
-            }
-            ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
-            attach.setFileType(FileTypeEnum.PDF.getCode());
-            attach.setAttachId(uploadFileResponse.getData().getAttachId());
-            createOutboundReq.setAttach(Collections.singletonList(attach));
-            createOutboundReq.setOnlineFlag(true);
-            createOutboundReq.setLabelData(logisticsLabelBase64);
-            //生成在线url
-            if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-             ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())) {
-                String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")),entity.getCode()+".pdf",new HashMap<>());
-                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
-                createOutboundReq.setLabelUrl(domain+path);
-            }
-        }
-
+        autoPushLogisticsLabel(entity, overseasProviderWarehouse, channelEntity, soB2cLabelEntity, createOutboundReq);
         //上传发票
-
         autoPushInvoice(entity, overseasProviderWarehouse, channelEntity,createOutboundReq);
 
-        createOutboundReq.setCarrierType(channelEntity.getCarrierType());
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
         if (Objects.nonNull(thirdWarehouseDeliveryEntity)){
             createOutboundReq.setReferenceNo(thirdWarehouseDeliveryEntity.getCode());
         }
         log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(entity.getCode()));
-        ApiResult<String> apiResult = soB2cService.createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, 0, thirdWarehouseDeliveryEntity);
+        ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult = soB2cService.createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, 0, thirdWarehouseDeliveryEntity);
         log.warn("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
         if (!apiResult.isSuccess()){
             //失败还原订单状态
@@ -3456,13 +3430,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
         soB2cErrorService.removeAllTypeErrorOrder(entity.getId());
-        String shippingOrderNo = apiResult.getData();
+        String shippingOrderNo = apiResult.getData().getShippingOrderNo();
+        String trackNo = apiResult.getData().getTrackNo();
         log.warn("{}打印接口响应参数{}",entity.getCode(),apiResult.getData());
         if (StringUtils.isNotBlank(shippingOrderNo)) {
             this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderNo).
                     eq(SoB2cEntity::getId, mainId).update(new SoB2cEntity());
             String msg = CharSequenceUtil.format("创建海外仓出库单成功，单号【{}】", shippingOrderNo);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "创建海外仓出库单");
+        }
+        //返回物流跟踪号，并且没有配置推送物流面单时，更新物流跟踪号
+        if ((Objects.isNull(createOutboundReq.getIsPushLabel()) || !createOutboundReq.getIsPushLabel()) && CharSequenceUtil.isNotBlank(trackNo) && !trackNo.equals(createOutboundReq.getTrackingNo())){
+            soB2cLogisticsService.updateLogisticsBySoId(entity.getId(), trackNo, Boolean.FALSE);
         }
         //上传面单
         if(Objects.nonNull(channelEntity.getIsPushLabel())
@@ -3530,8 +3509,63 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
     }
 
+    private void autoPushLogisticsLabel(SoB2cEntity entity, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, LogisticsChannelEntity channelEntity, SoB2cLabelEntity soB2cLabelEntity, ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
+            String logisticsLabelUrl = soB2cLabelEntity.getLogisticsLabelUrl();
+            if (CharSequenceUtil.isBlank(logisticsLabelUrl)){
+                throw new ServiceException("未找到面单信息");
+            }
+            byte[] bytes = fileFeign.downloadFile(logisticsLabelUrl);
+            String logisticsLabelBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
+            if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+                ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
+                thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
+                thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
+                thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
+                thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
+                ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
+                if(!uploadFileResponse.isSuccess()){
+                    throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());
+                }
+                ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
+                attach.setFileType(FileTypeEnum.PDF.getCode());
+                attach.setAttachId(uploadFileResponse.getData().getAttachId());
+                createOutboundReq.setAttach(Collections.singletonList(attach));
+                createOutboundReq.setOnlineFlag(true);
+            }
+            createOutboundReq.setLabelData(logisticsLabelBase64);
+            //生成在线url
+            if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+             ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+                    || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())) {
+                String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")), entity.getCode()+".pdf",new HashMap<>());
+                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
+                createOutboundReq.setLabelUrl(domain+path);
+            }
+        }
+    }
 
-    public ApiResult<String> createThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq, final int retryCount, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity) {
+    private void setInsurePrice(SoB2cEntity entity, ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        if(CurrencyEnum.USD.getCurrencyCode().equals(entity.getCurrency())){
+            createOutboundReq.setInsurePrice(entity.getAmount());
+        }else {
+            BigDecimal cnyAmount = MathUtil.multiplyWithTwo(entity.getAmount(), entity.getExchangeRate());
+            if (MathUtil.compareTo(BigDecimal.ZERO, cnyAmount) == MathUtil.ZERO) {
+                createOutboundReq.setInsurePrice(BigDecimal.ZERO);
+            }else {
+                BigDecimal rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                if (ObjectUtils.isEmpty(rate) || MathUtil.compareTo(BigDecimal.ZERO, rate) == MathUtil.ZERO) {
+                    throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDateTime.now(),  CurrencyEnum.USD.getCurrencyCode());
+                }
+                BigDecimal usdAmount = MathUtil.divide(cnyAmount, rate);
+                createOutboundReq.setInsurePrice(usdAmount);
+            }
+        }
+    }
+
+
+    public ApiResult<ThirdWarehouseQueryOutboundResponse> createThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq, final int retryCount, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity) {
         log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         //如果已存在发货单，不处理
         if(Objects.nonNull(thirdWarehouseDeliveryEntity) || CharSequenceUtil.isNotBlank(createOutboundReq.getReferenceNo())){
@@ -3542,14 +3576,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 queryOutboundReq.setErpOrderCode(CharSequenceUtil.isNotBlank(createOutboundReq.getReferenceNo()) ? createOutboundReq.getReferenceNo() : thirdWarehouseDeliveryEntity.getCode());
                 queryOutboundReq.setThirdWarehouseProvideCode(createOutboundReq.getThirdWarehouseProvideCode());
                 queryOutboundReq.setAuthId(createOutboundReq.getAuthId());
-                ApiResult<String> stringApiResult = thirdWarehouseFeign.queryOutboundOrder(queryOutboundReq);
+                ApiResult<ThirdWarehouseQueryOutboundResponse> stringApiResult = thirdWarehouseFeign.queryOutboundOrder(queryOutboundReq);
                 log.warn("查询三方仓发货单结果:{}", JSONUtil.toJsonStr(stringApiResult));
                 if (stringApiResult.isSuccess()){
-                    return ApiResult.success(stringApiResult.getData());
+                    return stringApiResult;
                 }
             }else {
                 log.warn("订单{}已存在待处理的发货单，不再重复创建", entity.getCode());
-                return ApiResult.success(entity.getShippingOrderNo());
+                return ApiResult.success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(entity.getShippingOrderNo()).build());
             }
         }
         try {
@@ -3565,7 +3599,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             log.error("B2C订单【{}】生成三方仓发货单异常>>>{}", entity.getCode(), e.getMessage());
             throw new ServiceException("生成三方仓发货单异常", e.getMessage());
         }
-        ApiResult<String> apiResult = null;
+        ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult = null;
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         try {
             log.warn("调用三方仓出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
@@ -3575,7 +3609,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (BAD_GATEWAY.equals(apiResult.getMsg())){
                     throw new ServiceException("调用三方仓出库单异常，状态码502");
                 }
-                String message = "创建出库单异常" + apiResult.getMsg();
+                String message = "创建三方仓出库单异常" + apiResult.getMsg();
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                 //标记三方仓发货单为删除
@@ -4394,10 +4428,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     soB2cReceiverEntity.setPartitionCode(dictPartitionEntity.getCode());
                 }
             }
-            SoB2cReceiverDTO.ViewDTO receiverDTO = new SoB2cReceiverDTO.ViewDTO();
-            BeanMapperUtils.copy(soB2cReceiverEntity, receiverDTO);
-
-            data.setReceiverDTO(receiverDTO);
+            data.setReceiverDTO(SoB2cCoreConverter.INSTANCE.convertReceiverEntityToViewDTO(soB2cReceiverEntity));
         }
         //订单分类
         List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Arrays.asList(id));
@@ -9125,6 +9156,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return new ArrayList<>();
         }
         return lambdaQuery().eq(SoB2cEntity::getPlatformCode, platformCode).list();
+    }
+
+    @Override
+    public List<SoB2cEntity> getByShippingOrderNo(String shippingOrderNo) {
+        if (StringUtils.isBlank(shippingOrderNo)) {
+            return new ArrayList<>();
+        }
+        return lambdaQuery().eq(SoB2cEntity::getShippingOrderNo, shippingOrderNo).list();
     }
 
     @Override

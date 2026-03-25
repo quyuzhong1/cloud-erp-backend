@@ -387,6 +387,9 @@ public enum ApiError implements Serializable {
     DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM(3514,"请选择差异标签为平台单据多的"),
     DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD(3515, "请选择同一个核算周期的数据"),
     DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM(3516, "请选择同一个平台的数据"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL(3513,"仓库操作类型不允许为空"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM(3514,"缺少必要的仓库操作类型【{0}】"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
 
 
     /**
@@ -1431,6 +1434,9 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE(11135,"下推生成的盘盈盘亏单不允许修改"),
     WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
+
+    WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+
 
     /**
      * 头程发货单 错误 信息 11500-12000
