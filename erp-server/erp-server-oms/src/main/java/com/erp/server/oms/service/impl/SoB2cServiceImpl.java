@@ -11943,6 +11943,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public void retryPlatformOutbound(List<String> ids) {
+        log.warn("平台出库异常重试开始, soB2cIds={}", JSONUtil.toJsonStr(ids));
         Map<String, SoB2cEntity> mainMap = listByIds(ids)
                 .stream()
                 .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
@@ -11961,8 +11962,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(Objects.isNull(b2cError)){
                 throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
             }
+            log.warn("平台出库异常重试命中异常记录, soB2cId={}, soCode={}, errorId={}, errorType={}, errorMsg={}, errorCreateTime={}",
+                    id,
+                    currentEntity.getCode(),
+                    b2cError.getId(),
+                    b2cError.getType(),
+                    b2cError.getMessage(),
+                    b2cError.getCreateTime());
             String retryPayload = resolveRetryPlatformOutboundPayload(currentEntity, b2cError);
+            log.warn("平台出库异常重试准备发送MQ, soB2cId={}, soCode={}, payload={}",
+                    id,
+                    currentEntity.getCode(),
+                    retryPayload);
             SendResult result = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC,  RocketMqNewTag.DMP_PLATFORM_OUTBOUND_TO_WMS_TAG,retryPayload,id);
+            log.warn("平台出库异常重试发送MQ结果, soB2cId={}, soCode={}, sendStatus={}, msgId={}, queueId={}",
+                    id,
+                    currentEntity.getCode(),
+                    Objects.isNull(result) ? null : result.getSendStatus(),
+                    Objects.isNull(result) ? null : result.getMsgId(),
+                    Objects.isNull(result) || Objects.isNull(result.getMessageQueue()) ? null : result.getMessageQueue().getQueueId());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -11983,17 +12001,42 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String outputClass = resolvePlatformOutboundOutputClass(oldDto);
         String sourceCode = StringUtils.isNotBlank(oldDto.getOrderCode()) ? oldDto.getOrderCode() : currentEntity.getPlatformCode();
+        log.warn("平台出库异常重试解析参数, soB2cId={}, provider={}, platform={}, orderCode={}, referenceNo={}, warehouseCode={}, outputClass={}, dmpOutputTaskRecordId={}",
+                currentEntity.getId(),
+                oldDto.getProvider(),
+                oldDto.getPlatform(),
+                oldDto.getOrderCode(),
+                oldDto.getReferenceNo(),
+                oldDto.getWarehouseCode(),
+                outputClass,
+                getDmpOutputTaskRecordId(oldPayload));
         if (StringUtils.isBlank(sourceCode)) {
+            log.warn("平台出库异常重试未取到sourceCode, soB2cId={}, fallbackOldPayload=true", currentEntity.getId());
             return oldPayload;
         }
         if (StringUtils.isBlank(outputClass)) {
+            log.warn("平台出库异常重试未匹配到outputClass, soB2cId={}, provider={}, fallbackOldPayload=true",
+                    currentEntity.getId(),
+                    oldDto.getProvider());
             return resolveRetryPlatformOutboundFallbackPayload(oldDto, oldPayload, "未匹配到DMP出库处理器");
         }
         List<DmpOutputTaskRecordEntity> latestRecords = dmpTaskFeign.getOutputTaskRecord(sourceCode, outputClass);
+        log.warn("平台出库异常重试查询DMP记录, soB2cId={}, sourceCode={}, outputClass={}, recordCount={}",
+                currentEntity.getId(),
+                sourceCode,
+                outputClass,
+                CollectionUtils.isEmpty(latestRecords) ? 0 : latestRecords.size());
         if (CollectionUtils.isEmpty(latestRecords)) {
             return resolveRetryPlatformOutboundFallbackPayload(oldDto, oldPayload, "未查询到最新DMP出库记录");
         }
-        String latestRequestData = latestRecords.get(0).getRequestData();
+        DmpOutputTaskRecordEntity latestRecord = latestRecords.get(0);
+        log.warn("平台出库异常重试命中DMP记录, soB2cId={}, recordId={}, sourceCode={}, status={}, createTime={}",
+                currentEntity.getId(),
+                latestRecord.getId(),
+                latestRecord.getSourceCode(),
+                latestRecord.getStatus(),
+                latestRecord.getCreateTime());
+        String latestRequestData = latestRecord.getRequestData();
         return StringUtils.isNotBlank(latestRequestData)
                 ? latestRequestData
                 : resolveRetryPlatformOutboundFallbackPayload(oldDto, oldPayload, "最新DMP出库记录requestData为空");
@@ -12001,6 +12044,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     private String resolveRetryPlatformOutboundFallbackPayload(PlatformOutboundDTO dto, String oldPayload, String reason) {
         String provider = Objects.isNull(dto) ? null : dto.getProvider();
+        log.warn("平台出库异常重试走fallback, provider={}, orderCode={}, referenceNo={}, reason={}, hasRecordId={}",
+                provider,
+                Objects.isNull(dto) ? null : dto.getOrderCode(),
+                Objects.isNull(dto) ? null : dto.getReferenceNo(),
+                reason,
+                hasDmpOutputTaskRecordId(oldPayload));
         if (hasDmpOutputTaskRecordId(oldPayload)) {
             return oldPayload;
         }
