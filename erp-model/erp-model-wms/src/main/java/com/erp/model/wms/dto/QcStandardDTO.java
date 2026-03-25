@@ -10,7 +10,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +55,7 @@ public class QcStandardDTO {
          */
         private List<AttachDTO> attachmentList;
 
-        private  List<WmsAttachmentEntity> wmsAttachmentEntities;
+
 
     }
 
@@ -86,6 +85,10 @@ public class QcStandardDTO {
     @Data
     @EqualsAndHashCode(callSuper = true)
     public static class AddDTO extends CommonDTO {
+
+        private Boolean isAdd = true;
+
+        private List<WmsAttachmentEntity> wmsAttachmentEntities;
     }
 
     /**

@@ -38,7 +38,6 @@ import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
@@ -85,8 +84,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
     @Transactional(rollbackFor = Exception.class)
     public void add(QcStandardDTO.AddDTO addDTO) {
         // 校验唯一性
-        List<WmsAttachmentEntity> wmsAttachmentEntities = addDTO.getWmsAttachmentEntities();
-        if(CollectionUtils.isEmpty(wmsAttachmentEntities)){
+        if(addDTO.getIsAdd()){
             checkUnique(addDTO.getSkuId(), null);
         }
 
@@ -113,8 +111,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         }
 
         // 保存附件 (标准化接收规则)
-
-        if(CollectionUtils.isNotEmpty(wmsAttachmentEntities)){
+        List<WmsAttachmentEntity> wmsAttachmentEntities = addDTO.getWmsAttachmentEntities();
+        if(!addDTO.getIsAdd() && CollectionUtils.isNotEmpty(wmsAttachmentEntities)){
             for (WmsAttachmentEntity wmsAttachmentEntity : wmsAttachmentEntities) {
                 wmsAttachmentEntity.setBusinessId(entity.getId());
                 wmsAttachmentEntity.setId(IdWorker.getIdStr());
@@ -276,23 +274,22 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         searchParam.setPermissionSql(permissionsDTO.getPermissionSql());
 
         List<QcStandardDTO.TabListDTO> list = this.baseMapper.tabList(searchParam);
-        if (list == null) {
-            list = new ArrayList<>();
-        }
-        list.add(0, new QcStandardDTO.TabListDTO("all", "全部", 0));
+        List<QcStandardDTO.TabListDTO> result = new ArrayList<>();
+        result.add(0, new QcStandardDTO.TabListDTO("all", "全部", 0));
         QcStandardDTO.TabListDTO enable = list.stream().filter(e -> e.getTabFlag().equals("enable")).findFirst().orElse(null);
         if(Objects.isNull(enable)){
-            list.add( new QcStandardDTO.TabListDTO("enable", "启用", 0));
+            result.add( new QcStandardDTO.TabListDTO("enable", "启用", 0));
         }else{
-            list.add( enable);
+            result.add( enable);
         }
+
         QcStandardDTO.TabListDTO disabled = list.stream().filter(e -> e.getTabFlag().equals("disabled")).findFirst().orElse(null);
         if(Objects.isNull(disabled)){
-            list.add( new QcStandardDTO.TabListDTO("disabled", "禁用", 0));
+            result.add( new QcStandardDTO.TabListDTO("disabled", "禁用", 0));
         }else{
-            list.add( disabled);
+            result.add( disabled);
         }
-        return list;
+        return result;
     }
 
 
@@ -352,9 +349,12 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if(CollUtil.isEmpty(list)) {
             return;
         }
+        List<String> skus = list.stream().map(QcStandardDTO.ListDTO::getSkuNo).collect(Collectors.toList());
+        Map<String, String> map = plmTaskFeign.listBySkuNos(skus).stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName, (o1, o2) -> o1));
 
         for (QcStandardDTO.ListDTO listDTO : list) {
             listDTO.setDisabledName(listDTO.getDisabled() ? "禁用" : "启用" );
+            listDTO.setProductName(map.getOrDefault(listDTO.getSkuId(),""));
         }
     }
 
@@ -389,7 +389,12 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
     private QcStandardDTO.ViewDTO getFullViewDTO(QcStandardEntity entity) {
         String id = entity.getId();
         QcStandardDTO.ViewDTO viewDTO = BeanMapperUtils.map(QcStandardDTO.ViewDTO.class, entity);
-        
+
+        List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).eq(ProductDetailEntity::getId, entity.getSkuId()).list();
+        if(CollectionUtils.isEmpty(skuList)){
+            throw new ServiceException(ApiError.COMMON_NO_SKU);
+        }
+        viewDTO.setProductName(skuList.get(0).getName());
         // 载入详情
         List<QcStandardDetailEntity> details = qcStandardDetailService.list(Wrappers.<QcStandardDetailEntity>lambdaQuery()
                 .eq(QcStandardDetailEntity::getMainId, id)
@@ -622,6 +627,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     }).collect(Collectors.toList());
                     addDTO.setWmsAttachmentEntities(copyAttachments);
                 }
+                addDTO.setIsAdd(false);
                 bean.add(addDTO);
             }
 
@@ -715,40 +721,42 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         PackagePart cellImagesPart = null;
         for (PackagePart part : workbook.getPackage().getParts()) {
             String name = part.getPartName().getName();
-            if (name.contains("cellimages.xml")) {
+            // 注意: 必须用 endsWith 精准匹配，避免误匹配 cellimages.xml.rels
+            if (name.endsWith("cellimages.xml")) {
                 cellImagesPart = part;
                 break;
             }
         }
         if (cellImagesPart == null) return;
 
+        // 关闭命名空间感知，才能用 "etc:cellImage" 等前缀形式的标签名匹配
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(false);
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(cellImagesPart.getInputStream());
-        
-        // WPS 使用 etc:cellImage，命名空间可能不同，这里尝试通用获取
-        NodeList imageNodes = doc.getElementsByTagNameNS("*", "cellImage");
-        if (imageNodes.getLength() == 0) imageNodes = doc.getElementsByTagName("cellImage");
-        if (imageNodes.getLength() == 0) imageNodes = doc.getElementsByTagName("etc:cellImage");
+
+        // WPS 的节点名称: <etc:cellImage> → <xdr:cNvPr name="ID_..."/> & <a:blip r:embed="rId1"/>
+        NodeList imageNodes = doc.getElementsByTagName("etc:cellImage");
+//        log.info("[DISPIMG] cellimages.xml 中发现 {} 个图片节点", imageNodes.getLength());
 
         for (int i = 0; i < imageNodes.getLength(); i++) {
             Element imgElem = (Element) imageNodes.item(i);
-            
-            // 提取 ID (name 属性)
+
+            // 提取图片 ID: <xdr:cNvPr name="ID_..."/>
             String name = "";
-            NodeList cNvPrList = imgElem.getElementsByTagNameNS("*", "cNvPr");
-            if (cNvPrList.getLength() == 0) cNvPrList = imgElem.getElementsByTagName("cNvPr");
+            NodeList cNvPrList = imgElem.getElementsByTagName("xdr:cNvPr");
             if (cNvPrList.getLength() > 0) {
                 name = ((Element) cNvPrList.item(0)).getAttribute("name");
             }
 
-            // 提取 rId
+            // 提取关系 ID: <a:blip r:embed="rId1"/>
             String rId = "";
-            NodeList blipList = imgElem.getElementsByTagNameNS("*", "blip");
-            if (blipList.getLength() == 0) blipList = imgElem.getElementsByTagName("a:blip");
+            NodeList blipList = imgElem.getElementsByTagName("a:blip");
             if (blipList.getLength() > 0) {
                 rId = ((Element) blipList.item(0)).getAttribute("r:embed");
             }
+
+//            log.info("[DISPIMG] 解析节点 [{}]: name={}, rId={}", i, name, rId);
 
             if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(rId)) {
                 try {
@@ -759,12 +767,15 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                                 XSSFPictureData xpd = (XSSFPictureData) pd;
                                 if (xpd.getPackagePart().getPartName().equals(mediaPart.getPartName())) {
                                     map.put(name, pd);
+//                                    log.info("[DISPIMG] 成功映射: {} -> {}", name, mediaPart.getPartName());
                                     break;
                                 }
                             }
                         }
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+//                    log.warn("[DISPIMG] 映射图片 rId={} 失败: {}", rId, e.getMessage());
+                }
             }
         }
     }
