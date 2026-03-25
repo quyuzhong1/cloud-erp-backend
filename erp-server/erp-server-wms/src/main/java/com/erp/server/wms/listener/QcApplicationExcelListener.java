@@ -30,6 +30,8 @@ public class QcApplicationExcelListener extends AnalysisEventListener<QcApplicat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void invoke(QcApplicationImportExcelDTO data, AnalysisContext context) {
+        //总数据
+        allList.add(data);
         List<String> errorMsgList = new ArrayList<>();
 
         // 基础验证
