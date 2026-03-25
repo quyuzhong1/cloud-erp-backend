@@ -168,7 +168,7 @@ public class QcApplicationDTO implements Serializable {
         private String supplierName;
 
         /**
-         * 质检状态
+         * 质检状态【可排序】
          */
         private String qcStatus;
 
@@ -178,7 +178,7 @@ public class QcApplicationDTO implements Serializable {
         private String qcStatusName;
 
         /**
-         * 质检结果
+         * 质检结果【可排序】
          */
         private String qcResult;
 
@@ -193,22 +193,22 @@ public class QcApplicationDTO implements Serializable {
         private Integer qty;
 
         /**
-         * 批次合格量
+         * 批次合格量【可排序】
          */
         private Integer batchQty;
 
         /**
-         * 质检数量
+         * 质检数量【可排序】
          */
         private Integer qcQty;
 
         /**
-         * 质检合格数量
+         * 质检合格数量【可排序】
          */
         private Integer qcGoodQty;
 
         /**
-         * 质检不良数量
+         * 质检不良数量【可排序】
          */
         private Integer qcBadQty;
 
@@ -416,6 +416,10 @@ public class QcApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListPushQcNoticeDTO {
+        /**
+         * 质检申请id
+         */
+        private String id;
         /**
          * 质检申请单号
          */

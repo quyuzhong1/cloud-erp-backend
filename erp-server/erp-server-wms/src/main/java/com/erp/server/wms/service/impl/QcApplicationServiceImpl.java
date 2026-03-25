@@ -49,6 +49,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -189,6 +190,9 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
         }
+        if (!CharSequenceUtil.equals(entity.getApproveStatus().getStatus(),ApproveStatusEnum.APPROVE.getStatus())) {
+            throw new ServiceException(ApiError.QC_APPLICATION_NOT_APPROVE_PUSH);
+        }
         List<QcApplicationDetailEntity> detailList = qcApplicationDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
@@ -197,17 +201,48 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         QcNoticeDTO.AddDTO addDTO = new QcNoticeDTO.AddDTO();
         addDTO.setQcType(entity.getQcType());
         addDTO.setQcWarehouseId(entity.getWarehouseId());
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getSourceCode());
+        addDTO.setSourceType(entity.getSourceType());
         List<QcNoticeDetailDTO.AddDTO> addDetailList = new ArrayList<>();
         for (QcApplicationDetailEntity detailEntity : detailList) {
             QcNoticeDetailDTO.AddDTO  addDetailDTO = new QcNoticeDetailDTO.AddDTO();
             addDetailDTO.setSkuId(detailEntity.getSkuId());
             addDetailDTO.setQcNoticeQty(detailEntity.getQty());
             addDetailDTO.setQcUserId(dto.getQcUserId());
+            addDetailDTO.setSourceDetailId(detailEntity.getId());
             addDetailList.add(addDetailDTO);
         }
         addDTO.setDetailList(addDetailList);
         qcNoticeService.add(addDTO);
+
+        //添加下推日志
+         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据生成质检通知单 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检申请单主单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_APPLICATION.getCode(), entity.getId(), "生成质检通知单操作");
+
+        //更新质检申请单中的期望质检日期
+        updatePlanQcDate(entity, dto.getPlanQcDate());
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.GENERATE);
+    }
+
+    /**
+     * 更新质检申请单中的期望质检日期
+     * @param entity 质检申请单主单实体
+     * @param planQcDate 期望质检日期
+     */
+    private void updatePlanQcDate(QcApplicationEntity entity, LocalDate planQcDate) {
+        if (ObjectUtil.isEmpty(planQcDate) || planQcDate.equals(entity.getPlanQcDate())) {
+            return;
+        }
+        QcApplicationEntity updateEntity = new QcApplicationEntity();
+        updateEntity.setId(entity.getId());
+        updateEntity.setPlanQcDate(planQcDate);
+        super.updateById(updateEntity);
+
+        //更新日志
+        String msg = CharSequenceUtil.format("用户【{}】修改单号为【{}】的【{}】单据期望质检日期，原值：【{}】，新值：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检申请单主单", entity.getPlanQcDate(), planQcDate);
+        operateLogService.addModuleOperateLogByObj(entity, updateEntity, ModuleTypeEnum.QC_APPLICATION.getCode(), entity.getId(), msg);
     }
 
     @Override
