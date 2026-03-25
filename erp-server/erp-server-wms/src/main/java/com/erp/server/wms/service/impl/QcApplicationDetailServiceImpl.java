@@ -7,6 +7,8 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
@@ -14,6 +16,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -23,12 +26,18 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
+import com.erp.model.wms.entity.QcApplicationEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.listener.QcApplicationExcelListener;
 import com.erp.server.wms.mapper.QcApplicationDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.PoInstockDetailService;
+import com.erp.server.wms.service.PoReturnDetailService;
 import com.erp.server.wms.service.QcApplicationDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -64,14 +73,20 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private PoReturnDetailService poReturnDetailService;
+    @Resource
+    private PoInstockDetailService poInstockDetailService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(List<QcApplicationDetailDTO.AddDTO> detailList, String mainId,String sourceId) {
+    public Boolean add(List<QcApplicationDetailDTO.AddDTO> detailList, QcApplicationEntity qcApplicationEntity) {
         List<QcApplicationDetailEntity> qcApplicationDetailList = BeanUtil.copyToList(detailList, QcApplicationDetailEntity.class);
 
         // 数据处理
-        handleData(qcApplicationDetailList,mainId,sourceId);
+        handleData(qcApplicationDetailList,qcApplicationEntity);
 
         log.info("开始新增质检申请单明细单");
         boolean save = super.saveBatch(qcApplicationDetailList);
@@ -86,14 +101,14 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, String mainId,String sourceId) {
+    public Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, QcApplicationEntity qcApplicationEntity) {
         if (CollUtil.isNotEmpty(detailList)) {
             throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
         }
         List<QcApplicationDetailEntity> qcApplicationDetailList = BeanUtil.copyToList(detailList, QcApplicationDetailEntity.class);
 
         //原明细数据
-        List<QcApplicationDetailEntity> oldList = this.listByMainId(mainId);
+        List<QcApplicationDetailEntity> oldList = this.listByMainId(qcApplicationEntity.getId());
         List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<QcApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -106,8 +121,8 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         }
 
         // 数据处理
-        handleData(qcApplicationDetailList,mainId,sourceId);
-        log.info("编辑 开始修改质检申请单明细单数据，id：【{}】", mainId);
+        handleData(qcApplicationDetailList,qcApplicationEntity);
+        log.info("编辑 开始修改质检申请单明细单数据，id：【{}】", qcApplicationEntity.getId());
         boolean save = super.updateBatchById(qcApplicationDetailList);
         if(!save) {
             throw new ServiceException("质检申请单明细单保存失败");
@@ -241,7 +256,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<QcApplicationDetailEntity> qcApplicationDetailList,String mainId,String sourceId) {
+    private void handleData(List<QcApplicationDetailEntity> qcApplicationDetailList,QcApplicationEntity qcApplicationEntity) {
         if (CollUtil.isEmpty(qcApplicationDetailList)) {
             return;
         }
@@ -250,9 +265,19 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         List<QcApplicationDetailEntity> addList = qcApplicationDetailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         //新增不需要添加新增SKU的日志
         if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(qcApplicationEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "编辑操作");
         }
+
+        List<String> podIdList = qcApplicationDetailList.stream().map(QcApplicationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        //查询采购订单明细数据
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = FeignQuery.create(PurchaseOrderDetailEntity.class).in(PurchaseOrderDetailEntity::getId, podIdList).list();
+        //查询退货数据
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIdList);
+        //查询入库数据
+        List<PoInstockDetailEntity> stockInDetailList = poInstockDetailService.listDetailByPodIds(podIdList);
+        //根据来源明细id查询质检申请
+        List<QcApplicationDetailEntity> oldDetailList = this.listDetailBySourceDetailIds(podIdList);
 
         //sku信息
         List<String> skuIdList = qcApplicationDetailList.stream().map(QcApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -260,18 +285,18 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         Map<String, String> skuMap = CollUtil.isEmpty(skuList) ? new HashMap<>() : skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getSkuNo));
 
         //查询来源采购订单数据
-        PurchaseOrderSupplierEntity poSupplierEntity = CharSequenceUtil.isBlank(sourceId) ? new PurchaseOrderSupplierEntity() : FeignQuery.getById(PurchaseOrderSupplierEntity.class, sourceId);
+        PurchaseOrderSupplierEntity poSupplierEntity = CharSequenceUtil.isBlank(qcApplicationEntity.getSourceId()) ? new PurchaseOrderSupplierEntity() : FeignQuery.getById(PurchaseOrderSupplierEntity.class, qcApplicationEntity.getSourceId());
 
         for (QcApplicationDetailEntity data : qcApplicationDetailList) {
                //校验供应商信息
                 if (CharSequenceUtil.isNotBlank(data.getSupplierId()) && !CharSequenceUtil.equals(data.getSupplierId(),poSupplierEntity.getSupplierId())) {
                     throw new ServiceException(ApiError.QC_APPLICATION_SUPPLIER_NOT_DIFF);
                 }
-                //sku编码
-                data.setSkuNo(skuMap.get(data.getSkuId()));
+               //校验数量
+             checkQcApplicationQty(qcApplicationEntity,data,oldDetailList,purchaseOrderDetailList,purchaseReturnOrderDetailList,stockInDetailList);
 
-                //校验申请质检数量 TODO
-
+            //sku编码
+            data.setSkuNo(skuMap.get(data.getSkuId()));
 
             //操作日志
             if (StringUtils.isNotBlank(data.getId())) {
@@ -279,11 +304,57 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
                 }
-                operateLogService.addModuleOperateLogByObj(old,data, ModuleTypeEnum.QC_APPLICATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old,data, ModuleTypeEnum.QC_APPLICATION.getCode(),qcApplicationEntity.getId(),"",String.format("【%s】",old.getSkuNo()));
             }
         }
+    }
 
 
+    /**
+     * 校验数量
+     * @author will
+     * @date 2026/3/25 16:06
+     * @param
+     * @return void
+     */
+    private void checkQcApplicationQty(QcApplicationEntity mainEntity, QcApplicationDetailEntity detailEntity,List<QcApplicationDetailEntity> oldDetailList,List<PurchaseOrderDetailEntity> purchaseOrderDetailList,
+                                        List<PoReturnDetailEntity> purchaseReturnOrderDetailList, List<PoInstockDetailEntity> stockInDetailList) {
+     if (CharSequenceUtil.equals(mainEntity.getSourceType(), SourceTypeEnum.PURCHASE_ORDER.getCode())) {
+         //采购明细
+         PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+         if ( ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+             throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
+         }
+         //已申请数量（审核通过的质检申请单数量）
+         Integer hasPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getSourceDetailId()) && !CharSequenceUtil.equals(obj.getId(), detailEntity.getId())).map(QcApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
+         //退货补数量（审核通过的补货退货单数量）
+         Integer returnQty = purchaseReturnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+         //有效入库数量（未审核通过）
+         Integer effectiveStockInQty = MathUtil.ZERO;
+         if (CollectionUtils.isNotEmpty(stockInDetailList)) {
+             effectiveStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+         }
+         //未入库数量
+         Integer notPushQty = purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty - hasPushQty;
+        if (detailEntity.getQty() > notPushQty) {
+            throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_QTY, notPushQty);
+        }
+     }
+    }
+
+    /**
+     * 根据来源明细id查询质检申请单明细数据
+     * @author will
+     * @date 2026/3/25 15:50
+     * @param podIdList
+     * @return List<QcApplicationDetailEntity>
+     */
+    private List<QcApplicationDetailEntity> listDetailBySourceDetailIds (List<String> podIdList) {
+        if (CollUtil.isEmpty(podIdList)) {
+            return Collections.emptyList();
+        }
+       return lambdaQuery().in(QcApplicationDetailEntity::getSourceDetailId, podIdList).list();
     }
 
    /**

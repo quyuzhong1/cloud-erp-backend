@@ -1784,7 +1784,9 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
     QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
     QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致"),
-    QC_APPLICATION_NOT_APPROVE_PUSH(16003,"质检申请单未审核不支持下推")
+    QC_APPLICATION_NOT_APPROVE_PUSH(16003,"质检申请单未审核不支持下推"),
+    QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW(16004,"期望质检日期不能早于当前日期"),
+    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_QTY(16005,"申请质检数量不能大于未入库数量，未入库数量：【{0}}】")
 
     ;
     @Getter

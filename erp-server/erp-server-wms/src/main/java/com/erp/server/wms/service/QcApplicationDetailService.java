@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.dto.excel.QcApplicationImportExcelDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
+import com.erp.model.wms.entity.QcApplicationEntity;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public interface QcApplicationDetailService extends SuperService<QcApplicationDe
     * @param detailList
     * @return BaseResultDTO.AddDTO
     */
-    Boolean add(List<QcApplicationDetailDTO.AddDTO> detailList, String mainId,String sourceId);
+    Boolean add(List<QcApplicationDetailDTO.AddDTO> detailList, QcApplicationEntity qcApplicationEntity);
 
     /**
     * 修改
@@ -33,7 +34,7 @@ public interface QcApplicationDetailService extends SuperService<QcApplicationDe
     * @param detailList
     * @return Boolean
     */
-    Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, String mainId,String sourceId);
+    Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, QcApplicationEntity qcApplicationEntity);
 
     /**
      * 导入excel
