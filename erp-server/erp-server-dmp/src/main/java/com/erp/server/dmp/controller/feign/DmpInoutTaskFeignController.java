@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -15,6 +16,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.controller.api.DmpCfgEtlController;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -75,6 +77,26 @@ public class DmpInoutTaskFeignController{
 	@PostMapping("/updateOutputTaskRecord")
     public ApiResult<Boolean> updateOutputTaskRecord(@RequestBody DmpOutputTaskRecordDTO.UpdateDTO updateDTO) {
 		return ApiResult.success(dmpOutputUtils.updateStatus(updateDTO.getId(), updateDTO.getStatus(), updateDTO.getResponseData() , updateDTO.getMessage()));
+	}
+
+	/**
+	 * 重新同步（批量同步）输出记录
+	 */
+	@PostMapping("/batchSyncOutputTaskRecord")
+	public ApiResult<Boolean> batchSyncOutputTaskRecord(@RequestBody BaseIdsDTO.IdsDTO dto) {
+		if (ObjUtil.isEmpty(dto) || CollectionUtils.isEmpty(dto.getIds())) {
+			return ApiResult.success(Boolean.FALSE);
+		}
+		dmpOutputTaskRecordService.lambdaUpdate()
+				.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
+				.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
+				.in(DmpOutputTaskRecordEntity::getId, dto.getIds())
+				.update();
+
+		List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.lambdaQuery()
+				.in(DmpOutputTaskRecordEntity::getId, dto.getIds())
+				.list();
+		return ApiResult.success(dmpOutputTaskRecordService.batchSync(list));
 	}
 
 	/**
