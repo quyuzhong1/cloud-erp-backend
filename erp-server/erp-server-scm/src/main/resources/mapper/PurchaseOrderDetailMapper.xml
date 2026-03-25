@@ -57,9 +57,12 @@
             pod.currency,
             pod.currency_symbol as currencySymbol,
             pod.warehouse_location as warehouseLocation,
-            pod.first_mass_product as firstMassProduct
+            pod.first_mass_product as firstMassProduct,
+            pos.supplier_id as poSupplierId,
+            pos.supplier_name as poSupplierName
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        inner join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         <where>
             po.is_deleted = false and po.approve_status = 'approve' and po.invalid_status = false
             <if test="params.purchaseOrderId != null and params.purchaseOrderId != ''">
@@ -298,5 +301,29 @@
             </foreach>
             )
         </where>
+    </select>
+
+    <!-- 查询符合推送质检信息的采购订单 -->
+    <select id="listPushQcApplication"
+            resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$ListPushQcApplicationDTO">
+            select
+                po.id as poId,
+                pod.id as podId,
+                po.code,
+                pod.sku_id as skuId,
+                pod.sku_no as skuNo,
+                pos.supplier_id as supplierId,
+                pos.supplier_name as supplierName,
+                pod.qty as poQty
+            from purchase_order_detail pod
+            inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+            inner join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+            <where>
+                pod.is_deleted = false and  po.approve_status = 'approve'
+                and pod.id in
+                <foreach collection="podIdList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </where>
     </select>
 </mapper>

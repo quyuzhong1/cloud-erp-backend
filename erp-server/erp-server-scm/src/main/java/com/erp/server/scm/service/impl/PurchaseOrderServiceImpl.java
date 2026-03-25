@@ -628,10 +628,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.PO_PUSH_DOWN_CHANGE_EXISTS);
         }
 
-        //验证与没有下推送货单
+        //验证有没有下推送货单
         List<DeliveryOrderDetailEntity> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
         if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
             throw new ServiceException(ApiError.PO_PUSH_DOWN_DELIVERY_EXISTS);
+        }
+        //验证有没有下推质检申请单
+        List<QcApplicationEntity> qcApplicationList = FeignQuery.create(QcApplicationEntity.class).eq(QcApplicationEntity::getSourceId, entity.getId()).list();
+        if (CollectionUtils.isNotEmpty(qcApplicationList)) {
+            String qcApplicationCodes = qcApplicationList.stream().map(QcApplicationEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.PO_PUSH_DOWN_QC_APPLICATION_EXISTS,qcApplicationCodes);
         }
 
         //送货中、已完成、已关闭不能反审核,但是上面验证了下推收货单据则只需要验证已关闭即可

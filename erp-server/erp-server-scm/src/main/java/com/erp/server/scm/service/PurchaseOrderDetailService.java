@@ -1,9 +1,7 @@
 package com.erp.server.scm.service;
 
 import cn.hutool.json.JSONArray;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -221,14 +219,7 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return List<PurchaseOrderAdjustResultDTO>
      */
     List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> listAdjustPurchaseOrder(List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList);
-    /**
-     *
-     * @author will
-     * @date 2026/3/23 14:48
-     * @param dto
-     * @return PurchaseOrderDetailDTO.ListPushProductDTO
-     */
-    PagingVO<PurchaseOrderDetailDTO.ListPushProductDTO> pagingPushProduct(PagingDTO<PurchaseOrderDetailDTO.ListPushProductParamDTO> dto);
+
     /**
      * @description: 下推质检通知数据回显
      * @author will
@@ -236,13 +227,5 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @param dto
      * @return PurchaseOrderDetailDTO.ListPushQcApplicationDTO
      */
-    PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto);
-    /**
-     * 块粘数据回显
-     * @author will
-     * @date 2026/3/23 16:55
-     * @param dto
-     * @return  List<PurchaseOrderDetailDTO.SkuQuickPasteDTO>
-     */
-    List<PurchaseOrderDetailDTO.SkuQuickPasteDTO> listSourceSkuQuickPaste(PurchaseOrderDetailDTO.SkuQuickPasteParamDTO dto);
+    List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto);
 }
