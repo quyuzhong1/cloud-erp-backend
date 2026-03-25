@@ -172,8 +172,8 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         List<String> existStatusList = list.stream().map(QcApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new QcApplicationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
-        }
+                list.add(new QcApplicationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
+            }
         });
         return list;
     }
@@ -611,13 +611,19 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         //来源单号
         data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
          //审核状态
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(data.getApproveStatus().getName());
         //质检类型
         data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
 
+        //仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(data.getWarehouseId());
+        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            data.setWarehouseName(warehouseEntity.getName());
+        }
+
         //明细
         List<QcApplicationDetailEntity> list = qcApplicationDetailService.listByMainId(data.getId());
-        if (CollUtil.isNotEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
         }
         //SKU

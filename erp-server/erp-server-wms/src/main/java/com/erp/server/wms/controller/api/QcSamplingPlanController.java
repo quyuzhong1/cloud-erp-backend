@@ -117,11 +117,6 @@ public class QcSamplingPlanController extends BaseController {
     * @return ApiResult<SamplingPlanDTO.ViewDTO>>
     */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:samplingPlan:view",
-            serviceClass = QcSamplingPlanService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<SamplingPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(qcSamplingPlanService.view(id));

@@ -297,7 +297,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
 
             //sku编码
             data.setSkuNo(skuMap.get(data.getSkuId()));
-
+            data.setMainId(qcApplicationEntity.getId());
             //操作日志
             if (StringUtils.isNotBlank(data.getId())) {
                 QcApplicationDetailEntity old = this.getById(data.getId());
