@@ -312,19 +312,26 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
         }
 
+        List<String> skus = pageData.getRecords().stream().map(QcStandardDTO.ListDTO::getSkuNo).collect(Collectors.toList());
+        Map<String, String> map = plmTaskFeign.listBySkuNos(skus).stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName, (o1, o2) -> o1));
+
 
         for (QcStandardDTO.ExportDTO listDTO : pageData.getRecords()) {
             listDTO.setDisabledName(listDTO.getDisabled() ? "禁用" : "启用" );
+            listDTO.setProductName(map.getOrDefault(listDTO.getSkuId(),""));
             List<WmsAttachmentDTO.UpdateDTO> updateDTOS = grouped.get(listDTO.getId());
             if(CollectionUtils.isNotEmpty(updateDTOS)){
                 Map<String, List<WmsAttachmentDTO.UpdateDTO>> listMap = updateDTOS.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getType));
 
                 List<WmsAttachmentDTO.UpdateDTO> productPhysicalList = listMap.get("productPhysical");
-                //url用回车换行拼接
-                listDTO.setProductPhysicalUrl(productPhysicalList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.joining("\n")));
-
+                if(CollectionUtils.isNotEmpty(productPhysicalList)){
+                    listDTO.setProductPhysicalUrl(productPhysicalList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.joining("\n")));
+                }
                 List<WmsAttachmentDTO.UpdateDTO> packagingAccessoriesList = listMap.get("packagingAccessories");
-                listDTO.setPackagingAccessoriesUrl(packagingAccessoriesList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.joining("\n")));
+                if(CollectionUtils.isNotEmpty(packagingAccessoriesList)){
+                    listDTO.setPackagingAccessoriesUrl(packagingAccessoriesList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.joining("\n")));
+                }
+
             }
         }
 
