@@ -741,6 +741,16 @@ public class QcNoticeDTO implements Serializable {
          */
         private String supplierId;
 
+        /**
+         * 质检人id
+         */
+        private String qcUserId;
+
+        /**
+         * 质检人名称
+         */
+        private String qcUserName;
+
         @NotEmpty
         private List<QcNoticeDetailDTO.@Valid AddDTO> detailList;
     }
