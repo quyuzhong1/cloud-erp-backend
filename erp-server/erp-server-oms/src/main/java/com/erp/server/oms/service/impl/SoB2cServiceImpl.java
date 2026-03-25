@@ -12133,16 +12133,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ));
     }
 
-    private boolean hasDmpOutputTaskRecordId(String payload) {
+    private String getDmpOutputTaskRecordId(String payload) {
         if (StringUtils.isBlank(payload)) {
-            return false;
+            log.warn("平台出库异常重试提取dmpOutputTaskRecordId, payload为空");
+            return null;
         }
         try {
-            return StringUtils.isNotBlank(JSON.parseObject(payload).getString("dmpOutputTaskRecordId"));
+            String recordId = JSON.parseObject(payload).getString("dmpOutputTaskRecordId");
+            log.warn("平台出库异常重试提取dmpOutputTaskRecordId, recordId={}", recordId);
+            return recordId;
         } catch (Exception e) {
-            log.warn("平台出库异常重试校验dmpOutputTaskRecordId失败", e);
-            return false;
+            log.warn("平台出库异常重试提取dmpOutputTaskRecordId失败", e);
+            return null;
         }
+    }
+
+    private boolean hasDmpOutputTaskRecordId(String payload) {
+        return StringUtils.isNotBlank(getDmpOutputTaskRecordId(payload));
     }
 
     private boolean isRetryPlatformOutboundManualSyncProvider(String provider) {
