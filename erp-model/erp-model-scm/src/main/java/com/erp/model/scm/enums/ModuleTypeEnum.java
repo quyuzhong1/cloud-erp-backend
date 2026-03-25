@@ -209,6 +209,7 @@ public enum ModuleTypeEnum {
     QC_SAMPLING_PLAN("162", "抽样方案单"),
 
     QC_APPLICATION("163", "质检申请单"),
+    FILE_MANAGEMENT("164", "文件管理"),
 
 
 

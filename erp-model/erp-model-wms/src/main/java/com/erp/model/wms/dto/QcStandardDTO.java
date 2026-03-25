@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +56,7 @@ public class QcStandardDTO {
          */
         private List<AttachDTO> attachmentList;
 
+        private  List<WmsAttachmentEntity> wmsAttachmentEntities;
 
     }
 
