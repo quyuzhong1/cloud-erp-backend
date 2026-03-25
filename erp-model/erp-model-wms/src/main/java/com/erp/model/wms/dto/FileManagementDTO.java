@@ -24,247 +24,231 @@ import java.util.Map;
  *
  * @author zdy
  * @since 2026-03-20
-*/
+ */
 @Data
 @NoArgsConstructor
 public class FileManagementDTO implements Serializable {
 
 
-
-     /**
+    /**
      * 状态统计
      */
-     @Data
-     @NoArgsConstructor
-     @AllArgsConstructor
-     public static class TabListDTO {
-
-         /**
-         * 类型
-         */
-         private String tabFlag;
-
-         /**
-         * 数量
-         */
-         private Integer count;
-
-     }
-
-
-     /**
-     * 分页列表查询参数
-     */
-     @Data
-     @NoArgsConstructor
-     public static class PagingParamDTO extends SortDTO {
-
-         /**
-         * 页面高级查询
-         */
-         private List<AdvanceQueryDTO> advanceQueryDTOList;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
 
         /**
-            * sqlMap 默认key default
-        */
-        private Map<String,String> sqlMap;
+         * 类型
+         */
+        private String tabFlag;
 
-     }
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
 
 
     /**
-    * 分页列表
-    */
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+    }
+
+
+    /**
+     * 分页列表
+     */
     @Data
     @NoArgsConstructor
     public static class ListDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 单据编码(WDGL开头)
-        */
+         * 单据编码(WDGL开头)
+         */
         private String code;
 
         /**
-        * skuid
-        */
+         * skuid
+         */
         private String skuId;
 
         /**
-        * sku编码
-        */
+         * sku编码
+         */
         private String skuNo;
 
         /**
-        * 文件类型
-        */
+         * 文件类型
+         */
         private String fileType;
+        /**
+         * 文件类型名称
+         */
         private String fileTypeName;
 
         /**
-        * 一级品类id
-        */
+         * 一级品类id
+         */
         private String firstCategoryId;
 
         /**
-        * 一级品类名称
-        */
+         * 一级品类名称
+         */
         private String firstCategoryName;
 
         /**
-        * 产品名称
-        */
+         * 产品名称
+         */
         private String productName;
 
         /**
-        * 文件版本
-        */
+         * 文件名称
+         */
+        private String attachName;
+        /**
+         * 文件版本
+         */
         private Integer attachVersion;
 
         /**
-        * 文件链接
-        */
+         * 文件链接
+         */
         private String attachUrl;
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
-        * 文件大小
-        */
-        private BigDecimal attachSize;
-
-        /**
-        * 文件名称
-        */
-        private String attachName;
-
-        /**
-        * 是否最新记录
-        */
-        private Boolean isLatest;
-
-        /**
-        * 上传日期
-        */
+         * 上传日期
+         */
         private LocalDateTime uploadTime;
 
-
         /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-
-        /**
-        * 创建时间
-        */
+         * 创建时间
+         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
-        */
+         * 创建人名称
+         */
         private String createUserName;
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
 
     }
 
 
     /**
-    * 导出Excel
-    */
+     * 导出Excel
+     */
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
         /**
-        * 勾选的id集合
-        */
+         * 勾选的id集合
+         */
         private List<String> ids;
     }
 
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 单据编码(WDGL开头)
-        */
+         * 单据编码(WDGL开头)
+         */
         private String code;
 
         /**
-        * skuid
-        */
+         * skuid
+         */
         private String skuId;
 
         /**
-        * sku编码
-        */
+         * sku编码
+         */
         private String skuNo;
 
         /**
-        * 文件类型
-        */
+         * 文件类型
+         */
         private String fileType;
+        /**
+         * 文件类型名称
+         */
+        private String fileTypeName;
 
         /**
-        * 一级品类id
-        */
+         * 一级品类id
+         */
         private String firstCategoryId;
 
         /**
-        * 一级品类名称
-        */
+         * 一级品类名称
+         */
         private String firstCategoryName;
 
         /**
-        * 产品名称
-        */
+         * 产品名称
+         */
         private String productName;
 
         /**
-        * 文件版本
-        */
+         * 文件版本
+         */
         private Integer attachVersion;
 
         /**
-        * 文件链接
-        */
+         * 文件链接
+         */
         private String attachUrl;
 
         /**
-        * 文件大小
-        */
+         * 文件大小
+         */
         private BigDecimal attachSize;
 
         /**
-        * 文件名称
-        */
+         * 文件名称
+         */
         private String attachName;
-
-        /**
-        * 是否最新记录
-        */
-        private Boolean isLatest;
-
-        /**
-        * 上传日期
-        */
-        private LocalDateTime uploadTime;
-
-
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -273,15 +257,15 @@ public class FileManagementDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -292,81 +276,106 @@ public class FileManagementDTO implements Serializable {
     public static class CommonDTO extends SuperDTO {
 
         /**
-        * skuid
-        */
-        @NotBlank(message = "skuid不能为空")
-        @Size(max = 19,message = "skuid最大长度不能超过19位")
+         * skuid
+         */
+        @Size(max = 19, message = "skuid最大长度不能超过19位")
         private String skuId;
 
         /**
-        * 文件类型
-        */
+         * 文件类型
+         */
         @NotBlank(message = "文件类型不能为空")
-        @Size(max = 32,message = "文件类型最大长度不能超过32位")
+        @Size(max = 32, message = "文件类型最大长度不能超过32位")
         private String fileType;
 
         /**
-        * 一级品类id
-        */
-        @NotBlank(message = "一级品类id不能为空")
-        @Size(max = 19,message = "一级品类id最大长度不能超过19位")
+         * 一级品类id
+         */
+        @Size(max = 19, message = "一级品类id最大长度不能超过19位")
         private String firstCategoryId;
 
         /**
-        * 一级品类名称
-        */
-        @NotBlank(message = "一级品类名称不能为空")
-        @Size(max = 32,message = "一级品类名称最大长度不能超过32位")
+         * 一级品类名称
+         */
+        @Size(max = 32, message = "一级品类名称最大长度不能超过32位")
         private String firstCategoryName;
 
         /**
-        * 产品名称
-        */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 255,message = "产品名称最大长度不能超过255位")
+         * 产品名称
+         */
+        @Size(max = 255, message = "产品名称最大长度不能超过255位")
         private String productName;
 
         /**
-        * 文件版本
-        */
-        @NotNull(message = "文件版本不能为空")
+         * 文件版本
+         */
         private Integer attachVersion;
 
         /**
-        * 文件链接
-        */
+         * 文件链接
+         */
         @NotBlank(message = "文件链接不能为空")
-        @Size(max = 255,message = "文件链接最大长度不能超过255位")
+        @Size(max = 255, message = "文件链接最大长度不能超过255位")
         private String attachUrl;
 
         /**
-        * 文件大小
-        */
-        @NotNull(message = "文件大小不能为空")
+         * 文件大小
+         */
         @Digits(integer = 12, fraction = 4, message = "文件大小整数位不能超过12位，小数位不能超过4位")
         private BigDecimal attachSize;
 
         /**
-        * 文件名称
-        */
+         * 文件名称
+         */
         @NotBlank(message = "文件名称不能为空")
-        @Size(max = 255,message = "文件名称最大长度不能超过255位")
+        @Size(max = 255, message = "文件名称最大长度不能超过255位")
         private String attachName;
-
         /**
-        * 是否最新记录
-        */
-        @NotNull(message = "是否最新记录不能为空")
-        private Boolean isLatest;
-
-        /**
-        * 上传日期
-        */
-        @NotNull(message = "上传日期不能为空")
-        private LocalDateTime uploadTime;
-
-
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大长度不能超过255位")
+        private String remark;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class VersionDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 业务id
+         */
+        private String businessId;
 
+        /**
+         * 文件版本
+         */
+        private Integer attachVersion;
+        /**
+         * 文件链接
+         */
+        private String attachUrl;
+        /**
+         * 文件名称
+         */
+        private String attachName;
+        /**
+         * 上传日期
+         */
+        private String createTime;
+        /**
+         * 文件大小
+         */
+        private BigDecimal attachSize;
+        /**
+         * 文件大小字符串
+         */
+        private String attachSizeStr;
+        /**
+         * 操作人
+         */
+        private String createUserName;
+    }
 }

@@ -290,7 +290,8 @@ public enum ApiError implements Serializable {
     FILE_OPERATION_INTERRUPTED(2438, "操作被中断"),
     FILE_ZIP_EMPTY(2439, "ZIP文件中没有找到文件"),
     FILE_CHECK_SIZE_FAILED(2440, "检查ZIP文件大小失败: {0}"),
-
+    FILE_MANAGEMENT_SKU_TYPE_EXIST(2441, "SKU【{0}】类型【{1}】已存在"),
+    FILE_MANAGEMENT_CATEGORY_TYPE_EXIST(2442, "品类【{0}】类型【{1}】已存在"),
     /**
      * 单据相关提示 从3000 - 3500
      */
