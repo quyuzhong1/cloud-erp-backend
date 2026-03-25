@@ -616,6 +616,12 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         //质检类型
         data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
 
+        //仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(data.getWarehouseId());
+        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            data.setWarehouseName(warehouseEntity.getName());
+        }
+
         //明细
         List<QcApplicationDetailEntity> list = qcApplicationDetailService.listByMainId(data.getId());
         if (CollUtil.isEmpty(list)) {
