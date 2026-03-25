@@ -209,6 +209,11 @@ public class WarehouseReceiveDetailDTO {
          * 新品首批
          */
         private String firstMassProductName;
+
+        /**
+         * 待质检数量
+         */
+        private Integer waitQcQty;
     }
 
 }

@@ -185,6 +185,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 主表id
          */
         private String id;
+
+        /**
+         * 质检合格量
+         */
+        private Integer qcGoodQty;
     }
 
     @Data
