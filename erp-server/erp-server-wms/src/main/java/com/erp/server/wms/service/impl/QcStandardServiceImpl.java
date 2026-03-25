@@ -4,13 +4,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -33,17 +34,24 @@ import com.common.business.threadlocal.UserContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFDrawing;
-import org.apache.poi.xssf.usermodel.XSSFPicture;
-import org.apache.poi.xssf.usermodel.XSSFShape;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import javax.annotation.Resource;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_STANDARD;
@@ -75,13 +83,15 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "#addDTO.skuId")
     public void add(QcStandardDTO.AddDTO addDTO) {
         // 校验唯一性
-        checkUnique(addDTO.getSkuId(), null);
+        List<WmsAttachmentEntity> wmsAttachmentEntities = addDTO.getWmsAttachmentEntities();
+        if(CollectionUtils.isEmpty(wmsAttachmentEntities)){
+            checkUnique(addDTO.getSkuId(), null);
+        }
 
         QcStandardEntity entity = BeanMapperUtils.map(QcStandardEntity.class, addDTO);
-
+        entity.setId(IdWorker.getIdStr());
         findSkuNo(entity);
 
         // 保存主表
@@ -103,7 +113,17 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         }
 
         // 保存附件 (标准化接收规则)
-        addAttachments(addDTO.getAttachmentList(), entity.getId());
+
+        if(CollectionUtils.isNotEmpty(wmsAttachmentEntities)){
+            for (WmsAttachmentEntity wmsAttachmentEntity : wmsAttachmentEntities) {
+                wmsAttachmentEntity.setBusinessId(entity.getId());
+                wmsAttachmentEntity.setId(IdWorker.getIdStr());
+            }
+            wmsAttachmentService.saveBatch(wmsAttachmentEntities);
+        }else {
+            addAttachments(addDTO.getAttachmentList(), entity.getId());
+        }
+
     }
 
     private static void findSkuNo(QcStandardEntity entity) {
@@ -117,7 +137,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "#updateDTO.skuId")
     public void update(QcStandardDTO.UpdateDTO updateDTO) {
         QcStandardEntity oldEntity = this.getById(updateDTO.getId());
         if (oldEntity == null) {
@@ -409,14 +428,13 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "#id")
     public BatchResultDTO delete(String id) {
         QcStandardEntity entity = this.getById(id);
         if (entity == null) {
             return BatchResultDTO.fail(id, id, "数据不存在");
         }
         this.removeById(id);
-        qcStandardDetailService.remove(Wrappers.<QcStandardDetailEntity>lambdaQuery().eq(QcStandardDetailEntity::getMainId, id));
+        qcStandardDetailService.lambdaUpdate().set(QcStandardDetailEntity::getIsDeleted,true).eq(QcStandardDetailEntity::getMainId, id);
         // 删除附件 (标准化逻辑)
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(attachmentList)) {
@@ -433,7 +451,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "#params.id")
     public BatchResultDTO updateStatus(QcStandardDTO.UpdateStatusDTO params) {
         QcStandardEntity entity = this.getById(params.getId());
         if (entity == null) {
@@ -506,9 +523,19 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             Workbook workbook = WorkbookFactory.create(inputStream);
             Sheet sheet = workbook.getSheetAt(0);
 
-            // 1. 提取 SKU 和产品名称 (前15行遍历查找关键字)
+            // 1. 建立 DISPIMG ID 到 PictureData 的映射 (针对 WPS 嵌入图片)
+            Map<String, PictureData> cellImageMap = new HashMap<>();
+            if (workbook instanceof XSSFWorkbook) {
+                try {
+                    initCellImageMap((XSSFWorkbook) workbook, cellImageMap);
+                } catch (Exception e) {
+                    throw new ServiceException("分析 cellimages.xml 失败或不包含嵌入图片: {}",e.getMessage());
+                }
+            }
+
+            // 2. 提取 SKU 和产品名称 (前15行遍历查找关键字)
             String skuStr = "";
-            for (int i = 2; i < 3; i++) {
+            for (int i = 2; i < 4; i++) { // 优化查找范围
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
                 for (int j = 0; j < 10; j++) {
@@ -528,11 +555,11 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 throw new ServiceException("未在Excel中找到“产品SKU”关键字或对应数值");
             }
 
-            // 2. 提取图片 (第7-11行)
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = new ArrayList<>();
-            extractImages(sheet, attachmentList);
+            // 3. 提取图片 (第8-11行)
+            List<WmsAttachmentEntity> attachmentList = new ArrayList<>();
+            extractImages(sheet, attachmentList, cellImageMap);
 
-            // 3. 解析逻辑详情 (第15行开始)
+            // 4. 解析逻辑详情 (第15行开始)
             List<QcStandardDTO.DetailDTO> detailList = new ArrayList<>();
             for (int i = 14; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
@@ -541,7 +568,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 if (indexCell == null) continue;
                 String indexVal = indexCell.toString().trim();
 
-                // 正则匹配纯数字序号 (1, 2, 3...)，排除 一、二、三
+                // 正则匹配纯数字序号 (1, 2, 3...)
                 if (indexVal.matches("^\\d+(\\.\\d+)?$")) {
                     Cell itemCell = row.getCell(1);
                     Cell reqCell = row.getCell(2);
@@ -561,34 +588,41 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 throw new ServiceException("未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）");
             }
 
-            // 4. 处理 SKU 拆分与覆盖保存
-            List<String> skus = Arrays.asList(skuStr.split("[,，]"));
+            // 5. 处理 SKU 拆分与覆盖保存
+            String[] split = skuStr.split("[,，]");
+            List<String> skus = new ArrayList<>();
+            for (String s : split) {
+                if (StringUtils.isNotBlank(s)) skus.add(s.trim());
+            }
 
+            Map<String, QcStandardEntity> existingMap = lambdaQuery().in(QcStandardEntity::getSkuId, skus).eq(QcStandardEntity::getIsDeleted, false).list()
+                    .stream().collect(Collectors.toMap(QcStandardEntity::getSkuId, Function.identity(), (o1, o2) -> o1));
+
+            QcStandardServiceImpl bean = ApplicationContextUtils.getBean(QcStandardServiceImpl.class);
             List<ProductDetailEntity> skuVOList = plmTaskFeign.listBySkuNos(skus);
-            for (String skuNo : skus) {
-                String cleanSkuNo = skuNo.trim();
-                if (StringUtils.isBlank(cleanSkuNo)) continue;
-
-                if (CollectionUtils.isEmpty(skuVOList)) {
-                    continue;
-                }
-                String skuId = skuVOList.get(0).getId();
-
-                // 覆盖逻辑
-                QcStandardEntity existing = this.getOne(Wrappers.<QcStandardEntity>lambdaQuery()
-                        .eq(QcStandardEntity::getSkuId, skuId)
-                        .eq(QcStandardEntity::getIsDeleted, false));
+            
+            for (ProductDetailEntity productDetailEntity : skuVOList) {
+                String skuId = productDetailEntity.getId();
+                QcStandardEntity existing = existingMap.get(skuId);
                 if (existing != null) {
-                    this.delete(existing.getId());
+                    bean.delete(existing.getId());
                 }
 
-//                // 构造新增数据
-//                QcStandardDTO.AddDTO addDTO = new QcStandardDTO.AddDTO();
-//                addDTO.setSkuId(skuId);
-//                addDTO.setDetailList(detailList);
-//                addDTO.setAttachmentList(attachmentList);
-//
-//                this.add(addDTO);
+                QcStandardDTO.AddDTO addDTO = new QcStandardDTO.AddDTO();
+                addDTO.setSkuId(skuId);
+                addDTO.setDetailList(detailList);
+                if (CollectionUtils.isNotEmpty(attachmentList)) {
+                    // 深度拷贝附件实体，防止 businessId 冲突
+                    List<WmsAttachmentEntity> copyAttachments = attachmentList.stream().map(a -> {
+                        WmsAttachmentEntity copy = new WmsAttachmentEntity();
+                        copy.setAttachUrl(a.getAttachUrl());
+                        copy.setAttachName(a.getAttachName());
+                        copy.setType(a.getType());
+                        return copy;
+                    }).collect(Collectors.toList());
+                    addDTO.setWmsAttachmentEntities(copyAttachments);
+                }
+                bean.add(addDTO);
             }
 
         } catch (Exception e) {
@@ -599,10 +633,10 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     /**
      * 提取图片并根据行列坐标进行分类
-     * 产品实物：8-11行 (index 7-10), A-I列 (index 0-8)
-     * 包装配件：8-11行 (index 7-10), J-M列 (index 9-12)
+     * 支持浮动图片（Shapes）和 WPS 嵌入式图片（DISPIMG）
      */
-    private void extractImages(Sheet sheet, List<WmsAttachmentDTO.UpdateDTO> list) {
+    private void extractImages(Sheet sheet, List<WmsAttachmentEntity> list, Map<String, PictureData> cellImageMap) {
+        // A. 抓取浮动图片 (Shapes)
         Drawing<?> drawing = sheet.getDrawingPatriarch();
         if (drawing instanceof XSSFDrawing) {
             XSSFDrawing xssfDrawing = (XSSFDrawing) drawing;
@@ -610,37 +644,127 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 if (shape instanceof XSSFPicture) {
                     XSSFPicture picture = (XSSFPicture) shape;
                     ClientAnchor anchor = picture.getClientAnchor();
-                    int rowIdx = anchor.getRow1(); // 0-indexed row
-                    int colIdx = anchor.getCol1(); // 0-indexed column
-                    
-                    // 确认在 8-11 行范围内 (7-10)
-                    if (rowIdx >= 7 && rowIdx <= 10) {
-                        String type = null;
-                        
-                        // 分类判断
-                        if (colIdx >= 0 && colIdx <= 8) {
-                            type = "productPhysical";
-                        } else if (colIdx >= 9 && colIdx <= 12) {
-                            type = "packagingAccessories";
-                        }
+                    processAndAddImage(picture.getPictureData(), anchor.getRow1(), anchor.getCol1(), list);
+                }
+            }
+        }
 
-                        if (type != null) {
-                            PictureData data = picture.getPictureData();
-                            byte[] bytes = data.getData();
-                            String ext = data.suggestFileExtension();
-                            String fileName = UUID.randomUUID().toString() + "." + ext;
-                            
-                            String url = FastDFSClientUtil.uploadFile(bytes, fileName, null);
-                            if (StringUtils.isNotBlank(url)) {
-                                WmsAttachmentDTO.UpdateDTO att = new WmsAttachmentDTO.UpdateDTO();
-                                att.setAttachUrl(url);
-                                att.setAttachName(fileName);
-                                att.setType(type);
-                                list.add(att);
-                            }
+        // B. 扫描 8-11 行单元格，查找 DISPIMG 公式 (WPS 嵌入图片)
+        for (int r = 7; r <= 10; r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) continue;
+            for (int c = 1; c <= 13; c++) { // A列在0，图片通常在B列(1)起
+                Cell cell = row.getCell(c);
+                if (cell == null) continue;
+                if (cell.getCellType() == CellType.FORMULA) {
+                    String formula = cell.getCellFormula();
+                    if (formula.contains("DISPIMG")) {
+                        String imgId = extractDispImgId(formula);
+                        if (StringUtils.isNotBlank(imgId) && cellImageMap.containsKey(imgId)) {
+                            processAndAddImage(cellImageMap.get(imgId), r, c, list);
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private void processAndAddImage(PictureData data, int rowIdx, int colIdx, List<WmsAttachmentEntity> list) {
+        // 确认在 8-11 行范围内 (index 7-10)，放宽 1 行误差
+        if (rowIdx >= 7 && rowIdx <= 11) {
+            String type = null;
+            // 分类判断: A-I (index 0-8) -> 实物; J-M (index 9-12) -> 配件
+            // 放宽列判定: J列起 index 为 9
+            if (colIdx >= 0 && colIdx <= 8) {
+                type = "productPhysical";
+            } else if (colIdx >= 9 && colIdx <= 15) { // 放宽到15列
+                type = "packagingAccessories";
+            }
+
+            if (type != null) {
+                byte[] bytes = data.getData();
+                String ext = data.suggestFileExtension();
+                String fileName = UUID.randomUUID().toString() + "." + ext;
+                String url = FastDFSClientUtil.uploadFile(bytes, fileName, null);
+                if (StringUtils.isNotBlank(url)) {
+                    WmsAttachmentEntity att = new WmsAttachmentEntity();
+                    att.setAttachUrl(url);
+                    att.setAttachName(fileName);
+                    att.setType(type);
+                    list.add(att);
+                }
+            }
+        }
+    }
+
+    private String extractDispImgId(String formula) {
+        try {
+            int start = formula.indexOf("\"") + 1;
+            int end = formula.indexOf("\"", start);
+            if (start > 0 && end > start) {
+                return formula.substring(start, end).trim();
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    /**
+     * 解析 WPS cellimages.xml 建立 ID 到数据的映射
+     */
+    private void initCellImageMap(XSSFWorkbook workbook, Map<String, PictureData> map) throws Exception {
+        PackagePart cellImagesPart = null;
+        for (PackagePart part : workbook.getPackage().getParts()) {
+            String name = part.getPartName().getName();
+            if (name.contains("cellimages.xml")) {
+                cellImagesPart = part;
+                break;
+            }
+        }
+        if (cellImagesPart == null) return;
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(cellImagesPart.getInputStream());
+        
+        // WPS 使用 etc:cellImage，命名空间可能不同，这里尝试通用获取
+        NodeList imageNodes = doc.getElementsByTagNameNS("*", "cellImage");
+        if (imageNodes.getLength() == 0) imageNodes = doc.getElementsByTagName("cellImage");
+        if (imageNodes.getLength() == 0) imageNodes = doc.getElementsByTagName("etc:cellImage");
+
+        for (int i = 0; i < imageNodes.getLength(); i++) {
+            Element imgElem = (Element) imageNodes.item(i);
+            
+            // 提取 ID (name 属性)
+            String name = "";
+            NodeList cNvPrList = imgElem.getElementsByTagNameNS("*", "cNvPr");
+            if (cNvPrList.getLength() == 0) cNvPrList = imgElem.getElementsByTagName("cNvPr");
+            if (cNvPrList.getLength() > 0) {
+                name = ((Element) cNvPrList.item(0)).getAttribute("name");
+            }
+
+            // 提取 rId
+            String rId = "";
+            NodeList blipList = imgElem.getElementsByTagNameNS("*", "blip");
+            if (blipList.getLength() == 0) blipList = imgElem.getElementsByTagName("a:blip");
+            if (blipList.getLength() > 0) {
+                rId = ((Element) blipList.item(0)).getAttribute("r:embed");
+            }
+
+            if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(rId)) {
+                try {
+                    PackagePart mediaPart = cellImagesPart.getRelatedPart(cellImagesPart.getRelationship(rId));
+                    if (mediaPart != null) {
+                        for (PictureData pd : workbook.getAllPictures()) {
+                            if (pd instanceof XSSFPictureData) {
+                                XSSFPictureData xpd = (XSSFPictureData) pd;
+                                if (xpd.getPackagePart().getPartName().equals(mediaPart.getPartName())) {
+                                    map.put(name, pd);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {}
             }
         }
     }
