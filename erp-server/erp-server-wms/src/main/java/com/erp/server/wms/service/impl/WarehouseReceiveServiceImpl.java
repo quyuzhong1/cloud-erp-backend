@@ -776,6 +776,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : receiveDetailList) {
             QcNoticeDetailDTO.AddDTO addDetail = new QcNoticeDetailDTO.AddDTO();
             BeanUtils.copyProperties(warehouseReceiveDetailEntity,addDetail);
+            addDetail.setSourceDetailId(warehouseReceiveDetailEntity.getId());
             addDetailDTOs.add(addDetail);
         }
         addDTO.setDetailList(addDetailDTOs);
