@@ -612,7 +612,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         //来源单号
         data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
          //审核状态
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(data.getApproveStatus().getName());
         //质检类型
         data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
 

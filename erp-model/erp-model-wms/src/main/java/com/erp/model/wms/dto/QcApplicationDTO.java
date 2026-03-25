@@ -295,7 +295,7 @@ public class QcApplicationDTO implements Serializable {
         /**
         * 单据状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
         /**
          * 单据状态名称
          */
