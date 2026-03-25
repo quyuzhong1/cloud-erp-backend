@@ -175,6 +175,7 @@ public class NfeInvoiceService {
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail);
+            nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
             invoiceAddress = nfeClienteDTO.getRua();
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
@@ -512,7 +513,7 @@ public class NfeInvoiceService {
         clienteDTO.setUf(nfeClienteDTO.getUf());
         clienteDTO.setCep(nfeClienteDTO.getCep());
         clienteDTO.setTelefone(nfeClienteDTO.getMobile());
-        clienteDTO.setEmail(nfeClienteDTO.getEmail());
+        clienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return clienteDTO;
     }
     
@@ -856,6 +857,7 @@ public class NfeInvoiceService {
         }
         nfeClienteDTO.setUf(dictCityList.get(0).getCode());
         nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
+        nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
     }
 
@@ -943,6 +945,7 @@ public class NfeInvoiceService {
         }
         nfeClienteDTO.setUf(dictCityList.get(0).getCode());
         nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
+        nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
     }
 
