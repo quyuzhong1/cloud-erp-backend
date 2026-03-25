@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * @date 2025-06-10
  */
 public enum FeishuFileTypeEnum implements EnumMessage {
-    PDF("file", "飞书文件PDF"),
+    FILE("file", "飞书资源文件"),
     DOCX("docx", "飞书文件DOCX"),
     XLSX("sheets", "飞书文件XLSX"),
     WIKI("wiki", "飞书文件WIKI"),
