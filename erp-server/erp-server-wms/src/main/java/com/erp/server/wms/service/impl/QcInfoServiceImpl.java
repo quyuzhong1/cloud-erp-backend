@@ -125,6 +125,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private DictBasicService dictBasicService;
 
     @Resource
+    private QcSamplingPlanRefService qcSamplingPlanRefService;
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
