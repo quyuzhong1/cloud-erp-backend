@@ -147,5 +147,4 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      **/
     Map<String, String> listQcItemRolePeople(QcResultDTO.QcItemRolePeopleDTO dto );
 
-    QcInfoDTO.ListQcStandardResultDTO listQcStandard(QcInfoDTO.ListQcStandardParamDTO dto);
 }
