@@ -2,9 +2,9 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.plm.dto.ProductPackDTO;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcResultEntity;
-
 import java.util.List;
 import java.util.Map;
 
@@ -146,4 +146,6 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      * @Date 2025-07-03
      **/
     Map<String, String> listQcItemRolePeople(QcResultDTO.QcItemRolePeopleDTO dto );
+
+    QcInfoDTO.ListQcStandardResultDTO listQcStandard(QcInfoDTO.ListQcStandardParamDTO dto);
 }

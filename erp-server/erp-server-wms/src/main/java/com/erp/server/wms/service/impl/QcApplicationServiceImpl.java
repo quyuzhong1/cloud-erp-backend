@@ -36,6 +36,7 @@ import com.erp.model.wms.dto.QcNoticeDetailDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
 import com.erp.model.wms.entity.QcApplicationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -484,11 +485,10 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检申请单主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_APPLICATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.QC_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -656,16 +656,16 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class, supplierIdList);
        Map<String, String> supplierNameMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName));
 
-       //质检信息
-
        // 属性赋值
         for(QcApplicationDTO.ListDTO data : list) {
-            //审核状态
+            //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            //质检类型
+            //质检类型名称
             data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
-            //质检状态
+            //质检状态名称
              data.setQcStatusName(QcTypeEnum.getByCode(data.getQcStatus()));
+            //质检结果名称
+            data.setQcResultName(QcResultEnum.getByCode(data.getQcResult()));
             // 仓库名称
             WarehouseEntity warehouseEntity = warehouseEntityMap.get(data.getWarehouseId());
             if (ObjectUtil.isNotEmpty(warehouseEntity)) {
@@ -673,6 +673,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             }
             // 供应商名称
             data.setSupplierName(supplierNameMap.get(data.getSupplierId()));
+
         }
    }
 }

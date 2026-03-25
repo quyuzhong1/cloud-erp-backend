@@ -82,4 +82,10 @@ public interface QcStandardService extends IService<QcStandardEntity> {
     QcStandardDTO.ViewDTO copyBySku(String skuNo);
 
     PagingVO<QcStandardDTO.ExportDTO> exportList(PagingDTO<QcStandardDTO.PagingParamDTO> dto);
+
+    /**
+     * 导入质检标准
+     * @param fileUrl 文件URL
+     */
+    void importFile(String fileUrl);
 }

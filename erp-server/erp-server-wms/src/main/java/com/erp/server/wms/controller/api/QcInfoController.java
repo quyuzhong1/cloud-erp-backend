@@ -571,4 +571,13 @@ public class QcInfoController extends BaseController {
         return success(qcResultService.listQcItemRolePeople(dto));
     }
 
+    /**
+     * 根据 sku+质检类型+总数量匹配质检标准
+     *
+     **/
+    @PostMapping("/listQcStandard")
+    public ApiResult<QcInfoDTO.ListQcStandardResultDTO> listQcStandard(@RequestBody QcInfoDTO.ListQcStandardParamDTO dto) {
+        return success(qcResultService.listQcStandard(dto));
+    }
+
 }

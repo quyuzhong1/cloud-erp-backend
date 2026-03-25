@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -15,26 +16,33 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcStandardDetailEntity;
 import com.erp.model.wms.entity.QcStandardEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.QcStandardImageTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.QcStandardMapper;
 import com.erp.server.wms.service.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.common.business.threadlocal.UserContext;
-import cn.hutool.core.util.StrUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFPicture;
+import org.apache.poi.xssf.usermodel.XSSFShape;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,8 +69,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
     @Autowired
     private OperateLogService operateLogService;
 
-    @Autowired
-    private DictBasicService dictBasicService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -100,7 +108,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     private static void findSkuNo(QcStandardEntity entity) {
         List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).eq(ProductDetailEntity::getId, entity.getSkuId()).list();
-        if(CollectionUtils.isNotEmpty(skuList)){
+        if(CollectionUtils.isEmpty(skuList)){
             throw new ServiceException(ApiError.COMMON_NO_SKU);
         }
         String skuNo = skuList.get(0).getSkuNo();
@@ -253,6 +261,18 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             list = new ArrayList<>();
         }
         list.add(0, new QcStandardDTO.TabListDTO("all", "全部", 0));
+        QcStandardDTO.TabListDTO enable = list.stream().filter(e -> e.getTabFlag().equals("enable")).findFirst().orElse(null);
+        if(Objects.isNull(enable)){
+            list.add( new QcStandardDTO.TabListDTO("enable", "启用", 0));
+        }else{
+            list.add( enable);
+        }
+        QcStandardDTO.TabListDTO disabled = list.stream().filter(e -> e.getTabFlag().equals("disabled")).findFirst().orElse(null);
+        if(Objects.isNull(disabled)){
+            list.add( new QcStandardDTO.TabListDTO("disabled", "禁用", 0));
+        }else{
+            list.add( disabled);
+        }
         return list;
     }
 
@@ -262,21 +282,18 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<QcStandardDTO.ExportDTO> pageData = this.baseMapper.exportList(query,pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if(CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
 
         List<String> ids = pageData.getRecords().stream().map(QcStandardDTO.ExportDTO::getId).distinct().collect(Collectors.toList());
 
         // 载入附件图片 (标准化回显)
-        Map<String, String> qcStandardImageTypeMap = dictBasicService.getByKey("qcStandardImageType").stream().collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (o1, o2) -> o1));
         Map<String, List<WmsAttachmentDTO.UpdateDTO>> grouped = new HashMap<>();
         List<WmsAttachmentDTO.UpdateDTO> allAttachments = wmsAttachmentService.getByBusinessIds(ids);
         if (CollectionUtils.isNotEmpty(allAttachments)) {
             grouped = allAttachments.stream()
                     .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
-
-
         }
 
 
@@ -304,7 +321,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<QcStandardDTO.ListDTO> pageData = this.baseMapper.paging(query,pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if(CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
@@ -366,14 +383,12 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             Map<String, List<WmsAttachmentDTO.UpdateDTO>> grouped = allAttachments.stream()
                     .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getType));
 
-            Map<String, String> qcStandardImageTypeMap = dictBasicService.getByKey("qcStandardImageType").stream().collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (o1, o2) -> o1));
-
 
             List<QcStandardDTO.AttachDTO> attachmentList = new ArrayList<>();
             grouped.forEach((type, attachments) -> {
                 QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
                 attachDTO.setType(type);
-                attachDTO.setTypeName(qcStandardImageTypeMap.get(type));
+                attachDTO.setTypeName(QcStandardImageTypeEnum.getByCode(type));
                 attachDTO.setAttachmentNameList(attachments.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
                 attachDTO.setAttachmentUrlList(attachments.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
                 attachmentList.add(attachDTO);
@@ -448,11 +463,11 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<QcStandardDetailEntity> removeList = oldList.stream().filter(e -> deleteIds.contains(e.getId())).collect(Collectors.toList());
             qcStandardDetailService.removeByIds(deleteIds);
-            
+
             // 记录审计日志
             List<Pair<String, String>> removePairList = removeList.stream()
-                .map(obj -> new Pair<>(mainId, obj.getInspectItemName()))
-                .collect(Collectors.toList());
+                    .map(obj -> new Pair<>(mainId, obj.getInspectItemName()))
+                    .collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("编辑：删除质检项【%s】", ModuleTypeEnum.QC_STANDARD.getCode(), removePairList, "编辑操作");
         }
         List<QcStandardDetailEntity> addList = newList.stream().filter(e -> e.getId() == null).collect(Collectors.toList());
@@ -462,19 +477,169 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
             // 记录审计日志
             List<Pair<String, String>> addPairList = addList.stream()
-                .map(obj -> new Pair<>(mainId, obj.getInspectItemName()))
-                .collect(Collectors.toList());
+                    .map(obj -> new Pair<>(mainId, obj.getInspectItemName()))
+                    .collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("编辑：新增质检项【%s】", ModuleTypeEnum.QC_STANDARD.getCode(), addPairList, "编辑操作");
         }
         if (CollectionUtils.isNotEmpty(updateList)) {
             qcStandardDetailService.updateBatchById(updateList);
-            
+
             // 逐一记录审计日志 (差分)
             for (QcStandardDetailEntity detail : updateList) {
                 QcStandardDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), detail.getId())).findFirst().orElse(null);
                 if (Objects.nonNull(oldDetail)) {
                     String msg = StrUtil.format("编辑质检项【{}】内容", oldDetail.getInspectItemName());
                     operateLogService.addModuleOperateLogByObj(oldDetail, detail, ModuleTypeEnum.QC_STANDARD.getCode(), mainId, msg);
+                }
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importFile(String fileUrl) {
+        if (StringUtils.isBlank(fileUrl)) {
+            throw new ServiceException("导入文件URL不能为空");
+        }
+
+        try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
+            Workbook workbook = WorkbookFactory.create(inputStream);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            // 1. 提取 SKU 和产品名称 (前15行遍历查找关键字)
+            String skuStr = "";
+            for (int i = 2; i < 3; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                for (int j = 0; j < 10; j++) {
+                    Cell cell = row.getCell(j);
+                    if (cell == null) continue;
+                    String val = cell.toString().trim();
+                    if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
+                        Cell valCell = row.getCell(j + 1);
+                        if (valCell != null) skuStr = valCell.toString().trim();
+                        break;
+                    }
+                }
+                if (StringUtils.isNotBlank(skuStr)) break;
+            }
+
+            if (StringUtils.isBlank(skuStr)) {
+                throw new ServiceException("未在Excel中找到“产品SKU”关键字或对应数值");
+            }
+
+            // 2. 提取图片 (第7-11行)
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = new ArrayList<>();
+            extractImages(sheet, attachmentList);
+
+            // 3. 解析逻辑详情 (第15行开始)
+            List<QcStandardDTO.DetailDTO> detailList = new ArrayList<>();
+            for (int i = 14; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                Cell indexCell = row.getCell(0);
+                if (indexCell == null) continue;
+                String indexVal = indexCell.toString().trim();
+
+                // 正则匹配纯数字序号 (1, 2, 3...)，排除 一、二、三
+                if (indexVal.matches("^\\d+(\\.\\d+)?$")) {
+                    Cell itemCell = row.getCell(1);
+                    Cell reqCell = row.getCell(2);
+                    String itemName = itemCell != null ? itemCell.toString().trim() : "";
+                    String requirement = reqCell != null ? reqCell.toString().trim() : "";
+
+                    if (StringUtils.isNotBlank(requirement)) {
+                        QcStandardDTO.DetailDTO detail = new QcStandardDTO.DetailDTO();
+                        detail.setInspectItemName(itemName);
+                        detail.setInspectRequirement(requirement);
+                        detailList.add(detail);
+                    }
+                }
+            }
+
+            if (CollectionUtils.isEmpty(detailList)) {
+                throw new ServiceException("未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）");
+            }
+
+            // 4. 处理 SKU 拆分与覆盖保存
+            List<String> skus = Arrays.asList(skuStr.split("[,，]"));
+
+            List<ProductDetailEntity> skuVOList = plmTaskFeign.listBySkuNos(skus);
+            for (String skuNo : skus) {
+                String cleanSkuNo = skuNo.trim();
+                if (StringUtils.isBlank(cleanSkuNo)) continue;
+
+                if (CollectionUtils.isEmpty(skuVOList)) {
+                    continue;
+                }
+                String skuId = skuVOList.get(0).getId();
+
+                // 覆盖逻辑
+                QcStandardEntity existing = this.getOne(Wrappers.<QcStandardEntity>lambdaQuery()
+                        .eq(QcStandardEntity::getSkuId, skuId)
+                        .eq(QcStandardEntity::getIsDeleted, false));
+                if (existing != null) {
+                    this.delete(existing.getId());
+                }
+
+//                // 构造新增数据
+//                QcStandardDTO.AddDTO addDTO = new QcStandardDTO.AddDTO();
+//                addDTO.setSkuId(skuId);
+//                addDTO.setDetailList(detailList);
+//                addDTO.setAttachmentList(attachmentList);
+//
+//                this.add(addDTO);
+            }
+
+        } catch (Exception e) {
+            log.error("质检报告导入失败", e);
+            throw new ServiceException("解析报告失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 提取图片并根据行列坐标进行分类
+     * 产品实物：8-11行 (index 7-10), A-I列 (index 0-8)
+     * 包装配件：8-11行 (index 7-10), J-M列 (index 9-12)
+     */
+    private void extractImages(Sheet sheet, List<WmsAttachmentDTO.UpdateDTO> list) {
+        Drawing<?> drawing = sheet.getDrawingPatriarch();
+        if (drawing instanceof XSSFDrawing) {
+            XSSFDrawing xssfDrawing = (XSSFDrawing) drawing;
+            for (XSSFShape shape : xssfDrawing.getShapes()) {
+                if (shape instanceof XSSFPicture) {
+                    XSSFPicture picture = (XSSFPicture) shape;
+                    ClientAnchor anchor = picture.getClientAnchor();
+                    int rowIdx = anchor.getRow1(); // 0-indexed row
+                    int colIdx = anchor.getCol1(); // 0-indexed column
+                    
+                    // 确认在 8-11 行范围内 (7-10)
+                    if (rowIdx >= 7 && rowIdx <= 10) {
+                        String type = null;
+                        
+                        // 分类判断
+                        if (colIdx >= 0 && colIdx <= 8) {
+                            type = "productPhysical";
+                        } else if (colIdx >= 9 && colIdx <= 12) {
+                            type = "packagingAccessories";
+                        }
+
+                        if (type != null) {
+                            PictureData data = picture.getPictureData();
+                            byte[] bytes = data.getData();
+                            String ext = data.suggestFileExtension();
+                            String fileName = UUID.randomUUID().toString() + "." + ext;
+                            
+                            String url = FastDFSClientUtil.uploadFile(bytes, fileName, null);
+                            if (StringUtils.isNotBlank(url)) {
+                                WmsAttachmentDTO.UpdateDTO att = new WmsAttachmentDTO.UpdateDTO();
+                                att.setAttachUrl(url);
+                                att.setAttachName(fileName);
+                                att.setType(type);
+                                list.add(att);
+                            }
+                        }
+                    }
                 }
             }
         }

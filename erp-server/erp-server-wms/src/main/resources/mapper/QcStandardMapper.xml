@@ -4,8 +4,8 @@
 
     <select id="tabList" resultType="com.erp.model.wms.dto.QcStandardDTO$TabListDTO">
         SELECT
-        CASE WHEN qs.disabled THEN 'DISABLE' ELSE 'ENABLE' END as tabFlag,
-        CASE WHEN qs.disabled THEN '已禁用' ELSE '已启用' END as tabFlagName,
+        CASE WHEN qs.disabled THEN 'disabled' ELSE 'enable' END as tabFlag,
+        CASE WHEN qs.disabled THEN '禁用' ELSE '启用' END as tabFlagName,
         COUNT(qs.id) as count
         FROM qc_standard qs
         WHERE qs.is_deleted = false
