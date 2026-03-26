@@ -383,8 +383,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setStatus(code);
         allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
-        //异步触发库存比对任务
-        service.asyncCompareInventory(allocationEntity, detailEntityList);
         //处理分货推送
         this.submitHandlePush(allocationEntity,detailEntityList,transferWarehouseList,warehouseMap);
 
@@ -454,6 +452,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
             //生成平台取消分货同步单
             virtualWarehousePushHandleService.cancelAllocationPush(allocationEntity);
+
+            //异步触发库存比对任务
+            service.asyncCompareInventory(allocationEntity, detailEntityList);
 
             //调拨分货生成直接调拨单
             List<String> transferIdList = generateDirectTransferInfo(allocationEntity, detailEntityList, warehouseMap);
