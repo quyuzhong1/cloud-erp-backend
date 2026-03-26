@@ -1569,6 +1569,76 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         return importDTO;
     }
 
+    @Override
+    public List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(List<String> detailIdList) {
+        List<QcNoticeDTO.PrintQcStandardDTO> printQcStandardDTOS = new ArrayList<>();
+        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByIds(detailIdList);
+        List<String> ids = qcNoticeDetails.stream()
+                .map(item -> item.getMainId())
+                .collect(Collectors.toList());
+
+        List<QcNoticeEntity> qcNotices = this.listByIds(ids);
+        List<String> qcInfoIds = qcNotices.stream()
+                .map(item -> item.getId())
+                .collect(Collectors.toList());
+        List<QcInfoEntity> qcInfos = qcInfoService.listQCBySourceIds(qcInfoIds);
+        for (QcNoticeDetailEntity qcNoticeDetail : qcNoticeDetails) {
+            QcNoticeDTO.PrintQcStandardDTO printQcStandardDTO = new QcNoticeDTO.PrintQcStandardDTO();
+            QcNoticeEntity qcNoticeEntity = qcNotices.stream()
+                    .filter(item -> Objects.equals(item.getId(), qcNoticeDetail.getMainId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(qcNoticeEntity)) {
+                //质检通知单号
+                printQcStandardDTO.setCode(qcNoticeEntity.getCode());
+
+                QcInfoEntity qcInfoEntity = qcInfos.stream()
+                        .filter(item -> Objects.equals(item.getSourceId(), qcNoticeEntity.getId()))
+                        .findFirst()
+                        .orElse(null);
+                //质检单号
+                if (Objects.nonNull(qcInfoEntity)) {
+                    printQcStandardDTO.setQcInfoCode(qcInfoEntity.getCode());
+                }
+
+                //抽样信息
+                SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
+                planParamDTO.setQcType(qcNoticeEntity.getQcType());
+                planParamDTO.setQty(qcNoticeDetail.getQcQty());
+                planParamDTO.setSkuId(qcNoticeDetail.getSkuId());
+
+                SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+                printQcStandardDTO.setSamplingPlanName(qcNoticeEntity.getQcType() + "通用抽样方案");
+                printQcStandardDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
+            }
+
+            printQcStandardDTO.setSkuNo(qcNoticeDetail.getSkuNo());
+
+            //质检标准
+            QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
+                    .eq(QcStandardEntity::getSkuId, qcNoticeDetail.getSkuId())
+                    .one();
+            if (Objects.nonNull(qcStandardEntity)) {
+                List<QcStandardDetailEntity> list = qcStandardDetailService.lambdaQuery()
+                        .eq(QcStandardDetailEntity::getMainId, qcStandardEntity.getId())
+                        .list();
+                if (!list.isEmpty()) {
+                    List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
+                    for (QcStandardDetailEntity qcStandardDetailEntity : list) {
+                        QcNoticeDTO.QcInspectItemView qcInspectItemView = new QcNoticeDTO.QcInspectItemView();
+                        qcInspectItemView.setInspectItem(qcStandardDetailEntity.getInspectItemName());
+                        qcInspectItemView.setInspectRequirement(qcStandardDetailEntity.getInspectRequirement());
+                        qcInspectItemViews.add(qcInspectItemView);
+                    }
+                    printQcStandardDTO.setQcInspectItemViewDTOList(qcInspectItemViews);
+                }
+            }
+
+            printQcStandardDTOS.add(printQcStandardDTO);
+        }
+        return printQcStandardDTOS;
+    }
+
 
     //删除质检单以及其明细
     private void deleteQcInfo(List<String> qcInfoIdList) {
