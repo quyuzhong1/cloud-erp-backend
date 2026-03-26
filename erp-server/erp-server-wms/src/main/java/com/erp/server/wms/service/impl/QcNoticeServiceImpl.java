@@ -752,13 +752,27 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 List<WmsAttachmentEntity> imageAttachment = attachmentService.lambdaQuery()
                         .eq(WmsAttachmentEntity::getBusinessId, qcStandardEntity.getId())
                         .list();
+
                 if (!imageAttachment.isEmpty()) {
-                    for (WmsAttachmentEntity wmsAttachmentEntity : imageAttachment) {
+                    // 按类型分组
+                    Map<String, List<WmsAttachmentEntity>> groupedByType = imageAttachment.stream()
+                            .collect(Collectors.groupingBy(WmsAttachmentEntity::getType));
+
+                    for (Map.Entry<String, List<WmsAttachmentEntity>> entry : groupedByType.entrySet()) {
+                        String type = entry.getKey();
+                        List<WmsAttachmentEntity> attachmentsOfType = entry.getValue();
+
                         QcNoticeDTO.QcImageView qcImageView = new QcNoticeDTO.QcImageView();
-                        qcImageView.setImageType(wmsAttachmentEntity.getType());
-                        qcImageView.setImageUrl(wmsAttachmentEntity.getAttachUrl());
+                        qcImageView.setImageType(type);
+
+                        List<String> imageUrlList = attachmentsOfType.stream()
+                                .map(WmsAttachmentEntity::getAttachUrl)
+                                .collect(Collectors.toList());
+                        qcImageView.setImageUrlList(imageUrlList);
+
                         qcImageViews.add(qcImageView);
                     }
+
                     qcStandardView.setQcImageViewDTOList(qcImageViews);
                 }
             }
@@ -859,13 +873,27 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 List<WmsAttachmentEntity> imageAttachment = attachmentService.lambdaQuery()
                         .eq(WmsAttachmentEntity::getBusinessId, qcStandardEntity.getId())
                         .list();
+
                 if (!imageAttachment.isEmpty()) {
-                    for (WmsAttachmentEntity wmsAttachmentEntity : imageAttachment) {
+                    // 按类型分组
+                    Map<String, List<WmsAttachmentEntity>> groupedByType = imageAttachment.stream()
+                            .collect(Collectors.groupingBy(WmsAttachmentEntity::getType));
+
+                    for (Map.Entry<String, List<WmsAttachmentEntity>> entry : groupedByType.entrySet()) {
+                        String type = entry.getKey();
+                        List<WmsAttachmentEntity> attachmentsOfType = entry.getValue();
+
                         QcNoticeDTO.QcImageView qcImageView = new QcNoticeDTO.QcImageView();
-                        qcImageView.setImageType(wmsAttachmentEntity.getType());
-                        qcImageView.setImageUrl(wmsAttachmentEntity.getAttachUrl());
+                        qcImageView.setImageType(type);
+
+                        List<String> imageUrlList = attachmentsOfType.stream()
+                                .map(WmsAttachmentEntity::getAttachUrl)
+                                .collect(Collectors.toList());
+                        qcImageView.setImageUrlList(imageUrlList);
+
                         qcImageViews.add(qcImageView);
                     }
+
                     qcStandardView.setQcImageViewDTOList(qcImageViews);
                 }
             }

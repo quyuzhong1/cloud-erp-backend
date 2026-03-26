@@ -269,12 +269,12 @@ public class QcNoticeDTO implements Serializable {
         private LocalDateTime putawayDate;
 
         /**
-         * 来源id
+         * 来源id【可排序】
          */
         private String sourceId;
 
         /**
-         * 来源编码
+         * 来源编码【可排序】
          */
         private String sourceCode;
 
@@ -284,12 +284,12 @@ public class QcNoticeDTO implements Serializable {
         private String sourceType;
 
         /**
-         * 采购订单id
+         * 采购订单id【可排序】
          */
         private String purchaseOrderId;
 
         /**
-         * 采购订单编码
+         * 采购订单编码【可排序】
          */
         private String purchaseOrderCode;
 
@@ -683,9 +683,15 @@ public class QcNoticeDTO implements Serializable {
         private String imageType;
 
         /**
-         *
+         * 图片类型名称
          */
-        private String imageUrl;
+        private String imageTypeName;
+
+
+        /**
+         * 图片url列表
+         */
+        private List<String> imageUrlList;
     }
 
     @Data
