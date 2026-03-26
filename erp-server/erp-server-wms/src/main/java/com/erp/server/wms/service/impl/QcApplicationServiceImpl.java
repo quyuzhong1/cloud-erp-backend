@@ -88,6 +88,9 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
 
     @Resource
     private QcNoticeService qcNoticeService;
+    @Resource
+    private CommonService commonService;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)

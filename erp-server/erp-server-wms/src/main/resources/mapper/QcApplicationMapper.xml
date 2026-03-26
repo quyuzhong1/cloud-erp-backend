@@ -87,10 +87,44 @@
         qa.id DESC
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from qc_application where is_deleted = false group by approve_status
+    <!-- 分页查询 -->
+    <select id="srmPaging" resultType="com.erp.model.wms.dto.QcApplicationSrmDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />,
+        qad.sku_id as skuId,
+        qad.sku_no as skuNo,
+        qad.supplier_id as supplierId,
+        pd.name as productName,
+        qnd.qc_status as qcStatus,
+        qr.qc_result as qcResult,
+        qr.lot_qualified_qty as batchQty,
+        qnd.qc_good_qty as qcGoodQty,
+        qnd.qc_bad_qty as qcBadQty,
+        qnd.qc_qty as qcQty,
+        qad.qty
+        from qc_application qa
+        inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
+        left join product_detail pd on pd.id = qad.sku_id and pd.is_deleted = FALSE
+        left join qc_notice qn on qa.id = qn.source_id and qn.is_deleted = false
+        left join qc_notice_detail qnd on qad.id = qnd.source_detail_id and qnd.is_deleted = false
+        left join qc_info qi on qn.id = qi.source_id and qnd.id = qi.source_detail_id and qi.is_deleted = false
+        left join qc_result qr on qi.id = qr.main_id and qr.is_deleted = false
+        WHERE ${params.sqlMap.default}
+        and qa.is_deleted = FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qa.id DESC
     </select>
 
+    <!-- tab统计 -->
     <select id="tabList" resultType="com.erp.model.wms.dto.QcApplicationDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,
@@ -101,6 +135,23 @@
             ${params.permissionSql}
         </if>
         GROUP BY approve_status
+    </select>
+
+    <!-- srm端tab统计 -->
+    <select id="srmTabList" resultType="com.erp.model.wms.dto.QcApplicationDTO$TabListDTO">
+        SELECT
+        qa.approve_status AS tabFlag,
+        count(distinct qa.id)  AS count
+        FROM  qc_application qa
+        inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
+        WHERE qa.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params != null and params.supplierId != null and params.supplierId != ''">
+            qad.supplier_id = #{params.supplierId}
+        </if>
+        GROUP BY qa.approve_status
     </select>
 
 </mapper>

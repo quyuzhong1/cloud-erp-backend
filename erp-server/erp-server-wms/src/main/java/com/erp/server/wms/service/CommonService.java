@@ -1,8 +1,9 @@
 package com.erp.server.wms.service;
 
-import java.util.List;
-
 import com.common.business.vo.LoginUser;
+import com.erp.model.scm.entity.SupplierEntity;
+
+import java.util.List;
 
 /**
  * @author yl
@@ -31,4 +32,13 @@ public interface CommonService {
      * @return List<String>
      */
     List<String> listProcessCurBusinessIds (String businessKey);
+
+    /**
+     * @description: 获取供应商信息
+     * @author Will
+     * @date: 2023/8/2 16:37
+     * @param
+     * @return SupplierEntity
+     */
+    SupplierEntity getSupplierEntity();
 }
