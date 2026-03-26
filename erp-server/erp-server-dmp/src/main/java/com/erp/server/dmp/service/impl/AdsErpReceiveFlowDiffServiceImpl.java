@@ -125,19 +125,19 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
         
         l = new AdsErpReceiveFlowDiffDTO.TabListDTO();
         l.setTabFlag("platform");
-        l.setTabFlagName("单据1多");
+        l.setTabFlagName("平台单据多");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("platform")).map(AdsErpReceiveFlowDiffDTO.TabListDTO::getCount).findFirst().orElse(0));
         list.add(l);
         
         l = new AdsErpReceiveFlowDiffDTO.TabListDTO();
         l.setTabFlag("erp");
-        l.setTabFlagName("单据2多");
+        l.setTabFlagName("ERP单据多");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("erp")).map(AdsErpReceiveFlowDiffDTO.TabListDTO::getCount).findFirst().orElse(0));
         list.add(l);
         
         l = new AdsErpReceiveFlowDiffDTO.TabListDTO();
         l.setTabFlag("field");
-        l.setTabFlagName("字段错误");
+        l.setTabFlagName("字段差异");
         l.setCount(dblist.stream().filter(d -> d.getTabFlag().equals("field")).map(AdsErpReceiveFlowDiffDTO.TabListDTO::getCount).findFirst().orElse(0));
         list.add(l);
         
