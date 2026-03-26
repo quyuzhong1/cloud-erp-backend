@@ -61,8 +61,9 @@ public class QcSamplingPlanDetailServiceImpl extends SuperServiceImpl<QcSampling
         this.removeByMainId(id, Collections.emptyList());
     }
 
-    private void removeByMainId(String mainId, List<String> idList) {
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByMainId(String mainId, List<String> idList) {
         this.lambdaUpdate().eq(QcSamplingPlanDetailEntity::getMainId, mainId)
-                .ne(CollUtil.isNotEmpty(idList), QcSamplingPlanDetailEntity::getId, idList).remove();
+                .notIn(CollUtil.isNotEmpty(idList), QcSamplingPlanDetailEntity::getId, idList).remove();
     }
 }

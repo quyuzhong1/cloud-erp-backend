@@ -76,9 +76,10 @@ public class QcSamplingPlanQcTypeRefServiceImpl extends SuperServiceImpl<QcSampl
                 .eq(QcSamplingPlanQcTypeRefEntity::getDisabled, Boolean.FALSE).list();
     }
 
-    private void removeByMainId(String mainId, List<String> idList) {
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByMainId(String mainId, List<String> idList) {
         this.lambdaUpdate().eq(QcSamplingPlanQcTypeRefEntity::getMainId, mainId)
-                .ne(CollUtil.isNotEmpty(idList), QcSamplingPlanQcTypeRefEntity::getId, idList).remove();
+                .notIn(CollUtil.isNotEmpty(idList), QcSamplingPlanQcTypeRefEntity::getId, idList).remove();
     }
 
     /**

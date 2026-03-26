@@ -87,9 +87,10 @@ public class QcSamplingPlanSkuRefServiceImpl extends SuperServiceImpl<QcSampling
         return baseMapper.listSkuByMainIds(ids);
     }
 
-    private void removeByMainId(String mainId, List<String> idList) {
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByMainId(String mainId, List<String> idList) {
         this.lambdaUpdate().eq(QcSamplingPlanSkuRefEntity::getMainId, mainId)
-                .ne(CollUtil.isNotEmpty(idList), QcSamplingPlanSkuRefEntity::getId, idList).remove();
+                .notIn(CollUtil.isNotEmpty(idList), QcSamplingPlanSkuRefEntity::getId, idList).remove();
     }
 
 }

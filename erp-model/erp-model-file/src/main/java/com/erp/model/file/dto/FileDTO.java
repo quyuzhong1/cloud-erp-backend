@@ -132,9 +132,5 @@ public class FileDTO {
         //文件链接
         @NotBlank(message = "文件链接不能为空")
         private String fileUrl;
-        //文件名
-        private String fileName;
-        //文件类型
-        private String fileType;
     }
 }

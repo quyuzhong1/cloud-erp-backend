@@ -84,7 +84,7 @@ public class FileManagementDTO implements Serializable {
         private String id;
 
         /**
-         * 单据编码(WDGL开头)
+         * 单据编码(WDGL开头)【可排序】
          */
         private String code;
 
@@ -94,12 +94,12 @@ public class FileManagementDTO implements Serializable {
         private String skuId;
 
         /**
-         * sku编码
+         * sku编码【可排序】
          */
         private String skuNo;
 
         /**
-         * 文件类型
+         * 文件类型【可排序】
          */
         private String fileType;
         /**
@@ -113,21 +113,21 @@ public class FileManagementDTO implements Serializable {
         private String firstCategoryId;
 
         /**
-         * 一级品类名称
+         * 一级品类名称【可排序】
          */
         private String firstCategoryName;
 
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
 
         /**
-         * 文件名称
+         * 文件名称【可排序】
          */
         private String attachName;
         /**
-         * 文件版本
+         * 文件版本【可排序】
          */
         private Integer attachVersion;
 
@@ -136,7 +136,7 @@ public class FileManagementDTO implements Serializable {
          */
         private String attachUrl;
         /**
-         * 备注
+         * 备注【可排序】
          */
         private String remark;
 
@@ -283,6 +283,7 @@ public class FileManagementDTO implements Serializable {
 
         /**
          * 文件类型
+         * WmsFileTypeEnum 枚举类
          */
         @NotBlank(message = "文件类型不能为空")
         @Size(max = 32, message = "文件类型最大长度不能超过32位")
@@ -314,7 +315,7 @@ public class FileManagementDTO implements Serializable {
         /**
          * 文件链接
          */
-        @NotBlank(message = "文件链接不能为空")
+        @NotBlank(message = "附件上传或飞书文档链接上传二选一，飞书文档链接必须先下载再保存")
         @Size(max = 255, message = "文件链接最大长度不能超过255位")
         private String attachUrl;
 
