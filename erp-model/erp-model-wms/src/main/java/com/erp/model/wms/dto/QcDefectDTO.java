@@ -207,14 +207,23 @@ public class QcDefectDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
-         * 不良图片地址集合
+         * 不良图片
          */
-        private List<String> badImageUrlList;
+        private List<BadImageView> badImageViewList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BadImageView{
+        /**
+         * 附件名称
+         */
+        private String attachName;
 
         /**
-         * 不良图片名称地址集合
+         *
          */
-        private List<String> badImageNameList;
+        private String attachUrl;
     }
 
     /**
@@ -235,50 +244,39 @@ public class QcDefectDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO extends SuperDTO {
-
+        /**
+         * id
+         */
+        private String id;
         /**
         * 质检单id
         */
-        @NotBlank(message = "质检单id不能为空")
-        @Size(max = 19,message = "质检单id最大长度不能超过19位")
         private String mainId;
 
         /**
         * 缺陷等级
         */
-        @NotBlank(message = "缺陷等级不能为空")
-        @Size(max = 255,message = "缺陷等级最大长度不能超过255位")
         private String defectLevel;
 
         /**
         * 缺陷数量
         */
-        @NotNull(message = "缺陷数量不能为空")
-        private Integer defectQty;
+        private Integer badQty;
 
         /**
         * 不良描述
         */
-        @NotBlank(message = "不良描述不能为空")
-        @Size(max = 255,message = "不良描述最大长度不能超过255位")
         private String defectDesc;
 
         /**
         * 问题属性
         */
-        @NotBlank(message = "问题属性不能为空")
-        @Size(max = 255,message = "问题属性最大长度不能超过255位")
         private String issueProperty;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
-
-
     }
-
 
 }

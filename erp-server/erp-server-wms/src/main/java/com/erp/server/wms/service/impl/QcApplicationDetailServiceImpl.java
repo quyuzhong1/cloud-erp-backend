@@ -204,7 +204,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             BeanUtil.copyProperties(data, resultDTO);
 
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), data.getSkuNo())).findFirst().orElse(null);
-            if ( ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+            if (CharSequenceUtil.isNotBlank(sourceId) && ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
                 data.setErrorMsg("采购订单中不存在该SKU");
                 errorList.add(data);
                 continue;
@@ -231,7 +231,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             resultDTO.setSkuId(skuVO.getSkuId());
             resultDTO.setProductName(skuVO.getSkuName());
             resultDTO.setEan(skuVO.getEan());
-            resultDTO.setSourceDetailId(purchaseOrderDetailEntity.getId());
+            resultDTO.setSourceDetailId(ObjectUtil.isEmpty(purchaseOrderDetailEntity) ? "" : purchaseOrderDetailEntity.getId());
             resultDTO.setQty(MathUtil.valueOfInteger(data.getQtyStr()));
             if (ObjectUtil.isNotEmpty(supplierEntity)) {
                 resultDTO.setSupplierId(supplierEntity.getId());
@@ -293,7 +293,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
 
         for (QcApplicationDetailEntity data : qcApplicationDetailList) {
             //校验供应商信息
-            if (CharSequenceUtil.isNotBlank(data.getSupplierId()) && !CharSequenceUtil.equals(data.getSupplierId(),poSupplierEntity.getSupplierId())) {
+            if (CharSequenceUtil.isNotBlank(data.getSourceDetailId()) && CharSequenceUtil.isNotBlank(data.getSupplierId()) && !CharSequenceUtil.equals(data.getSupplierId(),poSupplierEntity.getSupplierId())) {
                 throw new ServiceException(ApiError.QC_APPLICATION_SUPPLIER_NOT_DIFF);
             }
             //校验数量

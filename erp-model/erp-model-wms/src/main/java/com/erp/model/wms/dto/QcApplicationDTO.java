@@ -129,6 +129,10 @@ public class QcApplicationDTO implements Serializable {
          * 单据状态名称
          */
         private String approveStatusName;
+        /**
+         * 最新审核人
+         */
+        private String approveUserName;
 
         /**
         * 审核完成时间【可排序】
