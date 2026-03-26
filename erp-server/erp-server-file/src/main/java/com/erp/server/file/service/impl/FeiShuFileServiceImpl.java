@@ -9,10 +9,9 @@ import com.erp.model.file.enums.FeishuFileTypeEnum;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.handler.FeiShuFileHandler;
 import com.erp.server.file.handler.FileRegistry;
-import com.erp.server.file.service.FileTaskService;
+import com.erp.server.file.service.FeiShuFileService;
 import com.google.gson.JsonParser;
 import com.lark.oapi.Client;
-import com.lark.oapi.core.request.RequestOptions;
 import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.service.drive.v1.model.*;
 import com.lark.oapi.service.wiki.v2.model.GetNodeSpaceReq;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -32,14 +30,14 @@ import java.util.Map;
 
 /**
  * @author zdy
- * @ClassName FileTaskServiceImpl
+ * @ClassName FeiShuFileServiceImpl
  * @description: TODO
  * @date 2026年03月20日
  * @version: 1.0
  */
 @Slf4j
 @Service
-public class FileTaskServiceImpl implements FileTaskService {
+public class FeiShuFileServiceImpl implements FeiShuFileService {
 
 
     @Resource
@@ -104,25 +102,13 @@ public class FileTaskServiceImpl implements FileTaskService {
 
     // 处理普通文件
     private SysCommonDTO.AttachmentDTO handleFile(String fileToken, String sheet, String view, Client client) throws Exception {
-        DownloadFileReq downloadFileReq = new DownloadFileReq();
-        downloadFileReq.setFileToken(fileToken);
-        DownloadFileResp resp = client.drive().v1().file().download(downloadFileReq);
-        log.warn("resp:{}", JSONUtil.toJsonStr(resp));
-
-        if (!resp.success()) {
-            String format = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
-            throw new ServiceException(format);
-        }
-
-        ByteArrayOutputStream data = resp.getData();
-        String url = FastDFSClientUtil.uploadFile(data.toByteArray(), resp.getFileName(), null);
+        DownloadFileResp resp = downloadFile(fileToken, client);
+        String url = FastDFSClientUtil.uploadFile(resp.getData().toByteArray(), resp.getFileName(), null);
         log.warn("url:{}", url);
-
         return SysCommonDTO.AttachmentDTO.builder()
                 .attachName(resp.getFileName())
                 .attachUrl(url)
-                .attachSize(new BigDecimal(data.size()).divide(new BigDecimal(1024 * 1024), 4, RoundingMode.HALF_UP))
+                .attachSize(new BigDecimal(resp.getData().size()).divide(new BigDecimal(1024 * 1024), 4, RoundingMode.HALF_UP))
                 .build();
     }
 
@@ -150,7 +136,7 @@ public class FileTaskServiceImpl implements FileTaskService {
     private SysCommonDTO.AttachmentDTO handleBase(String fileToken, String sheet, String view, Client client) throws Exception {
         fileToken = fileToken.split("\\?")[0];
         if (sheet != null) {
-            sheet = sheet.split("\\&")[0];
+            sheet = sheet.split("&")[0];
         }
         return processExportTask(fileToken, FeishuFileTypeEnum.BASE.getCode(), client, sheet);
     }
@@ -174,6 +160,34 @@ public class FileTaskServiceImpl implements FileTaskService {
                 .build();
     }
 
+    /**
+     * 下载文件
+     * @param fileToken
+     * @param client
+     * @return
+     * @throws Exception
+     */
+    private DownloadFileResp downloadFile(String fileToken, Client client) throws Exception {
+        DownloadFileReq downloadFileReq = new DownloadFileReq();
+        downloadFileReq.setFileToken(fileToken);
+        DownloadFileResp resp = client.drive().v1().file().download(downloadFileReq);
+        log.warn("resp:{}", JSONUtil.toJsonStr(resp));
+
+        if (!resp.success()) {
+            String format = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
+            throw new ServiceException(format);
+        }
+        return resp;
+    }
+
+    /**
+     * 下载导出任务
+     * @param fileToken
+     * @param client
+     * @return
+     * @throws Exception
+     */
     private DownloadExportTaskResp downloadTask(String fileToken, Client client) throws Exception {
         // 创建请求对象
         DownloadExportTaskReq req = DownloadExportTaskReq.newBuilder()
@@ -250,6 +264,15 @@ public class FileTaskServiceImpl implements FileTaskService {
         return getExportTaskResp;
     }
 
+    /**
+     * 创建导出任务
+     * @param objToken
+     * @param objType
+     * @param client
+     * @param subId
+     * @return
+     * @throws Exception
+     */
     private static CreateExportTaskResp exportTask(String objToken, String objType, Client client, String subId) throws Exception {
         String fileExtension = objType;
         if ("sheet".equals(objType) || "base".equals(objType) || "sheets".equals(objType)) {
@@ -285,6 +308,13 @@ public class FileTaskServiceImpl implements FileTaskService {
         return resp;
     }
 
+    /**
+     * 获取知识空间节点信息
+     * @param fileToken
+     * @param client
+     * @return
+     * @throws Exception
+     */
     private static GetNodeSpaceResp getNode(String fileToken, Client client) throws Exception {
         // 创建请求对象
         GetNodeSpaceReq req = GetNodeSpaceReq.newBuilder()

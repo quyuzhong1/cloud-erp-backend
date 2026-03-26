@@ -65,7 +65,7 @@ public class FileManagementEntity extends BaseEntity<FileManagementEntity> {
     * 备注
     */
     @TableField("remark")
-    private Integer remark;
+    private String remark;
     /**
     * 文件id
     */
