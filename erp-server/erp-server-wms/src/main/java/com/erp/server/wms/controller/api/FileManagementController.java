@@ -40,12 +40,13 @@ public class FileManagementController extends BaseController {
     private FileManagementService fileManagementService;
 
     /**
-    * 新增
-    * @author zdy
-    * @date:  2026-03-20
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author zdy
+     * @date: 2026-03-20
+     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "文件管理新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated FileManagementDTO.AddDTO dto) {
@@ -53,35 +54,37 @@ public class FileManagementController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author zdy
-    * @date:  2026-03-20
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author zdy
+     * @date: 2026-03-20
+     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "文件管理修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:fileManagement:update",
-        serviceClass = FileManagementService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:fileManagement:update",
+            serviceClass = FileManagementService.class,
+            keyIdName = "id")
     public ApiResult<Boolean> update(@RequestBody @Validated FileManagementDTO.UpdateDTO dto) {
         return success(fileManagementService.update(dto));
     }
 
     /**
-    * 列表查询
-    * @author zdy
-    * @date: 2026-03-20
-    * @param dto
-    * @return ApiResult<PagingVO<FileManagementDTO.ListDTO>>
-    */
+     * 列表查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < FileManagementDTO.ListDTO>>
+     * @author zdy
+     * @date: 2026-03-20
+     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:fileManagement:paging",
-            tableAlias = ""
+            tableAlias = "fm"
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<FileManagementDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FileManagementDTO.PagingParamDTO> dto) {
@@ -90,12 +93,13 @@ public class FileManagementController extends BaseController {
 
 
     /**
-    * 详情
-    * @author zdy
-    * @date:  2026-03-20
-    * @param id
-    * @return ApiResult<FileManagementDTO.ViewDTO>>
-    */
+     * 详情
+     *
+     * @param id
+     * @return ApiResult<FileManagementDTO.ViewDTO>>
+     * @author zdy
+     * @date: 2026-03-20
+     */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -109,6 +113,7 @@ public class FileManagementController extends BaseController {
 
     /**
      * 版本记录
+     *
      * @param id
      * @return
      */

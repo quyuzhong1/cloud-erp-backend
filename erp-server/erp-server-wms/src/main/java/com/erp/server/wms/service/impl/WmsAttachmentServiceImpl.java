@@ -20,6 +20,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.QcStandardService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -54,6 +55,9 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Resource
     private FileFeign fileFeign;
+
+    @Resource
+    private QcStandardService qcStandardService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -254,7 +258,6 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
         if (CollectionUtils.isEmpty(list)) {
             entity.setAttachVersion(1);
             this.saveOrUpdate(entity);
-            return entity.getId();
         }else {
             //取最大版本号记录比较url是否一致，一致则不保存，不一致则新增记录
             WmsAttachmentEntity maxVersionEntity = list.stream().max(Comparator.comparingInt(WmsAttachmentEntity::getAttachVersion)).orElse(null);
@@ -263,8 +266,10 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             }
             entity.setAttachVersion(maxVersionEntity.getAttachVersion() + 1);
             this.saveOrUpdate(entity);
-            return entity.getId();
         }
+        //新增质检标准
+        qcStandardService.importFile(entity.getAttachUrl());
+        return entity.getId();
     }
 
     @Override
