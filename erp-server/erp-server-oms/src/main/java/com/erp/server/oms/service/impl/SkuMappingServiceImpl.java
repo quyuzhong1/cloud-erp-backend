@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.FileTemplateConstant;
@@ -71,7 +72,9 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.Item;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemImage;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSummaries;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSummaryByMarketplace;
 import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
@@ -2331,6 +2334,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> syncPlatformProductByOne(SkuMappingDTO.SyncPlatformProductDTO paramDTO){
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(paramDTO.getShopId());
         if(ObjectUtil.isEmpty(shopInfoEntity)){
@@ -2342,6 +2346,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(Boolean.TRUE.equals(shopInfoEntity.getDisabled())){
             throw new ServiceException("已禁用店铺无法同步");
         }
+        //所有亚马逊店铺
+        List<ShopInfoEntity> shopInfoList = shopInfoService.listShopByAmazon();
+
         //查下对照表数据
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setShopIdList(Collections.singletonList(paramDTO.getShopId()));
@@ -2381,6 +2388,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<ListingInfoEntity> listingUpdateList = new ArrayList<>();
         //新增listing表数据
         List<ListingInfoEntity> listingAddList = new ArrayList<>();
+        //新增skumapping表数据
+        List<SkuMappingEntity> skuMappingAddList = new ArrayList<>();
 
         for (String platformSkuNo : paramDTO.getPlatformSkuNoList()) {
             Item item = items.stream().filter(obj -> CharSequenceUtil.equals(obj.getSku(), platformSkuNo)).findFirst().orElse(null);
@@ -2398,17 +2407,43 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String asin = summary.getAsin();
             String fnSku = summary.getFnSku();
             String itemName = summary.getItemName();
+            String marketplaceId = summary.getMarketplaceId();
+            //店铺id
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictCountryCode(), AmazonMarketplaceEnum.getByMarketplaceId(marketplaceId).getCountryCode())).map(ShopInfoEntity::getId).findFirst().orElse("");
+            ItemImage mainImage = summary.getMainImage();
 
             SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = mappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSkuNo(), platformSkuNo)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(mappingSkuViewDTO)) {
                 ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                listingInfoEntity.setId(IdWorker.getIdStr());
                 listingInfoEntity.setPlatformSkuNo(platformSkuNo);
                 listingInfoEntity.setPlatformSpuName(itemName);
                 listingInfoEntity.setPlatformSpuNo(asin);
                 listingInfoEntity.setPlatformFnSku(fnSku);
                 listingInfoEntity.setPlatform(paramDTO.getPlatform());
                 listingInfoEntity.setMatchResult(ListingMatchResultEnum.FALSE.getCode());
+                listingInfoEntity.setProductImageUrl(ObjectUtil.isEmpty(mainImage) ? "" : mainImage.getLink());
+                //状态
+                if (ObjectUtil.isNotEmpty(summary.getStatus())) {
+                    ItemSummaryByMarketplace.StatusEnum statusEnum = summary.getStatus().get(summary.getStatus().size() - 1);
+                    boolean isBuyable = statusEnum.getValue().equals("BUYABLE");
+                    if (isBuyable) {
+                        listingInfoEntity.setPlatformStatus(ListingInfoPlatformStatusEnum.ACTIVE.getCode());
+                    }
+                    boolean isDiscoverable = statusEnum.getValue().equals("DISCOVERABLE");
+                    if (isDiscoverable) {
+                        listingInfoEntity.setPlatformStatus(ListingInfoPlatformStatusEnum.INACTIVE.getCode());
+                    }
+                }
+                listingAddList.add(listingInfoEntity);
 
+                SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+                skuMappingEntity.setListingId(listingInfoEntity.getId());
+                skuMappingEntity.setDictPlatform(paramDTO.getPlatform());
+                skuMappingEntity.setType(RuleTypeEnum.B2C_PLATFORM);
+                skuMappingEntity.setShopId(shopId);
+                skuMappingAddList.add(skuMappingEntity);
+                resultDTOList.add(BatchResultDTO.success(paramDTO.getShopId(),platformSkuNo,"商品同步成功"));
             } else {
                 ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
                 listingInfoEntity.setId(mappingSkuViewDTO.getListingId());
@@ -2421,7 +2456,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 continue;
             }
         }
-        listingInfoService.updateBatchById(listingUpdateList);
+        if (CollUtil.isNotEmpty(listingUpdateList)) {
+            listingInfoService.updateBatchById(listingUpdateList);
+        }
+        //添加listing和mapping的关联关系
+       if (CollUtil.isNotEmpty(listingAddList)) {
+           listingInfoService.saveBatch(listingAddList);
+           if (CollUtil.isNotEmpty(skuMappingAddList)) {
+               super.saveBatch(skuMappingAddList);
+           }
+       }
         return resultDTOList;
     }
 
