@@ -1,5 +1,6 @@
 package com.erp.server.file.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
@@ -10,6 +11,7 @@ import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileTaskService;
 import com.google.gson.JsonParser;
 import com.lark.oapi.Client;
+import com.lark.oapi.core.request.RequestOptions;
 import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.service.drive.v1.model.*;
 import com.lark.oapi.service.wiki.v2.model.GetNodeSpaceReq;
@@ -38,18 +40,19 @@ public class FileTaskServiceImpl implements FileTaskService {
 
     final String FEISHU_FILE_URL = "https://open.feishu.cn/open-apis/drive/v1/files/:file_token/download";
     final String FEISHU_USER_ACCESS_TOKEN = "u-e.VZVpvUZ7QHm3EyjKmYuS0lhN3glhWNW0GyYMI203mc";
-    final String FEISHU_APP_ID = "cli_a3675230d0fa9013";
-    final String FEISHU_APP_SECRET = "fjN4dbPZGF6arsJSYOZpLgAcH7Z0XSvL";
+    final static String FEISHU_APP_ID = "cli_a3675230d0fa9013";
+    final static String FEISHU_APP_SECRET = "fjN4dbPZGF6arsJSYOZpLgAcH7Z0XSvL";
 
     @Override
     public SysCommonDTO.AttachmentDTO getFeiShuFile(FileDTO.UploadDTO uploadDTO) throws Exception {
         String fileUrl = uploadDTO.getFileUrl();
         //根据url进行文件类型解析
-        // https://ulanzichina.feishu.cn/docx/RwgbdMGogowhPLxCUVDcoy6vnrh
-        // https://ulanzichina.feishu.cn/wiki/GevlwEB1VirtyFkpgH0cjhWjnld
-        // https://ulanzichina.feishu.cn/docx/MURjdH3gvoRMNqxYr5mc6WjxnNc
-        // https://ulanzichina.feishu.cn/file/JnSebf1hQoGOJexFw0JcuZi3nee
-        // https://ulanzichina.feishu.cn/sheets/KTFqsRTLthfFR9ttOG2cMCrYnGf?sheet=wvKWL0
+//         https://ulanzichina.feishu.cn/docx/RwgbdMGogowhPLxCUVDcoy6vnrh
+//         https://ulanzichina.feishu.cn/wiki/GevlwEB1VirtyFkpgH0cjhWjnld
+//         https://ulanzichina.feishu.cn/docx/MURjdH3gvoRMNqxYr5mc6WjxnNc
+//         https://ulanzichina.feishu.cn/file/JnSebf1hQoGOJexFw0JcuZi3nee
+//         https://ulanzichina.feishu.cn/sheets/KTFqsRTLthfFR9ttOG2cMCrYnGf?sheet=wvKWL0
+//        https://ulanzichina.feishu.cn/base/Bi0mbFqAWaBR36swcOkcV7XAnQe?table=tblz2QEAG3BrGKqz&view=vew101gNh4
 
         //域名 https://ulanzichina.feishu.cn
         //文件类型 docx
@@ -59,11 +62,14 @@ public class FileTaskServiceImpl implements FileTaskService {
         String fileToken = fileUrl.split("/")[4];
         //获取sheet=wvKWL0
         String sheet = null;
+        String view = null;
         String[] split1 = fileUrl.split("\\?");
         if (split1.length > 1) {
             String[] split2 = split1[1].split("=");
             if (split2.length > 1) {
                 sheet = split2[1];
+            }else if (split2.length == 3){
+                view = split2[2];
             }
         }
         // 构建client
@@ -94,7 +100,7 @@ public class FileTaskServiceImpl implements FileTaskService {
             CreateExportTaskResp createExportTaskResp = exportTask(objToken, objType, client, sheet);
             String ticket = createExportTaskResp.getData().getTicket();
             //查询导出任务结果
-            GetExportTaskResp getExportTaskResp = queryTask(ticket, objToken, client);
+            GetExportTaskResp getExportTaskResp = retryQueryTask(ticket, objToken, client);
             ExportTask result = getExportTaskResp.getData().getResult();
             //下载文件
             DownloadExportTaskResp downloadExportTaskResp = downloadTask(result.getFileToken(), client);
@@ -106,8 +112,8 @@ public class FileTaskServiceImpl implements FileTaskService {
             //创建导出任务
             CreateExportTaskResp createExportTaskResp = exportTask(fileToken, fileType, client, sheet);
             String ticket = createExportTaskResp.getData().getTicket();
-            //查询导出任务结果
-            GetExportTaskResp getExportTaskResp = queryTask(ticket, fileToken, client);
+            //查询导出任务结果  7621369825390906312  RwgbdMGogowhPLxCUVDcoy6vnrh
+            GetExportTaskResp getExportTaskResp = retryQueryTask(ticket, fileToken, client);
             ExportTask result = getExportTaskResp.getData().getResult();
             //下载文件
             DownloadExportTaskResp downloadExportTaskResp = downloadTask(result.getFileToken(), client);
@@ -116,18 +122,34 @@ public class FileTaskServiceImpl implements FileTaskService {
             return SysCommonDTO.AttachmentDTO.builder().attachName(downloadExportTaskResp.getFileName()).attachUrl(url).attachSize(BigDecimal.valueOf(result.getFileSize() / 1024 / 1024)).build();
 
         } else if (FeishuFileTypeEnum.XLSX.getCode().equals(fileType)) {
-            // 处理XLSX文件
+            // 处理XLSX文件 截去fileToken后缀?sheet=wvKWL0部分
+            fileToken = fileToken.split("\\?")[0];
             //创建导出任务
             CreateExportTaskResp createExportTaskResp = exportTask(fileToken, fileType, client, sheet);
             String ticket = createExportTaskResp.getData().getTicket();
             //查询导出任务结果
-            GetExportTaskResp getExportTaskResp = queryTask(ticket, fileToken, client);
+            GetExportTaskResp getExportTaskResp = retryQueryTask(ticket, fileToken, client);
             ExportTask result = getExportTaskResp.getData().getResult();
             //下载文件
             DownloadExportTaskResp downloadExportTaskResp = downloadTask(result.getFileToken(), client);
             //上传fastdfs
             String url = FastDFSClientUtil.uploadFile(downloadExportTaskResp.getData().toByteArray(), downloadExportTaskResp.getFileName(), null);
             return SysCommonDTO.AttachmentDTO.builder().attachName(downloadExportTaskResp.getFileName()).attachUrl(url).attachSize(BigDecimal.valueOf(result.getFileSize() / 1024 / 1024)).build();
+        }else if (FeishuFileTypeEnum.BASE.getCode().equals(fileType)){
+            fileToken = fileToken.split("\\?")[0];
+            sheet =sheet.split("\\&")[0];
+            //创建导出任务
+            CreateExportTaskResp createExportTaskResp = exportTask(fileToken, fileType, client, sheet);
+            String ticket = createExportTaskResp.getData().getTicket();
+            //查询导出任务结果
+            GetExportTaskResp getExportTaskResp = retryQueryTask(ticket, fileToken, client);
+            ExportTask result = getExportTaskResp.getData().getResult();
+            //下载文件
+            DownloadExportTaskResp downloadExportTaskResp = downloadTask(result.getFileToken(), client);
+            //上传fastdfs
+            String url = FastDFSClientUtil.uploadFile(downloadExportTaskResp.getData().toByteArray(), downloadExportTaskResp.getFileName(), null);
+            return SysCommonDTO.AttachmentDTO.builder().attachName(downloadExportTaskResp.getFileName()).attachUrl(url).attachSize(BigDecimal.valueOf(result.getFileSize() / 1024 / 1024)).build();
+
         }
 
         return null;
@@ -138,7 +160,7 @@ public class FileTaskServiceImpl implements FileTaskService {
         DownloadExportTaskReq req = DownloadExportTaskReq.newBuilder()
                 .fileToken(fileToken)
                 .build();
-
+        log.warn("下载导出任务请求：{}", JSONUtil.toJsonStr(req));
         // 发起请求
         DownloadExportTaskResp resp = null;
         try {
@@ -153,16 +175,45 @@ public class FileTaskServiceImpl implements FileTaskService {
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
             throw new ServiceException(format);
         }
-        log.warn("下载导出任务成功：{}", resp);
+        log.warn("下载导出任务成功：{}", JSONUtil.toJsonStr(resp));
         return resp;
     }
 
-    private GetExportTaskResp queryTask(String ticket, String objToken, Client client) throws Exception {
+    /**
+     * 重试查询导出任务结果  最多重试3次  每次间隔间隔1秒
+     * @param ticket
+     * @param objToken
+     * @param client
+     * @return
+     * @throws Exception
+     */
+    private static GetExportTaskResp retryQueryTask(String ticket, String objToken, Client client) throws Exception {
+        int retryCount = 0;
+        for (int i = 0; i < 3; i++) {
+            try {
+                return queryTask(ticket, objToken, client);
+            } catch (Exception e) {
+                retryCount++;
+                Thread.sleep(1000);
+            }
+        }
+        throw new ServiceException("查询导出任务结果失败，重试3次后仍失败");
+    }
+    /**
+     * 查询导出任务结果
+     * @param ticket
+     * @param objToken
+     * @param client
+     * @return
+     * @throws Exception
+     */
+    private static GetExportTaskResp queryTask(String ticket, String objToken, Client client) throws Exception {
         // 创建请求对象
         GetExportTaskReq req = GetExportTaskReq.newBuilder()
                 .ticket(ticket)
                 .token(objToken)
                 .build();
+        log.warn("查询导出任务结果请求：{}", JSONUtil.toJsonStr(req));
         // 发起请求
         GetExportTaskResp getExportTaskResp = client.drive().v1().exportTask().get(req);
 
@@ -172,22 +223,35 @@ public class FileTaskServiceImpl implements FileTaskService {
                     getExportTaskResp.getCode(), getExportTaskResp.getMsg(), getExportTaskResp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(getExportTaskResp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
             throw new ServiceException(format);
         }
-        log.warn("查询导出任务结果成功：{}", getExportTaskResp);
+        log.warn("查询导出任务结果成功：{}", JSONUtil.toJsonStr(getExportTaskResp));
+        if (getExportTaskResp.getData().getResult() == null || CharSequenceUtil.isBlank(getExportTaskResp.getData().getResult().getFileToken())) {
+            throw new ServiceException("查询导出任务结果失败，导出任务结果为空");
+        }
         return getExportTaskResp;
     }
 
     private static CreateExportTaskResp exportTask(String objToken, String objType, Client client, String subId) throws Exception {
-
+        String fileExtension = objType;
+        if ("sheet".equals(objType) || "base".equals(objType) || "sheets".equals(objType)) {
+            fileExtension = "xlsx";
+        }else if ("doc".equals(objType)) {
+            fileExtension = "docx";
+        }
+        if ("sheets".equals(objType)){
+            objType = "sheet";
+        }else if ("base".equals(objType)){
+            objType = "bitable";
+        }
         // 创建请求对象
         CreateExportTaskReq req = CreateExportTaskReq.newBuilder()
                 .exportTask(ExportTask.newBuilder()
-                        .fileExtension("csv")
+                        .fileExtension(fileExtension)
                         .token(objToken)
                         .type(objType)
                         .subId(subId)
                         .build())
                 .build();
-
+        log.warn("创建导出任务请求：{}", JSONUtil.toJsonStr(req));
         // 发起请求
         CreateExportTaskResp resp = client.drive().v1().exportTask().create(req);
 
@@ -197,7 +261,7 @@ public class FileTaskServiceImpl implements FileTaskService {
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
             throw new ServiceException(format);
         }
-        log.warn("创建导出任务成功：{}", resp);
+        log.warn("创建导出任务成功：{}", JSONUtil.toJsonStr(resp));
         return resp;
     }
 
@@ -207,7 +271,7 @@ public class FileTaskServiceImpl implements FileTaskService {
                 .token(fileToken)
 //                .objType("docx")
                 .build();
-
+        log.warn("获取知识空间节点请求：{}", JSONUtil.toJsonStr(req));
         // 发起请求
         GetNodeSpaceResp resp = client.wiki().v2().space().getNode(req);
         // 处理服务端错误
@@ -216,7 +280,7 @@ public class FileTaskServiceImpl implements FileTaskService {
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
             throw new ServiceException(format);
         }
-        log.warn("获取知识空间节点信息成功：{}", resp);
+        log.warn("获取知识空间节点信息成功：{}", JSONUtil.toJsonStr(resp));
         return resp;
     }
 }
