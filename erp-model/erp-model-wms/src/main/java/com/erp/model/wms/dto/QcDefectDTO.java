@@ -182,14 +182,9 @@ public class QcDefectDTO implements Serializable {
         private String issueProperty;
 
         /**
-         * 不良图片地址集合
+         * 不良图片
          */
-        private List<String> badImageUrlList;
-
-        /**
-         * 不良图片名称地址集合
-         */
-        private List<String> badImageNameList;
+        private List<BadImageView> badImageViewList;
 
         /**
         * 备注
