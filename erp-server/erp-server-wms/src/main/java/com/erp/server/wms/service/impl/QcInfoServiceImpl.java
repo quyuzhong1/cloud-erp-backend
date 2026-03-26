@@ -125,6 +125,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private DictBasicService dictBasicService;
 
     @Resource
+    private QcDefectService qcDefectService;
+
+    @Resource
     private QcSamplingPlanRefService qcSamplingPlanRefService;
 
     @Resource
@@ -314,6 +317,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcReportDetailService.add(billId, dto.getReportDetailList());
             //质检备注暂存
             qcRemarkService.add(billId, dto.getRemarkList());
+            //不良信息
+            qcDefectService.add(billId,dto.getQcDefectList());
             //质检标准
             qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
             //操作日志
@@ -592,7 +597,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcReportDetailService.add(billId, dto.getReportDetailList());
             //质检备注暂存
             qcRemarkService.add(billId, dto.getRemarkList());
-
+            //不良信息
+            qcDefectService.add(billId,dto.getQcDefectList());
+            //质检标准
+            qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
             //质检类型
             String qcType = qcInfo.getQcType();
             String b2bQc = QcTypeEnum.B2B_OUTSIDE_QC.getCode();
