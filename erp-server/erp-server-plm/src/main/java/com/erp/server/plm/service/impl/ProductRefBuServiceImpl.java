@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.entity.BasicProductBuEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.service.BasicProductBuService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.plm.entity.ProductRefBuEntity;
@@ -46,13 +47,20 @@ public class ProductRefBuServiceImpl extends SuperServiceImpl<ProductRefBuMapper
     }
 
     @Override
-    public void addOrUpdate(String productId, String buId) {
+    public void addOrUpdate(String skuId,String productId, String buId) {
         //查询是否存在
         ProductRefBuEntity existing = lambdaQuery()
                 .eq(ProductRefBuEntity::getProductId, productId)
                 .one();
         if (existing != null) {
             if(!existing.getBuId().equals(buId)) {
+                //记录日志
+                List<String> buIds = Arrays.asList(existing.getBuId(), buId);
+                List<BasicProductBuEntity> basicProductBuEntities = basicProductBuService.listByIds(buIds);
+                String oldName = basicProductBuEntities.stream().filter(e -> e.getId().equals(existing.getBuId())).map(BasicProductBuEntity::getName).findFirst().orElse("");
+                String newName = basicProductBuEntities.stream().filter(e -> e.getId().equals(buId)).map(BasicProductBuEntity::getName).findFirst().orElse("");
+                String content = "修改产品BU信息关联，原BU：" + oldName + "，新BU：" + newName;
+                operateLogService.addSysLogBySave(content,  String.valueOf(ProductDetailEntity.class), skuId, productId);
                 existing.setBuId(buId);
                 updateById(existing);
             }
@@ -60,6 +68,10 @@ public class ProductRefBuServiceImpl extends SuperServiceImpl<ProductRefBuMapper
             ProductRefBuEntity newEntity = new ProductRefBuEntity();
             newEntity.setProductId(productId);
             newEntity.setBuId(buId);
+            BasicProductBuEntity basicProductBuEntity = basicProductBuService.getById(buId);
+            String name = basicProductBuEntity != null ? basicProductBuEntity.getName() : "";
+            String content = "新增产品BU信息关联，BU：" + name;
+            operateLogService.addSysLogBySave(content,  String.valueOf(ProductDetailEntity.class), skuId, productId);
             save(newEntity);
         }
     }

@@ -167,7 +167,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @param soId
      * @param trackNo
      */
-    void updateLogisticsBySoId(String soId, String trackNo);
+    void updateLogisticsBySoId(String soId, String trackNo, Boolean isDelLabel);
 
     /**
      * 根据运单号进行跟踪号更新

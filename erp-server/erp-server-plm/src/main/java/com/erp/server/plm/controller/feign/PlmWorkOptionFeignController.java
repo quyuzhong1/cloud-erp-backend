@@ -32,7 +32,7 @@ public class PlmWorkOptionFeignController {
     private ProjectTaskService taskService;
 
     @Resource
-    private ProductChangeService productChangeService;
+    private BomChangeService bomChangeService;
 
     @Resource
     private PilotApplicationService pilotApplicationService;
@@ -110,9 +110,9 @@ public class PlmWorkOptionFeignController {
      * @param
      * @return 新增结果
      */
-    @PostMapping("/productChangeApprove")
-    public void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto) {
-        productChangeService.approve(dto);
+    @PostMapping("/bomChangeApprove")
+    public void bomChangeApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        bomChangeService.approve(dto);
     }
 
     /**

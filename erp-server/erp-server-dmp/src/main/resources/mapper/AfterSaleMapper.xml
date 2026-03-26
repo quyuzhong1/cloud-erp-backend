@@ -122,7 +122,10 @@
         tui.nick_name AS nickName,
         afs.phone_number AS phoneNumber,
         r.track_no as returnTrackNo,
-        o.track_no as outboundTrackNo
+        o.track_no as outboundTrackNo,
+        afs.shop_id as shopId,
+        afs.cs_agent_id as csAgentId,
+        afs.cs_agent_name as csAgentName
         FROM
         after_sale AS afs
         LEFT JOIN after_sale_detail AS afsd ON afs.ID = afsd.main_id 	AND afsd.is_deleted = FALSE

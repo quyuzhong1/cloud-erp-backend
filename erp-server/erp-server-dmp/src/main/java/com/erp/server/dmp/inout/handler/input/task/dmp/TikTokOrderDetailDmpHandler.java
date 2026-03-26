@@ -44,11 +44,15 @@ public class TikTokOrderDetailDmpHandler extends TikTokOrderGetDetailDmpHandler 
             List<Map<String, Object>> dmpDataKeyMaps = dmpInputDataDmpRelationMap.getKey();
             String warehouseId = "";
             for (Map<String, Object> keyMap : dmpDataKeyMaps){
-                warehouseId = keyMap.get("warehouseId").toString();
+                Object warehouseIdObj = keyMap.get("warehouseId");
+                if (ObjectUtil.isNotEmpty(warehouseIdObj)) {
+                    warehouseId = warehouseIdObj.toString();
+                }
             }
             String warehouseName = "";
             if(StringUtils.isNotBlank(warehouseId)){
-                List<DmpThirdWarehouseInfoEntity> dmpThirdWarehouseInfoEntityList = dmpThirdWarehouseInfoService.getByPlatformAndCode(PlatformDictEnum.TIK_TOK.getCode(),warehouseId);
+                List<DmpThirdWarehouseInfoEntity> dmpThirdWarehouseInfoEntityList = dmpThirdWarehouseInfoService
+                        .getByPlatformAndAuthIdAndCode(PlatformDictEnum.TIK_TOK.getCode(), nextLevelId, warehouseId);
                 if(CollectionUtil.isEmpty(dmpThirdWarehouseInfoEntityList)){
                     //创建推送任务
                     Map<String, Object> map = new HashMap<>();
@@ -62,7 +66,8 @@ public class TikTokOrderDetailDmpHandler extends TikTokOrderGetDetailDmpHandler 
                     dmpInputCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
                     // 创建任务并执行
                     List<DmpInputFinishResponse> response = dmpInputCreateFactory.doHotfixInputTask(dmpInputCreateRequest);
-                    dmpThirdWarehouseInfoEntityList = dmpThirdWarehouseInfoService.getByPlatformAndCode(PlatformDictEnum.TIK_TOK.getCode(),warehouseId);
+                    dmpThirdWarehouseInfoEntityList = dmpThirdWarehouseInfoService
+                            .getByPlatformAndAuthIdAndCode(PlatformDictEnum.TIK_TOK.getCode(), nextLevelId, warehouseId);
                     if(CollectionUtil.isNotEmpty(dmpThirdWarehouseInfoEntityList)){
                         warehouseName = dmpThirdWarehouseInfoEntityList.get(0).getWarehouseName();
                     }
@@ -84,6 +89,7 @@ public class TikTokOrderDetailDmpHandler extends TikTokOrderGetDetailDmpHandler 
                     }
                 }
                 dmpDataMap.put("warehouseName",warehouseName);
+                dmpDataMap.put("warehouseId", warehouseId);
                 Object itemTaxObj = dmpDataMap.get("itemTax");
                 if (itemTaxObj != null) {
                     List<Map<String, Object>> itemTaxMap = (List<Map<String, Object>>) itemTaxObj;

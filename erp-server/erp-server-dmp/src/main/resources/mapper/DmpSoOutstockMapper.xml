@@ -34,6 +34,7 @@
        <result column="exchange_rate" property="exchangeRate" />
        <result column="shipping_cost" property="shippingCost" />
        <result column="subsidy_amount" property="subsidyAmount" />
+       <result column="third_bill_no" property="thirdBillNo" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -47,7 +48,7 @@
         update_user_id,
         version,
         is_deleted,
-        platform_create_time, platform_update_time, source_system, third_code, platform_code, status, platform_status, delivery_time, logistics_code, shop_id, shop_name, country, city, province, man_street, second_street, district, currency_code, all_amount, exchange_rate, shipping_cost, subsidy_amount
+        platform_create_time, platform_update_time, source_system, third_code, platform_code, status, platform_status, delivery_time, logistics_code, shop_id, shop_name, country, city, province, man_street, second_street, district, currency_code, all_amount, exchange_rate, shipping_cost, subsidy_amount, third_bill_no
     </sql>
 
 

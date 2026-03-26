@@ -38,6 +38,9 @@ public class ImportPlmFeignController {
     @Resource
     private RefProductImgAttachmentService refProductImgAttachmentService;
 
+    @Resource
+    private ProductChangeService productChangeService;
+
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
@@ -127,6 +130,14 @@ public class ImportPlmFeignController {
             updateTask(dto.getTaskId(), e);
         }
     }
-
+    @PostMapping("/importProductChange")
+    public void importProductChange(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            productChangeService.importProductChange(dto);
+        } catch (Exception e) {
+            log.error("导入产品信息变更失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
 
 }

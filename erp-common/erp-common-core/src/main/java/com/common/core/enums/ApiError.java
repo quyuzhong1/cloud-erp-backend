@@ -201,6 +201,10 @@ public enum ApiError implements Serializable {
     COMMON_FS_USER_NOT_BIND(98130,"飞书【{0}】事件,用户【{1}】未绑定飞书账号"),
     COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
     COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
+    COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
+    COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
+
+    COMMON_NO_SKU(98128,"SKU不存在"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -321,12 +325,13 @@ public enum ApiError implements Serializable {
     BILL_TASK_CANCEL_SUBMIT_INVALID(3029,"待审核任务才能取消提交"),
     BILL_URGE_ONLY_IN_APPROVING(3030, "仅支持审核中的单据支持催办提醒"),
     BILL_VOID_EDIT_FORBIDDEN(3031,"单据已作废，不支持编辑功能"),
+    BILL_VOID_SUBMIT_FORBIDDEN(3031,"单据已作废，不支持提交"),
     BILL_UPDATE_FIELD_APPROVEING(3032,"状态在审核中不可更新"),
     BILL_ROW_CHANGE_FORBIDDEN(3033,"已验收和已关闭的明细行不允许变更"),
     BILL_SELECTION_REQUIRED(3034,"选择数据不能为空"),
     BILL_PARAM_SELECTION_REQUIRED(3034,"{0}明细数据不能为空"),
     BILL_VOID_ALLOWED_STATUS_ONLY(3035,"只有待提交和审核不通过数据支持作废"),
-    BILL_DELETE_ALLOWED_STATUS_ONLY(3036,"只有待提交并且未作废数据支持删除"),
+    BILL_DELETE_ALLOWED_STATUS_ONLY(3036,"只有待提交数据支持删除"),
     BILL_SUBMIT_ALLOWED_STATUS_ONLY(3037,"只有待提交或审核不通过并且未作废数据支持提交"),
     BILL_ALREADY_VOID_CANNOT_VOID_AGAIN(3038,"已作废数据不支持作废"),
     BILL_WAIT_SUBMIT_TO_APPROVE_ING(3039,"只有待提交和审核不通过才能提交审核"),
@@ -378,6 +383,13 @@ public enum ApiError implements Serializable {
     DMP_THIRD_SYS_TYPE_SINGLE_BINDING(3510,"同一个第三方平台只能绑定一个{0}"),
     DMP_THIRD_LOGISTICS_NOT_FOUND(3511,"第三方渠道不存在"),
     DMP_PUSH_CFG_NOT_FOUND(3512,"未找到推送配置项【{0}】"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND(3513,"出库同步差异记录不存在"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM(3514,"请选择差异标签为平台单据多的"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD(3515, "请选择同一个核算周期的数据"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM(3516, "请选择同一个平台的数据"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL(3513,"仓库操作类型不允许为空"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM(3514,"缺少必要的仓库操作类型【{0}】"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
 
 
     /**
@@ -668,6 +680,10 @@ public enum ApiError implements Serializable {
     PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED(5112, "请至少选择一张图片"),
     PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
     PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
+    PRODUCT_CHANGE_SKU_NOT_APPROVE(5115, "【{0}】只有已审核SKU可以变更"),
+    PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE(5115, "产品尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
+    PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
+    PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
 
     /**
      * BOM 错误信息 6000 - 6499
@@ -1419,6 +1435,9 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
 
+    WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+
+
     /**
      * 头程发货单 错误 信息 11500-12000
      */
@@ -1631,7 +1650,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_CHANNEL_NOT_FOUND(13574,"物流渠道不存在"),
     LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY(13575,"渠道【{0}】下类型【{1}】的地址为空"),
     LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED(13576,"渠道【{0}】尚未配置销售渠道"),
-    LOGISTICS_PRINT_WAYBILL_FAILED(13577,"调用第三方接口打印面单异常，原因：{0}"),
+    LOGISTICS_PRINT_WAYBILL_FAILED(13577,"调用第三方接口打印面单异常，订单ID:{0}，原因：{1}"),
     LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN(13578,"该物流渠道已被引用，不支持删除"),
     LOGISTICS_SELF_SHIP_BILL_STATUS_CHANGE_FORBIDDEN(13579,"已确认或已作废的自发货费用单不支持状态变更"),
     LOGISTICS_CHANNEL_ALREADY_USED(13580,"物流渠道【{0}】已被使用，不支持重复选择"),

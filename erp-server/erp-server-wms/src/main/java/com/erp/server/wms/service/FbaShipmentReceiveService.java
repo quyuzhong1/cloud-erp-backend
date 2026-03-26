@@ -73,7 +73,7 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
     /**
      * 根据md5查询历史
      */
-    List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate);
+    List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate, String sourcePlatform);
 
     /**
      * 汇总 亚马逊签收报告/第三方仓签收报告签收数量

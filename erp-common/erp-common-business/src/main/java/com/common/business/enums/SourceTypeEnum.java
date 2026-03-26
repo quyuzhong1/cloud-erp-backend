@@ -169,7 +169,7 @@ public enum SourceTypeEnum {
     SDY_PRODUCT_DETAIL("sdy_productDetail", "产品管理","product_detail"),
     WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
-    PRODUCT_CHANGE("productChange", "变更管理","product_change"),
+    BOM_CHANGE("bomChange", "BOM变更管理","bom_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
     APPLICATION_CATEGORY("applicationCategory", "应用分类","application_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
@@ -185,6 +185,8 @@ public enum SourceTypeEnum {
     CFG_MOLD_RETURN_ALERT_RULE("cfgMoldReturnAlertRule","资产采购变更单","cfg_mold_return_alert_rule"),
     CFG_MOLD_ALERT_RULE("cfgMoldAlertRule","资产采购变更单","cfg_mold_alert_rule"),
     MOLD_MONITOR("moldMonitor", "模具监控","mold_monitor"),
+
+    PRODUCT_CHANGE("productChange", "产品变更单","product_change"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -253,6 +255,7 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓创建入库单","dmp_push_task"),
     THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓编辑入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_APPROVE_INBOUND_BILL("thirdWarehouseApproveInboundBill", "第三方仓审核入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL("thirdWarehouseCreateFbaOutboundBill", "B2B第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),

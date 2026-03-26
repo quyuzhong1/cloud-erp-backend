@@ -144,6 +144,11 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("taxid_type")
     private String taxidType;
 
+    /**
+     * 门牌号
+     */
+    @TableField("house_number")
+    private String houseNumber;
 
     @TableField(exist = false)
     private String partitionCode;

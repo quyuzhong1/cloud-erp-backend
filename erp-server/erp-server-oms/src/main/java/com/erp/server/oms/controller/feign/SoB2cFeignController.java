@@ -454,6 +454,11 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateWarehouseByShopId(id, shopId);
     }
 
+    @PostMapping("updateTikTokOrderWarehouse")
+    public Boolean updateTikTokOrderWarehouse(@RequestParam("soId") String soId) {
+        return soB2cService.updateTikTokOrderWarehouse(soId);
+    }
+
     /**
      * 查询合并来源关系
      *
@@ -645,7 +650,7 @@ public class SoB2cFeignController extends BaseController {
      */
     @GetMapping("/updateLogisticsBySoId")
     public void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo) {
-        soB2cLogisticsService.updateLogisticsBySoId(soId, trackNo);
+        soB2cLogisticsService.updateLogisticsBySoId(soId, trackNo, Boolean.TRUE);
     }
 
     /**
@@ -661,6 +666,25 @@ public class SoB2cFeignController extends BaseController {
                                                @RequestParam("sourceType") String sourceType
     ){
         return soB2cService.getByPlatformCodeList(platformCodeList, dictPlatform, shopId, sourceType);
+    }
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @GetMapping("/getSoB2cByPlatformCode")
+    public List<SoB2cEntity> getSoB2cByPlatformCode(@RequestParam("platformCode") String platformCode){
+        return soB2cService.getByPlatformCode(platformCode);
+    }
+
+    /**
+     * 根据第三方仓发货订单id查询B2C销售订单
+     */
+    @GetMapping("/getByShippingOrderNo")
+    public List<SoB2cEntity> getByShippingOrderNo(@RequestParam("shippingOrderNo") String shippingOrderNo){
+        return soB2cService.getByShippingOrderNo(shippingOrderNo);
     }
 
     /**

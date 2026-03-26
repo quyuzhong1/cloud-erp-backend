@@ -39,6 +39,10 @@ public class PlatformRefundOrderDTO extends UniqueDto {
      */
     private String dictPlatform;
     /**
+     * 店铺ID
+     */
+    private String shopId;
+    /**
      * 币别
      */
     private String currency;

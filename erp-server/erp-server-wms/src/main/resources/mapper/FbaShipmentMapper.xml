@@ -14,6 +14,9 @@
         fs.country_name AS countryName,
         fs.fulfillment_center AS fulfillmentCenter,
         fs.delivery_status AS deliveryStatus,
+        fs.source_type AS sourceType,
+        fse.carrier_name AS carrierName,
+        fse.tracking_no AS trackingNo,
         (SELECT fd.code FROM first_mile_delivery fd
                         INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
                         WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
@@ -32,6 +35,7 @@
         fs.is_sta as isSta
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        LEFT JOIN fba_shipment_extend fse ON fse.main_id = fs.id AND fse.is_deleted = FALSE
         WHERE
         fs.is_deleted = FALSE
         <if test="params.sourceType != null and params.sourceType != ''">
@@ -124,6 +128,9 @@
         fs.country_name AS countryName,
         fs.fulfillment_center AS fulfillmentCenter,
         fs.delivery_status AS deliveryStatus,
+        fs.source_type AS sourceType,
+        fse.carrier_name AS carrierName,
+        fse.tracking_no AS trackingNo,
         (SELECT fd.code FROM first_mile_delivery fd
         INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
         WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
@@ -141,6 +148,7 @@
         fs.is_packing_download as isPackingDownload
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        LEFT JOIN fba_shipment_extend fse ON fse.main_id = fs.id AND fse.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         and fs.is_deleted = FALSE

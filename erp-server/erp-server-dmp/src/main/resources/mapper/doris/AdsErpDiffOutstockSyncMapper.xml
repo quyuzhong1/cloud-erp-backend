@@ -185,4 +185,14 @@
             #{item.checkMonth}
         </foreach>
     </update>
+
+    <update id="updateSuggestType">
+        update ads_erp_diff_outstock_sync t
+        set suggest_type = #{params.suggestType},
+            update_time = now()
+        where t.id = #{params.id}
+        <if test="params.conditionSql!=null and params.conditionSql!=''">
+            and  #{params.conditionSql}
+        </if>
+    </update>
 </mapper>

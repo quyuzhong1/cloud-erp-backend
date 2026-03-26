@@ -32,4 +32,8 @@ public class ThirdWarehouseCancelFbaOutboundReq extends ThirdWarehouseAuth{
     private String sourceCode;
     private String soCode;
 
+    /**
+     * 取消原因
+     */
+    private String remark;
 }

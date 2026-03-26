@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -205,6 +206,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         return this.saveBatch(list);
     }
 
+    @DS("postgres")
     @Override
     public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String msg) {
         return this.addModuleOperateLogByObj(oldObj, newObj, moduleType, businessId, null, msg);
