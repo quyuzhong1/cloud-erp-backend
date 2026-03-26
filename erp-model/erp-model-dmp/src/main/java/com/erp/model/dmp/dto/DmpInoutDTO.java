@@ -124,7 +124,8 @@ public class DmpInoutDTO implements Serializable {
         private String billType;
 
         /**
-         * 执行系统
+         * 执行系统:默认:dmp
+         * /api/dmp/common/enumDropDown?type=DmpCfgInputExecSystem
          */
         private String execSystem;
     }
