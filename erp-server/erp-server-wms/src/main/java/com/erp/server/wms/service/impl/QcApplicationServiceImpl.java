@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
@@ -46,6 +47,7 @@ import com.erp.server.wms.mapper.QcApplicationMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -667,6 +669,21 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class, supplierIdList);
        Map<String, String> supplierNameMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName));
 
+       //最新审核人
+       ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+       list.forEach(obj -> {
+           dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.QC_APPLICATION.getCode(), obj.getId()));
+       });
+       ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+       if (CollectionUtils.isNotEmpty(dtoList)) {
+           listApiResult = workflowFeign.curApprover(dtoList);
+           Integer code = listApiResult.getCode();
+           if (200 != code) {
+               throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+           }
+       }
+
+
        // 属性赋值
         for(QcApplicationDTO.ListDTO data : list) {
             //审核状态名称
@@ -685,6 +702,11 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             // 供应商名称
             data.setSupplierName(supplierNameMap.get(data.getSupplierId()));
 
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
+            }
         }
    }
 }

@@ -42,6 +42,7 @@
         qa.source_type as sourceType,
       qa.approve_status as approveStatus,
       qa.approve_user_id as approveUserId,
+      qa.approve_user_name as approveUserName,
       qa.approve_time as approveTime,
       qa.qc_type as qcType,
       qa.warehouse_id as warehouseId,
