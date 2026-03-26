@@ -93,7 +93,7 @@
 	           ${item.field} ${item.sort}
 	       </foreach>
 	    </if>
-        t.check_month_query desc
+        t.check_month_query,t.id desc
     </select>
     
     <select id="total" resultType="com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO$TotalDTO">
