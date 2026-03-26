@@ -339,7 +339,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "orderType", ignore = true),
             @Mapping(target = "palletQty", ignore = true),
             @Mapping(target = "returnContainerDate", ignore = true),
-            @Mapping(target = "shelfMode", ignore = true),
+            @Mapping(target = "shelfMode", constant = "2"),
             @Mapping(target = "stockType", ignore = true),
             @Mapping(target = "unloadType", ignore = true)
     })
