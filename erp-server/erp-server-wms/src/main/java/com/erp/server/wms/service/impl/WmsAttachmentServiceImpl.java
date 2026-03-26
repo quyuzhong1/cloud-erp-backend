@@ -18,7 +18,6 @@ import com.erp.model.wms.enums.WmsFileTypeEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.QcStandardService;
@@ -270,7 +269,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
         }
         if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(entity.getType())){
             //新增质检标准
-            qcStandardService.importFile(entity.getAttachUrl());
+            qcStandardService.genQcStandardByUrl(entity.getAttachUrl());
         }
         return entity.getId();
     }

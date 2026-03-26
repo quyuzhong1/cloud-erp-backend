@@ -565,10 +565,63 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void importFile(String fileUrl) {
+    public List<String> listSkuNoByUrl(String fileUrl) {
         if (StringUtils.isBlank(fileUrl)) {
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "导入文件URL");
+        }
+
+        List<String> skus = new ArrayList<>();
+        try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
+            Workbook workbook = WorkbookFactory.create(inputStream);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            //  提取 SKU  (前15行遍历查找关键字)
+            String skuStr = "";
+            for (int i = 2; i < 4; i++) { // 优化查找范围
+                Row row = sheet.getRow(i);
+                if (row == null)
+                    continue;
+                for (int j = 0; j < 10; j++) {
+                    Cell cell = row.getCell(j);
+                    if (cell == null)
+                        continue;
+                    String val = cell.toString().trim();
+                    if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
+                        Cell valCell = row.getCell(j + 1);
+                        if (valCell != null)
+                            skuStr = valCell.toString().trim();
+                        break;
+                    }
+                }
+                if (StringUtils.isNotBlank(skuStr))
+                    break;
+            }
+
+            if (StringUtils.isBlank(skuStr)) {
+                throw new ServiceException(ApiError.QC_STANDARD_IMPORT_SKU_NOT_FOUND);
+            }
+
+            String[] split = skuStr.split("[,，]");
+            for (String s : split) {
+                if (StringUtils.isNotBlank(s))
+                    skus.add(s.trim());
+            }
+        } catch (Exception e) {
+            log.error("质检报告解析SKU失败", e);
+            throw new ServiceException("质检报告解析SKU失败：" + e.getMessage());
+        }
+        return skus;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void genQcStandardByUrl(List<String> skuNos, String fileUrl) {
+        if (StringUtils.isBlank(fileUrl)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "导入文件URL");
+        }
+
+        if(CollUtil.isEmpty(skuNos)){
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "SKU");
         }
 
         try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
@@ -663,6 +716,11 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             List<ProductDetailEntity> skuVOList = plmTaskFeign.listBySkuNos(skus);
 
             for (ProductDetailEntity productDetailEntity : skuVOList) {
+                //判断本次该SKU是否需要生成质检标准
+                if(!skuNos.contains(productDetailEntity.getSkuNo())){
+                    continue;
+                }
+
                 String skuId = productDetailEntity.getId();
 
                 QcStandardDTO.AddDTO addDTO = new QcStandardDTO.AddDTO();
