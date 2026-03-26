@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.python.antlr.ast.Str;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -886,6 +887,7 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class QcInspectItemAddDTO{
 
+        private String id;
         /**
          * 质检项目
          */
@@ -901,13 +903,14 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class QcImageAddDTO{
 
+        private String id;
         /**
          * 图片类型
          */
         private String imageType;
 
         /**
-         *
+         * 图片url
          */
         private String imageUrl;
     }

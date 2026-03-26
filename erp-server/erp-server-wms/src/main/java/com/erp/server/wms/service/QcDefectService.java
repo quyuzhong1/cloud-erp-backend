@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.QcDefectDTO;
+import com.erp.model.wms.dto.QcRemarkDTO;
 import com.erp.model.wms.entity.QcDefectEntity;
 import com.common.business.service.SuperService;
 
@@ -17,4 +18,7 @@ public interface QcDefectService extends SuperService<QcDefectEntity> {
 
     void add(String billId, List<QcDefectDTO.AddDTO> qcDefectList);
 
+    List<QcDefectDTO.ViewDTO> getByMainId(String id);
+
+    void removeByMainIds(List<String> ids);
 }

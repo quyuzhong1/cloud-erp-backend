@@ -412,6 +412,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcRemarkDTO.AddDTO> remarkList = qcRemarkService.getByMainId(id);
         view.setRemarkList(remarkList);
 
+        //不良信息
+        List<QcDefectDTO.ViewDTO> defectList = qcDefectService.getByMainId(id);
+        view.setQcDefectList(defectList);
         return view;
     }
 
@@ -1015,6 +1018,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcReportDetailService.add(billId, dto.getReportDetailList());
             //质检备注暂存
             qcRemarkService.add(billId, dto.getRemarkList());
+            //不良信息
+            qcDefectService.add(billId,dto.getQcDefectList());
+            //质检标准
+            qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
 
             //操作日志
             if (Objects.isNull(qc)) {
@@ -1345,6 +1352,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcRemarkService.removeByMainIds(ids);
         qcReportDetailService.removeByMainIds(ids);
         qcProductService.removeByMainIds(ids);
+        //不良信息
+        qcDefectService.removeByMainIds(ids);
+        //质检标准
+        qcSamplingPlanRefService.removeByMainIds(ids);
         if (result){
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         } else {
