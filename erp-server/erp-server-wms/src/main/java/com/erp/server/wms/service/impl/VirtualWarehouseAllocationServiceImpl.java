@@ -456,6 +456,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //生成平台取消分货同步单
             virtualWarehousePushHandleService.cancelAllocationPush(allocationEntity);
 
+            //异步触发库存比对任务
+            service.asyncCompareInventory(allocationEntity, detailEntityList);
+
             //调拨分货生成直接调拨单
             List<String> transferIdList = generateDirectTransferInfo(allocationEntity, detailEntityList, warehouseMap);
 
