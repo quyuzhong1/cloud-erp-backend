@@ -2377,7 +2377,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         List<Item> items = JSONArray.parseArray(requestList.get(0), Item.class);
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        //更新listing表数据
         List<ListingInfoEntity> listingUpdateList = new ArrayList<>();
+        //新增listing表数据
+        List<ListingInfoEntity> listingAddList = new ArrayList<>();
+
         for (String platformSkuNo : paramDTO.getPlatformSkuNoList()) {
             Item item = items.stream().filter(obj -> CharSequenceUtil.equals(obj.getSku(), platformSkuNo)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(item)) {
@@ -2394,18 +2398,28 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String asin = summary.getAsin();
             String fnSku = summary.getFnSku();
             String itemName = summary.getItemName();
-            mappingList.stream().filter(obj ->CharSequenceUtil.equals(obj.getPlatformSkuNo(), platformSkuNo))
-                    .findFirst()
-                    .ifPresent(mapping -> {
-                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
-                        listingInfoEntity.setId(mapping.getListingId());
-                        listingInfoEntity.setPlatformSkuNo(platformSkuNo);
-                        listingInfoEntity.setPlatformSpuName(itemName);
-                        listingInfoEntity.setPlatformSpuNo(asin);
-                        listingInfoEntity.setPlatformFnSku(fnSku);
-                        listingUpdateList.add(listingInfoEntity);
-                        resultDTOList.add(BatchResultDTO.success(paramDTO.getShopId(),platformSkuNo,"商品同步成功"));
-                    });
+
+            SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = mappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSkuNo(), platformSkuNo)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(mappingSkuViewDTO)) {
+                ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                listingInfoEntity.setPlatformSkuNo(platformSkuNo);
+                listingInfoEntity.setPlatformSpuName(itemName);
+                listingInfoEntity.setPlatformSpuNo(asin);
+                listingInfoEntity.setPlatformFnSku(fnSku);
+                listingInfoEntity.setPlatform(paramDTO.getPlatform());
+                listingInfoEntity.setMatchResult(ListingMatchResultEnum.FALSE.getCode());
+
+            } else {
+                ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                listingInfoEntity.setId(mappingSkuViewDTO.getListingId());
+                listingInfoEntity.setPlatformSkuNo(platformSkuNo);
+                listingInfoEntity.setPlatformSpuName(itemName);
+                listingInfoEntity.setPlatformSpuNo(asin);
+                listingInfoEntity.setPlatformFnSku(fnSku);
+                listingUpdateList.add(listingInfoEntity);
+                resultDTOList.add(BatchResultDTO.success(paramDTO.getShopId(),platformSkuNo,"商品同步成功"));
+                continue;
+            }
         }
         listingInfoService.updateBatchById(listingUpdateList);
         return resultDTOList;
