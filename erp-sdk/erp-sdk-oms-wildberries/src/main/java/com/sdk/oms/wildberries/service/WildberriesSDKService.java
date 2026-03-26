@@ -2,9 +2,11 @@ package com.sdk.oms.wildberries.service;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.wildberries.constant.WildberriesConstant;
@@ -12,9 +14,7 @@ import com.sdk.oms.wildberries.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author zdy
@@ -28,7 +28,7 @@ import java.util.Map;
 public class WildberriesSDKService {
 
     private String getSandbox(){
-        if (BusinessCommonConstants.hasProfile("prod")) {
+        if (BusinessCommonConstants.hasProfile("prod") ) {
             return CharSequenceUtil.EMPTY;
         } else {
             return "-sandbox";
@@ -317,16 +317,40 @@ public class WildberriesSDKService {
     public AddOrderToSupplyResponse addOrderToSupply(String token, AddOrderToSupplyRequest request) throws InterruptedException {
         Thread.sleep(1000);
         log.error("接口请求：{}", JSONUtil.toJsonStr(request));
-        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_ADD_ORDER_TO_SUPPLY,getSandbox(),request.getSupplyId(),request.getOrderId());
-        String bodyStr = HttpRequest.patch(url)
+        Map<String,Object> body = new HashMap<>();
+        body.put("orders", Collections.singletonList(request.getOrderId()));
+        String url = CharSequenceUtil.format(WildberriesConstant.PATCH_ADD_ORDER_TO_SUPPLY,getSandbox(),request.getSupplyId());
+        HttpResponse httpResponse = HttpRequest.patch(url)
                 .header("Authorization", token)
                 .header("Content-Type", "application/json")
                 .header("locale", "zh")
-                .execute().body();
-        log.error("接口返回：{}", bodyStr);
-        AddOrderToSupplyResponse response = JSON.parseObject(JSONUtil.toJsonStr(bodyStr),new TypeReference<AddOrderToSupplyResponse>() {}.getType());
-        return response;
+                .body(JSONUtil.toJsonStr(body))
+                .execute();
+        // 检查响应状态
+        String bodyStr = httpResponse.body();
+        log.error(" addOrderToSupply  响应头: {},HTTP状态码: {},接口返回：'{}",  httpResponse.headers(),httpResponse.getStatus(),bodyStr);
+        if(StringUtils.isBlank(bodyStr)){
+            int status = httpResponse.getStatus();
+            if(204 == status) {
+                AddOrderToSupplyResponse response = new AddOrderToSupplyResponse();
+                response.setCode("204");
+                response.setMessage("添加订单到组包成功");
+                return response;
+            }
+        }
+
+        List<AddOrderToSupplyResponse> response = JSON.parseObject(
+                bodyStr,  // 假设 bodyStr 已经是 JSON 字符串
+                new TypeReference<List<AddOrderToSupplyResponse>>() {}
+        );
+        if(response != null && !response.isEmpty()){
+            return response.get(0);
+        }else{
+            return null;
+        }
     }
+
+
     public String getSupplyOrders(String token, String supplyId) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(supplyId));
         String url = CharSequenceUtil.format(WildberriesConstant.GET_SUPPLY_ORDER,WildberriesConstant.SANDBOX_STR,supplyId);

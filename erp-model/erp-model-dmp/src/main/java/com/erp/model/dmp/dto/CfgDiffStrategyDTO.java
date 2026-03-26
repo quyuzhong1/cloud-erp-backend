@@ -368,5 +368,18 @@ public class CfgDiffStrategyDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListByBillTypeDTO {
+        private String id;
+        private String typeName;
+        private String diffTag;
+        private String conditionSql;
+        private String suggestType;
+    }
+
 
 }

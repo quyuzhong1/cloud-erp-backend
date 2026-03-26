@@ -183,10 +183,12 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @Transactional(rollbackFor = Exception.class)
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         List<OverseasProviderEntity> overseasProviderEntityList = this.list();
-        if(overseasProviderEntityList.stream().filter(v->v.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())).anyMatch(v->v.getAuthJson().equals(dto.getAuthJson()))){
+        if(overseasProviderEntityList.stream()
+                .filter(v -> AuthStatusEnum.ALREADY.getCode().equals(v.getAuthStatus()))
+                .anyMatch(v -> Objects.equals(v.getAuthJson(), dto.getAuthJson()))){
             throw new ServiceException("相同授权信息已授权，无法重复授权");
         }
-        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(getPlatFormCodeById(dto.getId()));
+        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandlerByAuthId(dto.getId());
         boolean result = thirdWarehouseService.authorize(dto);
         if(result){
             OverseasProviderEntity entity = this.getById(dto.getId());
@@ -388,7 +390,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             return Collections.emptyList();
         }
         List<ShippingCalculationDTO.ListDTO> listDTOList = new ArrayList<>();
-        ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(platform);
+        ThirdWarehouseService service = thirdWarehouseRegistry.getHandlerByAuthId(providerWarehouseEntity.getMainId());
         List<Future<List<ShippingCalculationDTO.ListDTO>>> futureList = new ArrayList<>();
         for (ThirdWarehouseCalculateFeeReq calculateFeeReq : list){
             Future<List<ShippingCalculationDTO.ListDTO>> future = thirdWarehouseExecutorPool.submit(() -> {
@@ -465,7 +467,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     public OverseasProviderEntity refreshToken(OverseasProviderEntity entity) {
-        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(entity.getCode());
+        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandlerByAuthId(entity.getId());
         Map<String,Object> authMap = entity.getAuthJson();
         ApiResult<String> result = thirdWarehouseService.refreshToken(entity.getId(),authMap);
         if(result.isSuccess()) {

@@ -6,10 +6,10 @@
         SELECT sdu.id AS flagId,sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         sdu.lead_state,sui.user_state,sd.name AS departmentName
         FROM sys_department_user sdu
-        INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid
-        INNER JOIN sys_department sd ON sd.id=sdu.department_id
+        INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid and sui.is_deleted = false
+        INNER JOIN sys_department sd ON sd.id=sdu.department_id and sd.is_deleted = false
         WHERE ${params.sqlMap.default}
-        and sui.is_deleted = false
+        and sdu.is_deleted = false
         <if test="departmentIds !=null  and  departmentIds.size>0">
           AND  sdu.department_id IN
             <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
@@ -35,9 +35,9 @@
         sui.user_name,
         sd.code
         FROM sys_department_user sdu
-        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
-        INNER JOIN sys_department sd ON sdu.department_id = sd.id
-        WHERE sui.is_deleted = false
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid and sui.is_deleted = false
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id and sd.is_deleted = false
+        WHERE sdu.is_deleted = false
     </select>
     <select id="listSuperiorByUserId" resultType="com.erp.model.sys.dto.UserSuperiorDTO">
         SELECT
@@ -56,14 +56,15 @@
             WITH RECURSIVE department_tree AS (
             SELECT id, name, remark, create_time, update_time, parent_id, type, 1 AS level
             FROM sys_department
-            WHERE id = (SELECT department_id from sys_department_user where user_id = #{userId} limit 1)   -- Replace with the desired department ID
+            WHERE is_deleted = false and id = (SELECT department_id from sys_department_user where is_deleted = false and user_id = #{userId} limit 1)   -- Replace with the desired department ID
             UNION ALL
             SELECT d.id, d.name, d.remark, d.create_time, d.update_time, d.parent_id, d.type, dt.level + 1
             FROM sys_department d JOIN department_tree dt ON d.id = dt.parent_id
+            where d.is_deleted = false
             )
             SELECT * FROM department_tree
             ) AS dept
-        LEFT JOIN sys_department_user sdu on dept.id = sdu.department_id and sdu.lead_state = 1
+        LEFT JOIN sys_department_user sdu on dept.id = sdu.department_id and sdu.lead_state = 1 and sdu.is_deleted = false
         LEFT JOIN sys_user_info sui on sdu.user_id = sui.uid
         where sui.is_deleted = false
     </select>
@@ -76,9 +77,9 @@
         sui.user_name,
         sd.code
         FROM sys_department_user sdu
-        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
-        INNER JOIN sys_department sd ON sdu.department_id = sd.id
-        WHERE sui.is_deleted = false
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid and sui.is_deleted = false
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id and sd.is_deleted = false
+        WHERE sdu.is_deleted = false
         AND sdu.user_id = #{userId}
         LIMIT 1
     </select>
@@ -91,8 +92,8 @@
         sui.user_name,
         sd.code
         FROM sys_department_user sdu
-        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
-        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid and sui.is_deleted = false
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id and sd.is_deleted = false
         WHERE sui.is_deleted = false
         AND sdu.user_id = #{userId}
         AND (sd.disabled IS NULL OR sd.disabled = false)
@@ -107,7 +108,7 @@
             sui.mobile
          FROM sys_user_info sui
          INNER JOIN sys_department_user sdu
-         ON sdu.user_id = sui.uid
+         ON sdu.user_id = sui.uid  and sdu.is_deleted = false
          WHERE sui.is_deleted = false
          AND sdu.department_id = #{deptId}
 
@@ -123,8 +124,8 @@
         sui.head_icon AS userHeadIcon,
         sd.parent_id AS deptPid
         FROM sys_user_info sui
-        LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
-        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid and sdu.is_deleted = false
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id and sd.is_deleted = false
         WHERE sui.is_deleted = false
         <if test="userIdList!=null and userIdList.size>0">
             AND sui.uid IN
@@ -146,8 +147,8 @@
         sui.head_icon AS userHeadIcon,
         sd.parent_id AS deptPid
         FROM sys_user_info sui
-        INNER JOIN sys_department_user sdu ON sdu.user_id = sui.uid
-        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        INNER JOIN sys_department_user sdu ON sdu.user_id = sui.uid and sdu.is_deleted = false
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id and sd.is_deleted = false
         WHERE sui.is_deleted = false
         <if test="deptIdList!=null and deptIdList.size>0">
             AND sd.id IN

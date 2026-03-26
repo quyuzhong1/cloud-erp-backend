@@ -44,6 +44,10 @@ public class PlatformReturnOrderDTO extends UniqueDto {
      */
     private String batchNo;
     /**
+     * 退货物流单号
+     */
+    private String trackingNumber;
+    /**
      * 明细
      */
     private List<PlatformReturnOrderDTO.Detail> detailList;

@@ -319,12 +319,12 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:cancel",
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.CancelDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = overseasWarehouseInboundService.cancel(id);
+                submit = overseasWarehouseInboundService.cancel(id, dto.getRemark());
             } catch (Exception e) {
                 log.error("海外仓入库单 取消失败", e);
                 OverseasWarehouseInboundEntity entity = overseasWarehouseInboundService.getById(id);

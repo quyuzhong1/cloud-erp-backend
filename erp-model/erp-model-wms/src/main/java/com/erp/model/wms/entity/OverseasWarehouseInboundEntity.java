@@ -3,11 +3,13 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -297,6 +299,11 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
 
     @TableField(exist = false)
     private String fileName;
+    /**
+     * 附件列表
+     */
+    @TableField(exist = false)
+    private List<WmsAttachmentDTO.UpdateDTO> attachmentList;
 
     public static final String DICT_PLATFORM = "dict_platform";
 

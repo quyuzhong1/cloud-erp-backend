@@ -199,6 +199,12 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     @TableField("other_cost")
     private BigDecimal otherCost = BigDecimal.ZERO;
 
+    /**
+     * 旺店通寄样费用匹配键，落表时不保存
+     */
+    @TableField(exist = false)
+    private String matchSourceCode;
+
 
     public static final String SOURCE_ID = "source_id";
 

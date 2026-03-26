@@ -7,8 +7,6 @@ import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
-import com.erp.model.wms.entity.SoOutstockEntity;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -111,10 +109,15 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
 
     void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
 
+    void handleZhongBaoResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
+
     List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds);
 
     void submitApprove(String soOutstockId);
 
     void createFbaOutbound(ThirdWarehouseCreateFbaOutboundReq req);
     void cancelFbaOutbound(ThirdWarehouseCancelFbaOutboundReq req);
+
+    List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO> listWarehouseOperationDescription(B2bThirdDeliveryDTO.ThirdWarehousePlatformDTO thirdWarehousePlatformDTO);
+
 }

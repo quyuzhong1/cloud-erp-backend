@@ -2,48 +2,23 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.dmp.entity.ThirdWarehouseEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.*;
-import com.sdk.oms.temu.dto.TemuLogisticShipmentDTO;
-import com.sdk.oms.temu.dto.TemuOrderDTO;
-import com.sdk.oms.temu.dto.TemuOrderReq;
-import com.sdk.oms.temu.dto.TemuResp;
-import com.sdk.oms.temu.service.TemuClient;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.Resource;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -154,6 +129,7 @@ public class RetryThirdWarehouseDeliveryJob {
                 queryOutboundReq.setErpOrderCodeList(subList);
                 queryOutboundReq.setAuthId(mainId);
                 queryOutboundReq.setThirdWarehouseProvideCode(viewDTOS.get(0).getProviderCode());
+                XxlJobHelper.log("erp订单号 : {},第三方仓授权Id : {},第三方仓服务商编码 : {}",String.join(",",subList),mainId,viewDTOS.get(0).getProviderCode());
                 ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(viewDTOS.get(0).getProviderCode());
                 ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, mainId);
                 //处理返回结果

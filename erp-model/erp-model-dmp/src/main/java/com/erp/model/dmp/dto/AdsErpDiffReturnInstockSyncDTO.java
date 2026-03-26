@@ -2,7 +2,6 @@ package com.erp.model.dmp.dto;
 
 import java.util.Date;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.PagingParamDTO;
 
 import java.util.List;
 import lombok.Data;
@@ -10,10 +9,10 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -140,6 +139,10 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+
+        private List<String> ids;
+
+        private String type;
 
      }
 
@@ -309,7 +312,7 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
         /**
         * 差异数量
         */
-        private String diffQty;
+        private Integer diffQty;
 
         /**
         * 差异标签
@@ -973,6 +976,234 @@ public class AdsErpDiffReturnInstockSyncDTO implements Serializable {
         * 执行完成时间
         */
         private Date finishTime;
+
+
+    }
+
+    /**
+     * 溯源列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SourcePlatformDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 出库单号
+         */
+        private String outstockCode;
+
+        /**
+         * ERP下单单号
+         */
+        private String soDeliveryCode;
+
+        /**
+         * 平台原始订单号
+         */
+        private String platformOrderCode;
+
+        /**
+         * ERP销售单号
+         */
+        private String soCode;
+        /**
+         * 销售平台
+         */
+        private String salesPlatform;
+
+        /**
+         * 销售平台名称
+         */
+        private String salesPlatformName;
+
+        /**
+         * ERP销售平台
+         */
+        private String erpSalesPlatform;
+        /**
+         * ERP销售平台名称
+         */
+        private String erpSalesPlatformName;
+        /**
+         * ERP店铺ID
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 单据日期
+         */
+        private String platformBillDate;
+
+        /**
+         * 出库仓库
+         */
+        private String platformWarehouse;
+        /**
+         * 出库仓库名称
+         */
+        private String platformWarehouseName;
+        /**
+         * 仓库id
+         */
+        private String erpWarehouseId;
+        /**
+         * 仓库名称
+         */
+        private String erpWarehouseName;
+
+        /**
+         * 平台单据状态
+         */
+        private String platformBillStatus;
+        /**
+         * 平台单据状态名称
+         */
+        private String platformBillStatusName;
+        /**
+         * 平台单据状态
+         */
+        private String erpBillStatus;
+        /**
+         * 标准单据状态名称
+         */
+        private String erpBillStatusName;
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 库存SKU
+         */
+        private String stockSku;
+
+        /**
+         * ERP_SKU_ID
+         */
+        private String skuId;
+
+        /**
+         * ERP_SKU
+         */
+        private String skuNo;
+
+        /**
+         * 出库数量
+         */
+        private Integer outstockQty;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformProductName;
+        /**
+         * 产品名称
+         */
+        private String productName;
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateParamsDTO {
+        /**
+         * sku明细
+         */
+        private List< @Valid PlateformReturnInstockNotExistRelationDTO> list;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpReturnInstockParamsDTO {
+
+        @NotBlank(message = "核对仓库不能为空")
+        private String sourceSystemName;
+
+        @NotBlank(message = "核对周期不能为空")
+        private String checkMonth;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpReturnInstockResultDTO {
+
+        /**
+         *销售出库单号
+         */
+        private String returnInstockCode;
+        /**
+         *sku明细
+         */
+        private List<ErpReturnInstockResultDetailDTO> skuList;
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ErpReturnInstockResultDetailDTO {
+        /**
+         * detailId
+         */
+        private String detailId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PlateformReturnInstockNotExistRelationDTO {
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * 平台入库单号
+         */
+        private String platformReturnInstockCode;
+        /**
+         * 原始单号
+         */
+        private String platformOrderCode;
+        /**
+         * 库存SKU
+         */
+        private String stockSku;
+
+        /**
+         *入库单号
+         */
+        private String returnInstockCode;
+
+        /**
+         * detailId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String detailId;
 
 
     }

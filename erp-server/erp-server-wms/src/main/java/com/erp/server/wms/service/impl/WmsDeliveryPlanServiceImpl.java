@@ -138,6 +138,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(WmsDeliveryPlanDTO.AddDTO addDTO) {
+        refreshDeliveryPlanFnSku(addDTO);
         WmsDeliveryPlanEntity wmsDeliveryPlanEntity = new WmsDeliveryPlanEntity();
         BeanMapperUtils.copy(addDTO, wmsDeliveryPlanEntity);
 
@@ -179,6 +180,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             throw new ServiceException("发货建议下推的发货计划不支持编辑!");
         }
 
+        refreshDeliveryPlanFnSku(updateDTO);
         WmsDeliveryPlanEntity wmsDeliveryPlanEntity =  BeanMapperUtils.map(WmsDeliveryPlanEntity.class, updateDTO);
 
         // 数据处理
@@ -195,6 +197,32 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDeliveryPlanEntity.getCode(), "发货计划");
         operateLogService.addModuleOperateLogByObj(old, wmsDeliveryPlanEntity, ModuleTypeEnum.DELIVERY_PLAN.getCode(), wmsDeliveryPlanEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private void refreshDeliveryPlanFnSku(WmsDeliveryPlanDTO.AddDTO dto) {
+        refreshDeliveryPlanFnSkuCommon(dto.getType(), dto.getDeliveryType(), dto.getDetailList());
+    }
+
+    private void refreshDeliveryPlanFnSku(WmsDeliveryPlanDTO.UpdateDTO dto) {
+        refreshDeliveryPlanFnSkuCommon(dto.getType(), dto.getDeliveryType(), dto.getDetailList());
+    }
+
+    private <T extends WmsDeliveryPlanDetailDTO.CommonDTO> void refreshDeliveryPlanFnSkuCommon(String type,
+                                                                                               String deliveryType,
+                                                                                               List<T> detailList) {
+        if (!DeliveryPlanTypeEnum.FBT.getCode().equalsIgnoreCase(type)
+                || !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equalsIgnoreCase(deliveryType)
+                || CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        for (T detailDTO : detailList) {
+            if (Objects.isNull(detailDTO) || StringUtils.isNotBlank(detailDTO.getFnSku())) {
+                continue;
+            }
+            detailDTO.setFnSku(StringUtils.defaultIfBlank(detailDTO.getMSKU(),
+                    StringUtils.defaultIfBlank(detailDTO.getPlatformSku(), "")));
+        }
     }
 
 
@@ -225,7 +253,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and (((odp.type = 'fba' or odp.type = 'awd') {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
+        return CharSequenceUtil.format("{} and (((odp.type = 'fba' or odp.type = 'fbt' or odp.type = 'awd') {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -662,6 +690,11 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
+            }else if(DeliveryPlanTypeEnum.FBT.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.FBT.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBT.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
             }else if(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(viewDTO.getDeliveryPlanType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getName());
@@ -1096,7 +1129,14 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             FirstMileDeliveryDTO.AddDTO addDTO = DeliveryPlanConverter.INSTANCE.generateDeliverFDD(value.get(MathUtil.ZERO));
 
             //备货类型
-            addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+            String type = value.get(MathUtil.ZERO).getType();
+            if (DeliveryPlanTypeEnum.FBT.getCode().equals(type)) {
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
+            } else if (DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)) {
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode());
+            } else {
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+            }
             //来源类型
             addDTO.setSourceType(SourceTypeEnum.DELIVERY_PLAN.getCode());
 
@@ -1281,8 +1321,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
             wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
         }
-        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.AWD.getCode().equals(wmsDeliveryPlanEntity.getType())
-                ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
+        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.FBT.getCode().equals(wmsDeliveryPlanEntity.getType())
+                || DeliveryPlanTypeEnum.AWD.getCode().equals(wmsDeliveryPlanEntity.getType())
+                || DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){
                 throw new ServiceException("店铺不能为空");
             }

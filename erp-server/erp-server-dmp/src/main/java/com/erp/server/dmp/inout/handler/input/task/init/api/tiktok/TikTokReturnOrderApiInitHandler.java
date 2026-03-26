@@ -11,7 +11,6 @@ import com.common.core.utils.HttpCommonUtil;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.returnOrder.ReturnDTO;
@@ -82,9 +81,13 @@ public class TikTokReturnOrderApiInitHandler implements DmpInputApiInitHandler {
 
             //请求body，平台用于计算签名
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("return_types", Arrays.asList("RETURN_AND_REFUND", "REPLACEMENT", "REFUND"));
-            bodyMap.put("update_time_ge", dmpInputApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
-            bodyMap.put("update_time_lt", dmpInputApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
+            bodyMap.put("return_types", Arrays.asList("RETURN_AND_REFUND", "REPLACEMENT"));
+            if (dmpInputApiInitRequest.getStartTime() != null) {
+                bodyMap.put("update_time_ge", dmpInputApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
+            }
+            if (dmpInputApiInitRequest.getEndTime() != null) {
+                bodyMap.put("update_time_lt", dmpInputApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
+            }
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
@@ -114,7 +117,6 @@ public class TikTokReturnOrderApiInitHandler implements DmpInputApiInitHandler {
             }
 
             //解析数据
-            ObjectMapper objectMapper = new ObjectMapper();
             ReturnDTO returnDTO = null;
             try {
                 returnDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), ReturnDTO.class);
