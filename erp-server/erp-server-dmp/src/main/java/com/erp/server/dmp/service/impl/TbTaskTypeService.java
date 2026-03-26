@@ -471,6 +471,37 @@ public class TbTaskTypeService {
             dmpCfgInputDetailService.removeByIds(list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         }
 
+        // 中台
+        removeDmpThirdWarehouseTask(overseasProviderEntity, cfgInputIds);
+
+        // restCloud
+        removeRestCloudThirdWarehouseTask(overseasProviderEntity, systemId);
+    }
+
+    private void removeRestCloudThirdWarehouseTask(OverseasProviderEntity overseasProviderEntity, String systemId) {
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery()
+                .eq(DmpCfgOutputEntity::getExecSystem, DmpCfgInputExecSystemEnum.REST_CLOUD.getCode())
+                .in(DmpCfgOutputEntity::getSystemId, systemId)
+                .list();
+        if (CollUtil.isEmpty(outputEntityList)) {
+            return;
+        }
+        List<String> outputIds = outputEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        List<DmpCfgOutputDetailEntity> cfgOutputDetailEntities = dmpCfgOutputDetailService.lambdaQuery()
+                .in(DmpCfgOutputDetailEntity::getMainId, outputIds)
+                .in(DmpCfgOutputDetailEntity::getNextLevelId, overseasProviderEntity.getId())
+                .list();
+
+        if (CollUtil.isNotEmpty(cfgOutputDetailEntities)){
+            cfgOutputDetailEntities.forEach(e -> {e.setDisabled(true);});
+            dmpCfgOutputDetailService.updateBatchById(cfgOutputDetailEntities);
+        }
+
+
+    }
+
+    private void removeDmpThirdWarehouseTask(OverseasProviderEntity overseasProviderEntity, List<String> cfgInputIds) {
         List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, cfgInputIds).list();
         List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollUtil.isEmpty(convertIds)) {
