@@ -294,7 +294,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             List<QcApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (QcApplicationDTO.GeneratePoRefQcApplicationDTO refDTO : value) {
                 //采购订单明细
-                PurchaseOrderDetailEntity purchaseOrderDetailEntity = podList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entry.getKey())).findFirst().orElse(null);
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = podList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), refDTO.getPodId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                     throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
                 }
