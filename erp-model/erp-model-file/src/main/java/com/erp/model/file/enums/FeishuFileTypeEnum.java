@@ -18,6 +18,7 @@ public enum FeishuFileTypeEnum implements EnumMessage {
     DOCX("docx", "飞书文件DOCX"),
     XLSX("sheets", "飞书文件XLSX"),
     WIKI("wiki", "飞书文件WIKI"),
+    BASE("base", "飞书文件多维表格"),
     ;
 
     @EnumValue

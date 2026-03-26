@@ -88,7 +88,7 @@ public class QcStandardDTO {
     @EqualsAndHashCode(callSuper = true)
     public static class AddDTO extends CommonDTO {
 
-        private Boolean isAdd = true;
+        private Boolean isImport = false;
 
         private List<WmsAttachmentEntity> wmsAttachmentEntities;
     }

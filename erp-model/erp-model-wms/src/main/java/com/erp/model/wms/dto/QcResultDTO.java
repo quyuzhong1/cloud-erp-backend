@@ -149,6 +149,12 @@ public class QcResultDTO {
          */
         @StateEnumValue(clazz = QcReCheckResultEnum.class, message = "复检抽检结果有误")
         private String qcSampleResult;
+
+        /**
+         * 批次合格量
+         */
+        @NotBlank(message = "批次合格量不允许为空")
+        private String  lotQualifiedQty;
     }
 
 
