@@ -120,6 +120,14 @@ public interface ExportDmpFeign {
     @PostMapping("/feign/export/exportAdsErpInventoryDetailSelf")
     PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> exportAdsErpInventoryDetailSelf(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/exportAdsErpReceiveFlowDiff")
+    PagingVO<AdsErpReceiveFlowDiffDTO.ListDTO> exportAdsErpReceiveFlowDiff(PagingDTO<AdsErpReceiveFlowDiffDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpReceiveInventoryFlow")
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> exportAdsErpReceiveInventoryFlow(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpReceiveTransfer")
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> exportAdsErpReceiveTransfer(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportDiffOutstockSyncSourcePlatform")
     PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> exportDiffOutstockSyncSourcePlatform(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
 
