@@ -5,11 +5,11 @@ import com.erp.model.sys.dto.SysCommonDTO;
 
 /**
  * @author zdy
- * @ClassName FileTaskService
+ * @ClassName FeiShuFileService
  * @description: TODO
  * @date 2026年03月20日
  * @version: 1.0
  */
-public interface FileTaskService {
+public interface FeiShuFileService {
     SysCommonDTO.AttachmentDTO getFeiShuFile(FileDTO.UploadDTO uploadDTO) throws Exception;
 }

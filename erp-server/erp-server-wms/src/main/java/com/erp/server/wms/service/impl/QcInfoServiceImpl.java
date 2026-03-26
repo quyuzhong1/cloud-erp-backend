@@ -164,6 +164,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private QcReportService qcReportService;
 
+    @Resource
+    private WmsAttachmentService attachmentService;
 
     //收货单
     @Resource
@@ -2851,16 +2853,30 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
 
             //参考图片
-            List<WmsAttachmentEntity> imageAttachment = wmsAttachmentService.lambdaQuery()
+            List<WmsAttachmentEntity> imageAttachment = attachmentService.lambdaQuery()
                     .eq(WmsAttachmentEntity::getBusinessId, qcStandardEntity.getId())
                     .list();
+
             if (!imageAttachment.isEmpty()) {
-                for (WmsAttachmentEntity wmsAttachmentEntity : imageAttachment) {
+                // 按类型分组
+                Map<String, List<WmsAttachmentEntity>> groupedByType = imageAttachment.stream()
+                        .collect(Collectors.groupingBy(WmsAttachmentEntity::getType));
+
+                for (Map.Entry<String, List<WmsAttachmentEntity>> entry : groupedByType.entrySet()) {
+                    String type = entry.getKey();
+                    List<WmsAttachmentEntity> attachmentsOfType = entry.getValue();
+
                     QcInfoDTO.QcImageView qcImageView = new QcInfoDTO.QcImageView();
-                    qcImageView.setImageType(wmsAttachmentEntity.getType());
-                    qcImageView.setImageUrl(wmsAttachmentEntity.getAttachUrl());
+                    qcImageView.setImageType(type);
+
+                    List<String> imageUrlList = attachmentsOfType.stream()
+                            .map(WmsAttachmentEntity::getAttachUrl)
+                            .collect(Collectors.toList());
+                    qcImageView.setImageUrlList(imageUrlList);
+
                     qcImageViews.add(qcImageView);
                 }
+
                 listQcStandardResultDTO.setQcImageViewDTOList(qcImageViews);
             }
         }
