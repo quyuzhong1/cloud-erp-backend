@@ -89,6 +89,7 @@ public class DmpInoutTaskFeignController{
 		dmpOutputTaskRecordService.lambdaUpdate()
 				.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
 				.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
+				.setSql("error_count = COALESCE(error_count, 0) + 1")
 				.in(DmpOutputTaskRecordEntity::getId, dto.getIds())
 				.update();
 
