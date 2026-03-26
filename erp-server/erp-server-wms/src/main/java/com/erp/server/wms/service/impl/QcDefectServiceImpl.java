@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.QcDefectDTO;
 import com.erp.model.wms.entity.QcDefectEntity;
 import com.erp.model.wms.entity.QcProductEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.WmsDefectLevelEnum;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcDefectMapper;
 import com.erp.server.wms.service.QcDefectService;
@@ -145,17 +146,18 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
 
         if (!list.isEmpty()) {
             for (QcDefectEntity qcDefectEntity : list) {
-                QcDefectDTO.ViewDTO addDTO = new QcDefectDTO.ViewDTO();
+                QcDefectDTO.ViewDTO viewDTO = new QcDefectDTO.ViewDTO();
                 List<QcDefectDTO.BadImageView> badImageViews = new ArrayList<>();
-                BeanUtils.copyProperties(qcDefectEntity,addDTO);
+                BeanUtils.copyProperties(qcDefectEntity,viewDTO);
+                viewDTO.setDefectLevelName(WmsDefectLevelEnum.getName(viewDTO.getDefectLevelName()));
                 List<WmsAttachmentEntity> attachments = attachmentService.getByBusinessId(qcDefectEntity.getId(), WmsConstant.BAD);
                 for (WmsAttachmentEntity attachment : attachments) {
                     QcDefectDTO.BadImageView badImageView = new QcDefectDTO.BadImageView();
                     badImageView.setAttachName(attachment.getAttachName());
                     badImageView.setAttachUrl(attachment.getAttachUrl());
                 }
-                addDTO.setBadImageViewList(badImageViews);
-                addDTOS.add(addDTO);
+                viewDTO.setBadImageViewList(badImageViews);
+                addDTOS.add(viewDTO);
             }
         }
         return addDTOS;
