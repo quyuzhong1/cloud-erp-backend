@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.server.file.handler.FileRegistry;
+import com.erp.server.file.repository.IFileTaskRepository;
 import com.erp.server.file.service.FileService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,9 @@ import java.util.UUID;
 public class FileFeignController {
     @Resource
     private FileRegistry fileRegistry;
+
+    @Resource
+    private IFileTaskRepository fileTaskRepository;
 
     /**
      * 上传文件
@@ -35,6 +40,17 @@ public class FileFeignController {
     public String uploadFile(@RequestPart("multipartFile")MultipartFile multipartFile){
         FileService fileService = fileRegistry.getHandler();
         return fileService.uploadFile(multipartFile);
+    }
+
+    @PostMapping(value = "/batchUploadFiles", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public List<String> batchUploadFiles(@RequestPart("multipartFiles") MultipartFile[] multipartFiles){
+        FileService fileService = fileRegistry.getHandler();
+        List<String> filePathList = new ArrayList<>();
+        for (int i = 0; i < multipartFiles.length; i++) {
+            String filePath = fileService.uploadFile(multipartFiles[i]);
+            filePathList.add(filePath);
+        }
+        return filePathList;
     }
 
     @PostMapping("/deleteFile")
@@ -135,5 +151,18 @@ public class FileFeignController {
     public List<FileDTO.FileSizeInfo> getBatchFileSize(@RequestBody List<String> fileUrlList) {
         FileService fileService = fileRegistry.getHandler();
         return fileService.getBatchFileSize(fileUrlList);
+    }
+
+    /**
+     * 查询最新的文件任务信息
+     * @author will 
+     * @date 2026/1/26 11:30
+     * @param fileUrlList 
+     * @return List<FileTaskDTO>
+     */
+    @PostMapping("/listLatestFileTask")
+    public List<FileDTO.FileTaskDTO> listLatestFileTask(@RequestBody List<String> fileUrlList) {
+        FileService fileService = fileRegistry.getHandler();
+        return fileTaskRepository.listLatestFileTask(fileUrlList);
     }
 }

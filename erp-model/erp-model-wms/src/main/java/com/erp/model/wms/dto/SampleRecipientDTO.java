@@ -181,6 +181,11 @@ public class SampleRecipientDTO implements Serializable {
         private String deptId;
 
         /**
+         * 领用部门名称
+         */
+        private String deptName;
+
+        /**
         * 领料组织ID
         */
         private String pickOrgId;

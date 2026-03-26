@@ -59,6 +59,14 @@ public class SkuMappingFeignController extends BaseController {
         return skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
     }
 
+    /**
+     * 更改库存sku 对照
+     */
+    @PostMapping("/updateWarehouseSku")
+    public String updateWarehouseSku(@RequestBody SkuMappingDTO.UpdateWarehouseSkuDTO dto) {
+        return skuMappingService.updateWarehouseSku(dto);
+    }
+
 
     /**
      * 通过条件查询sku映射信息
@@ -109,5 +117,11 @@ public class SkuMappingFeignController extends BaseController {
     @PostMapping("/mapListingByPlatformSkuNo")
     public Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(@RequestBody SkuMappingDTO.PlatformSkuNoParamDTO paramDTO){
         return skuMappingService.mapListingByPlatformSkuNo(paramDTO.getPlatformSkuList(), paramDTO.getPlatformSpuList(), paramDTO.getDictPlatform(), paramDTO.getShopId(), null, null);
+    }
+
+    @PostMapping("/listByWarehouseAndPlatformSku")
+    public List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@RequestParam("warehouseId") String warehouseId,
+                                                                              @RequestBody List<String> platformSkuNoList) {
+        return skuMappingService.listByWarehouseAndPlatformSku(warehouseId, platformSkuNoList);
     }
 }

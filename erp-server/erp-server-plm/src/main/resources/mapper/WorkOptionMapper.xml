@@ -18,10 +18,10 @@
         AND status = #{status}
     </select>
 
-    <select id="getProductChangeNum" resultType="java.lang.Integer">
+    <select id="getBomChangeNum" resultType="java.lang.Integer">
         SELECT
         COUNT(*)
-        FROM product_change
+        FROM bom_change
         where 1=1
         AND state = #{status}
     </select>

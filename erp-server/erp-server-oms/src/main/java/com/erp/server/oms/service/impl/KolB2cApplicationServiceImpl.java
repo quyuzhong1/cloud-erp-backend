@@ -1,17 +1,31 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.MultiErrorExcelData;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -20,6 +34,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -30,6 +45,7 @@ import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -39,51 +55,35 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.oms.listener.KolB2cApplicationAddressExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationDetailExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationExcelListener;
+import com.erp.server.oms.mapper.KolB2cApplicationMapper;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.server.oms.mapper.KolB2cApplicationMapper;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
 
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.stream.Stream;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_B2C_APPLICATION;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_B2C_APPLICATION;
 
 /**
  * <p>
@@ -376,6 +376,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
+        if(old.getInvalidStatus()){
+            throw new ServiceException(ApiError.BILL_VOID_EDIT_FORBIDDEN);
+        }
         handleUpdateData(addOrUpdateDTO);
 
         KolB2cApplicationEntity kolB2cApplicationEntity =  BeanMapperUtils.map(KolB2cApplicationEntity.class, addOrUpdateDTO);
@@ -543,6 +546,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     public PagingVO<KolB2cApplicationDTO.ListDTO> paging(PagingDTO<KolB2cApplicationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        query.setOptimizeCountSql(false);
         IPage<KolB2cApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
@@ -726,6 +730,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException("只有待提交数据支持删除");
         }
+        if (entity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
+        }
 
         //删除明细
         kolB2cApplicationDetailService.lambdaUpdate()
@@ -788,7 +795,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
@@ -807,6 +815,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -958,6 +967,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             receiverDTO.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
             receiverDTO.setReceiverTelNumber(kolB2cApplicationAddressEntity.getReceiverPhone());
             receiverDTO.setPostCode(kolB2cApplicationAddressEntity.getZipCode());
+            receiverDTO.setReceiverTaxNo(kolB2cApplicationAddressEntity.getReceiverTaxNo());
             b2cDto.setReceiverDTO(receiverDTO);
 
             //------------根据生成拆分单明细，以及生成B2C明细------------
@@ -1323,6 +1333,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap,provinceMap,cityMap,districtMap);
 
         List<MultiErrorExcelData> errList = new ArrayList<>();
+        List<KolB2cApplicationDetailImportExcelDTO> detailErrorList = new ArrayList<>();
+        List<KolB2cApplicationAddressImportExcelDTO> addressErrorList = new ArrayList<>();
+        List<KolB2cApplicationImportExcelDTO> errorList = new ArrayList<>();
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
 
@@ -1331,18 +1344,23 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             EasyExcel.read(new ByteArrayInputStream(bytes), KolB2cApplicationAddressImportExcelDTO.class, addressListenerUtil).sheet(2).doRead();
 
             List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList = detailExcelListenerUtil.getSuccessList();
-            List<KolB2cApplicationDetailImportExcelDTO> detailErrorList = detailExcelListenerUtil.getErrorList();
+            detailErrorList = detailExcelListenerUtil.getErrorList();
 
             List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList = addressListenerUtil.getSuccessList();
-            List<KolB2cApplicationAddressImportExcelDTO> addressErrorList = addressListenerUtil.getErrorList();
+            addressErrorList = addressListenerUtil.getErrorList();
 
             List<KolB2cApplicationImportExcelDTO> successList = excelListenerUtil.getSuccessList();
-            List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            errorList = excelListenerUtil.getErrorList();
 
             List<String> errorNoList = errorList.stream().map(KolB2cApplicationImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+            Set<String> allMainNoSet = Stream.concat(successList.stream(), errorList.stream())
+                    .map(KolB2cApplicationImportExcelDTO::getNo)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toSet());
 
             List<KolB2cApplicationDetailImportExcelDTO> error1 = detailSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(error1)){
+                error1.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、主表数据异常；")));
                 detailErrorList.addAll(error1);
 
                 detailSuccessList = detailSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
@@ -1350,9 +1368,29 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
             List<KolB2cApplicationAddressImportExcelDTO> error2 = addressSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(error2)){
+                error2.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、主表数据异常；")));
                 addressErrorList.addAll(error2);
 
                 addressSuccessList = addressSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            // 明细/地址中的序号在sheet1不存在，按错误处理，避免“仅导入地址明细也提示成功”
+            List<KolB2cApplicationDetailImportExcelDTO> detailNoNotExistList = detailSuccessList.stream()
+                    .filter(e -> !allMainNoSet.contains(e.getNo()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(detailNoNotExistList)) {
+                detailNoNotExistList.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、序号在sheet1中不存在；")));
+                detailErrorList.addAll(detailNoNotExistList);
+                detailSuccessList = detailSuccessList.stream().filter(e -> allMainNoSet.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            List<KolB2cApplicationAddressImportExcelDTO> addressNoNotExistList = addressSuccessList.stream()
+                    .filter(e -> !allMainNoSet.contains(e.getNo()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(addressNoNotExistList)) {
+                addressNoNotExistList.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、序号在sheet1中不存在；")));
+                addressErrorList.addAll(addressNoNotExistList);
+                addressSuccessList = addressSuccessList.stream().filter(e -> allMainNoSet.contains(e.getNo())).collect(Collectors.toList());
             }
 
             KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
@@ -1382,7 +1420,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(excelListenerUtil.getCount());
-        List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         MultiErrorExcelData sheet1 = new MultiErrorExcelData();
         sheet1.setSheetName("sheet1");
         sheet1.setSheetNo(0);
@@ -1390,7 +1427,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         sheet1.setDataResult(errorList);
         errList.add(0,sheet1);
         String url = "";
-        if (CollectionUtils.isNotEmpty(errorList)) {
+        int totalErrorCount = errorList.size() + detailErrorList.size() + addressErrorList.size();
+        if (totalErrorCount > 0) {
             String fileName = "B2C寄样申请错误信息.xlsx";
 //            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolB2cApplicationImportExcelDTO.class);
             File file = ExcelUtil.generateTemplateFile(fileName,errList);
@@ -1398,11 +1436,18 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setRemark("处理完成，失败" + totalErrorCount + "条");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    private String appendImportError(String sourceErrorMsg, String appendErrorMsg) {
+        if (StringUtils.isBlank(sourceErrorMsg)) {
+            return appendErrorMsg;
+        }
+        return sourceErrorMsg + appendErrorMsg;
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)

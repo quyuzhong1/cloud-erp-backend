@@ -1,7 +1,5 @@
 package com.erp.server.plm.mapper;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.TaskPagingShowDTO;
 import com.erp.model.plm.dto.TaskSearchParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -16,7 +14,7 @@ public interface WorkOptionMapper {
 
     Integer getProductDetailNum(@Param("params") WorkOptionDTO.MyWorkOptionDTO tableNumDTO, @Param("status") Integer status);
 
-    Integer getProductChangeNum(@Param("params") WorkOptionDTO.MyWorkOptionDTO tableNumDTO, @Param("status") Integer status);
+    Integer getBomChangeNum(@Param("params") WorkOptionDTO.MyWorkOptionDTO tableNumDTO, @Param("status") Integer status);
 
     Integer getProductBomInfoNum(@Param("params") WorkOptionDTO.MyWorkOptionDTO tableNumDTO, @Param("status") Integer status);
 

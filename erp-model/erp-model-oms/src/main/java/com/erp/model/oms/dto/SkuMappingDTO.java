@@ -104,7 +104,7 @@ public class SkuMappingDTO implements Serializable {
         private String warehouseSkuNo;
 
         @NotBlank(message = "库存产品名称不能为空")
-        @Size(max = 200, message = "库存产品名称最大200字符")
+        @Size(max = 255, message = "库存产品名称最大255字符")
         private String warehouseProductName;
 
         @NotBlank(message = "产品sku不能为空")
@@ -443,7 +443,7 @@ public class SkuMappingDTO implements Serializable {
          * 库存产品名称
          */
         @NotBlank(message = "库存产品名称不能为空")
-        @Size(max = 200, message = "库存产品名称最大200字符")
+        @Size(max = 255, message = "库存产品名称最大255字符")
         private String warehouseProductName;
 
 
@@ -848,7 +848,14 @@ public class SkuMappingDTO implements Serializable {
          * id
          */
         private String id;
-
+        /**
+         * 系统创建时间
+         */
+        private LocalDateTime systemCreateTime;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
 
         /**
          * authId
@@ -1390,6 +1397,8 @@ public class SkuMappingDTO implements Serializable {
         private String listingId;
 
         private String id;
+
+        private String warehouseId;
 
         private String authId;
         /**

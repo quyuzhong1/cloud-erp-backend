@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 /**
  * 前端埋点事件记录
@@ -44,6 +45,8 @@ public class SysEventTrackingController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody String data, HttpServletRequest request) {
 //        log.warn("前端埋点事件记录:{}", data);
         SysEventTrackingDTO.AddDTO addDTO = JSONUtil.toBean(JSONUtil.toJsonStr(data), SysEventTrackingDTO.AddDTO.class);
+        HttpSession session = request.getSession();
+        addDTO.setSessionId(null == session ? "" :session.getId());
         return success(sysEventTrackingService.add(addDTO));
     }
 }

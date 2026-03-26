@@ -38,10 +38,7 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
@@ -80,13 +77,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -100,7 +97,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PURCHASE_RETURN_ORDER;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SUPPLIER_PO_RETURN;
 
 /**
  * <p>
@@ -479,12 +475,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setSupplierName(supplierEntity.getName());
             }
         }
-        poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
         if (CharSequenceUtil.isNotBlank(dto.getSupplierContactId())) {
+            poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             if (ObjectUtil.isNotEmpty(supplierContactById)) {
                 poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
             }
+        }else {
+            poReturnEntity.setSupplierContactId("");
+            poReturnEntity.setSupplierContactName("");
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
         //退货组织名称
@@ -3133,6 +3132,166 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         return new PagingVO<>(pageData);
     }
+
+    @Override
+    public PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderView(PurchaseReturnOrderDTO.detailIdsDTO detailIdsDTO) {
+        PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO();
+        List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO> pushDownSubcontractOrderDetailViewDTOS = new ArrayList<>();
+
+        List<String> detailIds = detailIdsDTO.getDetailIds();
+        List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByIds(detailIds);
+        if (poReturnDetailList.isEmpty()) {
+            throw new ServiceException(ApiError.PO_RETURN_DETAIL_NOT_EXISTS);
+        }
+
+        long count = poReturnDetailList.stream().map(item -> item.getMainId()).distinct().count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER);
+        }
+
+        String mainId = poReturnDetailList.get(0).getMainId();
+        PoReturnEntity poReturnEntity = this.getById(mainId);
+        if (Objects.isNull(poReturnEntity)) {
+            throw new ServiceException(ApiError.PO_RETURN_NOT_EXISTS);
+        }
+
+        //委外订单已下推完毕不允许下推
+        Map<String, Integer> sourceIdToQtyMap = null;
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(detailIds);
+        if (!subcontractOrderDetailList.isEmpty()) {
+            sourceIdToQtyMap = subcontractOrderDetailList.stream()
+                    .collect(Collectors.toMap(
+                            SubcontractOrderDetailEntity::getSourceDetailId,
+                            SubcontractOrderDetailEntity::getQty,
+                            Integer::sum
+                    ));
+        }
+
+        //采购订单信息
+        if (StringUtils.isNotBlank(poReturnEntity.getPurchaseOrderId())) {
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(poReturnEntity.getPurchaseOrderId());
+            pushDownSubcontractOrderViewDTO.setDeptId(purchaseOrderEntity.getPurchaseDeptId());
+            pushDownSubcontractOrderViewDTO.setDeptName(purchaseOrderEntity.getPurchaseDeptName());
+            pushDownSubcontractOrderViewDTO.setPurchaserId(purchaseOrderEntity.getPurchaseUserId());
+            pushDownSubcontractOrderViewDTO.setPurchaserName(purchaseOrderEntity.getPurchaseUserName());
+            pushDownSubcontractOrderViewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+            pushDownSubcontractOrderViewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+
+        }
+        //默认返修委外订单
+        pushDownSubcontractOrderViewDTO.setType(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode());
+        pushDownSubcontractOrderViewDTO.setBillDate(LocalDate.now());
+        pushDownSubcontractOrderViewDTO.setSourceId(poReturnEntity.getId());
+        pushDownSubcontractOrderViewDTO.setSourceCode(poReturnEntity.getCode());
+        pushDownSubcontractOrderViewDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+
+        List<String> skuIdList = poReturnDetailList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIdList);
+
+
+        for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
+            PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO pushDownSubcontractOrderDetailViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO();
+            List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO> childPushDownSubcontractOrderDetailViewDTOS = new ArrayList<>();
+            PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO childPushDownSubcontractOrderDetailViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO();
+            //父行信息
+            //sku信息
+            String productName = skuList.stream()
+                    .filter(item -> Objects.equals(item.getId(), poReturnDetailEntity.getSkuId()))
+                    .findFirst()
+                    .map(ProductDetailEntity::getName)
+                    .orElse("");
+            pushDownSubcontractOrderDetailViewDTO.setSkuId(poReturnDetailEntity.getSkuId());
+            pushDownSubcontractOrderDetailViewDTO.setSkuNo(poReturnDetailEntity.getSkuNo());
+            pushDownSubcontractOrderDetailViewDTO.setProductName(productName);
+
+            //供应商信息
+            SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(poReturnEntity.getSupplierId());
+            if (Objects.nonNull(supplierEntity)) {
+                pushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
+                pushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
+                pushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
+                pushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
+            }
+
+            //返修数量 = 采购退货的退货数量 - 委外订单的委外数量
+            //已下推委外订单数量
+            Integer pushQty = 0;
+            Integer repairQty = 0;
+            if (Objects.nonNull(sourceIdToQtyMap)) {
+                pushQty = sourceIdToQtyMap.get(poReturnDetailEntity.getId());
+                repairQty = poReturnDetailEntity.getReturnQty() - pushQty;
+            } else {
+                repairQty = poReturnDetailEntity.getReturnQty();
+            }
+
+
+            if (repairQty <= 0) {
+                throw new ServiceException(ApiError.PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY,poReturnDetailEntity.getSkuNo());
+            }
+            //返修信息
+            pushDownSubcontractOrderDetailViewDTO.setRepairQty(repairQty);
+            pushDownSubcontractOrderDetailViewDTO.setRepairPrice(poReturnDetailEntity.getReturnPrice());
+            pushDownSubcontractOrderDetailViewDTO.setRepairAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),repairQty));
+
+            //采购退货单信息
+            pushDownSubcontractOrderDetailViewDTO.setCurrency(poReturnDetailEntity.getCurrency());
+            pushDownSubcontractOrderDetailViewDTO.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
+            pushDownSubcontractOrderDetailViewDTO.setSourceDetailId(poReturnDetailEntity.getId());
+
+            //子行信息
+            childPushDownSubcontractOrderDetailViewDTO.setSkuId(poReturnDetailEntity.getSkuId());
+            childPushDownSubcontractOrderDetailViewDTO.setSkuNo(poReturnDetailEntity.getSkuNo());
+            childPushDownSubcontractOrderDetailViewDTO.setProductName(productName);
+            if (Objects.nonNull(supplierEntity)) {
+                childPushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
+                childPushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
+                childPushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
+                childPushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
+            }
+
+            childPushDownSubcontractOrderDetailViewDTO.setCurrency(poReturnDetailEntity.getCurrency());
+            childPushDownSubcontractOrderDetailViewDTO.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
+            childPushDownSubcontractOrderDetailViewDTO.setQty(poReturnDetailEntity.getReturnQty());
+            childPushDownSubcontractOrderDetailViewDTO.setDeliveryQty(poReturnDetailEntity.getReturnQty());
+            childPushDownSubcontractOrderDetailViewDTO.setPrice(poReturnDetailEntity.getReturnPrice());
+            childPushDownSubcontractOrderDetailViewDTO.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),poReturnDetailEntity.getReturnQty()));
+            childPushDownSubcontractOrderDetailViewDTO.setSourceDetailId(poReturnDetailEntity.getId());
+
+            //子行
+            childPushDownSubcontractOrderDetailViewDTOS.add(childPushDownSubcontractOrderDetailViewDTO);
+            pushDownSubcontractOrderDetailViewDTO.setChildList(childPushDownSubcontractOrderDetailViewDTOS);
+            //父行
+            pushDownSubcontractOrderDetailViewDTOS.add(pushDownSubcontractOrderDetailViewDTO);
+        }
+
+        pushDownSubcontractOrderViewDTO.setDetailList(pushDownSubcontractOrderDetailViewDTOS);
+        return pushDownSubcontractOrderViewDTO;
+    }
+
+    @Override
+    public Boolean pushDownSubcontractOrder(PurchaseReturnOrderDTO.PushDownSubcontractOrderDTO pushDownSubcontractOrderDTO) {
+        SubcontractOrderDTO.AddDTO addDTO = new SubcontractOrderDTO.AddDTO();
+        List<SubcontractOrderDetailDTO.AddDTO> addDTOS = new ArrayList<>();
+
+        BeanUtils.copyProperties(pushDownSubcontractOrderDTO,addDTO);
+        addDTO.setType(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode());
+        addDTO.setSubcontractOrgId(pushDownSubcontractOrderDTO.getPurchaseOrgId());
+
+        for (PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailDTO pushDownSubcontractOrderDetailDTO : pushDownSubcontractOrderDTO.getDetailList()) {
+            SubcontractOrderDetailDTO.AddDTO dto = new SubcontractOrderDetailDTO.AddDTO();
+            BeanUtils.copyProperties(pushDownSubcontractOrderDetailDTO,dto);
+
+            //子行
+            List<PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailDTO> childList = pushDownSubcontractOrderDetailDTO.getChildList();
+            List<SubcontractOrderDetailDTO.AddDTO> childAddDTOS = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.AddDTO.class, childList);
+            dto.setChildList(childAddDTOS);
+            addDTOS.add(dto);
+        }
+        addDTO.setDetailList(addDTOS);
+
+        return scmTaskFeign.pushDownSubcontractOrder(addDTO);
+    }
+
 
     @Override
     public List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(String poId) {

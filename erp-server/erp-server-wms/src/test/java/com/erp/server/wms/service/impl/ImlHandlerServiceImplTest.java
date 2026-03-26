@@ -3,10 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
@@ -185,14 +182,14 @@ public class ImlHandlerServiceImplTest {
                         .province("newyork")
                         .city("hs")
                         .address1("13")
-                        .zipcode("123456")
+                        .zipCode("123456")
                         .build())
                 .items(Arrays.asList(ThirdWarehouseCreateOutboundReq.Item.builder()
                         .productSku("1764")
                         .quantity(1)
                         .build()))
                 .build();
-        ApiResult<String> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1726457716430561281");
+        ApiResult<ThirdWarehouseQueryOutboundResponse> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1726457716430561281");
         System.out.println(code);
         System.out.println(code.getData());
     }

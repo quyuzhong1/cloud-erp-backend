@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -253,7 +254,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
     }
 
     @Override
-    public PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
+    public PagingVO<OperateLogShowDTO.HistoryDTO> getBomChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
         Page<OperateLogShowDTO.HistoryDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         OperateLogShowDTO.PagingParamDTO params = dto.getParams();
         IPage<OperateLogShowDTO.HistoryDTO> pageData = baseMapper.getProductChangeHistory(query, params);
@@ -429,4 +430,16 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         String result = matcher.replaceAll("");
         return result;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addModuleOperateLog(String content, String moduleType, String businessId, String operation) {
+        OperateLogEntity entity = new OperateLogEntity();
+        entity.setModuleType(moduleType)
+                .setBusinessId(businessId)
+                .setContent(content)
+                .setOperation(operation);
+        return this.save(entity);
+    }
+
 }

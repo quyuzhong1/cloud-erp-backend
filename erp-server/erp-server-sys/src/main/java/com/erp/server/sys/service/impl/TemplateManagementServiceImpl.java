@@ -33,6 +33,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -308,5 +309,22 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Override
     public void exportList(TemplateManagementDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("模板管理导出", EXPORT_SYS_TEMPLATE.getCode(), param);
+    }
+
+    @Override
+    public List<TemplateManagementDTO.TemplateResultDTO> getTemplateByType(TemplateManagementDTO.TemplateParamsDTO dto) {
+        List<TemplateManagementEntity> list = this.lambdaQuery().eq(TemplateManagementEntity::getBizType, dto.getBizType())
+                .eq(TemplateManagementEntity::getType, dto.getType())
+                .eq(TemplateManagementEntity::getDisabled,Boolean.FALSE)
+                .list();
+        List<TemplateManagementDTO.TemplateResultDTO> templateResultDTOS = new ArrayList<>();
+        for (TemplateManagementEntity templateManagementEntity : list) {
+            TemplateManagementDTO.TemplateResultDTO templateResultDTO = new TemplateManagementDTO.TemplateResultDTO();
+            BeanUtils.copyProperties(templateManagementEntity,templateResultDTO);
+            templateResultDTO.setTemplateId(templateManagementEntity.getId());
+            templateResultDTO.setTemplateName(templateManagementEntity.getName());
+            templateResultDTOS.add(templateResultDTO);
+        }
+        return templateResultDTOS;
     }
 }

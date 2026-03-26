@@ -2,6 +2,7 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -27,6 +28,7 @@ import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.server.wms.rocketmq.consumer.handler.PlatformInventoryMessageHandler;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.service.OverseasInventoryAgeDetailService;
 import com.erp.server.wms.service.OverseasInventoryService;
@@ -34,6 +36,7 @@ import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.WarehouseMappingService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -78,6 +82,8 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     private OverseasInventoryAgeDetailService overseasInventoryAgeDetailService;
     @Resource
     private WarehouseMappingService warehouseMappingService;
+    @Autowired(required = false)
+    private List<PlatformInventoryMessageHandler> inventoryMessageHandlers = Collections.emptyList();
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -118,6 +124,18 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<Object> handle(Object ext) {
+        JSONObject jsonObject = JSONUtil.parseObj(ext);
+        if (inventoryMessageHandlers != null && !inventoryMessageHandlers.isEmpty()) {
+            PlatformInventoryMessageHandler matchHandler = inventoryMessageHandlers.stream()
+                    .sorted(Comparator.comparingInt(PlatformInventoryMessageHandler::order))
+                    .filter(handler -> handler.supports(jsonObject))
+                    .findFirst()
+                    .orElse(null);
+            if (matchHandler != null) {
+                return matchHandler.handle(jsonObject);
+            }
+        }
+
         PlatformInventoryDTO dto = JSONUtil.toBean(ext.toString(), PlatformInventoryDTO.class);
         //根据产品条码查询sku
         handleThirdBarcode(dto);

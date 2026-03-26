@@ -46,4 +46,6 @@ public interface CfgDiffStrategyService extends SuperService<CfgDiffStrategyEnti
     void batchOp(CfgDiffStrategyDTO.BatchOpDTO dto);
     
     CfgDiffStrategyDTO.UpdateDTO view(String id);
+
+    List<CfgDiffStrategyDTO.ListByBillTypeDTO> listByBillType(String billType);
 }

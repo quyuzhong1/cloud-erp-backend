@@ -83,7 +83,8 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
                 }
             }
         } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
-        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)) {
+        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)
+        ||DeliveryPlanTypeEnum.FBT.getCode().equals(type)) {
             Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
 
@@ -93,7 +94,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
                             .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
                             .distinct()
                             .collect(Collectors.joining(", "));
-                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                    throw new ServiceException("FBT/速卖通/三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
                 }
             }
         } else {
@@ -149,7 +150,8 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
                 }
             }
         } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
-        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)) {
+        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)
+        ||DeliveryPlanTypeEnum.FBT.getCode().equals(type)) {
             Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
 
@@ -159,7 +161,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
                             .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
                             .distinct()
                             .collect(Collectors.joining(", "));
-                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                    throw new ServiceException("FBT/速卖通/三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
                 }
             }
         } else {

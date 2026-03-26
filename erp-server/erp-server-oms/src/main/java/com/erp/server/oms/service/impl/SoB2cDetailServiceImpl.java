@@ -20,6 +20,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -34,6 +35,7 @@ import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -109,6 +111,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Resource
     private ShopInfoService shopInfoService;
@@ -472,8 +476,27 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
+        boolean isTikTokPlatformWarehouseOrder = Boolean.TRUE.equals(isShipped)
+                && mainEntity.hasPlatformWarehouseOrder()
+                && PlatformDictEnum.TIK_TOK.getCode().equals(mainEntity.getDictPlatform());
+        Map<String, ThirdMappingDTO.ErpWarehouseDTO> tikTokErpWarehouseMap = new HashMap<>();
+        if (isTikTokPlatformWarehouseOrder) {
+            dto.getDetails().stream()
+                    .map(PlatformOrderDetailDTO::getWarehouseId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .forEach(warehouseId -> {
+                        ThirdMappingDTO.ErpWarehouseDTO warehouseDTO =
+                                dmpThirdMappingFeign.resolveErpWarehouseBySourceId(mainEntity.getDictPlatform(), warehouseId);
+                        if (ObjectUtils.isNotEmpty(warehouseDTO) && StringUtils.isNotBlank(warehouseDTO.getWarehouseId())) {
+                            tikTokErpWarehouseMap.put(warehouseId, warehouseDTO);
+                        }
+                    });
+        }
         // 新增或更新列表
         List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
+        boolean finalIsTikTokPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder;
+        Map<String, ThirdMappingDTO.ErpWarehouseDTO> finalTikTokErpWarehouseMap = tikTokErpWarehouseMap;
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
@@ -534,6 +557,18 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     saveOrUpdateEntity.setWarehouseName("");
                     saveOrUpdateEntity.setWarehouseOrgId("");
                     saveOrUpdateEntity.setWarehouseOrgName("");
+                }
+            } else if (finalIsTikTokPlatformWarehouseOrder) {
+                saveOrUpdateEntity.setWarehouseId("");
+                saveOrUpdateEntity.setWarehouseName("");
+                saveOrUpdateEntity.setWarehouseOrgId("");
+                saveOrUpdateEntity.setWarehouseOrgName("");
+                ThirdMappingDTO.ErpWarehouseDTO erpWarehouseDTO = finalTikTokErpWarehouseMap.get(detailDTO.getWarehouseId());
+                if (ObjectUtils.isNotEmpty(erpWarehouseDTO) && StringUtils.isNotBlank(erpWarehouseDTO.getWarehouseId())) {
+                    saveOrUpdateEntity.setWarehouseId(erpWarehouseDTO.getWarehouseId());
+                    saveOrUpdateEntity.setWarehouseName(StringUtils.defaultString(erpWarehouseDTO.getWarehouseName()));
+                    saveOrUpdateEntity.setWarehouseOrgId(StringUtils.defaultString(erpWarehouseDTO.getWarehouseOrgId()));
+                    saveOrUpdateEntity.setWarehouseOrgName(StringUtils.defaultString(erpWarehouseDTO.getWarehouseOrgName()));
                 }
             }
             return saveOrUpdateEntity;

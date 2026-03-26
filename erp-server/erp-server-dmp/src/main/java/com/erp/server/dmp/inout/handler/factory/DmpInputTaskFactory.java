@@ -88,7 +88,7 @@ public class DmpInputTaskFactory{
 					}
 				}
 			}catch (Exception e) {
-				log.error("{}任务执行报错， 异常类型={}" , inputTaskId , ExceptionUtil.stacktraceToString(e) , e);
+				log.error("{}任务执行报错， 异常类型={}", inputTaskId , ExceptionUtil.stacktraceToString(e));
 				throw e;
 			}finally {
 				redisTemplate.delete(redisKey);
@@ -111,7 +111,7 @@ public class DmpInputTaskFactory{
 			bean.addDmpHandler(dmpInputTaskStatusHandler);
 			bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
 		} catch (Exception e) {
-			log.error("{}任务执行报错，执行状态{}, 异常类型={}" , inputTaskId , code, ExceptionUtil.stacktraceToString(e) , e);
+			log.error("{}任务执行报错，执行状态{}, 异常类型={}" , inputTaskId , code, ExceptionUtil.stacktraceToString(e));
 			Integer maxRetryCount = 3;
 			DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpResponse.getDmpCfgInputDetailEntity();
 			if(dmpCfgInputDetailEntity != null) {

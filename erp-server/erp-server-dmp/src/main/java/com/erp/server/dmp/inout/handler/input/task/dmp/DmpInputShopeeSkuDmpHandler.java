@@ -45,46 +45,50 @@ public class DmpInputShopeeSkuDmpHandler extends DmpInputDoChildDmpHandler{
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 				Object model_list = dmpInputMongoChild.get("dmp_model_list");
+				Boolean isModel = false;
 				if(model_list != null) {
 					List<Map<String , Object>> modelList = (List<Map<String , Object>>)model_list;
-					if(CollUtil.isEmpty(modelList)) {
-						continue;
+					if(CollUtil.isNotEmpty(modelList)) {
+						isModel = true;
 					}
-					
-					dmpInputMongoChild.put("create_time", Long.valueOf(dmpInputMongoChild.get("create_time").toString()) * 1000L);
-					dmpInputMongoChild.put("update_time", Long.valueOf(dmpInputMongoChild.get("update_time").toString()) * 1000L);
-					Object dimensionObj = dmpInputMongoChild.get("dimension");
-					if(dimensionObj != null) {
-						Map<String, Object> dimension = (Map<String, Object>) dimensionObj;
-						dmpInputMongoChild.put("packageLength", dimension.get("package_length"));
-						dmpInputMongoChild.put("packageWidth", dimension.get("package_width"));
-						dmpInputMongoChild.put("packageHeight", dimension.get("package_height"));
+				}
+
+
+				dmpInputMongoChild.put("create_time", Long.valueOf(dmpInputMongoChild.get("create_time").toString()) * 1000L);
+				dmpInputMongoChild.put("update_time", Long.valueOf(dmpInputMongoChild.get("update_time").toString()) * 1000L);
+				Object dimensionObj = dmpInputMongoChild.get("dimension");
+				if (dimensionObj != null) {
+					Map<String, Object> dimension = (Map<String, Object>) dimensionObj;
+					dmpInputMongoChild.put("packageLength", dimension.get("package_length"));
+					dmpInputMongoChild.put("packageWidth", dimension.get("package_width"));
+					dmpInputMongoChild.put("packageHeight", dimension.get("package_height"));
+				}
+				Object attribute_list_obj = dmpInputMongoChild.get("attribute_list");
+				if (attribute_list_obj != null) {
+					String attribute_list = JSON.toJSONString(attribute_list_obj);
+					List<Attribute> attributeList = JSONUtil.toList(attribute_list, Attribute.class);
+					String categoryName = PlatformShopeeListingDTO.processProductSpec(attributeList);
+					dmpInputMongoChild.put("categoryName", categoryName);
+				}
+				Object imageObj = dmpInputMongoChild.get("image");
+				if (imageObj != null) {
+					Map<String, Object> image = (Map<String, Object>) imageObj;
+					Object image_url_list_obj = image.get("image_url_list");
+					if (image_url_list_obj != null) {
+						List<Object> image_url_list = (List<Object>) image_url_list_obj;
+						dmpInputMongoChild.put("imageUrls", image_url_list.stream().map(Object::toString).collect(Collectors.joining(";")));
 					}
-					Object attribute_list_obj = dmpInputMongoChild.get("attribute_list");
-					if(attribute_list_obj != null) {
-						String attribute_list = JSON.toJSONString(attribute_list_obj);
-						List<Attribute> attributeList = JSONUtil.toList(attribute_list , Attribute.class);
-						String categoryName = PlatformShopeeListingDTO.processProductSpec(attributeList);
-						dmpInputMongoChild.put("categoryName", categoryName);
-					}
-					Object imageObj = dmpInputMongoChild.get("image");
-					if(imageObj != null) {
-						Map<String, Object> image = (Map<String, Object>) imageObj;
-						Object image_url_list_obj = image.get("image_url_list");
-						if(image_url_list_obj != null) {
-							List<Object> image_url_list = (List<Object>) image_url_list_obj;
-							dmpInputMongoChild.put("imageUrls", image_url_list.stream().map(Object::toString).collect(Collectors.joining(";")));
-						}
-					}
-					
-					for(Map<String , Object> model : modelList) {
+				}
+				if(isModel){
+					List<Map<String, Object>> modelList = (List<Map<String, Object>>) model_list;
+					for (Map<String, Object> model : modelList) {
 						Object skuIdObj = model.get("model_id");
-						if(skuIdObj == null || StringUtils.isBlank(skuIdObj.toString())) {
+						if (skuIdObj == null || StringUtils.isBlank(skuIdObj.toString())) {
 							skuIdObj = dmpInputMongoChild.get("item_id");
 						}
 						dmpInputMongoChild.put("skuId", skuIdObj);
 						Object skuNoObj = model.get("model_sku");
-						if(skuNoObj == null || StringUtils.isBlank(skuNoObj.toString())) {
+						if (skuNoObj == null || StringUtils.isBlank(skuNoObj.toString())) {
 							skuNoObj = dmpInputMongoChild.get("item_sku");
 						}
 						dmpInputMongoChild.put("skuNo", skuNoObj);
@@ -92,7 +96,14 @@ public class DmpInputShopeeSkuDmpHandler extends DmpInputDoChildDmpHandler{
 						dmpInputMongoChild.put("status", model.get("model_status"));
 						result.add(BeanUtil.copyProperties(dmpInputMongoChild, Map.class));
 					}
+				}else{
+					dmpInputMongoChild.put("skuId", dmpInputMongoChild.get("item_id"));
+					dmpInputMongoChild.put("skuNo", dmpInputMongoChild.get("item_sku"));
+					dmpInputMongoChild.put("name", dmpInputMongoChild.get("item_name"));
+					dmpInputMongoChild.put("status", dmpInputMongoChild.get("item_status"));
+					result.add(BeanUtil.copyProperties(dmpInputMongoChild, Map.class));
 				}
+
 			}
 		}
 		return result;

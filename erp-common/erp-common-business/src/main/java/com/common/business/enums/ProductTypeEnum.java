@@ -10,8 +10,8 @@ import com.common.core.constant.EnumMessage;
  */
 public enum ProductTypeEnum implements EnumMessage {
 
-    NEW_PRODUCTS("old", "新品","新品"),
-    OLD_PRODUCTS("new", "老品","老品");
+    NEW_PRODUCTS("new", "新品","新品"),
+    OLD_PRODUCTS("old", "老品","老品");
 
 
     private String code;

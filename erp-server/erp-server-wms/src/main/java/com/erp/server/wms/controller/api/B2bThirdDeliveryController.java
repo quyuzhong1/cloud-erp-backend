@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -12,14 +11,11 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.B2bThirdWarehouseDeliveryQueryHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
@@ -279,4 +274,13 @@ public class B2bThirdDeliveryController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * zhongbao仓库操作指令类型下拉框
+     */
+    @PostMapping(value = "/listWarehouseOperationDescription")
+    public ApiResult<List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO>> listWarehouseOperationDescription(@RequestBody B2bThirdDeliveryDTO.ThirdWarehousePlatformDTO thirdWarehousePlatformDTO) {
+        return success(b2bThirdDeliveryService.listWarehouseOperationDescription(thirdWarehousePlatformDTO));
+    }
+
 }

@@ -55,12 +55,20 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.srm.dto.PoReconciliationDTO$ListDTO">
+        with filter as (
+        SELECT DISTINCT pr.id from po_reconciliation pr
+        left join po_reconciliation_ref_detail prrd on pr.id = prrd.po_reconciliation_id and prrd.is_deleted = false
+        left join po_reconciliation_detail prd on prrd.source_detail_id = prd.source_detail_id and prd.is_deleted = false
+        left join foreign_purchase_order po on prrd.po_id = po.id and po.is_deleted = false
+        where             ${params.sqlMap.default}
+       and prrd.is_deleted = false
+        )
         select
                <include refid="Base_Column_List" />
         from po_reconciliation pr
-        <where>
-            ${params.sqlMap.default}
-            and pr.is_deleted = false
+        where
+             pr.is_deleted = false
+        and pr.id in (select id from filter)
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -72,7 +80,6 @@
                 </foreach>
             </if>
             pr.id desc
-        </where>
     </select>
 
     <!-- 导出 -->
@@ -132,6 +139,8 @@
     <select id="exportAllPoReconciliationDetail"
             resultType="com.erp.model.srm.dto.PoReconciliationDTO$ExportDetailDTO">
             select
+        po.id as poId,
+        po.source_type as poSourceType,
                 pr.code,
                 pr.status,
                 pr.start_date as startDate,

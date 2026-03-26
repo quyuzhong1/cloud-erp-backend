@@ -951,6 +951,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 member.setProductName(skuVO.getSkuName());
                 member.setVariantProperty(skuVO.getVariantProperty());
                 member.setUnitName(skuVO.getUnitName());
+                member.setSpecification(skuVO.getSpuNo());
             }
             //根据组织、仓库、仓位、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(data.getOutWarehouseId(), member.getSkuId(), member.getOutWarehouseLocation());
@@ -958,6 +959,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), data.getOutWarehouseId())
                     && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(member.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
             member.setOutWarehouseLocationName(outWarehouseLocationName);
+            member.setOutWarehouseName(data.getOutWarehouseName());
         });
         data.setDetailList(viewDetailList);
     }

@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -43,7 +43,9 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -919,27 +921,25 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         AssetAcceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产验收单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
-        log.info("撤销 开始修改资产验收单状态，id：【{}】", id);
-        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_ACCEPTANCE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         workflowFeign.revokeProcess(revokeDTO);
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
@@ -1022,17 +1022,21 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                         Collectors.summingInt(detail -> detail.getAcceptQty() != null ? detail.getAcceptQty() : 0)
                 ));
 
-        // 回写采购订单状态
-        currentDetailList.stream()
+        List<AssetPurchaseOrderDTO.rewritePurchaseOrderDTO> rewriteDTOList = currentDetailList.stream()
                 .map(AssetAcceptDetailEntity::getSourceDetailId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
-                .forEach(sourceDetailId -> {
+                .map(sourceDetailId -> {
                     AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewriteDTO = new AssetPurchaseOrderDTO.rewritePurchaseOrderDTO();
                     rewriteDTO.setDetailId(sourceDetailId);
                     rewriteDTO.setAcceptedQty(new BigDecimal(approvedAcceptQtyMap.getOrDefault(sourceDetailId, 0)));
-                    assetPurchaseOrderFeign.rewriteAssetPurchaseOrder(rewriteDTO);
-                });
+                    return rewriteDTO;
+                })
+                .collect(Collectors.toList());
+
+        if (!rewriteDTOList.isEmpty()) {
+            assetPurchaseOrderFeign.batchRewriteAssetPurchaseOrder(rewriteDTOList);
+        }
     }
 
     @Override
@@ -1069,34 +1073,40 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         startDTO.setBusinessKey(SourceTypeEnum.ASSET_ACCEPTANCE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        
-        // 查询人员列表并按personType分组，同一personType的userId用逗号分割
-        List<AssetAcceptPersonEntity> personList = assetAcceptPersonService.lambdaQuery()
-                .eq(AssetAcceptPersonEntity::getAssetAcceptId, entity.getId())
-                .list();
-        
-        Map<String, String> personTypeUserIdMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(personList)) {
-            personTypeUserIdMap = personList.stream()
-                    .collect(Collectors.groupingBy(
-                            AssetAcceptPersonEntity::getPersonType,
-                            Collectors.mapping(
-                                    AssetAcceptPersonEntity::getUserId,
-                                    Collectors.joining(",")
-                            )
-                    ));
-        }
-        
+
         // 合并entity和人员信息到variablesMap
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        variablesMap.putAll(personTypeUserIdMap);
-        startDTO.setVariablesMap(variablesMap);
+        Map<String, Object> map = buildVariablesMap(entity);
+        startDTO.setVariablesMap(map);
         
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
     }
+
+    private Map<String, Object> buildVariablesMap(AssetAcceptEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        AssetAcceptDTO.ViewDTO viewDTO = this.view((entity.getId()));
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.ASSET_ACCEPTANCE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(viewDTO));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        map.put("detailList", viewDTO.getDetailList());
+        viewDTO.getPersonList().forEach(v->{
+            map.put(v.getPersonType(),v.getUserName());
+        });
+        Map<String,String> attachmentMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(viewDTO.getAttachmentUrlList())){
+            for (int i = 0; i < viewDTO.getAttachmentUrlList().size(); i++) {
+                String name = viewDTO.getAttachmentNameList().get(i);
+                attachmentMap.put(name,viewDTO.getAttachmentUrlList().get(i));
+            }
+        }
+        if(!attachmentMap.isEmpty()){
+            map.put("attachment", attachmentMap);
+        }
+        return map;
+    }
+
     private void fillOne(AssetAcceptDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
@@ -1114,6 +1124,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 log.error("查询验收组织信息失败，orgId: {}", data.getAcceptOrgId(), e);
             }
         }
+        data.setIsNeedSealStr(Boolean.TRUE.equals(data.getIsNeedSeal()) ? "是" : "否");
 
         // 填充验收人姓名
         if (StringUtils.isNotBlank(data.getAcceptUserId()) && StringUtils.isBlank(data.getAcceptUserName())) {
@@ -1327,6 +1338,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                                 else if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(approveStatus) 
                                         || ApproveStatusEnum.APPROVE_ING.getStatus().equals(approveStatus) 
                                         || ApproveStatusEnum.REJECT.getStatus().equals(approveStatus)) {
+                                    if (detail.getId().equals(acceptDetail.getId())) {
+                                        continue;
+                                    }
                                     processingAcceptQty += acceptQty;
                                 }
                             }
@@ -2140,8 +2154,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             for (AssetAcceptDetailEntity detailEntity : list) {
                 AssetAcceptDTO.AssetPurchaseOrderRefListDTO assetPurchaseOrderRefListDTO = new AssetAcceptDTO.AssetPurchaseOrderRefListDTO();
                 assetPurchaseOrderRefListDTO.setAssetAcceptCode(assetAcceptEntity.getCode());
-                assetPurchaseOrderRefListDTO.setApproveStatuts(assetAcceptEntity.getApproveStatus().getCode());
-                assetPurchaseOrderRefListDTO.setApproveStatutsName(assetAcceptEntity.getApproveStatus().getName());
+                assetPurchaseOrderRefListDTO.setApproveStatus(assetAcceptEntity.getApproveStatus().getCode());
+                assetPurchaseOrderRefListDTO.setApproveStatusName(assetAcceptEntity.getApproveStatus().getName());
                 assetPurchaseOrderRefListDTO.setInvalidStatus(assetAcceptEntity.getInvalidStatus());
                 assetPurchaseOrderRefListDTO.setInvalidStatusName(InvalidStatusEnum.getName(assetAcceptEntity.getInvalidStatus()));
                 assetPurchaseOrderRefListDTO.setSkuId(detailEntity.getSkuId());
@@ -2194,7 +2208,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     SysUserDTO sysUserById = sysUserFeign.getSysUserById(assetAcceptEntity.getApproveUserId());
                     assetPurchaseOrderRefListDTO.setApproveUserName(sysUserById.getUserName());
                 }
-                assetPurchaseOrderRefListDTO.setApproveStatutsName(ApproveStatusEnum.getName(assetPurchaseOrderRefListDTO.getApproveStatuts()));
+                assetPurchaseOrderRefListDTO.setApproveStatusName(ApproveStatusEnum.getName(assetPurchaseOrderRefListDTO.getApproveStatus()));
                 assetPurchaseOrderRefListDTO.setInvalidStatusName(InvalidStatusEnum.getName(assetPurchaseOrderRefListDTO.getInvalidStatus()));
 
                 //明细信息

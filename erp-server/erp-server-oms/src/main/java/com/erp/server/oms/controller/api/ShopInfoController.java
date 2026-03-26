@@ -453,6 +453,17 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
+     * 根据平台集合查询店铺，并补充仓库权限标识
+     * @author codex
+     * @date 2026/3/13
+     */
+    @PostMapping("/listByPlatformListAuth")
+    public ApiResult<List<ShopInfoEntity>> listByPlatformListAuth(@RequestBody @Validated ShopDTO.PlatformParamDTO dto) {
+        List<ShopInfoEntity> result = shopInfoService.listByPlatformListAuth(dto.getPlatformList());
+        return success(result);
+    }
+
+    /**
      * 查询当前用户权限的亚马逊店铺信息
      *
      * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
@@ -616,5 +627,14 @@ public class ShopInfoController extends BaseController {
             dto.getParams().setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
         }
         return success(shopInfoService.pagingSelect(dto));
+    }
+
+    /**
+     * 根据平台列表批量获取店铺
+     * @param platformList 平台
+     */
+    @PostMapping("/listShopInfoByPlatformList")
+    public ApiResult<List<ShopDTO.ListShopInfoDTO>> listShopInfoByPlatformList(@RequestBody List<String> platformList){
+        return success(shopInfoService.listShopInfoByPlatformList(platformList));
     }
 }

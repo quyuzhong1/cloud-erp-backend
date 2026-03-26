@@ -15,6 +15,8 @@ public enum OrderTypeEnum implements EnumMessage {
     B2C("B2C", "B2C订单"),
     FIRST_MILE("firstMile", "头程物流单"),
     SORETURN_INSTOCK("soReturnInstock", "退货入库单"),
+    OTHER("other", "其他"),
+
     ;
 
     private String code;

@@ -48,9 +48,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 采购申请单
@@ -217,6 +217,42 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
 
         //计划交期处理
         Object details = map.get("details");
+
+        List<String> allSkuNos = new ArrayList<>();
+        List<String> allWarehouseNames = new ArrayList<>();
+        for (Object detail : (List<Object>) details) {
+            Map<String, Object> detailMap = (Map<String, Object>) detail;
+            Object skuNo = detailMap.get("skuNo");
+            if (ObjectUtil.isNotEmpty(skuNo)) {
+                allSkuNos.add(skuNo.toString());
+            }
+
+            Object warehouseName = detailMap.get("destWarehouseName");
+            if (ObjectUtil.isNotEmpty(warehouseName) && !allWarehouseNames.contains(warehouseName)) {
+                allWarehouseNames.add(warehouseName.toString());
+            }
+        }
+
+        //批量查询 SKU 信息
+        Map<String, SkuVO> skuInfoMap = new HashMap<>();
+        if (!allSkuNos.isEmpty()) {
+            List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(allSkuNos);
+            if (ObjectUtil.isEmpty(skuVOList)) {
+                throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND, allSkuNos);
+            }
+            skuInfoMap = skuVOList.stream()
+                    .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
+        }
+
+        Map<String, WarehouseEntity> warehouseMap = new HashMap<>();
+        if (!allWarehouseNames.isEmpty()) {
+            List<WarehouseEntity> warehouses = FeignQuery.create(WarehouseEntity.class)
+                    .in(WarehouseEntity::getName, allWarehouseNames)
+                    .list();
+            warehouseMap = warehouses.stream()
+                    .collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
+        }
+
         for  (Object detail : (List<Object>) details) {
 
             Map<String, Object> detailMap = (Map<String, Object>) detail;
@@ -231,23 +267,25 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             //仓库
             Object destWarehouseName = detailMap.get("destWarehouseName");
             if (ObjectUtil.isNotEmpty(destWarehouseName)) {
-                List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName, destWarehouseName).list();
-                if (ObjectUtil.isEmpty(list)) {
+                WarehouseEntity warehouse = warehouseMap.get(destWarehouseName.toString());
+                if (warehouse == null) {
                     throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND, destWarehouseName);
                 }
-                detailMap.put("destWarehouseId", list.get(0).getId());
+                detailMap.put("destWarehouseId", warehouse.getId());
             }
 
             //sku
             Object skuNo = detailMap.get("skuNo");
             if (ObjectUtil.isNotEmpty(skuNo)) {
-                List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNo.toString()));
-                if (ObjectUtil.isEmpty(skuVOList)) {
-                    throw new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, skuNo);
+                String skuNoStr = skuNo.toString();
+                if (skuInfoMap.containsKey(skuNoStr)) {
+                    SkuVO skuVO = skuInfoMap.get(skuNoStr);
+                    detailMap.put("skuId", skuVO.getSkuId());
+                    detailMap.put("unitQty", skuVO.getBoxQty());
+                    detailMap.put("moq", skuVO.getMoq());
+                } else {
+                    throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND, skuNo);
                 }
-                detailMap.put("skuId", skuVOList.get(0).getSkuId());
-                detailMap.put("unitQty", skuVOList.get(0).getBoxQty());
-                detailMap.put("moq", skuVOList.get(0).getMoq());
             }
         }
     }

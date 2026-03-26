@@ -22,6 +22,7 @@ import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.query.SysUserInfoQueryHandler;
+import com.erp.server.sys.service.SysDepartmentUserService;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,9 @@ public class SysUserInfoController extends BaseController {
 
     @Autowired
     private SysUserThirdService sysUserThirdService;
+
+    @Autowired
+    private SysDepartmentUserService sysDepartmentUserService;
 
     /**
      * 获取状态统计
@@ -310,7 +314,29 @@ public class SysUserInfoController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 根据用户id查询部门信息
+     * 自动带出用户绑定部门，如用户绑定多个部门，则取最近绑定的部门；若部门已禁用，则不带出
+     * @param userId 用户id
+     * @return ApiResult
+     */
+    @GetMapping("/getDeptByUserId")
+    public ApiResult<SysDepartmentUserNumberDTO> getDeptByUserId(@RequestParam("userId") String userId) {
+        SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getDeptByUserIdWithDisabledFilter(userId);
+        return success(dto);
+    }
 
+    /**
+     * 根据用户id查询关联的全部部门信息
+     * 若部门已禁用，则不带出
+     * @param userId 用户id
+     * @return ApiResult
+     */
+    @GetMapping("/listDeptByUserId")
+    public ApiResult<List<SysDepartmentUserNumberDTO>> listDeptByUserId(@RequestParam("userId") String userId) {
+        List<SysDepartmentUserNumberDTO> dto = sysDepartmentUserService.listDeptByUserIdWithDisabledFilter(userId);
+        return success(dto);
+    }
 
     /**
      * 导出Excel数据

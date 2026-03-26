@@ -420,7 +420,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //销售员
         String sellerId = entity.getSellerId();
         String salesDeptId = entity.getSalesDeptId();
-//        获取业务员信息
+        //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(salesOrgId);
@@ -432,6 +432,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             //销售员
             if (!Objects.isNull(kingdeeSeller)) {
                 resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
+                resultMap.put("deptCode", kingdeeSeller.getDeptCode());
             }
         }
         //通过军区和平台获取部门信息
@@ -466,40 +467,16 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (customerInfo != null) {
                 resultMap.put("customerCode", customerInfo.getCode());
                 String platformType = customerInfo.getPlatformType();
-                String partitionId = entity.getPartitionId();
-                if(StringUtils.isBlank(partitionId)){
-                    partitionId = customerInfo.getPartitionId();
-                }
                 if(StringUtils.isNotBlank(platformType)) {
-                	List<DictBasicEntity> dictBasicEntityList = dictBasicService.lambdaQuery()
+                    List<DictBasicEntity> dictBasicEntityList = dictBasicService.lambdaQuery()
                             .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
                             .eq(DictBasicEntity::getName, platformType)
                             .list();
-                	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
-                		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
-                	}
-                }
-                String deptId = customerInfo.getSalesDeptId();
-                if(StringUtils.isNotBlank(platformType) && StringUtils.isNotBlank(partitionId)) {
-                    List<CfgDeptRelationEntity> cfgDeptRelationEntityList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDictPlatform, platformType)
-                            .eq(CfgDeptRelationEntity::getPartitionId, partitionId)
-                            .eq(CfgDeptRelationEntity::getDisabled,false)
-                            .list();
-                    if(CollectionUtils.isNotEmpty(cfgDeptRelationEntityList)) {
-                        deptId = cfgDeptRelationEntityList.get(0).getDeptId();
-                    }
-                }
-                if(StringUtils.isNotBlank(deptId)){
-                    DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdeeDTO = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-                    findDeptKingdeeDTO.setDeptId(deptId);
-                    findDeptKingdeeDTO.setOrgId(salesOrgId);
-                    KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeFeign.getDeptKingdee(findDeptKingdeeDTO);
-                    if(Objects.nonNull(kingdeeDepartmentEntity)){
-                        resultMap.put("deptCode",kingdeeDepartmentEntity.getKingdeeDeptCode());
+                    if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+                        resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
                     }
                 }
             }
-
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         String kingdeeWarehouseCode = "";

@@ -326,7 +326,7 @@ public class ExportOmsFeignController {
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoMultiChannelQueryHandler.class)
     public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return soMultiChannelService.paging(dto);
     }
@@ -466,7 +466,7 @@ public class ExportOmsFeignController {
      * @return PagingVO<KolB2cApplicationDTO.ListDTO>
      */
     @PostMapping("/exportOmsKolB2cApplication")
-    @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
+    @WebAdvanceQuery(handler = KolB2cApplicationQueryHandler.class)
     public PagingVO<KolB2cApplicationDTO.ListDTO> exportOmsKolB2cApplication(@RequestBody PagingDTO<KolB2cApplicationDTO.PagingParamDTO> dto) {
         return kolB2cApplicationService.paging(dto);
     }

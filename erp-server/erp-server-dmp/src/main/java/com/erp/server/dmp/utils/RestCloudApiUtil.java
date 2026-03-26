@@ -4,8 +4,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import com.alibaba.fastjson.JSON;
@@ -18,6 +20,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 
+@Slf4j
 public class RestCloudApiUtil {
     private RestCloudApiUtil() {
     }
@@ -35,6 +38,23 @@ public class RestCloudApiUtil {
             resultBool = requestRestCloud(url, map, resultBool);
         }
         return resultBool;
+    }
+
+
+    /**
+     * 异步调用
+     * @param checkMonth 核对月份
+     * @param urls 请求路径列表
+     * @return 是否成功，true表示至少有一个接口调用成功，false表示任意接口调用失败
+     */
+    public static boolean syncReCreate(String checkMonth, String... urls) {
+        for (String url : urls) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("data", Arrays.asList());
+            map.put("yearMonth", checkMonth);
+            syncRequestRestCloud(url, map);
+        }
+        return true;
     }
 
     public static boolean requestRestCloud(String url, Map<String, Object> map, boolean resultBool) {
@@ -66,5 +86,36 @@ public class RestCloudApiUtil {
             }
         }
         return resultBool;
+    }
+
+
+    /**
+     * 异步调用谷云接口，适用于不关心结果的场景
+     * @param url 请求路径
+     * @param map 请求参数
+     */
+    public static boolean syncRequestRestCloud(String url, Map<String, Object> map) {
+        CompletableFuture.runAsync(() -> {
+            String restUrl = "http://" + restcloudUrl + ":" + restcloudPort + "/restcloud/" + url;
+            HttpResponse response = HttpRequest.post(restUrl)
+                    .header("Content-Type", "application/json")
+                    .body(JSON.toJSONString(map))
+                    .timeout(60000)
+                    .execute();
+            if (200 != response.getStatus()) {
+                log.error("调用谷云地址：{}状态码{}错误，请联系实施", restUrl, response.getStatus());
+            } else {
+                String body = response.body();
+                JSONObject responseJson = JSON.parseObject(body);
+                Integer resultCode = responseJson.getInteger("resultCode");
+                // 判断结果异常:ETLProcessRunResultCode
+                if (null != resultCode && 1 == resultCode) {
+                    log.warn("调用谷云地址：{}返回报文：{}成功", restUrl, body);
+                } else {
+                    log.error("调用谷云地址：{}返回报文：{}错误，请联系实施", restUrl, body);
+                }
+            }
+        });
+        return true;
     }
 }

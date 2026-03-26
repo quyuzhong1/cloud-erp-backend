@@ -29,26 +29,33 @@ import static com.sdk.oms.shopee.constants.ShopeeConstants.*;
 @Component
 @Slf4j
 public class ShopeeOrderService {
+
     public static void main(String[] args) {
         ShopeeOrderService shopeeOrderService = new ShopeeOrderService();
         long timest = System.currentTimeMillis() / 1000L;
-        Long time_from = timest - (3600 * 24 * 15);
+        Long time_from = timest - (3600 * 24 * 12);
         Long time_to = timest;
         //订单列表
         OrderRequest orderRequest = OrderRequest.builder()
+                .host("https://openplatform.shopee.cn")
+                .token("eyJhbGciOiJIUzI1NiJ9.CLa8ehABGLHL7qgGIAEooM-qzAYwseSXwgU4AUAB.cI2aba0IK4sOn5xwgZt7tS3DCfM22QUQP56CbKc1jBE")
+                .shopId(Long.parseLong("1696310705"))
+                .partnerId(Long.parseLong("2006582"))
+                .tmpPartnerKey("446568575a4b52694578456c4c78645969735a6f716b4b6550496754705a7a63")
                 .offset(0)
                 .timeFrom(time_from)
                 .timeTo(time_to)
-                .tmpPartnerKey(tmp_partner_key)
-                .partnerId(partner_id)
-                .token(shop_access_token)
-                .shopId(shop_id)
-                .host(host)
+                .orderStatus("READY_TO_SHIP")
                 .cursor("")
                 .build();
-        List<OrderDetail> platformOrderDTOS = new ArrayList<>();
-        shopeeOrderService.getAllOrder(orderRequest, platformOrderDTOS);
-        System.out.println(platformOrderDTOS.size());
+        ShopeeResponse shopeeResponse = shopeeOrderService.getOrderList(orderRequest);
+        System.out.println(JSONUtil.toJsonStr(shopeeResponse));
+        JSONArray jsonArray = shopeeResponse.getResponse().getJSONArray("order_list");
+        List<String> sns = jsonArray.toList(ShopeeOrder.class).stream().map(ShopeeOrder::getOrderSn).collect(Collectors.toList());
+//        sns = Arrays.asList("260202M6TRBTYU");
+        orderRequest.setOrderSns(org.apache.commons.lang3.StringUtils.join(sns, ","));
+        ShopeeResponse shopeeResponse1 = shopeeOrderService.getOrderDetail(orderRequest);
+        System.out.println(JSONUtil.toJsonStr(shopeeResponse1));
 //        shopeeOrderService.getOrderDetail(host, shop_access_token, shop_id, partner_id, tmp_partner_key,"231019B5QD22UG");
     }
 
@@ -120,6 +127,9 @@ public class ShopeeOrderService {
         }
         if (Objects.nonNull(orderRequest.getTimeTo())) {
             paramMap.put("time_to", orderRequest.getTimeTo());
+        }
+        if (Objects.nonNull(orderRequest.getOrderStatus())) {
+            paramMap.put("order_status", orderRequest.getOrderStatus());
         }
         paramMap.put("timestamp", timestamp);
         //1-100

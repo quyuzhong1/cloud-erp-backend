@@ -72,6 +72,8 @@
             aeid.update_user_id AS updateUserId,
             aeid.unique_code AS uniqueCode,
             aeid.source_system AS sourceSystem,
+            aeid.check_platform AS checkPlatform,
+            aeid.check_platform_name AS checkPlatformName,
             aeid.account_code AS accountCode,
             aeid.source_id AS sourceId,
             aeid.last_update_flag AS lastUpdateFlag,
@@ -108,7 +110,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        aeid.check_month_query desc
+        aeid.check_month_query,aeid.id desc
     </select>
 
 

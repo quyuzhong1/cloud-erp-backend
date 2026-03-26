@@ -158,6 +158,10 @@ public class ProductDetailShowDTO implements Serializable {
     private String rdtTeamName;
 
     /**
+     * BU线
+     */
+    private String buName;
+    /**
      * 产品等级
      */
     private String grade;

@@ -431,6 +431,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //校验物流单对账单状态
         checkLogisticsBillStatus(old);
         LogisticsBillEntity updateFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,updateDTO);
+
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, updateFirstMileLogisticEntity, ModuleTypeEnum.LOGISTICS_BILL.getCode(), old.getId(), "", "");
+
         BeanUtil.copyProperties(updateFirstMileLogisticEntity,old, CopyOptions.create().setIgnoreNullValue(true));
         boolean save = super.updateById(old);
         if(!save) {
@@ -1235,6 +1239,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         if(CollectionUtils.isNotEmpty(updateList)){
             this.updateBatchById(updateList);
+            List<Pair<String, String>> addPairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), obj.getId())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(CharSequenceUtil.format("更新【{}】",logisticsChannelEntity.getName()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addPairList, "更新渠道");
         }
         if(CollectionUtils.isNotEmpty(updateCostList)){
             logisticsBillCostService.updateBatchById(updateCostList);
@@ -1555,6 +1561,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 //        // 更新已成功对账单
 //        List<String> billIds = Collections.singletonList(id);
 //        this.updateReconciliation(billIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), reconciliationEntity.getId());
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("下推对账单单号【{}】",reconciliationEntity.getCode()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), id, "下推操作");
 
         return BatchResultDTO.success(id, curListDTO.getTransportNo(), OperationTypeEnum.ADD);
     }
@@ -2049,12 +2056,20 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public BatchResultDTO pushWeightAllocation(LogisticsBillEntity entity) throws InterruptedException {
+        if (!entity.getIsAllocateWeightRequired()) {
+            return BatchResultDTO.fail(entity.getId(), entity.getOutstockCode(), "设置为不需要重量分摊，不能下推重量分摊");
+        }
+
         //重量分摊基础数据
         List<TmsFirstMileLogisticDTO.WeightAllocationDTO> list = baseMapper.assembleFirstMileEstimatedList(Collections.singletonList(entity.getId()));
         if(list.isEmpty()){
             return BatchResultDTO.fail(entity.getId(), entity.getOutstockCode(), "只有下单后的物流单才能推送重量分摊");
         }
-        return firstMileWeightAllocationService.add(entity.getId());
+        BatchResultDTO add = firstMileWeightAllocationService.add(entity.getId());
+
+        //操作日志
+        operateLogService.addModuleOperateLog("下推重量分摊", ModuleTypeEnum.LOGISTICS_BILL.getCode(), entity.getId(), "下推操作");
+        return add;
     }
 
     @Override
@@ -2233,5 +2248,48 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         String counterNo = CharSequenceUtil.isNotBlank(logisticsBill.getCounterNo()) ? logisticsBill.getCounterNo() : transportNo;
 
         return logisticsTrackService.listByTrackNo(counterNo);
+    }
+
+    @Override
+    public BatchResultDTO updateIsAllocateRequired(String id, Boolean isAllocateRequired, String notAllocateRemark) {
+        LogisticsBillEntity logisticsBill = logisticsBillService.getById(id);
+        if (ObjectUtil.isEmpty(logisticsBill)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流单");
+        }
+        if (logisticsBill.getIsAllocateWeightRequired().equals(isAllocateRequired)) {
+            return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"状态无变化，无需更新");
+        }
+        if (!isAllocateRequired && StringUtils.isBlank(notAllocateRemark)) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"不分摊时，需填写不分摊备注");
+        }
+        //判断是否已下推重量分摊
+        List<FirstMileWeightAllocationEntity> firstMileWeightAllocationList = firstMileWeightAllocationService.listByLogisticsBillIds(Collections.singletonList(id));
+        if (CollUtil.isNotEmpty(firstMileWeightAllocationList)) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"已下推重量分摊，无法修改是否分摊状态");
+        }
+
+        logisticsBill.setIsAllocateWeightRequired(isAllocateRequired);
+        if (!isAllocateRequired) {
+            logisticsBill.setNotAllocateWeightRemark(notAllocateRemark);
+        } else {
+            logisticsBill.setNotAllocateWeightRemark("");
+        }
+        boolean update = logisticsBillService.updateById(logisticsBill);
+        if (!update) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"状态更新失败");
+        }
+        String msg = "";
+        if (isAllocateRequired) {
+            msg = CharSequenceUtil.format("是否分摊状态变更为是");
+        } else {
+            msg = CharSequenceUtil.format("是否分摊状态变更为否,不分摊备注：{},", notAllocateRemark);
+        }
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "分摊设置操作");
+        return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"更新成功");
+    }
+
+    @Override
+    public void addFirstMileLogisticLog(TmsFirstMileLogisticDTO.AddLogDTO addLogDTO) {
+        operateLogService.addModuleOperateLog(addLogDTO.getContent(), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addLogDTO.getId(), addLogDTO.getOperation());
     }
 }

@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 
 import java.util.List;
 
@@ -41,4 +42,19 @@ public interface StocktakingProfitLossDetailService extends SuperService<Stockta
      * @return void
      */
     void removeByMainId(String id);
+
+    /**
+     * 根据sourceId查询明细
+     * @param sourceId
+     * @return
+     */
+    List<StocktakingProfitLossDetailEntity> listBySourceId(String sourceId);
+
+    /**
+     *
+     * @param sourceIds
+     * @return
+     */
+    List<StocktakingProfitLossDetailEntity> listBySourceIds(List<String> sourceIds);
+
 }

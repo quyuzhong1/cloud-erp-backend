@@ -915,6 +915,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String tikTokStatus;
         /**
+         *  订单类型
+         */
+        private String orderType;
+        /**
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
@@ -964,6 +968,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isManual;
 
+        /**
+         *  订单类型
+         */
+        private String orderType;
 
         /**
          * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
@@ -990,6 +998,16 @@ public class SoB2cDTO implements Serializable {
          * 美客多（mode=me2 且 logistic_type = fulfillment是官方仓发货）
          */
         private String logisticType;
+
+        /**
+         * TikTok履约类型（FULFILLMENT_BY_SELLER=自发货，FULFILLMENT_BY_TIKTOK=平台仓）
+         */
+        private String fulfillmentType;
+
+        /**
+         * TikTok发货类型（SELLER=自发货，TIKTOK=平台仓，兼容历史）
+         */
+        private String shippingType;
 
         /**
          * 是否平台仓订单 true 是 fasle 不是
@@ -4073,5 +4091,49 @@ public class SoB2cDTO implements Serializable {
          */
         @Size(message = "备注长度不能超过200", max = 200)
         private String remark;
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class B2cByPlatformOutboundDTO{
+        private String soB2cId;
+
+        private LocalDate soOutstockDate;
+
+        private String warehouseId;
+
+        private String warehouseName;
+
+        /**
+         * 库存组织id
+         */
+        private String warehouseOrgId;
+        /**
+         * 库存组织名称
+         */
+        private String warehouseOrgName;
+
+        private String virtualWarehouseId;
+
+        private String billStatus;
+
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 是否记录日志
+         */
+        private boolean addOperationLog = false ;
+
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
     }
 }

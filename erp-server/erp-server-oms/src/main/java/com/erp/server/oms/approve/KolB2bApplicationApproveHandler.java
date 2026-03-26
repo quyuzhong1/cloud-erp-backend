@@ -50,7 +50,7 @@ public class KolB2bApplicationApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO =  kolB2bApplicationService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO =  kolB2bApplicationService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

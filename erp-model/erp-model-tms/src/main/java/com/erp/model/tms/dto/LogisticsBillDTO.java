@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -259,6 +260,16 @@ public class LogisticsBillDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 是否分摊
+         */
+        private Boolean isAllocateRequired;
+
+        /**
+         * 不分摊原因
+         */
+        private String notAllocateRemark;
+
     }
 
     /**
@@ -347,6 +358,15 @@ public class LogisticsBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+        /**
+         * 部门id
+         */
+        private String salesDeptId;
+
         /**
          * 物流明细信息
          */
@@ -487,6 +507,14 @@ public class LogisticsBillDTO implements Serializable {
          * 电话
          */
         private String telNumber;
+        /**
+         * 发货单号id
+         */
+        private String soDeliveryId;
+        /**
+         * 发货单号
+         */
+        private String soDeliveryCode;
     }
 
     /**
@@ -1193,5 +1221,28 @@ public class LogisticsBillDTO implements Serializable {
         private String outstockId;
         //销售出库单编码
         private String outstockCode;
+    }
+
+
+    /**
+     * 是否分摊状态更新
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateAllocateRequiredDTO{
+        /**
+         * 主表ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+        /**
+         * 是否分摊状态
+         */
+        @NotNull(message = "是否分摊状态不能为空")
+        private Boolean isAllocateRequired;
+        /**
+         * 不分摊原因
+         */
+        private String notAllocateRemark;
     }
 }

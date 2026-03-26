@@ -65,6 +65,10 @@ public class TypeConversionWorker {
         return value.setScale(2, RoundingMode.HALF_UP);
     }
 
+    @Named("booleanToInt")
+    public Integer booleanToInt(Boolean value){
+        return Boolean.TRUE.equals(value) ? 1 : -1;
+    }
      /**
      * 转换sourceType到demandType
      */
@@ -76,9 +80,13 @@ public class TypeConversionWorker {
         if (ShipmentSourceTypeEnum.FBA.getCode().equals(sourceType)){
             return FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode();
         }
+        if (ShipmentSourceTypeEnum.FBT.getCode().equals(sourceType)){
+            return FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode();
+        }
         if (ShipmentSourceTypeEnum.AWD.getCode().equals(sourceType)){
             return FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode();
         }
         return sourceType;
     }
 }
+

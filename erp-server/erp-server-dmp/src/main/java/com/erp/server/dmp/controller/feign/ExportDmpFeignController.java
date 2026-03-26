@@ -6,12 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.server.dmp.query.*;
-import com.erp.server.dmp.query.AdsPushTaskQueryHandler;
-import com.erp.server.dmp.query.AfterSaleQueryHandler;
-import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
-import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -72,6 +67,10 @@ public class ExportDmpFeignController {
     private AdsErpFirstMileInTransitDiffService adsErpFirstMileInTransitDiffService;
     @Resource
     private AdsErpInventoryDiffKingdeeService adsErpInventoryDiffKingdeeService;
+    @Resource
+    private AdsErpReceiveFlowDiffService adsErpReceiveFlowDiffService;
+
+
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -217,5 +216,86 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = AdsErpFirstMileInTransitDiffQueryHandler.class)
     public PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> exportAdsErpFirstMileInTransitDiff(@RequestBody @Validated PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> dto){
         return adsErpFirstMileInTransitDiffService.paging(dto);
+    }
+
+    /**
+     * 朔源查询导出-平台出库单
+     * @author will
+     * @date 2026/2/5 10:38
+     * @param dto
+     * @return PagingVO<SourcePlatformDTO>
+     */
+    @PostMapping("/exportAdsErpOutstockDetailPlatform")
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> exportAdsErpOutstockDetailPlatform(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto){
+        return adsErpOutstockDiffFlowService.sourcePlatformPaging(dto);
+    }
+
+    /**
+     * 朔源查询导出-平台出库单
+     * @author will
+     * @date 2026/2/5 10:38
+     * @param dto
+     * @return PagingVO<SourceSelfDTO>
+     */
+    @PostMapping("/exportAdsErpOutstockDetailSelf")
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> exportAdsErpOutstockDetailSelf(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto){
+        return adsErpOutstockDiffFlowService.sourceSelfPaging(dto);
+    }
+
+    /**
+     * 朔源查询导出-每日库存
+     * @author will
+     * @date 2026/2/5 10:38
+     * @param dto
+     * @return PagingVO<SourcePlatformDTO>
+     */
+    @PostMapping("/exportAdsErpInventoryDetailPlatform")
+    public PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> exportAdsErpInventoryDetailPlatform(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto){
+        return adsErpInventoryDiffFlowService.sourcePlatformPaging(dto);
+    }
+
+    /**
+     * 朔源查询导出-每日库存
+     * @author will
+     * @date 2026/2/5 10:38
+     * @param dto
+     * @return PagingVO<SourcePlatformDTO>
+     */
+    @PostMapping("/exportAdsErpInventoryDetailSelf")
+    public PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> exportAdsErpInventoryDetailSelf(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto){
+        return adsErpInventoryDiffFlowService.sourceSelfPaging(dto);
+    }
+
+    @PostMapping("/exportDiffOutstockSyncSourcePlatform")
+    public PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> exportDiffOutstockSyncSourcePlatform(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto){
+        return adsErpDiffOutstockSyncService.sourcePlatformPaging(dto);
+    }
+
+    @PostMapping("/exportDiffReturnInstockSyncSourcePlatform")
+    public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> exportDiffReturnInstockSyncSourcePlatform(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto){
+        return adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto);
+    }
+
+    /**
+     * 签收流水差异导出
+     */
+    @PostMapping("/exportAdsErpReceiveFlowDiff")
+    @WebAdvanceQuery(handler = AdsErpReceiveFlowDiffQueryHandler.class)
+    public PagingVO<AdsErpReceiveFlowDiffDTO.ListDTO> exportAdsErpReceiveFlowDiff(@RequestBody @Validated PagingDTO<AdsErpReceiveFlowDiffDTO.PagingParamDTO> dto){
+        return adsErpReceiveFlowDiffService.paging(dto);
+    }
+    /**
+     * 签收流水溯源-库存流水
+     */
+    @PostMapping("/exportAdsErpReceiveInventoryFlow")
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> exportAdsErpReceiveInventoryFlow(@RequestBody @Validated PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto){
+        return adsErpReceiveFlowDiffService.sourcePlatformFlowPaging(dto);
+    }
+    /**
+     * 签收流水溯源-直接调拨单
+     */
+    @PostMapping("/exportAdsErpReceiveTransfer")
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> exportAdsErpReceiveTransfer(@RequestBody @Validated PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto){
+        return adsErpReceiveFlowDiffService.transferInfoPaging(dto);
     }
 }

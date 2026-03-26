@@ -94,10 +94,18 @@ public class KolB2cApplicationAddressImportExcelDTO implements Serializable {
     private String zipCode;
 
     /**
+     * 收件人税号
+     */
+    @ColumnWidth(10)
+    @ExcelProperty(value = "收件人税号", index = 8)
+    @FieldValid(fieldName = "收件人税号")
+    private String receiverTaxNo;
+
+    /**
      * 收货人电话
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*收货人电话", index = 8)
+    @ExcelProperty(value = "*收货人电话", index = 9)
     @FieldValid(fieldName = "*收货人电话", isNotBlank = true)
     private String receiverPhone;
 
@@ -105,14 +113,14 @@ public class KolB2cApplicationAddressImportExcelDTO implements Serializable {
      * 详细地址
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "*详细地址", index = 9)
+    @ExcelProperty(value = "*详细地址", index = 10)
     @FieldValid(fieldName = "*详细地址", isNotBlank = true)
     private String detailAddress;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 10)
+    @ExcelProperty(value = "错误数据", index = 11)
     @ColumnWidth(50)
     private String errorMsg = "";
 }

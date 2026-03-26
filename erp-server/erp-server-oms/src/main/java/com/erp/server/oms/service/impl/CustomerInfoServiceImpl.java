@@ -411,19 +411,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             return false;
         }
         List<CustomerInfoEntity> list = this.listByIds(ids);
-        
-        List<CustomerInfoEntity> hasPartitionList = list.stream().filter(l -> StringUtils.isNotBlank(l.getPartitionId())).collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(hasPartitionList)) {
-        	Map<String, Map<String, Object>> cacheMap = new HashMap<>();
-            Map<String, String> dictPartitionIdCodeMap = FeignQuery.getByIds(DictPartitionEntity.class, 
-            		hasPartitionList.stream().map(CustomerInfoEntity::getPartitionId).filter(Objects::nonNull).collect(Collectors.toList()))
-            		  .stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getCode));
-            String errorDepartmentCodeJoin = hasPartitionList.stream().filter(l -> queryAndCacheOmsDictBasic(cacheMap, dictPartitionIdCodeMap.get(l.getPartitionId()), l.getPlatformType()) == null)
-            		.map(CustomerInfoEntity::getCode).collect(Collectors.joining("、"));
-            if(StringUtils.isNotBlank(errorDepartmentCodeJoin)) {
-            	throw new ServiceException(errorDepartmentCodeJoin + "军区未关联部门，请联系实施配置");
-            }
-        }
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();

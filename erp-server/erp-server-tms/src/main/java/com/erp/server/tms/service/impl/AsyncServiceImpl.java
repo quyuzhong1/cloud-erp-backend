@@ -69,6 +69,7 @@ public class AsyncServiceImpl implements AsyncService {
             }
         } catch (Exception e) {
             log.error("同步渠道异常：{}", e);
+            throw new RuntimeException("同步渠道异常");
         }
 
     }

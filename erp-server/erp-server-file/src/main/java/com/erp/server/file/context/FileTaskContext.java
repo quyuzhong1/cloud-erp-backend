@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -96,6 +97,23 @@ public class FileTaskContext {
                 log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
             }
         });
+        return fileTask.getId();
+    }
+
+    /**
+     * 创建文件任务
+     */
+    @Transactional(rollbackFor = Exception.class ,propagation = Propagation.REQUIRES_NEW)
+    public String addNewImport(FileTaskDTO fileTaskDTO) {
+        // 创建文件任务
+        FileTask fileTask = FileTask.create(fileTaskDTO.getEvent(), fileTaskDTO.getFileName(), writeValueAsString(fileTaskDTO.getMetaInfo()));
+        LoginUser loginUser = UserContext.getLoginUser();
+        fileTask.setType(FileTaskTypeEnum.ASYNC_IMPORT.getCode());
+        // 保存文件任务
+        fileTaskRepository.save(fileTask);
+        log.info("文件任务[{}]创建成功,类型为[{}],状态[PENDING]", fileTask.getId(), fileTaskDTO.getEvent());
+        // 完成新增数据事务提交之后,异步执行
+        importProcess(fileTask.getId(), loginUser, false);
         return fileTask.getId();
     }
 

@@ -34,7 +34,7 @@ public interface MessageService extends SuperService<MessageEntity> {
      * @param type
      * @return java.util.List<com.erp.model.sys.dto.MessageDTO.NotReadMessageNumDetail>
      **/
-    List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type);
+    List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type , Integer pageNo , Integer pageSize);
 
     /**
      * 全部已读

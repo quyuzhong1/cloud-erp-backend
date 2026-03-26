@@ -40,5 +40,7 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
      * @return java.util.List<com.erp.model.sys.entity.MessageEntity>
      **/
     List<MessageEntity> list(@Param("param") MessageDTO.PdaParamDTO param);
+    
+    List<MessageDTO.NotReadMessageNum> listNotReadMessageNum(@Param("param") MessageDTO.PdaParamDTO param);
 
 }

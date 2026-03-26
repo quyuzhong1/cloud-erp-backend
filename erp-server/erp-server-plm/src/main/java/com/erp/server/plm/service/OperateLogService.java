@@ -17,6 +17,7 @@ import java.util.List;
  */
 public interface OperateLogService extends IService<OperateLogEntity> {
 
+    Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation);
 
     /**
      * @description: 修改时保存日志
@@ -94,5 +95,5 @@ public interface OperateLogService extends IService<OperateLogEntity> {
      * @param dto
      * @return
      */
-    PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto);
+    PagingVO<OperateLogShowDTO.HistoryDTO> getBomChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto);
 }

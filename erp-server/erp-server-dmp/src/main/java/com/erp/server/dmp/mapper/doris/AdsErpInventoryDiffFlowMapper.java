@@ -58,5 +58,7 @@ public interface AdsErpInventoryDiffFlowMapper extends BaseMapper<AdsErpInventor
     
     List<PlatformInitStockExcelDTO> listInit(@Param("warehouseNameList") List<String> warehouseNameList , @Param("checkMonthList") List<String> checkMonthList);
     
+    List<PlatformInitStockExcelDTO> listDimCheckWareHouse();
+    
     void batchInsertInit(@Param("dtoList") List<PlatformInitStockExcelDTO> dtoList);
 }

@@ -13,6 +13,7 @@ public enum ProductBatchFieldEnum implements EnumMessage  {
     SALE_STATE("sale_state","销售状态", "product_sale", "sku_id"),
     IS_MARKETABLE("is_marketable","是否可销售(0否，1是)", "product_sale", "sku_id"),
     PRODUCT_PROPERTY_ID("product_property_id","属性", "product_logistics", "sku_id"),
+    PRODUCT_PROPERTY("product_property","属性名称", "product_logistics", "sku_id"),
     DECLARE_CHINESE_NAME("declare_chinese_name","报关中文名", "product_logistics", "sku_id"),
     DECLARE_ENGLISH_NAME("declare_english_name","报关英文名", "product_logistics", "sku_id"),
     DECLARE_MODEL("declare_model","报关型号", "product_logistics", "sku_id"),
