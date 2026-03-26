@@ -1684,9 +1684,14 @@ public class QcInfoDTO implements Serializable {
         private String imageType;
 
         /**
+         * 图片类型名称
+         */
+        private String imageTypeName;
+
+        /**
          * 图片url
          */
-        private String imageUrl;
+        private List<String> imageUrlList;
     }
 
 }

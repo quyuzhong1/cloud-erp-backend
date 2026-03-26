@@ -11,7 +11,7 @@ import com.erp.model.file.dto.FileDTO;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileService;
-import com.erp.server.file.service.FileTaskService;
+import com.erp.server.file.service.FeiShuFileService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +35,7 @@ public class FileController extends BaseController {
     @Resource
     private FileRegistry fileRegistry;
     @Resource
-    private FileTaskService fileTaskService;
+    private FeiShuFileService feiShuFileService;
 
     /**
      * 上传文件
@@ -156,7 +156,7 @@ public class FileController extends BaseController {
     public ApiResult<SysCommonDTO.AttachmentDTO> getFeiShuFile(@RequestBody FileDTO.UploadDTO uploadDTO){
         SysCommonDTO.AttachmentDTO attachmentDTO = null;
         try {
-            attachmentDTO = fileTaskService.getFeiShuFile(uploadDTO);
+            attachmentDTO = feiShuFileService.getFeiShuFile(uploadDTO);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
