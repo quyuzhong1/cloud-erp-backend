@@ -306,24 +306,24 @@
     <!-- 查询符合推送质检信息的采购订单 -->
     <select id="listPushQcApplication"
             resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$ListPushQcApplicationDTO">
-            select
-                po.id as poId,
-                pod.id as podId,
-                po.code,
-                pod.sku_id as skuId,
-                pod.sku_no as skuNo,
-                pos.supplier_id as supplierId,
-                pos.supplier_name as supplierName,
-                pod.qty as poQty
-            from purchase_order_detail pod
-            inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
-            inner join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
-            <where>
-                pod.is_deleted = false and  po.approve_status = 'approve'
-                and pod.id in
-                <foreach collection="podIdList" item="item" separator="," open="(" close=")">
-                    #{item}
-                </foreach>
-            </where>
+        select
+            po.id as poId,
+            pod.id as podId,
+            po.code,
+            pod.sku_id as skuId,
+            pod.sku_no as skuNo,
+            pos.supplier_id as supplierId,
+            pos.supplier_name as supplierName,
+            pod.purchase_qty as poQty
+        from purchase_order_detail pod
+        inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+        inner join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        <where>
+            pod.is_deleted = false and  po.approve_status = 'approve'
+            and pod.id in
+            <foreach collection="params.podIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
     </select>
 </mapper>

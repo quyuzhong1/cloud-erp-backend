@@ -19,6 +19,7 @@ import com.erp.model.wms.dto.SamplingPlanDTO;
 import com.erp.model.wms.entity.QcSamplingPlanEntity;
 import com.erp.model.wms.entity.QcSamplingPlanQcTypeRefEntity;
 import com.erp.server.wms.query.QcSamplingPlanQueryHandler;
+import com.erp.server.wms.service.FileManagementService;
 import com.erp.server.wms.service.QcSamplingAqlRuleService;
 import com.erp.server.wms.service.QcSamplingPlanQcTypeRefService;
 import com.erp.server.wms.service.QcSamplingPlanService;
@@ -60,11 +61,6 @@ public class QcSamplingPlanController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:samplingPlan:add",
-            serviceClass = QcSamplingPlanService.class,
-            keyIdName = "id")
     @LogAction(value = LogActionEnum.INSERT, desc = "抽样方案表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SamplingPlanDTO.AddDTO dto) {
         return success(qcSamplingPlanService.add(dto));
@@ -117,6 +113,11 @@ public class QcSamplingPlanController extends BaseController {
     * @return ApiResult<SamplingPlanDTO.ViewDTO>>
     */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:samplingPlan:view",
+            serviceClass = QcSamplingPlanQcTypeRefService.class,
+            keyIdName = "id")
     @LogViewService
     public ApiResult<SamplingPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(qcSamplingPlanService.view(id));
@@ -133,7 +134,7 @@ public class QcSamplingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:samplingPlan:updateStatus",
-            serviceClass = QcSamplingPlanService.class,
+            serviceClass = QcSamplingPlanQcTypeRefService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
@@ -178,7 +179,7 @@ public class QcSamplingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:samplingPlan:delete",
-            serviceClass = QcSamplingPlanService.class,
+            serviceClass = QcSamplingPlanQcTypeRefService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "抽样方案单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
