@@ -109,6 +109,11 @@ public class RocketMqNewTag {
      * 新中台旺店通虚拟仓库
      */
     public static final String DMP_WDT_VIRTUALWAREHOUSE_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_virtualwarehouse_to_dmp_tag";
+
+    /**
+     * 新中台 TikTok 销售仓库
+     */
+    public static final String DMP_TIKTOK_WAREHOUSE_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_tiktok_warehouse_to_dmp_tag";
     
     /**
      * 新中台旺店通店铺
@@ -168,9 +173,15 @@ public class RocketMqNewTag {
     public static final String DMP_LX_FBA_SHIPMENT_RECEIVE_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_fba_shipment_receive_to_dmp_tag";
 
     /**
+     * 新中台FBT签收
+     */
+    public static final String DMP_FBT_FBA_SHIPMENT_RECEIVE_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fbt_fba_shipment_receive_to_dmp_tag";
+
+    /**
      * 新中台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_tag";
+    public static final String DMP_FBT_SHIPMENT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fbt_shipment_to_wms_tag";
     public static final String DMP_AWD_SHIPMENT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_shipment_to_wms_tag";
     public static final String DMP_FULFILL_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fulfill_order_to_oms_tag";
 

@@ -67,6 +67,10 @@ public class ExportDmpFeignController {
     private AdsErpFirstMileInTransitDiffService adsErpFirstMileInTransitDiffService;
     @Resource
     private AdsErpInventoryDiffKingdeeService adsErpInventoryDiffKingdeeService;
+    @Resource
+    private AdsErpReceiveFlowDiffService adsErpReceiveFlowDiffService;
+
+
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -270,5 +274,28 @@ public class ExportDmpFeignController {
     @PostMapping("/exportDiffReturnInstockSyncSourcePlatform")
     public PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> exportDiffReturnInstockSyncSourcePlatform(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto){
         return adsErpDiffReturnInstockSyncService.sourcePlatformPaging(dto);
+    }
+
+    /**
+     * 签收流水差异导出
+     */
+    @PostMapping("/exportAdsErpReceiveFlowDiff")
+    @WebAdvanceQuery(handler = AdsErpReceiveFlowDiffQueryHandler.class)
+    public PagingVO<AdsErpReceiveFlowDiffDTO.ListDTO> exportAdsErpReceiveFlowDiff(@RequestBody @Validated PagingDTO<AdsErpReceiveFlowDiffDTO.PagingParamDTO> dto){
+        return adsErpReceiveFlowDiffService.paging(dto);
+    }
+    /**
+     * 签收流水溯源-库存流水
+     */
+    @PostMapping("/exportAdsErpReceiveInventoryFlow")
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> exportAdsErpReceiveInventoryFlow(@RequestBody @Validated PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto){
+        return adsErpReceiveFlowDiffService.sourcePlatformFlowPaging(dto);
+    }
+    /**
+     * 签收流水溯源-直接调拨单
+     */
+    @PostMapping("/exportAdsErpReceiveTransfer")
+    public PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> exportAdsErpReceiveTransfer(@RequestBody @Validated PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto){
+        return adsErpReceiveFlowDiffService.transferInfoPaging(dto);
     }
 }

@@ -65,6 +65,14 @@ public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
      */
     private String status;
 
+    /**
+     * zhongbao 海外仓出库异常时，记录异常原型到操作日志
+     */
+    private String errorReason;
 
+    /**
+     * 平台：zhongbao用作判断订单状态是否需要解析数据
+     */
+    private String platform;
 
 }

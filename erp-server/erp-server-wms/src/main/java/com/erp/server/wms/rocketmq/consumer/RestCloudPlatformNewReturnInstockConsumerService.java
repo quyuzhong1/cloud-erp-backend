@@ -13,6 +13,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -28,10 +29,7 @@ import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.*;
-import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SkuMappingFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.*;
 import io.seata.common.util.CollectionUtils;
@@ -42,6 +40,7 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -86,6 +85,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	private SoB2cFeign soB2cFeign;
 
 	@Resource
+	private SoInfoFeign soInfoFeign;
+
+	@Resource
 	private SoOutstockDetailService soOutstockDetailService;
 
 	@Resource
@@ -96,6 +98,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	@Resource
 	private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+	@Resource
+	private B2bThirdDeliveryService b2bThirdDeliveryService;
+
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -148,13 +154,16 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 		} else {
 			SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
-			if(Objects.nonNull(existEntity)){
+			if (Objects.nonNull(existEntity)) {
 				return;
 			}
 		}
 
 		SoB2cEntity soB2cEntity = null;
+		SoInfoEntity soInfoEntity = null;
 		SoOutstockEntity soOutstock = null;
+		SoReturnInstockEntity soReturnInstockEntity = null;
+		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
 		if(CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())){
 			ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
 			if(dto.getOrderReferenceNo().contains(BusinessNoConstant.WFHD)){
@@ -171,6 +180,27 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
 			}
 		}
+
+
+		if(Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())
+				&& CharSequenceUtil.isNotBlank(dto.getPlatformOrderNo())){
+			List<B2bThirdDeliveryEntity> list = b2bThirdDeliveryService.lambdaQuery()
+					.eq(B2bThirdDeliveryEntity::getPlatformOrderCode, dto.getPlatformOrderNo())
+					.list();
+			if (!list.isEmpty()) {
+				SoInfoEntity soInfo = soInfoFeign.getSoInfoById(list.get(0).getSoId());
+				if (Objects.nonNull(soInfo)) {
+					soInfoEntity = soInfo;
+				}
+			}
+
+			List<SoB2cEntity> soB2CList = soB2cFeign.getByShippingOrderNo(dto.getPlatformOrderNo());
+			if (!soB2CList.isEmpty()) {
+				soB2cEntity = soB2CList.get(0);
+			}
+
+		}
+
 		WarehouseEntity warehouseEntity = new WarehouseEntity();
 		//艾姆勒没有仓库，拿订单的仓库
 		if(PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform()) || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(dto.getPlatform())){
@@ -192,11 +222,18 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
 		}
 
-		SoReturnInstockEntity soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
-		List<SoReturnInstockDetailEntity> detailEntityList = this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity);
+		if (Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())) {
+			soReturnInstockEntity = this.buildZhongBaoSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soInfoEntity,soOutstock);
+			detailEntityList.addAll(this.buildZhongBaoSoReturnInstockDetail(dto,soB2cEntity,soInfoEntity,warehouseEntity));
+		} else {
+			soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
+			detailEntityList.addAll(this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity));
+		}
+
 		if(CollectionUtils.isEmpty(detailEntityList)){
 			throw new ServiceException("没有映射");
 		}
+
 		//关联销售退货单
 		this.matchSoReturn(soReturnInstockEntity,detailEntityList,dto,soB2cEntity);
 
@@ -281,6 +318,79 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		return detailEntityList;
 	}
 
+	private List<SoReturnInstockDetailEntity> buildZhongBaoSoReturnInstockDetail(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,WarehouseEntity warehouseEntity) {
+		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
+		List<SoB2cDetailEntity> soB2cDetails = new ArrayList<>();
+		List<SoDetailEntity> soDetails = new ArrayList<>();
+		if(CollectionUtils.isEmpty(details)){
+			throw new ServiceException("明细为空");
+		}
+		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v->v.getProductSku()).collect(Collectors.toList());
+		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setAuthId(dto.getAuthId());
+		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
+		if (Objects.nonNull(soB2cEntity)) {
+			soB2cDetails.addAll(soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId())));
+		} else if (Objects.nonNull(soInfoEntity)){
+			soDetails.addAll(soInfoFeign.listSoDetailByMainId(soInfoEntity.getId()));
+		}
+		for (PlatformReturnInstockDTO.Detail detail : details) {
+			SkuMappingDTO.MappingSkuViewDTO skuViewDTO = mappingSkuViewDTOList.stream().filter(v->v.getPlatformSkuNo().equals(detail.getProductSku())).findFirst().orElse(null);
+			if(Objects.isNull(skuViewDTO)){
+				continue;
+			}
+			SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
+			soReturnInstockDetailEntity.setSkuId(skuViewDTO.getProductSkuId());
+			soReturnInstockDetailEntity.setSkuNo(skuViewDTO.getProductSkuNo());
+			soReturnInstockDetailEntity.setMustQty(0);
+			soReturnInstockDetailEntity.setReceiveQty(detail.getReceiveQty());
+			soReturnInstockDetailEntity.setRealQty(detail.getRealQty());
+			if (!soB2cDetails.isEmpty()) {
+
+				SoB2cDetailEntity soB2cDetailEntity = soB2cDetails.stream()
+						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getPlatformSkuNo()))
+						.findFirst()
+						.orElse(null);
+				if (Objects.nonNull(soB2cDetailEntity)) {
+					BigDecimal amount = MathUtil.multiplyWithTwo(soB2cDetailEntity.getPrice(), detail.getReceiveQty());
+					soReturnInstockDetailEntity.setAmount(amount);
+					soReturnInstockDetailEntity.setTaxReturnAmount(amount);
+				} else {
+					soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+				}
+
+			} else if (!soDetails.isEmpty()){
+				SoDetailEntity soDetailEntity = soDetails.stream()
+						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getPlatformSkuNo()))
+						.findFirst()
+						.orElse(null);
+				if (Objects.nonNull(soDetailEntity)) {
+					soReturnInstockDetailEntity.setReturnAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), detail.getReceiveQty()));
+					soReturnInstockDetailEntity.setTaxReturnAmount(MathUtil.multiplyWithTwo(soDetailEntity.getTaxPrice(), detail.getReceiveQty()));
+				} else {
+					soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+				}
+			} else {
+				soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+				soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+			}
+			soReturnInstockDetailEntity.setWarehouseId(warehouseEntity.getId());
+			soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
+			soReturnInstockDetailEntity.setRemark(dto.getReason());
+			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
+			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
+			detailEntityList.add(soReturnInstockDetailEntity);
+		}
+		return detailEntityList;
+	}
+
 	private SoReturnInstockEntity buildSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoOutstockEntity soOutstock){
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		if(StringUtils.isNotBlank(warehouseEntity.getId())){
@@ -329,6 +439,75 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 			soReturnInstockEntity.setSellerId(soOutstock.getSellerId());
 			soReturnInstockEntity.setSellerName(soOutstock.getSellerName());
+		}
+		return soReturnInstockEntity;
+	}
+
+	private SoReturnInstockEntity buildZhongBaoSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,SoOutstockEntity soOutstock){
+		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
+		CustomerInfoEntity customerInfo = null;
+			if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+		}
+		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
+		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
+		soReturnInstockEntity.setSourceId(dto.getSourceId());
+		//组织信息
+		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+			soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
+		}
+		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
+		soReturnInstockEntity.setApproveUserName("system");
+		soReturnInstockEntity.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode());
+		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
+		soReturnInstockEntity.setCreated(dto.getCreateTime());
+		if (Objects.nonNull(soB2cEntity)) {
+			soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
+			soReturnInstockEntity.setType("B2C");
+			soReturnInstockEntity.setSalesOrgId(soB2cEntity.getOrgId());
+			soReturnInstockEntity.setSalesOrgName(soB2cEntity.getOrgName());
+			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
+			customerInfo = customerFeign.getCustomerById(shopInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerId(shopInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerName(customerInfo.getName());
+			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
+			soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
+			soReturnInstockEntity.setSoId(soB2cEntity.getId());
+			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
+			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
+		} else if (Objects.nonNull(soInfoEntity)){
+			soReturnInstockEntity.setSourceCode(soInfoEntity.getCode());
+			soReturnInstockEntity.setType("B2B");
+			soReturnInstockEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+			soReturnInstockEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+			customerInfo = customerFeign.getCustomerById(soInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerId(soInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerName(customerInfo.getName());
+			soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
+			soReturnInstockEntity.setSourceCode(soInfoEntity.getCode());
+			soReturnInstockEntity.setSoId(soInfoEntity.getId());
+			soReturnInstockEntity.setCurrency(soInfoEntity.getCurrency());
+		} else {
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+			soReturnInstockEntity.setCurrencySymbol("¥");
+		}
+		if(Objects.nonNull(soOutstock)){
+			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
+				SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
+				if( null != department){
+					soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
+					soReturnInstockEntity.setSalesDeptName(department.getName());
+				}
+			}
+		}
+
+		if (Objects.nonNull(customerInfo)) {
+			soReturnInstockEntity.setSellerId(customerInfo.getSellerId());
+			soReturnInstockEntity.setSellerName(customerInfo.getSellerName());
 		}
 		return soReturnInstockEntity;
 	}
