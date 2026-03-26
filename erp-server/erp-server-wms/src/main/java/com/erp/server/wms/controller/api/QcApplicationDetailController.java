@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -79,7 +80,7 @@ public class QcApplicationDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "质检申请导入")
     @PostMapping(value = "/importExcel")
-    public ApiResult<QcApplicationDetailDTO.ImportDTO> importExcel(@RequestBody QcApplicationDetailDTO.ImportParamDTO dto) {
+    public ApiResult<QcApplicationDetailDTO.ImportDTO> importExcel(@RequestBody @Valid QcApplicationDetailDTO.ImportParamDTO dto) {
         return success(qcApplicationDetailService.importExcel(dto));
     }
 

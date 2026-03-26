@@ -97,8 +97,8 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, QcApplicationEntity qcApplicationEntity) {
@@ -185,7 +185,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         List<PurchaseOrderDetailEntity> detailList = new ArrayList<>();
         if (CharSequenceUtil.isNotBlank(sourceId)) {
             //查询采购订单数据
-             detailList = FeignQuery.create(PurchaseOrderDetailEntity.class).eq(PurchaseOrderDetailEntity::getPurchaseOrderId, sourceId).list();
+            detailList = FeignQuery.create(PurchaseOrderDetailEntity.class).eq(PurchaseOrderDetailEntity::getPurchaseOrderId, sourceId).list();
         }
 
         //SKU信息
@@ -232,7 +232,11 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             resultDTO.setProductName(skuVO.getSkuName());
             resultDTO.setEan(skuVO.getEan());
             resultDTO.setSourceDetailId(purchaseOrderDetailEntity.getId());
-            resultDTO.setSupplierId(supplierEntity.getId());
+            resultDTO.setQty(MathUtil.valueOfInteger(data.getQtyStr()));
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                resultDTO.setSupplierId(supplierEntity.getId());
+                resultDTO.setSupplierName(supplierEntity.getName());
+            }
             resultList.add(resultDTO);
         }
         return resultList;
@@ -254,8 +258,8 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(List<QcApplicationDetailEntity> qcApplicationDetailList,QcApplicationEntity qcApplicationEntity) {
         if (CollUtil.isEmpty(qcApplicationDetailList)) {
             return;
@@ -288,12 +292,12 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         PurchaseOrderSupplierEntity poSupplierEntity = CharSequenceUtil.isBlank(qcApplicationEntity.getSourceId()) ? new PurchaseOrderSupplierEntity() : FeignQuery.getById(PurchaseOrderSupplierEntity.class, qcApplicationEntity.getSourceId());
 
         for (QcApplicationDetailEntity data : qcApplicationDetailList) {
-               //校验供应商信息
-                if (CharSequenceUtil.isNotBlank(data.getSupplierId()) && !CharSequenceUtil.equals(data.getSupplierId(),poSupplierEntity.getSupplierId())) {
-                    throw new ServiceException(ApiError.QC_APPLICATION_SUPPLIER_NOT_DIFF);
-                }
-               //校验数量
-             checkQcApplicationQty(qcApplicationEntity,data,oldDetailList,purchaseOrderDetailList,purchaseReturnOrderDetailList,stockInDetailList);
+            //校验供应商信息
+            if (CharSequenceUtil.isNotBlank(data.getSupplierId()) && !CharSequenceUtil.equals(data.getSupplierId(),poSupplierEntity.getSupplierId())) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SUPPLIER_NOT_DIFF);
+            }
+            //校验数量
+            checkQcApplicationQty(qcApplicationEntity,data,oldDetailList,purchaseOrderDetailList,purchaseReturnOrderDetailList,stockInDetailList);
 
             //sku编码
             data.setSkuNo(skuMap.get(data.getSkuId()));
@@ -318,29 +322,29 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
      * @return void
      */
     private void checkQcApplicationQty(QcApplicationEntity mainEntity, QcApplicationDetailEntity detailEntity,List<QcApplicationDetailEntity> oldDetailList,List<PurchaseOrderDetailEntity> purchaseOrderDetailList,
-                                        List<PoReturnDetailEntity> purchaseReturnOrderDetailList, List<PoInstockDetailEntity> stockInDetailList) {
-     if (CharSequenceUtil.equals(mainEntity.getSourceType(), SourceTypeEnum.PURCHASE_ORDER.getCode())) {
-         //采购明细
-         PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
-         if ( ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-             throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
-         }
-         //已申请数量（审核通过的质检申请单数量）
-         Integer hasPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getSourceDetailId()) && !CharSequenceUtil.equals(obj.getId(), detailEntity.getId())).map(QcApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                                       List<PoReturnDetailEntity> purchaseReturnOrderDetailList, List<PoInstockDetailEntity> stockInDetailList) {
+        if (CharSequenceUtil.equals(mainEntity.getSourceType(), SourceTypeEnum.PURCHASE_ORDER.getCode())) {
+            //采购明细
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if ( ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
+            }
+            //已申请数量（审核通过的质检申请单数量）
+            Integer hasPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getSourceDetailId()) && !CharSequenceUtil.equals(obj.getId(), detailEntity.getId())).map(QcApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
 
-         //退货补数量（审核通过的补货退货单数量）
-         Integer returnQty = purchaseReturnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
-         //有效入库数量（未审核通过）
-         Integer effectiveStockInQty = MathUtil.ZERO;
-         if (CollectionUtils.isNotEmpty(stockInDetailList)) {
-             effectiveStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-         }
-         //未入库数量
-         Integer notPushQty = purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty - hasPushQty;
-        if (detailEntity.getQty() > notPushQty) {
-            throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_QTY, notPushQty);
+            //退货补数量（审核通过的补货退货单数量）
+            Integer returnQty = purchaseReturnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            //有效入库数量（未审核通过）
+            Integer effectiveStockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(stockInDetailList)) {
+                effectiveStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //未入库数量
+            Integer notPushQty = purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty - hasPushQty;
+            if (detailEntity.getQty() > notPushQty) {
+                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_QTY, notPushQty);
+            }
         }
-     }
     }
 
     /**
@@ -354,19 +358,19 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         if (CollUtil.isEmpty(podIdList)) {
             return Collections.emptyList();
         }
-       return lambdaQuery().in(QcApplicationDetailEntity::getSourceDetailId, podIdList).list();
+        return lambdaQuery().in(QcApplicationDetailEntity::getSourceDetailId, podIdList).list();
     }
 
-   /**
-    * 分页查询、导出 数据处理
-   */
-   private void fillList(List<QcApplicationDetailDTO.ListDTO> list) {
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<QcApplicationDetailDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
             return;
         }
         // 属性赋值
         for(QcApplicationDetailDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
+            // TODO 其他如需要显示名称的字段赋值
         }
-   }
+    }
 }
