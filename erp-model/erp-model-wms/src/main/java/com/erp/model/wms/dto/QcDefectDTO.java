@@ -167,6 +167,11 @@ public class QcDefectDTO implements Serializable {
         private String defectLevel;
 
         /**
+         * 缺陷等级名称
+         */
+        private String defectLevelName;
+
+        /**
         * 缺陷数量
         */
         private Integer defectQty;
