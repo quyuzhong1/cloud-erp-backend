@@ -316,12 +316,14 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
             // 明细完结判断最后一个发货单
             if (i == resultList.size() - 1 && orderFinish) {
                 // 最后一个发货明细
+                proratedInfoDTO.setProratedAfterTaxUnitPrice(lastAfterTaxAmount.divide(BigDecimal.valueOf(proratedInfoDTO.getQty()), 4, RoundingMode.DOWN));
                 proratedInfoDTO.setProratedAfterTaxAmount(lastAfterTaxAmount);
                 break;
             }
             // 计算分摊税后金额
             BigDecimal prorateAfterTaxAmount = proratedInfoDTO.getProratedAmount().divide(orderAmount, 4, RoundingMode.DOWN).multiply(afterTaxAmount);
             proratedInfoDTO.setProratedAfterTaxAmount(prorateAfterTaxAmount);
+            proratedInfoDTO.setProratedAfterTaxUnitPrice(prorateAfterTaxAmount.divide(BigDecimal.valueOf(proratedInfoDTO.getQty()), 4, RoundingMode.DOWN));
             // 最后剩余税后金额 = 当前发货单税后金额 - 当前发货单税后金额
             lastAfterTaxAmount = lastAfterTaxAmount.subtract(prorateAfterTaxAmount);
         }
