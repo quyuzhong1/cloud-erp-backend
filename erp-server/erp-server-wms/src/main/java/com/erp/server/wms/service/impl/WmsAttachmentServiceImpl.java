@@ -267,10 +267,6 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             entity.setAttachVersion(maxVersionEntity.getAttachVersion() + 1);
             this.saveOrUpdate(entity);
         }
-        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(entity.getType())){
-            //新增质检标准
-            qcStandardService.genQcStandardByUrl(entity.getAttachUrl());
-        }
         return entity.getId();
     }
 
