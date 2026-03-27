@@ -613,9 +613,15 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         return skus;
     }
 
+    public void genQcStandardByUrl1(List<String> skuNos, String fileUrl) {
+
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void genQcStandardByUrl(List<String> skuNos, String fileUrl) {
+    public List<QcStandardDTO.AddDTO> genQcStandardByUrl(List<String> skuNos, String fileUrl) {
+        List<QcStandardDTO.AddDTO> addDTOList = new ArrayList<>();
+
         if (StringUtils.isBlank(fileUrl)) {
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "导入文件URL");
         }
@@ -623,7 +629,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if(CollUtil.isEmpty(skuNos)){
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "SKU");
         }
-
         try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
             Workbook workbook = WorkbookFactory.create(inputStream);
             Sheet sheet = workbook.getSheetAt(0);
@@ -715,6 +720,12 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             QcStandardServiceImpl bean = ApplicationContextUtils.getBean(QcStandardServiceImpl.class);
             List<ProductDetailEntity> skuVOList = plmTaskFeign.listBySkuNos(skus);
 
+
+            Boolean flag = false;
+            if(skuNos.size() == 1){
+                flag = true;
+            }
+
             for (ProductDetailEntity productDetailEntity : skuVOList) {
                 //判断本次该SKU是否需要生成质检标准
                 if(!skuNos.contains(productDetailEntity.getSkuNo())){
@@ -732,7 +743,9 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 addDTO.setIsImport(true);
 
                 QcStandardEntity existing = existingMap.get(skuId);
-                if (existing != null) {
+                if(flag){
+                    addDTOList.add(addDTO);
+                }else if (existing != null) {
                     // 1. 详情更新 (基于名称匹配)
                     updateDetailsForImport(existing.getId(), detailList);
 
@@ -768,6 +781,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             log.error("质检报告导入失败", e);
             throw new ServiceException("解析报告失败：" + e.getMessage());
         }
+
+        return addDTOList;
     }
 
     /**
