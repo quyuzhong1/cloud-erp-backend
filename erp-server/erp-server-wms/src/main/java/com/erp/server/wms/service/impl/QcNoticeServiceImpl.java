@@ -619,7 +619,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardAddDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
             //品类通用标准
             List<FileManagementEntity> fileList = fileManagementService.lambdaQuery()
-                    .eq(FileManagementEntity::getFileType, "") //TODO
+                    .eq(FileManagementEntity::getFileType, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode())
                     .eq(FileManagementEntity::getSkuId, qcNoticeDetail.getSkuId())
                     .list();
             if (!fileList.isEmpty()) {
@@ -714,7 +714,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //品类通用标准
             List<FileManagementEntity> fileList = fileManagementService.lambdaQuery()
-                    .eq(FileManagementEntity::getFileType, "") //TODO 文件类型未知
+                    .eq(FileManagementEntity::getFileType, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode())
                     .eq(FileManagementEntity::getSkuId, qcInfoView.getSkuId())
                     .list();
             if (!fileList.isEmpty()) {
@@ -835,7 +835,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //品类通用标准
             List<FileManagementEntity> fileList = fileManagementService.lambdaQuery()
-                    .eq(FileManagementEntity::getFileType, "") //TODO
+                    .eq(FileManagementEntity::getFileType, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode())
                     .eq(FileManagementEntity::getSkuId, qcInfoView.getSkuId())
                     .list();
             if (!fileList.isEmpty()) {
