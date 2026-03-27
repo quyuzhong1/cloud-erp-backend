@@ -317,7 +317,7 @@ public class SamplingPlanDTO implements Serializable {
         /**
         * 一般缺陷AQL
         */
-        @Digits(integer = 8, fraction = 2, message = "一般缺陷AQL整数位不能超过8位，小数位不能超过2位")
+        @Digits(integer = 12, fraction = 4, message = "一般缺陷AQL整数位不能超过12位，小数位不能超过4位")
         private String generalAql;
 
         /**
