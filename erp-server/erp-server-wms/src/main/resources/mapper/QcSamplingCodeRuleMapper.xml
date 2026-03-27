@@ -45,7 +45,7 @@
             *
         FROM
             qc_sampling_code_rule
-                 WHERE is_valid = 1 AND min_lot_qty <![CDATA[ <= ]]> #{lotQty} AND max_lot_qty >= #{lotQty} LIMIT 1
+                 WHERE disabled = false AND is_deleted =false AND  min_lot_qty <![CDATA[ <= ]]> #{lotQty} AND max_lot_qty >= #{lotQty} LIMIT 1
     </select>
 
 </mapper>

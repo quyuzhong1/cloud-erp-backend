@@ -35,7 +35,7 @@
     </sql>
 
     <select id="selectByCodeAndAql" resultType="com.erp.model.wms.entity.QcSamplingAqlRuleEntity">
-        SELECT * FROM qc_sampling_aql_rule WHERE is_valid = 1 AND sample_qty_code = #{sampleCode} AND aql_value = #{aqlValue} LIMIT 1
+        SELECT * FROM qc_sampling_aql_rule WHERE is_deleted = false AND disabled =false  AND sample_qty_code = #{sampleCode} AND aql_value = #{aqlValue} LIMIT 1
     </select>
 
 </mapper>
