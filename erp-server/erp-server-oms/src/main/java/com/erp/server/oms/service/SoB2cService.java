@@ -19,6 +19,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -355,8 +356,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean platformWarehouseOrderHandle(String id , Map<String,Object> map);
 
-  
-    /** 
+
+    @Transactional(rollbackFor = Exception.class)
+    SoB2cDTO.RuleResultDTO warehouseRuleNotRequiresNew(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
+
+    /**
      * @description 正常订单拉取处理规则
      * @param id
      * @author Lambda
@@ -514,6 +518,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-29 8:41
      */
     SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
+
+    @Transactional(rollbackFor = Exception.class)
+    SoB2cDTO.RuleResultDTO logisticsRuleNotRequiresNew(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
 
     /**
      * 获取客户信息
