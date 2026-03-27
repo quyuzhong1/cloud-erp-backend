@@ -235,8 +235,8 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> genQcStandard(List<String> skuNoList, String attachUrl) {
-//        return qcStandardService.genQcStandardByUrl(skuNoList, attachUrl);
-        return null;
+        BatchResultDTO resultDTO = qcStandardService.genQcStandardByUrl(skuNoList, attachUrl);
+        return Collections.singletonList(resultDTO);
     }
 
     @Override
@@ -248,8 +248,7 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
             throw new ServiceException("只有评审报告类型的文件允许生成质检标准");
         }
         WmsAttachmentEntity attachmentEntity = wmsAttachmentService.getByIdOpt(fileManagementEntity.getFileId()).orElseThrow(() -> new ServiceException("未找到文件附件数据"));
-        List<QcStandardDTO.AddDTO> addDTOS = qcStandardService.genQcStandardByUrl(Collections.singletonList(skuRefEntity.getSkuNo()), attachmentEntity.getAttachUrl());
-        return addDTOS.get(0);
+        return qcStandardService.getQcStandardAddDTOByUrl(skuRefEntity.getSkuNo(), attachmentEntity.getAttachUrl());
     }
 
     /**
