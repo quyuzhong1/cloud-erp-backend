@@ -127,17 +127,6 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     @TableField("source_type")
     private String sourceType;
 
-    /**
-     * 质检人id
-     */
-    @TableField("qc_user_id")
-    private String qcUserId;
-
-    /**
-     * 质检人名称
-     */
-    @TableField("qc_user_name")
-    private String qcUserName;
 
 
     public static final String APPROVE_STATUS = "approve_status";

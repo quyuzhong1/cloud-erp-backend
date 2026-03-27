@@ -119,13 +119,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     private QcSamplingPlanService qcSamplingPlanService;
 
     @Resource
-    private QcSamplingPlanDetailService qcSamplingPlanDetailService;
-
-    @Resource
-    private QcSamplingPlanSkuRefService qcSamplingPlanSkuRefService;
-
-    @Resource
     private FileManagementService fileManagementService;
+
+    @Resource
+    private QcStandardSkuRefService qcStandardSkuRefService;
 
     @Resource
     private QcStandardService qcStandardService;
@@ -617,22 +614,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardAddDTO.setSamplingPlanId(samplingPlan.getId());
             qcStandardAddDTO.setSamplingPlanName(entity.getQcType() + "抽样方案");
             qcStandardAddDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
+
             //品类通用标准
-            List<FileManagementEntity> fileList = fileManagementService.lambdaQuery()
-                    .eq(FileManagementEntity::getFileType, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode())
-                    .eq(FileManagementEntity::getSkuId, qcNoticeDetail.getSkuId())
-                    .list();
-            if (!fileList.isEmpty()) {
-                String id = fileList.get(0).getId();
-                WmsAttachmentEntity wmsAttachmentEntity = attachmentService.lambdaQuery()
-                        .eq(WmsAttachmentEntity::getBusinessId, id)
-                        .orderByDesc(WmsAttachmentEntity::getAttachVersion)
-                        .last("limit 1")
-                        .one();
-                if (Objects.nonNull(wmsAttachmentEntity)) {
-                    qcStandardAddDTO.setAttachUrl(wmsAttachmentEntity.getAttachUrl());
-                    qcStandardAddDTO.setAttachName(wmsAttachmentEntity.getAttachName());
-                }
+            FileManagementDTO.AttachDTO attachDTO = fileManagementService.getCategoryGeneralStandardFile(qcNoticeDetail.getSkuId());
+            if (Objects.nonNull(attachDTO)) {
+                qcStandardAddDTO.setAttachUrl(attachDTO.getAttachUrl());
+                qcStandardAddDTO.setAttachName(attachDTO.getAttachName());
             }
 
             //质检项目
@@ -713,21 +700,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardView.setSuggestSamplingQty(samplingPlan.getSampleQty());
 
             //品类通用标准
-            List<FileManagementEntity> fileList = fileManagementService.lambdaQuery()
-                    .eq(FileManagementEntity::getFileType, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode())
-                    .eq(FileManagementEntity::getSkuId, qcInfoView.getSkuId())
-                    .list();
-            if (!fileList.isEmpty()) {
-                String id = fileList.get(0).getId();
-                WmsAttachmentEntity wmsAttachmentEntity = attachmentService.lambdaQuery()
-                        .eq(WmsAttachmentEntity::getBusinessId, id)
-                        .orderByDesc(WmsAttachmentEntity::getAttachVersion)
-                        .last("limit 1")
-                        .one();
-                if (Objects.nonNull(wmsAttachmentEntity)) {
-                    qcStandardView.setAttachUrl(wmsAttachmentEntity.getAttachUrl());
-                    qcStandardView.setAttachName(wmsAttachmentEntity.getAttachName());
-                }
+            FileManagementDTO.AttachDTO attachDTO = fileManagementService.getCategoryGeneralStandardFile(qcInfoView.getSkuId());
+            if (Objects.nonNull(attachDTO)) {
+                qcStandardView.setAttachUrl(attachDTO.getAttachUrl());
+                qcStandardView.setAttachName(attachDTO.getAttachName());
             }
 
             //质检项目
@@ -834,21 +810,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardView.setSuggestSamplingQty(samplingPlan.getSampleQty());
 
             //品类通用标准
-            List<FileManagementEntity> fileList = fileManagementService.lambdaQuery()
-                    .eq(FileManagementEntity::getFileType, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode())
-                    .eq(FileManagementEntity::getSkuId, qcInfoView.getSkuId())
-                    .list();
-            if (!fileList.isEmpty()) {
-                String id = fileList.get(0).getId();
-                WmsAttachmentEntity wmsAttachmentEntity = attachmentService.lambdaQuery()
-                        .eq(WmsAttachmentEntity::getBusinessId, id)
-                        .orderByDesc(WmsAttachmentEntity::getAttachVersion)
-                        .last("limit 1")
-                        .one();
-                if (Objects.nonNull(wmsAttachmentEntity)) {
-                    qcStandardView.setAttachUrl(wmsAttachmentEntity.getAttachUrl());
-                    qcStandardView.setAttachName(wmsAttachmentEntity.getAttachName());
-                }
+            FileManagementDTO.AttachDTO attachDTO = fileManagementService.getCategoryGeneralStandardFile(qcInfoView.getSkuId());
+            if (Objects.nonNull(attachDTO)) {
+                qcStandardView.setAttachUrl(attachDTO.getAttachUrl());
+                qcStandardView.setAttachName(attachDTO.getAttachName());
             }
 
             //质检项目
