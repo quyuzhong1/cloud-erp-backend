@@ -35,6 +35,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpOutputConstant;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
@@ -62,6 +63,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -187,6 +189,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private FileFeign fileFeign;
     @Resource
     private FileTemplateFeign fileTemplateFeign;
+    @Resource
+    private DmpAmazonFeign dmpAmazonFeign;
+
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -2346,8 +2351,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(Boolean.TRUE.equals(shopInfoEntity.getDisabled())){
             throw new ServiceException("已禁用店铺无法同步");
         }
-        //所有亚马逊店铺
-        List<ShopInfoEntity> shopInfoList = shopInfoService.listShopByAmazon();
 
         //查下对照表数据
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
@@ -2408,8 +2411,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String fnSku = summary.getFnSku();
             String itemName = summary.getItemName();
             String marketplaceId = summary.getMarketplaceId();
-            //店铺id
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictCountryCode(), AmazonMarketplaceEnum.getByMarketplaceId(marketplaceId).getCountryCode())).map(ShopInfoEntity::getId).findFirst().orElse("");
+
+            // 获取店铺授权信息
+            AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopInfoEntity.getId());
+            if (null == shopInfoDTO) {
+                throw new ServiceException("未找到店铺授权:" + shopInfoEntity.getId());
+            }
             ItemImage mainImage = summary.getMainImage();
 
             SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = mappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSkuNo(), platformSkuNo)).findFirst().orElse(null);
@@ -2441,7 +2448,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 skuMappingEntity.setListingId(listingInfoEntity.getId());
                 skuMappingEntity.setDictPlatform(paramDTO.getPlatform());
                 skuMappingEntity.setType(RuleTypeEnum.B2C_PLATFORM);
-                skuMappingEntity.setShopId(shopId);
+                AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceId);
+                if (ObjectUtil.isEmpty(shopNameDTO)) {
+                    throw new ServiceException("未找到店铺授权信息:" + marketplaceId);
+                }
+                skuMappingEntity.setShopId(shopNameDTO.getShopId());
                 skuMappingAddList.add(skuMappingEntity);
                 resultDTOList.add(BatchResultDTO.success(paramDTO.getShopId(),platformSkuNo,"商品同步成功"));
             } else {
