@@ -61,4 +61,8 @@ public interface FileManagementService extends SuperService<FileManagementEntity
      * @return
      */
     List<FileManagementDTO.VersionDTO> history(String id);
+
+    List<BatchResultDTO> genQcStandard(List<String> ids);
+
+    Boolean genSingleQcStandard(String id);
 }

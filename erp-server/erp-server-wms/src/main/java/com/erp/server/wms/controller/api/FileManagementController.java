@@ -3,9 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -120,5 +118,23 @@ public class FileManagementController extends BaseController {
     @GetMapping("/history")
     public ApiResult<List<FileManagementDTO.VersionDTO>> history(@RequestParam("id") String id) {
         return success(fileManagementService.history(id));
+    }
+    /**
+     * 批量生成质检标准
+     * ids 取值 skuRefId
+     */
+    @PostMapping("/genQcStandard")
+    public ApiResult<List<BatchResultDTO>> genQcStandard(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        return success(fileManagementService.genQcStandard(idsDTO.getIds()));
+    }
+    /**
+     * 生成单个质检标准
+     *
+     * @param id 取值 skuRefId
+     * @return
+     */
+    @GetMapping("/genSingleQcStandard")
+    public ApiResult<Boolean> genSingleQcStandard(@RequestParam("id") String id) {
+        return success(fileManagementService.genSingleQcStandard(id));
     }
 }

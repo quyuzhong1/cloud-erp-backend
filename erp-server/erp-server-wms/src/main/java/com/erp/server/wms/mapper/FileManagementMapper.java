@@ -29,4 +29,13 @@ public interface FileManagementMapper extends BaseMapper<FileManagementEntity> {
     * @return
     */
     IPage<FileManagementDTO.ListDTO> paging(Page query, @Param("params") FileManagementDTO.PagingParamDTO params);
+
+    /**
+     *  根据sku和类型统计数量
+     * @param skuIds
+     * @param fileType
+     * @param id
+     * @return
+     */
+    Integer countBySkuAndFileType(@Param("skuId") List<String> skuIds, @Param("fileType")String fileType, @Param("id") String id);
 }

@@ -32,19 +32,21 @@
         update_user_id,
         version,
         is_deleted,
-        code, sku_id, sku_no, file_type, first_category_id, first_category_name, product_name
+        code,file_type, first_category_id, first_category_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.FileManagementDTO$ListDTO">
         SELECT
             fm.id,
             fm.code as code,
-            fm.sku_id as skuId,
-            fm.sku_no as skuNo,
+            qssr.id as skuRefId,
+            qssr.sku_id as skuId,
+            qssr.sku_no as skuNo,
             fm.file_type as fileType,
             fm.first_category_id as firstCategoryId,
             fm.first_category_name as firstCategoryName,
-            fm.product_name as productName,
+            qssr.product_name as productName,
+            a.id as fileId,
             a.attach_name as attachName,
             a.attach_version as attachVersion,
             a.attach_url as attachUrl,
@@ -55,6 +57,7 @@
             fm.update_time as updateTime
         FROM file_management fm
         LEFT JOIN attachment a on fm.file_id = a.id and a.is_deleted=false
+        left join qc_standard_sku_ref qssr on fm.id = qssr.main_id and qssr.is_deleted = FALSE
         where  ${params.sqlMap.default}
         AND fm.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -68,6 +71,20 @@
         </if>
         fm.create_time desc
     </select>
-
-
+    <select id="countBySkuAndFileType" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM file_management fm
+        left join qc_standard_sku_ref qssr on fm.id = qssr.main_id and qssr.is_deleted = FALSE
+        WHERE fm.is_deleted = FALSE
+        AND fm.file_type = #{fileType}
+        <if test="skuIds != null and skuIds.size > 0">
+            and qssr.sku_id in
+            <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="id != null and id != ''">
+          AND fm.id != #{id}
+        </if>
+    </select>
 </mapper>
