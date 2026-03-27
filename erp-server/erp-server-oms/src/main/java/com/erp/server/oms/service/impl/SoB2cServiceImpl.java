@@ -6360,7 +6360,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return getRuleResultDTO(id, map, isCheckProductRegistration);
     }
 
-    private SoB2cDTO.@NotNull RuleResultDTO getRuleResultDTO(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
+    private SoB2cDTO.RuleResultDTO getRuleResultDTO(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
         SoB2cEntity entity = super.getById(id);
         isExist(entity);
         if (map.isEmpty()) {
