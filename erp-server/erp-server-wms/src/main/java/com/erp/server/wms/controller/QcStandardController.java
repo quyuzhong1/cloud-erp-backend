@@ -182,16 +182,4 @@ public class QcStandardController extends BaseController {
     public ApiResult<QcStandardDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(qcStandardService.view(id));
     }
-
-    /**
-     * 导入质检标准报告
-     * @param fileUrl 报告的文件URL (FastDFS路径)
-     * @return 业务结果
-     */
-    @PostMapping("/import")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入质检标准报告")
-    public ApiResult<Void> importFile(@RequestParam("fileUrl") String fileUrl) {
-        qcStandardService.importFile(fileUrl);
-        return success();
-    }
 }

@@ -77,11 +77,19 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      */
     List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> listAdjustPurchaseOrder(@Param(value = "params") List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> params);
     /**
-     * 查询推送质检申请单数据
+     * 查询推送质检申请单数据(采购订单)
      * @author will
      * @date 2025/7/29 14:10
      * @param params
      * @return List<ListPushQcApplicationDTO>
      */
     List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(@Param(value = "params") PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO params);
+    /**
+     * 查询推送质检申请单数据回显（SRM待发货）
+     * @author will
+     * @date 2026/3/23 14:48
+     * @param dto
+     * @return List<ListPushQcApplicationDTO>
+     */
+    List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushSrmQcApplication(@Param(value = "params") PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto);
 }

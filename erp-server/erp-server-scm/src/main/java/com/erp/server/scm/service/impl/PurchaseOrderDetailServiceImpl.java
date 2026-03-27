@@ -794,6 +794,34 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         return listPushQcApplicationList;
     }
 
+    @Override
+    public List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushSrmQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplicationList = baseMapper.listPushSrmQcApplication(dto);
+        //查询待入库数量
+        handlePushSrmQcApplication(listPushQcApplicationList);
+        return listPushQcApplicationList;
+    }
+
+    private  void handlePushSrmQcApplication(List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplicationList) {
+        if (CollUtil.isEmpty(listPushQcApplicationList)) {
+            return;
+        }
+        List<String> podIdList = listPushQcApplicationList.stream().map(PurchaseOrderDetailDTO.ListPushQcApplicationDTO::getPodId).distinct().collect(Collectors.toList());
+
+        //查询入库数据
+        List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
+
+        for ( PurchaseOrderDetailDTO.ListPushQcApplicationDTO viewProductDTO : listPushQcApplicationList) {
+            //有效入库数量（未审核通过）
+            Integer effectiveStockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                effectiveStockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //未入库数量
+            viewProductDTO.setQty(viewProductDTO.getPoQty() - effectiveStockInQty);
+        }
+    }
+
     /**
      * 数据处理，计算待入库数量=采购数量-有效入库数量+退货数量
      * @author will

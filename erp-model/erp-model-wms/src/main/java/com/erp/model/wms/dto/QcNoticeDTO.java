@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.python.antlr.ast.Str;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -886,6 +887,7 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class QcInspectItemAddDTO{
 
+        private String id;
         /**
          * 质检项目
          */
@@ -901,13 +903,14 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class QcImageAddDTO{
 
+        private String id;
         /**
          * 图片类型
          */
         private String imageType;
 
         /**
-         *
+         * 图片url
          */
         private String imageUrl;
     }
@@ -1042,6 +1045,42 @@ public class QcNoticeDTO implements Serializable {
          */
         @NotNull(message = "质检结果不允许为空")
         private QcRemarkDTO.QcResultView qcResultView;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintQcStandardDTO{
+
+        /**
+         * 质检通知单号
+         */
+        private String code;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 质检单号
+         */
+        private String qcInfoCode;
+
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemView>  qcInspectItemViewDTOList;
 
     }
 }

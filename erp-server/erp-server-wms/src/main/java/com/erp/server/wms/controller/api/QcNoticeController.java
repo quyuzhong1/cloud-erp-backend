@@ -552,4 +552,14 @@ public class QcNoticeController extends BaseController {
         return success(qcNoticeService.importFile(excelFile, response));
     }
 
+    /**
+     * 质检标准打印
+     * @param detailIdList
+     * @return
+     */
+    @PostMapping("/printQcStandard")
+    public ApiResult<List<QcNoticeDTO.PrintQcStandardDTO>> printQcStandard(@RequestBody @Valid List<String> detailIdList) {
+        return success(qcNoticeService.printQcStandard(detailIdList));
+    }
+
 }

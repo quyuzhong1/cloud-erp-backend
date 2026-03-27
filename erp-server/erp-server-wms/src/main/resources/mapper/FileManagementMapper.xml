@@ -54,7 +54,7 @@
             fm.create_time as createTime,
             fm.update_time as updateTime
         FROM file_management fm
-        LEFT JOIN attachment a on fm.file_id = a.business_id and a.is_deleted=false
+        LEFT JOIN attachment a on fm.file_id = a.id and a.is_deleted=false
         where  ${params.sqlMap.default}
         AND fm.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">

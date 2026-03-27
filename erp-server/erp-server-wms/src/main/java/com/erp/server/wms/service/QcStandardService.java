@@ -8,6 +8,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.entity.QcStandardEntity;
 
+import java.util.List;
+
 /**
  * 质检标准主表 Service 接口
  *
@@ -83,9 +85,11 @@ public interface QcStandardService extends IService<QcStandardEntity> {
 
     PagingVO<QcStandardDTO.ExportDTO> exportList(PagingDTO<QcStandardDTO.PagingParamDTO> dto);
 
+    List<String> listSkuNoByUrl(String fileUrl);
+
     /**
      * 导入质检标准
      * @param fileUrl 文件URL
      */
-    void importFile(String fileUrl);
+    void genQcStandardByUrl(List<String> skuNos, String fileUrl);
 }

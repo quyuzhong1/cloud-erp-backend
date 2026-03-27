@@ -1,18 +1,26 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.QcDefectDTO;
 import com.erp.model.wms.entity.QcDefectEntity;
+import com.erp.model.wms.entity.QcProductEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.WmsDefectLevelEnum;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcDefectMapper;
 import com.erp.server.wms.service.QcDefectService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.WmsAttachmentService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +36,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefectEntity> implements QcDefectService {
+
+    @Resource
+    private WmsAttachmentService attachmentService;
 
     @Override
     @Transactional
@@ -124,5 +135,58 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
             removeByIds(toDeleteIds); // 删除
         }
     }
+
+    @Override
+    public List<QcDefectDTO.ViewDTO> getByMainId(String id) {
+        List<QcDefectDTO.ViewDTO> addDTOS = new ArrayList<>();
+
+        List<QcDefectEntity> list = this.lambdaQuery()
+                .eq(QcDefectEntity::getMainId, id)
+                .list();
+
+        if (!list.isEmpty()) {
+            for (QcDefectEntity qcDefectEntity : list) {
+                QcDefectDTO.ViewDTO viewDTO = new QcDefectDTO.ViewDTO();
+                List<QcDefectDTO.BadImageView> badImageViews = new ArrayList<>();
+                BeanUtils.copyProperties(qcDefectEntity,viewDTO);
+                viewDTO.setDefectLevelName(WmsDefectLevelEnum.getName(viewDTO.getDefectLevelName()));
+                List<WmsAttachmentEntity> attachments = attachmentService.getByBusinessId(qcDefectEntity.getId(), WmsConstant.BAD);
+                for (WmsAttachmentEntity attachment : attachments) {
+                    QcDefectDTO.BadImageView badImageView = new QcDefectDTO.BadImageView();
+                    badImageView.setAttachName(attachment.getAttachName());
+                    badImageView.setAttachUrl(attachment.getAttachUrl());
+                }
+                viewDTO.setBadImageViewList(badImageViews);
+                addDTOS.add(viewDTO);
+            }
+        }
+        return addDTOS;
+    }
+
+    @Override
+    public void removeByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isNotEmpty(mainIdList)) {
+            LambdaQueryWrapper<QcDefectEntity> defectQueryWrapper = new LambdaQueryWrapper<>();
+            defectQueryWrapper.in(QcDefectEntity::getMainId, mainIdList);
+            this.remove(defectQueryWrapper);
+
+            LambdaQueryWrapper<QcDefectEntity> idQueryWrapper = new LambdaQueryWrapper<>();
+            idQueryWrapper.select(QcDefectEntity::getId)
+                    .in(QcDefectEntity::getMainId, mainIdList);
+            List<QcDefectEntity> defectEntities = this.list(idQueryWrapper);
+
+            List<String> defectIds = defectEntities.stream()
+                    .map(QcDefectEntity::getId)
+                    .collect(Collectors.toList());
+
+            if (CollectionUtils.isNotEmpty(defectIds)) {
+                // 删除图片
+                LambdaQueryWrapper<WmsAttachmentEntity> attachmentQueryWrapper = new LambdaQueryWrapper<>();
+                attachmentQueryWrapper.in(WmsAttachmentEntity::getBusinessId, defectIds);
+                attachmentService.remove(attachmentQueryWrapper);
+            }
+        }
+    }
+
 
 }

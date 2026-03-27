@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.ApproveDTO;
+import com.erp.model.wms.entity.QcNoticeEntity;
+import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -9,6 +10,7 @@ import com.erp.model.wms.entity.QcNoticeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -175,4 +177,6 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     List<BatchResultDTO>  checkInventory(QcNoticeDTO.AddDTO dto);
 
     QcNoticeDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(List<String> detailIdList);
 }

@@ -14,10 +14,10 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.WmsFileTypeEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.QcStandardService;
@@ -267,8 +267,6 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             entity.setAttachVersion(maxVersionEntity.getAttachVersion() + 1);
             this.saveOrUpdate(entity);
         }
-        //新增质检标准
-        qcStandardService.importFile(entity.getAttachUrl());
         return entity.getId();
     }
 
