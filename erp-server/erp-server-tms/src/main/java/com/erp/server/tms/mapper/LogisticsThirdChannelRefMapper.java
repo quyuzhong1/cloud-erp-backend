@@ -32,4 +32,9 @@ public interface LogisticsThirdChannelRefMapper extends BaseMapper<LogisticsThir
     IPage<LogisticsThirdChannelRefDTO.PagingVO> paging(Page<Object> query, LogisticsThirdChannelRefDTO.PagingParamDTO params);
 
     List<LogisticsThirdChannelRefDTO.PagingVO> listByPlatform(@Param("platformType") String platformType);
+
+    /**
+     * 根据物流渠道id获取已启用查询配置
+     */
+    List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(@Param("channelId") String channelId);
 }

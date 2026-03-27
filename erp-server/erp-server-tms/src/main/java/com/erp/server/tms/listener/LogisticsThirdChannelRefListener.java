@@ -5,6 +5,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -65,6 +66,14 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+        }
+
+        String mainDictPlatformName = excelDTO.getMainDictPlatformName().trim();
+        PlatformDictEnum platformDict = PlatformDictEnum.getByName(mainDictPlatformName);
+        if (Objects.isNull(platformDict)) {
+            errorMsgList.add("服务商不存在");
+        }else {
+            excelDTO.setMainDictPlatform(platformDict.getCode());
         }
         //查询服务商
         String platformType = TrackPlatformTypeEnum.getCode(excelDTO.getPlatformTypeName());

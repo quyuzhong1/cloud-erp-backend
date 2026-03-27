@@ -200,6 +200,11 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return baseMapper.listTrackDto(query);
     }
 
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto22(LogisticsBillDetailQueryDTO query) {
+        return baseMapper.listTrackDto(query);
+    }
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateTrackNo(LogisticsBillDTO.UpdateTrackNoDTO billDTO) {
@@ -382,6 +387,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             return;
         }
         this.lambdaUpdate().set(LogisticsBillDetailEntity::getTrackEnable, Boolean.FALSE)
+               .set(LogisticsBillDetailEntity::getTrackStatus, LogisticTrackStatusEnum.NOT_QUERY.getCode())
+               .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                .in(LogisticsBillDetailEntity::getId, detailIds).update();
     }
 
