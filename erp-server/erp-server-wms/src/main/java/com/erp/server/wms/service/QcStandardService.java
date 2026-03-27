@@ -7,6 +7,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.entity.QcStandardEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -91,5 +92,7 @@ public interface QcStandardService extends IService<QcStandardEntity> {
      * 导入质检标准
      * @param fileUrl 文件URL
      */
-    List<QcStandardDTO.AddDTO> genQcStandardByUrl(List<String> skuNos, String fileUrl);
+    BatchResultDTO genQcStandardByUrl(List<String> skuNos, String fileUrl);
+
+    QcStandardDTO.AddDTO getQcStandardAddDTOByUrl(String skuNo, String fileUrl);
 }

@@ -38,4 +38,7 @@ public interface FileManagementMapper extends BaseMapper<FileManagementEntity> {
      * @return
      */
     Integer countBySkuAndFileType(@Param("skuIds") List<String> skuIds, @Param("fileType")String fileType, @Param("id") String id);
+
+
+    FileManagementDTO.AttachDTO getCategoryGeneralStandardFileUrl(@Param("skuId") String skuId);
 }

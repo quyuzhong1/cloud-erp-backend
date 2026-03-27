@@ -40,6 +40,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,8 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
     private QcStandardService qcStandardService;
     @Resource
     private QcStandardSkuRefService qcStandardSkuRefService;
+    @Resource
+    private FileManagementMapper fileManagementMapper;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -260,5 +263,11 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         for (FileManagementDTO.ListDTO data : list) {
             data.setFileTypeName(WmsFileTypeEnum.getName(data.getFileType()));
         }
+    }
+
+
+    @Override
+    public FileManagementDTO.AttachDTO getCategoryGeneralStandardFile(String skuId) {
+        return fileManagementMapper.getCategoryGeneralStandardFileUrl(skuId);
     }
 }

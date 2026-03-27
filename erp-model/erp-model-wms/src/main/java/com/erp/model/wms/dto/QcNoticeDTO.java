@@ -949,6 +949,16 @@ public class QcNoticeDTO implements Serializable {
         private Integer qcNoticeQty;
 
         /**
+         * 质检类型
+         */
+        private String qcType;
+
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+
+        /**
          * 质检单状态
          */
         private String qcInfoStatus;
