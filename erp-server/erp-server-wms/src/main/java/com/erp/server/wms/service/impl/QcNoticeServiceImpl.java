@@ -611,7 +611,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //抽样方案
             SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
             planParamDTO.setQcType(entity.getQcType());
-            planParamDTO.setQty(qcNoticeDetail.getQcQty());
+            planParamDTO.setQty(qcNoticeDetail.getQcNoticeQty());
             planParamDTO.setSkuId(qcNoticeDetail.getSkuId());
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
             qcStandardAddDTO.setSamplingPlanId(samplingPlan.getId());
@@ -1604,11 +1604,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 //抽样信息
                 SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
                 planParamDTO.setQcType(qcNoticeEntity.getQcType());
-                planParamDTO.setQty(qcNoticeDetail.getQcQty());
+                planParamDTO.setQty(qcNoticeDetail.getQcNoticeQty());
                 planParamDTO.setSkuId(qcNoticeDetail.getSkuId());
 
                 SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
-                printQcStandardDTO.setSamplingPlanName(qcNoticeEntity.getQcType() + "通用抽样方案");
+                printQcStandardDTO.setSamplingPlanName(QcTypeEnum.getByCode(qcNoticeEntity.getQcType()) + "抽样方案");
                 printQcStandardDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
             }
 
