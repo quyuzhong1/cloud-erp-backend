@@ -31,7 +31,7 @@ public class PurchaseOrderDetailController extends BaseController {
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
-     * 采购订单下推质检申请数据列表
+     * 采购订单下推质检申请数据列表(scm)
      * @author will
      * @date 2026/3/23 17:00
      * @param dto
@@ -43,4 +43,17 @@ public class PurchaseOrderDetailController extends BaseController {
         return success(pagingVO);
     }
 
+
+    /**
+     * 待发货下推质检申请数据列表(srm)
+     * @author will
+     * @date 2026/3/23 17:00
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDetailDTO.ListPushQcApplicationDTO>>
+     */
+    @PostMapping("/listPushSrmQcApplication")
+    public ApiResult<List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO>> listPushSrmQcApplication(@RequestBody @Validated PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> pagingVO = purchaseOrderDetailService.listPushSrmQcApplication(dto);
+        return success(pagingVO);
+    }
 }
