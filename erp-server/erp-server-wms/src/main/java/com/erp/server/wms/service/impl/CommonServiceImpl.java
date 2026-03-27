@@ -7,13 +7,16 @@ import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.service.CommonService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +31,10 @@ public class CommonServiceImpl  implements CommonService {
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SupplierFeign supplierFeign;
+
 
     @Override
     public List<String> listProcessCurBusinessIds (String businessKey) {
@@ -47,5 +54,19 @@ public class CommonServiceImpl  implements CommonService {
     @Override
     public LoginUser getUserInfo() {
         return UserContext.getDefaultLoginUser();
+    }
+
+    @Override
+    public SupplierEntity getSupplierEntity(){
+        LoginUser loginUser = UserContext.getLoginUser();
+        if(Objects.isNull(loginUser)){
+            throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
+        }
+        //查询供应商信息
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
+        if(Objects.isNull(supplier)){
+            throw new ServiceException(ApiError.SUPPLIER_REF_NOT_FOUND);
+        }
+        return supplier;
     }
 }

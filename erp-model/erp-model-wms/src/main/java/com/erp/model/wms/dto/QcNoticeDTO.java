@@ -1047,4 +1047,40 @@ public class QcNoticeDTO implements Serializable {
         private QcRemarkDTO.QcResultView qcResultView;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintQcStandardDTO{
+
+        /**
+         * 质检通知单号
+         */
+        private String code;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 质检单号
+         */
+        private String qcInfoCode;
+
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemView>  qcInspectItemViewDTOList;
+
+    }
 }
