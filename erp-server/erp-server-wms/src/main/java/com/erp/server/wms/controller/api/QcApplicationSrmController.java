@@ -215,15 +215,15 @@ public class QcApplicationSrmController extends BaseController {
 
 
     /**
-     * 采购订单下推质检申请数据保存
+     * 待发货下推质检申请数据保存
      * @author will
      * @date 2026/3/23 12:24
      * @param list
      * @return QcApplicationDTO.ListPushQcNoticeDTO
      */
-    @PostMapping("/generatePoRefQcApplication")
-    public ApiResult<Object> generatePoRefQcApplication(@RequestBody @Validated ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list) {
-        return success(qcApplicationService.generatePoRefQcApplication(list));
+    @PostMapping("/generateWaitDeliveryRefQcApplication")
+    public ApiResult<Object> generateWaitDeliveryRefQcApplication(@RequestBody @Validated ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list) {
+        return success(qcApplicationSrmService.generateWaitDeliveryRefQcApplication(list));
     }
 
 }

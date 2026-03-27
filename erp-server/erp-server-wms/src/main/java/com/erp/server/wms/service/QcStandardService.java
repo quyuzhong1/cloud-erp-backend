@@ -91,5 +91,5 @@ public interface QcStandardService extends IService<QcStandardEntity> {
      * 导入质检标准
      * @param fileUrl 文件URL
      */
-    void genQcStandardByUrl(List<String> skuNos, String fileUrl);
+    List<QcStandardDTO.AddDTO> genQcStandardByUrl(List<String> skuNos, String fileUrl);
 }

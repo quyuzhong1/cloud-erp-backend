@@ -82,6 +82,14 @@ public class FileManagementDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * sku引用id
+         */
+        private String skuRefId;
+        /**
+         * 文件id
+         */
+        private String fileId;
 
         /**
          * 单据编码(WDGL开头)【可排序】
