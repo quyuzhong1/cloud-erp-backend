@@ -75,12 +75,11 @@ public class QcApplicationController extends BaseController {
         serviceClass = QcApplicationService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated QcApplicationDTO.UpdateDTO dto) {
-        QcApplicationEntity entity = qcApplicationService.getById(dto.getId());
-        if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
+        // 校验来源
+        Boolean isSrm = qcApplicationService.isSrmSourceData(dto.getId());
+        if (isSrm) {
+            throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
         }
-
-
         qcApplicationService.update(dto);
         return success();
     }
@@ -138,6 +137,12 @@ public class QcApplicationController extends BaseController {
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+            }
+
             BatchResultDTO submit;
             try {
                 submit = qcApplicationService.submit(id);
@@ -176,6 +181,12 @@ public class QcApplicationController extends BaseController {
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : ids) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+            }
+
             BatchResultDTO approveResult;
             try {
                 approveResult = qcApplicationService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
@@ -214,6 +225,11 @@ public class QcApplicationController extends BaseController {
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+            }
             BatchResultDTO disApproveResult;
             try {
                 disApproveResult = qcApplicationService.disApprove(id);
@@ -253,6 +269,11 @@ public class QcApplicationController extends BaseController {
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+            }
             BatchResultDTO deleteResult;
             try {
                 deleteResult = qcApplicationService.delete(id);
@@ -291,6 +312,12 @@ public class QcApplicationController extends BaseController {
         List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
         Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION);
+            }
+
             BatchResultDTO cancelResult;
             try {
                 cancelResult = qcApplicationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));

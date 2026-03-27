@@ -15,7 +15,9 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.QcApplicationDTO;
 import com.erp.model.wms.dto.QcApplicationSrmDTO;
 import com.erp.model.wms.entity.QcApplicationEntity;
@@ -59,6 +61,11 @@ public class QcApplicationSrmController extends BaseController {
     */
     @PostMapping("/update")
     public ApiResult<?> update(@RequestBody @Validated QcApplicationDTO.UpdateDTO dto) {
+        // 校验来源
+        Boolean isSrm = qcApplicationService.isSrmSourceData(dto.getId());
+        if (!isSrm) {
+            throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_PO_NOT_OPTION);
+        }
         qcApplicationService.update(dto);
         return success();
     }
@@ -101,6 +108,11 @@ public class QcApplicationSrmController extends BaseController {
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (!isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_PO_NOT_OPTION);
+            }
             BatchResultDTO submit;
             try {
                 submit = qcApplicationService.submit(id);
@@ -134,6 +146,11 @@ public class QcApplicationSrmController extends BaseController {
 		List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
 		Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (!isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_PO_NOT_OPTION);
+            }
             BatchResultDTO deleteResult;
             try {
                 deleteResult = qcApplicationService.delete(id);
@@ -167,6 +184,11 @@ public class QcApplicationSrmController extends BaseController {
         List<QcApplicationEntity> list = qcApplicationService.lambdaQuery().in(QcApplicationEntity::getId, ids).list();
         Map<String, QcApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            // 校验来源
+            Boolean isSrm = qcApplicationService.isSrmSourceData(id);
+            if (!isSrm) {
+                throw new ServiceException(ApiError.QC_APPLICATION_SOURCE_PO_NOT_OPTION);
+            }
             BatchResultDTO cancelResult;
             try {
                 cancelResult = qcApplicationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
