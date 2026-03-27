@@ -322,10 +322,15 @@
         left join product_detail pd on pod.sku_id = pd.id and pd.is_deleted = false
         <where>
             pod.is_deleted = false and  po.approve_status = 'approve'
-            and pod.id in
-            <foreach collection="params.podIdList" item="item" separator="," open="(" close=")">
-                #{item}
-            </foreach>
+            <if test="params.podIdList != null and params.podIdList.size > 0">
+                and pod.id in
+                <foreach collection="params.podIdList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrderId != null  and params.purchaseOrderId != ''">
+                AND po.id = #{params.purchaseOrderId}
+            </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and pod.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">

@@ -823,11 +823,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListPushQcApplicationParamDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
 
         /**
          * 采购订单明细id
          */
-        @NotEmpty(message = "采购订单明细id列表不能为空")
         private List<String> podIdList;
 
 

@@ -400,7 +400,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 .eq(QcStandardEntity::getSkuNo, skuNo)
                 .eq(QcStandardEntity::getIsDeleted, false));
         if (entity == null) {
-            throw new ServiceException(ApiError.QC_STANDARD_SKU_NOT_FOUND, skuNo);
+            return null;
         }
         QcStandardDTO.ViewDTO viewDTO = getFullViewDTO(entity);
         // 清除 ID，以便前端作为新记录处理（可选，根据业务规范通常由前端处理，但后端返回干净数据更优）
@@ -497,6 +497,10 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if (entity == null) {
             return BatchResultDTO.fail(params.getId(), params.getId(), "数据不存在");
         }
+        if(entity.getDisabled().equals(params.getDisabled())){
+            return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "状态更新成功");
+        }
+
         QcStandardEntity updateEntity = new QcStandardEntity();
         updateEntity.setId(params.getId());
         updateEntity.setDisabled(params.getDisabled());
@@ -615,11 +619,10 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         return skus;
     }
 
+
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<QcStandardDTO.AddDTO> genQcStandardByUrl(List<String> skuNos, String fileUrl) {
-        List<QcStandardDTO.AddDTO> addDTOList = new ArrayList<>();
-
+    public BatchResultDTO genQcStandardByUrl(List<String> skuNos, String fileUrl) {
         if (StringUtils.isBlank(fileUrl)) {
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "导入文件URL");
         }
@@ -627,6 +630,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if(CollUtil.isEmpty(skuNos)){
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "SKU");
         }
+        //skuNos 转出一个String
+        String skuNosStr = skuNos.stream().collect(Collectors.joining(","));
         try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
             Workbook workbook = WorkbookFactory.create(inputStream);
             Sheet sheet = workbook.getSheetAt(0);
@@ -637,7 +642,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 try {
                     initCellImageMap((XSSFWorkbook) workbook, cellImageMap);
                 } catch (Exception e) {
-                    throw new ServiceException("分析 cellimages.xml 失败或不包含嵌入图片: {}", e.getMessage());
+                    return BatchResultDTO.fail(skuNosStr, skuNosStr, "分析 cellimages.xml 失败或不包含嵌入图片");
                 }
             }
 
@@ -718,12 +723,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             QcStandardServiceImpl bean = ApplicationContextUtils.getBean(QcStandardServiceImpl.class);
             List<ProductDetailEntity> skuVOList = plmTaskFeign.listBySkuNos(skus);
 
-
-            Boolean flag = false;
-            if(skuNos.size() == 1){
-                flag = true;
-            }
-
             for (ProductDetailEntity productDetailEntity : skuVOList) {
                 //判断本次该SKU是否需要生成质检标准
                 if(!skuNos.contains(productDetailEntity.getSkuNo())){
@@ -741,9 +740,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 addDTO.setIsImport(true);
 
                 QcStandardEntity existing = existingMap.get(skuId);
-                if(flag){
-                    addDTOList.add(addDTO);
-                }else if (existing != null) {
+                if (existing != null) {
                     // 1. 详情更新 (基于名称匹配)
                     updateDetailsForImport(existing.getId(), detailList);
 
@@ -777,10 +774,170 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
         } catch (Exception e) {
             log.error("质检报告导入失败", e);
+            return BatchResultDTO.fail(skuNosStr, skuNosStr, "解析报告失败");
+        }
+
+        return BatchResultDTO.success(skuNosStr, skuNosStr, "质检标准新增或更新成功");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public QcStandardDTO.AddDTO getQcStandardAddDTOByUrl(String skuNo, String fileUrl) {
+        if (StringUtils.isBlank(fileUrl)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "导入文件URL");
+        }
+
+        if(StringUtils.isBlank(skuNo)){
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "SKU");
+        }
+
+        try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
+            Workbook workbook = WorkbookFactory.create(inputStream);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            // 1. 建立 DISPIMG ID 到 PictureData 的映射 (针对 WPS 嵌入图片)
+            Map<String, PictureData> cellImageMap = new HashMap<>();
+            if (workbook instanceof XSSFWorkbook) {
+                try {
+                    initCellImageMap((XSSFWorkbook) workbook, cellImageMap);
+                } catch (Exception e) {
+                    throw new ServiceException("分析 cellimages.xml 失败或不包含嵌入图片: {}", e.getMessage());
+                }
+            }
+
+            // 2. 提取 SKU 和产品名称 (前15行遍历查找关键字)
+            String skuStr = "";
+            for (int i = 2; i < 4; i++) { // 优化查找范围
+                Row row = sheet.getRow(i);
+                if (row == null)
+                    continue;
+                for (int j = 0; j < 10; j++) {
+                    Cell cell = row.getCell(j);
+                    if (cell == null)
+                        continue;
+                    String val = cell.toString().trim();
+                    if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
+                        Cell valCell = row.getCell(j + 1);
+                        if (valCell != null)
+                            skuStr = valCell.toString().trim();
+                        break;
+                    }
+                }
+                if (StringUtils.isNotBlank(skuStr))
+                    break;
+            }
+
+            if (StringUtils.isBlank(skuStr)) {
+                throw new ServiceException(ApiError.QC_STANDARD_IMPORT_SKU_NOT_FOUND);
+            }
+
+            // 3. 提取图片 (第8-11行)
+            List<WmsAttachmentEntity> attachmentList = new ArrayList<>();
+            extractImages(sheet, attachmentList, cellImageMap);
+
+            // 4. 解析逻辑详情 (第15行开始)
+            List<QcStandardDTO.DetailDTO> detailList = new ArrayList<>();
+            for (int i = 14; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null)
+                    continue;
+                Cell indexCell = row.getCell(0);
+                if (indexCell == null)
+                    continue;
+                String indexVal = indexCell.toString().trim();
+
+                // 正则匹配纯数字序号 (1, 2, 3...)
+                if (indexVal.matches("^\\d+(\\.\\d+)?$")) {
+                    Cell itemCell = row.getCell(1);
+                    Cell reqCell = row.getCell(2);
+                    String itemName = itemCell != null ? itemCell.toString().trim() : "";
+                    String requirement = reqCell != null ? reqCell.toString().trim() : "";
+
+                    if (StringUtils.isNotBlank(requirement)&& StringUtils.isNotBlank(itemName)) {
+                        QcStandardDTO.DetailDTO detail = new QcStandardDTO.DetailDTO();
+                        detail.setInspectItemName(itemName);
+                        detail.setInspectRequirement(requirement);
+                        detailList.add(detail);
+                    }
+                }
+            }
+
+            if (CollectionUtils.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.QC_STANDARD_IMPORT_DETAIL_NOT_FOUND);
+            }
+
+            // 5. 处理 SKU 拆分与覆盖保存
+            String[] split = skuStr.split("[,，]");
+            List<String> skus = new ArrayList<>();
+            for (String s : split) {
+                if (StringUtils.isNotBlank(s) && s.equals(skuNo))
+                    skus.add(s.trim());
+            }
+
+            if(CollUtil.isEmpty(skus)){
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "SKU");
+            }
+
+            Map<String, QcStandardEntity> existingMap = lambdaQuery().in(QcStandardEntity::getSkuId, skus)
+                    .eq(QcStandardEntity::getIsDeleted, false).list()
+                    .stream()
+                    .collect(Collectors.toMap(QcStandardEntity::getSkuId, Function.identity(), (o1, o2) -> o1));
+
+            QcStandardServiceImpl bean = ApplicationContextUtils.getBean(QcStandardServiceImpl.class);
+            List<ProductDetailEntity> skuVOList = plmTaskFeign.listBySkuNos(skus);
+
+            for (ProductDetailEntity productDetailEntity : skuVOList) {
+                String skuId = productDetailEntity.getId();
+
+                QcStandardDTO.AddDTO addDTO = new QcStandardDTO.AddDTO();
+                addDTO.setSkuId(skuId);
+                addDTO.setDetailList(detailList);
+                if (CollectionUtils.isNotEmpty(attachmentList)) {
+                    addDTO.setWmsAttachmentEntities(attachmentList);
+                }
+                addDTO.setIsImport(true);
+
+                QcStandardEntity existing = existingMap.get(skuId);
+                if (existing != null) {
+//                    // 1. 详情更新 (基于名称匹配)
+//                    updateDetailsForImport(existing.getId(), detailList);
+//
+//                    // 2. 图片更新 (先删后增)
+//                    // 获取旧附件
+//                    List<WmsAttachmentDTO.UpdateDTO> oldAttachments = wmsAttachmentService
+//                            .getByBusinessIds(Collections.singletonList(existing.getId()));
+//                    if (CollectionUtils.isNotEmpty(oldAttachments)) {
+//                        List<String> oldUrls = oldAttachments.stream()
+//                                .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+//                                .collect(Collectors.toList());
+//                        wmsAttachmentService.deleteByUrlList(oldUrls);
+//                    }
+//                    if (CollectionUtils.isNotEmpty(attachmentList)) {
+//                        // 插入新附件
+//                        for (WmsAttachmentEntity att : attachmentList) {
+//                            att.setBusinessId(existing.getId());
+//                            att.setId(IdWorker.getIdStr());
+//                        }
+//                        wmsAttachmentService.saveBatch(attachmentList);
+//                    }
+//
+//                    // 3. 记录主表日志
+//                    String msg = StrUtil.format("用户【{}】通过导入更新了质检标准，SKU编号【{}】",
+//                            UserContext.getDefaultLoginUser().getUserName(), existing.getSkuNo());
+//                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_STANDARD.getCode(), existing.getId(), "导入更新");
+                    throw new ServiceException(ApiError.QC_STANDARD_SKU_EXISTS);
+                } else {
+//                    bean.add(addDTO);
+                    return addDTO;
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("质检报告导入失败", e);
             throw new ServiceException("解析报告失败：" + e.getMessage());
         }
 
-        return addDTOList;
+        return null;
     }
 
     /**

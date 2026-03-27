@@ -333,4 +333,24 @@ public class QcStandardDTO {
         @NotNull(message = "状态必须指定")
         private Boolean disabled;
     }
+
+
+    /**
+     *
+     */
+    @Data
+    public static class SkuNoDTO{
+
+        /**
+         * url
+         */
+        private String url ;
+
+        /**
+         * skuNo集合
+         */
+        private List<String> skuNoList;
+
+
+    }
 }
