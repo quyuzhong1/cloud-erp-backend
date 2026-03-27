@@ -73,6 +73,7 @@ import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.B2bThirdDeliveryMapper;
 import com.erp.server.wms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;

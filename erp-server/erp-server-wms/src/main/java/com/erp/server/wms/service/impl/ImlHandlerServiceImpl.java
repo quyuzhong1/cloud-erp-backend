@@ -334,7 +334,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         ImlQueryOutboundReq imlQueryOutboundReq = ImlQueryOutboundReq.builder()
                 .platformOrderNo(queryOutboundReq.getErpOrderCode())
                 .build();
@@ -342,7 +342,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(imlQueryOutboundRespImlBaseResp.getCode())){
             return failure(imlQueryOutboundRespImlBaseResp.getMessage());
         }
-        return success(imlQueryOutboundRespImlBaseResp.getData().getOrderNo());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(imlQueryOutboundRespImlBaseResp.getData().getOrderNo()).build());
     }
 
     @Override
