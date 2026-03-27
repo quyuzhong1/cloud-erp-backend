@@ -400,7 +400,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 .eq(QcStandardEntity::getSkuNo, skuNo)
                 .eq(QcStandardEntity::getIsDeleted, false));
         if (entity == null) {
-            throw new ServiceException(ApiError.QC_STANDARD_SKU_NOT_FOUND, skuNo);
+            return null;
         }
         QcStandardDTO.ViewDTO viewDTO = getFullViewDTO(entity);
         // 清除 ID，以便前端作为新记录处理（可选，根据业务规范通常由前端处理，但后端返回干净数据更优）
@@ -497,6 +497,10 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if (entity == null) {
             return BatchResultDTO.fail(params.getId(), params.getId(), "数据不存在");
         }
+        if(entity.getDisabled().equals(params.getDisabled())){
+            return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "状态更新成功");
+        }
+
         QcStandardEntity updateEntity = new QcStandardEntity();
         updateEntity.setId(params.getId());
         updateEntity.setDisabled(params.getDisabled());

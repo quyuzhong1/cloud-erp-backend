@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -8,6 +9,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.annotation.DataPermission;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import com.common.core.controller.BaseController;
 
@@ -170,7 +173,11 @@ public class QcStandardController extends BaseController {
             menuCode = "wms:qcStandard:paging",
             tableAlias = "qs")
     public ApiResult<QcStandardDTO.ViewDTO> copyBySku(@RequestParam("skuNo") String skuNo) {
-        return success(qcStandardService.copyBySku(skuNo));
+        QcStandardDTO.ViewDTO viewDTO = qcStandardService.copyBySku(skuNo);
+        if(Objects.isNull(viewDTO)){
+            return failure(StrUtil.format(ApiError.QC_STANDARD_SKU_NOT_FOUND.getMsg(), skuNo),null);
+        }
+        return success(viewDTO);
     }
 
     @GetMapping("/view")
