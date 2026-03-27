@@ -14,31 +14,39 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.QcApplicationDTO;
+import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.dto.QcApplicationSrmDTO;
 import com.erp.model.wms.entity.QcApplicationEntity;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.QcApplicationMapper;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.QcApplicationService;
+import com.erp.server.wms.service.QcApplicationSrmService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -55,24 +63,11 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private DocNoGenHelper docNoGenHelper;
-    @Resource
     private WorkflowFeign workflowFeign;
     @Resource
-    private DownloadTaskFeign downloadTaskFeign;
-    @Resource
-    private WarehouseService warehouseService;
-    @Resource
-    private QcApplicationDetailService qcApplicationDetailService;
-
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
-
-    @Resource
-    private QcNoticeService qcNoticeService;
-    @Resource
     private CommonService commonService;
-
+    @Resource
+    private QcApplicationService qcApplicationService;
 
 
     @Override
@@ -140,7 +135,61 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
-        return null;
+        List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> generateList = list.getList();
+        Map<String, List<QcApplicationDTO.GeneratePoRefQcApplicationDTO>> map = generateList.stream().collect(Collectors.groupingBy(QcApplicationDTO.GeneratePoRefQcApplicationDTO::getPoId));
+
+        //查询采购订单信息
+        List<String> poIdList = generateList.stream().map(QcApplicationDTO.GeneratePoRefQcApplicationDTO::getPoId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderEntity> poList = FeignQuery.getByIds(PurchaseOrderEntity.class, poIdList);
+
+        //查询采购订单明细信息
+        List<String> podIdList = generateList.stream().map(QcApplicationDTO.GeneratePoRefQcApplicationDTO::getPodId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> podList = FeignQuery.getByIds(PurchaseOrderDetailEntity.class, podIdList);
+
+        //采购供应商信息
+        List<PurchaseOrderSupplierEntity> poSupplierList = FeignQuery.create(PurchaseOrderSupplierEntity.class).in(PurchaseOrderSupplierEntity::getPurchaseOrderId, poIdList).list();
+
+        for ( Map.Entry<String, List<QcApplicationDTO.GeneratePoRefQcApplicationDTO>> entry : map.entrySet()) {
+            List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> value = entry.getValue();
+
+            //采购订单
+            PurchaseOrderEntity purchaseOrderEntity = poList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entry.getKey())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.PO_NOT_FOUND);
+            }
+            if (!CharSequenceUtil.equals(purchaseOrderEntity.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())) {
+                throw new ServiceException(ApiError.PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION);
+            }
+            //采购供应商信息
+            PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = poSupplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPurchaseOrderId(), purchaseOrderEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderSupplierEntity)) {
+                throw new ServiceException(ApiError.PO_SUPPLIER_INFO_NOT_FOUND);
+            }
+            QcApplicationDTO.AddDTO addDTO = new QcApplicationDTO.AddDTO();
+            addDTO.setSourceId(purchaseOrderEntity.getId());
+            addDTO.setSourceCode(purchaseOrderEntity.getCode());
+            addDTO.setSourceType(SourceTypeEnum.WAIT_DELIVERY.getCode());
+            addDTO.setPlanQcDate(value.get(0).getPlanQcDate());
+            addDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
+
+            List<QcApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (QcApplicationDTO.GeneratePoRefQcApplicationDTO refDTO : value) {
+                //采购订单明细
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = podList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), refDTO.getPodId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                    throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
+                }
+                QcApplicationDetailDTO.AddDTO detailDTO = new QcApplicationDetailDTO.AddDTO();
+                detailDTO.setQty(refDTO.getQty());
+                detailDTO.setSourceDetailId(purchaseOrderDetailEntity.getId());
+                detailDTO.setSkuId(purchaseOrderDetailEntity.getSkuId());
+                detailDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+                detailList.add(detailDTO);
+            }
+            addDTO.setDetailList(detailList);
+            qcApplicationService.add(addDTO);
+        }
+        return Boolean.TRUE;
     }
 
     /**
