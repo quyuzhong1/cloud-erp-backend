@@ -11,6 +11,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -31,8 +32,11 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.*;
@@ -807,18 +811,72 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             return;
         }
         List<String> podIdList = listPushQcApplicationList.stream().map(PurchaseOrderDetailDTO.ListPushQcApplicationDTO::getPodId).distinct().collect(Collectors.toList());
+        List<String> poIdList = listPushQcApplicationList.stream().map(PurchaseOrderDetailDTO.ListPushQcApplicationDTO::getPoId).distinct().collect(Collectors.toList());
+        //送货信息
+        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailDTOByDetailSourceIds(podIdList);
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(poIdList);
+        //入库信息
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
+        //退货信息
+        List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
 
-        //查询入库数据
-        List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
 
         for ( PurchaseOrderDetailDTO.ListPushQcApplicationDTO viewProductDTO : listPushQcApplicationList) {
-            //有效入库数量（未审核通过）
-            Integer effectiveStockInQty = MathUtil.ZERO;
-            if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                effectiveStockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            //已送货数量
+            Integer deliveredQty = MathUtil.ZERO;
+            //有送货单的收货数量
+            Integer hasDeliveryReceiveQty = MathUtil.ZERO;
+            //无送货单收货数量
+            Integer unDeliveryReceiveQty = MathUtil.ZERO;
+            //无收货单的入库数量
+            Integer unReceiveInstockQty = MathUtil.ZERO;
+            //收发差异
+            Integer diffSendAndReceive = MathUtil.ZERO;
+            //退货补货数量
+            Integer returnQty = MathUtil.ZERO;
+
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                hasDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isNotEmpty(e.getSourceType())
+                                && e.getSourceType().equalsIgnoreCase(SourceTypeEnum.DELIVERY_ORDER.getCode())
+                                && e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId()))
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId()))
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            //未入库数量
-            viewProductDTO.setQty(viewProductDTO.getPoQty() - effectiveStockInQty);
+            //无收货单的入库数量
+            if (CollectionUtils.isNotEmpty(stockInDetailList)) {
+                // 采购入库单（无收货单），只有审核通过的才占用库存数量
+                unReceiveInstockQty = stockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())
+                                && Objects.equals(e.getSourceDetailId(), viewProductDTO.getPodId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            }
+            // 退货单（退货补货的才会导致在途数量变化）
+            if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
+                returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                                && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
+                                && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                        .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            //已送货数量
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                deliveredQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(viewProductDTO.getPodId()))
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                //发货数量 - 已审核收货数量
+                Integer srmDeliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(viewProductDTO.getPodId())
+                                && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()))
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
+                diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
+                //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
+                viewProductDTO.setQty(viewProductDTO.getPoQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty);
+            }
         }
     }
 

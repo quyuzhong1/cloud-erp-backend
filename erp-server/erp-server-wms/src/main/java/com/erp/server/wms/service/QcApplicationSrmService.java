@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcApplicationDTO;
 import com.erp.model.wms.dto.QcApplicationSrmDTO;
@@ -49,4 +50,12 @@ public interface QcApplicationSrmService extends SuperService<QcApplicationEntit
      * @return Boolean
      */
     Boolean exportList(QcApplicationDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * 生成待入库质检单
+     * @author will
+     * @date: 2026-03-20
+     * @param list
+     * @return Boolean
+     */
+    Boolean generateWaitDeliveryRefQcApplication(ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list);
 }

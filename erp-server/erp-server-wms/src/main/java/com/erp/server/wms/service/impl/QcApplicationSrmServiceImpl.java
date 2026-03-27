@@ -135,6 +135,14 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean generateWaitDeliveryRefQcApplication(ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        return null;
+    }
+
     /**
      * 分页查询、导出 数据处理
      */
