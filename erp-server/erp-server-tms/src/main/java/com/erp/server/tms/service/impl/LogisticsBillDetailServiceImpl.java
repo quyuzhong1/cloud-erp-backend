@@ -200,10 +200,6 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return baseMapper.listTrackDto(query);
     }
 
-    public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto22(LogisticsBillDetailQueryDTO query) {
-        return baseMapper.listTrackDto(query);
-    }
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -390,6 +386,11 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                .set(LogisticsBillDetailEntity::getTrackStatus, LogisticTrackStatusEnum.NOT_QUERY.getCode())
                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                .in(LogisticsBillDetailEntity::getId, detailIds).update();
+    }
+
+    @Override
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType) {
+        return baseMapper.listWaitingRegisterByConfig(query, platformType);
     }
 
     @Override

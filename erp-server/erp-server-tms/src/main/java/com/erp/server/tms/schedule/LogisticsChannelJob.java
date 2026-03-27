@@ -235,11 +235,12 @@ public class LogisticsChannelJob {
 
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
         XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
-        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
+        // 从原来的 listTrackDto 切换为基于配置映射表的精确拉取 (弃用旧的 track_query_mode 字段依赖)
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listWaitingRegisterByConfig(query, query.getTrackQueryMode());
         XxlJobHelper.log("获取列表数：{}", list.size());
-        //获取第三方推送配置
+        // 获取第三方推送配置 (用于 processRegisterData 内部的具体字段映射匹配)
         List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList = logisticsThirdChannelRefService.listByPlatform(LogisticsPlatformEnum.TRACK123.getCode());
-        XxlJobHelper.log("获取第三方推送配置：{}", list.size());
+        XxlJobHelper.log("获取第三方推送配置：{}", channelRefList.size());
         if (list.size() > MathUtil.NUMBER_100){
             //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
