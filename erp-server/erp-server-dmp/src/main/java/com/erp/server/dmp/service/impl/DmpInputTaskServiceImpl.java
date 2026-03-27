@@ -331,6 +331,9 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
                 updateResult = super.updateById(entity);
             }
             dmpInputTaskEntity.setId(IdWorker.getIdStr());
+            dmpInputTaskEntity.setErrorMessage("");
+            dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+            dmpInputTaskEntity.setErrorCount(0);
             // 重试主单数据
             log.info("重试 开始重试拉取任务主单数据，id：【{}】", entity.getId());
             boolean saveResult = super.save(dmpInputTaskEntity);
