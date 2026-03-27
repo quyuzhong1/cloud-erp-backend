@@ -54,8 +54,6 @@ import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqNewTag;
-import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -146,7 +144,7 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -6362,6 +6360,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
+        return getRuleResultDTO(id, map, isCheckProductRegistration);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public SoB2cDTO.RuleResultDTO logisticsRuleNotRequiresNew(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
+        return getRuleResultDTO(id, map, isCheckProductRegistration);
+    }
+
+    private SoB2cDTO.RuleResultDTO getRuleResultDTO(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
         SoB2cEntity entity = super.getById(id);
         isExist(entity);
         if (map.isEmpty()) {
@@ -8363,6 +8371,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
 //    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public SoB2cDTO.RuleResultDTO warehouseRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        return getRuleResultDTO(id, detailList, map);
+    }
+
+    /**
+     * 仓库规则匹配()
+     *
+     * @param id
+     * @param detailList
+     * @param map
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public SoB2cDTO.RuleResultDTO warehouseRuleNotRequiresNew(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        return getRuleResultDTO(id, detailList, map);
+    }
+
+    private SoB2cDTO.RuleResultDTO getRuleResultDTO(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
         isExist(entity);
         if (CollectionUtils.isEmpty(detailList)) {
@@ -8374,6 +8400,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //仓库匹配规则结果
         return ruleDeliveryWarehouseService.getRuleOrderMatchResult(entity, detailList, map);
     }
+
 
     /**
      * @param
