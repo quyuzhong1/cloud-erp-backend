@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -12,15 +13,24 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.FileManagementDTO;
+import com.erp.model.wms.dto.QcStandardDTO;
+import com.erp.model.wms.entity.FileManagementEntity;
+import com.erp.model.wms.entity.QcStandardSkuRefEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.WmsFileTypeEnum;
 import com.erp.server.wms.service.FileManagementService;
+import com.erp.server.wms.service.QcStandardSkuRefService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 文件管理
@@ -36,7 +46,10 @@ public class FileManagementController extends BaseController {
 
     @Resource
     private FileManagementService fileManagementService;
-
+    @Resource
+    private QcStandardSkuRefService qcStandardSkuRefService;
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
     /**
      * 新增
      *
@@ -125,7 +138,41 @@ public class FileManagementController extends BaseController {
      */
     @PostMapping("/genQcStandard")
     public ApiResult<List<BatchResultDTO>> genQcStandard(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        return success(fileManagementService.genQcStandard(idsDTO.getIds()));
+        List<QcStandardSkuRefEntity> skuRefEntityList = CollUtil.isEmpty(idsDTO.getIds()) ? null : qcStandardSkuRefService.listByIds(idsDTO.getIds());
+        if (CollUtil.isEmpty(skuRefEntityList)){
+            throw new ServiceException("未找到质检标准关联SKU记录数据");
+        }
+        List<String> mainIds = skuRefEntityList.stream().map(QcStandardSkuRefEntity::getMainId).distinct().collect(Collectors.toList());
+        List<FileManagementEntity> fileManagementEntityList = CollUtil.isEmpty(mainIds) ? null : fileManagementService.listByIds(mainIds);
+        if (CollUtil.isEmpty(fileManagementEntityList)){
+            throw new ServiceException("未找到文件管理数据");
+        }
+        List<String> fileIds = fileManagementEntityList.stream().map(FileManagementEntity::getFileId).distinct().collect(Collectors.toList());
+        List<WmsAttachmentEntity> attachmentEntityList = CollUtil.isEmpty(fileIds) ? null : wmsAttachmentService.listByIds(fileIds);
+        if (CollUtil.isEmpty(attachmentEntityList)){
+            throw new ServiceException("未找到文件附件数据");
+        }
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        for (FileManagementEntity entity : fileManagementEntityList) {
+            //只有评审报告类型的文件允许生成质检标准
+            if (!WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(entity.getFileType())){
+                batchResultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "文件类型不是评审报告"));
+                continue;
+            }
+            List<String> skuNoList = skuRefEntityList.stream().filter(e -> e.getMainId().equals(entity.getId())).map(QcStandardSkuRefEntity::getSkuNo).collect(Collectors.toList());
+            if (CollUtil.isEmpty(skuNoList)){
+                batchResultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "未找到质检标准关联SKU记录数据"));
+                continue;
+            }
+            WmsAttachmentEntity attachmentEntity = attachmentEntityList.stream().filter(e -> e.getId().equals(entity.getFileId())).findFirst().orElse(null);
+            if (attachmentEntity == null){
+                batchResultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "未找到文件附件数据"));
+                continue;
+            }
+            List<BatchResultDTO> batchResultDTOS = fileManagementService.genQcStandard(skuNoList, attachmentEntity.getAttachUrl());
+            batchResultDTOList.addAll(batchResultDTOS);
+        }
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
     /**
      * 生成单个质检标准
@@ -134,7 +181,7 @@ public class FileManagementController extends BaseController {
      * @return
      */
     @GetMapping("/genSingleQcStandard")
-    public ApiResult<Boolean> genSingleQcStandard(@RequestParam("id") String id) {
+    public ApiResult<QcStandardDTO.AddDTO> genSingleQcStandard(@RequestParam("id") String id) {
         return success(fileManagementService.genSingleQcStandard(id));
     }
 }

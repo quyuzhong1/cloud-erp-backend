@@ -21,6 +21,7 @@ import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FileManagementDTO;
+import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.entity.FileManagementEntity;
 import com.erp.model.wms.entity.QcStandardSkuRefEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
@@ -36,8 +37,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -64,12 +67,14 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
     private QcStandardService qcStandardService;
     @Resource
     private QcStandardSkuRefService qcStandardSkuRefService;
+    @Resource
+    private FileManagementMapper fileManagementMapper;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FileManagementDTO.AddDTO addDTO) {
-        List<QcStandardSkuRefEntity> skuRefEntityList = Collections.emptyList();
+        List<QcStandardSkuRefEntity> skuRefEntityList = new ArrayList<>();
         if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addDTO.getFileType())) {
             List<String> skuNoList = qcStandardService.listSkuNoByUrl(addDTO.getAttachUrl());
             if (CollUtil.isEmpty(skuNoList)) {
@@ -228,13 +233,22 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
     }
 
     @Override
-    public List<BatchResultDTO> genQcStandard(List<String> ids) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> genQcStandard(List<String> skuNoList, String attachUrl) {
+        BatchResultDTO resultDTO = qcStandardService.genQcStandardByUrl(skuNoList, attachUrl);
+        return Collections.singletonList(resultDTO);
     }
 
     @Override
-    public Boolean genSingleQcStandard(String id) {
-        return null;
+    public QcStandardDTO.AddDTO genSingleQcStandard(String id) {
+        QcStandardSkuRefEntity skuRefEntity = qcStandardSkuRefService.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检标准关联SKU记录数据"));
+        FileManagementEntity fileManagementEntity = this.getByIdOpt(skuRefEntity.getMainId()).orElseThrow(() -> new ServiceException("未找到文件管理数据"));
+        //只有评审报告类型的文件允许生成质检标准
+        if (!WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(fileManagementEntity.getFileType())) {
+            throw new ServiceException("只有评审报告类型的文件允许生成质检标准");
+        }
+        WmsAttachmentEntity attachmentEntity = wmsAttachmentService.getByIdOpt(fileManagementEntity.getFileId()).orElseThrow(() -> new ServiceException("未找到文件附件数据"));
+        return qcStandardService.getQcStandardAddDTOByUrl(skuRefEntity.getSkuNo(), attachmentEntity.getAttachUrl());
     }
 
     /**
@@ -248,5 +262,11 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         for (FileManagementDTO.ListDTO data : list) {
             data.setFileTypeName(WmsFileTypeEnum.getName(data.getFileType()));
         }
+    }
+
+
+    @Override
+    public FileManagementDTO.AttachDTO getCategoryGeneralStandardFile(String skuId) {
+        return fileManagementMapper.getCategoryGeneralStandardFileUrl(skuId);
     }
 }

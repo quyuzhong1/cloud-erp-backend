@@ -387,4 +387,17 @@ public class FileManagementDTO implements Serializable {
          */
         private String createUserName;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class AttachDTO{
+        /**
+         * 文件链接
+         */
+        private String attachUrl;
+        /**
+         * 文件名称
+         */
+        private String attachName;
+    }
 }

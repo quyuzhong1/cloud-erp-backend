@@ -87,4 +87,19 @@
           AND fm.id != #{id}
         </if>
     </select>
+
+    <select id="getCategoryGeneralStandardFileUrl"
+            resultType="com.erp.model.wms.dto.FileManagementDTO$AttachDTO">
+        SELECT
+            A.attach_name AS attachName,
+            A.attach_url AS attachUrl
+        FROM
+            file_management fm
+            LEFT JOIN qc_standard_sku_ref qssr ON fm.ID = qssr.main_id AND qssr.is_deleted = FALSE
+            LEFT JOIN attachment A ON fm.file_id = A.ID AND A.is_deleted = FALSE
+        WHERE
+            qssr.sku_id = #{skuId}
+            AND fm.file_type = 'categoryGeneralStandard'
+            AND A.ID = ( SELECT a2.ID FROM attachment a2 WHERE a2.ID = fm.file_id ORDER BY a2.attach_version DESC LIMIT 1 );
+    </select>
 </mapper>

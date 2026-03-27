@@ -1,11 +1,11 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.entity.FileManagementEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FileManagementDTO;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.ApproveDTO;
-import javax.servlet.http.HttpServletResponse;
+
 import java.util.List;
 
 /**
@@ -62,7 +62,9 @@ public interface FileManagementService extends SuperService<FileManagementEntity
      */
     List<FileManagementDTO.VersionDTO> history(String id);
 
-    List<BatchResultDTO> genQcStandard(List<String> ids);
+    List<BatchResultDTO> genQcStandard(List<String> skuNoList, String attachUrl);
 
-    Boolean genSingleQcStandard(String id);
+    QcStandardDTO.AddDTO genSingleQcStandard(String id);
+
+    FileManagementDTO.AttachDTO getCategoryGeneralStandardFile(String skuId);
 }
