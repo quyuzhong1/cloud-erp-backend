@@ -152,7 +152,7 @@ public enum SourceTypeEnum {
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
     PAYABLE_INFO( "payableInfo", "应付单","payable_info"),
-
+    WAIT_DELIVERY( "waitDelivery", "待发货",""),
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),

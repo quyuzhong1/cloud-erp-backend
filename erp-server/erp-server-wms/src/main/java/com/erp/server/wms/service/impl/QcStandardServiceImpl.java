@@ -429,7 +429,9 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 .list(Wrappers.<QcStandardDetailEntity>lambdaQuery()
                         .eq(QcStandardDetailEntity::getMainId, id)
                         .orderByAsc(QcStandardDetailEntity::getSort));
-        viewDTO.setDetailList(BeanMapperUtils.copyList(QcStandardDTO.DetailDTO.class, details));
+        if(CollUtil.isNotEmpty(details)){
+            viewDTO.setDetailList(BeanMapperUtils.copyList(QcStandardDTO.DetailDTO.class, details));
+        }
 
         // 载入附件图片 (标准化回显)
         List<WmsAttachmentDTO.UpdateDTO> allAttachments = wmsAttachmentService
@@ -611,10 +613,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             throw new ServiceException("质检报告解析SKU失败：" + e.getMessage());
         }
         return skus;
-    }
-
-    public void genQcStandardByUrl1(List<String> skuNos, String fileUrl) {
-
     }
 
     @Transactional(rollbackFor = Exception.class)

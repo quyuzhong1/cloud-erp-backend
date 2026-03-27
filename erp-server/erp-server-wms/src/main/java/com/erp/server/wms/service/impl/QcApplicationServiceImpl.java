@@ -48,6 +48,7 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -271,6 +272,8 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         //采购供应商信息
         List<PurchaseOrderSupplierEntity> poSupplierList = FeignQuery.create(PurchaseOrderSupplierEntity.class).in(PurchaseOrderSupplierEntity::getPurchaseOrderId, poIdList).list();
 
+        List<Pair<String, String>> addPairList = new ArrayList<>();
+
         for ( Map.Entry<String, List<QcApplicationDTO.GeneratePoRefQcApplicationDTO>> entry : map.entrySet()) {
             List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> value = entry.getValue();
 
@@ -309,8 +312,12 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
-             this.add(addDTO);
+            BaseResultDTO.AddDTO add = this.add(addDTO);
+
+            // 记录操作日志参数
+            addPairList.add( new Pair<>(add.getId(), purchaseOrderEntity.getCode()));
         }
+        operateLogService.batchAddModuleOperateLog("采购订单【%s】生成质检申请单", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "下推操作");
         return Boolean.TRUE;
     }
 
