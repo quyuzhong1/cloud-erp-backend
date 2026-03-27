@@ -7528,13 +7528,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return oldEntity.hasPlatformWarehouseOrder();
         }
-        if (Objects.nonNull(oldEntity) && oldEntity.hasPlatformWarehouseOrder()) {
-            return true;
-        }
-        if (Objects.nonNull(oldEntity) && StringUtils.isNotBlank(oldEntity.getPlatformDeliveryWarehouse())) {
-            return true;
-        }
-        if (StringUtils.isNotBlank(dto.getPlatformDeliveryWarehouse())) {
+        if (oldEntity.hasPlatformWarehouseOrder()) {
             return true;
         }
         if (StringUtils.isNotBlank(dto.getLabelJson())) {
