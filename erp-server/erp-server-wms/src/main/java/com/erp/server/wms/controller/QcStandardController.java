@@ -170,7 +170,7 @@ public class QcStandardController extends BaseController {
     @GetMapping("/copyBySku")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:qcStandard:paging",
+            menuCode = "wms:qcStandard:copyBySku",
             tableAlias = "qs")
     public ApiResult<QcStandardDTO.ViewDTO> copyBySku(@RequestParam("skuNo") String skuNo) {
         QcStandardDTO.ViewDTO viewDTO = qcStandardService.copyBySku(skuNo);
