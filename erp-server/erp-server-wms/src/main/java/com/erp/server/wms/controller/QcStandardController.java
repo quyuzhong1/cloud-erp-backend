@@ -175,7 +175,7 @@ public class QcStandardController extends BaseController {
     public ApiResult<QcStandardDTO.ViewDTO> copyBySku(@RequestParam("skuNo") String skuNo) {
         QcStandardDTO.ViewDTO viewDTO = qcStandardService.copyBySku(skuNo);
         if(Objects.isNull(viewDTO)){
-            return failure(StrUtil.format(ApiError.QC_STANDARD_SKU_NOT_FOUND.getMsg(), skuNo),null);
+            return failure(ApiError.QC_STANDARD_NOT_FOUND.getMsg(),null);
         }
         return success(viewDTO);
     }
