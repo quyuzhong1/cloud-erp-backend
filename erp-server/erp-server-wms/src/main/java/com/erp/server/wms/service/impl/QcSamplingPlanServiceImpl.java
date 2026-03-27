@@ -320,7 +320,12 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
                             List<QcSamplingPlanDetailEntity> detailEntities,
                             List<QcSamplingPlanQcTypeRefEntity> qcTypeRefEntities) {
         //数据重复校验 根据质检类型获取已存在的方案
-        List<SamplingPlanDTO.ListDTO> existList = baseMapper.listByQcTypeList(qcTypeRefEntities.stream().map(QcSamplingPlanQcTypeRefEntity::getQcType).collect(Collectors.toList()));
+        List<String> qcTypeList = qcTypeRefEntities.stream().map(QcSamplingPlanQcTypeRefEntity::getQcType).distinct().collect(Collectors.toList());
+        if (qcTypeRefEntities.size() != qcTypeList.size()){
+            throw new ServiceException("单次新增质检类型不能重复");
+        }
+        List<SamplingPlanDTO.ListDTO> existList = baseMapper.listByQcTypeList(qcTypeList);
+
         if (CharSequenceUtil.isNotBlank(qcSamplingPlanEntity.getId())) {
             //过滤当前方案
             existList.removeIf(item -> item.getId().equals(qcSamplingPlanEntity.getId()));
@@ -346,37 +351,6 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
                             throw new ServiceException(ApiError.PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU, EnumMessage.getNameByCode(QcTypeEnum.class, item.getQcType()), String.join(",", intersection));
                         }
                     }
-                }
-            });
-        }
-        //抽样数量校验
-        if (CollUtil.isNotEmpty(detailEntities)){
-            //明细范围必须连续，且为整数
-            //明细范围前后值不允许一致
-            //明细范围只能输入大于等于0的整数
-            //1.根据起始值排序
-            detailEntities.sort(Comparator.comparing(QcSamplingPlanDetailEntity::getRangFrom));
-            for (int i = 0; i < detailEntities.size(); i++) {
-                QcSamplingPlanDetailEntity detail = detailEntities.get(i);
-                // 2基础校验
-                validateRange(detail.getRangFrom(), detail.getRangTo());
-                //3连续性校验
-                if (i > 0) {
-                    QcSamplingPlanDetailEntity prev = detailEntities.get(i - 1);
-                    // 连续规则：前一个 end + 1 == 当前 start
-                    if (!detail.getRangFrom().equals(prev.getRangTo() + 1)) {
-                        throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS, prev.getRangFrom(), prev.getRangTo(), detail.getRangFrom(), detail.getRangTo());
-                    }
-                }
-            }
-            detailEntities.forEach(detail -> {
-                if (Objects.isNull(detail.getGeneralRejectQty())) {
-                    //缺陷拒收数默认等于缺陷允收数+1
-                    detail.setGeneralRejectQty(detail.getGeneralAcceptQty() + 1);
-                }
-                if (Objects.isNull(detail.getMajorRejectQty())) {
-                    //严重缺陷拒收数默认等于严重缺陷允收数+1
-                    detail.setMajorRejectQty(detail.getMajorAcceptQty() + 1);
                 }
             });
         }
@@ -428,7 +402,37 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
                 throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY);
             }
         }
-
+//抽样数量校验
+        if (CollUtil.isNotEmpty(detailEntities)){
+            //明细范围必须连续，且为整数
+            //明细范围前后值不允许一致
+            //明细范围只能输入大于等于0的整数
+            //1.根据起始值排序
+            detailEntities.sort(Comparator.comparing(QcSamplingPlanDetailEntity::getRangFrom));
+            for (int i = 0; i < detailEntities.size(); i++) {
+                QcSamplingPlanDetailEntity detail = detailEntities.get(i);
+                // 2基础校验
+                validateRange(detail.getRangFrom(), detail.getRangTo());
+                //3连续性校验
+                if (i > 0) {
+                    QcSamplingPlanDetailEntity prev = detailEntities.get(i - 1);
+                    // 连续规则：前一个 end + 1 == 当前 start
+                    if (!detail.getRangFrom().equals(prev.getRangTo() + 1)) {
+                        throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS, prev.getRangFrom(), prev.getRangTo(), detail.getRangFrom(), detail.getRangTo());
+                    }
+                }
+            }
+            detailEntities.forEach(detail -> {
+                if (Objects.isNull(detail.getGeneralRejectQty())) {
+                    //缺陷拒收数默认等于缺陷允收数+1
+                    detail.setGeneralRejectQty(detail.getGeneralAcceptQty() + 1);
+                }
+                if (Objects.isNull(detail.getMajorRejectQty())) {
+                    //严重缺陷拒收数默认等于严重缺陷允收数+1
+                    detail.setMajorRejectQty(detail.getMajorAcceptQty() + 1);
+                }
+            });
+        }
     }
 
     public static void validateRange(Integer start, Integer end) {

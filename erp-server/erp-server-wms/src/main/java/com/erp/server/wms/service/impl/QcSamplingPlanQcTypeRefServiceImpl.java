@@ -44,7 +44,7 @@ public class QcSamplingPlanQcTypeRefServiceImpl extends SuperServiceImpl<QcSampl
     public void updateDetail(List<QcSamplingPlanQcTypeRefEntity> qcTypeList, QcSamplingPlanEntity qcSamplingPlanEntity) {
         List<QcSamplingPlanQcTypeRefEntity> oldList = this.listByMainId(qcSamplingPlanEntity.getId());
         if (CollUtil.isNotEmpty(oldList)) {
-            this.removeByMainId(qcSamplingPlanEntity.getId(), oldList.stream().map(QcSamplingPlanQcTypeRefEntity::getId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+            this.removeByMainId(qcSamplingPlanEntity.getId(), qcTypeList.stream().map(QcSamplingPlanQcTypeRefEntity::getId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
         }
         //填充信息
         if (CollUtil.isEmpty(qcTypeList)) {
