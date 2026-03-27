@@ -312,18 +312,34 @@
             po.code,
             pod.sku_id as skuId,
             pod.sku_no as skuNo,
+            pd.name as productName,
             pos.supplier_id as supplierId,
             pos.supplier_name as supplierName,
             pod.purchase_qty as poQty
         from purchase_order_detail pod
         inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
         inner join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        left join product_detail pd on pod.sku_id = pd.id and pd.is_deleted = false
         <where>
             pod.is_deleted = false and  po.approve_status = 'approve'
-            and pod.id in
-            <foreach collection="params.podIdList" item="item" separator="," open="(" close=")">
-                #{item}
-            </foreach>
+            <if test="params.podIdList != null and params.podIdList.size > 0">
+                and pod.id in
+                <foreach collection="params.podIdList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrderId != null  and params.purchaseOrderId != ''">
+                AND po.id = #{params.purchaseOrderId}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and pod.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
+                AND pod.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text,'%')
+            </if>
         </where>
     </select>
 

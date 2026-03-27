@@ -65,4 +65,6 @@ public interface FileManagementService extends SuperService<FileManagementEntity
     List<BatchResultDTO> genQcStandard(List<String> ids);
 
     Boolean genSingleQcStandard(String id);
+
+    FileManagementDTO.AttachDTO getCategoryGeneralStandardFile(String skuId);
 }

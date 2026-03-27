@@ -151,4 +151,12 @@ public interface QcApplicationService extends SuperService<QcApplicationEntity> 
      * @return  Boolean
      */
     Boolean generatePoRefQcApplication(ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list);
+    /**
+     * 检查来源单据类型是否正确
+     * @author will
+     * @date 2026/3/23 12:25
+     * @param id
+     * @return  Boolean
+     */
+    Boolean isSrmSourceData(String id);
 }

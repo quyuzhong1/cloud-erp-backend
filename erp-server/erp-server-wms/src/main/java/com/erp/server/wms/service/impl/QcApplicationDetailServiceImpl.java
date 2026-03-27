@@ -449,7 +449,15 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         Map<String, String> skuMap = CollUtil.isEmpty(skuList) ? new HashMap<>() : skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getSkuNo));
 
         //查询来源采购订单数据
-        PurchaseOrderSupplierEntity poSupplierEntity = CharSequenceUtil.isBlank(qcApplicationEntity.getSourceId()) ? new PurchaseOrderSupplierEntity() : FeignQuery.getById(PurchaseOrderSupplierEntity.class, qcApplicationEntity.getSourceId());
+        PurchaseOrderSupplierEntity poSupplierEntity = new PurchaseOrderSupplierEntity();
+        if ( CharSequenceUtil.isNotBlank(qcApplicationEntity.getSourceId())) {
+            List<PurchaseOrderSupplierEntity> poSupplierEntityList = FeignQuery.create(PurchaseOrderSupplierEntity.class)
+                    .eq(PurchaseOrderSupplierEntity::getPurchaseOrderId, qcApplicationEntity.getSourceId())
+                    .list();
+            if (CollUtil.isNotEmpty(poSupplierEntityList)) {
+                poSupplierEntity = poSupplierEntityList.get(0);
+            }
+        }
 
         for (QcApplicationDetailEntity data : qcApplicationDetailList) {
             //校验供应商信息

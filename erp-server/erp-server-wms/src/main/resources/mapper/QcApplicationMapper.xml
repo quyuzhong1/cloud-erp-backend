@@ -149,7 +149,7 @@
             ${params.permissionSql}
         </if>
         <if test="params != null and params.supplierId != null and params.supplierId != ''">
-            qad.supplier_id = #{params.supplierId}
+           and qad.supplier_id = #{params.supplierId}
         </if>
         GROUP BY qa.approve_status
     </select>

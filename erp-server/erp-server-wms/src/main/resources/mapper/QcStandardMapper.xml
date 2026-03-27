@@ -8,7 +8,8 @@
         CASE WHEN qs.disabled THEN '禁用' ELSE '启用' END as tabFlagName,
         COUNT(qs.id) as count
         FROM qc_standard qs
-        WHERE qs.is_deleted = false
+        WHERE  ${params.sqlMap.default}
+        and qs.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -19,7 +20,8 @@
         SELECT
         qs.*
         FROM qc_standard qs
-        WHERE qs.is_deleted = false
+        WHERE  ${params.sqlMap.default}
+          and qs.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -32,7 +34,8 @@
         qsd.inspect_requirement as inspectRequirement
         FROM qc_standard qs
         LEFT JOIN qc_standard_detail qsd ON qs.id = qsd.main_id and qsd.is_deleted = false
-        WHERE qs.is_deleted = false
+        WHERE ${params.sqlMap.default}
+        and qs.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

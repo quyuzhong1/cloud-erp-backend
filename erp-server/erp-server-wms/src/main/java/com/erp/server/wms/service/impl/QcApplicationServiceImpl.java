@@ -321,6 +321,18 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean isSrmSourceData(String id) {
+        QcApplicationEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+             throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
+        }
+        if (CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.WAIT_DELIVERY.getCode())) {
+           return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
 
     @Override
     public List<QcApplicationDTO.ListPushQcNoticeDTO> listPushQcNotice(List<String> ids) {

@@ -823,12 +823,27 @@ public class PurchaseOrderDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListPushQcApplicationParamDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
 
         /**
          * 采购订单明细id
          */
-        @NotEmpty(message = "采购订单明细id列表不能为空")
         private List<String> podIdList;
+
+
+        /**
+         * sku编号集合
+         */
+        private List<String>  skuNoList;
+
+        /**
+         * 远程搜索sku
+         */
+        private String remoteSearchSku;
+
     }
 
     @Data
@@ -855,11 +870,15 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 产品名称
+         */
+        private String productName;
+        /**
          * 采购数量
          */
         private Integer poQty;
         /**
-         * 待入库数量
+         * 待入库数量/剩余送货量
          */
         private Integer qty;
         /**
