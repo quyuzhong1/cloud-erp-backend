@@ -790,23 +790,22 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             QcProductDTO.ViewDTO qcProductView = new QcProductDTO.ViewDTO();
 
             BeanUtils.copyProperties(packVOList.get(0),qcProductView);
-            QcRemarkDTO.QcResultView qcResultView = qcInfoView.getQcResultView();
             //抽样方案
             SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
-            planParamDTO.setQcType(qcResultView.getQcType());
+            planParamDTO.setQcType(qcInfoView.getQcType());
             planParamDTO.setQty(qcInfoView.getQcNoticeQty());
             planParamDTO.setSkuId(qcInfoView.getSkuId());
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
             qcInfoView.setSuggestSamplingQty(samplingPlan.getSampleQty());
             qcInfoView.setSamplingPlanId(samplingPlan.getId());
-            qcInfoView.setSamplingPlanName(QcTypeEnum.getByCode(qcResultView.getQcType()) + "通用抽样方案");
+            qcInfoView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "抽样方案");
             qcInfoView.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
             qcInfoView.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
             qcInfoView.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
             qcInfoView.setMajorRejectQty(samplingPlan.getMajorRejectQty());
 
             qcStandardView.setSamplingPlanId(samplingPlan.getId());
-            qcStandardView.setSamplingPlanName(QcTypeEnum.getByCode(qcResultView.getQcType()) + "抽样方案");
+            qcStandardView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "抽样方案");
             qcStandardView.setSuggestSamplingQty(samplingPlan.getSampleQty());
 
             //品类通用标准
