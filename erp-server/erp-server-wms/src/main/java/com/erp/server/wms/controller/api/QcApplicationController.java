@@ -75,6 +75,12 @@ public class QcApplicationController extends BaseController {
         serviceClass = QcApplicationService.class,
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated QcApplicationDTO.UpdateDTO dto) {
+        QcApplicationEntity entity = qcApplicationService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_NOT_EXIST);
+        }
+
+
         qcApplicationService.update(dto);
         return success();
     }
