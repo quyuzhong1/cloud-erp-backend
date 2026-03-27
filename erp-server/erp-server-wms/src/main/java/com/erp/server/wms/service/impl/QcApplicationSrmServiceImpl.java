@@ -6,7 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -24,6 +24,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcApplicationDTO;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.dto.QcApplicationSrmDTO;
@@ -39,7 +40,9 @@ import com.erp.server.wms.service.QcApplicationService;
 import com.erp.server.wms.service.QcApplicationSrmService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -131,6 +134,7 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean generateWaitDeliveryRefQcApplication(ValidList<QcApplicationDTO.GeneratePoRefQcApplicationDTO> list) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -148,6 +152,8 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
 
         //采购供应商信息
         List<PurchaseOrderSupplierEntity> poSupplierList = FeignQuery.create(PurchaseOrderSupplierEntity.class).in(PurchaseOrderSupplierEntity::getPurchaseOrderId, poIdList).list();
+
+        List<Pair<String, String>> addPairList = new ArrayList<>();
 
         for ( Map.Entry<String, List<QcApplicationDTO.GeneratePoRefQcApplicationDTO>> entry : map.entrySet()) {
             List<QcApplicationDTO.GeneratePoRefQcApplicationDTO> value = entry.getValue();
@@ -187,8 +193,12 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
-            qcApplicationService.add(addDTO);
+            BaseResultDTO.AddDTO add = qcApplicationService.add(addDTO);
+
+            // 记录操作日志参数
+            addPairList.add( new Pair<>(add.getId(), purchaseOrderEntity.getCode()));
         }
+        operateLogService.batchAddModuleOperateLog("待发货订单【%s】生成质检申请单", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "下推操作");
         return Boolean.TRUE;
     }
 
