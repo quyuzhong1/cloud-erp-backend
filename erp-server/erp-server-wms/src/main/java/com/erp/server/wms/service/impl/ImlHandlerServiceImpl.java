@@ -273,13 +273,13 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         ImlCreateOutboundReq imlCreateOutboundReq =  this.buildOutboundDto(createOutboundReq);
         ImlBaseResp<ImlOutboundResp> imlInboundRespImlBaseResp = imlService.createOutboundBill(imlCreateOutboundReq);
         if(!isSuccess(imlInboundRespImlBaseResp.getCode())){
             return failure(imlInboundRespImlBaseResp.getMessage());
         }
-        return success(imlInboundRespImlBaseResp.getData().getOrderNo());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(imlInboundRespImlBaseResp.getData().getOrderNo()).build());
     }
 
     private ImlCreateOutboundReq buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {

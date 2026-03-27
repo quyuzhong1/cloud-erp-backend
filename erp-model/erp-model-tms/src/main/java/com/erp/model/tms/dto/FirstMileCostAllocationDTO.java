@@ -128,13 +128,13 @@ public class FirstMileCostAllocationDTO implements Serializable {
 
         /**
         * {业务单号}取值发货单关联的业务单号
-        * FBA：取值FBA货件单号
+        * FBA/FBT/AWD/速卖通：取值货件单号
         * 第三方仓：海外仓入库单号
         */
         private String businessCode;
 
         /**
-        * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA
+        * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=备货FBA仓，demandFbtWarehouse=备货FBT仓
         */
         private String businessType;
 
@@ -325,18 +325,18 @@ public class FirstMileCostAllocationDTO implements Serializable {
 
         /**
         * {业务单号}取值发货单关联的业务单号
-        * FBA：取值FBA货件单号
+        * FBA/FBT/AWD/速卖通：取值货件单号
         * 第三方仓：海外仓入库单号
         */
-        @NotBlank(message = "业务单号取值发货单关联的业务单号 FBA：取值FBA货件单号 第三方仓：海外仓入库单号不能为空")
-        @Size(max = 64,message = "业务单号取值发货单关联的业务单号 FBA：取值FBA货件单号 第三方仓：海外仓入库单号最大长度不能超过64位")
+        @NotBlank(message = "业务单号取值发货单关联的业务单号 FBA/FBT/AWD/速卖通：取值货件单号 第三方仓：海外仓入库单号不能为空")
+        @Size(max = 64,message = "业务单号取值发货单关联的业务单号 FBA/FBT/AWD/速卖通：取值货件单号 第三方仓：海外仓入库单号最大长度不能超过64位")
         private String businessCode;
 
         /**
-        * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA
+        * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=备货FBA仓，demandFbtWarehouse=备货FBT仓
         */
-        @NotBlank(message = "业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA不能为空")
-        @Size(max = 30,message = "业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA最大长度不能超过30位")
+        @NotBlank(message = "业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=备货FBA仓，demandFbtWarehouse=备货FBT仓不能为空")
+        @Size(max = 30,message = "业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=备货FBA仓，demandFbtWarehouse=备货FBT仓最大长度不能超过30位")
         private String businessType;
 
         /**
@@ -644,13 +644,13 @@ public class FirstMileCostAllocationDTO implements Serializable {
 
         /**
          * {业务单号}取值发货单关联的业务单号
-         * FBA：取值FBA货件单号
+         * FBA/FBT/AWD/速卖通：取值货件单号
          * 第三方仓：海外仓入库单号
          */
         private String businessCode;
 
         /**
-         * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA
+         * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=备货FBA仓，demandFbtWarehouse=备货FBT仓
          */
         private String businessType;
 

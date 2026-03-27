@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -199,6 +200,12 @@ public class B2bThirdDeliveryDTO implements Serializable {
         * 是否API发货
         */
         private Boolean isApiDelivery;
+
+        /**
+         * 三方仓编码
+         */
+        private String thirdWarehouseCode;
+
         /**
          * 异常原因
          */
@@ -683,5 +690,92 @@ public class B2bThirdDeliveryDTO implements Serializable {
             }
             return list;
         }
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ThirdWarehousePlatformDTO{
+
+        /**
+         * 三方仓平台编码
+         */
+        @NotBlank(message = "三方仓编码不能为空")
+        private String thirdWarehouse;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OtherWarehouseOperationDescriptionDTO{
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 三方仓平台编码
+         */
+        private String thirdWarehouse;
+
+        /**
+         * 三方仓平台名称
+         */
+        private String thirdWarehouseName;
+
+        /**
+         * 操作类型
+         */
+        private String operationType;
+
+        /**
+         * 操作类型名称
+         */
+        private String operationTypeName;
+
+        /**
+         * 输入类型:下拉框,输入框
+         */
+        private String inputType;
+
+        /**
+         * 下拉框值列表
+         */
+        private List<InputValueDTO> inputValueList;
+
+        /**
+         * 三方仓平台名称
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InputValueDTO{
+
+        /**
+         * 输入值名称
+         */
+        private String name;
+
+        /**
+         * 输入值
+         */
+        private String value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConvertDTO{
+
+        private String platformOrderCode;
+
+        private String trackNo;
+
+        private LocalDateTime deliveryTime;
     }
 }

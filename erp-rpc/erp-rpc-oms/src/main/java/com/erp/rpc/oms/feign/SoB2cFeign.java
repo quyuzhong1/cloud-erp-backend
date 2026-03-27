@@ -335,6 +335,9 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/updateWarehouseByShopId")
     Boolean updateWarehouseByShopId(@RequestParam("id")String id,@RequestParam("shopId") String shopId);
 
+    @PostMapping("/feign/soB2c/updateTikTokOrderWarehouse")
+    Boolean updateTikTokOrderWarehouse(@RequestParam("soId") String soId);
+
     @GetMapping("/feign/soB2c/findMergeByTargetId")
     List<SoB2cRefEntity> findMergeByTargetId(@RequestParam("targetId")String targetId);
 
@@ -429,14 +432,6 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateShippingOrderNoBySoId")
     Boolean updateShippingOrderNoBySoId(@RequestBody TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO);
-    /**
-     * 根据销售订单拆分sku
-     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
-     * @param soIds
-     * @return
-     */
-    @PostMapping("/feign/soB2c/getTransferDeclareProductBySoIds")
-    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) ;
 
     /**
      * 修改速卖通订单仓库
@@ -480,6 +475,18 @@ public interface SoB2cFeign {
                                          @RequestParam("dictPlatform") String dictPlatform,
                                          @RequestParam("shopId") String shopId,
                                          @RequestParam("sourceType") String sourceType);
+
+    /**
+     * 根据第三方仓发货订单id查询B2C销售订单
+     */
+    @GetMapping("/feign/soB2c/getByShippingOrderNo")
+    List<SoB2cEntity> getByShippingOrderNo(@RequestParam("shippingOrderNo") String shippingOrderNo);
+
+    /**
+     * 根据平台单号查询B2C销售订单
+     */
+    @GetMapping("/feign/soB2c/getSoB2cByPlatformCode")
+    List<SoB2cEntity> getSoB2cByPlatformCode(@RequestParam("platformCode") String platformCode);
 
     @PostMapping("/feign/soB2c/updateById")
     Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);

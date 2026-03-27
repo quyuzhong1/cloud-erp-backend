@@ -15,6 +15,7 @@ public enum PickingBillTypeEnum implements EnumMessage {
     B2B("B2B", "B2B订单"),
     B2C("B2C", "B2C订单"),
     FBA("FBA", "FBA头程要货单"),
+    FBT("FBT", "FBT头程要货单"),
     AWD("AWD", "AWD头程要货单"),
     THIRD("THIRD", "三方仓头程要货单"),
     TRANSFER("transfer", "直接调拨单");
@@ -38,6 +39,6 @@ public enum PickingBillTypeEnum implements EnumMessage {
 
 
     public static List<String> firstLegs(){
-        return Arrays.asList(FBA.getCode(), AWD.getCode(),THIRD.getCode());
+        return Arrays.asList(FBA.getCode(), FBT.getCode(), AWD.getCode(), THIRD.getCode());
     }
 }

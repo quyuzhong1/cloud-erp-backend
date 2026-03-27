@@ -149,6 +149,7 @@
 	<springProfile name="test">
 		<root level="INFO">
 			<appender-ref ref="CONSOLE"/>
+			<appender-ref ref="ASYNC_LOG_ERROR" />
 			<appender-ref ref="ASYNC_LOG_DEBUG" />
 		</root>
 	</springProfile>

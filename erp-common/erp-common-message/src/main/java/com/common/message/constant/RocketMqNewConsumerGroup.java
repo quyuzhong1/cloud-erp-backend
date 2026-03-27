@@ -120,6 +120,11 @@ public class RocketMqNewConsumerGroup {
      * 新中台旺店通虚拟仓库
      */
     public static final String DMP_WDT_VIRTUALWAREHOUSE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_virtualwarehouse_to_dmp_group";
+
+    /**
+     * 新中台 TikTok 销售仓库
+     */
+    public static final String DMP_TIKTOK_WAREHOUSE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_tiktok_warehouse_to_dmp_group";
     
     /**
      * 新中台旺店通店铺
@@ -179,9 +184,15 @@ public class RocketMqNewConsumerGroup {
     public static final String DMP_LX_FBA_SHIPMENT_RECEIVE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_fba_shipment_receive_to_dmp_group";
 
     /**
+     * 新中台FBT签收
+     */
+    public static final String DMP_FBT_FBA_SHIPMENT_RECEIVE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fbt_fba_shipment_receive_to_dmp_group";
+
+    /**
      * 新中台平台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_group";
+    public static final String DMP_FBT_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fbt_shipment_to_wms_group";
     public static final String DMP_THIRD_WAREHOUSE_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-erp_dmp_group";
     public static final String DMP_FULFILL_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fulfill_order_to_oms_group";
 

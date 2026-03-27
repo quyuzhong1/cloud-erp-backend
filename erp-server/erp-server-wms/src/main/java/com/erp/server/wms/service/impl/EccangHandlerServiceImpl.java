@@ -93,6 +93,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AntuResponse<String> response = antuService.cancelInboundBill(cancelInboundReq.getReceivingCode(),getPlatForm());
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
+
     @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
         AntuCalculateFeeReq antuCalculateFeeReq = ThirdWarehouseConverter.INSTANCE.reqToAntuCalculateFeeReq(calculateFeeReq);
@@ -103,16 +104,16 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AntuCreateOutboundReq antuCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToAntu(createOutboundReq);
         this.handleData(antuCreateOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
         AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
         log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(response));
         if(response.getMessage().contains("参考编号已存在")){
-            return success(response.getOrderCode());
+            return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getOrderCode()).build());
         }
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+        return isSuccess(response.getAsk()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData()).build()) : failure(response.getMessage());
     }
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
@@ -173,12 +174,12 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         AntuGetOutboundRefReq antuGetOutboundReq = AntuGetOutboundRefReq.builder()
                 .referenceNo(queryOutboundReq.getErpOrderCode())
                 .build();
         AntuResponse<AntuOutboundResp> response = antuService.getOrderByRefCode(antuGetOutboundReq, getPlatForm());
-        return Objects.nonNull(response.getData()) ? success(response.getData().getOrderCode()) : failure(response.getMessage());
+        return Objects.nonNull(response.getData()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(response.getData().getOrderCode()).build()) : failure(response.getMessage());
     }
 
     @Override
