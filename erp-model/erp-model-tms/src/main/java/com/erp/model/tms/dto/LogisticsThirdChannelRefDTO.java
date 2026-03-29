@@ -259,7 +259,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         /**
          * 销售平台（主表侧维度）
          */
-        @NotBlank(message = "销售平台不能为空")
+        @NotBlank(message = "平台不能为空")
         private String dictPlatform;
         /**
          * 所有供应商 ： true

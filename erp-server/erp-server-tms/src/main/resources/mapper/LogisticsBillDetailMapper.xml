@@ -173,8 +173,12 @@
             AND ltcr.is_deleted = false
         LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
         WHERE lbd.is_deleted = false
-          AND lbd.register_status = #{query.registerStatus}
-          AND lbd.track_enable = true
+          <if test="query.registerStatus != null">
+            and lbd.register_status = #{query.registerStatus}
+          </if>
+          <if test="query.trackEnable != null">
+            and lbd.track_enable = #{query.trackEnable}
+          </if>
           AND lbd.track_status NOT IN ('sign','manualComplete','systemComplete','deliveryFail')
           AND (lbd.track_no != '' OR lb.transport_no != '')
           <!-- 优先级匹配逻辑 (精准 > 供应商 > 全局) -->
