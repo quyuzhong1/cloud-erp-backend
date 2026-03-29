@@ -91,6 +91,7 @@
         lb.transport_no as transportNo,
         lb.sales_platform as salesPlatform,
         lb.shop_id as shopId,
+        lb.sales_platform as salesPlatform,
         lc.track_query_type as trackQueryType
         from logistics_bill_detail lbd
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
@@ -151,5 +152,56 @@
                 </foreach>
             </if>
         </where>
+    </select>
+    <select id="listWaitingRegisterByConfig" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
+        SELECT DISTINCT
+            lbd.id,
+            lbd.track_no,
+            lbd.platform_order_no,
+            lb.carrier_id AS carrierId,
+            lb.tel_number AS telNumber,
+            lb.channel_id AS channelId,
+            lb.channel_name AS channelName,
+            lb.transport_no AS transportNo,
+            lb.sales_platform AS salesPlatform,
+            lb.shop_id AS shopId,
+            lc.track_query_type AS trackQueryType
+        FROM logistics_bill_detail lbd
+        INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
+        INNER JOIN logistics_third_channel_ref ltcr ON ltcr.platform_type = #{platformType}
+            AND ltcr.disabled = false
+            AND ltcr.is_deleted = false
+        LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
+        WHERE lbd.is_deleted = false
+          AND lbd.register_status = #{query.registerStatus}
+          AND lbd.track_enable = true
+          AND lbd.track_status NOT IN ('sign','manualComplete','systemComplete','deliveryFail')
+          AND (lbd.track_no != '' OR lb.transport_no != '')
+          <!-- 优先级匹配逻辑 (精准 > 供应商 > 全局) -->
+          AND (
+              (lb.sales_platform = ltcr.dict_platform AND lb.logistics_supplier_id = ltcr.logistics_supplier_id AND lb.channel_id = ltcr.logistics_channel_id)
+              OR
+              (lb.sales_platform = ltcr.dict_platform AND lb.logistics_supplier_id = ltcr.logistics_supplier_id AND ltcr.logistics_channel_id = 'all')
+              OR
+              (lb.sales_platform = ltcr.dict_platform AND ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
+          )
+          <if test="query.transportType != null and query.transportType == 'expressDelivery'">
+              AND lb.order_type IN ('B2B','B2C','AfterSale')
+          </if>
+          <if test="query.transportType != null and query.transportType == 'ocean'">
+              AND lb.order_type = 'firstMile'
+          </if>
+          <if test="query.trackNoList != null and query.trackNoList.size > 0">
+              AND lbd.track_no IN
+              <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
+          <if test="query.transportNoList != null and query.transportNoList.size > 0">
+              AND lb.transport_no IN
+              <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
     </select>
 </mapper>
