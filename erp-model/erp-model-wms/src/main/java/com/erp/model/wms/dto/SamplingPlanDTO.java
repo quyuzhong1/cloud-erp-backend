@@ -311,13 +311,11 @@ public class SamplingPlanDTO implements Serializable {
         /**
         * 严重缺陷AQL
         */
-        @Digits(integer = 12, fraction = 4, message = "严重缺陷AQL整数位不能超过12位，小数位不能超过4位")
         private String majorAql;
 
         /**
         * 一般缺陷AQL
         */
-        @Digits(integer = 12, fraction = 4, message = "一般缺陷AQL整数位不能超过12位，小数位不能超过4位")
         private String generalAql;
 
         /**
