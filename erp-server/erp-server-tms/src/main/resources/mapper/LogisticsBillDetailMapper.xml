@@ -165,13 +165,35 @@
             lb.transport_no AS transportNo,
             lb.sales_platform AS salesPlatform,
             lb.shop_id AS shopId,
-            lc.track_query_type AS trackQueryType
+            lc.track_query_type AS trackQueryType,
+            best_match.cfgId
         FROM logistics_bill_detail lbd
         INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
         INNER JOIN logistics_third_channel_ref ltcr ON ltcr.platform_type = #{platformType}
             AND ltcr.disabled = false
             AND ltcr.is_deleted = false
         LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
+        -- LATERAL 魔法：针对每一条 lb 数据，独立执行子查询，按优先级排序并只取第一条
+        LEFT JOIN LATERAL (
+        SELECT ltcr.id AS cfgId
+        FROM logistics_third_channel_ref ltcr
+        WHERE  ltcr.disabled = false
+        AND ltcr.is_deleted = false
+          AND ltcr.dict_platform = lb.sales_platform
+        AND (
+        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id) OR
+        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all') OR
+        (ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
+        )
+        ORDER BY
+        -- 核心优先级控制：匹配越精准，得分越低，排在越前面
+        CASE
+        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id THEN 1
+        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all' THEN 2
+        WHEN ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all' THEN 3
+        END ASC
+        LIMIT 1
+        ) AS best_match ON TRUE
         WHERE lbd.is_deleted = false
           <if test="query.registerStatus != null">
             and lbd.register_status = #{query.registerStatus}
@@ -181,14 +203,6 @@
           </if>
           AND lbd.track_status NOT IN ('sign','manualComplete','systemComplete','deliveryFail')
           AND (lbd.track_no != '' OR lb.transport_no != '')
-          <!-- 优先级匹配逻辑 (精准 > 供应商 > 全局) -->
-          AND (
-              (lb.sales_platform = ltcr.dict_platform AND lb.logistics_supplier_id = ltcr.logistics_supplier_id AND lb.channel_id = ltcr.logistics_channel_id)
-              OR
-              (lb.sales_platform = ltcr.dict_platform AND lb.logistics_supplier_id = ltcr.logistics_supplier_id AND ltcr.logistics_channel_id = 'all')
-              OR
-              (lb.sales_platform = ltcr.dict_platform AND ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
-          )
           <if test="query.transportType != null and query.transportType == 'expressDelivery'">
               AND lb.order_type IN ('B2B','B2C','AfterSale')
           </if>
@@ -207,8 +221,12 @@
                   #{item}
               </foreach>
           </if>
-          AND lb.delivery_time &gt;= #{query.deliveryTime}
-          and lb.sales_platform = #{query.salesPlatform}
-
+          <if test="query.salesPlatform != null and query.salesPlatform != ''">
+              and lb.sales_platform = #{query.salesPlatform}
+          </if>
+          <if test="query.deliveryTime != null ">
+            AND lb.delivery_time &gt;= #{query.deliveryTime}
+          </if>
+            and best_match.cfgId =!''
     </select>
 </mapper>
