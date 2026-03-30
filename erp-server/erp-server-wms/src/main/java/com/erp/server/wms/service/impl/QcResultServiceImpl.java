@@ -476,6 +476,11 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     }
 
     @Override
+    public  QcResultDTO.LotQualifiedQtyDTO getLotQualifiedQtyByMainId(String qcId) {
+      return   baseMapper.getLotQualifiedQtyByMainId(qcId);
+    }
+
+    @Override
     public void sendQcBackFillPackaging(List<ProductPackDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;

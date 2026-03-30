@@ -588,6 +588,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType()) && CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
                 srmDeliveryOrderFeign.confirmReceiveStatus(detailIdsByDeliverySource);
             }
+
+            //生成质检通知单
+            generateQcNotice(entity,receiveDetailList);
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -602,6 +605,35 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
+    /**
+     * 自动生成质检通知单
+     * @author will
+     * @date 2026/3/30 18:53
+     * @param entity
+     * @param receiveDetailList
+     * @return  void
+     */
+    private void generateQcNotice(WarehouseReceiveEntity entity,List<WarehouseReceiveDetailEntity> receiveDetailList) {
+        QcNoticeDTO.AddDTO addDTO = new QcNoticeDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
+        addDTO.setQcWarehouseId(entity.getDeliveryWarehouseId());
+        addDTO.setPutawayWarehouseId(entity.getDeliveryWarehouseId());
+        addDTO.setQcType(QcTypeEnum.STOCK_IN.getCode());
+        addDTO.setRemark(CharSequenceUtil.format("采购收货单【{}】审核通过，待质检SKU自动生成质检通知单",entity.getCode()));
+        List<QcNoticeDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
+        for (WarehouseReceiveDetailEntity detailEntity : receiveDetailList) {
+            QcNoticeDetailDTO.AddDTO detailDTO = new QcNoticeDetailDTO.AddDTO();
+            detailDTO.setSourceDetailId(detailEntity.getId());
+            detailDTO.setSkuId(detailEntity.getSkuId());
+            detailDTO.setSkuNo(detailEntity.getSkuNo());
+            detailDTO.setQcNoticeQty(detailEntity.getWaitQcQty());
+            detailDTOList.add(detailDTO);
+        }
+        addDTO.setDetailList(detailDTOList);
+        qcNoticeService.add(addDTO);
+    }
 
     /**
      * 生成质检单
@@ -806,6 +838,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (CollectionUtils.isNotEmpty(collect)) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.PO_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN.getMsg());
         }
+        //查询是否存在质检通知单
+        List<QcNoticeEntity> qcNoticeList = qcNoticeService.listBySourceId(entity.getId());
+        if (CollectionUtils.isNotEmpty(qcNoticeList)) {
+            String codes = qcNoticeList.stream().map(QcNoticeEntity::getCode).collect(Collectors.joining(","));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format(ApiError.PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN.getMsg(), codes));
+        }
+
         List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(entity.getId());
         if (CollectionUtils.isNotEmpty(qcList)) {
             String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));

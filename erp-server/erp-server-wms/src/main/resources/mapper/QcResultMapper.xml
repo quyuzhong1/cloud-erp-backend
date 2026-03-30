@@ -94,4 +94,16 @@
         group by qi.source_detail_id
     </select>
 
+    <!-- 根据来源单id查询合格数量汇总 -->
+    <select id="getLotQualifiedQtyByMainId" resultType="com.erp.model.wms.dto.QcResultDTO$LotQualifiedQtyDTO">
+        select
+            qi.id as qcId,
+            qi.source_detail_id,
+            qr.lot_qualified_qty as totalLotQualifiedQty
+        from qc_result qr
+                 inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
+        where qr.is_deleted = FALSE and qi.qc_status = 'finishQc' and qi.source_type in ('qcNotice','poReceive')
+          and qi.id = #{qcId}
+    </select>
+
 </mapper>
