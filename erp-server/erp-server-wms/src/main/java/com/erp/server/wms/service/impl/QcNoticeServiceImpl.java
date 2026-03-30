@@ -981,7 +981,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //质检通知单审核通过更新质检单
         for (QcNoticeDTO.QcInfoFullView qcInfoView : dto) {
 
-            if (Objects.nonNull(qcInfoView.getQcResultView())) {
+            if (Objects.isNull(qcInfoView.getQcResultView())) {
                 throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED,"质检结果");
             }
             QcRemarkDTO.QcResultView qcResultView = qcInfoView.getQcResultView();
