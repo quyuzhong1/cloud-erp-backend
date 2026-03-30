@@ -257,6 +257,12 @@ public class ProductSkuFeignController {
         return list;
     }
 
+    @PostMapping("/getProductPackBySkuNos")
+    public List<ProductVO.ProductPackVO> getProductPackBySkuNos(@RequestBody List<String> skuNos) {
+        List<ProductVO.ProductPackVO> list = productPackService.getBySkuNos(skuNos);
+        return list;
+    }
+
     /**
      * 根据用户获取各任务阶段数量
      *
