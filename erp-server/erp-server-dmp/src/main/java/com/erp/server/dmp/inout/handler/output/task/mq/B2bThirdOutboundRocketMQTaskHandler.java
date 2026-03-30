@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOutboundDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
@@ -68,7 +69,7 @@ public class B2bThirdOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         if (Objects.isNull(entity) || this.validateDataBlack(entity, cfgOutputId)) {
             return null;
         }
-        String targetStatus = convertStatus(entity.getOrderStatus());
+        String targetStatus = convertStatus(entity.getSourcePlatform(), entity.getOrderStatus());
         if (Objects.isNull(targetStatus)) {
             return null;
         }
@@ -83,7 +84,19 @@ public class B2bThirdOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         return dto;
     }
 
-    private String convertStatus(String thirdOrderStatus) {
+    private String convertStatus(String sourcePlatform, String thirdOrderStatus) {
+        if (PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(sourcePlatform)) {
+            switch (thirdOrderStatus) {
+                case "-1":
+                    return ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode();
+                case "-2":
+                    return ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode();
+                case "5":
+                    return ThirdDeliveryStatusEnum.SHIPPED.getCode();
+                default:
+                    return null;
+            }
+        }
         B2BThirdDeliveryCancelResultEnum statusEnum = B2BThirdDeliveryCancelResultEnum.getByCode(thirdOrderStatus);
         if (Objects.isNull(statusEnum)) {
             return null;

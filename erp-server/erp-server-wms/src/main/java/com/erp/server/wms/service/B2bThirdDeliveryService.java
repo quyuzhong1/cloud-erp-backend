@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
@@ -110,6 +111,8 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
     void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
 
     void handleZhongBaoResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
+
+    void syncOutboundStatus(PlatformOutboundDTO dto);
 
     List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds);
 

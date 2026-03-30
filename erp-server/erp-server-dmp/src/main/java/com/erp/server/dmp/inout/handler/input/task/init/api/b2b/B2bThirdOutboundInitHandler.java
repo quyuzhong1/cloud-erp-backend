@@ -109,14 +109,18 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
         if (Objects.isNull(response) || StringUtils.isBlank(response.getStatus())) {
             return false;
         }
-        return Objects.nonNull(B2BThirdDeliveryCancelResultEnum.getByCode(response.getStatus()))
+        if (isZhongBaoProvider()) {
+            return Arrays.asList("-1", "-2", "5").contains(response.getStatus());
+        }
+        B2BThirdDeliveryCancelResultEnum statusEnum = B2BThirdDeliveryCancelResultEnum.getByCode(response.getStatus());
+        return Objects.nonNull(statusEnum)
                 && !Arrays.asList(
                 B2BThirdDeliveryCancelResultEnum.NEW,
                 B2BThirdDeliveryCancelResultEnum.SUBMIT,
                 B2BThirdDeliveryCancelResultEnum.PROCESSED,
                 B2BThirdDeliveryCancelResultEnum.WAIT_UPLOAD,
                 B2BThirdDeliveryCancelResultEnum.UPLOADED
-        ).contains(B2BThirdDeliveryCancelResultEnum.getByCode(response.getStatus()));
+        ).contains(statusEnum);
     }
 
     private JSONObject toResult(ThirdWarehouseQueryFbaOutboundResponse response) {
@@ -126,9 +130,14 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
         result.put("referenceNo", response.getCode());
         result.put("orderStatus", response.getStatus());
         result.put("trackingNo", response.getTrackNo());
-        result.put("abnormalProblemReason", response.getErrorType());
+        result.put("abnormalProblemReason", isZhongBaoProvider() ? response.getErrorReason() : response.getErrorType());
         result.put("dateShippingStr", response.getDeliveryTimeStr());
         return result;
+    }
+
+    private boolean isZhongBaoProvider() {
+        return Objects.nonNull(dmpBasicSystemEntity)
+                && StringUtils.equalsIgnoreCase("zhongbao", dmpBasicSystemEntity.getCode());
     }
 
     /**

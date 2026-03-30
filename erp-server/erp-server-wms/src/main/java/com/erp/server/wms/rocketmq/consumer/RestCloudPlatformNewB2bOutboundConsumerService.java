@@ -3,7 +3,6 @@ package com.erp.server.wms.rocketmq.consumer;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
- * B2B三方仓出库状态消费入口
+ * RestCloud B2B三方仓出库状态消费入口
  */
 @Service
 @RocketMQMessageListener(
