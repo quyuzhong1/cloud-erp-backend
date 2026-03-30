@@ -906,6 +906,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
                 QcStandardDTO.AddDTO addDTO = new QcStandardDTO.AddDTO();
                 addDTO.setSkuId(skuId);
+                addDTO.setSkuNo(productDetailEntity.getSkuNo());
+                addDTO.setProductName(productDetailEntity.getName());
                 addDTO.setDetailList(detailList);
                 if (CollectionUtils.isNotEmpty(attachmentList)) {
                     addDTO.setWmsAttachmentEntities(attachmentList);
