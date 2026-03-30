@@ -4958,7 +4958,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
         //已存在数据
-        skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        if (CollUtil.isEmpty(skuParamDTO.getStatusList())){
+            skuParamDTO.setStatusList(Collections.singletonList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        }
         List<String> saleMethodList = skuParamDTO.getSaleMethodList();
         List<String> saleMethodParams = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(saleMethodList)) {
