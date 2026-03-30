@@ -2,9 +2,9 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.plm.dto.ProductPackDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcResultEntity;
+
 import java.util.List;
 import java.util.Map;
 
@@ -146,5 +146,12 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      * @Date 2025-07-03
      **/
     Map<String, String> listQcItemRolePeople(QcResultDTO.QcItemRolePeopleDTO dto );
-
+    /**
+     * 根据质检单的来源明细id 获取到质检合格的数量汇总
+     * @author will
+     * @date 2026/3/30 15:12
+     * @param sourceDetailIdList
+     * @return  List<QcResultDTO.TotalLotQualifiedQtyDTO>
+     */
+    List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyBySourceDetailId(List<String> sourceDetailIdList);
 }

@@ -216,4 +216,34 @@ public class WarehouseReceiveDetailDTO {
         private Integer waitQcQty;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveQtyDTO {
+        /**
+         * 采购订单明细id
+         */
+        private String podId;
+        /**
+         *  收货数量汇总
+         */
+        private Integer totalReceiveQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WaitQcQtyDTO {
+        /**
+         * 采购订单明细id
+         */
+        private String podId;
+        /**
+         * 采购收货明细id
+         */
+        private String detailId;
+        /**
+         *  收货数量汇总
+         */
+        private Integer totalWaitQcQty;
+    }
 }
