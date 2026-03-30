@@ -1597,7 +1597,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         qcInspectItemView.setInspectRequirement(qcStandardDetailEntity.getInspectRequirement());
                         qcInspectItemViews.add(qcInspectItemView);
                     }
-                    printQcStandardDTO.setQcInspectItemViewDTOList(qcInspectItemViews);
+                    printQcStandardDTO.setDetailList(qcInspectItemViews);
                 }
             }
 

@@ -1090,7 +1090,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 质检项目
          */
-        private List<QcInspectItemView>  qcInspectItemViewDTOList;
+        private List<QcInspectItemView>  detailList;
 
     }
 }

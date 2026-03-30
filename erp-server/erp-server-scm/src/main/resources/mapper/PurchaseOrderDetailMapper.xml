@@ -354,10 +354,12 @@
                 pod.sku_no as skuNo,
                 pos.supplier_id as supplierId,
                 pos.supplier_name as supplierName,
-                pod.purchase_qty as poQty
+                pod.purchase_qty as poQty,
+                pd.name as productName
             from purchase_order_detail pod
             inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
             inner join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+            left join product_detail pd on pod.sku_id = pd.id and pd.is_deleted = false
             <where>
                 pod.is_deleted = false and  po.approve_status = 'approve'
                 <if test="params.podIdList != null and params.podIdList.size > 0">
