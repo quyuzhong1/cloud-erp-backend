@@ -34,6 +34,37 @@
         order by wr.create_time asc
     </select>
 
+    <!-- 获取其他收货单的待质检数量汇总 -->
+    <select id="getTotalReceiveQty"
+            resultType="com.erp.model.wms.dto.WarehouseReceiveDetailDTO$ReceiveQtyDTO">
+        select
+            wrd.purchase_order_detail_id as podId,
+            sum(wrd.receive_qty) as totalReceiveQty
+        from po_receive_detail wrd
+                 inner join po_receive wr on wr.id = wrd.main_id and wr.is_deleted = false
+        where wrd.is_deleted = false  and wr.invalid_status = false
+          and wrd.purchase_order_detail_id in
+              <foreach collection="podIdList" separator="," item="item" open="(" close=")">
+                  #{item}
+              </foreach>
+         group by wrd.purchase_order_detail_id
+    </select>
+
+    <select id="getTotalWaitQcQty"
+            resultType="com.erp.model.wms.dto.WarehouseReceiveDetailDTO$WaitQcQtyDTO">
+        select
+        wrd.purchase_order_detail_id as podId,
+        wrd.id as detailId,
+        sum(wrd.wait_qc_qty) as totalWaitQcQty
+        from po_receive_detail wrd
+        inner join po_receive wr on wr.id = wrd.main_id and wr.is_deleted = false
+        where wrd.is_deleted = false  and wr.invalid_status = false
+        and wrd.purchase_order_detail_id in
+        <foreach collection="podIdList" separator="," item="item" open="(" close=")">
+            #{item}
+        </foreach>
+        group by wrd.purchase_order_detail_id,wrd.id
+    </select>
 
     <update id="updateInfo">
         UPDATE po_receive_detail

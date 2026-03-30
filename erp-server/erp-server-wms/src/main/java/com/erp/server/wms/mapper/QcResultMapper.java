@@ -44,4 +44,12 @@ public interface QcResultMapper extends BaseMapper<QcResultEntity> {
      * @return
      */
     int getReQcCount();
+    /**
+     * 来源明细id获取质检合格数量汇总
+     * @author will
+     * @date 2026/3/30 15:13
+     * @param sourceDetailIdList
+     * @return  List<QcResultDTO.TotalLotQualifiedQtyDTO>
+     */
+    List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyBySourceDetailId(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
 }
