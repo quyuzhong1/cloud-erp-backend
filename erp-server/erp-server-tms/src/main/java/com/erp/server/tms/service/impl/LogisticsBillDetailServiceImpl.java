@@ -81,6 +81,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         list.forEach(l -> {
             if(!flag){
                 l.setTrackStatus(LogisticTrackStatusEnum.NOT_QUERY.getCode());
+                l.setTrackEnable(false);
             }
             l.setMainId(mainId);
             if(StringUtils.isNotBlank(authEntity.getId())){
