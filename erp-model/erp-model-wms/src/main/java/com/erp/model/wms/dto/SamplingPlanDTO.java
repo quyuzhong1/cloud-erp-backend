@@ -397,7 +397,7 @@ public class SamplingPlanDTO implements Serializable {
          */
         private Integer rangTo;
         /**
-         * 抽样比例
+         * 抽样比例 %
          */
         private BigDecimal rate;
 

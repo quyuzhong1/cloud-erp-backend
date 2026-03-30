@@ -309,7 +309,7 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
         result.setRangFrom(detailEntity.getRangFrom());
         result.setRangTo(detailEntity.getRangTo());
         result.setLotRange(detailEntity.getRangFrom() + "~" + detailEntity.getRangTo());
-        result.setSampleQty(detailEntity.getQty());
+        result.setSampleQty( Objects.nonNull(detailEntity.getQty()) && detailEntity.getQty() < planDTO.getQty() ? detailEntity.getQty() : planDTO.getQty());
         result.setGeneralAcceptQty(detailEntity.getGeneralAcceptQty());
         result.setGeneralRejectQty(detailEntity.getGeneralRejectQty());
         result.setMajorAcceptQty(detailEntity.getMajorAcceptQty());
