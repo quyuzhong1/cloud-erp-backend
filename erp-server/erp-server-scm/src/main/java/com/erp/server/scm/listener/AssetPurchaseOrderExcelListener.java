@@ -473,10 +473,27 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             try {
                 assetPurchaseOrderService.handleImportSuccessList(filteredList);
             }catch (Exception e){
-                errorList.forEach(excelDTO -> excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                String errorMsg = buildImportErrorMsg(e);
+                Set<String> serialNumberSet = filteredList.stream()
+                        .map(AssetPurchaseOrderDetailDTO.MoldImportDTO::getSerialNumber)
+                        .collect(Collectors.toSet());
+                List<AssetPurchaseOrderImportExcelDTO> failedRows = allList.stream()
+                        .filter(excelDTO -> serialNumberSet.contains(excelDTO.getSerialNumber()))
+                        .filter(excelDTO -> StringUtils.isBlank(excelDTO.getErrorMsg()))
+                        .collect(Collectors.toList());
+                failedRows.forEach(excelDTO -> excelDTO.setErrorMsg(errorMsg));
+                errorList.addAll(failedRows);
             }
             updateTask(count);
         }
+    }
+
+    private String buildImportErrorMsg(Exception e) {
+        String errorMsg = Objects.isNull(e) ? "" : e.getMessage();
+        if (StringUtils.isBlank(errorMsg)) {
+            errorMsg = Objects.isNull(e) ? "导入失败" : e.getClass().getSimpleName();
+        }
+        return errorMsg.length() > 50 ? errorMsg.substring(0, 50) : errorMsg;
     }
 
     public List<AssetPurchaseOrderImportExcelDTO> getAllList(){
