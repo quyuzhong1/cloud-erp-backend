@@ -916,7 +916,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcNoticeIdList = dto.stream().map(QcNoticeDTO.QcInfoFullView::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //质检通知单
         List<QcNoticeEntity> qcNoticeList = listByIds(qcNoticeIdList);
-        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())).count();
+        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
         }
@@ -1156,7 +1156,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcNoticeIdList = dto.stream().map(QcNoticeDTO.QcInfoView::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //质检通知单
         List<QcNoticeEntity> qcNoticeList = listByIds(qcNoticeIdList);
-        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())).count();
+        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
         }
