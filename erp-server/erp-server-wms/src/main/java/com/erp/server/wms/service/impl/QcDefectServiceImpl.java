@@ -48,7 +48,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 .eq(QcDefectEntity::getMainId, billId)
                 .list();
 
-        if (qcDefectList.isEmpty()) {
+        if (Objects.isNull(qcDefectList) || qcDefectList.isEmpty()) {
             return;
         }
 
