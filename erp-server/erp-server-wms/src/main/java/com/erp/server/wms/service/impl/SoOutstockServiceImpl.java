@@ -4555,46 +4555,82 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(dtoList)) {
             return Collections.emptyList();
         }
-
-        // 过滤无效数据
-        List<SoOutstockDTO.BatchUpdateDeclarationTypeDTO> validDtos = dtoList.stream()
-                .filter(obj -> StringUtils.isNotBlank(obj.getDeclarationType()))
-                .collect(Collectors.toList());
-
-        List<BatchResultDTO> results = new ArrayList<>(validDtos.size());
-
-        if (CollectionUtils.isEmpty(validDtos)) {
-            return results;
-        }
-
+        List<String> ids = new ArrayList<>();
+        List<BatchResultDTO> results = new ArrayList<>(dtoList.size());
+        List<SoOutstockEntity> oldList = new ArrayList<>(dtoList.size());
+        List<String> collect = dtoList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+        ids.addAll(collect);
         try {
-            List<String> ids = validDtos.stream().map(SoOutstockDTO.BatchUpdateDeclarationTypeDTO::getId).collect(Collectors.toList());
+            if (StringUtils.isBlank(dtoList.get(0).getDeclarationType())) {
 
-            // 执行批量更新
-            boolean batchUpdateResult = this.lambdaUpdate()
-                    .set(SoOutstockEntity::getDeclarationType, validDtos.get(0).getDeclarationType())
-                    .in(SoOutstockEntity::getId, ids)
-                    .update();
+                boolean batchUpdateResult = this.lambdaUpdate()
+                        .set(SoOutstockEntity::getDeclarationType, "")
+                        .set(SoOutstockEntity::getUpdateTime, LocalDate.now())
+                        .set(SoOutstockEntity::getUpdateUserId, UserContext.getDefaultLoginUser().getUid())
+                        .in(SoOutstockEntity::getId, collect)
+                        .update();
 
-            // 构建结果
-            for (SoOutstockDTO.BatchUpdateDeclarationTypeDTO dto : validDtos) {
-                BatchResultDTO result = new BatchResultDTO();
-                result.setId(dto.getId());
-                result.setCode(dto.getCode());
-                result.setSuccess(batchUpdateResult); // 或者根据实际更新影响行数判断
-                results.add(result);
+                // 构建结果
+                for (SoOutstockDTO.BatchUpdateDeclarationTypeDTO dto : dtoList) {
+                    BatchResultDTO result = new BatchResultDTO();
+                    result.setId(dto.getId());
+                    result.setCode(dto.getCode());
+                    result.setSuccess(batchUpdateResult); // 或者根据实际更新影响行数判断
+                    results.add(result);
+                    //添加日志
+                    for (SoOutstockEntity soOutstockEntity : oldList) {
+                        if (soOutstockEntity.getId().equals(dto.getId())) {
+                            String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据修改报关类型操作,修改前【{}】,修改后【{}】",
+                                    UserContext.getDefaultLoginUser().getUserName(),
+                                    dto.getCode(),
+                                    StringUtils.isBlank(soOutstockEntity.getDeclarationType()) ? "" : DeclarationTypeEnum.getByCode(soOutstockEntity.getDeclarationType()).getName(),
+                                    DeclarationTypeEnum.getByCode(dto.getDeclarationType()));
+                            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), dto.getId(), "修改操作");
+                        }
+                    }
+                }
+            } else {
+
+                boolean batchUpdateResult = this.lambdaUpdate()
+                        .set(SoOutstockEntity::getDeclarationType, dtoList.get(0).getDeclarationType())
+                        .set(SoOutstockEntity::getUpdateTime, LocalDate.now())
+                        .set(SoOutstockEntity::getUpdateUserId, UserContext.getDefaultLoginUser().getUid())
+                        .in(SoOutstockEntity::getId, ids)
+                        .update();
+
+                // 构建结果
+                for (SoOutstockDTO.BatchUpdateDeclarationTypeDTO dto : dtoList) {
+                    BatchResultDTO result = new BatchResultDTO();
+                    result.setId(dto.getId());
+                    result.setCode(dto.getCode());
+                    result.setSuccess(batchUpdateResult); // 或者根据实际更新影响行数判断
+                    results.add(result);
+                    //添加日志
+                    for (SoOutstockEntity soOutstockEntity : oldList) {
+                        if (soOutstockEntity.getId().equals(dto.getId())) {
+                            String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据修改报关类型操作,修改前【{}】,修改后【{}】",
+                                    UserContext.getDefaultLoginUser().getUserName(),
+                                    dto.getCode(),
+                                    StringUtils.isBlank(soOutstockEntity.getDeclarationType()) ? "" : DeclarationTypeEnum.getByCode(soOutstockEntity.getDeclarationType()).getName(),
+                                    DeclarationTypeEnum.getByCode(dto.getDeclarationType()));
+                            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), dto.getId(), "修改操作");
+                        }
+                    }
+                }
             }
+
         } catch (Exception e) {
             // 记录错误日志
             log.error("批量更新申报类型失败", e);
 
             // 返回部分成功结果或全部标记为失败
-            for (SoOutstockDTO.BatchUpdateDeclarationTypeDTO dto : validDtos) {
+            for (SoOutstockDTO.BatchUpdateDeclarationTypeDTO dto : dtoList) {
                 BatchResultDTO result = new BatchResultDTO();
                 result.setId(dto.getId());
                 result.setCode(dto.getCode());
                 result.setSuccess(false);
                 results.add(result);
+                return results;
             }
         }
 
