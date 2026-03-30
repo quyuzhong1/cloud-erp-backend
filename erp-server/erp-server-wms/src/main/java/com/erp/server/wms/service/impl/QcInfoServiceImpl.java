@@ -631,36 +631,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 }
             }
 
-            //回写采购收货待质检数
-            if (Objects.equals(dto.getSourceType(), SourceTypeEnum.PO_RECEIVE.getCode())) {
-
-                List<QcInfoEntity> list = this.lambdaQuery()
-                        .eq(QcInfoEntity::getSourceDetailId, bill.getSourceDetailId())
-                        .list();
-
-                List<String> ids = list.stream()
-                        .map(item -> item.getId())
-                        .collect(Collectors.toList());
-
-                List<QcResultEntity> qcResults = qcResultService.getByMainIdList(ids);
-
-                Integer qcSumQty = qcResults.stream()
-                        .map(item -> item.getQcQty())
-                        .reduce(0, Integer::sum);
-
-                WarehouseReceiveDetailEntity warehouseReceiveDetail = warehouseReceiveDetailService.getById(bill.getSourceDetailId());
-
-                if (warehouseReceiveDetail.getReceiveQty() - qcSumQty >= 0) {
-                    warehouseReceiveDetailService.lambdaUpdate()
-                            .set(WarehouseReceiveDetailEntity::getWaitQcQty,warehouseReceiveDetail.getReceiveQty() - qcSumQty)
-                            .eq(WarehouseReceiveDetailEntity::getSourceDetailId,bill.getSourceDetailId())
-                            .update();
-                } else {
-                    throw new ServiceException(ApiError.PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
-                }
-
-            }
-
+            //批量去更新 质检数量
+            warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
 
             operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
         } else {
@@ -1219,6 +1191,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //新品首批回填SKU的尺寸信息
             updateProductPack(ids);
+
+            //批量去更新 质检数量
+            warehouseReceiveDetailService.updateWaitQcQty(entity.getId());
+
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);

@@ -581,4 +581,26 @@ public class QcResultDTO {
          */
         private Integer totalLotQualifiedQty;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class LotQualifiedQtyDTO {
+        /**
+         * 质检id
+         */
+        private String qcId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 批次合格量
+         */
+        private Integer lotQualifiedQty;
+    }
 }
