@@ -133,7 +133,7 @@
 	           ${item.field} ${item.sort}
 	       </foreach>
 	    </if>
-	    t.check_month_query desc
+	    t.check_month_query, t.id desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -184,5 +184,15 @@
         <foreach collection="params" item="item" open="(" separator="," close=")">
             #{item.checkMonth}
         </foreach>
+    </update>
+
+    <update id="updateSuggestType">
+        update ads_erp_diff_outstock_sync t
+        set suggest_type = #{params.suggestType},
+            update_time = now()
+        where t.id = #{params.id}
+        <if test="params.conditionSql!=null and params.conditionSql!=''">
+            and  #{params.conditionSql}
+        </if>
     </update>
 </mapper>

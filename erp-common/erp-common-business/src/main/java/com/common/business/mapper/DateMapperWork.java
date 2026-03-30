@@ -22,6 +22,13 @@ public class DateMapperWork {
         // 转换为 Date
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
+    @Named("localDateTimeToDateStr")
+    public String localDateTimeToDateStr(LocalDateTime localDateTime) {
+        if(Objects.isNull(localDateTime)){
+            return null;
+        }
+        return localDateTime.toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
 
     @Named("toStrByDate")
     public String toStrByDate(LocalDateTime localDateTime) {

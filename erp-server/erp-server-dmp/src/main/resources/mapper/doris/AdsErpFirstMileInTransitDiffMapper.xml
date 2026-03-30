@@ -157,7 +157,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        aefmid.check_month_query DESC
+        aefmid.check_month_query, aefmid.id DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

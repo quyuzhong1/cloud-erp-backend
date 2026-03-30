@@ -341,6 +341,10 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         processDTO.setBusinessKey(entity.getBussinessKey());
         processDTO.setBusinessId(entity.getBussinessId());
         processDTO.setApproveStatus(ApproveTypeEnum.getByCode(approveStatus));
+        if (CharSequenceUtil.isBlank(userId)) {
+            throw new ServiceException(ApiError.WF_FS_PROCESS_USER_NOT_FOUND, "");
+        }
+
         // 来自第三方系统的用户ID可能需要转换为您系统内部的用户ID
         SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
         if (user == null) {

@@ -60,6 +60,26 @@ public class TikTokRefundDmpHandler extends DmpInputDbConvertDmpHandler {
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 dmpDataMap.put("nextLevelId", dmpDataMap.get("nextLevelId"));
                 dmpDataMap.put("shopId", dmpDataMap.get("nextLevelId"));
+
+                Object returnIdObj = dmpDataMap.get("returnId");
+                if (returnIdObj != null) {
+                    dmpDataMap.put("thirdCode", returnIdObj);
+                }
+
+                Object orderIdObj = dmpDataMap.get("orderId");
+                if (orderIdObj != null) {
+                    dmpDataMap.put("platformCode", orderIdObj);
+                    dmpDataMap.put("platformOrderCode", orderIdObj);
+                }
+
+                Object returnReasonTextObj = dmpDataMap.get("returnReasonText");
+                if (returnReasonTextObj != null) {
+                    dmpDataMap.put("reason", returnReasonTextObj);
+                    if (dmpDataMap.get("remark") == null) {
+                        dmpDataMap.put("remark", returnReasonTextObj);
+                    }
+                }
+
                 Object statusObj = dmpDataMap.get("platformOriginalStatus");
                 if (statusObj != null) {
                     String status = String.valueOf(statusObj);

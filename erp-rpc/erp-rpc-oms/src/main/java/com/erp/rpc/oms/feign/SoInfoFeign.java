@@ -100,6 +100,13 @@ public interface SoInfoFeign {
     List<SoInfoEntity> listByCodes(List<String> list);
 
     /**
+     * 根据code查询
+     * @param soCode
+     */
+    @PostMapping("feign/soInfo/getByCode")
+    SoInfoEntity getByCode(String soCode);
+
+    /**
      * 修改单据审批状态
      * @param updateApprovalStatusDTO
      */
@@ -124,4 +131,10 @@ public interface SoInfoFeign {
      */
     @PostMapping("feign/soInfo/getB2bThirdDeliveryView")
     B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto);
+
+    /**
+     * 根据平台订单号获取订单
+     */
+    @PostMapping("feign/soInfo/getByPlatformOrderCode")
+    List<SoInfoEntity> getByPlatformOrderCode(@RequestBody String platformCode);
 }
