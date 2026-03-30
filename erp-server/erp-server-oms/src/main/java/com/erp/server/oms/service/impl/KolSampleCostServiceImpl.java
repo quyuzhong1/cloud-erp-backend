@@ -57,6 +57,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -74,6 +75,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapper, KolSampleCostEntity> implements KolSampleCostService {
+    private static final int IMPORT_ALLOCATION_SCALE = 6;
+
     @Autowired
     private OperateLogService operateLogService;
 
@@ -447,7 +450,8 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     }
 
     private String buildWdtKolMatchKey(KolSampleCostEntity entity) {
-        return StrUtil.format("{}#{}", entity.getSourceCode(), entity.getSkuNo());
+        String matchSourceCode = CharSequenceUtil.blankToDefault(entity.getMatchSourceCode(), entity.getSourceCode());
+        return StrUtil.format("{}#{}", matchSourceCode, entity.getSkuNo());
     }
 
     /**
@@ -492,7 +496,11 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     errorList.add(importExcelDTO);
                     continue;
                 }*/
-                List<KolSampleCostEntity> costList = kolSampleCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).collect(Collectors.toList());
+                List<KolSampleCostEntity> costList = kolSampleCostList.stream()
+                        .filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode()))
+                        .sorted(Comparator.comparing(KolSampleCostEntity::getSoOutstockDetailId, Comparator.nullsLast(String::compareTo))
+                                .thenComparing(KolSampleCostEntity::getId, Comparator.nullsLast(String::compareTo)))
+                        .collect(Collectors.toList());
                 if (CollUtil.isEmpty(costList)) {
                     importExcelDTO.setErrorMsg("未找到对应的销售订单号：" + importExcelDTO.getSoCode());
                     errorList.add(importExcelDTO);
@@ -507,11 +515,21 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             }
             BigDecimal importAmount = MathUtil.valueOf(importExcelDTO.getAmountStr());
             BigDecimal exchangeRate = MathUtil.valueOf(importExcelDTO.getExchangeRateStr());
+            BigDecimal importLocalAmount = importAmount.multiply(exchangeRate).setScale(IMPORT_ALLOCATION_SCALE, RoundingMode.HALF_UP);
             BigDecimal totalQtyDecimal = MathUtil.valueOf(totalQty);
-            for (KolSampleCostEntity entity : costList) {
-                BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), totalQtyDecimal)
-                        .multiply(importAmount)
-                        .multiply(exchangeRate);
+            BigDecimal allocatedAmount = BigDecimal.ZERO;
+            for (int index = 0; index < costList.size(); index++) {
+                KolSampleCostEntity entity = costList.get(index);
+                BigDecimal cost;
+                if (index == costList.size() - 1) {
+                    // 最后一行吸收尾差，保证同销售单本次导入增量合计严格等于导入金额*汇率
+                    cost = importLocalAmount.subtract(allocatedAmount);
+                } else {
+                    cost = MathUtil.valueOf(entity.getQty())
+                            .multiply(importLocalAmount)
+                            .divide(totalQtyDecimal, IMPORT_ALLOCATION_SCALE, RoundingMode.HALF_UP);
+                    allocatedAmount = allocatedAmount.add(cost);
+                }
                 BigDecimal historyShippingCost = ObjUtil.defaultIfNull(entity.getShippingCost(), BigDecimal.ZERO);
                 BigDecimal historyOtherCost = ObjUtil.defaultIfNull(entity.getOtherCost(), BigDecimal.ZERO);
                 if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {

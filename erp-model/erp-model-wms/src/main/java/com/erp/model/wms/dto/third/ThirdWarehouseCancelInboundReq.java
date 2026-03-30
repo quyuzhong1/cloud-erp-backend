@@ -30,4 +30,5 @@ public class ThirdWarehouseCancelInboundReq {
      */
     private String ownerCode;
     private String warehouseCode;
+    private String remark;
 }

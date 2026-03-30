@@ -60,6 +60,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "address3", source = "entity.address3")
     @Mapping(target = "address2", source = "entity.address2")
     @Mapping(target = "address1", source = "entity.receiveAddress")
+    @Mapping(target = "customerName", source = "entity.customerName")
     ThirdWarehouseCreateFbaOutboundReq toCreateFbaOutboundReq(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
 
     ThirdWarehouseCreateFbaOutboundReq.Item toCreateFbaOutboundReqItem(B2bThirdDeliveryDetailEntity entity);

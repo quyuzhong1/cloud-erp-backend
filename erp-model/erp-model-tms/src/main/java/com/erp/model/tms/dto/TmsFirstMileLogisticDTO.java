@@ -1672,7 +1672,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String sourceCode;
         /**
          * 业务单号
-         * FBA：取值FBA货件单号
+         * FBA/FBT/AWD/速卖通：取值货件单号
          * 第三方仓：海外仓入库单号
          */
         private String businessCode;

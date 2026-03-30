@@ -195,7 +195,7 @@ public class AntuHandlerServiceImplTest {
                         .city("Valparaíso de Goiás")
                         .address1("Rua 19 Quadra 27 Casa 16")
                         .address2("Jardim Oriente")
-                        .zipcode("72870-263")
+                        .zipCode("72870-263")
                         .email("jofersant@gmail.com")
                         .taxNumber("83143025115")
                         .build())
@@ -204,7 +204,7 @@ public class AntuHandlerServiceImplTest {
                         .quantity(5)
                         .build()))
                 .build();
-        ApiResult<String> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1826513110852497409");
+        ApiResult<ThirdWarehouseQueryOutboundResponse> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1826513110852497409");
         System.out.println(code);
         System.out.println(code.getData());
     }

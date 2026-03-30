@@ -28,12 +28,11 @@ import java.util.*;
 public class WildberriesSDKService {
 
     private String getSandbox(){
-        return "";
-//        if (BusinessCommonConstants.hasProfile("prod") || BusinessCommonConstants.hasProfile("uat")) {
-//            return CharSequenceUtil.EMPTY;
-//        } else {
-//            return "-sandbox";
-//        }
+        if (BusinessCommonConstants.hasProfile("prod") ) {
+            return CharSequenceUtil.EMPTY;
+        } else {
+            return "-sandbox";
+        }
     }
     public WildberriesResponse checkToken(String token) {
         log.error("接口请求：{}", JSONUtil.toJsonStr(token));

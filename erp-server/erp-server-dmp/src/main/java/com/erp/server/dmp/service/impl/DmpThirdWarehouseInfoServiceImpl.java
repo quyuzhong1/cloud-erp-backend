@@ -1,25 +1,26 @@
 package com.erp.server.dmp.service.impl;
-
-
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.dmp.entity.DmpThirdWarehouseInfoEntity;
 import com.erp.server.dmp.mapper.DmpThirdWarehouseInfoMapper;
-import com.erp.server.dmp.service.DmpThirdWarehouseInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.enums.ApiError;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DmpThirdWarehouseInfoDTO;
+import com.erp.server.dmp.service.DmpThirdWarehouseInfoService;
+import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpThirdWarehouseInfoDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 第三方仓库 服务实现类
@@ -105,6 +106,17 @@ public class DmpThirdWarehouseInfoServiceImpl extends SuperServiceImpl<DmpThirdW
         return lambdaQuery().eq(DmpThirdWarehouseInfoEntity::getSourcePlatform,platform).eq(DmpThirdWarehouseInfoEntity::getWarehouseCode,code).list();
     }
 
+    @Override
+    public List<DmpThirdWarehouseInfoEntity> getByPlatformAndAuthIdAndCode(String platform, String authId, String code) {
+        if (StringUtils.isBlank(platform) || StringUtils.isBlank(authId) || StringUtils.isBlank(code)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .eq(DmpThirdWarehouseInfoEntity::getSourcePlatform, platform)
+                .eq(DmpThirdWarehouseInfoEntity::getAuthId, authId)
+                .eq(DmpThirdWarehouseInfoEntity::getWarehouseCode, code)
+                .list();
+    }
 
     /**
     * 新增修改处理数据

@@ -7,6 +7,7 @@ import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -112,4 +113,6 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     List<OverseasProviderWarehouseDTO.ShippedViewDTO> getShippedInfo(OverseasProviderWarehouseDTO.ShippedDTO shippedDTO);
 
     BaseResultDTO.AddDTO addThirdWarehouse(ThirdWarehouseDTO.AddDTO addDTO);
+
+    List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCode(String platform);
 }
