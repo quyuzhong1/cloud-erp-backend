@@ -187,13 +187,13 @@ public class ZhongbaoService {
         log.warn("生成的 request: {}", JSONUtil.toJsonStr(channelRequest));
         List<ChannelResponse.Channel> list = new ArrayList<>();
         boolean hasNext = true;
-        Integer pageNum = Integer.valueOf(channelRequest.getCommonParam().getPageParam().getPageNum());
-        Integer pageSize = Integer.valueOf(channelRequest.getCommonParam().getPageParam().getPageSize());
+        Integer pageNum = channelRequest.getCommonParam().getPageParam().getPageNum();
+        Integer pageSize = channelRequest.getCommonParam().getPageParam().getPageSize();
         while (hasNext) {
             String token = getToken(authMap);
             pageNum++;
-            channelRequest.getCommonParam().getPageParam().setPageNum(String.valueOf(pageNum));
-            channelRequest.getCommonParam().getPageParam().setPageSize(String.valueOf(pageSize));
+            channelRequest.getCommonParam().getPageParam().setPageNum(pageNum);
+            channelRequest.getCommonParam().getPageParam().setPageSize(pageSize);
             OkHttpClient client = new OkHttpClient().newBuilder().build();
             MediaType mediaType = MediaType.parse("application/json");
             RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(channelRequest));

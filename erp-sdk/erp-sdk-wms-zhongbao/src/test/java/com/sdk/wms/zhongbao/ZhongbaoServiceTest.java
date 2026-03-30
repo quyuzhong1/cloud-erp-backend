@@ -6,6 +6,7 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
+import com.sdk.wms.zhongbao.utils.AuthUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,11 +21,11 @@ import java.util.Map;
 @SpringBootTest(classes= ZhongbaoService.class)
 class ZhongbaoServiceTest {
     //prod
-//    static final String appKey = "Va2lD4obI60xIFJUHMaY0d9j0HUtTZ9S";
-//    static final String appSecret = "6LzmNOSa9AZQfhltff3v3DnKHJkwXpBUuGvvSbwJtH0Vx24MMXP2D43TYfAakvZTWvslGxck1Z8iKTIzhxE3g9xW9D0wRKpGn18pT0WViHNvcD5BcUXqLKXTTliIoh9V";
+    static final String appKey = "Va2lD4obI60xIFJUHMaY0d9j0HUtTZ9S";
+    static final String appSecret = "6LzmNOSa9AZQfhltff3v3DnKHJkwXpBUuGvvSbwJtH0Vx24MMXP2D43TYfAakvZTWvslGxck1Z8iKTIzhxE3g9xW9D0wRKpGn18pT0WViHNvcD5BcUXqLKXTTliIoh9V";
     //test
-    static final String appKey = "xvMMiIKs1m9rwzjHI26AiaPW7TNmUGnO";
-    static final String appSecret = "4lFb4ZGFnMRiPsZTfjqwXdL8TPQzsDHpA6RqjTOIElS9WuLsNNnc7agBE7H6DctEXBFr99ZlSh7DA8SCZFa9fw4GFXjtnDuBbQxCqtAoLVaiN0NV8LccSNFRpa6tnEMG";
+//    static final String appKey = "xvMMiIKs1m9rwzjHI26AiaPW7TNmUGnO";
+//    static final String appSecret = "4lFb4ZGFnMRiPsZTfjqwXdL8TPQzsDHpA6RqjTOIElS9WuLsNNnc7agBE7H6DctEXBFr99ZlSh7DA8SCZFa9fw4GFXjtnDuBbQxCqtAoLVaiN0NV8LccSNFRpa6tnEMG";
 
     @Resource
     private ZhongbaoService zhongbaoService;
@@ -51,15 +52,17 @@ class ZhongbaoServiceTest {
 
     @Test
     public void productList() {
-        String token = zhongbaoService.getToken(appKey, appSecret);
-        ProductRequest productRequest = ProductRequest.builder().build();
+        ThirdWarehouseContext.setAuthMap(authMap);
+//        String token = zhongbaoService.getToken(appKey, appSecret);
+        ProductRequest productRequest = ProductRequest.builder().commonParam(CommonRequest.builder().pageParam(PageRequest.builder().pageNum(1).pageSize(10).build()).build()).status(3).build();
+//        ProductRequest productRequest = ProductRequest.builder().status(3).build();
         BaseResponse<ProductResponse> response = zhongbaoService.productList(productRequest);
         System.out.println(JSONUtil.toJsonStr(response));
     }
     @Test
     public void chanelList() {
 //        String token = zhongbaoService.getToken(appKey, appSecret);
-        ChannelRequest channelRequest = ChannelRequest.builder().commonParam(CommonRequest.builder().pageParam(PageRequest.builder().pageNum("0").pageSize("10").build()).build()).build();
+        ChannelRequest channelRequest = ChannelRequest.builder().commonParam(CommonRequest.builder().pageParam(PageRequest.builder().pageNum(0).pageSize(10).build()).build()).build();
         List<ChannelResponse.Channel> channels = zhongbaoService.chanelList(authMap, channelRequest);
         System.out.println(JSONUtil.toJsonStr(channels));
     }
@@ -84,5 +87,13 @@ class ZhongbaoServiceTest {
         OutboundB2cQueryRequest queryRequest = OutboundB2cQueryRequest.builder().startUpdateTime("2026-03-11 00:00:00").endUpdateTime("2026-03-17 00:00:00").build();
         BaseResponse<OutboundB2cQueryResponse> listBaseResponse = zhongbaoService.queryB2cOutboundBill(queryRequest);
         System.out.println(JSONUtil.toJsonStr(listBaseResponse));
+    }
+
+    @Test
+    public void getToken(){
+        String apiKey = "Va2lD4obI60xIFJUHMaY0d9j0HUtTZ9S";
+        String apiSecret = "6LzmNOSa9AZQfhltff3v3DnKHJkwXpBUuGvvSbwJtH0Vx24MMXP2D43TYfAakvZTWvslGxck1Z8iKTIzhxE3g9xW9D0wRKpGn18pT0WViHNvcD5BcUXqLKXTTliIoh9V";
+        String token = AuthUtils.getToken(apiKey, apiSecret);
+        System.out.println(token);
     }
 }
