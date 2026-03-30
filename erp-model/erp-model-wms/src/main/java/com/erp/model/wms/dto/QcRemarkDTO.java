@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -76,8 +77,15 @@ public class QcRemarkDTO implements Serializable {
         /**
          * 质检数量
          */
-        @NotBlank(message = "质检数量不允许为空")
+        @NotNull(message = "质检数量不允许为空")
         private Integer qcQty;
+
+        /**
+         * 总数量
+         */
+        @NotNull(message = "总数量不允许为空")
+        private Integer totalQty;
+
         /**
          * 检验结果 QcResultEnum
          */
@@ -90,12 +98,12 @@ public class QcRemarkDTO implements Serializable {
         /**
          * 是否库内抽检
          */
-        @NotBlank(message = "是否库内抽检不允许为空")
+        @NotNull(message = "是否库内抽检不允许为空")
         private boolean isInsideQc;
         /**
          * 检验合格量
          */
-        @NotBlank(message = "检验合格量不允许为空")
+        @NotNull(message = "检验合格量不允许为空")
         private Integer qcGoodQty;
         /**
          * 检验合格率
@@ -104,7 +112,7 @@ public class QcRemarkDTO implements Serializable {
         /**
          * 批次合格量
          */
-        @NotBlank(message = "批次合格量不允许为空")
+        @NotNull(message = "批次合格量不允许为空")
         private Integer lotQualifiedQty;
         /**
          * 抽检结果
@@ -113,11 +121,11 @@ public class QcRemarkDTO implements Serializable {
         /**
          * 抽样比例
          */
-        private String qcSamplingRate;
+        private BigDecimal qcSamplingRate;
         /**
          * 检验不良量
          */
-        @NotBlank(message = "检验不良量不允许为空")
+        @NotNull(message = "检验不良量不允许为空")
         private Integer qcBadQty;
         /**
          * 检验不良率
