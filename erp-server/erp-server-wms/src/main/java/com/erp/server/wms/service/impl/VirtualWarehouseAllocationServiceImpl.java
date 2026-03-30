@@ -412,7 +412,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         dto.setSystemCode(PlatformDictEnum.WDT.getCode());
         dto.setBillType("queryInventory");
         dto.setNextLevelId("1");
-        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
         Map<String, Object> map = new HashMap<>();
         map.put("erpWarehouseIdList", allDetailWarehouseList);
         map.put("skuIdList", skuIdList);
