@@ -1005,7 +1005,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     boolean hasDefectQty = defectView.getBadQty() != null && defectView.getBadQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
-                    boolean hasDefectImage = !defectView.getBadImageViewList().isEmpty();
+                    boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();
 
                     if ((hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage)
                             && !(hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc && hasDefectImage)) {
@@ -1133,8 +1133,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
                         transferOutDetail.setSkuId(detailEntity.getSkuId());
                         transferOutDetail.setQty(detailEntity.getQcGoodQty());
-                        String code = qcInfoMap.get(detailEntity.getId()).getCode();
-                        transferOutDetail.setRemark(StrUtil.format(remark,code));
+//                        String code = qcInfoMap.get(detailEntity.getId()).getCode();
+//                        transferOutDetail.setRemark(StrUtil.format(remark,code));
                         transferOutDetail.setSourceDetailId(detailEntity.getId());
 //                    transferOutDetail.setOutWarehouseLocation("");
                         transferOutDetail.setUnit("Pcs");
@@ -1331,8 +1331,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
                         transferOutDetail.setSkuId(detailEntity.getSkuId());
                         transferOutDetail.setQty(detailEntity.getQcGoodQty());
-                        String code = qcInfoMap.get(detailEntity.getId()).getCode();
-                        transferOutDetail.setRemark(StrUtil.format(remark,code));
+//                        String code = qcInfoMap.get(detailEntity.getId()).getCode();
+//                        transferOutDetail.setRemark(StrUtil.format(remark,code));
                         transferOutDetail.setSourceDetailId(detailEntity.getId());
 //                    transferOutDetail.setOutWarehouseLocation("");
                         transferOutDetail.setUnit("Pcs");

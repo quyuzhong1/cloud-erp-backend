@@ -100,7 +100,8 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     public BaseResultDTO.AddDTO add(QcApplicationDTO.AddDTO addDTO) {
         QcApplicationEntity qcApplicationEntity = new QcApplicationEntity();
         BeanMapperUtils.copy(addDTO, qcApplicationEntity);
-
+        //来源类型为空时默认self
+        qcApplicationEntity.setSourceType(CharSequenceUtil.isBlank(qcApplicationEntity.getSourceType()) ? SourceTypeEnum.SELF_ADD.getCode() : qcApplicationEntity.getSourceType());
         // 数据处理
         handleData(qcApplicationEntity);
 

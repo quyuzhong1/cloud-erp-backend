@@ -4,7 +4,6 @@ import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcReCheckResultEnum;
-import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -569,4 +568,17 @@ public class QcResultDTO {
         private Boolean isFirstMassProduct;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class TotalLotQualifiedQtyDTO {
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 批次合格量汇总
+         */
+        private Integer totalLotQualifiedQty;
+    }
 }
