@@ -112,7 +112,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(List<QcApplicationDetailDTO.UpdateDTO> detailList, QcApplicationEntity qcApplicationEntity) {
-        if (CollUtil.isNotEmpty(detailList)) {
+        if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
         }
         List<QcApplicationDetailEntity> qcApplicationDetailList = BeanUtil.copyToList(detailList, QcApplicationDetailEntity.class);

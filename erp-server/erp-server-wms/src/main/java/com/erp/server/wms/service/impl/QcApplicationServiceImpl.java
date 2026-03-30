@@ -608,7 +608,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     * 新增修改处理数据
     */
     private void handleData(QcApplicationEntity qcApplicationEntity) {
-        if (qcApplicationEntity.getPlanQcDate().isBefore(LocalDate.now())) {
+        if (ObjectUtil.isNotEmpty(qcApplicationEntity.getPlanQcDate()) && qcApplicationEntity.getPlanQcDate().isBefore(LocalDate.now())) {
             throw new ServiceException(ApiError.QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW);
         }
 
