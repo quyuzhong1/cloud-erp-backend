@@ -398,8 +398,7 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
                 if (Objects.isNull(detail.getQty()) || detail.getQty() <= 0) {
                     throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID);
                 }
-                Integer rangFrom = detail.getRangFrom() == 0 ? 1 : detail.getRangFrom();
-                if ((detail.getQty() - 1) > (detail.getRangTo() - rangFrom)) {
+                if (detail.getQty() <= detail.getRangTo()) {
                     throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS);
                 }
 

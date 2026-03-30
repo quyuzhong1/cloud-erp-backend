@@ -222,6 +222,12 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
     public FileManagementDTO.ViewDTO view(String id) {
         FileManagementEntity fileManagementEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到文件管理数据"));
         WmsAttachmentEntity attachmentEntity = wmsAttachmentService.getByIdOpt(fileManagementEntity.getFileId()).orElseThrow(() -> new ServiceException("未找到文件附件数据"));
+        if (WmsFileTypeEnum.MANUFACTURING_REPORT.getCode().equals(fileManagementEntity.getFileType())){
+            List<QcStandardSkuRefEntity> skuRefEntityList = qcStandardSkuRefService.listByMainId(id);
+            fileManagementEntity.setSkuId(skuRefEntityList.get(0).getSkuId());
+            fileManagementEntity.setSkuNo(skuRefEntityList.get(0).getSkuNo());
+            fileManagementEntity.setProductName(skuRefEntityList.get(0).getProductName());
+        }
         return FileManagementConverter.INSTANCE.fileManagementToViewDTO(fileManagementEntity, attachmentEntity);
     }
 
