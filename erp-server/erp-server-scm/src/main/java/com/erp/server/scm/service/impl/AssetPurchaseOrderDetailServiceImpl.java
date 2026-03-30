@@ -33,6 +33,7 @@ import com.erp.model.scm.dto.AssetPurchaseOrderDetailDTO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -200,6 +201,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
         if (CollectionUtils.isNotEmpty(nonGiftDetailList) && priceDTOS.isEmpty()) {
             throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
+        Map<String, PurchasePriceDTO.PriceDTO> priceMap = buildPriceMap(priceDTOS);
 
         List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
         for (AssetPurchaseOrderDetailDTO.AddDTO addDTO1 : addDTO.getAssetPurchaseOrderDetailDTOList()) {
@@ -223,12 +225,9 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                 assetPurchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
                 assetPurchaseOrderDetailEntity.setTotalAmount(BigDecimal.ZERO);
             } else {
-                for (PurchasePriceDTO.PriceDTO priceDTO : priceDTOS) {
-                    if (priceDTO.getSkuId().equals(addDTO1.getAssetId())) {
-                        assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                        assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
-                    }
-                }
+                PurchasePriceDTO.PriceDTO priceDTO = validateAndGetNonGiftPrice(priceMap, addDTO1.getAssetId(), addDTO1.getAssetCode());
+                assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
             }
 
             assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
@@ -374,6 +373,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
             AssetPurchaseOrderDTO.UpdateDTO updateDTO,
             List<AssetPurchaseOrderDetailDTO.UpdateDTO> detailList,
             List<PurchasePriceDTO.PriceDTO> priceDTOS) {
+        Map<String, PurchasePriceDTO.PriceDTO> priceMap = buildPriceMap(priceDTOS);
         return detailList.stream()
                 .map(dto -> {
                     AssetPurchaseOrderDetailEntity entity = new AssetPurchaseOrderDetailEntity();
@@ -387,19 +387,40 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
                         entity.setTaxPrice(BigDecimal.ZERO);
                         entity.setTotalAmount(BigDecimal.ZERO);
                     } else {
-                        priceDTOS.stream()
-                                .filter(priceDTO -> priceDTO.getSkuId().equals(dto.getAssetId()))
-                                .findFirst()
-                                .ifPresent(priceDTO -> {
-                                    entity.setTaxPrice(priceDTO.getTaxPrice());
-                                    entity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
-                                });
+                        PurchasePriceDTO.PriceDTO priceDTO = validateAndGetNonGiftPrice(priceMap, dto.getAssetId(), dto.getAssetCode());
+                        entity.setTaxPrice(priceDTO.getTaxPrice());
+                        entity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
                     }
 
                     entity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
                     return entity;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private Map<String, PurchasePriceDTO.PriceDTO> buildPriceMap(List<PurchasePriceDTO.PriceDTO> priceDTOS) {
+        if (CollectionUtils.isEmpty(priceDTOS)) {
+            return Collections.emptyMap();
+        }
+        return priceDTOS.stream()
+                .filter(Objects::nonNull)
+                .filter(priceDTO -> StringUtils.isNotBlank(priceDTO.getSkuId()))
+                .collect(Collectors.toMap(
+                        PurchasePriceDTO.PriceDTO::getSkuId,
+                        Function.identity(),
+                        (first, second) -> first
+                ));
+    }
+
+    private PurchasePriceDTO.PriceDTO validateAndGetNonGiftPrice(Map<String, PurchasePriceDTO.PriceDTO> priceMap, String assetId, String assetCode) {
+        PurchasePriceDTO.PriceDTO priceDTO = priceMap.get(assetId);
+        if (Objects.isNull(priceDTO)) {
+            throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND, assetCode);
+        }
+        if (Objects.isNull(priceDTO.getTaxPrice()) || priceDTO.getTaxPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_ZERO, assetCode);
+        }
+        return priceDTO;
     }
 
     /**

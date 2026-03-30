@@ -903,14 +903,6 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
         Map<String, BasicCategoryEntity> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getName, Function.identity(),(o1,o2)->o1));
 
-        //结算方式
-        List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getName, DictBasicDTO::getId,(o1,o2)->o1));
-
-        //付款条件
-        List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
-        Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode,(o1,o2)->o1));
-
         //货款供应商
         List<SupplierDTO.SupplierSimpleDTO> supplierSimpleList = supplierFeign.listApproveSupplierByCategoryType(SupplierCategoryEnum.LOAN.getCode());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierSimpleList.stream().collect(Collectors.toMap(SupplierDTO.SupplierSimpleDTO::getName, Function.identity(),(o1,o2)->o1));
@@ -934,7 +926,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             UserContext.setLoginUser(user);
         }
 
-        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),userList,supplierMap,cfgMouldSettingMap,categoryMap,settleDictMap,paymentConditionMap);
+        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),userList,supplierMap,cfgMouldSettingMap,categoryMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), MoldInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

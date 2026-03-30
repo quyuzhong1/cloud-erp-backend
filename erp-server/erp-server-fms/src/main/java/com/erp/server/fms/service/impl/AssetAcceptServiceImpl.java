@@ -22,6 +22,7 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -35,6 +36,7 @@ import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.fms.entity.AssetAcceptPersonEntity;
 import com.erp.model.fms.entity.AttachmentEntity;
+import com.erp.model.plm.entity.CfgMouldSettingEntity;
 import com.erp.model.fms.enums.UnitEnum;
 import com.erp.model.fms.enums.*;
 import com.erp.model.plm.entity.MoldInfoEntity;
@@ -1951,6 +1953,16 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             if (CollUtil.isEmpty(moldInfoList)) {
                 return Collections.emptyMap();
             }
+            Map<String, String> moldTypeMap = FeignQuery.getByIds(
+                            CfgMouldSettingEntity.class,
+                            moldInfoList.stream()
+                                    .map(MoldInfoEntity::getType)
+                                    .filter(StringUtils::isNotBlank)
+                                    .distinct()
+                                    .collect(Collectors.toList()))
+                    .stream()
+                    .collect(Collectors.toMap(CfgMouldSettingEntity::getId, CfgMouldSettingEntity::getName, (v1, v2) -> v1));
+            moldInfoList.forEach(info -> info.setTypeName(moldTypeMap.get(info.getType())));
             return moldInfoList.stream()
                     .filter(info -> StringUtils.isNotBlank(info.getCode()))
                     .collect(Collectors.toMap(MoldInfoEntity::getCode, info -> info, (v1, v2) -> v1));

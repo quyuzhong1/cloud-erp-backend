@@ -33,7 +33,11 @@ public class ImportScmFeignController {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
         importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-        importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+        String message = e == null ? "导入失败，异常信息为空" : e.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            message = e == null ? "导入失败，异常信息为空" : e.getClass().getName();
+        }
+        importResultDTO.setRemark(message.length() > 490 ? message.substring(0, 490) : message);
         downloadTaskFeign.updateTask(importResultDTO);
     }
 
