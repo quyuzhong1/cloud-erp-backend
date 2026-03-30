@@ -235,6 +235,14 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(deleteUrlList)) {
                 wmsAttachmentService.deleteByUrlList(deleteUrlList);
+
+                // 记录审计日志
+                List<Pair<String, String>> removePairList = oldAttachments.stream()
+                        .filter(obj -> deleteUrlList.contains(obj.getAttachUrl()))
+                        .map(obj -> new Pair<>(businessId, obj.getAttachName()))
+                        .collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("编辑：删除附件【%s】", ModuleTypeEnum.QC_STANDARD.getCode(),
+                        removePairList, "编辑操作");
             }
         }
 
@@ -265,6 +273,13 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         }
         if (CollectionUtils.isNotEmpty(addEntities)) {
             wmsAttachmentService.saveBatch(addEntities);
+
+            // 记录审计日志
+            List<Pair<String, String>> addPairList = addEntities.stream()
+                    .map(obj -> new Pair<>(businessId, obj.getAttachName()))
+                    .collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("编辑：新增附件【%s】", ModuleTypeEnum.QC_STANDARD.getCode(),
+                    addPairList, "编辑操作");
         }
     }
 
