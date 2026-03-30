@@ -87,6 +87,10 @@ public class QcStandardDTO {
     @Data
     @EqualsAndHashCode(callSuper = true)
     public static class AddDTO extends CommonDTO {
+        /**
+         * 产品名称
+         */
+        private String productName;
 
         private Boolean isImport = false;
 
