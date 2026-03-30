@@ -446,9 +446,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //校验总库存
             submitCheckQty(detailEntityList,allocationEntity);
 
-            //异步触发库存比对任务
-            service.asyncCompareInventory(allocationEntity, detailEntityList);
-
             //生成平台新增分货同步单
             virtualWarehousePushHandleService.addAllocationPush(allocationEntity,transferIdList);
 
