@@ -1009,6 +1009,21 @@ public class QcNoticeDTO implements Serializable {
         private String skuNo;
 
         /**
+         * EAN码
+         */
+        private String ean;
+
+        /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称
+         */
+        private String qcStatusName;
+
+        /**
          * 产品名称
          */
         private String productName;

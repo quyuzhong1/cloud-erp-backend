@@ -271,6 +271,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                 packVO.setProductName(detail.getSkuName());
                 packVO.setVariantProperty(detail.getVariantProperty());
                 String skuImagesUrl = detail.getSkuImagesUrl();
+                packVO.setEan(detail.getEan());
                 if (StringUtils.isNotBlank(skuImagesUrl)) {
                     packVO.setSkuImageUrlList(Arrays.asList(skuImagesUrl.split(",")));
                 }

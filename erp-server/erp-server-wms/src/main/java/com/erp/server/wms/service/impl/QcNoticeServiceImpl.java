@@ -785,12 +785,28 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
 
+        //质检单状态
+        List<String> qcNoticeIds = qcInfoViews.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<QcInfoEntity> qcInfos = qcInfoService.listQCBySourceIds(qcNoticeIds);
+
         List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
         List<QcNoticeDTO.QcImageView> qcImageViews = new ArrayList<>();
 
         for (QcNoticeDTO.QcInfoFullView qcInfoView : qcInfoViews) {
             QcNoticeDTO.QcStandardView qcStandardView = new QcNoticeDTO.QcStandardView();
             QcProductDTO.ViewDTO qcProductView = new QcProductDTO.ViewDTO();
+
+            QcInfoEntity qcInfoEntity = qcInfos.stream()
+                    .filter(item -> Objects.equals(qcInfoView.getId(), item.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(qcInfoEntity)) {
+                qcInfoView.setQcStatus(qcInfoEntity.getCode());
+                qcInfoView.setQcStatusName(qcInfoEntity.getQcStatus().getName());
+            } else {
+                qcInfoView.setQcStatus(QcBillStatusEnum.WAIT_QC.getCode());
+                qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
+            }
 
             BeanUtils.copyProperties(packVOList.get(0),qcProductView);
             //抽样方案
