@@ -109,4 +109,6 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
      * @return
      */
     List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(String channelId);
+
+    Boolean existRefBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId);
 }

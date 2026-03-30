@@ -37,4 +37,6 @@ public interface LogisticsThirdChannelRefMapper extends BaseMapper<LogisticsThir
      * 根据物流渠道id获取已启用查询配置
      */
     List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(@Param("channelId") String channelId);
+
+    List<LogisticsThirdChannelRefEntity> existRefBySalePlatform(@Param("salePlatform") String salePlatform, @Param("channelId")String channelId,@Param("logisticsSupplierId") String logisticsSupplierId);
 }

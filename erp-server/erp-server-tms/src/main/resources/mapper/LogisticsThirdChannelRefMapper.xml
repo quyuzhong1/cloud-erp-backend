@@ -136,6 +136,19 @@
             and ltcr.logistics_channel_id = #{channelId}
         order by ltcr.create_time desc
     </select>
+    <select id="existRefBySalePlatform" resultType="com.erp.model.tms.entity.LogisticsThirdChannelRefEntity">
+        select * from logistics_third_channel_ref ltcr
+        where
+              ltcr.is_deleted = false
+          and ltcr.disabled = false
+          AND (
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = #{channelId} and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id ='all' and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} AND ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
+            )
+    </select>
 
 
 </mapper>
