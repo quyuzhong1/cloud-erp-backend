@@ -495,4 +495,15 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             });
         }
     }
+
+
+    @Override
+    public Boolean existRefBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId) {
+        Boolean flag = false;
+        List<LogisticsThirdChannelRefEntity> logisticsThirdChannelRefEntities = baseMapper.existRefBySalePlatform(salePlatform, channelId, logisticsSupplierId);
+        if(CollUtil.isNotEmpty(logisticsThirdChannelRefEntities)){
+            flag = true;
+        }
+        return flag;
+    }
 }
