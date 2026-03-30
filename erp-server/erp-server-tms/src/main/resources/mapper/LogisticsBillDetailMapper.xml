@@ -208,7 +208,7 @@
               </foreach>
           </if>
           AND lb.delivery_time &gt;= #{query.deliveryTime}
-          and lb.sales_platform = #{salesPlatform}
+          and lb.sales_platform = #{query.salesPlatform}
 
     </select>
 </mapper>
