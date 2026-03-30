@@ -262,16 +262,16 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     public List<CfgAfterPlatformShopDTO.CsAgentDTO> matchCsAgent(String dictPlatform, String shopId) {
         List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = new ArrayList<>();
 
-        // 查询所有匹配平台的记录
+        // 查询所有的记录
         List<CfgAfterPlatformShopEntity> list = this.lambdaQuery()
-                .eq(CfgAfterPlatformShopEntity::getDictPlatform, dictPlatform)
+                //.eq(CfgAfterPlatformShopEntity::getDictPlatform, dictPlatform)
                 .list();
 
         if (list.isEmpty()) {
             return csAgentDTOList;
         }
 
-        //  优先按 平台+店铺ID 匹配
+        // 优先只按店铺匹配
         if (Objects.nonNull(shopId)) {
             for (CfgAfterPlatformShopEntity entity : list) {
                 JSONObject shopJson = entity.getShopJson();
@@ -299,7 +299,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
             }
         }
 
-        // 如果 平台+店铺ID 匹配失败，或 shopId 为空，则按 平台+空店铺 匹配
+        // 如果店铺匹配失败，或 shopId 为空,则按 平台+空店铺 匹配
         for (CfgAfterPlatformShopEntity entity : list) {
             JSONObject shopJson = entity.getShopJson();
             if (shopJson.isEmpty()) {

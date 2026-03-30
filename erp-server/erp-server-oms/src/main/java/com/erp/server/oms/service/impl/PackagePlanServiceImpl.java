@@ -639,7 +639,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 return mqResponseDTO;
             }
             OrderLabelResponse.Sticker sticker = stickers.get(0);
-            String trackNo = sticker.getBarcode();
+            String trackNo = sticker.getPartA() + sticker.getPartB();
             Long orderId = sticker.getOrderId();
             String file = sticker.getFile();
             //更新跟踪号
