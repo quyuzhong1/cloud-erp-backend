@@ -472,9 +472,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
     }
 
     @Override
-    public void export(PagingDTO<QcStandardDTO.PagingParamDTO> pagingParamDTO) {
-        QcStandardDTO.PagingParamDTO params = pagingParamDTO.getParams();
-        params.setPermissionSql(pagingParamDTO.getPermissionSql());
+    public void export(QcStandardDTO.PagingParamDTO params) {
         downloadTaskFeign.saveDownloadTask("质检标准导出", EXPORT_WMS_QC_STANDARD.getCode(), params);
     }
 

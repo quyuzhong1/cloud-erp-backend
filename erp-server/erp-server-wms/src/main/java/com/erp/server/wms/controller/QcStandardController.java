@@ -99,7 +99,7 @@ public class QcStandardController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检标准导出Excel数据")
     @WebAdvanceQuery(handler = QcStandardQueryHandler.class)
-    public ApiResult<Boolean> exportList(@RequestBody @Validated PagingDTO<QcStandardDTO.PagingParamDTO> dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated QcStandardDTO.PagingParamDTO dto, HttpServletResponse response) {
         qcStandardService.export(dto);
         return success(true);
     }

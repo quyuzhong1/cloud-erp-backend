@@ -54,7 +54,7 @@ public interface QcStandardService extends IService<QcStandardEntity> {
      *
      * @param pagingParamDTO 导出参数
      */
-    void export(PagingDTO<QcStandardDTO.PagingParamDTO> pagingParamDTO);
+    void export(QcStandardDTO.PagingParamDTO pagingParamDTO);
 
     /**
      * 删除单据
