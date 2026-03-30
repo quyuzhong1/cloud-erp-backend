@@ -1,7 +1,10 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -9,6 +12,9 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.LogisticsTransportTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -16,11 +22,19 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefEntity;
 import com.erp.server.tms.query.LogisticsThirdChannelRefQueryHandler;
+import com.erp.server.tms.service.LogisticsBaseService;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsThirdChannelRefService;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +42,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物流-第三方渠道关系表
@@ -45,6 +62,10 @@ public class LogisticsThirdChannelRefController extends BaseController {
 
     @Resource
     private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
+    @Resource
+    private LogisticsBaseService logisticsBaseService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     /**
     * 新增
@@ -198,5 +219,98 @@ public class LogisticsThirdChannelRefController extends BaseController {
             resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    @PostMapping("/registerLogisticsNumber")
+    public void registerLogisticsNumber (){
+        Integer registerStatus = 0;
+        XxlJobHelper.log("====开始注册物流单号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> trackNoList = new ArrayList<>();
+        List<String> transportNoList = new ArrayList<>();
+        String salesPlatform ="";
+        // 获取物流编号 (发货日期须晚于 2026-03-01)
+        LocalDateTime deliveryLimitTime = null;
+        if (StringUtils.isNotBlank(jobParam)){
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            trackNoList = jsonObject.getBeanList("trackNoList", String.class);
+            transportNoList = jsonObject.getBeanList("transportNoList", String.class);
+            registerStatus = jsonObject.getInt("registerStatus", 0);
+            salesPlatform = jsonObject.getStr("salesPlatform");
+            deliveryLimitTime = jsonObject.getLocalDateTime("deliveryTime", LocalDateTime.of(2026, 3, 1, 0, 0, 0));
+        }
+        long current = 1;
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .size(100)
+                .current(current)
+                .registerStatus(registerStatus)
+                .trackEnable(true)
+                .transportNoList(transportNoList)
+                .trackNoList(trackNoList)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .deliveryTime(deliveryLimitTime)//2026-03-01之后
+                .salesPlatform(salesPlatform)//shopify
+                .build();
+        getRegisterData(query);
+
+        XxlJobHelper.log("====结束注册物流单号====");
+    }
+
+    @PostMapping("/registerOceanLogisticsNumber")
+    public void registerOceanLogisticsNumber(){
+        Integer registerStatus = 0;
+        XxlJobHelper.log("====开始注册物流单号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> trackNoList = new ArrayList<>();
+        List<String> transportNoList = new ArrayList<>();
+        String salesPlatform ="";
+        // 获取物流编号 (发货日期须晚于 2026-03-01)
+        LocalDateTime deliveryLimitTime = null;
+        if (StringUtils.isNotBlank(jobParam)){
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            trackNoList = jsonObject.getBeanList("trackNoList", String.class);
+            transportNoList = jsonObject.getBeanList("transportNoList", String.class);
+            registerStatus = jsonObject.getInt("registerStatus", 0);
+            salesPlatform = jsonObject.getStr("salesPlatform");
+            deliveryLimitTime = jsonObject.getLocalDateTime("deliveryTime", LocalDateTime.of(2026, 3, 1, 0, 0, 0));
+        }
+        long current = 1;
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .size(100)
+                .current(current)
+                .registerStatus(registerStatus)
+                .trackEnable(true)
+                .transportNoList(transportNoList)
+                .trackNoList(trackNoList)
+                .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
+                .deliveryTime(deliveryLimitTime)//2026-03-01之后
+                .salesPlatform(salesPlatform)//shopify
+                .build();
+        getRegisterData(query);
+
+        XxlJobHelper.log("====结束注册物流单号====");
+    }
+
+    private void getRegisterData(LogisticsBillDetailQueryDTO query) {
+        XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
+        // 从原来的 listTrackDto 切换为基于配置映射表的精确拉取 (弃用旧的 track_query_mode 字段依赖)
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listWaitingRegisterByConfig(query, query.getTrackQueryMode());
+//        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
+        XxlJobHelper.log("获取列表数：{}", list.size());
+        // 获取第三方推送配置 (用于 processRegisterData 内部的具体字段映射匹配)
+        List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList = logisticsThirdChannelRefService.listByPlatform(LogisticsPlatformEnum.TRACK123.getCode());
+        XxlJobHelper.log("获取第三方推送配置：{}", channelRefList.size());
+        if (list.size() > MathUtil.NUMBER_100){
+            //列表数据较多情况下，进行分割集合
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            XxlJobHelper.log("拆分列表数：{}", partition.size());
+            //物流商数据处理
+            partition.forEach(e -> logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType(),channelRefList));
+        }else {
+            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), list,query.getTransportType(), channelRefList);
+        }
+        log.info("========同步物流轨迹数据完成==========");
     }
 }

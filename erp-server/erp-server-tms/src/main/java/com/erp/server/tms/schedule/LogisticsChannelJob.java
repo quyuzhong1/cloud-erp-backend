@@ -65,15 +65,18 @@ public class LogisticsChannelJob {
         String jobParam = XxlJobHelper.getJobParam();
         List<String> trackNoList = new ArrayList<>();
         List<String> transportNoList = new ArrayList<>();
+        String salesPlatform ="";
+        // 获取物流编号 (发货日期须晚于 2026-03-01)
+        LocalDateTime deliveryLimitTime = null;
         if (StringUtils.isNotBlank(jobParam)){
             cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
             trackNoList = jsonObject.getBeanList("trackNoList", String.class);
             transportNoList = jsonObject.getBeanList("transportNoList", String.class);
             registerStatus = jsonObject.getInt("registerStatus", 0);
+            salesPlatform = jsonObject.getStr("salesPlatform");
+            deliveryLimitTime = jsonObject.getLocalDateTime("deliveryTime", LocalDateTime.of(2026, 3, 1, 0, 0, 0));
         }
         long current = 1;
-        // 获取物流编号 (发货日期须晚于 2026-03-01)
-        LocalDateTime deliveryLimitTime = LocalDateTime.of(2026, 3, 1, 0, 0, 0);
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .size(pageSize)
@@ -84,7 +87,7 @@ public class LogisticsChannelJob {
                 .trackNoList(trackNoList)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .deliveryTime(deliveryLimitTime)//2026-03-01之后
-                .salesPlatform(PlatformDictEnum.SHOPIFY.getCode())//shopify
+                .salesPlatform(salesPlatform)//shopify
                 .build();
         getRegisterData(query);
 
@@ -104,15 +107,18 @@ public class LogisticsChannelJob {
         String jobParam = XxlJobHelper.getJobParam();
         List<String> trackNoList = new ArrayList<>();
         List<String> transportNoList = new ArrayList<>();
+        String salesPlatform ="";
+        // 获取物流编号 (发货日期须晚于 2026-03-01)
+        LocalDateTime deliveryLimitTime = null;
         if (StringUtils.isNotBlank(jobParam)){
             cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
             trackNoList = jsonObject.getBeanList("trackNoList", String.class);
             transportNoList = jsonObject.getBeanList("transportNoList", String.class);
             registerStatus = jsonObject.getInt("registerStatus", 0);
+            salesPlatform = jsonObject.getStr("salesPlatform");
+            deliveryLimitTime = jsonObject.getLocalDateTime("deliveryTime", LocalDateTime.of(2026, 3, 1, 0, 0, 0));
         }
         long current = 1;
-        // 获取物流编号 (发货日期须晚于 2026-03-01)
-        LocalDateTime deliveryLimitTime = LocalDateTime.of(2026, 3, 1, 0, 0, 0);
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .size(pageSize)
@@ -123,7 +129,7 @@ public class LogisticsChannelJob {
                 .trackNoList(trackNoList)
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .deliveryTime(deliveryLimitTime)//2026-03-01之后
-                .salesPlatform(PlatformDictEnum.SHOPIFY.getCode())//shopify
+                .salesPlatform(salesPlatform)//shopify
                 .build();
         getRegisterData(query);
 
