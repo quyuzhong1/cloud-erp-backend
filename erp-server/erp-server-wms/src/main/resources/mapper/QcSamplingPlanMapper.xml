@@ -38,9 +38,9 @@
         select
         qsp.id,
         qsp.create_time as createTime,
-        qsp.update_time as updateTime,
+        qspqtr.update_time as updateTime,
         qsp.create_user_name as createUserName,
-        qsp.update_user_name as updateUserName,
+        qspqtr.update_user_name as updateUserName,
         qsp.code,
         qsp.plan_type as planType,
         qsp.qc_level as qcLevel,
