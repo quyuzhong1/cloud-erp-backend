@@ -18,20 +18,16 @@ public class QcStandardQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         // 根据前端需要处理虚拟 tab 标签或其他复杂条件
         if ("tab".equals(field)) {
+            if ("all".equals(value)|| "".equals(value)){
+                return getQueryAllSql();
+            }
             if ("enable".equals(value)) {
-                super.buildDefaultDTO("qs.disabled", false);
+                super.buildSplicingSQLDTO("qs.disabled", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
             } else if ("disabled".equals(value)) {
-                super.buildDefaultDTO("qs.disabled", true);
+                super.buildSplicingSQLDTO("qs.disabled", QueryConditionEnum.EQ,true, QueryDataTypeEnum.BOOLEAN);
             }
             return super.getSplicingSQL();
         }
-        
-        // 特殊字段映射，比如前端传 productName，但实际 DB 可能需要连接或者映射
-        if ("productName".equals(field)) {
-            super.buildSplicingSQLDTO("qs.sku_no", QueryConditionEnum.CONTAINS, value, QueryDataTypeEnum.STRING);
-            return super.getSplicingSQL();
-        }
-
         return null; // 返回 null 交给底层默认处理
     }
 }
