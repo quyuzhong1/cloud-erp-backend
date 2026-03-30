@@ -214,6 +214,12 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         data.setPlatformTypeName(TrackPlatformTypeEnum.getName(entity.getPlatformType()));
         data.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(entity.getPushType()));
         data.setDictPlatformName(PlatformDictEnum.getNameByCode(entity.getDictPlatform()));
+        if(Objects.equals(data.getLogisticsSupplierId(),"all")){
+            data.setIsAllSupplier(true);
+        }
+        if(Objects.equals(data.getLogisticsChannelId(),"all")){
+            data.setIsAllChannel(true);
+        }
         //查询实际明细
         List<LogisticsThirdChannelRefDetailEntity> detailEntityList = logisticsThirdChannelRefDetailService.listByMainIdList(Collections.singletonList(data.getId()));
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
