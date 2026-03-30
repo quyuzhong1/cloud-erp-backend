@@ -775,43 +775,44 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
 
         List<QcNoticeDTO.QcInfoFullView> qcInfoViews = baseMapper.
-                listQcInfoViewByCodeAndSku(qcNoticeParamDTO.getQcNoticeCode(),qcNoticeParamDTO.getSkuNo());
+                listQcInfoViewByCode(qcNoticeParamDTO.getQcNoticeCode());
 
         //产品信息
-        List<ProductVO.ProductPackVO> packVOList = plmTaskFeign.getProductPackBySkuNos(Collections.singletonList(qcNoticeParamDTO.getSkuNo()));
+        List<String> skuIds = qcInfoViews.stream()
+                .map(item -> item.getSkuId())
+                .collect(Collectors.toList());
+        List<ProductVO.ProductPackVO> packVOList = plmTaskFeign.getProductPackBySkuIds(skuIds);
         if (packVOList.isEmpty()) {
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
 
-        //质检单状态
-        List<String> qcNoticeIds = qcInfoViews.stream().map(item -> item.getId()).collect(Collectors.toList());
+
+        List<String> qcNoticeIds = qcInfoViews
+                .stream()
+                .map(item -> item.getId())
+                .collect(Collectors.toList());
         List<QcInfoEntity> qcInfos = qcInfoService.listQCBySourceIds(qcNoticeIds);
+
+        List<String> qcInfoIds = qcInfoViews.stream().map(item -> item.getQcBillId()).collect(Collectors.toList());
+        List<QcResultEntity> qcResults = qcResultService.getByMainIdList(qcInfoIds);
 
         List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
         List<QcNoticeDTO.QcImageView> qcImageViews = new ArrayList<>();
-
         for (QcNoticeDTO.QcInfoFullView qcInfoView : qcInfoViews) {
             QcNoticeDTO.QcStandardView qcStandardView = new QcNoticeDTO.QcStandardView();
             QcProductDTO.ViewDTO qcProductView = new QcProductDTO.ViewDTO();
             QcRemarkDTO.QcResultView qcResultView = new QcRemarkDTO.QcResultView();
 
-            QcInfoEntity qcInfoEntity = qcInfos.stream()
-                    .filter(item -> Objects.equals(qcInfoView.getId(), item.getId()))
+            //产品信息
+            ProductVO.ProductPackVO productPackVO = packVOList.stream()
+                    .filter(item -> Objects.equals(qcInfoView.getSkuId(), item.getSkuId()))
                     .findFirst()
                     .orElse(null);
-            if (Objects.nonNull(qcInfoEntity)) {
-                qcInfoView.setQcStatus(qcInfoEntity.getCode());
-                qcInfoView.setQcStatusName(qcInfoEntity.getQcStatus().getName());
-            } else {
-                qcInfoView.setQcStatus(QcBillStatusEnum.WAIT_QC.getCode());
-                qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
+            if (Objects.nonNull(productPackVO)) {
+                BeanUtils.copyProperties(productPackVO,qcProductView);
+                qcProductView.setBoxImageUrlList(productPackVO.getBoxImageUrlList());
+                qcProductView.setProductImageUrlList(productPackVO.getSkuImageUrlList());
             }
-
-            //产品信息
-            ProductVO.ProductPackVO productPackVO = packVOList.get(0);
-            BeanUtils.copyProperties(productPackVO,qcProductView);
-            qcProductView.setBoxImageUrlList(productPackVO.getBoxImageUrlList());
-            qcProductView.setProductImageUrlList(productPackVO.getSkuImageUrlList());
 
             //抽样方案
             SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
@@ -831,10 +832,29 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "抽样方案");
             qcStandardView.setSuggestSamplingQty(samplingPlan.getSampleQty());
 
+            //质检结果 && 质检状态
+            QcInfoEntity qcInfoEntity = qcInfos.stream()
+                    .filter(item -> Objects.equals(qcInfoView.getId(), item.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(qcInfoEntity)) {
+                qcInfoView.setQcStatus(qcInfoEntity.getCode());
+                qcInfoView.setQcStatusName(qcInfoEntity.getQcStatus().getName());
+                QcResultEntity qcResultEntity = qcResults.stream()
+                        .filter(item -> Objects.equals(item.getMainId(), qcInfoEntity.getId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(qcResultEntity)) {
+                    BeanUtils.copyProperties(qcResultEntity,qcResultView);
+                }
+            } else {
+                qcInfoView.setQcStatus(QcBillStatusEnum.WAIT_QC.getCode());
+                qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
+            }
 
-            //质检结果
+
             qcResultView.setQcType(qcInfoView.getQcType());
-            qcResultView.setQcTypeName(qcInfoView.getQcTypeName());
+            qcResultView.setQcTypeName(QcTypeEnum.getByCode(qcInfoView.getQcType()));
             qcResultView.setQcQty(samplingPlan.getSampleQty());
             qcResultView.setTotalQty(qcInfoView.getQcNoticeQty());
             qcResultView.setQcSamplingRate(MathUtil.divide(new BigDecimal(samplingPlan.getSampleQty()), new BigDecimal(qcInfoView.getQcNoticeQty())));
@@ -916,7 +936,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcNoticeIdList = dto.stream().map(QcNoticeDTO.QcInfoFullView::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //质检通知单
         List<QcNoticeEntity> qcNoticeList = listByIds(qcNoticeIdList);
-        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())).count();
+        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
         }
@@ -1156,7 +1176,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcNoticeIdList = dto.stream().map(QcNoticeDTO.QcInfoView::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //质检通知单
         List<QcNoticeEntity> qcNoticeList = listByIds(qcNoticeIdList);
-        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())).count();
+        long count = qcNoticeList.stream().filter(item -> !Objects.equals(item.getApproveStatus(), ApproveStatusEnum.APPROVE)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
         }

@@ -705,11 +705,6 @@ public class QcNoticeDTO implements Serializable {
         @NotBlank(message = "质检通知单号不允许为空")
         private String qcNoticeCode;
 
-        /**
-         * sku编码
-         */
-        @NotBlank(message = "sku编码不允许为空")
-        private String skuNo;
     }
 
     /**
