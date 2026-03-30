@@ -51,6 +51,7 @@ import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -792,6 +793,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         for (QcNoticeDTO.QcInfoFullView qcInfoView : qcInfoViews) {
             QcNoticeDTO.QcStandardView qcStandardView = new QcNoticeDTO.QcStandardView();
             QcProductDTO.ViewDTO qcProductView = new QcProductDTO.ViewDTO();
+            QcRemarkDTO.QcResultView qcResultView = new QcRemarkDTO.QcResultView();
 
             QcInfoEntity qcInfoEntity = qcInfos.stream()
                     .filter(item -> Objects.equals(qcInfoView.getId(), item.getId()))
@@ -805,7 +807,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
             }
 
-            BeanUtils.copyProperties(packVOList.get(0),qcProductView);
+            //产品信息
+            ProductVO.ProductPackVO productPackVO = packVOList.get(0);
+            BeanUtils.copyProperties(productPackVO,qcProductView);
+            qcProductView.setBoxImageUrlList(productPackVO.getBoxImageUrlList());
+            qcProductView.setProductImageUrlList(productPackVO.getSkuImageUrlList());
+
             //抽样方案
             SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
             planParamDTO.setQcType(qcInfoView.getQcType());
@@ -823,6 +830,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardView.setSamplingPlanId(samplingPlan.getId());
             qcStandardView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "抽样方案");
             qcStandardView.setSuggestSamplingQty(samplingPlan.getSampleQty());
+
+
+            //质检结果
+            qcResultView.setQcType(qcInfoView.getQcType());
+            qcResultView.setQcTypeName(qcInfoView.getQcTypeName());
+            qcResultView.setQcQty(samplingPlan.getSampleQty());
+            qcResultView.setTotalQty(qcInfoView.getQcNoticeQty());
+            qcResultView.setQcSamplingRate(MathUtil.divide(new BigDecimal(samplingPlan.getSampleQty()), new BigDecimal(qcInfoView.getQcNoticeQty())));
+            qcInfoView.setQcResultView(qcResultView);
 
             //品类通用标准
             FileManagementDTO.AttachDTO attachDTO = fileManagementService.getCategoryGeneralStandardFile(qcInfoView.getSkuId());
@@ -873,7 +889,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                         qcImageViews.add(qcImageView);
                     }
-
                     qcStandardView.setQcImageViewDTOList(qcImageViews);
                 }
             }
@@ -881,6 +896,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //产品信息
             qcInfoView.setQcProductView(qcProductView);
             qcInfoView.setQcStandardView(qcStandardView);
+
         }
 
         return qcInfoViews;
