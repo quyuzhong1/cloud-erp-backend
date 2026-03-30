@@ -777,10 +777,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
 
         List<QcNoticeDTO.QcInfoFullView> qcInfoViews = baseMapper.
-                listQcInfoViewByCodeAndSku(qcNoticeParamDTO.getQcNoticeCode(),qcNoticeParamDTO.getSkuId());
+                listQcInfoViewByCodeAndSku(qcNoticeParamDTO.getQcNoticeCode(),qcNoticeParamDTO.getSkuNo());
 
         //产品信息
-        List<ProductVO.ProductPackVO> packVOList = plmTaskFeign.getProductPackBySkuIds(Collections.singletonList(qcNoticeParamDTO.getSkuId()));
+        List<ProductVO.ProductPackVO> packVOList = plmTaskFeign.getProductPackBySkuNos(Collections.singletonList(qcNoticeParamDTO.getSkuNo()));
         if (packVOList.isEmpty()) {
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }

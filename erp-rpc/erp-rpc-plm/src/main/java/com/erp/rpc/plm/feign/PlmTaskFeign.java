@@ -155,6 +155,14 @@ public interface PlmTaskFeign {
     List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds);
 
     /**
+     * 根据skuNo 集合获取到产品包装信息
+     * @param skuNos
+     * @return
+     */
+    @PostMapping("feign/product/getProductPackBySkuNos")
+    List<ProductVO.ProductPackVO> getProductPackBySkuNos(@RequestBody List<String> skuNos);
+
+    /**
      * 根据用户获取各任务阶段数量
      *
      * @param optionUserId optionUserId

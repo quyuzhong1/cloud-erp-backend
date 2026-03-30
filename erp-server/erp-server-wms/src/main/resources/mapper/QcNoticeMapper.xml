@@ -212,7 +212,7 @@
         AND qnd.is_deleted = FALSE
         AND qnd.qc_status = 'wait'
         AND qn.code = #{code}
-        AND qnd.sku_id = #{skuId}
+        AND qnd.sku_no = #{skuNo}
         ORDER BY
         qn.code
     </select>
