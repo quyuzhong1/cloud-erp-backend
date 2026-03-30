@@ -266,7 +266,7 @@ public class SamplingPlanDetailDTO implements Serializable {
         * 抽样比例
         */
 //        @NotNull(message = "抽样比例不能为空")
-        @Digits(integer = 12, fraction = 4, message = "抽样比例整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 12, fraction = 4, message = "抽样比例整数位不能超过12位，小数位不能超过4位")
         private BigDecimal rate;
 
         /**
