@@ -117,6 +117,15 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          */
         private String dictPlatform;
         private String dictPlatformName;
+        /**
+         * 所有供应商 ： true
+         */
+        private Boolean isAllSupplier = false;
+
+        /**
+         * 所有渠道 ： true
+         */
+        private Boolean isAllChannel = false;
 
         /**
          * 明细
