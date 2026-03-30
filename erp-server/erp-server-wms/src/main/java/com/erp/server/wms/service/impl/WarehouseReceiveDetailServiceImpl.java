@@ -2,12 +2,14 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,14 +22,12 @@ import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.PoReturnDetailService;
-import com.erp.server.wms.service.QcResultService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -62,6 +62,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Resource
     private QcResultService qcResultService;
+
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
 
     /**
      * 新增
@@ -225,6 +228,12 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             }*/
         }
         boolean flag = this.saveOrUpdateBatch(listDetail);
+
+        List<String> podIdList = listDetail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> detailIdList = listDetail.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
+        //重算待质检数量
+        recalculateWaitQcQty(podIdList,detailIdList);
+
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList)) {
             List<WarehouseReceiveDetailEntity> receiveDetailEntityList = this.listByIds(addList);
@@ -404,8 +413,29 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     }
 
     @Override
-    public void updateWaitQcQty(String detailId) {
+    public void updateWaitQcQty(String qcId) {
+        QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = qcResultService.getLotQualifiedQtyByMainId(qcId);
 
+        //采购收货来源直接取来源明细id
+        String sourceDetailId = lotQualifiedQtyDTO.getSourceDetailId();
+        //质检通知单来源需要取质检通知单明细的来源明细id
+        if (CharSequenceUtil.equals(lotQualifiedQtyDTO.getSourceType(), SourceTypeEnum.QC_NOTICE.getCode())) {
+                QcNoticeDetailEntity qcNoticeDetailEntity = qcNoticeDetailService.getById(lotQualifiedQtyDTO.getSourceDetailId());
+                if (ObjectUtil.isEmpty(qcNoticeDetailEntity)) {
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"质检通知单明细");
+                }
+             sourceDetailId = qcNoticeDetailEntity.getSourceDetailId();
+        }
+        WarehouseReceiveDetailEntity receiveDetailEntity = this.getById(sourceDetailId);
+        if (ObjectUtil.isEmpty(receiveDetailEntity)) {
+            throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
+        }
+        //待质检量=∑收货数量-质检合格量-∑待质检量,小于0时默认为0
+        Integer waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getLotQualifiedQty();
+        if (waitQcQty < MathUtil.ZERO) {
+            waitQcQty = MathUtil.ZERO;
+        }
+        receiveDetailEntity.setWaitQcQty(waitQcQty);
+        super.updateById(receiveDetailEntity);
     }
-
 }
