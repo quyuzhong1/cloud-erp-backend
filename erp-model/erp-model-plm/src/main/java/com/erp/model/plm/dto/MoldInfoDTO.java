@@ -671,23 +671,31 @@ public class MoldInfoDTO implements Serializable {
         /**
         * 含税单价
         */
+        @NotNull(message = "含税单价不能为空")
+        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal taxPrice;
 
         /**
         * 税率(%)
         */
+        @NotNull(message = "税率(%)不能为空")
+        @Digits(integer = 12, fraction = 4, message = "税率(%)整数位不能超过12位，小数位不能超过4位")
         private BigDecimal rate;
 
         /**
         * 结算方式
          * http://172.16.100.11:3002/project/83/interface/api/7144 type = supplierPayMode
         */
+        @NotBlank(message = "结算方式不能为空")
+        @Size(max = 19,message = "结算方式最大长度不能超过19位")
         private String payMethodId;
 
         /**
         * 付款条件
          * http://172.16.100.11:3002/project/83/interface/api/31039 type=paymentCondition
         */
+        @NotBlank(message = "付款条件不能为空")
+        @Size(max = 64,message = "付款条件最大长度不能超过64位")
         private String paymentCondition;
 
 

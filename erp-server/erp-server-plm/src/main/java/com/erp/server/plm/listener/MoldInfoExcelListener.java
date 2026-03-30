@@ -48,6 +48,10 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
 
     //分类
     private Map<String, BasicCategoryEntity> categoryMap;
+    //结算方式
+    private Map<String, String> settleDictMap ;
+    //付款条件
+    private Map<String, String> paymentConditionMap ;
     //用户
     private List<FindUserDTO> userList ;
     //贷款供应商
@@ -76,7 +80,9 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
                                  List<FindUserDTO> userList,
                                  Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap,
                                  Map<String, String> cfgMouldSettingMap,
-                                 Map<String, BasicCategoryEntity> categoryMap) {
+                                 Map<String, BasicCategoryEntity> categoryMap,
+                                 Map<String, String> settleDictMap,
+                                 Map<String, String> paymentConditionMap) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
@@ -84,6 +90,8 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
         this.cfgMouldSettingMap = cfgMouldSettingMap;
         this.supplierMap = supplierMap;
         this.categoryMap = categoryMap;
+        this.settleDictMap = settleDictMap;
+        this.paymentConditionMap = paymentConditionMap;
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -193,6 +201,27 @@ public class MoldInfoExcelListener extends AnalysisEventListener<MoldInfoImportE
                 excelDTO.setSupplierCode(suppler.getCode());
             }
         }
+
+        String payMethodName = excelDTO.getPayMethodName();
+        if(StringUtils.isNotBlank(payMethodName)){
+            String payMethodId = settleDictMap.getOrDefault(payMethodName, "");
+            if(StringUtils.isBlank(payMethodName)){
+                errorMsgList.add("结算方式不存在");
+            }else {
+                excelDTO.setPayMethodId(payMethodId);
+            }
+        }
+
+        String paymentConditionName = excelDTO.getPaymentConditionName();
+        if(StringUtils.isNotBlank(paymentConditionName)){
+            String paymentCondition = paymentConditionMap.getOrDefault(paymentConditionName, "");
+            if(StringUtils.isBlank(paymentCondition)){
+                errorMsgList.add("付款条件不存在");
+            }else {
+                excelDTO.setPaymentCondition(paymentCondition);
+            }
+        }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
