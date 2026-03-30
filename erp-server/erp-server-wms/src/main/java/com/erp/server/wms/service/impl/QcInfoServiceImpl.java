@@ -322,7 +322,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //不良信息
             qcDefectService.add(billId,dto.getQcDefectList());
             //质检标准
-            qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
+            if (Objects.nonNull(dto.getQcStandardAddDTO())) {
+                qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
+            }
             //操作日志
             if (Objects.isNull(qc)) {
                 operateLogService.addModuleOperateLog(String.format("新增了质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
