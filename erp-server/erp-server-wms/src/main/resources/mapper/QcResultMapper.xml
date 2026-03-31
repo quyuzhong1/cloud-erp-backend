@@ -98,6 +98,7 @@
     <select id="getLotQualifiedQtyByMainId" resultType="com.erp.model.wms.dto.QcResultDTO$LotQualifiedQtyDTO">
         select
             qi.id as qcId,
+            qi.source_type as sourceType,
             qi.source_detail_id,
             qr.lot_qualified_qty as totalLotQualifiedQty
         from qc_result qr
