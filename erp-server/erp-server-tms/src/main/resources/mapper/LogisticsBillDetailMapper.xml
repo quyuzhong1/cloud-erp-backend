@@ -173,7 +173,6 @@
             AND ltcr.disabled = false
             AND ltcr.is_deleted = false
         LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
-        -- LATERAL 魔法：针对每一条 lb 数据，独立执行子查询，按优先级排序并只取第一条
         LEFT JOIN LATERAL (
         SELECT ltcr.id AS cfgId
         FROM logistics_third_channel_ref ltcr
@@ -186,7 +185,6 @@
         (ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
         )
         ORDER BY
-        -- 核心优先级控制：匹配越精准，得分越低，排在越前面
         CASE
         WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id THEN 1
         WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all' THEN 2

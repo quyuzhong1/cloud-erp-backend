@@ -226,7 +226,7 @@ public class LogisticsThirdChannelRefController extends BaseController {
     public void registerLogisticsNumber (){
         Integer registerStatus = 0;
         XxlJobHelper.log("====开始注册物流单号====");
-        String jobParam = XxlJobHelper.getJobParam();
+        String jobParam ="{}";
         List<String> trackNoList = new ArrayList<>();
         List<String> transportNoList = new ArrayList<>();
         String salesPlatform ="";
