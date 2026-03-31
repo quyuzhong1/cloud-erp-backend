@@ -424,7 +424,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         view.setQcDefectList(defectList);
 
         //质检标准
-        QcNoticeDTO.QcStandardView qcStandardView= qcSamplingPlanRefService.getByMainId(id,qcInfo.getQcTypeName());
+        QcNoticeDTO.QcStandardView qcStandardView= qcSamplingPlanRefService.getByMainId(id);
         view.setQcStandardView(qcStandardView);
         return view;
     }
