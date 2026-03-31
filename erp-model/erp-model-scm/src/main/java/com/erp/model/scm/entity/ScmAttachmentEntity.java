@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -21,7 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("attachment")
-public class AttachmentEntity extends BaseEntity<AttachmentEntity> {
+public class ScmAttachmentEntity extends BaseEntity<ScmAttachmentEntity> {
 
     /**
      * 业务表id
@@ -46,7 +47,17 @@ public class AttachmentEntity extends BaseEntity<AttachmentEntity> {
      */
     @TableField("attach_name")
     private String attachName;
+    /**
+     * 文件版本号
+     */
+    @TableField("attach_version")
+    private Integer attachVersion;
 
+    /**
+     * 文件大小
+     */
+    @TableField("attach_size")
+    private BigDecimal attachSize;
 
     static final String BUSINESS_ID = "business_id";
 

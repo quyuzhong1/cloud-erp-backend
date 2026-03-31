@@ -2,7 +2,7 @@ package com.erp.server.scm.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.entity.AttachmentEntity;
+import com.erp.model.scm.entity.ScmAttachmentEntity;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
  * @author admin
  * @since 2023-03-15
  */
-public interface AttachmentService extends SuperService<AttachmentEntity> {
+public interface AttachmentService extends SuperService<ScmAttachmentEntity> {
 
     
     /**
