@@ -110,7 +110,7 @@ public class SkuStdRetailPriceController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/batchAdd")
-    @LogAction(value = LogActionEnum.INSERT, desc = "sku标准零售价表新增")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "sku标准零售价表批量新增：skuId={skuId}", keyIdName = "skuId")
     public ApiResult<List<BaseResultDTO.AddDTO>> batchAdd(@RequestBody @Validated List<SkuStdRetailPriceDTO.AddDTO> dtoList) {
         return success(skuStdRetailPriceService.batchAdd(dtoList , true));
     }
@@ -236,6 +236,7 @@ public class SkuStdRetailPriceController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = SkuStdRetailPriceQueryHandler.class)
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated SkuStdRetailPriceDTO.ExportDTO dto) {
         return success(skuStdRetailPriceService.exportExcel(dto));
     }
