@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.AttachmentDTO;
-import com.erp.model.dmp.entity.AttachmentEntity;
+import com.erp.model.dmp.entity.DmpAttachmentEntity;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.dmp.mapper.AttachmentMapper;
 import com.erp.server.dmp.service.AttachmentService;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, AttachmentEntity> implements AttachmentService {
+public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, DmpAttachmentEntity> implements AttachmentService {
 
     @Resource
     private FileFeign fileFeign;
@@ -45,7 +45,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      */
     @Override
     public List<AttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds) {
-        List<AttachmentEntity> list = this.list(businessIds);
+        List<DmpAttachmentEntity> list = this.list(businessIds);
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }
 
@@ -61,13 +61,13 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     @Override
     public void deleteByBusinessIds(List<String> businessIdList) {
         if (CollectionUtils.isNotEmpty(businessIdList)) {
-            LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(AttachmentEntity::getBusinessId, businessIdList);
-            List<AttachmentEntity> list = this.list(queryWrapper);
-            List<String> urlList = list.stream().map(AttachmentEntity::getAttachUrl).collect(Collectors.toList());
+            LambdaQueryWrapper<DmpAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(DmpAttachmentEntity::getBusinessId, businessIdList);
+            List<DmpAttachmentEntity> list = this.list(queryWrapper);
+            List<String> urlList = list.stream().map(DmpAttachmentEntity::getAttachUrl).collect(Collectors.toList());
             //批量删除fastdfs 数据
             fileFeign.deleteBatchFile(urlList);
-            this.removeByIds(list.stream().map(AttachmentEntity::getId).collect(Collectors.toList()));
+            this.removeByIds(list.stream().map(DmpAttachmentEntity::getId).collect(Collectors.toList()));
         }
     }
 
@@ -85,9 +85,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     @Transactional(rollbackFor = Exception.class)
     public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
-            List<AttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
+            List<DmpAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity entity = new AttachmentEntity();
+                DmpAttachmentEntity entity = new DmpAttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
                 entity.setAttachName(attachmentNameList.get(i));
                 entity.setType(type);
@@ -110,9 +110,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      */
     @Override
     public List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId) {
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
-        List<AttachmentEntity> list = this.list(queryWrapper);
+        LambdaQueryWrapper<DmpAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DmpAttachmentEntity::getBusinessId, businessId);
+        List<DmpAttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
@@ -129,10 +129,10 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      */
     @Override
     public void removeAttachment(AttachmentDTO.DeleteDTO dto) {
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AttachmentEntity::getAttachUrl, dto.getAttachUrl());
+        LambdaQueryWrapper<DmpAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DmpAttachmentEntity::getAttachUrl, dto.getAttachUrl());
         if (StringUtils.isNotBlank(dto.getBusinessId())) {
-            queryWrapper.eq(AttachmentEntity::getBusinessId, dto.getBusinessId());
+            queryWrapper.eq(DmpAttachmentEntity::getBusinessId, dto.getBusinessId());
 
         }
         this.remove(queryWrapper);
@@ -140,12 +140,12 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     }
 
 
-    private List<AttachmentEntity> list(List<String> businessIds) {
+    private List<DmpAttachmentEntity> list(List<String> businessIds) {
         if (CollectionUtils.isEmpty(businessIds)) {
             return new ArrayList<>(1);
         }
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
+        LambdaQueryWrapper<DmpAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DmpAttachmentEntity::getBusinessId, businessIds);
         return this.list(queryWrapper);
     }
 }
