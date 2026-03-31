@@ -35,7 +35,11 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
      */
     OCEAN_TRACK_ING("oceanTrackIng","运输中", Constants.TRACK_ING1,"运输中"),
     OCEAN_ARRIVE("oceanArrive","已到港","arrive","已到港"),
-    OCEAN_HOLD("oceanHold","查验中","hold","查验中")
+    OCEAN_HOLD("oceanHold","查验中","hold","查验中"),
+    /**
+     * 暂不查询（未配置查询配置时使用）
+     */
+    NOT_QUERY("notQuery","暂不查询","notQuery","暂不查询")
     ;
 
 

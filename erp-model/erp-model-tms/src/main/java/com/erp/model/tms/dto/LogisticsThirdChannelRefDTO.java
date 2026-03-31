@@ -113,6 +113,21 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         private String pushTypeName;
 
         /**
+         * 销售平台名称（主表）
+         */
+        private String dictPlatform;
+        private String dictPlatformName;
+        /**
+         * 所有供应商 ： true
+         */
+        private Boolean isAllSupplier = false;
+
+        /**
+         * 所有渠道 ： true
+         */
+        private Boolean isAllChannel = false;
+
+        /**
          * 明细
          */
         private List<LogisticsThirdChannelRefDetailDTO.ViewDTO> detailList;
@@ -182,7 +197,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         /**
         * 渠道名称
         */
-        @NotBlank(message = "渠道名称不能为空")
+//        @NotBlank(message = "渠道名称不能为空")
         @Size(max = 100,message = "渠道名称最大长度不能超过100位")
         private String logisticsChannelName;
 
@@ -224,7 +239,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         /**
         * 物流商名称
         */
-        @NotBlank(message = "物流商名称不能为空")
+//        @NotBlank(message = "物流商名称不能为空")
         @Size(max = 100,message = "物流商名称最大长度不能超过100位")
         private String logisticsSupplierName;
 
@@ -246,11 +261,24 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         * 推送类型:sender=发件人,receiver=收件人,orderReceiver=订单收件人,shopSender=发件人-店铺,platformSender=发件人-平台
          * LogisticsThirdChannelRefPushTypeEnum
         */
-        @NotBlank(message = "推送类型:sender=发件人,receiver=收件人,orderReceiver=订单收件人,shopSender=发件人不能为空")
-        @Size(max = 50,message = "推送类型:sender=发件人,receiver=收件人,orderReceiver=订单收件人,shopSender=发件人最大长度不能超过50位")
+        @NotBlank(message = "推送类型不能为空")
+        @Size(max = 50,message = "推送类型最大长度不能超过50位")
         private String pushType;
 
+        /**
+         * 销售平台（主表侧维度）
+         */
+        @NotBlank(message = "平台不能为空")
+        private String dictPlatform;
+        /**
+         * 所有供应商 ： true
+         */
+        private Boolean isAllSupplier = false;
 
+        /**
+         * 所有渠道 ： true
+         */
+        private Boolean isAllChannel= false;
     }
 
 
@@ -363,6 +391,14 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          * 平台店铺名称
          */
         private String platformShopName;
+        /**
+         * 销售平台（主表侧维度）
+         */
+        private String mainDictPlatform;
+        /**
+         * 销售平台名称（主表侧维度）
+         */
+        private String mainDictPlatformName;
         /**
          * 创建时间
          */
