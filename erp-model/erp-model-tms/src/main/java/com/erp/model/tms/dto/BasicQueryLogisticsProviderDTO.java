@@ -138,6 +138,11 @@ public class BasicQueryLogisticsProviderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListAllParamDTO {
+        /**
+         * 查询平台：TRACK123=Track123,KUAIDI100=快递100
+         */
+        @NotBlank(message = "查询服务商不能为空")
+        private String trackPlatformType;
 
         /**
          * 物流商名称（中文）
