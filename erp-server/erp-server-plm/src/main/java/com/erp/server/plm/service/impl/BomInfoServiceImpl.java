@@ -374,21 +374,24 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         List<BomSkuEntity> bomSkuEntityList = bomSkuService.lambdaQuery().eq(BomSkuEntity::getBomId, dto.getId()).list();
-        Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
-            	.in(SkuStdRetailPriceEntity::getSkuId, bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toSet()))
-            	.eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
-            	.stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
-        Set<String> notHaveRetailSet = new HashSet<>();
-        for(BomSkuEntity bomSkuEntity : bomSkuEntityList) {
-        	if(!skuIdVatMap.containsKey(bomSkuEntity.getSkuId())) {
-        		notHaveRetailSet.add(bomSkuEntity.getSkuNo());
+        if (CollectionUtils.isNotEmpty(bomSkuEntityList)){
+            Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
+                    .in(SkuStdRetailPriceEntity::getSkuId, bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toSet()))
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
+                    .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+            Set<String> notHaveRetailSet = new HashSet<>();
+            for(BomSkuEntity bomSkuEntity : bomSkuEntityList) {
+                if(!skuIdVatMap.containsKey(bomSkuEntity.getSkuId())) {
+                    notHaveRetailSet.add(bomSkuEntity.getSkuNo());
+                }
+            }
+
+            if(CollUtil.isNotEmpty(notHaveRetailSet)) {
+                String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
+                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
             }
         }
 
-        if(CollUtil.isNotEmpty(notHaveRetailSet)) {
-            String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-            throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
-        }
         // 调用流程审核
         approveProcess(entity, dto);
         //操作记录
@@ -555,10 +558,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<String> parentSkuList = list.stream().map(BomPagingVO::getParentSkuNo).collect(Collectors.toList());
         skuNoList.addAll(parentSkuList);
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
-        Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
-        	.in(SkuStdRetailPriceEntity::getSkuId, skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toSet()))
-        	.eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
-        	.stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+        Map<String, BigDecimal> skuIdVatMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(skuList)) {
+            skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
+                    .in(SkuStdRetailPriceEntity::getSkuId, skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toSet()))
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
+                    .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+        }
         for (BomPagingVO item : list) {
             String skuNo = item.getSkuNo();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -1208,21 +1214,24 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 throw new ServiceException("只允许添加相同产品属性组合成组合品");
             }
         }
-        Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
-                .in(SkuStdRetailPriceEntity::getSkuId, childList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toSet()))
-                .eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
-                .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
-        Set<String> notHaveRetailSet = new HashSet<>();
-        for(BomChildrenSkuDTO bomSkuEntity : childList) {
-            if(!skuIdVatMap.containsKey(bomSkuEntity.getSkuId())) {
-                notHaveRetailSet.add(bomSkuEntity.getSkuNo());
+        if (CollectionUtils.isNotEmpty(childList)){
+            Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
+                    .in(SkuStdRetailPriceEntity::getSkuId, childList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toSet()))
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
+                    .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+            Set<String> notHaveRetailSet = new HashSet<>();
+            for(BomChildrenSkuDTO bomSkuEntity : childList) {
+                if(!skuIdVatMap.containsKey(bomSkuEntity.getSkuId())) {
+                    notHaveRetailSet.add(bomSkuEntity.getSkuNo());
+                }
+            }
+
+            if(CollUtil.isNotEmpty(notHaveRetailSet)) {
+                String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
+                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
             }
         }
 
-        if(CollUtil.isNotEmpty(notHaveRetailSet)) {
-            String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-            throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
-        }
     }
 
     /**
