@@ -36,6 +36,7 @@ import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.dto.QcNoticeDetailDTO;
 import com.erp.model.wms.entity.QcApplicationDetailEntity;
 import com.erp.model.wms.entity.QcApplicationEntity;
+import com.erp.model.wms.entity.QcNoticeEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
@@ -455,11 +456,24 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
+    /**
+     * 反审核条件判断
+     * @author will
+     * @date 2026/3/31 10:40
+     * @param entity
+     * @return  Boolean
+     */
     private Boolean validateDisApprove(QcApplicationEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
+        //查询是否已经下推质检通知单
+        List<QcNoticeEntity> qcNoticeList = qcNoticeService.listBySourceId(entity.getId());
+        if (CollUtil.isNotEmpty(qcNoticeList)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE);
+        }
+
         return true;
     }
 
