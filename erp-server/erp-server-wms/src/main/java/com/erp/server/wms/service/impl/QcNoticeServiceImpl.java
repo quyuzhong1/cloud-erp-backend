@@ -574,7 +574,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //人员
         List<String> userIds = qcNoticeDetails.stream().map(QcNoticeDetailEntity::getQcUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<FindUserDTO> userInfoList = sysUserFeign.getUserListByUserIds(userIds);
-        Map<String, String> userDepartmentMap = userInfoList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getDepartmentId));
         //产品
         List<String> skuIds = qcNoticeDetails.stream().map(QcNoticeDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ProductVO.ProductPackVO> productPackList = plmTaskFeign.getProductPackBySkuIds(skuIds);
@@ -593,7 +592,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //质检人
             addDto.setQcUserId(qcNoticeDetail.getQcUserId());
             //质检部门
-            addDto.setQcDeptId(userDepartmentMap.get(qcNoticeDetail.getQcUserId()));
+            FindUserDTO userDTO = userInfoList.stream()
+                    .filter(item -> Objects.equals(qcNoticeDetail.getQcUserId(), item.getUserId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(userDTO)) {
+                addDto.setQcDeptId(userDTO.getDepartmentId());
+            }
             //产品信息
             ProductVO.ProductPackVO productPackVO = productPactMap.get(qcNoticeDetail.getSkuId());
             BeanMapper.copy(productPackVO, qcProduct);
@@ -602,7 +607,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             BeanMapper.copy(qcNoticeDetail, qcInfo);
             qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setBadDescription(qcNoticeDetail.getBadDesc());
-            qcInfo.setQcResult(QcResultEnum.CONFORMITY.getCode());//默认OK
             qcInfo.setHandleModeDict("waitHandle");//默认待定
             qcInfo.setIsInsideQc(Boolean.FALSE);
             qcInfo.setId("");
@@ -615,7 +619,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardAddDTO.setSamplingPlanId(samplingPlan.getId());
             qcStandardAddDTO.setSamplingPlanName(entity.getQcType() + "抽样方案");
             qcStandardAddDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
-
             //品类通用标准
             FileManagementDTO.AttachDTO attachDTO = fileManagementService.getCategoryGeneralStandardFile(qcNoticeDetail.getSkuId());
             if (Objects.nonNull(attachDTO)) {
