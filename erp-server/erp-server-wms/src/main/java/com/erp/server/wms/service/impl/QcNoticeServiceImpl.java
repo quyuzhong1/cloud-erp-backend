@@ -607,7 +607,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             addDto.setQcProduct(qcProduct);
             //质检信息
             BeanMapper.copy(qcNoticeDetail, qcInfo);
-            qcInfo.setTotalQty(qcNoticeDetail.getQcQty());
+            qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setBadDescription(qcNoticeDetail.getBadDesc());
             qcInfo.setQcResult(QcResultEnum.CONFORMITY.getCode());//默认OK
             qcInfo.setHandleModeDict("waitHandle");//默认待定
@@ -1278,7 +1278,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     }
                 }
             }
-
 
             //回写质检通知单
             QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());

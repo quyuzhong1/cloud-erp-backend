@@ -132,7 +132,7 @@ public class QcResultEntity extends BaseEntity<QcResultEntity> {
      * 批次合格量
      */
     @TableField("lot_qualified_qty")
-    private String lotQualifiedQty;
+    private Integer lotQualifiedQty;
 
 
     public static final String MAIN_ID = "main_id";
