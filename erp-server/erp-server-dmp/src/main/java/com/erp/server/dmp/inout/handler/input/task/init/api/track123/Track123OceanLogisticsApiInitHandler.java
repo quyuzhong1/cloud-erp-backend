@@ -21,6 +21,7 @@ import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
+import com.erp.server.dmp.service.ForeignService;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.Rejected;
 import com.sdk.tms.track123.model.response.ResponseData;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,13 +45,15 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
     private static long pageSize = 100;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private LogisticsBillFeign logisticsBillFeign;
+//    @Resource
+//    private LogisticsBillFeign logisticsBillFeign;
     @Resource
     private TrackShipperService trackShipperService;
 
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private ForeignService foreignService;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -72,6 +76,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
         }
 
         long current = 1;
+        LocalDateTime deliveryLimitTime = LocalDateTime.of(2026, 3, 1, 0, 0, 0);
         //根据跟踪单获取跟踪轨迹
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
@@ -80,6 +85,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 .registerStatus(1)
                 .trackEnable(true)
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
+                .deliveryTime(deliveryLimitTime)//2026-03-01之后
                 .build();
         ResponseData trackData = getTrackData(query, cfgAppClient);
         if (ObjectUtil.isEmpty(trackData)) {
@@ -108,7 +114,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
     }
 
     private ResponseData getTrackData(LogisticsBillDetailQueryDTO query, CfgAppClientEntity cfgAppClient) {
-        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
+        List<LogisticsTrackDTO.UpdateTrackDTO> list =  pageDmpLogisticsTrack(query);
         if (list.size() > MathUtil.NUMBER_100){
 
             List<String> noList = new ArrayList<>();
@@ -173,6 +179,13 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
         }
         log.info("========同步物流轨迹数据完成==========");
         return null;
+    }
+
+    /**
+     * 分页查询
+     */
+    private List<LogisticsTrackDTO.UpdateTrackDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
+        return foreignService.listWaitingRegisterByConfig(query,query.getTrackQueryMode());
     }
 
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
