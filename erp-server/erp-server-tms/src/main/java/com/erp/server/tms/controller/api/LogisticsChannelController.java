@@ -208,9 +208,9 @@ public class LogisticsChannelController extends BaseController {
      * 所有渠道下拉
      * @return
      */
-    @GetMapping("listWithAll")
-    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listWithAll(){
-        return success(logisticsChannelService.listWithAll());
+    @PostMapping("listWithAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listWithAll(@RequestParam(value = "logisticsSupplierId",required = false, defaultValue = "") String logisticsSupplierId){
+        return success(logisticsChannelService.listWithAll(logisticsSupplierId));
     }
 
     /**
