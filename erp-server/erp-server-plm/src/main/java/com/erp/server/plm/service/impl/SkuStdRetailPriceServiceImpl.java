@@ -3,19 +3,13 @@ package com.erp.server.plm.service.impl;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -272,10 +266,12 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
    		List<AddDTO> result = new ArrayList<>();
    		
    		Set<String> CNYSkuSet = dtoList.stream().filter(d -> d.getCurrency().equals("CNY")).map(SkuStdRetailPriceDTO.AddDTO::getSkuId).collect(Collectors.toSet());
-   		Map<String, BigDecimal> beforeCNYRetailPriceMap = lambdaQuery().in(SkuStdRetailPriceEntity::getSkuId, CNYSkuSet)
-   				.eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
-   				.list().stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
-   		
+        Map<String, BigDecimal> beforeCNYRetailPriceMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(CNYSkuSet)) {
+            beforeCNYRetailPriceMap = lambdaQuery().in(SkuStdRetailPriceEntity::getSkuId, CNYSkuSet)
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
+                    .list().stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+        }
    		Set<String> skuIdSet = dtoList.stream().map(SkuStdRetailPriceDTO.AddDTO::getSkuId).collect(Collectors.toSet());
    		Set<String> currencySet = dtoList.stream().map(SkuStdRetailPriceDTO.AddDTO::getCurrency).collect(Collectors.toSet());
    		Map<String , String> dbSkuIdCurrencyMap = lambdaQuery().in(SkuStdRetailPriceEntity::getSkuId, skuIdSet)
