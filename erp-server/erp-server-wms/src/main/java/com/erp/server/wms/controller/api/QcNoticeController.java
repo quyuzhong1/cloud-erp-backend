@@ -543,12 +543,12 @@ public class QcNoticeController extends BaseController {
 
     /**
      * 质检标准打印
-     * @param detailIdList
+     * @param paramDTO
      * @return
      */
     @PostMapping("/printQcStandard")
-    public ApiResult<List<QcNoticeDTO.PrintQcStandardDTO>> printQcStandard(@RequestBody @Valid List<String> detailIdList) {
-        return success(qcNoticeService.printQcStandard(detailIdList));
+    public ApiResult<List<QcNoticeDTO.PrintQcStandardDTO>> printQcStandard(@RequestBody @Valid QcNoticeDTO.PrintQcStandardParamDTO paramDTO) {
+        return success(qcNoticeService.printQcStandard(paramDTO));
     }
 
 }

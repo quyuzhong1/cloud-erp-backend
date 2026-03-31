@@ -1590,9 +1590,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     }
 
     @Override
-    public List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(List<String> detailIdList) {
+    public List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(QcNoticeDTO.PrintQcStandardParamDTO paramDTO) {
         List<QcNoticeDTO.PrintQcStandardDTO> printQcStandardDTOS = new ArrayList<>();
-        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByIds(detailIdList);
+        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByIds(paramDTO.getDetailIds());
+        if (qcNoticeDetails.isEmpty()) {
+            throw new ServiceException(ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND);
+        }
         List<String> ids = qcNoticeDetails.stream()
                 .map(item -> item.getMainId())
                 .collect(Collectors.toList());

@@ -1070,6 +1070,17 @@ public class QcNoticeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PrintQcStandardParamDTO{
+
+        /**
+         * 明细id列表
+         */
+        @NotNull(message = "明细id列表不允许为空")
+        private List<String> detailIds;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PrintQcStandardDTO{
 
         /**
