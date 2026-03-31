@@ -43,6 +43,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
@@ -220,6 +221,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private QcNoticeService qcNoticeService;
+
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
+
     @Resource
     private QcEffectivenessService qcEffectivenessService;
     /**
@@ -634,10 +639,26 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
 
+            //回写质检通知单
+            reWriteQcNotice(dto);
+
             operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
         } else {
             return null;
         }
+    }
+
+    public void reWriteQcNotice(QcInfoDTO.SaveOrUpdateDTO dto){
+        //更新质检通知单的质检员
+        SysUserDTO user = sysUserFeign.getSysUserById(dto.getQcUserId());
+        if (Objects.isNull(user)) {
+            throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
+        }
+        qcNoticeDetailService.lambdaUpdate()
+                .set(QcNoticeDetailEntity::getQcUserId, dto.getQcUserId())
+                .set(QcNoticeDetailEntity::getQcUserName, user.getUserName())
+                .eq(QcNoticeDetailEntity::getId, dto.getSourceDetailId())
+                .update();
     }
 
     /**

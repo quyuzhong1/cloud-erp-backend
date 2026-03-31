@@ -179,24 +179,22 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
 
-        //查询质检单
-        List<String> receiveIds = records.stream().map(WarehouseReceiveDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
-        //质检信息
-        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIdsAndType(receiveIds,SourceTypeEnum.PO_RECEIVE.getCode());
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 //设置入库状态名称
                 obj.setInStockStatusName(InstockStatusEnum.getByCode(obj.getInStockStatus()));
-                List<QcInfoEntity> resultList = qcInfoList.stream().filter(v -> v.getSourceId().equals(obj.getId())).collect(Collectors.toList());
-                if(resultList.stream().allMatch(v->Objects.isNull(v.getQcStatus()) || QcBillStatusEnum.DRAFT.equals(v.getQcStatus())|| QcBillStatusEnum.WAIT_QC.equals(v.getQcStatus())|| QcBillStatusEnum.CANCEL.equals(v.getQcStatus()))){
+                if (obj.getReceiveQty().equals(obj.getWaitQcQty())) {
+                    //未质检：待质检量=收货数量
                     obj.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                     obj.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
-                }else if(resultList.stream().allMatch(v->QcBillStatusEnum.EXEMPTION.equals(v.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(v.getQcStatus()))){
-                    obj.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
-                    obj.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
-                }else{
+                } else if (obj.getReceiveQty() > obj.getWaitQcQty() && obj.getWaitQcQty() > 0) {
+                    //部分质检：待质检 < 收货数量，且不为0
                     obj.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
                     obj.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+                } else if (obj.getWaitQcQty() == 0) {
+                    //已质检：待质检=0
+                    obj.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
+                    obj.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
