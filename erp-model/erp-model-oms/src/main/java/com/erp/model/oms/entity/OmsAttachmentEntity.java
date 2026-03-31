@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -46,7 +47,17 @@ public class OmsAttachmentEntity extends BaseEntity<OmsAttachmentEntity> {
      */
     @TableField("type")
     private String type;
+    /**
+     * 文件版本号
+     */
+    @TableField("attach_version")
+    private Integer attachVersion;
 
+    /**
+     * 文件大小
+     */
+    @TableField("attach_size")
+    private BigDecimal attachSize;
 
     public static final String ATTACH_URL = "attach_url";
 

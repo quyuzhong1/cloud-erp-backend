@@ -34,7 +34,7 @@ import com.erp.model.fms.dto.excel.AssetAcceptExcelDTO;
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.fms.entity.AssetAcceptPersonEntity;
-import com.erp.model.fms.entity.AttachmentEntity;
+import com.erp.model.fms.entity.FmsAttachmentEntity;
 import com.erp.model.fms.enums.UnitEnum;
 import com.erp.model.fms.enums.*;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
@@ -289,14 +289,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
         //附件名
         List<String> attachmentNameList = addDTO.getAttachmentNameList();
-        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        List<FmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         if (CollUtil.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             Class<AssetAcceptEntity> entityClass = AssetAcceptEntity.class;
             TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity attachment = new AttachmentEntity();
+                FmsAttachmentEntity attachment = new FmsAttachmentEntity();
                 attachment.setAttachUrl(attachmentUrlList.get(i));
                 attachment.setAttachName(attachmentNameList.get(i));
                 attachment.setBusinessId(assetAcceptEntity.getId());
@@ -630,10 +630,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 //获取到表名
                 String type = tableName.value();
 
-                List<AttachmentEntity> batchAttachmentList = new ArrayList<>();
+                List<FmsAttachmentEntity> batchAttachmentList = new ArrayList<>();
                 for (int i = 0; i < attachmentUrlList.size(); i++) {
                     if(!oldUrlList.contains(attachmentUrlList.get(i))){
-                        AttachmentEntity addAttachment = new AttachmentEntity();
+                        FmsAttachmentEntity addAttachment = new FmsAttachmentEntity();
                         addAttachment.setAttachUrl(attachmentUrlList.get(i));
                         addAttachment.setAttachName(attachmentNameList.get(i));
                         addAttachment.setBusinessId(old.getId());

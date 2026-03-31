@@ -1,7 +1,7 @@
 package com.erp.server.tms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.scm.entity.AttachmentEntity;
+import com.erp.model.tms.entity.TmsAttachmentEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-03-15
  */
 @Mapper
-public interface AttachmentMapper extends BaseMapper<AttachmentEntity> {
+public interface AttachmentMapper extends BaseMapper<TmsAttachmentEntity> {
 
 }
