@@ -197,7 +197,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
             dmpDataMap.put("qty", qty);
             if (availableSendStock.intValue() < qty) {
                 dmpDataMap.put("billStatus", InventoryBillStatusEnum.FAILED.getCode());
-                dmpDataMap.put("remark", CharSequenceUtil.format("【{}】【{}】调整数量【{}】小于旺店通可用库存【{}】:旺店通总库存数量【{}】数大臣可用库存数量【{}】", skuNo, erpWarehouseName, qty,availableSendStock.intValue(), stockNum.intValue(), erpUsableQty));
+                dmpDataMap.put("remark", CharSequenceUtil.format("【{}】【{}】调整数量【{}】大于旺店通可用库存【{}】:旺店通总库存数量【{}】数大臣可用库存数量【{}】", skuNo, erpWarehouseName, qty,availableSendStock.intValue(), stockNum.intValue(), erpUsableQty));
             }
         }
         //重置pkey
