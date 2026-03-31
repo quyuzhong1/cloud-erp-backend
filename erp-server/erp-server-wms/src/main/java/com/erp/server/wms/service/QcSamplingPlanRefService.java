@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.entity.QcInfoEntity;
 import com.erp.model.wms.entity.QcSamplingPlanRefEntity;
 import com.common.business.service.SuperService;
 
@@ -19,4 +20,6 @@ public interface QcSamplingPlanRefService extends SuperService<QcSamplingPlanRef
     void add(String billId, QcNoticeDTO.QcStandardAddDTO qcStandardAddDTO);
 
     void removeByMainIds(List<String> ids);
+
+    QcNoticeDTO.QcStandardView getByMainId(String id, String qcTypeName);
 }

@@ -658,7 +658,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     qcStandardAddDTO.setQcImageAddDTOList(qcImageAddDTOS);
                 }
             }
-            addDto.setQcStandardAddDTO(qcStandardAddDTO);
+            addDto.setQcStandardView(qcStandardAddDTO);
             addDto.setQcInfo(qcInfo);
         }
         //新增质检单
