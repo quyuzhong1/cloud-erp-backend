@@ -36,6 +36,15 @@ public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetai
     List<LogisticsBillDetailEntity> listByPlatformCodeAndTrackNo(@Param("platformCodeList") List<String> platformCodeList,@Param("trackNoList") List<String> trackNoList);
 
     /**
+     * 根据第三方配置映射表，查询待注册的物流单详情
+     *
+     * @param query 查询条件
+     * @param platformType 第三方平台类型 (如 TRACK123)
+     * @return 待注册单据列表
+     */
+    List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(@Param("query") LogisticsBillDetailQueryDTO query, @Param("platformType") String platformType);
+
+    /**
      * 用于更新使用运单号做物流轨迹查询数据更新
      *
      * @param trackNoList

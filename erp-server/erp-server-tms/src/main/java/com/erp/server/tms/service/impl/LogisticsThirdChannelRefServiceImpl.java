@@ -28,6 +28,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -79,6 +80,27 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsThirdChannelRefDTO.AddDTO addDTO) {
+        //临时调整校验逻辑
+        if(!addDTO.getIsAllSupplier()){
+            String logisticsSupplierName = addDTO.getLogisticsSupplierName();
+            if(StringUtils.isBlank(logisticsSupplierName)){
+                throw new ServiceException("物流商名称不能为空");
+            }
+        }else{
+            addDTO.setLogisticsSupplierId("all");
+            addDTO.setLogisticsSupplierName("所有");
+        }
+        if(!addDTO.getIsAllChannel()){
+            String logisticsChannelName = addDTO.getLogisticsChannelName();
+            if(StringUtils.isBlank(logisticsChannelName)){
+                throw new ServiceException("渠道名称不能为空");
+            }
+        }else{
+            addDTO.setLogisticsChannelId("all");
+            addDTO.setLogisticsChannelCode("all");
+            addDTO.setLogisticsChannelName("所有");
+        }
+
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity = new LogisticsThirdChannelRefEntity();
         BeanMapperUtils.copy(addDTO, logisticsThirdChannelRefEntity);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
@@ -108,6 +130,27 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsThirdChannelRefDTO.UpdateDTO addOrUpdateDTO) {
+        //临时调整校验逻辑
+        if(!addOrUpdateDTO.getIsAllSupplier()){
+            String logisticsSupplierName = addOrUpdateDTO.getLogisticsSupplierName();
+            if(StringUtils.isBlank(logisticsSupplierName)){
+                throw new ServiceException("物流商名称不能为空");
+            }
+        }else{
+            addOrUpdateDTO.setLogisticsSupplierId("all");
+            addOrUpdateDTO.setLogisticsSupplierName("所有");
+        }
+        if(!addOrUpdateDTO.getIsAllChannel()){
+            String logisticsChannelName = addOrUpdateDTO.getLogisticsChannelName();
+            if(StringUtils.isBlank(logisticsChannelName)){
+                throw new ServiceException("渠道名称不能为空");
+            }
+        }else{
+            addOrUpdateDTO.setLogisticsChannelId("all");
+            addOrUpdateDTO.setLogisticsChannelCode("all");
+            addOrUpdateDTO.setLogisticsChannelName("所有");
+        }
+
         LogisticsThirdChannelRefEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流-第三方渠道关系单"));
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity =  BeanMapperUtils.map(LogisticsThirdChannelRefEntity.class, addOrUpdateDTO);
@@ -159,6 +202,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             e.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(e.getPushType()));
             e.setDisabledName(e.getDisabled() ? "是" : "否");
             e.setDictPlatformName(PlatformDictEnum.getNameByCode(e.getDictPlatform()));
+            e.setMainDictPlatformName(PlatformDictEnum.getNameByCode(e.getMainDictPlatform()));
             e.setPlatformShopName(CharSequenceUtil.isNotBlank(e.getDictPlatformName()) ? e.getDictPlatformName() : "" + (CharSequenceUtil.isNotBlank(e.getShopName()) ? e.getShopName():""));
         });
     }
@@ -169,6 +213,13 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         LogisticsThirdChannelRefDTO.ViewDTO data = BeanMapperUtils.map(LogisticsThirdChannelRefDTO.ViewDTO.class, entity);
         data.setPlatformTypeName(TrackPlatformTypeEnum.getName(entity.getPlatformType()));
         data.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(entity.getPushType()));
+        data.setDictPlatformName(PlatformDictEnum.getNameByCode(entity.getDictPlatform()));
+        if(Objects.equals(data.getLogisticsSupplierId(),"all")){
+            data.setIsAllSupplier(true);
+        }
+        if(Objects.equals(data.getLogisticsChannelId(),"all")){
+            data.setIsAllChannel(true);
+        }
         //查询实际明细
         List<LogisticsThirdChannelRefDetailEntity> detailEntityList = logisticsThirdChannelRefDetailService.listByMainIdList(Collections.singletonList(data.getId()));
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
@@ -296,7 +347,99 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         return baseMapper.listByPlatform(platformType);
     }
 
+    /**
+     * 批量新增渠道查询配置
+     * <p>
+     * 根据 isAllSupplier / isAllChannel 两个独立勾选项动态扩展物流商与渠道维度：
+     * 两者均为 false 时退化为单条新增；一个或两个为 true 时做笛卡尔积批量写入。
+     * 唯一性冲突不中断循环，统一收集到失败列表后返回。
+     * </p>
+     * @param dto 新增参数
+     * @return 批量操作结果列表
+     * @author jack
+     * @date 2026-03-27
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> batchAdd(LogisticsThirdChannelRefDTO.AddDTO dto) {
+        List<BatchResultDTO> results = new ArrayList<>();
 
+        // 1. 确定物流商列表
+        List<LogisticsSupplierEntity> supplierList;
+        if (Boolean.TRUE.equals(dto.getIsAllSupplier())) {
+            // 勾选所有物流商：查询全部启用的物流商
+            supplierList = logisticsSupplierService.lambdaQuery()
+                    .eq(LogisticsSupplierEntity::getDisabled, false)
+                    .list();
+            if (CollUtil.isEmpty(supplierList)) {
+                results.add(BatchResultDTO.fail("所有物流商", "-", "未查询到任何启用的物流商"));
+                return results;
+            }
+        } else {
+            // 未勾选：使用 dto 中指定的单个物流商
+            LogisticsSupplierEntity single = new LogisticsSupplierEntity();
+            single.setId(dto.getLogisticsSupplierId());
+            single.setSupplierName(dto.getLogisticsSupplierName());
+            supplierList = Collections.singletonList(single);
+        }
+
+        // 2. 遍历每个物流商，确定渠道列表，逐条调用 add
+        for (LogisticsSupplierEntity supplier : supplierList) {
+            List<LogisticsChannelEntity> channelList;
+            if (Boolean.TRUE.equals(dto.getIsAllChannel())) {
+                // 勾选所有渠道：查询该物流商下全部启用渠道
+                channelList = logisticsChannelService.listByMainId(supplier.getId());
+                if (CollUtil.isEmpty(channelList)) {
+                    results.add(BatchResultDTO.fail(
+                            supplier.getSupplierName(), "-", "该物流商下未查询到任何渠道"));
+                    continue;
+                }
+            } else {
+                // 未勾选：使用 dto 中指定的单个渠道
+                LogisticsChannelEntity singleChannel = new LogisticsChannelEntity();
+                singleChannel.setId(dto.getLogisticsChannelId());
+                singleChannel.setName(dto.getLogisticsChannelName());
+                singleChannel.setCode(dto.getLogisticsChannelCode());
+                singleChannel.setMainId(supplier.getId());
+                channelList = Collections.singletonList(singleChannel);
+            }
+
+            // 3. 为当前物流商×渠道 逐条创建记录
+            for (LogisticsChannelEntity channel : channelList) {
+                LogisticsThirdChannelRefDTO.AddDTO singleDto = new LogisticsThirdChannelRefDTO.AddDTO();
+                BeanMapperUtils.copy(dto, singleDto);
+                // 覆盖当前迭代的物流商+渠道信息
+                singleDto.setLogisticsSupplierId(supplier.getId());
+                singleDto.setLogisticsSupplierName(supplier.getSupplierName());
+                singleDto.setLogisticsChannelId(channel.getId());
+                singleDto.setLogisticsChannelName(channel.getName());
+                singleDto.setLogisticsChannelCode(channel.getCode());
+                // 重置勾选项为 false，避免在嵌套 add 里触发非法校验
+                singleDto.setIsAllSupplier(false);
+                singleDto.setIsAllChannel(false);
+                try {
+                    this.add(singleDto);
+                    results.add(BatchResultDTO.success(
+                            supplier.getSupplierName(), channel.getName(), "新增成功"));
+                } catch (ServiceException e) {
+                    // 唯一性冲突或业务异常：记录失败，不中断
+                    results.add(BatchResultDTO.fail(
+                            supplier.getSupplierName(), channel.getName(), e.getMessage()));
+                } catch (Exception e) {
+                    log.error("批量新增渠道查询配置异常，物流商:{}，渠道:{}",
+                            supplier.getSupplierName(), channel.getName(), e);
+                    results.add(BatchResultDTO.fail(
+                            supplier.getSupplierName(), channel.getName(), "系统异常：" + e.getMessage()));
+                }
+            }
+        }
+        return results;
+    }
+
+    @Override
+    public List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(String channelId) {
+        return baseMapper.listByChannelId(channelId);
+    }
     /**
     * 新增修改处理数据
     */
@@ -333,6 +476,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         Integer count = this.lambdaQuery().eq(LogisticsThirdChannelRefEntity::getPlatformType, logisticsThirdChannelRefEntity.getPlatformType())
                 .eq(LogisticsThirdChannelRefEntity::getLogisticsSupplierName, logisticsThirdChannelRefEntity.getLogisticsSupplierName())
                 .eq(LogisticsThirdChannelRefEntity::getLogisticsChannelName, logisticsThirdChannelRefEntity.getLogisticsChannelName())
+                .eq(LogisticsThirdChannelRefEntity::getDictPlatform, logisticsThirdChannelRefEntity.getDictPlatform())
                 .ne(CharSequenceUtil.isNotBlank(logisticsThirdChannelRefEntity.getId()), LogisticsThirdChannelRefEntity::getId, logisticsThirdChannelRefEntity.getId())
                 .count();
         if (count > 0){
@@ -341,20 +485,36 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         }
 
         //数据填充
-        if (CharSequenceUtil.isBlank(logisticsThirdChannelRefEntity.getLogisticsSupplierId())){
+        if(!Objects.equals(logisticsThirdChannelRefEntity.getLogisticsSupplierName(),"所有")){
             LogisticsSupplierEntity supplierEntity = logisticsSupplierService.lambdaQuery().eq(LogisticsSupplierEntity::getSupplierName, logisticsThirdChannelRefEntity.getLogisticsSupplierName()).one();
-            if (Objects.nonNull(supplierEntity)){
+            if (Objects.nonNull(supplierEntity) ) {
                 logisticsThirdChannelRefEntity.setLogisticsSupplierId(supplierEntity.getId());
+            } else {
+                throw new ServiceException("物流商【{}】不存在", logisticsThirdChannelRefEntity.getLogisticsSupplierName());
             }
         }
-        if (CharSequenceUtil.isBlank(logisticsThirdChannelRefEntity.getLogisticsChannelId())){
+        if(!Objects.equals(logisticsThirdChannelRefEntity.getLogisticsChannelName(),"所有")){
             List<LogisticsChannelEntity> channelList = logisticsChannelService.getChannelByName(logisticsThirdChannelRefEntity.getLogisticsChannelName());
-            channelList.stream().filter(e -> ((CharSequenceUtil.isNotBlank(logisticsThirdChannelRefEntity.getLogisticsSupplierId()) && e.getMainId().equals(logisticsThirdChannelRefEntity.getLogisticsSupplierId()))
+            LogisticsChannelEntity logisticsChannelEntity = channelList.stream().filter(e -> ((CharSequenceUtil.isNotBlank(logisticsThirdChannelRefEntity.getLogisticsSupplierId()) && e.getMainId().equals(logisticsThirdChannelRefEntity.getLogisticsSupplierId()))
                     || CharSequenceUtil.isBlank(logisticsThirdChannelRefEntity.getLogisticsSupplierId()))
-                    && e.getName().equals(logisticsThirdChannelRefEntity.getLogisticsChannelName())).findFirst().ifPresent(f -> {
-                logisticsThirdChannelRefEntity.setLogisticsChannelId(f.getId());
-                logisticsThirdChannelRefEntity.setLogisticsChannelCode(f.getCode());
-            });
+                    && e.getName().equals(logisticsThirdChannelRefEntity.getLogisticsChannelName())).findFirst().orElse(null);
+            if (Objects.nonNull(logisticsChannelEntity)) {
+                logisticsThirdChannelRefEntity.setLogisticsChannelId(logisticsChannelEntity.getId());
+                logisticsThirdChannelRefEntity.setLogisticsChannelCode(logisticsChannelEntity.getCode());
+            } else {
+                throw new ServiceException("物流商渠道【{}】不存在", logisticsThirdChannelRefEntity.getLogisticsChannelName());
+            }
         }
+    }
+
+
+    @Override
+    public Boolean existRefBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId) {
+        Boolean flag = false;
+        List<LogisticsThirdChannelRefEntity> logisticsThirdChannelRefEntities = baseMapper.existRefBySalePlatform(salePlatform, channelId, logisticsSupplierId);
+        if(CollUtil.isNotEmpty(logisticsThirdChannelRefEntities)){
+            flag = true;
+        }
+        return flag;
     }
 }
