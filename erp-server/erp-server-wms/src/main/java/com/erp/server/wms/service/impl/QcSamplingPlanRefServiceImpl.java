@@ -7,13 +7,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.server.wms.mapper.QcSamplingPlanRefMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.QcSamplingPlanRefService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.QcStandardImageRefService;
-import com.erp.server.wms.service.QcStandardRefService;
 import io.seata.common.util.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -44,6 +43,9 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
 
     @Resource
     private QcStandardImageRefService qcStandardImageRefService;
+
+    @Resource
+    private QcResultService qcResultService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -230,29 +232,33 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
     }
 
     @Override
-    public QcNoticeDTO.QcStandardView getByMainId(String id, String qcTypeName) {
+    public QcNoticeDTO.QcStandardView getByMainId(String id) {
         QcNoticeDTO.QcStandardView qcStandardView = new QcNoticeDTO.QcStandardView();
         QcSamplingPlanRefEntity qcSamplingPlanRef = this.lambdaQuery()
                 .eq(QcSamplingPlanRefEntity::getMainId, id)
                 .one();
-        BeanUtils.copyProperties(qcSamplingPlanRef,qcStandardView);
-        qcStandardView.setSamplingPlanName(qcTypeName + "抽样方案");
         if (Objects.nonNull(qcSamplingPlanRef)) {
-            List<QcStandardRefEntity> standradList = qcStandardRefService.lambdaQuery()
-                    .eq(QcStandardRefEntity::getMainId, qcSamplingPlanRef.getId())
-                    .list();
+            BeanUtils.copyProperties(qcSamplingPlanRef,qcStandardView);
+            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(id);
+            qcStandardView.setSamplingPlanName(QcTypeEnum.getByCode(qcResult.getQcType()) + "抽样方案");
+            if (Objects.nonNull(qcSamplingPlanRef)) {
+                List<QcStandardRefEntity> standradList = qcStandardRefService.lambdaQuery()
+                        .eq(QcStandardRefEntity::getMainId, qcSamplingPlanRef.getId())
+                        .list();
 
-            if (!standradList.isEmpty()) {
-                List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = BeanMapper.copyList(standradList, QcNoticeDTO.QcInspectItemView.class);
-                qcStandardView.setQcInspectItemViewDTOList(qcInspectItemViews);
+                if (!standradList.isEmpty()) {
+                    List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = BeanMapper.copyList(standradList, QcNoticeDTO.QcInspectItemView.class);
+                    qcStandardView.setQcInspectItemViewDTOList(qcInspectItemViews);
+                }
+                List<QcStandardImageRefEntity> imageList = qcStandardImageRefService.lambdaQuery()
+                        .eq(QcStandardImageRefEntity::getMainId, qcSamplingPlanRef.getId())
+                        .list();
+                if (!imageList.isEmpty()) {
+                    List<QcNoticeDTO.QcImageView> qcImageViews = BeanMapper.copyList(imageList, QcNoticeDTO.QcImageView.class);
+                    qcStandardView.setQcImageViewDTOList(qcImageViews);
+                }
             }
-            List<QcStandardImageRefEntity> imageList = qcStandardImageRefService.lambdaQuery()
-                    .eq(QcStandardImageRefEntity::getMainId, qcSamplingPlanRef.getId())
-                    .list();
-            if (!imageList.isEmpty()) {
-                List<QcNoticeDTO.QcImageView> qcImageViews = BeanMapper.copyList(imageList, QcNoticeDTO.QcImageView.class);
-                qcStandardView.setQcImageViewDTOList(qcImageViews);
-            }
+            return qcStandardView;
         }
         return qcStandardView;
     }

@@ -21,5 +21,5 @@ public interface QcSamplingPlanRefService extends SuperService<QcSamplingPlanRef
 
     void removeByMainIds(List<String> ids);
 
-    QcNoticeDTO.QcStandardView getByMainId(String id, String qcTypeName);
+    QcNoticeDTO.QcStandardView getByMainId(String id);
 }
