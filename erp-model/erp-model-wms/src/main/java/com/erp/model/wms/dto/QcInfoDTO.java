@@ -143,7 +143,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 质检标准
          */
-        private QcNoticeDTO.QcStandardAddDTO qcStandardAddDTO;
+        private QcNoticeDTO.QcStandardAddDTO qcStandardView;
     }
 
 

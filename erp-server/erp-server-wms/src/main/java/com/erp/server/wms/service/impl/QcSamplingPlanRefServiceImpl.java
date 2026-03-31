@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.entity.*;
@@ -52,7 +53,7 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
     public void add(String billId, QcNoticeDTO.QcStandardAddDTO qcStandardAddDTO) {
         QcSamplingPlanRefEntity qcSamplingPlanRefEntity = new QcSamplingPlanRefEntity();
         BeanUtils.copyProperties(qcStandardAddDTO, qcSamplingPlanRefEntity);
-
+        qcSamplingPlanRefEntity.setMainId(billId);
         QcSamplingPlanRefEntity oldEntity = null;
         if (StringUtils.isNotBlank(qcStandardAddDTO.getId())) {
             // 查询旧数据
@@ -226,5 +227,33 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
                     .collect(Collectors.toList());
             qcStandardImageRefService.removeByIds(imageIds);
         }
+    }
+
+    @Override
+    public QcNoticeDTO.QcStandardView getByMainId(String id, String qcTypeName) {
+        QcNoticeDTO.QcStandardView qcStandardView = new QcNoticeDTO.QcStandardView();
+        QcSamplingPlanRefEntity qcSamplingPlanRef = this.lambdaQuery()
+                .eq(QcSamplingPlanRefEntity::getMainId, id)
+                .one();
+        BeanUtils.copyProperties(qcSamplingPlanRef,qcStandardView);
+        qcStandardView.setSamplingPlanName(qcTypeName + "抽样方案");
+        if (Objects.nonNull(qcSamplingPlanRef)) {
+            List<QcStandardRefEntity> standradList = qcStandardRefService.lambdaQuery()
+                    .eq(QcStandardRefEntity::getMainId, qcSamplingPlanRef.getId())
+                    .list();
+
+            if (!standradList.isEmpty()) {
+                List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = BeanMapper.copyList(standradList, QcNoticeDTO.QcInspectItemView.class);
+                qcStandardView.setQcInspectItemViewDTOList(qcInspectItemViews);
+            }
+            List<QcStandardImageRefEntity> imageList = qcStandardImageRefService.lambdaQuery()
+                    .eq(QcStandardImageRefEntity::getMainId, qcSamplingPlanRef.getId())
+                    .list();
+            if (!imageList.isEmpty()) {
+                List<QcNoticeDTO.QcImageView> qcImageViews = BeanMapper.copyList(imageList, QcNoticeDTO.QcImageView.class);
+                qcStandardView.setQcImageViewDTOList(qcImageViews);
+            }
+        }
+        return qcStandardView;
     }
 }
