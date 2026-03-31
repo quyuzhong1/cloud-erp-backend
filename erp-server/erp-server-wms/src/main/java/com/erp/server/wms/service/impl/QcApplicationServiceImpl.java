@@ -210,6 +210,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         QcNoticeDTO.AddDTO addDTO = new QcNoticeDTO.AddDTO();
         addDTO.setQcType(entity.getQcType());
         addDTO.setQcWarehouseId(entity.getWarehouseId());
+        addDTO.setPutawayWarehouseId(entity.getWarehouseId());
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceCode(entity.getSourceCode());
         addDTO.setSourceType(entity.getSourceType());
