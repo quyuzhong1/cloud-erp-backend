@@ -227,6 +227,5 @@
           <if test="query.deliveryTime != null ">
             AND lb.delivery_time &gt;= #{query.deliveryTime}
           </if>
-            and best_match.cfgId =!''
     </select>
 </mapper>

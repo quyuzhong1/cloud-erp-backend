@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 物流-第三方渠道关系表
@@ -296,7 +297,7 @@ public class LogisticsThirdChannelRefController extends BaseController {
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
         XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
         // 从原来的 listTrackDto 切换为基于配置映射表的精确拉取 (弃用旧的 track_query_mode 字段依赖)
-        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listWaitingRegisterByConfig(query, query.getTrackQueryMode());
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listWaitingRegisterByConfig(query, query.getTrackQueryMode()).stream().filter(e->StringUtils.isNotBlank(e.getCfgId())).collect(Collectors.toList());
 //        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());
         // 获取第三方推送配置 (用于 processRegisterData 内部的具体字段映射匹配)
