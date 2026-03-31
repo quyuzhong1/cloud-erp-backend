@@ -76,6 +76,9 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
             InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
             dto.setWarehouseIdList(Collections.singletonList(erpWarehouseId));
             dto.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+            if(CollUtil.isNotEmpty(erpSkuIds)) {
+                dto.setSkuIdList(erpSkuIds);
+            }
             //查询库存
             List<InventoryQtyDTO.InventoryDTO> inventoryDTOS = inventoryFeign.listWarehouseInventoryByParam(dto);
             //根据时间查询变更记录
@@ -91,9 +94,12 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
             }
             List<InventoryQtyDTO.InventoryChangeDTO> inventoryChangeDTOS = inventoryFeign.listInventoryChangeByParam(inventoryChangeQueryDTO);
             //合并旺店通变更库存和erp变更库存成一个列表
-            List<String> skuNoList = inventoryChangeDTOS.stream().map(InventoryQtyDTO.InventoryChangeDTO::getSkuNo).collect(Collectors.toList());
+            List<String> skuNoList = inventoryChangeDTOS.stream().map(InventoryQtyDTO.InventoryChangeDTO::getSkuNo).distinct().collect(Collectors.toList());
             List<String> specNoList = detailList.stream().map(e -> (String) e.get("specNo")).collect(Collectors.toList());
             List<String> changeSkuNoList = Stream.concat(skuNoList.stream(), specNoList.stream()).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(erpSkuIds)) {
+                changeSkuNoList = skuNoList;
+            }
             //过滤费用、服务类SKU，不同步旺店通更新
             List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
             changeSkuNoList.removeAll(noInventorySku.stream().map(SkuVO::getSkuNo).collect(Collectors.toList()));
