@@ -485,18 +485,15 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         }
 
         //数据填充
-        if(!(StringUtils.isNotBlank(logisticsThirdChannelRefEntity.getLogisticsSupplierId())
-            && Objects.equals(logisticsThirdChannelRefEntity.getLogisticsSupplierId() , "all"))){
+        if(!Objects.equals(logisticsThirdChannelRefEntity.getLogisticsSupplierName(),"所有")){
             LogisticsSupplierEntity supplierEntity = logisticsSupplierService.lambdaQuery().eq(LogisticsSupplierEntity::getSupplierName, logisticsThirdChannelRefEntity.getLogisticsSupplierName()).one();
-            if (Objects.nonNull(supplierEntity)) {
+            if (Objects.nonNull(supplierEntity) ) {
                 logisticsThirdChannelRefEntity.setLogisticsSupplierId(supplierEntity.getId());
             } else {
                 throw new ServiceException("物流商【{}】不存在", logisticsThirdChannelRefEntity.getLogisticsSupplierName());
             }
         }
-
-        if(!(StringUtils.isNotBlank(logisticsThirdChannelRefEntity.getLogisticsChannelId())
-                && Objects.equals(logisticsThirdChannelRefEntity.getLogisticsChannelId() , "all"))){
+        if(!Objects.equals(logisticsThirdChannelRefEntity.getLogisticsChannelName(),"所有")){
             List<LogisticsChannelEntity> channelList = logisticsChannelService.getChannelByName(logisticsThirdChannelRefEntity.getLogisticsChannelName());
             LogisticsChannelEntity logisticsChannelEntity = channelList.stream().filter(e -> ((CharSequenceUtil.isNotBlank(logisticsThirdChannelRefEntity.getLogisticsSupplierId()) && e.getMainId().equals(logisticsThirdChannelRefEntity.getLogisticsSupplierId()))
                     || CharSequenceUtil.isBlank(logisticsThirdChannelRefEntity.getLogisticsSupplierId()))
