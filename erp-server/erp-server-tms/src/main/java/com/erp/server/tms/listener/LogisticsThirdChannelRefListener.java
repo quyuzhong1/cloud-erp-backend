@@ -11,6 +11,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
+import com.erp.model.tms.entity.BasicQueryLogisticsProviderEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
@@ -23,10 +24,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class LogisticsThirdChannelRefListener extends AnalysisEventListener<ImportLogisticsThirdChannelRefExcelDTO> {
-
+    private List<LogisticsSupplierEntity> logisticsSupplierEntities;
+    private Map<String, LogisticsChannelEntity> logisticsChannelMap;
+    private Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap;
     /**
      * 错误信息
      */
@@ -46,7 +52,11 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
     private final LogisticsSupplierService logisticsSupplierService = SpringUtil.getBean(LogisticsSupplierService.class);
     private final LogisticsChannelService logisticsChannelService = SpringUtil.getBean(LogisticsChannelService.class);
     private final DictBasicService dictBasicService = SpringUtil.getBean(DictBasicService.class);
-    public LogisticsThirdChannelRefListener() {
+
+    public LogisticsThirdChannelRefListener(List<LogisticsSupplierEntity> logisticsSupplierEntities,Map<String, LogisticsChannelEntity> logisticsChannelMap, Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap) {
+        this.logisticsSupplierEntities=logisticsSupplierEntities;
+        this.logisticsChannelMap=logisticsChannelMap;
+        this.queryLogisticsProviderMap=queryLogisticsProviderMap;
 
     }
 
@@ -82,6 +92,33 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
         }else {
             excelDTO.setPlatformType(platformType);
         }
+
+        //我司物流商合我司渠道
+        String logisticsSupplierName = excelDTO.getLogisticsSupplierName();
+        if (CharSequenceUtil.isBlank(logisticsSupplierName)) {
+            errorMsgList.add("物流商不能为空");
+        }else {
+            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(e -> Objects.equals(logisticsSupplierName, e.getSupplierName()) || Objects.equals(logisticsSupplierName, e.getShortName())).findFirst().orElse(null);
+            if(Objects.isNull(logisticsSupplierEntity)){
+                errorMsgList.add("物流商不存在");
+            }else {
+                excelDTO.setLogisticsSupplierId(logisticsSupplierEntity.getId());
+
+                String logisticsChannelName = excelDTO.getLogisticsChannelName();
+                if (CharSequenceUtil.isBlank(logisticsChannelName)) {
+                    errorMsgList.add("物流商渠道不能为空");
+                }else {
+                    LogisticsChannelEntity logisticsChannelEntity = logisticsChannelMap.getOrDefault(logisticsChannelName, null);
+                    if(Objects.isNull(logisticsChannelEntity)){
+                        errorMsgList.add("物流商渠道不存在");
+                    }else if(Objects.equals(logisticsChannelEntity.getMainId(),excelDTO.getLogisticsSupplierId())){
+                        errorMsgList.add("物流商下该渠道不存在");
+                    }else{
+                        excelDTO.setLogisticsChannelId(logisticsChannelEntity.getId());
+                    }
+                }
+            }
+        }
         //是否推送电话
         if (CharSequenceUtil.isNotBlank(excelDTO.getPushMobileName()) && excelDTO.getPushMobileName().equals("是")){
             excelDTO.setIsPushMobile(Boolean.TRUE);
@@ -90,6 +127,22 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
         }else {
             errorMsgList.add("是否推送电话必须是是/否");
         }
+
+        //查询物流商
+        String thirdSupplierName = excelDTO.getThirdSupplierName();
+        if (CharSequenceUtil.isBlank(thirdSupplierName)) {
+            errorMsgList.add("查询物流商（中文）不能为空");
+        }else {
+            BasicQueryLogisticsProviderEntity basicQueryLogisticsProviderEntity = queryLogisticsProviderMap.getOrDefault(thirdSupplierName, null);
+            if(Objects.isNull(basicQueryLogisticsProviderEntity)){
+                errorMsgList.add("查询物流商不存在");
+            }else if(!Objects.equals(basicQueryLogisticsProviderEntity.getTrackPlatformType(),platformType)){
+                errorMsgList.add("查询服务商与查询物流商基础信息配置不一致");
+            }else if(!Objects.equals(basicQueryLogisticsProviderEntity.getIsRegisterPhone(),excelDTO.getIsPushMobile())){
+                errorMsgList.add("是否推送电话与查询物流商基础信息配置不一致");
+            }
+        }
+
         //推送类型
         String pushType = LogisticsThirdChannelRefPushTypeEnum.getCodeByName(excelDTO.getPushTypeName());
         if (CharSequenceUtil.isBlank(pushType)) {
@@ -161,7 +214,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                     }else {
                         e.setDictPlatform(dict.getCode());
                     }
-                }else if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(e.getPushType()) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(e.getPushType())){
+                }else if (LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(e.getPushType())){
                     if (CharSequenceUtil.isBlank(e.getMobile()) && e.getIsPushMobile()){
                         errorMsgList.add("手机号不能为空");
                     }
