@@ -23,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -64,9 +65,9 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
         if (StringUtils.isBlank(qcStandardAddDTO.getId())) {
             // 新增逻辑
             this.save(qcSamplingPlanRefEntity);
-
             // 新增质检项目
-            if (!qcStandardAddDTO.getQcInspectItemAddDTOList().isEmpty()) {
+            if (Objects.nonNull(qcStandardAddDTO.getQcInspectItemAddDTOList())
+                    && !qcStandardAddDTO.getQcInspectItemAddDTOList().isEmpty()) {
                 List<QcStandardRefEntity> qcStandardRefs = qcStandardAddDTO.getQcInspectItemAddDTOList().stream()
                         .map(item -> {
                             QcStandardRefEntity ref = new QcStandardRefEntity();
@@ -79,7 +80,8 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
             }
 
             // 新增参考图片
-            if (!qcStandardAddDTO.getQcImageAddDTOList().isEmpty()) {
+            if (Objects.nonNull(qcStandardAddDTO.getQcImageAddDTOList())
+                    && !qcStandardAddDTO.getQcImageAddDTOList().isEmpty()) {
                 List<QcStandardImageRefEntity> qcStandardImageRefs = qcStandardAddDTO.getQcImageAddDTOList().stream()
                         .map(image -> {
                             QcStandardImageRefEntity ref = new QcStandardImageRefEntity();
@@ -95,7 +97,8 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
             this.updateById(qcSamplingPlanRefEntity);
 
             // 删除旧的质检项目
-            if (!qcStandardAddDTO.getQcInspectItemAddDTOList().isEmpty()) {
+            if (Objects.nonNull(qcStandardAddDTO.getQcInspectItemAddDTOList())
+                    && !qcStandardAddDTO.getQcInspectItemAddDTOList().isEmpty()) {
                 // 提取所有新质检项目的 ID
                 List<String> newInspectItemIds = qcStandardAddDTO.getQcInspectItemAddDTOList().stream()
                         .map(QcNoticeDTO.QcInspectItemAddDTO::getId)
@@ -124,7 +127,8 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
             }
 
             // 删除旧的参考图片
-            if (!qcStandardAddDTO.getQcImageAddDTOList().isEmpty()) {
+            if (Objects.nonNull(qcStandardAddDTO.getQcImageAddDTOList()) &&
+                    !qcStandardAddDTO.getQcImageAddDTOList().isEmpty()) {
                 List<String> newImageIds = qcStandardAddDTO.getQcImageAddDTOList().stream()
                         .map(QcNoticeDTO.QcImageAddDTO::getId)
                         .filter(id -> StringUtils.isNotBlank(id))
@@ -152,7 +156,8 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
         }
 
         // 新增质检项目
-        if (!qcStandardAddDTO.getQcInspectItemAddDTOList().isEmpty()) {
+        if (Objects.nonNull(qcStandardAddDTO.getQcInspectItemAddDTOList())
+                && !qcStandardAddDTO.getQcInspectItemAddDTOList().isEmpty()) {
             List<QcStandardRefEntity> qcStandardRefs = new ArrayList<>();
             for (QcNoticeDTO.QcInspectItemAddDTO qcInspectItemAddDTO : qcStandardAddDTO.getQcInspectItemAddDTOList()) {
                 QcStandardRefEntity qcStandardRef = new QcStandardRefEntity();
@@ -163,7 +168,8 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
         }
 
         // 新增参考图片
-        if (!qcStandardAddDTO.getQcImageAddDTOList().isEmpty()) {
+        if (Objects.nonNull(qcStandardAddDTO.getQcImageAddDTOList()) &&
+                !qcStandardAddDTO.getQcImageAddDTOList().isEmpty()) {
             List<QcStandardImageRefEntity> qcStandardImageRefs = new ArrayList<>();
             for (QcNoticeDTO.QcImageAddDTO qcImageAddDTO : qcStandardAddDTO.getQcImageAddDTOList()) {
                 QcStandardImageRefEntity qcStandardImageRefEntity = new QcStandardImageRefEntity();

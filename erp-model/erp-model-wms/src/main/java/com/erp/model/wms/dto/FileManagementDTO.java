@@ -336,7 +336,6 @@ public class FileManagementDTO implements Serializable {
         /**
          * 文件名称
          */
-        @NotBlank(message = "文件名称不能为空")
         @Size(max = 255, message = "文件名称最大长度不能超过255位")
         private String attachName;
         /**

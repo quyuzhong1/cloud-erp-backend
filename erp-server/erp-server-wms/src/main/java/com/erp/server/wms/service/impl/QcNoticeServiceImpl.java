@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -13,6 +14,9 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -592,7 +596,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             addDto.setSourceDetailId(qcNoticeDetail.getId());
             //质检日期
-            addDto.setQcDate(qcNoticeDetail.getQcDate().toLocalDate());
+            addDto.setQcDate(LocalDate.now());
             //质检人
             addDto.setQcUserId(qcNoticeDetail.getQcUserId());
             //质检部门
@@ -779,6 +783,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         List<QcNoticeDTO.QcInfoFullView> qcInfoViews = baseMapper.
                 listQcInfoViewByCode(qcNoticeParamDTO.getQcNoticeCode());
+
+        if (qcInfoViews.isEmpty()) {
+            throw new ServiceException(ApiError.PO_QC_NOTICE_FINISH,qcNoticeParamDTO.getQcNoticeCode());
+        }
 
         //产品信息
         List<String> skuIds = qcInfoViews.stream()
@@ -1081,7 +1089,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcNoticeDetailEntity.setQcBadQty(qcResultView.getQcBadQty());
             qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcNoticeQty() - qcResultView.getQcQty());
             //qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getHandleModeDict());
-            qcNoticeDetailEntity.setQcDate(nowTime);
+            //qcNoticeDetailEntity.setQcDate(nowTime);
             qcNoticeDetailEntity.setQcUserId(qcInfoView.getQcUserId());
             qcNoticeDetailEntity.setQcUserName(userInfoMap.getOrDefault(qcInfoView.getQcUserId(),""));
             //该sku已完成质检
@@ -1279,7 +1287,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
             qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
 //            qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getHandleModeDict());
-            qcNoticeDetailEntity.setQcDate(nowTime);
+            //qcNoticeDetailEntity.setQcDate(nowTime);
             qcNoticeDetailEntity.setQcUserId(qcInfoView.getQcUserId());
             qcNoticeDetailEntity.setQcUserName(userInfoMap.getOrDefault(qcInfoView.getQcUserId(),""));
             //该sku已完成质检
@@ -1589,9 +1597,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     }
 
     @Override
-    public List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(List<String> detailIdList) {
+    public List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(QcNoticeDTO.PrintQcStandardParamDTO paramDTO) {
         List<QcNoticeDTO.PrintQcStandardDTO> printQcStandardDTOS = new ArrayList<>();
-        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByIds(detailIdList);
+        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByIds(paramDTO.getDetailIds());
+        if (qcNoticeDetails.isEmpty()) {
+            throw new ServiceException(ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND);
+        }
         List<String> ids = qcNoticeDetails.stream()
                 .map(item -> item.getMainId())
                 .collect(Collectors.toList());
@@ -1656,6 +1667,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             printQcStandardDTOS.add(printQcStandardDTO);
         }
         return printQcStandardDTOS;
+    }
+
+    @Override
+    public List<QcNoticeEntity> listBySourceId(String sourceId) {
+        return lambdaQuery().eq(QcNoticeEntity::getId,sourceId).list();
     }
 
 

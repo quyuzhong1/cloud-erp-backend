@@ -179,5 +179,13 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
 
     QcNoticeDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
-    List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(List<String> detailIdList);
+    List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(QcNoticeDTO.PrintQcStandardParamDTO paramDTO);
+    /**
+     * 根据质检单的来源明细id 获取到质检合格的数量汇总
+     * @author will
+     * @date 2026/3/23 12:25
+     * @param sourceId
+     * @return  List<QcNoticeEntity>
+     */
+    List<QcNoticeEntity> listBySourceId(String sourceId);
 }
