@@ -393,6 +393,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    @Async("wmsErpExecutor")
     public Boolean asyncCompareInventory(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailEntityList) {
         List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey("wdtCompareWarehouse");
         List<String> needCompareWarehouse = CollUtil.isEmpty(list) ? Collections.emptyList() : list.stream().map(DictBasicDTO.ListDTO::getValue).collect(Collectors.toList());
@@ -412,13 +413,14 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         dto.setSystemCode(PlatformDictEnum.WDT.getCode());
         dto.setBillType("queryInventory");
         dto.setNextLevelId("1");
-        dto.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         Map<String, Object> map = new HashMap<>();
         map.put("erpWarehouseIdList", allDetailWarehouseList);
         map.put("skuIdList", skuIdList);
         dto.setDetailExtendJson(JSON.toJSONString(map));
         createDTOList.add(dto);
-        return dmpInoutTaskFeign.doInputTask(createDTOList);
+        dmpInoutTaskFeign.doHotfixReturnInputTask(createDTOList);
+        return true;
     }
 
 
