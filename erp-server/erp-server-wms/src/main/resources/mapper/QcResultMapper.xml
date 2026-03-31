@@ -102,8 +102,20 @@
             qi.source_detail_id,
             qr.lot_qualified_qty as totalLotQualifiedQty
         from qc_result qr
-                 inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
-        where qr.is_deleted = FALSE and qi.qc_status = 'finishQc' and qi.source_type in ('qcNotice','poReceive')
+        inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
+        inner join po_receive_detail prd on prd.id = qi.source_detail_id and prd.is_deleted = FALSE
+        where qr.is_deleted = FALSE and qi.qc_status = 'finishQc' and qi.source_type = 'poReceive'
+        and qi.id = #{qcId}
+        union all
+        select
+            qi.id as qcId,
+            qi.source_type as sourceType,
+            qi.source_detail_id,
+            qr.lot_qualified_qty as totalLotQualifiedQty
+        from qc_result qr
+         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
+         inner join qc_notice qn on qn.id = qi.source_id and qn.is_deleted = FALSE
+        where qr.is_deleted = FALSE and qi.qc_status = 'finishQc' and qi.source_type = 'qcNotice' and qn.source_type = 'poReceive'
           and qi.id = #{qcId}
     </select>
 
