@@ -13,8 +13,10 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum SkuStdSettingEnum implements EnumMessage {
-	RETAIL("retail", "标准零售价"),
-    DMP("dmp", "中台SKU成本")
+    RETAIL_STD("retail_std", "标准零售价"),
+//    COST_FIN("cost_fin", "财务导入成本"),
+    // 采购平均成本
+    COST_AVG("cost_avg", "中台SKU成本")
     ;
     private final String code;
     private final String name;
