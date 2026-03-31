@@ -349,6 +349,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 .map(obj -> new PurchasePriceDTO.PriceDTO(obj.getPurchaseQty(), obj.getSkuId(), supplierEntity.getSupplierId(),entity.getPurchaseOrgId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(priceList)) {
+            // 如果没有需要查询价格的非赠品项，直接处理赠品
+            for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
+                if (Boolean.TRUE.equals(addDTO.getIsGift())) {
+                    addDTO.setTaxPrice(BigDecimal.ZERO);
+                    addDTO.setTaxRate(BigDecimal.ZERO);
+                    addDTO.setCurrency("CNY");
+                    addDTO.setCurrencySymbol("¥");
+                    addDTO.setPurchaseAmount(BigDecimal.ZERO);
+                }
+            }
             return;
         }
         List<String> skuIdList = details.stream().map(PurchaseOrderDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -387,6 +397,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<String> errorList = new ArrayList<>();
         List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
+            // 处理赠品
+            if (Boolean.TRUE.equals(addDTO.getIsGift())) {
+                // 赠品设置默认价格和税率
+                addDTO.setTaxPrice(BigDecimal.ZERO);
+                addDTO.setTaxRate(BigDecimal.ZERO);
+                addDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                addDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+                addDTO.setPurchaseAmount(BigDecimal.ZERO);
+                continue;
+            }
             //子件
             PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                     obj.getSkuId().equals(addDTO.getSkuId())
