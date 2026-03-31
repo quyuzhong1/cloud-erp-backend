@@ -371,7 +371,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             }
             String pushType = pagingVO.getPushType();
             record.setThirdSupplierCode(pagingVO.getThirdSupplierCode());
-            if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(pushType) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
+            if ( LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
                 record.setTelNumber(pagingVO.getMobile());
                 record.setThirdRefId(pagingVO.getId());
                 record2s.add(record);

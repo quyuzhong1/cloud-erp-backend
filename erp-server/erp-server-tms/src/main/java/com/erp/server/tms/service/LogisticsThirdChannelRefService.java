@@ -29,15 +29,6 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
     BaseResultDTO.AddDTO add(LogisticsThirdChannelRefDTO.AddDTO dto);
 
     /**
-    * 批量新增
-    * @author zdy
-    * @date: 2025-05-29
-    * @param dto
-    * @return
-    */
-    List<BatchResultDTO> batchAdd(LogisticsThirdChannelRefDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author zdy
     * @date: 2025-05-29

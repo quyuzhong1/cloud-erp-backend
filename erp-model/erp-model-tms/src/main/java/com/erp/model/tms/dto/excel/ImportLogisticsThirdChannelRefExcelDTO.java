@@ -68,25 +68,25 @@ public class ImportLogisticsThirdChannelRefExcelDTO implements Serializable {
     /**
      * 查询物流商
      */
-    @ExcelProperty(value = "查询物流商", index = 5)
-    @FieldValid(fieldName = "查询物流商",maxLength = 64)
+    @ExcelProperty(value = "查询物流商（中文）", index = 5)
+    @FieldValid(fieldName = "查询物流商（中文）",maxLength = 64)
     private String thirdSupplierName;
-    /**
-     * 物流商编码
-     */
-    @ExcelProperty(value = "物流商编码", index = 6)
-    @FieldValid(fieldName = "物流商编码",maxLength = 64)
-    private String thirdSupplierCode;
-    /**
-     * *查询渠道名称
-     */
-    @ExcelProperty(value = "查询渠道名称", index = 7)
-    @FieldValid(fieldName = "查询渠道名称",maxLength = 64)
-    private String thirdChannelName;
+//    /**
+//     * 物流商编码
+//     */
+//    @ExcelProperty(value = "物流商编码", index = 6)
+//    @FieldValid(fieldName = "物流商编码",maxLength = 64)
+//    private String thirdSupplierCode;
+//    /**
+//     * *查询渠道名称
+//     */
+//    @ExcelProperty(value = "查询渠道名称", index = 7)
+//    @FieldValid(fieldName = "查询渠道名称",maxLength = 64)
+//    private String thirdChannelName;
     /**
      * *是否推送电话
      */
-    @ExcelProperty(value = "*是否推送电话", index = 8)
+    @ExcelProperty(value = "*是否推送电话", index = 6)
     @FieldValid(fieldName = "是否推送电话",isNotBlank = true ,maxLength = 64,fieldValues = "是，否")
     private String pushMobileName;
     @ExcelIgnore
@@ -95,7 +95,7 @@ public class ImportLogisticsThirdChannelRefExcelDTO implements Serializable {
      * 推送类型
      * LogisticsThirdChannelRefPushTypeEnum
      */
-    @ExcelProperty(value = "*推送类型", index = 9)
+    @ExcelProperty(value = "*推送类型", index = 7)
     @FieldValid(fieldName = "推送类型",isNotBlank = true ,maxLength = 64, enumClass = LogisticsThirdChannelRefPushTypeEnum.class)
     private String pushTypeName;
     @ExcelIgnore
@@ -103,13 +103,13 @@ public class ImportLogisticsThirdChannelRefExcelDTO implements Serializable {
     /**
      * 默认手机号
      */
-    @ExcelProperty(value = "默认手机号", index = 10)
+    @ExcelProperty(value = "默认手机号", index = 8)
     @FieldValid(fieldName = "默认手机号",maxLength = 64)
     private String mobile;
     /**
      * 店铺/平台名称
      */
-    @ExcelProperty(value = "店铺/平台名称", index = 11)
+    @ExcelProperty(value = "店铺/平台名称", index = 9)
     @FieldValid(fieldName = "店铺/平台名称",maxLength = 64)
     private String shopName;
     @ExcelIgnore
@@ -119,7 +119,7 @@ public class ImportLogisticsThirdChannelRefExcelDTO implements Serializable {
     /**
      * 店铺/平台手机号码
      */
-    @ExcelProperty(value = "店铺/平台手机号码", index = 12)
+    @ExcelProperty(value = "店铺/平台手机号码", index = 10)
     @FieldValid(fieldName = "店铺/平台手机号码",maxLength = 64)
     private String shopPhone;
 
