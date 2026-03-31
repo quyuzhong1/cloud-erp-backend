@@ -426,7 +426,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list = this.lambdaQuery().orderByAsc(LogisticsChannelEntity::getDisabled).list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
         Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+        return resultList;
+    }
 
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listWithAll() {
+        List<BaseDropDownDTO.DisabledDTO> resultList = new ArrayList<>();
+        resultList.add(new BaseDropDownDTO.DisabledDTO("all", "全部", false));
+        resultList.addAll(listAll());
         return resultList;
     }
 
