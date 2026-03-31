@@ -2363,6 +2363,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
         }
 
+        //当检验结果为不合格时，批次批次合格数量不可编辑，默认等于0
+        if (Objects.equals(QcResultEnum.NON_CONFORMITY.getCode(),qcInfo.getQcResult())) {
+            qcInfo.setLotQualifiedQty(0);
+        } else {
+            //当检验结果为合格时，批次合格数量为可编辑，默认等于总数量-检验不良量
+            qcInfo.setLotQualifiedQty(qcInfo.getTotalQty() - qcInfo.getQcBadQty());
+        }
     }
 
     private List<QcInfoDTO.QcDailyReportDTO> fillQcDailyRptData(List<QcInfoDTO.DailyListDTO> dataList) {

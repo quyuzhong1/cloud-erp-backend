@@ -152,8 +152,9 @@ public class QcResultDTO {
         /**
          * 批次合格量
          */
-        @NotBlank(message = "批次合格量不允许为空")
-        private String  lotQualifiedQty;
+        @NotNull(message = "批次合格量不允许为空")
+        @Min(value = 0,message = "批次合格量最小为0")
+        private Integer  lotQualifiedQty;
     }
 
 
