@@ -327,8 +327,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //不良信息
             qcDefectService.add(billId,dto.getQcDefectList());
             //质检标准
-            if (Objects.nonNull(dto.getQcStandardAddDTO())) {
-                qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
+            if (Objects.nonNull(dto.getQcStandardView())) {
+                qcSamplingPlanRefService.add(billId,dto.getQcStandardView());
             }
             //操作日志
             if (Objects.isNull(qc)) {
@@ -422,6 +422,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //不良信息
         List<QcDefectDTO.ViewDTO> defectList = qcDefectService.getByMainId(id);
         view.setQcDefectList(defectList);
+
+        //质检标准
+        QcNoticeDTO.QcStandardView qcStandardView= qcSamplingPlanRefService.getByMainId(id,qcInfo.getQcTypeName());
+        view.setQcStandardView(qcStandardView);
         return view;
     }
 
@@ -612,7 +616,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //不良信息
             qcDefectService.add(billId,dto.getQcDefectList());
             //质检标准
-            qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
+            qcSamplingPlanRefService.add(billId,dto.getQcStandardView());
             //质检类型
             String qcType = qcInfo.getQcType();
             String b2bQc = QcTypeEnum.B2B_OUTSIDE_QC.getCode();
@@ -1016,7 +1020,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //不良信息
             qcDefectService.add(billId,dto.getQcDefectList());
             //质检标准
-            qcSamplingPlanRefService.add(billId,dto.getQcStandardAddDTO());
+            qcSamplingPlanRefService.add(billId,dto.getQcStandardView());
 
             //操作日志
             if (Objects.isNull(qc)) {

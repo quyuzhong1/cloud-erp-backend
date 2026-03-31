@@ -426,7 +426,10 @@ public class QcNoticeDTO implements Serializable {
 
         private List<QcNoticeDetailDTO.ViewDTO> detailList;
 
-
+        /**
+         * 质检标准
+         */
+        private QcStandardView qcStandardView;
     }
 
     /**

@@ -129,11 +129,13 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
             this.removeByIds(deleteIds);
         }
+        //数据校验
+        checkSourceQty(qcApplicationDetailList,qcApplicationEntity);
 
         // 数据处理
         handleData(qcApplicationDetailList,qcApplicationEntity);
         log.info("编辑 开始修改质检申请单明细单数据，id：【{}】", qcApplicationEntity.getId());
-        boolean save = super.updateBatchById(qcApplicationDetailList);
+        boolean save = super.saveOrUpdateBatch(qcApplicationDetailList);
         if(!save) {
             throw new ServiceException("质检申请单明细单保存失败");
         }
