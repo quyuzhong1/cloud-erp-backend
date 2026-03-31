@@ -59,6 +59,7 @@ public class BasicQueryLogisticsProviderServiceImpl extends SuperServiceImpl<Bas
             return Lists.newArrayList();
         }
         List<BasicQueryLogisticsProviderEntity> list = this.lambdaQuery()
+                .eq(BasicQueryLogisticsProviderEntity::getTrackPlatformType,paramDTO.getTrackPlatformType())
                 .like(StrUtil.isNotBlank(paramDTO.getLogisticsNameCn()), BasicQueryLogisticsProviderEntity::getLogisticsNameCn, paramDTO.getLogisticsNameCn())
                 .orderByDesc(BasicQueryLogisticsProviderEntity::getCreateTime)
                 .list();
