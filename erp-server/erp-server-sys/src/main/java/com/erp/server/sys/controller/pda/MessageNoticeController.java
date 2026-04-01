@@ -49,7 +49,7 @@ public class MessageNoticeController {
                     String eventData = message.getDataJson().toString();
                     emitter.send(eventData);
                     log.warn("Data sent successfully: {}", eventData);
-                    Thread.sleep(30000);
+                    Thread.sleep(5000);
                     emitter.complete();
                 }
             } catch (Exception e) {
