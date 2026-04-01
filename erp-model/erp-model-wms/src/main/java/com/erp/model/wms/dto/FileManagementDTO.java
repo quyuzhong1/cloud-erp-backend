@@ -372,7 +372,7 @@ public class FileManagementDTO implements Serializable {
         /**
          * 上传日期
          */
-        private String createTime;
+        private LocalDateTime createTime;
         /**
          * 文件大小
          */
