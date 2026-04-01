@@ -71,10 +71,6 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 运单号
      */
     private List<String> transportNoList;
-    /**
-     * 发货时间（用于控制哪些发货的单据才允许注册轨迹查询）
-     */
-    private LocalDateTime deliveryTime;
 
     /**
      * 销售平台
