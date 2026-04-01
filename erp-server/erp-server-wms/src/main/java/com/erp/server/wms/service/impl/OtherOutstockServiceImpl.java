@@ -40,6 +40,7 @@ import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -1485,6 +1486,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if(mappingList.isEmpty()){
             return;
         }
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            log.warn("采购退货单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getWarehouseId());
+            return;//存在库存同步的配置则不再推送旺店通
+        }
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>();
         for (OtherOutstockDetailEntity detailEntity : detailList) {
@@ -1511,6 +1517,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
         if(mappingList.isEmpty()){
             return;
+        }
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            log.warn("采购退货单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getWarehouseId());
+            return;//存在库存同步的配置则不再推送旺店通
         }
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
