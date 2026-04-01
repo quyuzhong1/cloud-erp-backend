@@ -47,9 +47,10 @@ public class MessageNoticeController {
                             .last(" limit 1 ")
                             .one();
                     String eventData = message.getDataJson().toString();
-                    log.warn("eventData = {}",eventData);
                     emitter.send(eventData);
-                    Thread.sleep(5000);
+                    log.warn("Data sent successfully: {}", eventData);
+                    Thread.sleep(30000);
+                    emitter.complete();
                 }
             } catch (Exception e) {
                 emitter.completeWithError(e);
