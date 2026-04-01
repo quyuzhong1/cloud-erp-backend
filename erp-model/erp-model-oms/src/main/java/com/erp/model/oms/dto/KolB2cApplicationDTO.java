@@ -349,6 +349,12 @@ public class KolB2cApplicationDTO implements Serializable {
         private String approveStatusName;
 
         /**
+         * 创建状态
+         */
+        private String billStatus;
+        private String billStatusName;
+
+        /**
         * 审批时间
         */
         private LocalDateTime approveTime;

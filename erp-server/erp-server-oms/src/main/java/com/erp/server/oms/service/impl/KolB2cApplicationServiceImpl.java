@@ -159,7 +159,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KOLC);
         kolB2cApplicationEntity.setCode(code);
-        kolB2cApplicationEntity.setBillStatus(KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
+        kolB2cApplicationEntity.setBillStatus(KolB2cApplicationDocumentStatusEnum.WAIT.getCode());
         boolean save = super.save(kolB2cApplicationEntity);
         if(!save) {
             throw new ServiceException("B2C寄样申请单保存失败");
@@ -913,6 +913,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
                 }
             }
+            updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1107,11 +1108,17 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String, String> currencyMap = dictCurrencyEntities.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName));
 
         List<KolB2cApplicationDetailDTO.UpdateDTO> detailList = data.getDetailList();
-        List<String> skuIds = detailList.stream().map(KolB2cApplicationDetailDTO.UpdateDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+        List<String> skuIds = detailList.stream()
+                .map(KolB2cApplicationDetailDTO.UpdateDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuList = CollUtil.isEmpty(skuIds) ? Collections.emptyList() : plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
 
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setBillStatus(KolB2cApplicationDocumentStatusEnum.normalize(data.getBillStatus()));
+        data.setBillStatusName(KolB2cApplicationDocumentStatusEnum.getName(data.getBillStatus()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         String sampleTypeName = map.get(data.getSampleType());
         if(StringUtils.isNotBlank(sampleTypeName)){
@@ -1124,7 +1131,11 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         // 属性赋值
         for(KolB2cApplicationDetailDTO.UpdateDTO detailData : detailList) {
-            detailData.setProductName(skuMap.get(detailData.getSkuId()));
+            SkuVO skuVO = skuMap.get(detailData.getSkuId());
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                detailData.setProductName(skuVO.getSkuName());
+                detailData.setSpuNo(skuVO.getSpuNo());
+            }
 
             if(StringUtils.isNotBlank(detailData.getProjectTag())){
                 String projectTagName = Arrays.stream(detailData.getProjectTag().split(",")).map(map::get).collect(Collectors.joining(","));
@@ -1217,6 +1228,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .set(KolB2cApplicationEntity::getCancelTime, now)
                 .set(KolB2cApplicationEntity::getCancelUserId, userInfo.getUid())
                 .set(KolB2cApplicationEntity::getCancelUserName, userInfo.getUserName())
+                .update(new KolB2cApplicationEntity());
+    }
+
+    private void updateBillStatus(String id, String billStatus) {
+        lambdaUpdate().eq(KolB2cApplicationEntity::getId, id)
+                .set(KolB2cApplicationEntity::getBillStatus, billStatus)
                 .update(new KolB2cApplicationEntity());
     }
 
