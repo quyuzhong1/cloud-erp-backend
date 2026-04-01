@@ -447,7 +447,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             submitCheckQty(detailEntityList,allocationEntity);
 
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,transferIdList);
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,Collections.emptyList());
 
         } else if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(allocationEntity.getType())) {
             //调拨分货
@@ -463,7 +463,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             List<String> transferIdList = generateDirectTransferInfo(allocationEntity, detailEntityList, warehouseMap);
 
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, transferIdList);
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, Collections.emptyList());
         } else {
             //取消分货
             submitCheckQty(detailEntityList,allocationEntity);
