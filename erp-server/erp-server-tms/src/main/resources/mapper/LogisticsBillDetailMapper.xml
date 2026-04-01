@@ -222,6 +222,6 @@
           <if test="query.salesPlatform != null and query.salesPlatform != ''">
               and lb.sales_platform = #{query.salesPlatform}
           </if>
-            AND lb.delivery_time >=best_match.cfgTime
+            AND lb.delivery_time &gt;= best_match.cfgTime
     </select>
 </mapper>
