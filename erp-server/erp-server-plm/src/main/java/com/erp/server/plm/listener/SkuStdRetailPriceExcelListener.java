@@ -92,7 +92,7 @@ public class SkuStdRetailPriceExcelListener extends AnalysisEventListener<SkuStd
 			BigDecimal vatRate = new BigDecimal(excelDTO.getVatRate());
 			addDto.setVatRate(vatRate);
 			addDto.setStdRetailPrice(stdRetailPriceVat.divide(BigDecimal.ONE.add(vatRate) , 4 , RoundingMode.HALF_UP));
-			serviceBean.batchAdd(Arrays.asList(addDto), false);
+			serviceBean.batchAdd(Arrays.asList(addDto), false, false);
         }
     }
 

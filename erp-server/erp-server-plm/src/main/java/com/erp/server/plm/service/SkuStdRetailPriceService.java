@@ -33,7 +33,7 @@ public interface SkuStdRetailPriceService extends SuperService<SkuStdRetailPrice
     */
     BaseResultDTO.AddDTO add(SkuStdRetailPriceDTO.AddDTO dto);
     
-    List<BaseResultDTO.AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList , boolean isValidateCNY);
+    List<BaseResultDTO.AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList , boolean isValidateCNY, boolean checkAdd);
 
     /**
     * 修改
