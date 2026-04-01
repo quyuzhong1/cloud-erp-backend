@@ -112,7 +112,7 @@ public class SkuStdRetailPriceController extends BaseController {
     @PostMapping("/batchAdd")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "sku标准零售价表批量新增：skuId={skuId}", keyIdName = "skuId")
     public ApiResult<List<BaseResultDTO.AddDTO>> batchAdd(@RequestBody @Validated List<SkuStdRetailPriceDTO.AddDTO> dtoList) {
-        return success(skuStdRetailPriceService.batchAdd(dtoList , true));
+        return success(skuStdRetailPriceService.batchAdd(dtoList , true, true));
     }
     
     /**
@@ -195,7 +195,7 @@ public class SkuStdRetailPriceController extends BaseController {
         serviceClass = SkuStdRetailPriceService.class,
         keyIdName = "id")
     public ApiResult<Boolean> batchUpdate(@RequestBody @Validated List<SkuStdRetailPriceDTO.UpdateDTO> dtoList) {
-    	skuStdRetailPriceService.batchAdd(BeanUtil.copyToList(dtoList, SkuStdRetailPriceDTO.AddDTO.class) , true);
+    	skuStdRetailPriceService.batchAdd(BeanUtil.copyToList(dtoList, SkuStdRetailPriceDTO.AddDTO.class) , true, false);
     	return success(true);
     }
 
@@ -222,7 +222,7 @@ public class SkuStdRetailPriceController extends BaseController {
     		}
     		List<AddDTO> addList = BeanUtil.copyToList(listByIds, SkuStdRetailPriceDTO.AddDTO.class);
     		addList.forEach(a -> a.setIsDeleted(true));
-			skuStdRetailPriceService.batchAdd(addList , true);
+			skuStdRetailPriceService.batchAdd(addList , true, false);
     	}
         return success(true);
     }

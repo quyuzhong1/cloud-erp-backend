@@ -38,8 +38,8 @@
 		SELECT
 		CASE WHEN G.ID IS NULL THEN
 					T.ID ELSE G.ID 
-					END ID as id,
-				T.ID sku_id as skuId,
+					END ID,
+				T.ID as skuId,
 				T.sku_no as skuNo,
 				T.NAME as name,
 				T.status,
