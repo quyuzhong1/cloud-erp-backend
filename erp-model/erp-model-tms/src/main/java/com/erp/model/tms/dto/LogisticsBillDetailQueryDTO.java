@@ -71,4 +71,9 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 运单号
      */
     private List<String> transportNoList;
+
+    /**
+     * 销售平台
+     */
+    private String salesPlatform;
 }

@@ -1,7 +1,10 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -9,6 +12,9 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.LogisticsTransportTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -16,11 +22,19 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefEntity;
 import com.erp.server.tms.query.LogisticsThirdChannelRefQueryHandler;
+import com.erp.server.tms.service.LogisticsBaseService;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsThirdChannelRefService;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +42,12 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 物流-第三方渠道关系表
@@ -45,6 +63,10 @@ public class LogisticsThirdChannelRefController extends BaseController {
 
     @Resource
     private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
+    @Resource
+    private LogisticsBaseService logisticsBaseService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     /**
     * 新增
