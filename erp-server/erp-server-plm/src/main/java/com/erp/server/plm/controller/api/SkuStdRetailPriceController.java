@@ -78,7 +78,7 @@ public class SkuStdRetailPriceController extends BaseController {
      @DataPermission(operationType = DataAttributeEnum.LIST,
              tableField = "create_user_id",
              menuCode = "plm:skuStdRetailPrice:paging",
-             tableAlias = ""
+             tableAlias = "g"
      )
      public ApiResult<List<SkuStdRetailPriceDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(skuStdRetailPriceService.tabList(dto));
@@ -95,7 +95,7 @@ public class SkuStdRetailPriceController extends BaseController {
      @DataPermission(operationType = DataAttributeEnum.LIST,
              tableField = "create_user_id",
              menuCode = "plm:skuStdRetailPrice:paging",
-             tableAlias = ""
+             tableAlias = "g"
      )
      @WebAdvanceQuery(handler = SkuStdRetailPriceQueryHandler.class)
      public ApiResult<PagingVO<SkuStdRetailPriceDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SkuStdRetailPriceDTO.PagingParamDTO> dto) {

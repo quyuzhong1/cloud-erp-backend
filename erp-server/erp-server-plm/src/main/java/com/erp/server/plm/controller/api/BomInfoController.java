@@ -495,7 +495,7 @@ public class BomInfoController extends BaseController {
     }
 
     public static void main(String[] args) {
-        List<String> s = extractSkuNos("{SKU_NO1}{SKU_NO2}无零售价，会导致订单无法分摊");
+        List<String> s = extractSkuNos("{T060}无零售价，会导致订单无法分摊");
         System.out.println(s);
     }
 
