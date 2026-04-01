@@ -206,6 +206,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
     private static Mono<Void> handleSseRequest(ServerWebExchange exchange, GatewayFilterChain chain) {
         HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
         responseHeaders.setCacheControl(CacheControl.noCache());
+        responseHeaders.setContentType(MediaType.TEXT_EVENT_STREAM);
         return chain.filter(exchange);
     }
 }
