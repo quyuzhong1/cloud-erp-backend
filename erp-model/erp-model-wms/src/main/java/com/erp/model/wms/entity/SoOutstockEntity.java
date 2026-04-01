@@ -325,6 +325,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String dictPlatform;
 
     /**
+     * 报关类型
+     */
+    @TableField("declaration_type")
+    private String declarationType;
+
+    /**
      * 数据来源系统
      */
     @TableField("source_system")
