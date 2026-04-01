@@ -2,6 +2,7 @@ package com.erp.server.sys.controller.pda;
 
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.server.sys.service.MessageService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import java.util.concurrent.Executors;
  * @Description:
  **/
 
+@Slf4j
 @RestController
 @RequestMapping("/messageNotice")
 public class MessageNoticeController {
@@ -45,6 +47,7 @@ public class MessageNoticeController {
                             .last(" limit 1 ")
                             .one();
                     String eventData = message.getDataJson().toString();
+                    log.debug("eventData = {}",eventData);
                     emitter.send(eventData);
                     Thread.sleep(1000);
                 }
