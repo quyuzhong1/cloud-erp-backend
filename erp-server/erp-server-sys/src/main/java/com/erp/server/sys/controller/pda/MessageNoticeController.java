@@ -3,6 +3,7 @@ package com.erp.server.sys.controller.pda;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.server.sys.service.MessageService;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +30,7 @@ public class MessageNoticeController {
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
+    @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseBodyEmitter streamEvents() {
         ResponseBodyEmitter emitter = new ResponseBodyEmitter(Long.MAX_VALUE);
@@ -43,7 +45,6 @@ public class MessageNoticeController {
                             .last(" limit 1 ")
                             .one();
                     String eventData = message.getDataJson().toString();
-
                     emitter.send(eventData);
                     Thread.sleep(1000);
                 }
