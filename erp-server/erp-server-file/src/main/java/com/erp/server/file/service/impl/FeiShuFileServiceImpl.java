@@ -2,6 +2,7 @@ package com.erp.server.file.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.file.dto.FileDTO;
@@ -27,6 +28,8 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author zdy
@@ -39,7 +42,8 @@ import java.util.Map;
 @Service
 public class FeiShuFileServiceImpl implements FeiShuFileService {
 
-
+    private static final String URL_REGEX = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$";
+    private static final Pattern pattern = Pattern.compile(URL_REGEX);
     @Resource
     private FileRegistry fileRegistry;
     @Value("${third.fs.downloadClientId}")
@@ -64,7 +68,10 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
     @Override
     public SysCommonDTO.AttachmentDTO getFeiShuFile(FileDTO.UploadDTO uploadDTO) throws Exception {
         String fileUrl = uploadDTO.getFileUrl();
-
+        //校验url是否正确
+        if (!isValidURL(fileUrl)) {
+            throw new ServiceException(ApiError.FILE_URL_INVALID);
+        }
         // 解析URL
         String domain = fileUrl.split("/")[2];
         String fileType = fileUrl.split("/")[3];
@@ -97,7 +104,7 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
             return handler.handle(fileToken, sheet, view, client);
         }
 
-        throw new ServiceException("不支持的文件类型: " + fileType);
+        throw new ServiceException(ApiError.FILE_UNSUPPORTED_TYPE, fileType);
     }
 
     // 处理普通文件
@@ -332,5 +339,11 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         }
         log.warn("获取知识空间节点信息成功：{}", JSONUtil.toJsonStr(resp));
         return resp;
+    }
+
+    public static boolean isValidURL(String url) {
+        if (url == null) return false;
+        Matcher matcher = pattern.matcher(url);
+        return matcher.matches();
     }
 }
