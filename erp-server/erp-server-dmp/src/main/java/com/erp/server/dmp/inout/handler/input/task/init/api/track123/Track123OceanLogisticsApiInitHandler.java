@@ -85,7 +85,6 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 .registerStatus(1)
                 .trackEnable(true)
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
-                .deliveryTime(deliveryLimitTime)//2026-03-01之后
                 .build();
         ResponseData trackData = getTrackData(query, cfgAppClient);
         if (ObjectUtil.isEmpty(trackData)) {
