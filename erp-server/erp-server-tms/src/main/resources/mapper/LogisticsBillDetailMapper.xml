@@ -154,7 +154,7 @@
         </where>
     </select>
     <select id="listWaitingRegisterByConfig" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
-        SELECT DISTINCT
+        SELECT
             lbd.id,
             lbd.track_no,
             lbd.platform_order_no,
@@ -166,19 +166,19 @@
             lb.sales_platform AS salesPlatform,
             lb.shop_id AS shopId,
             lc.track_query_type AS trackQueryType,
-            best_match.cfgId
+            best_match.cfgId ,
+            best_match.cfgTime,
+            lb.delivery_time
         FROM logistics_bill_detail lbd
         INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
-        INNER JOIN logistics_third_channel_ref ltcr ON ltcr.platform_type = #{platformType}
-            AND ltcr.disabled = false
-            AND ltcr.is_deleted = false
         LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
-        LEFT JOIN LATERAL (
-        SELECT ltcr.id AS cfgId
+        INNER JOIN LATERAL (
+        SELECT ltcr.id AS cfgId,ltcr.create_time as cfgTime
         FROM logistics_third_channel_ref ltcr
         WHERE  ltcr.disabled = false
         AND ltcr.is_deleted = false
-          AND ltcr.dict_platform = lb.sales_platform
+        AND ltcr.platform_type = #{platformType}
+        AND ltcr.dict_platform = lb.sales_platform
         AND (
         (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id) OR
         (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all') OR
@@ -193,6 +193,9 @@
         LIMIT 1
         ) AS best_match ON TRUE
         WHERE lbd.is_deleted = false
+        <if test="query.trackTime != null">
+            and lbd.track_time > #{query.trackTime}
+        </if>
           <if test="query.registerStatus != null">
             and lbd.register_status = #{query.registerStatus}
           </if>
@@ -222,8 +225,6 @@
           <if test="query.salesPlatform != null and query.salesPlatform != ''">
               and lb.sales_platform = #{query.salesPlatform}
           </if>
-          <if test="query.deliveryTime != null ">
-            AND lb.delivery_time &gt;= #{query.deliveryTime}
-          </if>
+            AND lb.delivery_time &gt;= best_match.cfgTime
     </select>
 </mapper>
