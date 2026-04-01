@@ -323,7 +323,7 @@ public class FileManagementDTO implements Serializable {
         /**
          * 文件链接
          */
-        @NotBlank(message = "附件上传或飞书文档链接上传二选一，飞书文档链接必须先下载再保存")
+        @NotBlank(message = "文件上传/下载后再保存")
         @Size(max = 255, message = "文件链接最大长度不能超过255位")
         private String attachUrl;
 
