@@ -1263,23 +1263,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             warehouseIdSet.add(detail.getInWarehouseId());
             warehouseIdSet.add(detail.getOutWarehouseId());
         }
-        ThirdWarehouseDTO.QueryMapParamDTO queryMapParamDTO = ThirdWarehouseDTO.QueryMapParamDTO.builder()
-                .sysType(PlatformDictEnum.WDT.getCode())
-                .category(ThirdSysTypeEnum.WAREHOUSE.getCode())
-                .inventorySyncMode(InventorySyncModeEnum.INVENTORY.getCode())
-                .build();
-        List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOS = dmpThirdMappingFeign.listQueryMapping(queryMapParamDTO);
-        if (CollUtil.isNotEmpty(queryMapDTOS) && queryMapDTOS.stream().anyMatch(e -> warehouseIdSet.contains(e.getSysId()))) {
-            log.warn("直接调拨单同步旺店通时存在库存同步配置，调拨单号：{}", entity.getCode());
-            log.warn("直接调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), warehouseIdSet);
-            return;//存在库存同步的配置则不再推送旺店通
-        }
         //查询三方仓库映射
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
         if(mappingList.isEmpty()){
             return;
         }
-
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            log.warn("调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), String.join(",", warehouseIdSet));
+            return;//存在库存同步的配置则不再推送旺店通
+        }
         //根据来源查询parentId
         String parentId = "";
         if (CharSequenceUtil.equals(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),entity.getSourceType())) {
@@ -1344,6 +1337,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
         if(mappingList.isEmpty()){
             return;
+        }
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            log.warn("调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), String.join(",", warehouseIdSet));
+            return;//存在库存同步的配置则不再推送旺店通
         }
         //每个调入仓转换为一个其他出库单
         Map<String, List<TransferInfoDetailEntity>> inWarehouseCollect = transferDetailList.stream().collect(Collectors.groupingBy(item -> item.getInWarehouseId()));
