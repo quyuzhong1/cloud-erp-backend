@@ -76,6 +76,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
         }
 
         long current = 1;
+        LocalDateTime deliveryLimitTime = LocalDateTime.of(2026, 3, 1, 0, 0, 0);
         //根据跟踪单获取跟踪轨迹
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
@@ -84,6 +85,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 .registerStatus(1)
                 .trackEnable(true)
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
+                .deliveryTime(deliveryLimitTime)//2026-03-01之后
                 .build();
         ResponseData trackData = getTrackData(query, cfgAppClient);
         if (ObjectUtil.isEmpty(trackData)) {
