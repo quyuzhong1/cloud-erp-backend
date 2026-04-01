@@ -728,7 +728,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     skus.add(s.trim());
             }
 
-            Map<String, QcStandardEntity> existingMap = lambdaQuery().in(QcStandardEntity::getSkuId, skus)
+            Map<String, QcStandardEntity> existingMap = lambdaQuery().in(QcStandardEntity::getSkuNo, skus)
                     .eq(QcStandardEntity::getIsDeleted, false).list()
                     .stream()
                     .collect(Collectors.toMap(QcStandardEntity::getSkuId, Function.identity(), (o1, o2) -> o1));
@@ -787,7 +787,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
         } catch (Exception e) {
             log.error("质检报告导入失败", e);
-            return BatchResultDTO.fail(skuNosStr, skuNosStr, "解析报告失败");
+            return BatchResultDTO.fail(skuNosStr, skuNosStr, "解析报告失败：" + e.getMessage());
         }
 
         return BatchResultDTO.success(skuNosStr, skuNosStr, "质检标准新增或更新成功");
@@ -896,7 +896,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     .stream()
                     .collect(Collectors.toMap(QcStandardEntity::getSkuId, Function.identity(), (o1, o2) -> o1));
 
-            QcStandardServiceImpl bean = ApplicationContextUtils.getBean(QcStandardServiceImpl.class);
             List<ProductDetailEntity> skuVOList = plmTaskFeign.listBySkuNos(skus);
 
             for (ProductDetailEntity productDetailEntity : skuVOList) {
@@ -909,40 +908,41 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 addDTO.setDetailList(detailList);
                 if (CollectionUtils.isNotEmpty(attachmentList)) {
                     addDTO.setWmsAttachmentEntities(attachmentList);
+                    List<QcStandardDTO.AttachDTO> attachList = new ArrayList<>();
+                    List<WmsAttachmentEntity> productPhysical = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode())).collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(productPhysical)){
+                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
+                        attachDTO.setType(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode());
+                        List<String> attachmentNameList = new ArrayList<>();
+                        List<String> attachmentUrlList = new ArrayList<>();
+
+                        for (WmsAttachmentEntity entity : productPhysical) {
+                            attachmentNameList.add(entity.getAttachName());
+                            attachmentUrlList.add(entity.getAttachUrl());
+                        }
+                        attachList.add(attachDTO);
+                    }
+                    List<WmsAttachmentEntity> packagingAccessories = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode())).collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(packagingAccessories)){
+                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
+                        attachDTO.setType(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode());
+                        List<String> attachmentNameList = new ArrayList<>();
+                        List<String> attachmentUrlList = new ArrayList<>();
+
+                        for (WmsAttachmentEntity entity : packagingAccessories) {
+                            attachmentNameList.add(entity.getAttachName());
+                            attachmentUrlList.add(entity.getAttachUrl());
+                        }
+                        attachList.add(attachDTO);
+                    }
+                    addDTO.setAttachmentList(attachList);
                 }
                 addDTO.setIsImport(true);
 
                 QcStandardEntity existing = existingMap.get(skuId);
                 if (existing != null) {
-//                    // 1. 详情更新 (基于名称匹配)
-//                    updateDetailsForImport(existing.getId(), detailList);
-//
-//                    // 2. 图片更新 (先删后增)
-//                    // 获取旧附件
-//                    List<WmsAttachmentDTO.UpdateDTO> oldAttachments = wmsAttachmentService
-//                            .getByBusinessIds(Collections.singletonList(existing.getId()));
-//                    if (CollectionUtils.isNotEmpty(oldAttachments)) {
-//                        List<String> oldUrls = oldAttachments.stream()
-//                                .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
-//                                .collect(Collectors.toList());
-//                        wmsAttachmentService.deleteByUrlList(oldUrls);
-//                    }
-//                    if (CollectionUtils.isNotEmpty(attachmentList)) {
-//                        // 插入新附件
-//                        for (WmsAttachmentEntity att : attachmentList) {
-//                            att.setBusinessId(existing.getId());
-//                            att.setId(IdWorker.getIdStr());
-//                        }
-//                        wmsAttachmentService.saveBatch(attachmentList);
-//                    }
-//
-//                    // 3. 记录主表日志
-//                    String msg = StrUtil.format("用户【{}】通过导入更新了质检标准，SKU编号【{}】",
-//                            UserContext.getDefaultLoginUser().getUserName(), existing.getSkuNo());
-//                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_STANDARD.getCode(), existing.getId(), "导入更新");
                     throw new ServiceException(ApiError.QC_STANDARD_SKU_EXISTS);
                 } else {
-//                    bean.add(addDTO);
                     return addDTO;
                 }
             }
