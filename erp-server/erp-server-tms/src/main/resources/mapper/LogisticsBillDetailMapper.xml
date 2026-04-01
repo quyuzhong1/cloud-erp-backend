@@ -193,6 +193,9 @@
         LIMIT 1
         ) AS best_match ON TRUE
         WHERE lbd.is_deleted = false
+        <if test="query.trackTime != null">
+            and lbd.track_time > #{query.trackTime}
+        </if>
           <if test="query.registerStatus != null">
             and lbd.register_status = #{query.registerStatus}
           </if>
