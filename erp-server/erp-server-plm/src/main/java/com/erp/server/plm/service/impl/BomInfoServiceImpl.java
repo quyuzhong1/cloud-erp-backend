@@ -377,7 +377,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isNotEmpty(bomSkuEntityList)){
             Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
                     .in(SkuStdRetailPriceEntity::getSkuId, bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toSet()))
-                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
+                    .gt(SkuStdRetailPriceEntity::getStdRetailPriceVat, BigDecimal.ZERO)
+                    .list()
                     .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
             Set<String> notHaveRetailSet = new HashSet<>();
             for(BomSkuEntity bomSkuEntity : bomSkuEntityList) {
@@ -562,7 +564,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isNotEmpty(skuList)) {
             skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
                     .in(SkuStdRetailPriceEntity::getSkuId, skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toSet()))
-                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
+                    .gt(SkuStdRetailPriceEntity::getStdRetailPriceVat, BigDecimal.ZERO)
+                    .list()
                     .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
         }
         for (BomPagingVO item : list) {
@@ -1217,7 +1221,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isNotEmpty(childList)){
             Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
                     .in(SkuStdRetailPriceEntity::getSkuId, childList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toSet()))
-                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY").list()
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
+                    .gt(SkuStdRetailPriceEntity::getStdRetailPriceVat, BigDecimal.ZERO)
+                    .list()
                     .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
             Set<String> notHaveRetailSet = new HashSet<>();
             for(BomChildrenSkuDTO bomSkuEntity : childList) {
