@@ -46,6 +46,7 @@ public class NlpAddressParser implements AddressParser {
         NameExtractor.ExtractedName extractedName = nameExtractor.extract(textWithoutPhone, phone.getStart());
         List<String> locationHints = extractLocationHints(textWithoutPhone);
         RegionMatchResult region = regionMatcher.match(locationHints, textWithoutPhone);
+        extractedName = sanitizeExtractedName(extractedName, region);
 
         String detailAddress = buildDetailAddress(textWithoutPhone, region, extractedName);
 
@@ -62,6 +63,24 @@ public class NlpAddressParser implements AddressParser {
         result.setZipCode(StringUtils.trimToNull(zipCode));
         result.setConfidence(calculateConfidence(result));
         return result;
+    }
+
+    private NameExtractor.ExtractedName sanitizeExtractedName(NameExtractor.ExtractedName extractedName, RegionMatchResult region) {
+        if (extractedName == null || !extractedName.present()) {
+            return NameExtractor.ExtractedName.empty();
+        }
+        String remain = extractedName.getName();
+        remain = TextCleaner.removeToken(remain, region.getProvince());
+        remain = TextCleaner.removeToken(remain, region.getCity());
+        remain = TextCleaner.removeToken(remain, region.getDistrict());
+        remain = TextCleaner.removeToken(remain, region.getMatchedProvinceToken());
+        remain = TextCleaner.removeToken(remain, region.getMatchedCityToken());
+        remain = TextCleaner.removeToken(remain, region.getMatchedDistrictToken());
+        remain = StringUtils.deleteWhitespace(TextCleaner.normalize(remain));
+        if (StringUtils.isBlank(remain)) {
+            return NameExtractor.ExtractedName.empty();
+        }
+        return extractedName;
     }
 
     private String removeZip(String text, String zipCode) {
