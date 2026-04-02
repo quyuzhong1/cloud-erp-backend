@@ -1666,7 +1666,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Override
     public List<QcNoticeEntity> listBySourceId(String sourceId) {
-        return lambdaQuery().eq(QcNoticeEntity::getId,sourceId).list();
+        return lambdaQuery().eq(QcNoticeEntity::getSourceId,sourceId).list();
     }
 
 

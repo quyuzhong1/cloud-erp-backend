@@ -437,14 +437,6 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             return;
         }
 
-        //添加操作日志
-        List<QcApplicationDetailEntity> addList = qcApplicationDetailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        //新增不需要添加新增SKU的日志
-        if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(qcApplicationEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "编辑操作");
-        }
-
         //sku信息
         List<String> skuIdList = qcApplicationDetailList.stream().map(QcApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
