@@ -35,8 +35,10 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
     /**
      * 数据集json
      */
-    @TableField(value = "data_json", typeHandler= JacksonTypeHandler.class)
-    private LinkedHashMap<String, Object> dataJson;
+//    @TableField(value = "data_json", typeHandler= JacksonTypeHandler.class)
+//    private LinkedHashMap<String, Object> dataJson;
+      @TableField(value = "data_json")
+      private String dataJson;
 
     /**
     * 备注
