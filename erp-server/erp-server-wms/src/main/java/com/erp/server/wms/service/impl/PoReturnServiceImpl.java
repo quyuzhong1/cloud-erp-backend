@@ -1461,6 +1461,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if(mappingList.isEmpty()){
             return;
         }
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            log.warn("采购退货单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getReturnWarehouseId());
+            return;//存在库存同步的配置则不再推送旺店通
+        }
         List<PoReturnDetailEntity> detailList = poReturnDetailService.getDetailByMainId(entity.getId());
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);

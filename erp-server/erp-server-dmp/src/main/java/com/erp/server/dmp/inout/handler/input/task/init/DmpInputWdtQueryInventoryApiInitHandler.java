@@ -97,8 +97,8 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
         String endTime = dmpInputTaskEntity.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         StockAPI stockAPI = clientService.get(StockAPI.class);
         int pageSize = 1000;
-        String batchNo = IdUtil.getSnowflake().nextIdStr();
         for (ThirdWarehouseDTO.QueryMapDTO queryMapDTO : queryMapDTOList) {
+            String batchNo = IdUtil.getSnowflake().nextIdStr();
             if (CharSequenceUtil.isBlank(queryMapDTO.getThirdCode())) {
                 continue;
             }

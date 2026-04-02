@@ -89,8 +89,12 @@ public class DmpOutputWdtQueryInventoryHandler extends DmpOutputWdtBaseTaskHandl
             if (CollUtil.isEmpty(detailList)) {
                 return result;
             }
-            CreateOtherStockinRequest createOtherStockinRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockinRequest(dmpInventoryEntity, detailList);
-            result.put(InventoryOrderTypeEnum.IN_STOCK.getCode() + dmpInventoryEntity.getBatchNo(), createOtherStockinRequest);
+            //根据仓库ID分组
+            Map<String, List<DmpWdtWarehouseInventoryRecordEntity>> groupByWarehouseId = detailList.stream().collect(Collectors.groupingBy(DmpWdtWarehouseInventoryRecordEntity::getThirdWarehouseCode));
+            for (String thirdWarehouseCode : groupByWarehouseId.keySet()) {
+                CreateOtherStockinRequest createOtherStockinRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockinRequest(dmpInventoryEntity, groupByWarehouseId.get(thirdWarehouseCode));
+                result.put(InventoryOrderTypeEnum.IN_STOCK.getCode() + dmpInventoryEntity.getBatchNo() + thirdWarehouseCode, createOtherStockinRequest);
+            }
         }
         return result;
     }
@@ -104,8 +108,12 @@ public class DmpOutputWdtQueryInventoryHandler extends DmpOutputWdtBaseTaskHandl
             if (CollUtil.isEmpty(detailList)) {
                 return result;
             }
-            CreateOtherStockoutRequest createOtherStockOutRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockOutRequest(dmpInventoryEntity, detailList);
-            result.put(InventoryOrderTypeEnum.OUT_STOCK.getCode() + dmpInventoryEntity.getBatchNo(), createOtherStockOutRequest);
+            //根据仓库ID分组
+            Map<String, List<DmpWdtWarehouseInventoryRecordEntity>> groupByWarehouseId = detailList.stream().collect(Collectors.groupingBy(DmpWdtWarehouseInventoryRecordEntity::getThirdWarehouseCode));
+            for (String thirdWarehouseCode : groupByWarehouseId.keySet()) {
+                CreateOtherStockoutRequest createOtherStockOutRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockOutRequest(dmpInventoryEntity, groupByWarehouseId.get(thirdWarehouseCode));
+                result.put(InventoryOrderTypeEnum.OUT_STOCK.getCode() + dmpInventoryEntity.getBatchNo() + thirdWarehouseCode, createOtherStockOutRequest);
+            }
         }
         return result;
     }
