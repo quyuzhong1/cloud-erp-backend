@@ -908,6 +908,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                 addDTO.setDetailList(detailList);
                 if (CollectionUtils.isNotEmpty(attachmentList)) {
                     addDTO.setWmsAttachmentEntities(attachmentList);
+
                     List<QcStandardDTO.AttachDTO> attachList = new ArrayList<>();
                     List<WmsAttachmentEntity> productPhysical = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode())).collect(Collectors.toList());
                     if(CollectionUtils.isNotEmpty(productPhysical)){
@@ -920,6 +921,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                             attachmentNameList.add(entity.getAttachName());
                             attachmentUrlList.add(entity.getAttachUrl());
                         }
+                        attachDTO.setAttachmentNameList(attachmentNameList);
+                        attachDTO.setAttachmentUrlList(attachmentUrlList);
                         attachList.add(attachDTO);
                     }
                     List<WmsAttachmentEntity> packagingAccessories = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode())).collect(Collectors.toList());
@@ -933,6 +936,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                             attachmentNameList.add(entity.getAttachName());
                             attachmentUrlList.add(entity.getAttachUrl());
                         }
+                        attachDTO.setAttachmentNameList(attachmentNameList);
+                        attachDTO.setAttachmentUrlList(attachmentUrlList);
                         attachList.add(attachDTO);
                     }
                     addDTO.setAttachmentList(attachList);

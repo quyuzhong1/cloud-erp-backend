@@ -2,9 +2,10 @@ package com.erp.server.dmp.push.consumer.wangdian;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONArray;
+
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -99,9 +100,15 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
             log.error("WdtOtherInventoryStockConsumer handle, ext: {}, e:", ext, e);
             apiResult = ApiResult.error(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage());
         }
-        String batchNo = new cn.hutool.json.JSONObject(ext).getStr("outerNo");
-        String warehouseNo = new cn.hutool.json.JSONObject(ext).getStr("warehouseNo");
-        JSONArray goodsList = new cn.hutool.json.JSONObject(ext).getJSONArray("goodsList");
+        String requestStr = JSONUtil.toJsonStr(ext);
+        // 处理参数中存在null字符串的数据
+        requestStr = requestStr.replace("null", "");
+
+        JSONObject parseObject = JSON.parseObject(requestStr);
+        String batchNo = parseObject.getString("outerNo");
+
+        String warehouseNo = parseObject.getString("warehouseNo");
+        JSONArray goodsList = parseObject.getJSONArray("goodsList");
         List<String> skuNoList = null;
         if (CollUtil.isNotEmpty(goodsList)){
             skuNoList = goodsList.stream().map(item -> ((JSONObject) item).getString("specNo")).collect(Collectors.toList());
