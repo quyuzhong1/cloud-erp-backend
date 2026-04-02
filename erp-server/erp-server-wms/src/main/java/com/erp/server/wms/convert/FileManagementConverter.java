@@ -36,6 +36,7 @@ public interface FileManagementConverter {
     @Mapping(target = "attachUrl", source = "attachmentEntity.attachUrl")
     @Mapping(target = "attachSize", source = "attachmentEntity.attachSize")
     @Mapping(target = "attachName", source = "attachmentEntity.attachName")
+    @Mapping(target = "remark", source = "fileManagementEntity.remark")
     FileManagementDTO.ViewDTO fileManagementToViewDTO(FileManagementEntity fileManagementEntity, WmsAttachmentEntity attachmentEntity);
 
     @Mapping(target = "updateUserName", ignore = true)

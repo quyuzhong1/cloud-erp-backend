@@ -74,7 +74,7 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/supplier/list")
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listSupplierDropDown() {
-        List<Map<String, Object>> mapList = supplierService.listApproveSupplier();
+        List<Map<String, Object>> mapList = supplierService.listSupplierDropDown();
         if (CollectionUtils.isEmpty(mapList)) {
             return success(new ArrayList<>());
         }

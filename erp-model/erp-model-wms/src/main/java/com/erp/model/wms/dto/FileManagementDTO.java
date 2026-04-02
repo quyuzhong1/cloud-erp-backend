@@ -149,9 +149,9 @@ public class FileManagementDTO implements Serializable {
         private String remark;
 
         /**
-         * 上传日期
+         * 更新时间
          */
-        private LocalDateTime uploadTime;
+        private LocalDateTime updateTime;
 
         /**
          * 创建时间
@@ -252,6 +252,10 @@ public class FileManagementDTO implements Serializable {
          * 文件名称
          */
         private String attachName;
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
