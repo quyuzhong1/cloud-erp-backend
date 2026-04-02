@@ -66,10 +66,14 @@ public class MessageDTO implements Serializable {
          * 创建数据
          */
         public LocalDateTime createTime;
+//        /**
+//         * 参数json
+//         */
+//        private LinkedHashMap<String, Object> dataJson;
         /**
-         * 参数json
-         */
-        private LinkedHashMap<String, Object> dataJson;
+         //         * 参数json
+         //         */
+        private String dataJson;
     }
 
     /**

@@ -62,7 +62,7 @@ public class MessageNoticeController {
                     }
 
                     try {
-                        String eventData = message.getDataJson().toString();
+                        String eventData = message.getDataJson();
                         emitter.send(SseEmitter.event().data(eventData));
 
                         messageService.lambdaUpdate()

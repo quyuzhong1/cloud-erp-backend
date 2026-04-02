@@ -5,20 +5,15 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.sys.dto.MessageDTO;
-import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.sys.service.PdaVersionService;
 import com.common.core.controller.vo.ApiResult;
-
-import java.util.List;
 
 
 /**
@@ -67,7 +62,7 @@ public class PdaVersionController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "发版")
     @PostMapping(value = "/release")
-    public ApiResult release(@RequestBody PdaVersionDTO.AddDTO dto) {
+    public ApiResult release(@RequestBody PdaVersionDTO.AddDTO dto){
         Boolean flag = pdaVersionService.release(dto);
         return flag == true ? success() : failure();
     }

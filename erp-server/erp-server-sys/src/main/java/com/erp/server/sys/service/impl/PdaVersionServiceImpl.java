@@ -8,6 +8,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
@@ -18,9 +19,12 @@ import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.server.sys.mapper.PdaVersionMapper;
 import com.erp.server.sys.service.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -70,32 +74,41 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
     }
 
     @Override
-    public Boolean release(PdaVersionDTO.AddDTO dto) {
-        PdaVersionEntity entity = new PdaVersionEntity();
-        BeanMapper.copy(dto, entity);
-        boolean flag = this.save(entity);
-        if (flag) {
-            List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList(1);
-            MessageEntity messageEntity = new MessageEntity();
-            messageEntity.setType(MessageTypeEnum.SYS.getCode());
-            messageEntity.setRemark(dto.getRemark());
-            LinkedHashMap<String, Object> map = new LinkedHashMap();
-            map.put("version", dto.getPdaVersion());
-            map.put("remark", dto.getRemark());
-            messageEntity.setDataJson(map);
-            messageEntity.setApplication(dto.getType());
-            messageService.save(messageEntity);
-            List<MessageUserReadEntity> readEntityList = new ArrayList<>();
-            for (FindUserDTO findUserDTO : allUserList) {
-                MessageUserReadEntity readEntity = new MessageUserReadEntity();
-                readEntity.setMessageId(messageEntity.getId());
-                readEntity.setUserId(findUserDTO.getUserId());
-                readEntity.setIsRead(Boolean.FALSE);
-                readEntityList.add(readEntity);
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean release(PdaVersionDTO.AddDTO dto){
+        try{
+
+            PdaVersionEntity entity = new PdaVersionEntity();
+            BeanMapper.copy(dto, entity);
+            boolean flag = this.save(entity);
+            if (flag) {
+                List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList(1);
+                MessageEntity messageEntity = new MessageEntity();
+                messageEntity.setType(MessageTypeEnum.SYS.getCode());
+                messageEntity.setRemark(dto.getRemark());
+                LinkedHashMap<String, Object> map = new LinkedHashMap();
+                map.put("version", dto.getPdaVersion());
+                map.put("remark", dto.getRemark());
+                ObjectMapper objectMapper = new ObjectMapper();
+                String jsonString = objectMapper.writeValueAsString(map);
+                messageEntity.setDataJson(jsonString);
+                messageEntity.setDataJson(dto.getRemark());
+                messageEntity.setApplication(dto.getType());
+                messageService.save(messageEntity);
+                List<MessageUserReadEntity> readEntityList = new ArrayList<>();
+                for (FindUserDTO findUserDTO : allUserList) {
+                    MessageUserReadEntity readEntity = new MessageUserReadEntity();
+                    readEntity.setMessageId(messageEntity.getId());
+                    readEntity.setUserId(findUserDTO.getUserId());
+                    readEntity.setIsRead(Boolean.FALSE);
+                    readEntityList.add(readEntity);
+                }
+                messageUserReadService.saveBatch(readEntityList);
             }
-            messageUserReadService.saveBatch(readEntityList);
+            return flag;
+        }catch (Exception e){
+            throw new ServiceException("消息数据格式化失败",e);
         }
-        return flag;
     }
 
     @Override
