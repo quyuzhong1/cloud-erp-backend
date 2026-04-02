@@ -122,7 +122,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                             return true;
                         }
 
-                        String platformReturnOrRefundNo = StringUtils.defaultIfBlank(snapshot.buyerReturnNo, issueId);
+                        String platformReturnOrRefundNo = issueId;
                         String childOrderCode = StringUtils.defaultIfBlank(snapshot.orderId, parentOrderId);
                         String platformOrderCode = StringUtils.defaultIfBlank(parentOrderId, childOrderCode);
                         String buyerUserId = StringUtils.defaultIfBlank(
@@ -132,6 +132,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         String issueRemarkName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(snapshot.reasonEnglish, snapshot.reasonChinese);
                         String issueReason = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(snapshot.reasonChinese, snapshot.reasonEnglish);
                         v.put("sourceId", sourceId);
+                        v.put("sourcePlatform", "AliExpress");
                         v.put("buyerUserId", buyerUserId);
                         v.put("shopId", nextLevelId);
                         v.put("shopName", finalShopName);
@@ -158,7 +159,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         v.put("allAmount", snapshot.refundAmount);
                         v.put("amount", snapshot.refundAmount);
                         if (isRefundInfo) {
-                            v.put("status", "1");
+                            v.put("status", AliExpressIssueSolutionResolver.resolveRefundStatus(snapshot.reverseDetailStatus, snapshot.issueStatus));
                         } else {
                             String issueStatus = ObjectUtil.defaultIfNull(v.get("status"), "").toString();
                             v.put("status", "finish".equals(issueStatus) ? "4" : "1");
@@ -204,6 +205,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
         snapshot.buyerLoginId = ObjectUtil.defaultIfNull(issueDetail.get("buyer_login_id"), "").toString();
         snapshot.buyerReturnNo = ObjectUtil.defaultIfNull(issueDetail.get("buyer_return_no"), "").toString();
         snapshot.reverseDetailStatus = ObjectUtil.defaultIfNull(issueDetail.get("reverse_detail_status"), "").toString().toLowerCase();
+        snapshot.issueStatus = ObjectUtil.defaultIfNull(issueDetail.get("issue_status"), "").toString().toLowerCase();
         snapshot.reasonChinese = StringUtils.defaultIfBlank(
                 ObjectUtil.defaultIfNull(issueDetail.get("reason_chinese"), "").toString(),
                 AliExpressIssueSolutionResolver.getIssueContent(issueDetail));
@@ -229,6 +231,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
     private static class IssueDetailSnapshot {
         private String solutionType = "";
         private String reverseDetailStatus = "";
+        private String issueStatus = "";
         private boolean hasReturnSolution;
         private boolean hasRefundSolution;
         private String buyerLoginId = "";

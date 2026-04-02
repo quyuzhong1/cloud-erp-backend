@@ -49,6 +49,23 @@ public class AliExpressIssueSolutionResolverTest {
     }
 
     @Test
+    public void shouldTreatRefundRejectAsRefundEvenIfSellerCreatedReturnAndRefundSolution() {
+        Map<String, Object> issueDetail = new HashMap<>();
+        issueDetail.put("reverse_detail_status", "refund_reject");
+        issueDetail.put("buyer_solution_list",
+                solutionList(solution("refund", "44.44", "USD", true, "wait_seller_accept", "4009293259379837")));
+        issueDetail.put("seller_solution_list",
+                solutionList(solution("return_and_refund", "44.44", "USD", false, "reached", "4009266332479837")));
+
+        AliExpressIssueSolutionResolver.ResolvedIssueSolution resolved = AliExpressIssueSolutionResolver.resolve(issueDetail);
+
+        assertFalse(resolved.isMatchedReturn());
+        assertTrue(resolved.isMatchedRefund());
+        assertNotNull(resolved.getEffectiveSolution());
+        assertEquals(AliExpressIssueSolutionResolver.SOLUTION_REFUND, resolved.getEffectiveSolution().getSolutionType());
+    }
+
+    @Test
     public void shouldFallbackTrackingNumberToBuyerReturnNo() {
         Map<String, Object> issueDetail = new HashMap<>();
         issueDetail.put("buyer_return_no", "DPD123456");
@@ -65,6 +82,21 @@ public class AliExpressIssueSolutionResolverTest {
 
         assertEquals(longText, AliExpressIssueSolutionResolver.pickIssueText(longText));
         assertEquals(repeat('a', 255), AliExpressIssueSolutionResolver.pickIssueTextForVarchar(longText));
+    }
+
+    @Test
+    public void shouldRejectParagraphAsTrackingNumber() {
+        Map<String, Object> issueDetail = new HashMap<>();
+        issueDetail.put("buyer_return_no", "Я не буду повертати товар. Ви мені дали варіант лише повернення коштів.");
+
+        assertEquals("", AliExpressIssueSolutionResolver.getReturnTrackingNo(issueDetail));
+    }
+
+    @Test
+    public void shouldMapRefundStatusByReverseDetailStatus() {
+        assertEquals("1", AliExpressIssueSolutionResolver.resolveRefundStatus("refund_success", "finish"));
+        assertEquals("2", AliExpressIssueSolutionResolver.resolveRefundStatus("refund_reject", "finish"));
+        assertEquals("3", AliExpressIssueSolutionResolver.resolveRefundStatus("processing", "canceled_issue"));
     }
 
     private Map<String, Object> solutionList(Map<String, Object>... solutions) {
