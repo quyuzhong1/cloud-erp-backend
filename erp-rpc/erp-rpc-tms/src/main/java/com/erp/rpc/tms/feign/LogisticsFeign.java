@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -196,4 +197,11 @@ public interface LogisticsFeign {
 
     @GetMapping("/feign/logistics/getChannelByCodeAndOverseasWarehouseId")
     LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId);
+
+    /**
+     * @return
+     */
+    @PostMapping("/feign/logistics/updateTrack")
+    void updateTrack(@RequestBody LogisticsTrackDTO.Kuaidi100Detail dto);
+
 }

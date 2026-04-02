@@ -365,7 +365,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         }
 
         // 验证数据 & 数据赋值
-        if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode())) {
+        if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode()) || logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode())) {
             if (logisticsThirdChannelRefEntity.getIsPushMobile()) {
                 //手机号必填
                 detailList.stream().filter(detail -> StrUtil.isBlank(detail.getMobile())).forEach(detail -> {

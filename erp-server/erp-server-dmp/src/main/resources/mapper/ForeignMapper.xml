@@ -67,12 +67,15 @@
         lc.track_query_type AS trackQueryType,
         best_match.cfgId ,
         best_match.cfgTime,
+        best_match.thirdChannelName,
+        best_match.isPushMobile,
+        best_match.pushType
         lb.delivery_time
         FROM logistics_bill_detail lbd
         INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
         LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
         INNER JOIN LATERAL (
-        SELECT ltcr.id AS cfgId,ltcr.create_time as cfgTime
+        SELECT ltcr.id AS cfgId,ltcr.create_time as cfgTime,ltcr.third_channel_name as thirdChannelName ,ltcr.is_push_mobile as isPushMobile,ltcr.push_type as pushType
         FROM logistics_third_channel_ref ltcr
         WHERE  ltcr.disabled = false
         AND ltcr.is_deleted = false

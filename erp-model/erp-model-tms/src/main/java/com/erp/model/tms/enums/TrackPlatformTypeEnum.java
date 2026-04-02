@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 public enum TrackPlatformTypeEnum implements EnumMessage {
     TRACK123("TRACK123", "track123"),
     KUAIDI100("KUAIDI100", "快递100"),
-    TRACK17("TRACK17", "17track"),
     ;
 
     /**
