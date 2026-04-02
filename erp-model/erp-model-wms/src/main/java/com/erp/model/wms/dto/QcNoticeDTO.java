@@ -254,6 +254,11 @@ public class QcNoticeDTO implements Serializable {
         private String qcDetailStatusName;
 
         /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
+
+        /**
          * 质检时间
          */
         private LocalDateTime qcDate;
