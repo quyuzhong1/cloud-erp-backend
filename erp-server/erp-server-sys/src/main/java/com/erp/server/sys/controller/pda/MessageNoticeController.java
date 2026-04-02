@@ -8,11 +8,12 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
-
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @Author: wtr
@@ -34,31 +35,58 @@ public class MessageNoticeController {
 
     @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseBodyEmitter streamEvents() {
-        ResponseBodyEmitter emitter = new ResponseBodyEmitter(Long.MAX_VALUE);
+    public SseEmitter streamEvents() {
+        SseEmitter emitter = new SseEmitter(60_000L);
+        AtomicBoolean isComplete = new AtomicBoolean(false);
+
+        // 注册完成回调
+        emitter.onCompletion(() -> isComplete.set(true));
+        emitter.onTimeout(() -> {
+            isComplete.set(true);
+            log.info("SSE stream timeout");
+        });
 
         executor.execute(() -> {
             try {
-                int count = 0;
-                while (!Thread.currentThread().isInterrupted()) {
-                    count++;
+                while (!isComplete.get()) {  // 检查是否已完成
                     MessageEntity message = messageService.lambdaQuery()
-                            .select(MessageEntity::getDataJson)
-                            .last(" limit 1 ")
+                            .eq(MessageEntity::getIsSend, Boolean.FALSE)
+                            .last("limit 1")
                             .one();
-                    String eventData = message.getDataJson().toString();
-                    emitter.send(eventData);
-                    log.warn("Data sent successfully: {}", eventData);
-                    Thread.sleep(5000);
-                    emitter.complete();
+
+                    if (message == null) {
+                        log.info("No data found, closing SSE stream.");
+                        emitter.complete();
+                        isComplete.set(true);
+                        return;
+                    }
+
+                    try {
+                        String eventData = message.getDataJson().toString();
+                        emitter.send(SseEmitter.event().data(eventData));
+
+                        messageService.lambdaUpdate()
+                                .eq(MessageEntity::getId, message.getId())
+                                .set(MessageEntity::getIsSend, Boolean.TRUE)
+                                .update();
+
+                        log.debug("Data sent successfully: {}", eventData);
+                    } catch (IOException e) {
+                        log.debug("Client disconnected, stopping SSE stream.");
+                        isComplete.set(true);
+                        return;
+                    }
                 }
             } catch (Exception e) {
-                emitter.completeWithError(e);
-            } finally {
-                emitter.complete();
+                log.error("SSE stream error", e);
+                if (!isComplete.get()) {
+                    emitter.completeWithError(e);
+                    isComplete.set(true);
+                }
             }
         });
 
         return emitter;
     }
+
 }
