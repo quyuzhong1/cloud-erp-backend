@@ -87,12 +87,14 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                         ObjectUtil.defaultIfNull(dmpInputMongoChild.get("reason_chinese"), "").toString(),
                         AliExpressIssueSolutionResolver.getIssueContent(dmpInputMongoChild));
                 String reasonEnglish = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("reason_english"), "").toString();
+                String issueReason = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(reasonChinese, reasonEnglish);
+                String issueReasonName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(reasonEnglish, reasonChinese);
 
 				resultDmpInputMongoChild.put("buyer_login_id" , dmpInputMongoChild.get("buyer_login_id"));
 				resultDmpInputMongoChild.put("issue_id" , issueId);
 				resultDmpInputMongoChild.put("skuId" , dmpInputMongoChild.get("product_id"));
 				resultDmpInputMongoChild.put("skuNo" , dmpInputMongoChild.get("product_id"));
-                resultDmpInputMongoChild.put("skuName", dmpInputMongoChild.get("product_name"));
+                resultDmpInputMongoChild.put("skuName", AliExpressIssueSolutionResolver.trimForDb(dmpInputMongoChild.get("product_name")));
 				resultDmpInputMongoChild.put("detailStatus" , issueStatus);
 				resultDmpInputMongoChild.put("returnOriginalType" , reverseDetailStatus);
 				resultDmpInputMongoChild.put("returnLogisticsCompany" , dmpInputMongoChild.get("buyer_return_logistics_company"));
@@ -115,12 +117,12 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 resultDmpInputMongoChild.put("platformCode", StringUtils.defaultIfBlank(orderId, platformOrderCode));
                 resultDmpInputMongoChild.put("platformStatus", reverseDetailStatus);
                 resultDmpInputMongoChild.put("platformOriginalStatus", reverseDetailStatus);
-                resultDmpInputMongoChild.put("remark", StringUtils.defaultIfBlank(reasonChinese, reasonEnglish));
-                resultDmpInputMongoChild.put("reason", StringUtils.defaultIfBlank(reasonChinese, reasonEnglish));
-                resultDmpInputMongoChild.put("remarkName", StringUtils.defaultIfBlank(reasonEnglish, reasonChinese));
-                resultDmpInputMongoChild.put("trackingNumber", trackingNumber);
-                resultDmpInputMongoChild.put("logisticsSupplierCode", dmpInputMongoChild.get("buyer_return_logistics_company"));
-                resultDmpInputMongoChild.put("logisticsSupplierName", dmpInputMongoChild.get("buyer_return_logistics_company"));
+                resultDmpInputMongoChild.put("remark", issueReason);
+                resultDmpInputMongoChild.put("reason", issueReason);
+                resultDmpInputMongoChild.put("remarkName", issueReasonName);
+                resultDmpInputMongoChild.put("trackingNumber", AliExpressIssueSolutionResolver.trimForDb(trackingNumber));
+                resultDmpInputMongoChild.put("logisticsSupplierCode", AliExpressIssueSolutionResolver.trimForDb(dmpInputMongoChild.get("buyer_return_logistics_company")));
+                resultDmpInputMongoChild.put("logisticsSupplierName", AliExpressIssueSolutionResolver.trimForDb(dmpInputMongoChild.get("buyer_return_logistics_company")));
                 resultDmpInputMongoChild.put("platformCreateTime", dmpInputMongoChild.get("gmt_create"));
                 resultDmpInputMongoChild.put("platformUpdateTime", AliExpressIssueSolutionResolver.getLatestEventTime(dmpInputMongoChild));
                 resultDmpInputMongoChild.put("returnTime", dmpInputMongoChild.get("gmt_create"));

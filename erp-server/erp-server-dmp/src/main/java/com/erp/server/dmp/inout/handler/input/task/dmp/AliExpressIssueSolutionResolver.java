@@ -15,6 +15,7 @@ final class AliExpressIssueSolutionResolver {
     static final String SOLUTION_RETURN_AND_REFUND = "return_and_refund";
     static final String SOLUTION_REFUND = "refund";
     static final String REVERSE_STATUS_REFUND_SUCCESS = "refund_success";
+    private static final int DEFAULT_DB_TEXT_MAX_LENGTH = 255;
 
     private static final List<String> SOLUTION_LIST_KEYS = Arrays.asList(
             "buyer_solution_list",
@@ -105,6 +106,23 @@ final class AliExpressIssueSolutionResolver {
             }
         }
         return latestTime;
+    }
+
+    static String pickIssueText(Object... values) {
+        return normalizeText(firstNonBlank(values));
+    }
+
+    static String pickIssueTextForVarchar(Object... values) {
+        return trimForDb(firstNonBlank(values));
+    }
+
+    static String trimForDb(Object value) {
+        return StringUtils.left(normalizeText(value), DEFAULT_DB_TEXT_MAX_LENGTH);
+    }
+
+    static String normalizeText(Object value) {
+        String text = ObjectUtil.defaultIfNull(value, "").toString();
+        return ObjectUtil.defaultIfNull(StringUtils.normalizeSpace(text), "").toString();
     }
 
     private static List<SolutionRecord> collectSolutions(Map<String, Object> issueDetail) {
