@@ -166,7 +166,7 @@
             lb.sales_platform AS salesPlatform,
             lb.shop_id AS shopId,
             lc.track_query_type AS trackQueryType,
-            best_match.cfgId ,
+            best_match.cfgId as thirdRefId,
             best_match.cfgTime,
             lb.delivery_time
         FROM logistics_bill_detail lbd

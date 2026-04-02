@@ -102,7 +102,7 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
             return Collections.emptyList();
         }
 
-        List<String> cfgIds = records.stream().filter(e -> Objects.equals(Boolean.TRUE, e.getIsPushMobile())).map(LogisticsTrackDTO.UpdateTrackDTO::getCfgId).collect(Collectors.toList());
+        List<String> cfgIds = records.stream().filter(e -> Objects.equals(Boolean.TRUE, e.getIsPushMobile())).map(LogisticsTrackDTO.UpdateTrackDTO::getThirdRefId).collect(Collectors.toList());
         Map<String ,List<LogisticsThirdChannelRefDetailEntity>> refDetailEntities = new HashMap<>();
         if(CollUtil.isNotEmpty(cfgIds)){
             List<LogisticsThirdChannelRefDetailEntity> list = FeignQuery.create(LogisticsThirdChannelRefDetailEntity.class).in(LogisticsThirdChannelRefDetailEntity::getMainId, cfgIds).list();
@@ -137,8 +137,6 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
                 }
             }
 
-            record.setThirdRefId(record.getId());
-
             // 构建查询参数
             Kuaidi100QueryParam param = Kuaidi100QueryParam.builder()
                     .com(record.getChannelName().toLowerCase()) // 快递100要求小写
@@ -148,7 +146,7 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
             if(record.getIsPushMobile()){
                 String pushType = record.getPushType();
 
-                List<LogisticsThirdChannelRefDetailEntity> detailEntities = refDetailEntities.get(record.getCfgId());
+                List<LogisticsThirdChannelRefDetailEntity> detailEntities = refDetailEntities.get(record.getThirdRefId());
 
                 if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(pushType) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
                     record.setTelNumber(detailEntities.get(0).getMobile());

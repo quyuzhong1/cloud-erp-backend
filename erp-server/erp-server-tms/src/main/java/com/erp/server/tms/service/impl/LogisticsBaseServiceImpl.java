@@ -356,7 +356,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             }
             //处理供应商编码和手机号
 //            List<LogisticsThirdChannelRefDTO.PagingVO> collect = channelRefList.stream().filter(e -> e.getLogisticsChannelName().equals(record.getChannelName()) && !e.getDisabled()).collect(Collectors.toList());
-            List<LogisticsThirdChannelRefDTO.PagingVO> collect = channelRefList.stream().filter(e->Objects.equals(e.getId(),record.getCfgId())).collect(Collectors.toList());
+            List<LogisticsThirdChannelRefDTO.PagingVO> collect = channelRefList.stream().filter(e->Objects.equals(e.getId(),record.getThirdRefId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(collect)){
                 record.setTelNumber("");
                 record.setThirdSupplierCode("");
