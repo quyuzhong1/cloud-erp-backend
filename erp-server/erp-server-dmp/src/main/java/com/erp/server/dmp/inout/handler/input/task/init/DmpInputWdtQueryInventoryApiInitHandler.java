@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.PropertyNamingStrategy;
@@ -97,8 +98,8 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
         String endTime = dmpInputTaskEntity.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         StockAPI stockAPI = clientService.get(StockAPI.class);
         int pageSize = 1000;
+        String batchNo = IdUtil.getSnowflake().nextIdStr();
         for (ThirdWarehouseDTO.QueryMapDTO queryMapDTO : queryMapDTOList) {
-            String batchNo = IdUtil.getSnowflake().nextIdStr();
             if (CharSequenceUtil.isBlank(queryMapDTO.getThirdCode())) {
                 continue;
             }
@@ -121,6 +122,7 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
                 StockSearch2Response response;
                 try {
                     response = stockAPI.search2(request, pager);
+                    log.warn("旺店通查询库存, 仓库: {}, 批次: {}, 响应: {}", queryMapDTO.getThirdCode(), batchNo, JSONUtil.toJsonStr(response));
                 } catch (Exception e) {
                     log.error("旺店通查询库存异常, 仓库: {}, 异常信息: {}", queryMapDTO.getThirdCode(), e.getMessage(), e);
                     hasNext = false;
