@@ -1178,7 +1178,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                                                          List<DictPartitionEntity> partitionEntityList,
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                         List<SysDepartmentEntity> deptList) {
+                                                         List<CfgDeptRelationEntity> deptRelationList, List<SysDepartmentEntity> deptList) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -1268,7 +1268,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
             // 军区名称
             shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
-            if (null != dictPartitionEntity && StringUtils.isNotBlank(deptId)){
+            // 销售平台二级部门映射
+            CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(finalPartitionId) && e.getDictPlatform().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
+            if (null != cfgDeptRelationEntity){
+                deptId = cfgDeptRelationEntity.getDeptId();
+            }
+            if (StringUtils.isNotBlank(deptId)){
                 String finalDeptId = deptId;
                 deptList.stream()
                         .filter(e -> e.getId().equals(finalDeptId))
@@ -1408,23 +1413,23 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     
     @Override
     public Map<String, Object> syncNewDataToSdyFieldHandler(SoOutstockEntity entity,
-    		SoOutstockDetailEntity soOutstockDetailEntity,
-    		String operate,
-    		List<CurrencyDTO.ViewDTO> currencyList,
-    		List<ShopInfoEntity> shopInfoList,
-    		List<CustomerInfoEntity> customerInfoList,
-    		List<BaseIdDTO.CodeDTO> companyEntities,
-    		List<SkuVO> skuVOList,
-    		List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
-    		List<ProductDetailEntity> parentSkuList,
-    		List<SoB2cEntity> soB2cEntities,
-    		List<SoInfoEntity> soInfoEntities,
-    		List<SoB2cReceiverEntity> soB2cReceiverEntityList,
-    		List<DictBasicEntity> omsAllDictList,
-    		List<DictPartitionEntity> partitionEntityList,
-    		List<DictCountryEntity> countryEntityList,
-    		List<DictGlobalAreaEntity> dictGlobalEntityList,
-    		List<SysDepartmentEntity> deptList) {
+                                                            SoOutstockDetailEntity soOutstockDetailEntity,
+                                                            String operate,
+                                                            List<CurrencyDTO.ViewDTO> currencyList,
+                                                            List<ShopInfoEntity> shopInfoList,
+                                                            List<CustomerInfoEntity> customerInfoList,
+                                                            List<BaseIdDTO.CodeDTO> companyEntities,
+                                                            List<SkuVO> skuVOList,
+                                                            List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                            List<ProductDetailEntity> parentSkuList,
+                                                            List<SoB2cEntity> soB2cEntities,
+                                                            List<SoInfoEntity> soInfoEntities,
+                                                            List<SoB2cReceiverEntity> soB2cReceiverEntityList,
+                                                            List<DictBasicEntity> omsAllDictList,
+                                                            List<DictPartitionEntity> partitionEntityList,
+                                                            List<DictCountryEntity> countryEntityList,
+                                                            List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                            List<CfgDeptRelationEntity> deptRelationList, List<SysDepartmentEntity> deptList) {
     	
     	// 字典分组
     	Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
@@ -1765,6 +1770,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         // 部门信息
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
+        // 平台军区关联部门
+        List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+
+
         for (SoOutstockEntity soOutstockEntity : soOutstockEntities) {
             List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailEntityList.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
             for (SoOutstockDetailEntity detailEntity : detailEntityList) {
@@ -1787,6 +1796,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                             partitionEntityList,
                             countryEntityList,
                             dictGlobalEntityList,
+                            deptRelationList,
                             deptList
                     );
             	}else {
@@ -1807,6 +1817,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                             partitionEntityList,
                             countryEntityList,
                             dictGlobalEntityList,
+                            deptRelationList,
                             deptList
                     );
             	}

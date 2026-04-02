@@ -1,7 +1,6 @@
 package com.erp.server.oms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -10,9 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.business.wrapper.QueryParam;
@@ -269,6 +266,8 @@ public class SyncSdyJob {
                     .stream()
                     .map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
 
+            // 平台军区关联部门
+            List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
 
             for (SoB2cEntity soB2cEntity : list) {
                 SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
@@ -300,6 +299,7 @@ public class SyncSdyJob {
                                 partitionEntityList,
                                 countryEntityList,
                                 dictGlobalEntityList,
+                                deptRelationList,
                                 deptList
                         );
                     }
@@ -331,6 +331,7 @@ public class SyncSdyJob {
                                     partitionEntityList,
                                     countryEntityList,
                                     dictGlobalEntityList,
+                                    deptRelationList,
                                     deptList
                             );
                         } else {
@@ -353,6 +354,7 @@ public class SyncSdyJob {
                                     partitionEntityList,
                                     countryEntityList,
                                     dictGlobalEntityList,
+                                    deptRelationList,
                                     deptList
                             );
                         }
@@ -385,6 +387,7 @@ public class SyncSdyJob {
                                 partitionEntityList,
                                 countryEntityList,
                                 dictGlobalEntityList,
+                                deptRelationList,
                                 deptList
                         );
                     }
@@ -411,6 +414,7 @@ public class SyncSdyJob {
                             partitionEntityList,
                             countryEntityList,
                             dictGlobalEntityList,
+                            deptRelationList,
                             deptList);
                 }
             }
@@ -438,6 +442,7 @@ public class SyncSdyJob {
                                       List<DictPartitionEntity> partitionEntityList,
                                       List<DictCountryEntity> countryEntityList,
                                       List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                      List<CfgDeptRelationEntity> deptRelationList,
                                       List<SysDepartmentEntity> deptList) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryEntityMap.get(soB2cEntity.getId());
         if (CollectionUtils.isEmpty(soB2cDeliveryEntityList)){
@@ -468,6 +473,7 @@ public class SyncSdyJob {
                         partitionEntityList,
                         countryEntityList,
                         dictGlobalEntityList,
+                        deptRelationList,
                         deptList);
             }
         }
@@ -491,6 +497,7 @@ public class SyncSdyJob {
                                         List<DictPartitionEntity> partitionEntityList,
                                         List<DictCountryEntity> countryEntityList,
                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                        List<CfgDeptRelationEntity> deptRelationList,
                                         List<SysDepartmentEntity> deptList
     ) {
         List<AliexpressDeliveryEntity> aliexpressDeliveryList = aliexpressDeliveryMap.get(soB2cEntity.getId());
@@ -521,6 +528,7 @@ public class SyncSdyJob {
                         partitionEntityList,
                         countryEntityList,
                         dictGlobalEntityList,
+                        deptRelationList,
                         deptList);
             }
         }
@@ -614,6 +622,9 @@ public class SyncSdyJob {
             // 子区域信息
             List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
+            // 平台军区关联部门
+            List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+
             // 部门信息
             List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
             for (SoInfoEntity soInfoEntity : list) {
@@ -633,6 +644,7 @@ public class SyncSdyJob {
                         partitionEntityList,
                         countryEntityList,
                         dictGlobalEntityList,
+                        deptRelationList,
                         deptList
                 );
             }

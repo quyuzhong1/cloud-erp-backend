@@ -30,7 +30,6 @@ import com.erp.server.oms.kingdee.*;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
-import com.sdk.third.lingxing.dto.ProductInfo;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.math3.util.Pair;
@@ -710,6 +709,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         // 子区域信息
         List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
+        // 平台军区关联部门
+        List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+
         // 部门信息
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
@@ -748,6 +750,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     partitionEntityList,
                     countryEntityList,
                     dictGlobalEntityList,
+                    deptRelationList,
                     deptList));
         }
         return resultList;
@@ -816,6 +819,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         // 部门信息
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
+        // 平台军区关联部门
+        List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
@@ -845,6 +851,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     partitionEntityList,
                     countryEntityList,
                     dictGlobalEntityList,
+                    deptRelationList,
                     deptList));
         }
         return resultList;
@@ -973,6 +980,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         // 计算自发货明细单价
         Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap = syncSoB2cService.convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
 
+        // 平台军区关联部门
+        List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             SoB2cDeliveryDetailEntity deliveryDetailEntity = curDeliveryDetail.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
@@ -1019,6 +1029,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     partitionEntityList,
                     countryEntityList,
                     dictGlobalEntityList,
+                    deptRelationList,
                     deptList
             ));
         }
@@ -1151,6 +1162,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         // 部门信息
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
+        // 平台军区关联部门
+        List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             AliexpressDeliveryDetailEntity deliveryDetailEntity = deliveryDetailList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
@@ -1194,6 +1208,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     partitionEntityList,
                     countryEntityList,
                     dictGlobalEntityList,
+                    deptRelationList,
                     deptList
                     ));
         }

@@ -79,6 +79,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                          List<DictPartitionEntity> partitionEntityList,
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<CfgDeptRelationEntity> deptRelationList,
                                                          List<SysDepartmentEntity> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
@@ -155,6 +156,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 partitionEntityList,
                 countryEntityList,
                 dictGlobalEntityList,
+                deptRelationList,
                 deptList
         );
 
@@ -184,7 +186,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                      List<DictPartitionEntity> partitionEntityList,
                                      List<DictCountryEntity> countryEntityList,
                                      List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                     List<SysDepartmentEntity> deptList
+                                     List<CfgDeptRelationEntity> deptRelationList, List<SysDepartmentEntity> deptList
 
     ) {
         // 字典分组
@@ -395,20 +397,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         // 部门ID
         String deptId = null == customerInfo ? "" :customerInfo.getSalesDeptId();
 
-        if (StringUtils.isNotBlank(deptId)){
-            SysDepartmentEntity departmentDTO = deptList
-                    .stream()
-                    .filter(e -> e.getId().equals(deptId))
-                    .findFirst()
-                    .orElse(null);
-            if (null != departmentDTO){
-                // 部门编码
-                departmentCode = departmentDTO.getCode();
-                // 部门名称
-                departmentName = departmentDTO.getName();
-            }
-        }
-
         if (null != receiverEntity){
             String partitionId = receiverEntity.getPartitionId();
             DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(partitionId)).findFirst().orElse(null);
@@ -417,6 +405,26 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 militaryRegionCode = dictPartitionEntity.getCode();
                 // 军区名称
                 militaryRegionName = dictPartitionEntity.getName();
+            }
+
+            CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(partitionId) && e.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
+            if (null != cfgDeptRelationEntity){
+                deptId = cfgDeptRelationEntity.getDeptId();
+            }
+
+            if (StringUtils.isNotBlank(deptId)){
+                String finalDeptId = deptId;
+                SysDepartmentEntity departmentDTO = deptList
+                        .stream()
+                        .filter(e -> e.getId().equals(finalDeptId))
+                        .findFirst()
+                        .orElse(null);
+                if (null != departmentDTO){
+                    // 部门编码
+                    departmentCode = departmentDTO.getCode();
+                    // 部门名称
+                    departmentName = departmentDTO.getName();
+                }
             }
 
             if (StringUtils.isNotBlank(receiverEntity.getCountry())){
@@ -498,6 +506,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                               List<DictPartitionEntity> partitionEntityList,
                               List<DictCountryEntity> countryEntityList,
                               List<DictGlobalAreaEntity> dictGlobalEntityList,
+                              List<CfgDeptRelationEntity> deptRelationList,
                               List<SysDepartmentEntity> deptList
     ) {
         for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
@@ -529,6 +538,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     partitionEntityList,
                     countryEntityList,
                     dictGlobalEntityList,
+                    deptRelationList,
                     deptList)));
             omsPushMsgService.save(omsPushMsgEntity);
         }
@@ -628,6 +638,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                 List<DictPartitionEntity> partitionEntityList,
                                                                 List<DictCountryEntity> countryEntityList,
                                                                 List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                                List<CfgDeptRelationEntity> deptRelationList,
                                                                 List<SysDepartmentEntity> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
@@ -723,6 +734,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 partitionEntityList,
                 countryEntityList,
                 dictGlobalEntityList,
+                deptRelationList,
                 deptList
         );
 
@@ -751,6 +763,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                    List<DictPartitionEntity> partitionEntityList,
                                                                    List<DictCountryEntity> countryEntityList,
                                                                    List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                                   List<CfgDeptRelationEntity> deptRelationList,
                                                                    List<SysDepartmentEntity> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
@@ -815,6 +828,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 partitionEntityList,
                 countryEntityList,
                 dictGlobalEntityList,
+                deptRelationList,
                 deptList
         );
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
@@ -1000,6 +1014,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<DictPartitionEntity> partitionEntityList,
             List<DictCountryEntity> countryEntityList,
             List<DictGlobalAreaEntity> dictGlobalEntityList,
+            List<CfgDeptRelationEntity> deptRelationList,
             List<SysDepartmentEntity> deptList
 
     ){
@@ -1031,7 +1046,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     omsAllDictList, 
                     partitionEntityList, 
                     countryEntityList, 
-                    dictGlobalEntityList, 
+                    dictGlobalEntityList,
+                    deptRelationList,
                     deptList)));
             omsPushMsgService.save(omsPushMsgEntity);
     }
@@ -1059,6 +1075,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<DictPartitionEntity> partitionEntityList,
             List<DictCountryEntity> countryEntityList,
             List<DictGlobalAreaEntity> dictGlobalEntityList,
+            List<CfgDeptRelationEntity> deptRelationList,
             List<SysDepartmentEntity> deptList
     ) {
         //同步配货单
@@ -1088,7 +1105,9 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 partitionEntityList,
                 countryEntityList,
                 dictGlobalEntityList,
-                deptList)));
+                deptRelationList,
+                deptList
+        )));
         omsPushMsgService.save(omsPushMsgEntity);
     }
 
