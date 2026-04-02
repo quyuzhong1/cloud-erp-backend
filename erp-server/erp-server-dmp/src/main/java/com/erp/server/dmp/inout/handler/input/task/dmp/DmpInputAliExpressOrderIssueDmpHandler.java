@@ -128,6 +128,9 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         String buyerUserId = StringUtils.defaultIfBlank(
                                 ObjectUtil.defaultIfNull(v.get("buyerUserId"), "").toString(),
                                 snapshot.buyerLoginId);
+                        String issueRemark = AliExpressIssueSolutionResolver.pickIssueText(snapshot.reasonChinese, snapshot.reasonEnglish);
+                        String issueRemarkName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(snapshot.reasonEnglish, snapshot.reasonChinese);
+                        String issueReason = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(snapshot.reasonChinese, snapshot.reasonEnglish);
                         v.put("sourceId", sourceId);
                         v.put("buyerUserId", buyerUserId);
                         v.put("shopId", nextLevelId);
@@ -137,12 +140,16 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         v.put("platformOrderCode", platformOrderCode);
                         v.put("platformStatus", snapshot.reverseDetailStatus);
                         v.put("platformOriginalStatus", snapshot.reverseDetailStatus);
-                        v.put("reason", StringUtils.defaultIfBlank(snapshot.reasonChinese, snapshot.reasonEnglish));
-                        v.put("remark", StringUtils.defaultIfBlank(snapshot.reasonChinese, snapshot.reasonEnglish));
-                        v.put("remarkName", StringUtils.defaultIfBlank(snapshot.reasonEnglish, snapshot.reasonChinese));
-                        v.put("trackingNumber", snapshot.buyerReturnLogisticsNo);
-                        v.put("logisticsSupplierCode", snapshot.buyerReturnLogisticsCompany);
-                        v.put("logisticsSupplierName", snapshot.buyerReturnLogisticsCompany);
+                        if (isRefundInfo) {
+                            v.put("reason", issueReason);
+                            v.put("remark", issueReason);
+                        } else {
+                            v.put("remark", issueRemark);
+                            v.put("remarkName", issueRemarkName);
+                        }
+                        v.put("trackingNumber", AliExpressIssueSolutionResolver.trimForDb(snapshot.buyerReturnLogisticsNo));
+                        v.put("logisticsSupplierCode", AliExpressIssueSolutionResolver.trimForDb(snapshot.buyerReturnLogisticsCompany));
+                        v.put("logisticsSupplierName", AliExpressIssueSolutionResolver.trimForDb(snapshot.buyerReturnLogisticsCompany));
                         v.put("platformCreateTime", snapshot.gmtCreate);
                         v.put("platformUpdateTime", snapshot.gmtModified);
                         v.put("returnTime", snapshot.gmtCreate);

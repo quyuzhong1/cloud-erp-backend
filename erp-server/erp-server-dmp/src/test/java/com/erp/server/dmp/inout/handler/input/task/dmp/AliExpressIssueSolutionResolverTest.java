@@ -59,6 +59,14 @@ public class AliExpressIssueSolutionResolverTest {
         assertEquals("LP654321", AliExpressIssueSolutionResolver.getReturnTrackingNo(issueDetail));
     }
 
+    @Test
+    public void shouldKeepFullTextForTextColumnAndTrimOnlyVarcharFields() {
+        String longText = repeat('a', 260);
+
+        assertEquals(longText, AliExpressIssueSolutionResolver.pickIssueText(longText));
+        assertEquals(repeat('a', 255), AliExpressIssueSolutionResolver.pickIssueTextForVarchar(longText));
+    }
+
     private Map<String, Object> solutionList(Map<String, Object>... solutions) {
         Map<String, Object> wrapper = new HashMap<>();
         wrapper.put("solution_api_dto", Arrays.asList(solutions));
@@ -75,5 +83,11 @@ public class AliExpressIssueSolutionResolverTest {
         solution.put("status", status);
         solution.put("id", id);
         return solution;
+    }
+
+    private String repeat(char ch, int count) {
+        char[] chars = new char[count];
+        Arrays.fill(chars, ch);
+        return new String(chars);
     }
 }
