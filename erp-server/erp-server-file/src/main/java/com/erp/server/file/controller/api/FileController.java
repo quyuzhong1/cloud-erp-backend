@@ -153,13 +153,8 @@ public class FileController extends BaseController {
      * @return
      */
     @PostMapping(value = "/getFeiShuFile")
-    public ApiResult<SysCommonDTO.AttachmentDTO> getFeiShuFile(@RequestBody FileDTO.UploadDTO uploadDTO){
-        SysCommonDTO.AttachmentDTO attachmentDTO = null;
-        try {
-            attachmentDTO = feiShuFileService.getFeiShuFile(uploadDTO);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public ApiResult<SysCommonDTO.AttachmentDTO> getFeiShuFile(@RequestBody FileDTO.UploadDTO uploadDTO) throws Exception {
+        SysCommonDTO.AttachmentDTO attachmentDTO = feiShuFileService.getFeiShuFile(uploadDTO);
         return success(attachmentDTO);
     }
 }
