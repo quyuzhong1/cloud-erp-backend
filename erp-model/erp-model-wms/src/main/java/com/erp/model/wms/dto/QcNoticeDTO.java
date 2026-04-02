@@ -761,6 +761,11 @@ public class QcNoticeDTO implements Serializable {
          */
         private String qcUserName;
 
+        /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
+
         @NotEmpty
         private List<QcNoticeDetailDTO.@Valid AddDTO> detailList;
     }
