@@ -90,7 +90,7 @@
         qn.purchase_order_id as purchaseOrderId,
         qn.purchase_order_code as purchaseOrderCode,
         qn.supplier_id as supplierId,
-        qa.plan_qc_date as planQcDate
+        qn.plan_qc_date as planQcDate
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
