@@ -29,15 +29,6 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
     BaseResultDTO.AddDTO add(LogisticsThirdChannelRefDTO.AddDTO dto);
 
     /**
-    * 批量新增
-    * @author zdy
-    * @date: 2025-05-29
-    * @param dto
-    * @return
-    */
-    List<BatchResultDTO> batchAdd(LogisticsThirdChannelRefDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author zdy
     * @date: 2025-05-29
@@ -111,4 +102,14 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
     List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(String channelId);
 
     Boolean existRefBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId);
+
+    /**
+     * 根据单号搜索对应的三方渠道配置映射
+     *
+     * @param trackNos 物流单号列表
+     * @return 映射关系列表
+     * @author jack
+     * @date 2026-04-02
+     */
+    List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> listByTrackNos(List<String> trackNos);
 }

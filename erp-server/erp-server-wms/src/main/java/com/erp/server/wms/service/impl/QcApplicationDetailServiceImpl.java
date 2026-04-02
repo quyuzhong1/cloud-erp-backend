@@ -96,7 +96,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         checkSourceQty(qcApplicationDetailList,qcApplicationEntity);
 
         // 数据处理
-        handleData(qcApplicationDetailList,qcApplicationEntity);
+        handleData(qcApplicationDetailList,qcApplicationEntity,Boolean.FALSE);
 
         log.info("开始新增质检申请单明细单");
         boolean save = super.saveBatch(qcApplicationDetailList);
@@ -133,7 +133,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         checkSourceQty(qcApplicationDetailList,qcApplicationEntity);
 
         // 数据处理
-        handleData(qcApplicationDetailList,qcApplicationEntity);
+        handleData(qcApplicationDetailList,qcApplicationEntity,Boolean.TRUE);
         log.info("编辑 开始修改质检申请单明细单数据，id：【{}】", qcApplicationEntity.getId());
         boolean save = super.saveOrUpdateBatch(qcApplicationDetailList);
         if(!save) {
@@ -373,15 +373,15 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
                 diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
-                //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
-                Integer waitPushQty = poDetailEntity.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
+            }
+            //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
+            Integer waitPushQty = poDetailEntity.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
 
-                //已申请数量（审核通过的质检申请单数量）
-                Integer hasPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getSourceDetailId()) && !CharSequenceUtil.equals(obj.getId(), detailEntity.getId())).map(QcApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-                //数量校验
-                if ( detailEntity.getQty() > waitPushQty - hasPushQty) {
-                    throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY, waitPushQty - hasPushQty);
-                }
+            //已申请数量（审核通过的质检申请单数量）
+            Integer hasPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getSourceDetailId()) && !CharSequenceUtil.equals(obj.getId(), detailEntity.getId())).map(QcApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            //数量校验
+            if ( detailEntity.getQty() > waitPushQty - hasPushQty) {
+                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY, waitPushQty - hasPushQty);
             }
         }
     }
@@ -432,18 +432,11 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
     /**
      * 新增修改处理数据
      */
-    private void handleData(List<QcApplicationDetailEntity> qcApplicationDetailList,QcApplicationEntity qcApplicationEntity) {
+    private void handleData(List<QcApplicationDetailEntity> qcApplicationDetailList,QcApplicationEntity qcApplicationEntity, Boolean isUpdate) {
         if (CollUtil.isEmpty(qcApplicationDetailList)) {
             return;
         }
 
-        //添加操作日志
-        List<QcApplicationDetailEntity> addList = qcApplicationDetailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        //新增不需要添加新增SKU的日志
-        if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(qcApplicationEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "编辑操作");
-        }
 
         //sku信息
         List<String> skuIdList = qcApplicationDetailList.stream().map(QcApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -477,6 +470,14 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
                 }
                 operateLogService.addModuleOperateLogByObj(old,data, ModuleTypeEnum.QC_APPLICATION.getCode(),qcApplicationEntity.getId(),"",String.format("【%s】",old.getSkuNo()));
             }
+        }
+
+        //添加操作日志
+        List<QcApplicationDetailEntity> addList = qcApplicationDetailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        //新增不需要添加新增SKU的日志
+        if (CollectionUtils.isNotEmpty(addList)  && isUpdate) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(qcApplicationEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.QC_APPLICATION.getCode(), addPairList, "编辑操作");
         }
     }
 

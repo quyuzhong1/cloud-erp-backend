@@ -58,16 +58,15 @@ public class DmpOutputWdtQueryInventoryHandler extends DmpOutputWdtBaseTaskHandl
             if (CollUtil.isEmpty(detailList)) {
                 continue;
             }
-            DmpWdtWarehouseInventoryRecordEntity entity = detailList.get(0);
-            if (InventoryOrderTypeEnum.IN_STOCK.getCode().equals(entity.getOrderType())) {
-                Map<String, CreateOtherStockinRequest> result = this.convertInStock(entity, cfgOutputId, detailList);
+            if (InventoryOrderTypeEnum.IN_STOCK.getCode().equals(key)) {
+                Map<String, CreateOtherStockinRequest> result = this.convertInStock(cfgOutputId, detailList);
                 if (!result.isEmpty()) {
                     for (Map.Entry<String, CreateOtherStockinRequest> r : result.entrySet()) {
                         map.put(r.getKey(), JSON.toJSONString(r.getValue()));
                     }
                 }
-            } else if (InventoryOrderTypeEnum.OUT_STOCK.getCode().equals(entity.getOrderType())) {
-                Map<String, CreateOtherStockoutRequest> result = this.convertOutStock(entity, cfgOutputId, detailList);
+            } else if (InventoryOrderTypeEnum.OUT_STOCK.getCode().equals(key)) {
+                Map<String, CreateOtherStockoutRequest> result = this.convertOutStock(cfgOutputId, detailList);
                 if (!result.isEmpty()) {
                     for (Map.Entry<String, CreateOtherStockoutRequest> r : result.entrySet()) {
                         map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -80,36 +79,40 @@ public class DmpOutputWdtQueryInventoryHandler extends DmpOutputWdtBaseTaskHandl
         return map;
     }
 
-    private Map<String, CreateOtherStockinRequest> convertInStock(DmpWdtWarehouseInventoryRecordEntity dmpInventoryEntity, String cfgOutputId, List<DmpWdtWarehouseInventoryRecordEntity> detailList) {
+    private Map<String, CreateOtherStockinRequest> convertInStock(String cfgOutputId, List<DmpWdtWarehouseInventoryRecordEntity> detailList) {
         Map<String, CreateOtherStockinRequest> result = new HashMap<>();
-        if (dmpInventoryEntity != null) {
-            if (validateDataBlack(dmpInventoryEntity, cfgOutputId)) {
-                return result;
+        if (CollUtil.isNotEmpty(detailList)) {
+
+            //根据仓库ID分组
+            Map<String, List<DmpWdtWarehouseInventoryRecordEntity>> groupByWarehouseId = detailList.stream().collect(Collectors.groupingBy(DmpWdtWarehouseInventoryRecordEntity::getThirdWarehouseCode));
+            for (String thirdWarehouseCode : groupByWarehouseId.keySet()) {
+                List<DmpWdtWarehouseInventoryRecordEntity> inventoryRecordEntityList = groupByWarehouseId.get(thirdWarehouseCode);
+                if (validateDataBlack(inventoryRecordEntityList.get(0), cfgOutputId)) {
+                    continue;
+                }
+                CreateOtherStockinRequest createOtherStockinRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockinRequest(inventoryRecordEntityList.get(0), groupByWarehouseId.get(thirdWarehouseCode));
+                result.put(InventoryOrderTypeEnum.IN_STOCK.getCode() + inventoryRecordEntityList.get(0).getBatchNo() + thirdWarehouseCode, createOtherStockinRequest);
             }
-            if (CollUtil.isEmpty(detailList)) {
-                return result;
-            }
-            CreateOtherStockinRequest createOtherStockinRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockinRequest(dmpInventoryEntity, detailList);
-            result.put(InventoryOrderTypeEnum.IN_STOCK.getCode() + dmpInventoryEntity.getBatchNo(), createOtherStockinRequest);
         }
         return result;
     }
 
-    private Map<String, CreateOtherStockoutRequest> convertOutStock(DmpWdtWarehouseInventoryRecordEntity dmpInventoryEntity, String cfgOutputId, List<DmpWdtWarehouseInventoryRecordEntity> detailList) {
+    private Map<String, CreateOtherStockoutRequest> convertOutStock(String cfgOutputId, List<DmpWdtWarehouseInventoryRecordEntity> detailList) {
         Map<String, CreateOtherStockoutRequest> result = new HashMap<>();
-        if (dmpInventoryEntity != null) {
-            if (validateDataBlack(dmpInventoryEntity, cfgOutputId)) {
-                return result;
+        if (CollUtil.isNotEmpty(detailList)) {
+            //根据仓库ID分组
+            Map<String, List<DmpWdtWarehouseInventoryRecordEntity>> groupByWarehouseId = detailList.stream().collect(Collectors.groupingBy(DmpWdtWarehouseInventoryRecordEntity::getThirdWarehouseCode));
+            for (String thirdWarehouseCode : groupByWarehouseId.keySet()) {
+                List<DmpWdtWarehouseInventoryRecordEntity> inventoryRecordEntityList = groupByWarehouseId.get(thirdWarehouseCode);
+                if (validateDataBlack(inventoryRecordEntityList.get(0), cfgOutputId)) {
+                    continue;
+                }
+                CreateOtherStockoutRequest createOtherStockOutRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockOutRequest(inventoryRecordEntityList.get(0), groupByWarehouseId.get(thirdWarehouseCode));
+                result.put(InventoryOrderTypeEnum.OUT_STOCK.getCode() + inventoryRecordEntityList.get(0).getBatchNo() + thirdWarehouseCode, createOtherStockOutRequest);
             }
-            if (CollUtil.isEmpty(detailList)) {
-                return result;
-            }
-            CreateOtherStockoutRequest createOtherStockOutRequest = DmpWdtConverter.INSTANCE.toCreateOtherStockOutRequest(dmpInventoryEntity, detailList);
-            result.put(InventoryOrderTypeEnum.OUT_STOCK.getCode() + dmpInventoryEntity.getBatchNo(), createOtherStockOutRequest);
         }
         return result;
     }
-
     @Override
     protected List<String> getSourceCodeKeys() {
         return Arrays.asList("outerNo", "warehouseNo");

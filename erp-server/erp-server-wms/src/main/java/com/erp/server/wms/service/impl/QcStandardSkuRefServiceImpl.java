@@ -33,7 +33,7 @@ public class QcStandardSkuRefServiceImpl extends SuperServiceImpl<QcStandardSkuR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateDetail(List<QcStandardSkuRefEntity> skuRefEntityList, String mainId) {
-        List<String> ids = skuRefEntityList.stream().map(QcStandardSkuRefEntity::getId).collect(Collectors.toList());
+        List<String> ids = skuRefEntityList.stream().map(QcStandardSkuRefEntity::getId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //删除不存在记录
         removeByIdsAndMainId(ids, mainId);
         //查询记录是否存在

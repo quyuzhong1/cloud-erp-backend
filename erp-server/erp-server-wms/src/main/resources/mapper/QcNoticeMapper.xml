@@ -89,11 +89,13 @@
         qn.source_type as sourceType,
         qn.purchase_order_id as purchaseOrderId,
         qn.purchase_order_code as purchaseOrderCode,
-        qn.supplier_id as supplierId
+        qn.supplier_id as supplierId,
+        qn.plan_qc_date as planQcDate
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
         LEFT JOIN qc_info AS qi on qi.source_detail_id = qnd.id  and qi.is_deleted = FALSE
+        LEFT JOIN qc_application qa on qa.id = qn.source_id and qa.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND qn.is_deleted = FALSE

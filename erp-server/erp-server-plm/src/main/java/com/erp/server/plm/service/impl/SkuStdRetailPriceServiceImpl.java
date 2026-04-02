@@ -262,7 +262,7 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
 
    	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public List<AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList , boolean isValidateCNY) {
+	public List<AddDTO> batchAdd(List<SkuStdRetailPriceDTO.AddDTO> dtoList , boolean isValidateCNY, boolean checkAdd) {
    		List<AddDTO> result = new ArrayList<>();
    		
    		Set<String> CNYSkuSet = dtoList.stream().filter(d -> d.getCurrency().equals("CNY")).map(SkuStdRetailPriceDTO.AddDTO::getSkuId).collect(Collectors.toSet());
@@ -280,6 +280,10 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
    		for(SkuStdRetailPriceDTO.AddDTO dto : dtoList) {
    			String dbId = dbSkuIdCurrencyMap.get(dto.getSkuId() + "_" + dto.getCurrency());
 			if(StringUtils.isNotBlank(dbId)) {
+                if (checkAdd){
+                    // 同SKU同币种不可重复创建
+                    ServiceException.runError(ApiError.PRODUCT_RETAIL_SKU_DUPLICATE);
+                }
    				UpdateDTO updateDto = BeanUtil.copyProperties(dto, SkuStdRetailPriceDTO.UpdateDTO.class);
    				updateDto.setId(dbId);
 				this.update(updateDto);

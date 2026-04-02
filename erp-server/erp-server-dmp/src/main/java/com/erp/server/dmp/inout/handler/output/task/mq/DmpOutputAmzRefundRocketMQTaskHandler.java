@@ -7,8 +7,10 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoRefundDetailEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -100,7 +102,7 @@ public class DmpOutputAmzRefundRocketMQTaskHandler extends DmpOutputRocketMQTask
         BeanUtils.copyProperties(dmpEntity, dto);
         dto.setUniqueId(dmpEntity.getThirdCode());
         dto.setPlatformRefundNo(dmpEntity.getThirdCode());
-        dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
+        dto.setPlatformOrderNo(resolvePlatformOrderNo(dmpEntity));
         dto.setRemark(dmpEntity.getRemark());
         dto.setDictPlatform(dmpEntity.getSourceSystem());
         dto.setPlatform(dmpEntity.getSourceSystem());
@@ -129,6 +131,13 @@ public class DmpOutputAmzRefundRocketMQTaskHandler extends DmpOutputRocketMQTask
             resultList.add(detail);
         }
         return resultList;
+    }
+
+    private String resolvePlatformOrderNo(DmpSoRefundInfoEntity dmpEntity) {
+        if (StringUtils.equalsIgnoreCase(dmpEntity.getSourceSystem(), DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())) {
+            return StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode());
+        }
+        return dmpEntity.getPlatformCode();
     }
 
 

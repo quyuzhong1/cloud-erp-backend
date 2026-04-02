@@ -1,7 +1,11 @@
 package com.erp.server.dmp.push.consumer.wangdian;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -16,11 +20,13 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.InventoryOrderTypeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
 import com.erp.server.dmp.service.DmpPushTaskService;
+import com.erp.server.dmp.service.DmpWdtWarehouseInventoryRecordService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
 import com.sdk.wangdian.enums.WdtInStockStatusEnum;
@@ -39,6 +45,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 旺店通库单消费(推送其他出入库单到旺店通)
@@ -65,6 +72,8 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
     private ThirdMappingService thirdMappingService;
     @Resource
     private ThirdWarehouseService thirdWarehouseService;
+    @Resource
+    private DmpWdtWarehouseInventoryRecordService dmpWdtWarehouseInventoryRecordService;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -83,6 +92,42 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
 
     @Override
     public ApiResult<?> handle(Object ext) {
+        ApiResult<?> apiResult = null;
+        try {
+        apiResult = dataProcess(ext);
+        }catch (Exception e){
+            //操作异常
+            log.error("WdtOtherInventoryStockConsumer handle, ext: {}, e:", ext, e);
+            apiResult = ApiResult.error(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage());
+        }
+        String requestStr = JSONUtil.toJsonStr(ext);
+        // 处理参数中存在null字符串的数据
+        requestStr = requestStr.replace("null", "");
+
+        JSONObject parseObject = JSON.parseObject(requestStr);
+        String batchNo = parseObject.getString("outerNo");
+
+        String warehouseNo = parseObject.getString("warehouseNo");
+        JSONArray goodsList = parseObject.getJSONArray("goodsList");
+        List<String> skuNoList = null;
+        if (CollUtil.isNotEmpty(goodsList)){
+            skuNoList = goodsList.stream().map(item -> ((JSONObject) item).getString("specNo")).collect(Collectors.toList());
+        }
+        if (apiResult.isSuccess()){
+            updateInventoryStatus(batchNo,warehouseNo,skuNoList, DmpInputTaskStatusEnum.FINISH.getCode(),"");
+        }else {
+            updateInventoryStatus(batchNo,warehouseNo,skuNoList, DmpInputTaskStatusEnum.ERROR.getCode(),apiResult.getMsg());
+        }
+        return apiResult;
+    }
+
+    private void updateInventoryStatus(String batchNo, String warehouseNo, List<String> skuNoList, String status, String msg) {
+        if (CharSequenceUtil.isAllNotBlank(batchNo,warehouseNo,status) && CollUtil.isNotEmpty(skuNoList)){
+            dmpWdtWarehouseInventoryRecordService.updateInventoryStatus(batchNo, warehouseNo, skuNoList, status, msg);
+        }
+    }
+
+    private ApiResult<?> dataProcess(Object ext) {
         log.warn("WdtOtherInventoryStockConsumer handle, ext: {}", ext);
         RateLimiter limiter = RateLimiter.create(1, 1, TimeUnit.SECONDS);
         if (!limiter.tryAcquire()) {
@@ -145,6 +190,7 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
         }
         if (InventoryOrderTypeEnum.IN_STOCK.getCode().equals(orderType)) {
             CreateOtherStockinRequest request = JSON.parseObject(requestStr, CreateOtherStockinRequest.class);
+            request.setOuterNo(request.getOuterNo() + warehouseNo);
             //查询其他入库单
             OtherStockinResponse.DataInfoDto dataInfoDto = wdtOtherInStockService.queryWithDetail(request);
             List<OtherStockinResponse.OrderInfoDto> order = dataInfoDto.getOrder();
@@ -163,6 +209,7 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
             wdtOtherInStockService.executeConsumer(request);
         } else if (InventoryOrderTypeEnum.OUT_STOCK.getCode().equals(orderType)) {
             CreateOtherStockoutRequest request = JSON.parseObject(requestStr, CreateOtherStockoutRequest.class);
+            request.setOuterNo(request.getOuterNo() + warehouseNo);
             StockoutOtherQueryResponse queryResponse = wdtOtherOutStockService.queryWithDetail(request);
             List<StockoutOtherQueryResponse.OrderItem> order = queryResponse.getOrder();
             //旺店通已经存在这个单据

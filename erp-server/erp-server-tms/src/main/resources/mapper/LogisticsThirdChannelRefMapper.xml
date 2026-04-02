@@ -150,5 +150,27 @@
             )
     </select>
 
+    <select id="listByTrackNos" resultType="com.erp.model.tms.dto.LogisticsThirdChannelRefDTO$ListByTrackNosDTO">
+        SELECT
+            ltcr.ID AS thirdRefId,
+            lbd.ID AS logisticsBillDetailId,
+            lbd.track_no AS trackNo,
+            ltcr.platform_type AS platformType,
+            ltcr.third_channel_code AS thirdChannelCode
+        FROM
+            logistics_bill_detail lbd
+                LEFT JOIN logistics_third_channel_ref ltcr ON ltcr.disabled = FALSE
+                AND ltcr.is_deleted = FALSE
+                AND ltcr.ID = lbd.third_ref_id
+        WHERE
+            lbd.is_deleted = FALSE
+        <if test="trackNos != null and trackNos.size > 0">
+            AND lbd.track_no IN
+            <foreach collection="trackNos" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
 
 </mapper>

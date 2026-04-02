@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
@@ -8,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -170,6 +172,7 @@ public class CfgSettingVirtualServiceImpl  implements CfgSettingVirtualService {
                 jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualRuleDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualRuleDTO());
                 break;
             case VIRTUAL_TRANSFER:
+                this.checkVirtualTransferRule(addDTO.getVirtualTransferSettingDTO());
                 jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualTransferSettingDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualTransferSettingDTO());
                 break;
             default:
@@ -219,6 +222,34 @@ public class CfgSettingVirtualServiceImpl  implements CfgSettingVirtualService {
                 break;
             default:
                 break;
+        }
+    }
+
+
+    /**
+     * 校验中转配置表达式是否合法
+     */
+    private void checkVirtualTransferRule(CfgSettingVirtualValueDTO.VirtualTransferSettingDTO virtualTransferSettingDTO) {
+        if(Objects.isNull(virtualTransferSettingDTO)){
+            return;
+        }
+        List<CfgSettingVirtualValueDTO.VirtualTransferConditionElement> conditionList = virtualTransferSettingDTO.getConditionElementList();
+        if(CollUtil.isEmpty(conditionList)){
+            return;
+        }
+        List<ConditionElement> conditionElementList = new ArrayList<>(conditionList.size());
+        for (CfgSettingVirtualValueDTO.VirtualTransferConditionElement element : conditionList) {
+            ConditionElement conditionElement = new ConditionElement();
+            BeanMapper.copy(element, conditionElement);
+            conditionElement.setValue(element.getValue());
+            conditionElementList.add(conditionElement);
+        }
+
+        SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression = splElDTO.getExpression();
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
     }
 }

@@ -980,6 +980,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             viewDTO.setProductName(skuVO.getSkuName());
+            viewDTO.setSpuNo(skuVO.getSpuNo());
             viewDTO.setBrandName(skuVO.getBrandName());
         }
         data.setDetailList(detailDTOList);

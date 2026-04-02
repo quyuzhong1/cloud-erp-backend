@@ -66,7 +66,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         // 获取请求URL
         String uri = request.getPath().value();
-        if(uri.contains("/webVersion/sse")) {
+        if(uri.contains("/webVersion/sse") || uri.contains("/messageNotice/stream")) {
             return handleSseRequest(exchange, chain);
         }else if(uri.contains("/webVersion/update")) {
             return handleUpdateRequest(exchange, chain);
@@ -206,6 +206,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
     private static Mono<Void> handleSseRequest(ServerWebExchange exchange, GatewayFilterChain chain) {
         HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
         responseHeaders.setCacheControl(CacheControl.noCache());
+        responseHeaders.setContentType(MediaType.TEXT_EVENT_STREAM);
         return chain.filter(exchange);
     }
 }

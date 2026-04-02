@@ -368,4 +368,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return List<AddDTO>
      */
     List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist, List<DictCityEntity> cityList, String plantAddr, List<String> errorMsgList, boolean isUpdatePart);
+
+    /**
+     * 获取启/禁用的供应商列表
+     * @author will
+     * @date 2025/9/2 12:26
+     * @return List<Map<String, Object>>
+     */
+    List<Map<String, Object>> listSupplierDropDown();
 }

@@ -149,8 +149,8 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         qcApplicationDetailService.update(addOrUpdateDTO.getDetailList(),qcApplicationEntity);
 
         // 记录主单操作日志
-        log.info("编辑 开始记录质检申请单主单日志数据，单号：【{}】", qcApplicationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), qcApplicationEntity.getCode(), "质检申请单主单");
+        log.info("编辑 开始记录质检申请单主单日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "质检申请单主单");
         operateLogService.addModuleOperateLogByObj(old, qcApplicationEntity, ModuleTypeEnum.QC_APPLICATION.getCode(), qcApplicationEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -214,6 +214,9 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceCode(entity.getCode());
         addDTO.setSourceType(SourceTypeEnum.QC_APPLICATION.getCode());
+        addDTO.setPurchaseOrderId(entity.getSourceId());
+        addDTO.setPurchaseOrderCode(entity.getSourceCode());
+        addDTO.setPlanQcDate(entity.getPlanQcDate());
         List<QcNoticeDetailDTO.AddDTO> addDetailList = new ArrayList<>();
         for (QcApplicationDetailEntity detailEntity : detailList) {
             QcNoticeDetailDTO.AddDTO  addDetailDTO = new QcNoticeDetailDTO.AddDTO();

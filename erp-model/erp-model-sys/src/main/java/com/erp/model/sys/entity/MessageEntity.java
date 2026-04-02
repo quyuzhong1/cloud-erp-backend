@@ -35,8 +35,10 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
     /**
      * 数据集json
      */
-    @TableField(value = "data_json", typeHandler= JacksonTypeHandler.class)
-    private LinkedHashMap<String, Object> dataJson;
+//    @TableField(value = "data_json", typeHandler= JacksonTypeHandler.class)
+//    private LinkedHashMap<String, Object> dataJson;
+      @TableField(value = "data_json")
+      private String dataJson;
 
     /**
     * 备注
@@ -49,6 +51,12 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
     */
     @TableField("application")
     private String application;
+
+    /**
+     * 是否已发送
+     */
+    @TableField("is_send")
+    public Boolean isSend;
     
     /**
      * 是否已读

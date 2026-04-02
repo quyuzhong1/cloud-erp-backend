@@ -254,6 +254,11 @@ public class QcNoticeDTO implements Serializable {
         private String qcDetailStatusName;
 
         /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
+
+        /**
          * 质检时间
          */
         private LocalDateTime qcDate;
@@ -755,6 +760,11 @@ public class QcNoticeDTO implements Serializable {
          * 质检人名称
          */
         private String qcUserName;
+
+        /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
 
         @NotEmpty
         private List<QcNoticeDetailDTO.@Valid AddDTO> detailList;

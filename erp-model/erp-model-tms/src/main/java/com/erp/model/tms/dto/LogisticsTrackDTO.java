@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -185,17 +186,26 @@ public class LogisticsTrackDTO implements Serializable {
          */
         private Boolean isPushMobile;
         /**
+         * 推送类型
+         */
+        private String pushType;
+        /**
          * 第三方物流商编码
          */
         private String thirdSupplierCode;
         /**
+         * 第三方渠道
+         */
+        private String thirdChannelName;
+
+        /**
          * 第三方配置关系id
          */
         private String thirdRefId;
-        /**
-         * 查询通知配置主键id
-         */
-        private String cfgId;
+//        /**
+//         * 查询通知配置主键id
+//         */
+//        private String cfgId;
     }
 
     @Data
@@ -285,5 +295,20 @@ public class LogisticsTrackDTO implements Serializable {
          * 用于计算数据唯一值
          */
         private String md5;
+    }
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class Kuaidi100Detail {
+
+        private List<String> detailIds;
+
+        private List<LogisticsTrackDTO.UpdateTrackDTO> refList;
+
+        private List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList;
+
+        private List<LogisticsBillDetailDTO.BillDetailDTO> sucessList;
     }
 }

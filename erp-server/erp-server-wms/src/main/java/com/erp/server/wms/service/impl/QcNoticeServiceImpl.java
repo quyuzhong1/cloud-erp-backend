@@ -62,6 +62,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -382,7 +383,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 Integer noticeQty = detail.getQcNoticeQty();
                 Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
                 if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                    sb.append(StrUtil.format(ApiError.PO_QC_STOCK_INSUFFICIENT.getMsg(), skuNo, noticeQty, inventoryQty));
+                    String formattedMsg = MessageFormat.format(
+                            ApiError.PO_QC_STOCK_INSUFFICIENT.getMsg(),
+                            skuNo,
+                            noticeQty,
+                            inventoryQty
+                    );
+                    sb.append(formattedMsg);
                     sb.append(";");
                 }
             }
@@ -1673,7 +1680,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Override
     public List<QcNoticeEntity> listBySourceId(String sourceId) {
-        return lambdaQuery().eq(QcNoticeEntity::getId,sourceId).list();
+        return lambdaQuery().eq(QcNoticeEntity::getSourceId,sourceId).list();
     }
 
 

@@ -27,6 +27,7 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefEntity;
+import com.erp.model.tms.enums.TrackPlatformTypeEnum;
 import com.erp.server.tms.query.LogisticsThirdChannelRefQueryHandler;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
@@ -34,6 +35,7 @@ import com.erp.server.tms.service.LogisticsThirdChannelRefService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -220,5 +222,69 @@ public class LogisticsThirdChannelRefController extends BaseController {
             resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    @PostMapping("/registerLogisticsNumber")
+    public void registerLogisticsNumber() {
+        XxlJobHelper.log("====开始注册物流单号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> trackNoList = new ArrayList<>();
+        List<String> transportNoList = new ArrayList<>();
+        String salesPlatform = "";
+        Integer registerStatus = 0;
+        if (StringUtils.isNotBlank(jobParam)) {
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            trackNoList = jsonObject.getBeanList("trackNoList", String.class);
+            transportNoList = jsonObject.getBeanList("transportNoList", String.class);
+            salesPlatform = jsonObject.getStr("salesPlatform");
+            registerStatus = jsonObject.getInt("registerStatus", 0);
+        }
+
+        // 遍历所有定义的轨迹查询平台执行注册
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(TrackPlatformTypeEnum.KUAIDI100.getCode()) // 设置当前循环的平台标识
+                .size(100)
+                .current(1)
+                .registerStatus(registerStatus)
+                .trackNoList(trackNoList)
+                .transportNoList(transportNoList)
+                .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .salesPlatform(salesPlatform)
+                .build();
+        getRegisterData(query, TrackPlatformTypeEnum.KUAIDI100.getCode());
+
+        XxlJobHelper.log("====结束注册物流单号====");
+    }
+
+    /**
+     * 处理物流单注册数据（内部公用）
+     *
+     * @param query 查询参数
+     * @param platformCode 平台标识
+     */
+    private void getRegisterData(LogisticsBillDetailQueryDTO query, String platformCode) {
+        XxlJobHelper.log("注册单号平台【{}】列表请求参数：{}", platformCode, JSON.toJSONString(query));
+
+        // 基于配置映射表的精确拉取 (替代旧的 track_query_mode 强依赖)
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listWaitingRegisterByConfig(query, platformCode);
+        XxlJobHelper.log("查询到待注册数：{}", list.size());
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+
+        // 获取第三方渠道推送配置信息
+        List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList = logisticsThirdChannelRefService.listByPlatform(platformCode);
+        XxlJobHelper.log("获取到平台【{}】的渠道配置数：{}", platformCode, channelRefList.size());
+
+        // 分批执行注册逻辑
+        if (list.size() > MathUtil.NUMBER_100) {
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            XxlJobHelper.log("拆分批次数：{}", partition.size());
+            partition.forEach(e -> logisticsBaseService.processRegisterData(platformCode, e, query.getTransportType(), channelRefList));
+        } else {
+            logisticsBaseService.processRegisterData(platformCode, list, query.getTransportType(), channelRefList);
+        }
+        log.info("========【{}】平台同步物流注册数据完成==========", platformCode);
     }
 }

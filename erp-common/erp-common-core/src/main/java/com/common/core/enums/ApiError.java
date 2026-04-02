@@ -292,6 +292,9 @@ public enum ApiError implements Serializable {
     FILE_CHECK_SIZE_FAILED(2440, "检查ZIP文件大小失败: {0}"),
     FILE_MANAGEMENT_SKU_TYPE_EXIST(2441, "SKU【{0}】类型【{1}】已存在"),
     FILE_MANAGEMENT_CATEGORY_TYPE_EXIST(2442, "品类【{0}】类型【{1}】已存在"),
+
+    FILE_URL_INVALID(2443, "文件url格式错误"),
+    FILE_UNSUPPORTED_TYPE(2444, "不支持的文件类型【{0}】"),
     /**
      * 单据相关提示 从3000 - 3500
      */
@@ -688,6 +691,7 @@ public enum ApiError implements Serializable {
     PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
     PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
     PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
+    PRODUCT_RETAIL_SKU_DUPLICATE(5122, "已存在同SKU同币种零售价,不可重复创建"),
 
 
     /**
