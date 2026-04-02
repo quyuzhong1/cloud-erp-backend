@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,6 +12,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoReturnDetailEntity;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -102,9 +104,9 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
         }
         PlatformReturnOrderDTO dto = new PlatformReturnOrderDTO();
         BeanUtils.copyProperties(dmpEntity, dto);
-        dto.setUniqueId(dmpEntity.getThirdCode());
+        dto.setUniqueId(CharSequenceUtil.format("return_{}_{}_{}", dmpEntity.getThirdCode(), dmpEntity.getSourceId(), dmpEntity.getBatchNo()));
         dto.setPlatformReturnNo(dmpEntity.getThirdCode());
-        dto.setPlatformOrderNo(StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode()));
+        dto.setPlatformOrderNo(resolvePlatformOrderNo(dmpEntity));
         dto.setReason(dmpEntity.getRemark());
         dto.setDictPlatform(dmpEntity.getSourceSystem());
         dto.setPlatform(dmpEntity.getSourceSystem());
@@ -130,6 +132,13 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
             resultList.add(detail);
         }
         return resultList;
+    }
+
+    private String resolvePlatformOrderNo(DmpSoReturnInfoEntity dmpEntity) {
+        if (StringUtils.equalsIgnoreCase(dmpEntity.getSourceSystem(), DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())) {
+            return StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode());
+        }
+        return dmpEntity.getPlatformCode();
     }
 
 
