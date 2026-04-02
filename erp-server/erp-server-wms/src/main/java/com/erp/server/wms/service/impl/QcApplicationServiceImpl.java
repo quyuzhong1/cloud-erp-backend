@@ -216,6 +216,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         addDTO.setSourceType(SourceTypeEnum.QC_APPLICATION.getCode());
         addDTO.setPurchaseOrderId(entity.getSourceId());
         addDTO.setPurchaseOrderCode(entity.getSourceCode());
+        addDTO.setPlanQcDate(entity.getPlanQcDate());
         List<QcNoticeDetailDTO.AddDTO> addDetailList = new ArrayList<>();
         for (QcApplicationDetailEntity detailEntity : detailList) {
             QcNoticeDetailDTO.AddDTO  addDetailDTO = new QcNoticeDetailDTO.AddDTO();

@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -127,7 +128,11 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     @TableField("source_type")
     private String sourceType;
 
-
+    /**
+     * 期望质检日期
+     */
+    @TableField("plan_qc_date")
+    private LocalDate planQcDate;
 
     public static final String APPROVE_STATUS = "approve_status";
 
