@@ -74,9 +74,8 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 }
 
 				Map<String, Object> resultDmpInputMongoChild = new HashMap<>();
-                String buyerReturnNo = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("buyer_return_no"), "").toString();
                 String issueId = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("id"), "").toString();
-                String thirdCode = StringUtils.defaultIfBlank(buyerReturnNo, issueId);
+                String thirdCode = issueId;
                 String issueStatus = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("issue_status"), "").toString();
                 String orderId = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("order_id"), "").toString();
                 String parentOrderId = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("parent_order_id"), "").toString();
@@ -91,6 +90,7 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 String issueReasonName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(reasonEnglish, reasonChinese);
 
 				resultDmpInputMongoChild.put("buyer_login_id" , dmpInputMongoChild.get("buyer_login_id"));
+                resultDmpInputMongoChild.put("sourcePlatform", "AliExpress");
 				resultDmpInputMongoChild.put("issue_id" , issueId);
 				resultDmpInputMongoChild.put("skuId" , dmpInputMongoChild.get("product_id"));
 				resultDmpInputMongoChild.put("skuNo" , dmpInputMongoChild.get("product_id"));
@@ -128,7 +128,7 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 resultDmpInputMongoChild.put("returnTime", dmpInputMongoChild.get("gmt_create"));
                 resultDmpInputMongoChild.put("refundTime", dmpInputMongoChild.get("gmt_create"));
                 if (isRefundStorage) {
-                    resultDmpInputMongoChild.put("status", "1");
+                    resultDmpInputMongoChild.put("status", AliExpressIssueSolutionResolver.resolveRefundStatus(reverseDetailStatus, issueStatus));
                 } else {
                     resultDmpInputMongoChild.put("status", "finish".equals(issueStatus) ? "4" : "1");
                 }

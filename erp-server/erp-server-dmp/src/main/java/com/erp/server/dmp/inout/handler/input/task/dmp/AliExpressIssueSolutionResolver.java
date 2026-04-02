@@ -3,8 +3,10 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -15,7 +17,18 @@ final class AliExpressIssueSolutionResolver {
     static final String SOLUTION_RETURN_AND_REFUND = "return_and_refund";
     static final String SOLUTION_REFUND = "refund";
     static final String REVERSE_STATUS_REFUND_SUCCESS = "refund_success";
+    static final String REVERSE_STATUS_REFUND_REJECT = "refund_reject";
     private static final int DEFAULT_DB_TEXT_MAX_LENGTH = 255;
+    private static final Set<String> RETURN_REVERSE_STATUSES = new HashSet<>(Arrays.asList(
+            "wait_for_seller_set_return_address",
+            "wait_for_buyer_returnid",
+            "wait_for_seller_confirm",
+            "wait_for_warehouse_confirmation",
+            "wait_for_warehouse_quality_check",
+            "return_success"));
+    private static final Set<String> REFUND_REVERSE_STATUSES = new HashSet<>(Arrays.asList(
+            REVERSE_STATUS_REFUND_SUCCESS,
+            REVERSE_STATUS_REFUND_REJECT));
 
     private static final List<String> SOLUTION_LIST_KEYS = Arrays.asList(
             "buyer_solution_list",
@@ -36,18 +49,49 @@ final class AliExpressIssueSolutionResolver {
         List<SolutionRecord> candidates = collectSolutions(issueDetail);
         SolutionRecord returnSolution = pickSolution(candidates, SOLUTION_RETURN_AND_REFUND);
         SolutionRecord refundSolution = pickSolution(candidates, SOLUTION_REFUND);
+        boolean hasReturnSolution = returnSolution != null;
+        boolean hasRefundSolution = refundSolution != null;
 
-        boolean matchedReturn = returnSolution != null;
-        boolean matchedRefund = !matchedReturn
-                && refundSolution != null
-                && REVERSE_STATUS_REFUND_SUCCESS.equals(reverseDetailStatus);
+        boolean matchedReturn = false;
+        boolean matchedRefund = false;
+        if (hasReturnSolution && isReturnReverseStatus(reverseDetailStatus)) {
+            matchedReturn = true;
+        } else if (hasRefundSolution && isRefundReverseStatus(reverseDetailStatus)) {
+            matchedRefund = true;
+        } else if (hasRefundSolution && !hasReturnSolution) {
+            matchedRefund = true;
+        } else if (hasReturnSolution) {
+            matchedReturn = true;
+        }
 
         SolutionRecord effectiveSolution = matchedReturn ? returnSolution : (matchedRefund ? refundSolution : null);
         return new ResolvedIssueSolution(reverseDetailStatus, matchedReturn, matchedRefund, effectiveSolution);
     }
 
+    static boolean isReturnReverseStatus(String reverseDetailStatus) {
+        return RETURN_REVERSE_STATUSES.contains(getLowerCase(reverseDetailStatus));
+    }
+
+    static boolean isRefundReverseStatus(String reverseDetailStatus) {
+        return REFUND_REVERSE_STATUSES.contains(getLowerCase(reverseDetailStatus));
+    }
+
+    static String resolveRefundStatus(String reverseDetailStatus, String issueStatus) {
+        String normalizedReverseStatus = getLowerCase(reverseDetailStatus);
+        if (REVERSE_STATUS_REFUND_SUCCESS.equals(normalizedReverseStatus)) {
+            return "1";
+        }
+        if (REVERSE_STATUS_REFUND_REJECT.equals(normalizedReverseStatus)) {
+            return "2";
+        }
+        if ("canceled_issue".equals(getLowerCase(issueStatus))) {
+            return "3";
+        }
+        return "1";
+    }
+
     static String getReturnTrackingNo(Map<String, Object> issueDetail) {
-        return firstNonBlank(issueDetail.get("buyer_return_logistics_lp_no"), issueDetail.get("buyer_return_no"));
+        return sanitizeTrackingNo(firstNonBlank(issueDetail.get("buyer_return_logistics_lp_no"), issueDetail.get("buyer_return_no")));
     }
 
     static String getIssueContent(Map<String, Object> issueDetail) {
@@ -123,6 +167,17 @@ final class AliExpressIssueSolutionResolver {
     static String normalizeText(Object value) {
         String text = ObjectUtil.defaultIfNull(value, "").toString();
         return ObjectUtil.defaultIfNull(StringUtils.normalizeSpace(text), "").toString();
+    }
+
+    static String sanitizeTrackingNo(Object value) {
+        String trackingNo = normalizeText(value);
+        if (StringUtils.isBlank(trackingNo)) {
+            return "";
+        }
+        if (trackingNo.length() > DEFAULT_DB_TEXT_MAX_LENGTH) {
+            return "";
+        }
+        return trackingNo.matches("^[A-Za-z0-9][A-Za-z0-9\\-_.:/]*$") ? trackingNo : "";
     }
 
     private static List<SolutionRecord> collectSolutions(Map<String, Object> issueDetail) {
