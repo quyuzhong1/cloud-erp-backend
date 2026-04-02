@@ -18,6 +18,10 @@ public class NameExtractor {
     private static final List<String> NAME_HINT_KEYWORDS = Arrays.asList("收货人", "收件人", "联系人", "姓名");
     private static final Pattern KEYWORD_NAME_PATTERN = Pattern.compile(
             "(?:收货人|收件人|联系人|姓名)\\s*[:：]?\\s*([\\u4e00-\\u9fa5]{2,6})");
+    private static final Pattern ADDRESS_BUILDING_SUFFIX_PATTERN = Pattern.compile(
+            "^(?:\\s|,|，|;|；|:|：|-|_|/|\\\\)*([0-9A-Za-z一二三四五六七八九十百]+)?(楼|层|栋|幢|座|号|室|单元|楼栋|门牌).*");
+    private static final Pattern ADDRESS_PLACE_SUFFIX_PATTERN = Pattern.compile(
+            "^(?:\\s|,|，|;|；|:|：|-|_|/|\\\\)*(大厦|广场|中心|公寓|花园|小区|大楼|商厦|产业园|工业园|园区|城|苑).*");
 
     public ExtractedName extract(String textWithoutPhone, int phoneStartIndex) {
         if (textWithoutPhone == null || textWithoutPhone.trim().isEmpty()) {
@@ -71,6 +75,9 @@ public class NameExtractor {
                     continue;
                 }
                 cursor = idx + word.length();
+                if (isSuppressedByAddressContext(text, idx, idx + word.length())) {
+                    continue;
+                }
                 list.add(new NameCandidate(word, idx, idx + word.length()));
             }
         } catch (Throwable ignored) {
@@ -84,6 +91,9 @@ public class NameExtractor {
         while (matcher.find()) {
             String token = matcher.group();
             if (!isLikelyName(token)) {
+                continue;
+            }
+            if (isSuppressedByAddressContext(text, matcher.start(), matcher.end())) {
                 continue;
             }
             candidates.add(new NameCandidate(token, matcher.start(), matcher.end()));
@@ -135,6 +145,15 @@ public class NameExtractor {
             return false;
         }
         return !token.matches(".*(省|市|区|县|路|街|道|巷|号|栋|单元|室|园|大厦|广场|大道|小区).*");
+    }
+
+    private boolean isSuppressedByAddressContext(String text, int start, int end) {
+        if (text == null || start < 0 || end < start || end > text.length()) {
+            return false;
+        }
+        String suffix = text.substring(end);
+        return ADDRESS_BUILDING_SUFFIX_PATTERN.matcher(suffix).matches()
+                || ADDRESS_PLACE_SUFFIX_PATTERN.matcher(suffix).matches();
     }
 
     private int distance(int a, int b) {

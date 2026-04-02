@@ -41,6 +41,21 @@ public class NlpAddressParserTest {
         Assert.assertEquals("13900001111", parsed.getPhone());
     }
 
+    @Test
+    public void parse_short_district_alias_should_not_override_real_region_or_strip_building_name() {
+        NlpAddressParser parser = new NlpAddressParser(new DictRegionLexicon(mockAmbiguousDictCityList()));
+        ParsedAddress parsed = parser.parse("广东深圳龙岗星河12楼11号");
+
+        Assert.assertEquals("440000", parsed.getProvinceId());
+        Assert.assertEquals("广东省", parsed.getProvince());
+        Assert.assertEquals("440300", parsed.getCityId());
+        Assert.assertEquals("深圳市", parsed.getCity());
+        Assert.assertEquals("440307", parsed.getDistrictId());
+        Assert.assertEquals("龙岗区", parsed.getDistrict());
+        Assert.assertNull(parsed.getContactName());
+        Assert.assertEquals("星河12楼11号", parsed.getDetailAddress());
+    }
+
     private List<DictCityEntity> mockDictCityList() {
         List<DictCityEntity> list = new ArrayList<DictCityEntity>();
         list.add(create("440000", "广东省", DictCityTypeEnum.PROVINCE.getCode(), null));
@@ -57,5 +72,16 @@ public class NlpAddressParserTest {
         entity.setParentId(parentId);
         entity.setDisabled(false);
         return entity;
+    }
+
+    private List<DictCityEntity> mockAmbiguousDictCityList() {
+        List<DictCityEntity> list = new ArrayList<DictCityEntity>();
+        list.add(create("440000", "广东省", DictCityTypeEnum.PROVINCE.getCode(), null));
+        list.add(create("440300", "深圳市", DictCityTypeEnum.CITY.getCode(), "440000"));
+        list.add(create("440307", "龙岗区", DictCityTypeEnum.DISTRICT.getCode(), "440300"));
+        list.add(create("510000", "四川省", DictCityTypeEnum.PROVINCE.getCode(), null));
+        list.add(create("510400", "攀枝花市", DictCityTypeEnum.CITY.getCode(), "510000"));
+        list.add(create("510402", "东区", DictCityTypeEnum.DISTRICT.getCode(), "510400"));
+        return list;
     }
 }

@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
  */
 public class DictRegionLexicon implements RegionLexicon {
 
+    private static final int MIN_TRIM_ALIAS_LENGTH = 2;
+
     private final List<RegionNode> nodes;
     private final Map<String, RegionNode> idIndex;
     private final Map<String, List<RegionNode>> aliasIndex;
@@ -86,7 +88,10 @@ public class DictRegionLexicon implements RegionLexicon {
 
     private void addTrimAlias(Set<String> aliases, String name, String suffix) {
         if (name.endsWith(suffix) && name.length() > suffix.length()) {
-            aliases.add(name.substring(0, name.length() - suffix.length()));
+            String alias = name.substring(0, name.length() - suffix.length());
+            if (alias.length() >= MIN_TRIM_ALIAS_LENGTH) {
+                aliases.add(alias);
+            }
         }
     }
 
