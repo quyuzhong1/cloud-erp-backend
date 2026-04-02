@@ -96,7 +96,7 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
         apiResult = dataProcess(ext);
         }catch (Exception e){
             //操作异常
-            log.error("WdtOtherInventoryStockConsumer handle, ext: {}, e: {}", ext, e);
+            log.error("WdtOtherInventoryStockConsumer handle, ext: {}, e:", ext, e);
             apiResult = ApiResult.error(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage());
         }
         String batchNo = new cn.hutool.json.JSONObject(ext).getStr("outerNo");
