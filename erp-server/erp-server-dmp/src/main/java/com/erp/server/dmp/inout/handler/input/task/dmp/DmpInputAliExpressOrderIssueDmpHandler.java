@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
@@ -26,6 +25,7 @@ import com.erp.server.dmp.service.DmpSoInfoService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * dmp处理金蝶明细子类任务handler，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -34,6 +34,7 @@ import cn.hutool.core.util.ObjectUtil;
  */
 @Service
 @Scope("prototype")
+@Slf4j
 public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmpHandler{
 	@Autowired
 	private DmpSoInfoService dmpSoInfoService;
@@ -66,9 +67,10 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 						.eq(DmpSoInfoEntity::getSourcePlatform, DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())
 						.eq(DmpSoInfoEntity::getNextLevelId, nextLevelId)
 						.list();
-					if(CollUtil.isEmpty(list)) {
-						throw new ServiceException("所有退货订单未查询到订单数据");
-					}
+                    if (CollUtil.isEmpty(list)) {
+                        log.warn("AliExpress纠纷DMP未查询到任何来源订单，全部跳过。nextLevelId={}, inputTaskId={}, storageName={}, orderCount={}",
+                                nextLevelId, inputTaskId, dmpCfgInputConvertEntity.getStorageName(), orders.size());
+                    }
 					orderIdMaps = list.stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId , (v1 , v2) -> v1));
 				}
 				
@@ -115,7 +117,9 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         String parentOrderId = ObjectUtil.defaultIfNull(v.get("parent_order_id"), "").toString();
                         String sourceId = finalOrderIdMaps.get(parentOrderId);
                         if(StringUtils.isBlank(sourceId)) {
-                            throw new ServiceException("退货订单" + parentOrderId + "未查询到订单数据");
+                            log.warn("AliExpress纠纷DMP跳过未匹配来源订单的数据。parentOrderId={}, issueId={}, nextLevelId={}, inputTaskId={}, storageName={}",
+                                    parentOrderId, issueId, nextLevelId, inputTaskId, dmpCfgInputConvertEntity.getStorageName());
+                            return true;
                         }
 
                         String platformReturnOrRefundNo = StringUtils.defaultIfBlank(snapshot.buyerReturnNo, issueId);
