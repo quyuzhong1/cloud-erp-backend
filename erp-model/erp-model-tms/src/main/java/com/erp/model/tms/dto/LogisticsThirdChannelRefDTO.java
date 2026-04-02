@@ -419,4 +419,28 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          */
         private Boolean disabled;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListByTrackNosDTO {
+        /**
+         * 主键id列表
+         */
+        private String thirdRefId;
+
+        private String logisticsBillDetailId;
+
+        private String trackNo;
+
+        /**
+         * 平台类型(TRACK123)
+         * TrackPlatformTypeEnum
+         */
+        private String platformType;
+
+        /**
+         * 第三方渠道编码
+         */
+        private String thirdChannelCode;
+    }
 }

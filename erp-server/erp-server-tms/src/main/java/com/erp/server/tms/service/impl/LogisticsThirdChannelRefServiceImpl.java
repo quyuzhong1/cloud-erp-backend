@@ -404,4 +404,12 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         }
         return flag;
     }
+
+    @Override
+    public List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> listByTrackNos(List<String> trackNos) {
+        if (CollUtil.isEmpty(trackNos)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByTrackNos(trackNos);
+    }
 }
