@@ -7,14 +7,12 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 
 /**
  * @author Lambda
@@ -48,11 +46,11 @@ public interface SyncKingdeeSoService {
                                                   List<BaseIdDTO.CodeDTO> companyEntities,
                                                   List<CurrencyDTO.ViewDTO> currencyList,
                                                   List<SoChangeDetailEntity> soChangeDetailEntityList,
-                                                  List<DictBasicEntity> dictList,
+                                                  List<DictBasicEntity> omsAllDictList,
                                                   List<DictPartitionEntity> partitionEntityList,
                                                   List<DictCountryEntity> countryEntityList,
                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                  List<SysDepartmentEntity> deptList);
+                                                  List<CfgDeptRelationEntity> deptRelationList, List<SysDepartmentEntity> deptList);
 
     /**
      * 同步数帝云
@@ -76,6 +74,7 @@ public interface SyncKingdeeSoService {
                        List<DictPartitionEntity> partitionEntityList,
                        List<DictCountryEntity> countryEntityList,
                        List<DictGlobalAreaEntity> dictGlobalEntityList,
+                       List<CfgDeptRelationEntity> deptRelationList,
                        List<SysDepartmentEntity> deptList
     );
 

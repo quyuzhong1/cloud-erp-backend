@@ -109,7 +109,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
                                                          List<SysDepartmentEntity> deptList,
                                                          List<CfgCountryPartitionEntity> countryPartitionEntityList,
-                                                         String platformCode
+                                                         List<CfgDeptRelationEntity> deptRelationList, String platformCode
     ) {
 
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -365,27 +365,28 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
     
     @Override
     public Map<String, Object> syncNewDataToSdyFieldHandler(SoReturnInstockEntity entity,
-                                                         SoReturnInstockDetailEntity detailEntity,
-                                                         String operate,
-                                                         List<SkuVO> skuVOList,
-                                                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
-                                                         List<CurrencyDTO.ViewDTO> currencyList,
-                                                         List<ProductDetailEntity> parentSkuList,
-                                                         List<CustomerInfoEntity> customerInfoList,
-                                                         List<BaseIdDTO.CodeDTO> companyEntities,
-                                                         List<SoReturnEntity> soReturnEntityList,
-                                                         List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                                                         List<SoReturnEntity> receiveReturnList,
-                                                         String countryCode,
-                                                         String partitionId,
-                                                         String dictPlatform,
-                                                         List<DictBasicEntity> omsAllDictList,
-                                                         List<DictPartitionEntity> partitionEntityList,
-                                                         List<DictCountryEntity> countryEntityList,
-                                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                         List<SysDepartmentEntity> deptList,
-                                                         List<CfgCountryPartitionEntity> countryPartitionEntityList,
-                                                         String platformCode
+                                                            SoReturnInstockDetailEntity detailEntity,
+                                                            String operate,
+                                                            List<SkuVO> skuVOList,
+                                                            List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                            List<CurrencyDTO.ViewDTO> currencyList,
+                                                            List<ProductDetailEntity> parentSkuList,
+                                                            List<CustomerInfoEntity> customerInfoList,
+                                                            List<BaseIdDTO.CodeDTO> companyEntities,
+                                                            List<SoReturnEntity> soReturnEntityList,
+                                                            List<SoReturnReceiveEntity> soReturnReceiveEntityList,
+                                                            List<SoReturnEntity> receiveReturnList,
+                                                            String countryCode,
+                                                            String partitionId,
+                                                            String dictPlatform,
+                                                            List<DictBasicEntity> omsAllDictList,
+                                                            List<DictPartitionEntity> partitionEntityList,
+                                                            List<DictCountryEntity> countryEntityList,
+                                                            List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                            List<SysDepartmentEntity> deptList,
+                                                            List<CfgCountryPartitionEntity> countryPartitionEntityList,
+                                                            List<CfgDeptRelationEntity> deptRelationList,
+                                                            String platformCode
     ) {
 
         // 字典分组
@@ -590,11 +591,16 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             // 军区名称
             militaryRegionName = dictPartitionEntity.getName();
             // 销售平台二级部门映射
+            CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(finalPartitionId) && e.getDictPlatform().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
+            if (null != cfgDeptRelationEntity){
+                deptId = cfgDeptRelationEntity.getDeptId();
+            }
 
             if (StringUtils.isNotBlank(deptId)){
+                String finalDeptId = deptId;
                 SysDepartmentEntity departmentDTO = deptList
                         .stream()
-                        .filter(e -> e.getId().equals(deptId))
+                        .filter(e -> e.getId().equals(finalDeptId))
                         .findFirst()
                         .orElse(null);
                 if (null != departmentDTO){
@@ -787,6 +793,9 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         // 国家关联分区信息
         List<CfgCountryPartitionEntity> countryPartitionEntityList = FeignQuery.create(CfgCountryPartitionEntity.class).list();
 
+        // 平台军区关联部门
+        List<CfgDeptRelationEntity> deptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+
         for (SoReturnInstockEntity entity : list) {
             // 国家
             String country = "";
@@ -846,6 +855,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                             dictGlobalEntityList,
                             deptList,
                             countryPartitionEntityList,
+                            deptRelationList,
                             platformCode
                     );
             	}else {
@@ -870,6 +880,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                             dictGlobalEntityList,
                             deptList,
                             countryPartitionEntityList,
+                            deptRelationList,
                             platformCode
                     );
             	}

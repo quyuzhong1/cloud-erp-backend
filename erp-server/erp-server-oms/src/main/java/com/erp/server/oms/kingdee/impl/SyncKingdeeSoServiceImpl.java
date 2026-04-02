@@ -41,7 +41,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.entity.*;
@@ -620,6 +619,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                                                          List<DictPartitionEntity> partitionEntityList,
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<CfgDeptRelationEntity> deptRelationList,
                                                          List<SysDepartmentEntity> deptList
     ) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -850,11 +850,15 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             // 军区名称
             militaryRegionName = dictPartitionEntity.getName();
         }
-
+        CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(partitionId) && e.getDictPlatform().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
+        if (null != cfgDeptRelationEntity){
+            deptId = cfgDeptRelationEntity.getDeptId();
+        }
         if (StringUtils.isNotBlank(deptId)){
+            String finalDeptId = deptId;
             SysDepartmentEntity departmentDTO = deptList
                     .stream()
-                    .filter(e -> e.getId().equals(deptId))
+                    .filter(e -> e.getId().equals(finalDeptId))
                     .findFirst()
                     .orElse(null);
             if (null != departmentDTO){
@@ -935,6 +939,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                               List<DictPartitionEntity> partitionEntityList,
                               List<DictCountryEntity> countryEntityList,
                               List<DictGlobalAreaEntity> dictGlobalEntityList,
+                              List<CfgDeptRelationEntity> deptRelationList,
                               List<SysDepartmentEntity> deptList
     ) {
         for (SoDetailEntity soDetailEntity : detailEntityList) {
@@ -960,6 +965,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     partitionEntityList,
                     countryEntityList,
                     dictGlobalEntityList,
+                    deptRelationList,
                     deptList
 
             )));

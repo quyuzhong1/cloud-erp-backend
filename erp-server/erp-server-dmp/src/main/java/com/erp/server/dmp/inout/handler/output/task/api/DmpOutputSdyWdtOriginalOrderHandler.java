@@ -22,12 +22,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
-import com.erp.model.sys.entity.CfgCountryPartitionEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -315,9 +310,20 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
                         String departmentCode = "";
                         // 部门名称
                         String departmentName= "";
+                        // 部门ID
+                        String deptId = "";
 
                         if (null != customerInfo){
-                            SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, customerInfo.getSalesDeptId());
+                            deptId = customerInfo.getSalesDeptId();
+                            if (StringUtils.isNotBlank(customerInfo.getPlatformType()) && null != cfgCountryPartitionEntity) {
+                                // 如果平台类型和军区编码都不为空，则根据平台类型和军区编码查询关联部门信息
+                                CfgDeptRelationEntity deptRelationEntity = queryAndCacheCfgDeptRelation(cacheMap, customerInfo.getPlatformType(), cfgCountryPartitionEntity.getPartitionId());
+                                if (null != deptRelationEntity) {
+                                    deptId = deptRelationEntity.getDeptId();
+                                }
+                            }
+
+                            SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, deptId);
                             if (null != departmentDTO){
                             	KingdeeDepartmentEntity kingdeeDepartment = queryAndCacheKingdeeDepartment(cacheMap, departmentDTO.getId(), customerInfo.getUseOrgId());
                                 // 部门编码
@@ -670,6 +676,24 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
         	}
     	}
 		return new KingdeeDepartmentEntity();
+    }
+
+    private CfgDeptRelationEntity queryAndCacheCfgDeptRelation(Map<String, Map<String, Object>> cacheMap, String platformType, String partitionId) {
+        if (StringUtils.isBlank(platformType) || StringUtils.isBlank(partitionId)) {
+            return null;
+        }
+        Map<String, Object> cfgDeptRelationListMap = cacheMap.get("cfgDeptRelationList");
+        String key = CharSequenceUtil.format("{}_{}", partitionId, platformType);
+        if(null == cfgDeptRelationListMap) {
+            List<CfgDeptRelationEntity> cfgDeptRelationList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDisabled, false).list();
+            cfgDeptRelationListMap = cfgDeptRelationList.stream().collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}", e.getPartitionId(), e.getDictPlatform()), c -> c , (c1 , c2) -> c1));
+            cacheMap.put("cfgDeptRelationList", cfgDeptRelationListMap);
+        }
+        Object object = cfgDeptRelationListMap.get(key);
+        if(object != null) {
+            return (CfgDeptRelationEntity) object;
+        }
+        return null;
     }
 
 }

@@ -27,6 +27,7 @@ public interface SyncSoB2cService {
      * @param soB2cEntity
      * @param soB2cDetailEntity
      * @param operate
+     * @param deptRelationList
      * @return
      */
     Map<String, Object> syncDataToSdyFieldHandler(SoB2cEntity soB2cEntity,
@@ -47,6 +48,7 @@ public interface SyncSoB2cService {
                                                   List<DictPartitionEntity> partitionEntityList,
                                                   List<DictCountryEntity> countryEntityList,
                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                  List<CfgDeptRelationEntity> deptRelationList,
                                                   List<SysDepartmentEntity> deptList);
 
     void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate);
@@ -68,6 +70,7 @@ public interface SyncSoB2cService {
                        List<DictPartitionEntity> partitionEntityList,
                        List<DictCountryEntity> countryEntityList,
                        List<DictGlobalAreaEntity> dictGlobalEntityList,
+                       List<CfgDeptRelationEntity> deptRelationList,
                        List<SysDepartmentEntity> deptList);
 
     void syncSelfAddDataToSdy(SoB2cEntity soB2cEntity, String operateEnum);
@@ -97,6 +100,7 @@ public interface SyncSoB2cService {
                                                          List<DictPartitionEntity> partitionEntityList,
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<CfgDeptRelationEntity> deptRelationList,
                                                          List<SysDepartmentEntity> deptList);
 
     Map<String, Object> syncAliExpressDataToSdyFieldHandler(SoB2cEntity soB2cEntity,
@@ -119,6 +123,7 @@ public interface SyncSoB2cService {
                                                             List<DictPartitionEntity> partitionEntityList,
                                                             List<DictCountryEntity> countryEntityList,
                                                             List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                            List<CfgDeptRelationEntity> deptRelationList,
                                                             List<SysDepartmentEntity> deptList);
 
     /**
@@ -160,7 +165,7 @@ public interface SyncSoB2cService {
             List<DictPartitionEntity> partitionEntityList,
             List<DictCountryEntity> countryEntityList,
             List<DictGlobalAreaEntity> dictGlobalEntityList,
-            List<SysDepartmentEntity> deptList);
+            List<CfgDeptRelationEntity> deptRelationList, List<SysDepartmentEntity> deptList);
 
     void hisSyncAliExpressDataToSdyFieldHandler(
             SoB2cEntity soB2cEntity,
@@ -183,5 +188,6 @@ public interface SyncSoB2cService {
             List<DictPartitionEntity> partitionEntityList,
             List<DictCountryEntity> countryEntityList,
             List<DictGlobalAreaEntity> dictGlobalEntityList,
+            List<CfgDeptRelationEntity> deptRelationList,
             List<SysDepartmentEntity> deptList);
 }

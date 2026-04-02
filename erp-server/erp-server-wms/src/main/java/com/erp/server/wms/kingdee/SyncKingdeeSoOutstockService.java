@@ -6,14 +6,12 @@ import java.util.Map;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
@@ -78,30 +76,30 @@ public interface SyncKingdeeSoOutstockService {
                                                   List<SoB2cEntity> soB2cEntities,
                                                   List<SoInfoEntity> soInfoEntities,
                                                   List<SoB2cReceiverEntity> soB2cReceiverEntityList,
-                                                  List<DictBasicEntity> dictBasicEntityList,
+                                                  List<DictBasicEntity> omsAllDictList,
                                                   List<DictPartitionEntity> partitionEntityList,
                                                   List<DictCountryEntity> countryEntityList,
                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                  List<SysDepartmentEntity> deptList);
+                                                  List<CfgDeptRelationEntity> deptRelationList, List<SysDepartmentEntity> deptList);
     
     Map<String, Object> syncNewDataToSdyFieldHandler(SoOutstockEntity entity,
-    		SoOutstockDetailEntity soOutstockDetailEntity,
-    		String operate,
-    		List<CurrencyDTO.ViewDTO> currencyList,
-    		List<ShopInfoEntity> shopInfoList,
-    		List<CustomerInfoEntity> customerInfoList,
-    		List<BaseIdDTO.CodeDTO> companyEntities,
-    		List<SkuVO> skuVOList,
-    		List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
-    		List<ProductDetailEntity> parentSkuList,
-    		List<SoB2cEntity> soB2cEntities,
-    		List<SoInfoEntity> soInfoEntities,
-    		List<SoB2cReceiverEntity> soB2cReceiverEntityList,
-    		List<DictBasicEntity> dictBasicEntityList,
-    		List<DictPartitionEntity> partitionEntityList,
-    		List<DictCountryEntity> countryEntityList,
-    		List<DictGlobalAreaEntity> dictGlobalEntityList,
-    		List<SysDepartmentEntity> deptList);
+                                                     SoOutstockDetailEntity soOutstockDetailEntity,
+                                                     String operate,
+                                                     List<CurrencyDTO.ViewDTO> currencyList,
+                                                     List<ShopInfoEntity> shopInfoList,
+                                                     List<CustomerInfoEntity> customerInfoList,
+                                                     List<BaseIdDTO.CodeDTO> companyEntities,
+                                                     List<SkuVO> skuVOList,
+                                                     List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                     List<ProductDetailEntity> parentSkuList,
+                                                     List<SoB2cEntity> soB2cEntities,
+                                                     List<SoInfoEntity> soInfoEntities,
+                                                     List<SoB2cReceiverEntity> soB2cReceiverEntityList,
+                                                     List<DictBasicEntity> omsAllDictList,
+                                                     List<DictPartitionEntity> partitionEntityList,
+                                                     List<DictCountryEntity> countryEntityList,
+                                                     List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                     List<CfgDeptRelationEntity> deptRelationList, List<SysDepartmentEntity> deptList);
 
     /**
      * 同步数帝云
