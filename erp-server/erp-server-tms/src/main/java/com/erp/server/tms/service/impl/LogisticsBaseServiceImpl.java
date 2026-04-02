@@ -371,7 +371,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             }
             String pushType = pagingVO.getPushType();
             record.setThirdSupplierCode(pagingVO.getThirdSupplierCode());
-            if ( LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
+            if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(pushType) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
                 record.setTelNumber(pagingVO.getMobile());
                 record.setThirdRefId(pagingVO.getId());
                 record2s.add(record);
@@ -471,15 +471,26 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         return track;
     }
 
+    /**
+     * 批量更新物流轨迹信息（目前仅支持 Track123）
+     *
+     * @param dtos 待更新的轨迹数据列表
+     * @param transportType 运输类型（小包/海运）
+     * @return 更新结果清单
+     * @author zdy
+     * @date 2023-11-03
+     */
     @Override
-    public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos,String transportType) {
-        if (CollectionUtils.isEmpty(dtos)){
+    public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos, String transportType) {
+        if (CollectionUtils.isEmpty(dtos)) {
             return Collections.emptyList();
         }
         List<BatchResultDTO> dtoList = new ArrayList<>(dtos.size());
+        // 按 100 条为一个集合进行分批处理
         List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = Lists.partition(dtos, 100);
         for (List<LogisticsTrackDTO.UpdateTrackDTO> entityList : partition) {
-            dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), entityList,transportType));
+            // 目前仅由 Track123 物流商进行批量轨迹数据更新
+            dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), entityList, transportType));
         }
         return dtoList;
     }

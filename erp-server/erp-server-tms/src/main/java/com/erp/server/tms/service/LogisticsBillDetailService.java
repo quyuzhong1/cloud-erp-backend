@@ -149,4 +149,6 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @return
      */
     Integer countByThirdRefId(String id);
+
+    void updateTrack(LogisticsTrackDTO.Kuaidi100Detail dto);
 }
