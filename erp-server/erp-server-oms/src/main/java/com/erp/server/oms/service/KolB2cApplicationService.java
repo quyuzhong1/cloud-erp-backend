@@ -151,6 +151,13 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     BatchResultDTO cancel(String id);
 
     /**
+     * 根据拆分单回传刷新取消状态
+     * @param mainId 主单id
+     * @param failReason 取消失败原因
+     */
+    void refreshCancelStatusBySubOrder(String mainId, String failReason);
+
+    /**
      * 撤销
      * @author jack
     * @date: 2025-12-04
