@@ -85,10 +85,57 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(keyName = "addDTO.getSkuId()")
     public void add(QcStandardDTO.AddDTO addDTO) {
-        // 校验唯一性
-        if (!addDTO.getIsImport()) {
-            checkUnique(addDTO.getSkuId(), null);
+        //假如数据来源是导入，并且已存在SKU的质检标准则按更新逻辑走
+        if (addDTO.getIsImport()) {
+            QcStandardEntity existEntity = lambdaQuery().eq(QcStandardEntity::getSkuId, addDTO.getSkuId()).last(" limit 1 ").one();
+            if(Objects.nonNull(existEntity)){
+                String id = existEntity.getId();
+                List<WmsAttachmentEntity> attachmentList = addDTO.getWmsAttachmentEntities();
+                if (CollectionUtils.isNotEmpty(addDTO.getAttachmentList())) {
+                    List<QcStandardDTO.AttachDTO> attachList = new ArrayList<>();
+                    List<WmsAttachmentEntity> productPhysical = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode())).collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(productPhysical)){
+                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
+                        attachDTO.setType(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode());
+                        List<String> attachmentNameList = new ArrayList<>();
+                        List<String> attachmentUrlList = new ArrayList<>();
+
+                        for (WmsAttachmentEntity entity : productPhysical) {
+                            attachmentNameList.add(entity.getAttachName());
+                            attachmentUrlList.add(entity.getAttachUrl());
+                        }
+                        attachDTO.setAttachmentNameList(attachmentNameList);
+                        attachDTO.setAttachmentUrlList(attachmentUrlList);
+                        attachList.add(attachDTO);
+                    }
+                    List<WmsAttachmentEntity> packagingAccessories = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode())).collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(packagingAccessories)){
+                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
+                        attachDTO.setType(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode());
+                        List<String> attachmentNameList = new ArrayList<>();
+                        List<String> attachmentUrlList = new ArrayList<>();
+
+                        for (WmsAttachmentEntity entity : packagingAccessories) {
+                            attachmentNameList.add(entity.getAttachName());
+                            attachmentUrlList.add(entity.getAttachUrl());
+                        }
+                        attachDTO.setAttachmentNameList(attachmentNameList);
+                        attachDTO.setAttachmentUrlList(attachmentUrlList);
+                        attachList.add(attachDTO);
+                    }
+                    addDTO.setAttachmentList(attachList);
+                }
+
+                QcStandardDTO.UpdateDTO updateDTO = BeanMapperUtils.map(QcStandardDTO.UpdateDTO.class, addDTO);
+                updateDTO.setId(id);
+
+                QcStandardServiceImpl bean = ApplicationContextUtils.getBean(QcStandardServiceImpl.class);
+                bean.update(updateDTO);
+                return ;
+            }
         }
+        // 校验唯一性
+        checkUnique(addDTO.getSkuId(), null);
 
         QcStandardEntity entity = BeanMapperUtils.map(QcStandardEntity.class, addDTO);
         entity.setId(IdWorker.getIdStr());
@@ -943,13 +990,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     addDTO.setAttachmentList(attachList);
                 }
                 addDTO.setIsImport(true);
-
-                QcStandardEntity existing = existingMap.get(skuId);
-                if (existing != null) {
-                    throw new ServiceException(ApiError.QC_STANDARD_SKU_EXISTS);
-                } else {
-                    return addDTO;
-                }
+                return addDTO;
             }
 
         } catch (Exception e) {
