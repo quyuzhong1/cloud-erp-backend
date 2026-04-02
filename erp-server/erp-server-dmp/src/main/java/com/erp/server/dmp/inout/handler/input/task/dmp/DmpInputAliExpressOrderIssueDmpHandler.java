@@ -19,6 +19,8 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoInfoService;
 
@@ -35,13 +37,12 @@ import cn.hutool.core.util.ObjectUtil;
 public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmpHandler{
 	@Autowired
 	private DmpSoInfoService dmpSoInfoService;
+    @Autowired
+    private AliExpressOrderService aliExpressOrderService;
 
 	public static final String ALIEXPRESS_ISSUEDETAIL_DATA = "aliexpress_issueDetail_data";
     private static final String STORAGE_RETURN_INFO = "dmp_so_return_info";
     private static final String STORAGE_REFUND_INFO = "dmp_so_refund_info";
-    private static final String SOLUTION_RETURN_AND_REFUND = "return_and_refund";
-    private static final String SOLUTION_REFUND = "refund";
-    private static final String REVERSE_STATUS_REFUND_SUCCESS = "refund_success";
 	
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -90,11 +91,20 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 
                 boolean isReturnInfo = STORAGE_RETURN_INFO.equals(dmpCfgInputConvertEntity.getStorageName());
                 boolean isRefundInfo = STORAGE_REFUND_INFO.equals(dmpCfgInputConvertEntity.getStorageName());
+                String shopName = "";
+                try {
+                    AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(nextLevelId);
+                    if (shopInfoDTO != null) {
+                        shopName = ObjectUtil.defaultIfNull(shopInfoDTO.getName(), "").toString();
+                    }
+                } catch (Exception e) {
+                }
                 Iterator<Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>>> iterator = dmpInputDataDmpRelationMaps.entrySet().iterator();
                 while (iterator.hasNext()) {
                     Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> entry = iterator.next();
                     List<TreeMap<String, Object>> value = entry.getValue();
                     Map<String, String> finalOrderIdMaps = orderIdMaps;
+                    String finalShopName = shopName;
                     value.removeIf(v -> {
                         String issueId = getIssueIdFromConvertedData(v);
                         IssueDetailSnapshot snapshot = issueDetailMap.get(issueId);
@@ -109,8 +119,13 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         }
 
                         String platformReturnOrRefundNo = StringUtils.defaultIfBlank(snapshot.buyerReturnNo, issueId);
+                        String buyerUserId = StringUtils.defaultIfBlank(
+                                ObjectUtil.defaultIfNull(v.get("buyerUserId"), "").toString(),
+                                snapshot.buyerLoginId);
                         v.put("sourceId", sourceId);
-                        v.put("buyerUserId", ObjectUtil.defaultIfNull(v.get("buyer_login_id"), "").toString());
+                        v.put("buyerUserId", buyerUserId);
+                        v.put("shopId", nextLevelId);
+                        v.put("shopName", finalShopName);
                         v.put("thirdCode", platformReturnOrRefundNo);
                         v.put("platformCode", StringUtils.defaultIfBlank(snapshot.orderId, parentOrderId));
                         v.put("platformOrderCode", StringUtils.defaultIfBlank(snapshot.orderId, parentOrderId));
@@ -118,7 +133,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         v.put("platformOriginalStatus", snapshot.reverseDetailStatus);
                         v.put("reason", StringUtils.defaultIfBlank(snapshot.reasonChinese, snapshot.reasonEnglish));
                         v.put("remark", StringUtils.defaultIfBlank(snapshot.reasonChinese, snapshot.reasonEnglish));
-                        v.put("remarkName", snapshot.reasonEnglish);
+                        v.put("remarkName", StringUtils.defaultIfBlank(snapshot.reasonEnglish, snapshot.reasonChinese));
                         v.put("trackingNumber", snapshot.buyerReturnLogisticsNo);
                         v.put("logisticsSupplierCode", snapshot.buyerReturnLogisticsCompany);
                         v.put("logisticsSupplierName", snapshot.buyerReturnLogisticsCompany);
@@ -127,6 +142,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         v.put("returnTime", snapshot.gmtCreate);
                         v.put("refundTime", snapshot.gmtCreate);
                         v.put("currencyCode", snapshot.refundCurrency);
+                        v.put("allAmount", snapshot.refundAmount);
                         v.put("amount", snapshot.refundAmount);
                         if (isRefundInfo) {
                             v.put("status", "1");
@@ -162,45 +178,37 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 
     private boolean matchStorageCondition(IssueDetailSnapshot snapshot, boolean isReturnInfo, boolean isRefundInfo) {
         if (isReturnInfo) {
-            return SOLUTION_RETURN_AND_REFUND.equals(snapshot.solutionType);
+            return snapshot.hasReturnSolution;
         }
         if (isRefundInfo) {
-            return SOLUTION_REFUND.equals(snapshot.solutionType)
-                    && REVERSE_STATUS_REFUND_SUCCESS.equals(snapshot.reverseDetailStatus);
+            return snapshot.hasRefundSolution;
         }
         return true;
     }
 
     private IssueDetailSnapshot buildIssueDetailSnapshot(Map<String, Object> issueDetail) {
         IssueDetailSnapshot snapshot = new IssueDetailSnapshot();
+        snapshot.buyerLoginId = ObjectUtil.defaultIfNull(issueDetail.get("buyer_login_id"), "").toString();
         snapshot.buyerReturnNo = ObjectUtil.defaultIfNull(issueDetail.get("buyer_return_no"), "").toString();
-        snapshot.reverseDetailStatus = ObjectUtil.defaultIfNull(issueDetail.get("reverse_detail_status"), "").toString();
-        snapshot.reasonChinese = ObjectUtil.defaultIfNull(issueDetail.get("reason_chinese"), "").toString();
+        snapshot.reverseDetailStatus = ObjectUtil.defaultIfNull(issueDetail.get("reverse_detail_status"), "").toString().toLowerCase();
+        snapshot.reasonChinese = StringUtils.defaultIfBlank(
+                ObjectUtil.defaultIfNull(issueDetail.get("reason_chinese"), "").toString(),
+                AliExpressIssueSolutionResolver.getIssueContent(issueDetail));
         snapshot.reasonEnglish = ObjectUtil.defaultIfNull(issueDetail.get("reason_english"), "").toString();
         snapshot.buyerReturnLogisticsCompany = ObjectUtil.defaultIfNull(issueDetail.get("buyer_return_logistics_company"), "").toString();
-        snapshot.buyerReturnLogisticsNo = ObjectUtil.defaultIfNull(issueDetail.get("buyer_return_logistics_lp_no"), "").toString();
+        snapshot.buyerReturnLogisticsNo = AliExpressIssueSolutionResolver.getReturnTrackingNo(issueDetail);
         snapshot.orderId = ObjectUtil.defaultIfNull(issueDetail.get("order_id"), "").toString();
         snapshot.gmtCreate = ObjectUtil.defaultIfNull(issueDetail.get("gmt_create"), "").toString();
-        snapshot.gmtModified = ObjectUtil.defaultIfNull(issueDetail.get("gmt_modified"), "").toString();
+        snapshot.gmtModified = AliExpressIssueSolutionResolver.getLatestEventTime(issueDetail);
 
-        Object platformSolutionListObj = issueDetail.get("platform_solution_list");
-        if (platformSolutionListObj instanceof Map) {
-            Object solutionApiDtoObj = ((Map<String, Object>) platformSolutionListObj).get("solution_api_dto");
-            if (solutionApiDtoObj instanceof List && CollUtil.isNotEmpty((List<Map<String, Object>>) solutionApiDtoObj)) {
-                Map<String, Object> picked = null;
-                for (Map<String, Object> solution : (List<Map<String, Object>>) solutionApiDtoObj) {
-                    if (Boolean.TRUE.equals(solution.get("is_default"))) {
-                        picked = solution;
-                        break;
-                    }
-                }
-                if (picked == null) {
-                    picked = ((List<Map<String, Object>>) solutionApiDtoObj).get(0);
-                }
-                snapshot.solutionType = ObjectUtil.defaultIfNull(picked.get("solution_type"), "").toString().toLowerCase();
-                snapshot.refundAmount = ObjectUtil.defaultIfNull(picked.get("refund_money"), "").toString();
-                snapshot.refundCurrency = ObjectUtil.defaultIfNull(picked.get("refund_money_currency"), "").toString();
-            }
+        AliExpressIssueSolutionResolver.ResolvedIssueSolution resolvedIssueSolution = AliExpressIssueSolutionResolver.resolve(issueDetail);
+        snapshot.hasReturnSolution = resolvedIssueSolution.isMatchedReturn();
+        snapshot.hasRefundSolution = resolvedIssueSolution.isMatchedRefund();
+        AliExpressIssueSolutionResolver.SolutionRecord effectiveSolution = resolvedIssueSolution.getEffectiveSolution();
+        if (effectiveSolution != null) {
+            snapshot.solutionType = effectiveSolution.getSolutionType();
+            snapshot.refundAmount = ObjectUtil.defaultIfNull(effectiveSolution.get("refund_money"), "").toString();
+            snapshot.refundCurrency = ObjectUtil.defaultIfNull(effectiveSolution.get("refund_money_currency"), "").toString();
         }
         return snapshot;
     }
@@ -208,6 +216,9 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
     private static class IssueDetailSnapshot {
         private String solutionType = "";
         private String reverseDetailStatus = "";
+        private boolean hasReturnSolution;
+        private boolean hasRefundSolution;
+        private String buyerLoginId = "";
         private String buyerReturnNo = "";
         private String reasonChinese = "";
         private String reasonEnglish = "";
