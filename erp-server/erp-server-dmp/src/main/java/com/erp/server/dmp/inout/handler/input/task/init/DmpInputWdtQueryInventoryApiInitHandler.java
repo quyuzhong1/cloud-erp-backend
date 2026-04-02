@@ -12,6 +12,9 @@ import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.rpc.plm.feign.PlmFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -32,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
@@ -47,6 +51,9 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
     @Resource
     private WangDianClientService clientService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 
@@ -56,6 +63,7 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
         queryMapParamDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
         queryMapParamDTO.setInventorySyncMode(InventorySyncModeEnum.INVENTORY.getCode());
         String extendJson = dmpInputTaskEntity.getExtendJson();
+        List<String> erpSkuNo = new ArrayList<>();
         //转JSON，查看是否有传仓库ID参数
         if (CharSequenceUtil.isNotBlank(extendJson)) {
             JSONObject extendJsonObject = JSON.parseObject(extendJson);
@@ -65,8 +73,17 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
                     List<String> warehouseIdList = JSON.parseArray(warehouseIdsStr, String.class);
                     queryMapParamDTO.setSysIdList(warehouseIdList);
                 }
+                String skuIdList = extendJsonObject.getString("skuIdList");
+                if (CharSequenceUtil.isNotBlank(skuIdList)) {
+                    List<String> erpSkuIds = JSON.parseArray(skuIdList, String.class);
+                    List<ProductDetailEntity> productDetailEntities = plmTaskFeign.getByIdList(erpSkuIds);
+                    if (CollectionUtils.isNotEmpty(productDetailEntities)) {
+                        erpSkuNo = productDetailEntities.stream().map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+                    }
+                }
             }
         }
+
 
         //获取旺店通更新库存的仓库列表
         List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOList = thirdWarehouseService.listQueryMapping(queryMapParamDTO);
@@ -89,8 +106,12 @@ public class DmpInputWdtQueryInventoryApiInitHandler extends DmpInputInitHandler
             List<StockSearch2Response.Detail> detailList = new ArrayList<>();
             StockSearch2Request request = new StockSearch2Request();
             request.setWarehouseNo(queryMapDTO.getThirdCode());
-            request.setStartTime(startTime);
-            request.setEndTime(endTime);
+            if(CollectionUtils.isNotEmpty(erpSkuNo)){
+                request.setSpecNos(erpSkuNo);
+            }else{
+                request.setStartTime(startTime);
+                request.setEndTime(endTime);
+            }
 
             Pager pager = new Pager();
             pager.setPageNo(0);
