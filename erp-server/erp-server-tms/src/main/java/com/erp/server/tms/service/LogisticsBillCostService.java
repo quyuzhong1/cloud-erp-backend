@@ -1,11 +1,9 @@
 package com.erp.server.tms.service;
 
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.AsyncTaskRecordDTO;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
@@ -13,7 +11,6 @@ import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
-import org.springframework.scheduling.annotation.Async;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -260,5 +257,23 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
+
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    void batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList);
+
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    void batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList);
 
 }

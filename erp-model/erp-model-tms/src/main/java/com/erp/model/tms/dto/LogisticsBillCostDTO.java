@@ -3,6 +3,8 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -603,6 +605,10 @@ public class LogisticsBillCostDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 销售部门id
          */
         private String salesDeptId;
@@ -1187,4 +1193,44 @@ public class LogisticsBillCostDTO implements Serializable {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportDataDTO {
+        /**
+         * 导入类型
+         */
+        private String importType;
+        /**
+         * 确认日期
+         */
+        private LocalDateTime confirmTime;
+
+        /**
+         * 物流单信息
+          */
+        private LogisticsBillEntity logisticsBillEntity;
+        /**
+         * 物流单明细信息
+         */
+        private List<LogisticsBillDetailEntity> logisticsBillDetailList;
+
+        /**
+         * 物流费用新增数据列表
+         */
+        private  List<LogisticsBillCostDTO.AddDTO> addBillCostList;
+        /**
+         * 物流费用修改数据列表
+         */
+        private List<LogisticsBillCostDTO.UpdateDTO> updateBillCostList;
+        /**
+         * 费用项新增列表
+         */
+        private List<TmsCostDetailDTO.AddDTO> addCfgCostList;
+        /**
+         * 费用项更新列表
+         */
+        private List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList;
+    }
 }

@@ -7,6 +7,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
@@ -95,4 +96,13 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @return null
      */
     BatchResultDTO importFile(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO);
+
+    /**
+     * 导入成功后批量新增或修改物流单成本数据
+     * @author will
+     * @date 2026/1/29 10:00
+     * @param importDataList
+     * @return void
+     */
+    void importBatchAddOrUpdate(List<LogisticsBillCostDTO.ImportDataDTO> importDataList);
 }
