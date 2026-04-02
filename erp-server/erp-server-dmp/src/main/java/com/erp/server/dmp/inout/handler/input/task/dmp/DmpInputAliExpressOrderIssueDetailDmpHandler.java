@@ -79,6 +79,8 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 String thirdCode = StringUtils.defaultIfBlank(buyerReturnNo, issueId);
                 String issueStatus = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("issue_status"), "").toString();
                 String orderId = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("order_id"), "").toString();
+                String parentOrderId = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("parent_order_id"), "").toString();
+                String platformOrderCode = StringUtils.defaultIfBlank(parentOrderId, orderId);
                 String reverseDetailStatus = resolvedIssueSolution.getReverseDetailStatus();
                 String trackingNumber = AliExpressIssueSolutionResolver.getReturnTrackingNo(dmpInputMongoChild);
                 String reasonChinese = StringUtils.defaultIfBlank(
@@ -96,12 +98,12 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 				resultDmpInputMongoChild.put("returnLogisticsCompany" , dmpInputMongoChild.get("buyer_return_logistics_company"));
 				resultDmpInputMongoChild.put("returnLogisticsNo" , trackingNumber);
 				resultDmpInputMongoChild.put("platformDetailId" , thirdCode);
-				resultDmpInputMongoChild.put("thirdOrderCode" , dmpInputMongoChild.get("parent_order_id"));
+				resultDmpInputMongoChild.put("thirdOrderCode" , parentOrderId);
 				resultDmpInputMongoChild.put("thirdDetailId" , effectiveSolution.get("id"));
 				resultDmpInputMongoChild.put("logisticsFeeAmount" , effectiveSolution.get("logistics_fee_amount"));
 				resultDmpInputMongoChild.put("logisticsFeeCurrency" , effectiveSolution.get("logistics_fee_amount_currency"));
 				resultDmpInputMongoChild.put("logisticsFeeRole" , effectiveSolution.get("logistics_fee_bear_role"));
-				resultDmpInputMongoChild.put("platformOrderCode" , ObjectUtil.defaultIfNull(effectiveSolution.get("order_id"), orderId));
+				resultDmpInputMongoChild.put("platformOrderCode" , platformOrderCode);
 				resultDmpInputMongoChild.put("amount" , effectiveSolution.get("refund_money"));
 				resultDmpInputMongoChild.put("currency" , effectiveSolution.get("refund_money_currency"));
                 resultDmpInputMongoChild.put("currencyCode", effectiveSolution.get("refund_money_currency"));
@@ -110,7 +112,7 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 				resultDmpInputMongoChild.put("receiveGoods" , receiveGoods);
                 resultDmpInputMongoChild.put("qty", 1);
                 resultDmpInputMongoChild.put("thirdCode", thirdCode);
-                resultDmpInputMongoChild.put("platformCode", orderId);
+                resultDmpInputMongoChild.put("platformCode", StringUtils.defaultIfBlank(orderId, platformOrderCode));
                 resultDmpInputMongoChild.put("platformStatus", reverseDetailStatus);
                 resultDmpInputMongoChild.put("platformOriginalStatus", reverseDetailStatus);
                 resultDmpInputMongoChild.put("remark", StringUtils.defaultIfBlank(reasonChinese, reasonEnglish));

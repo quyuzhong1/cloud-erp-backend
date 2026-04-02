@@ -123,6 +123,8 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         }
 
                         String platformReturnOrRefundNo = StringUtils.defaultIfBlank(snapshot.buyerReturnNo, issueId);
+                        String childOrderCode = StringUtils.defaultIfBlank(snapshot.orderId, parentOrderId);
+                        String platformOrderCode = StringUtils.defaultIfBlank(parentOrderId, childOrderCode);
                         String buyerUserId = StringUtils.defaultIfBlank(
                                 ObjectUtil.defaultIfNull(v.get("buyerUserId"), "").toString(),
                                 snapshot.buyerLoginId);
@@ -131,8 +133,8 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         v.put("shopId", nextLevelId);
                         v.put("shopName", finalShopName);
                         v.put("thirdCode", platformReturnOrRefundNo);
-                        v.put("platformCode", StringUtils.defaultIfBlank(snapshot.orderId, parentOrderId));
-                        v.put("platformOrderCode", StringUtils.defaultIfBlank(snapshot.orderId, parentOrderId));
+                        v.put("platformCode", childOrderCode);
+                        v.put("platformOrderCode", platformOrderCode);
                         v.put("platformStatus", snapshot.reverseDetailStatus);
                         v.put("platformOriginalStatus", snapshot.reverseDetailStatus);
                         v.put("reason", StringUtils.defaultIfBlank(snapshot.reasonChinese, snapshot.reasonEnglish));
