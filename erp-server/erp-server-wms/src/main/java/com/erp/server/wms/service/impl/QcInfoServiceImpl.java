@@ -21,6 +21,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -634,8 +635,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (CharSequenceUtil.isNotBlank(purchaseOrderDetailId)) {
                 PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
                 qcQtyDTO.setPurchaseOrderDetailId(purchaseOrderDetailId);
-                qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? new BigDecimal(qcInfo.getQcGoodQty()) : BigDecimal.ZERO);
-                if (qcQtyDTO.getQcGoodQty().compareTo(BigDecimal.ZERO) > 0) {
+                qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0);
+                if (qcQtyDTO.getQcGoodQty() > 0) {
                     scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
                 }
             }
@@ -1217,6 +1218,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //新品首批回填SKU的尺寸信息
             updateProductPack(ids);
 
+            //累加质检合格量
+            QcResultDTO.ViewDTO qcInfo = qcResultService.getByMainId(entity.getId());
+            if (Objects.nonNull(qcInfo) && CharSequenceUtil.isNotBlank(qcInfo.getPurchaseOrderDetailId())) {
+                PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
+                qcQtyDTO.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
+                qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0);
+                if (qcQtyDTO.getQcGoodQty() > 0) {
+                    scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                }
+            }
+
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(entity.getId());
 
@@ -1435,6 +1447,27 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         long returnCount = returnList.stream().filter(s -> !s.getInvalidStatus()).count();
         if (returnCount > 0) {
             throw new ServiceException(ApiError.PO_RETURN_EXISTS_REVOKE_FORBIDDEN);
+        }
+
+        // 撤销质检扣减合格量
+        QcResultDTO.ViewDTO qcInfo = qcResultService.getByMainId(entity.getId());
+        if (Objects.nonNull(qcInfo) && CharSequenceUtil.isNotBlank(qcInfo.getPurchaseOrderDetailId()) && Objects.nonNull(qcInfo.getQcGoodQty()) && qcInfo.getQcGoodQty() > 0) {
+            // 获取采购详情，校验扣减后的合格量是否为负数
+            String podId = qcInfo.getPurchaseOrderDetailId();
+            List<PurchaseOrderDetailEntity> podList = FeignQuery.create(PurchaseOrderDetailEntity.class).eq(PurchaseOrderDetailEntity::getId, podId).list();
+            if (CollUtil.isNotEmpty(podList)) {
+                PurchaseOrderDetailEntity pod = podList.get(0);
+                int billGoodQty = qcInfo.getQcGoodQty();
+                int currentGoodQty = pod.getQcGoodQty() != null ? pod.getQcGoodQty() : 0;
+                if (currentGoodQty < billGoodQty) {
+                    throw new ServiceException("撤销质检失败：采购订单明细扣减后的质检合格量不能小于0");
+                }
+                // 执行扣减
+                PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
+                qcQtyDTO.setPurchaseOrderDetailId(podId);
+                qcQtyDTO.setQcGoodQty(-billGoodQty); // 取反表示扣减
+                scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+            }
         }
 
         //TODO 工作流要处理
