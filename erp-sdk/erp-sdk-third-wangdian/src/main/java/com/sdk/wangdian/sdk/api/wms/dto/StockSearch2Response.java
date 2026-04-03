@@ -84,6 +84,16 @@ public class StockSearch2Response
 		@SerializedName("last_inout_time") private String lastInoutTime;
 		@SerializedName("last_pd_time") private String lastPdTime;
 
+		private String erpWarehouseId;
+
+		public String getErpWarehouseId() {
+			return erpWarehouseId;
+		}
+
+		public void setErpWarehouseId(String erpWarehouseId) {
+			this.erpWarehouseId = erpWarehouseId;
+		}
+
 		public String getSpecCode()
 		{
 			return specCode;

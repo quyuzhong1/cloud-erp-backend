@@ -7,20 +7,22 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.WdtSearchHandelDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.WdtVirtualInventoryService;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
-import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
-import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
-import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.model.wms.dto.WdtCompareInventoryDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
@@ -36,9 +38,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 将erp虚拟仓分货单同步至旺店通
@@ -70,6 +74,9 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     private DmpInoutTaskFeign dmpInoutTaskFeign;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 校验分货单调出明细是否存在未同步成功的数据
@@ -215,6 +222,46 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         if(CollUtil.isNotEmpty(wmsPushMsgEntityList)) {
         	wmsPushMsgService.saveBatch(wmsPushMsgEntityList);
         }
+    }
+
+    @Override
+    public String saveWdtInventoryTask(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailEntityList) {
+        //如果明细的调入调出仓库都不在需要比对的仓库列表中，则不触发库存比对任务
+        List<String> allDetailWarehouseList = Stream.concat(detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getWarehouseId), detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getToWarehouseId)).distinct().collect(Collectors.toList());
+
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(allDetailWarehouseList), "wdt");
+        if(mappingList.isEmpty()){
+            return null;
+        }
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(collect)){
+            log.warn("分货单库存同步【{}】同步旺店通时，仓库【{}】不存在库存同步配置，跳过同步旺店通",allocationEntity.getCode(), String.join(",", allDetailWarehouseList));
+            return null;
+        }
+        List<String> skuIdList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuNoList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        WdtCompareInventoryDTO wdtCompareInventoryDTO = WdtCompareInventoryDTO.builder()
+                .id(allocationEntity.getId())
+                .code(allocationEntity.getCode())
+                .erpWarehouseList(allDetailWarehouseList)
+                .skuIdList(skuIdList)
+                .skuNoList(skuNoList)
+                .build();
+
+
+        String sourceType = SourceTypeEnum.WDT_INVENTORY_COMPARE.getCode();
+        //添加本地任务
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        wmsPushMsgEntity.setSourceType(sourceType);
+        wmsPushMsgEntity.setSourceId(allocationEntity.getId());
+        wmsPushMsgEntity.setSourceCode(allocationEntity.getCode());
+        wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(wdtCompareInventoryDTO));
+        wmsPushMsgService.save(wmsPushMsgEntity);
+        return allocationEntity.getId();
+
     }
 
     /**
