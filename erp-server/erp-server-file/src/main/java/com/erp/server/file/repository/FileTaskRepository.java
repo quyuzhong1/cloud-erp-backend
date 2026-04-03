@@ -63,7 +63,7 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
     public List<FileTask> listTimeOutImportTask(String code,Integer hours) {
       return   lambdaQuery().eq(FileTask::getEvent,code)
                 .eq(FileTask::getStatus, FileTaskStatusEnum.PROCESS.name())
-                .lt(FileTask::getCreateTime, LocalDateTime.now().minusHours(hours))
+                .lt(FileTask::getUpdateTime, LocalDateTime.now().minusHours(hours))
                 .list();
     }
 
