@@ -16,11 +16,6 @@
     <dependencies>
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-business</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-plm</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
