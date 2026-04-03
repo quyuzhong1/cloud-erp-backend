@@ -1245,6 +1245,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO finish(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        String sourceDetailId = entity.getSourceDetailId();
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
             throw new ServiceException(ApiError.PO_QC_VOIDED_OPERATION_NOT_ALLOWED, "完成质检");
@@ -1280,7 +1281,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
             //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId(),qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
+            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
@@ -1320,6 +1321,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchExemption(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        String sourceDetailId = entity.getSourceDetailId();
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
             throw new ServiceException(ApiError.PO_QC_VOIDED_OPERATION_NOT_ALLOWED, "免检");
@@ -1358,7 +1360,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
             //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId(),qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
+            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
