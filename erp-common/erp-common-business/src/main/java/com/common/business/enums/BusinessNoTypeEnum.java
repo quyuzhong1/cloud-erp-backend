@@ -164,6 +164,7 @@ public enum BusinessNoTypeEnum {
     CODE_DZ(122 ,"DZ","物流费用导入",BusinessNoConstant.DZ),
     CODE_FYPZ(123 ,"FYPZ","费用配置",BusinessNoConstant.FYPZ),
 
+    CODE_BG(122 ,"BG","产品信息变更单",BusinessNoConstant.BG),
 
 
 

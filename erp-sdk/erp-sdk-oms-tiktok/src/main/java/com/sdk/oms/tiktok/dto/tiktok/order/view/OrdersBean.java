@@ -153,4 +153,7 @@ public class OrdersBean {
     private List<LineItemsBean> lineItems;
     @JsonProperty("packages")
     private List<PackagesBean> packages;
+
+    @JsonProperty("order_type")
+    private String orderType;
 }

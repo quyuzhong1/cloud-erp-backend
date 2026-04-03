@@ -22,6 +22,7 @@ public enum PlatformEnum {
     WANGDIAN(11,"wangdian","旺店通"),
     SDY(12,"sdy","速帝云"),
     AMAZON(13,"amazon","亚马逊"),
+    FBT(14,"fbt","FBT"),
     ;
 
     private Integer code;

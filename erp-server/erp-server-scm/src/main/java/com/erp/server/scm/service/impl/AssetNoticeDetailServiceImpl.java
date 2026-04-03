@@ -168,6 +168,16 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
             }
             // 处理供应商等数据
             handleData(assetNoticeDetailEntity);
+            //记录日志
+            if(StringUtils.isBlank(assetNoticeDetailEntity.getId())){
+                //新增
+                String msg = StrUtil.format("用户【{}】新增单据明细，模具编码【{}】 ", UserContext.getDefaultLoginUser().getUserName(),assetNoticeDetailEntity.getAssetCode());
+                moduleOperateLogService.addModuleOperateLogByObj(null, assetNoticeDetailEntity, ModuleTypeEnum.ASSET_NOTICE.getCode(),assetNoticeId,"", msg);
+            }else{
+                AssetNoticeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(assetNoticeDetailEntity.getId())).findFirst().orElse(null);
+                String msg = StrUtil.format("用户【{}】编辑单据明细 ", UserContext.getDefaultLoginUser().getUserName());
+                moduleOperateLogService.addModuleOperateLogByObj(old, assetNoticeDetailEntity, ModuleTypeEnum.ASSET_NOTICE.getCode(),assetNoticeId,"", msg);
+            }
         }
         this.saveOrUpdateBatch(newList);
 

@@ -10,11 +10,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.common.business.config.ExportFeignConfig;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
-
 @FeignClient(name = "erp-dmp", contextId = "exportDmpFeign", configuration = ExportFeignConfig.class)
 public interface ExportDmpFeign {
 
@@ -87,5 +82,56 @@ public interface ExportDmpFeign {
 
     @PostMapping("/feign/export/exportAdsErpFirstMileInTransitDiff")
     PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> exportAdsErpFirstMileInTransitDiff(@RequestBody @Validated PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> dto);
+    /**
+     * 朔源查询-平台出库单
+     * @author will
+     * @date 2026/2/5 10:14
+     * @param dto
+     * @return PagingVO<SourcePlatformDTO>
+     */
+    @PostMapping("/feign/export/exportAdsErpOutstockDetailPlatform")
+    PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> exportAdsErpOutstockDetailPlatform(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto);
 
+    /**
+     * 朔源查询-库存流水
+     * @author will
+     * @date 2026/2/5 10:16
+     * @param dto
+     * @return PagingVO<SourceSelfDTO>
+     */
+    @PostMapping("/feign/export/exportAdsErpOutstockDetailSelf")
+    PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> exportAdsErpOutstockDetailSelf(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto);
+    /**
+     * 朔源查询-即时库存
+     * @author will
+     * @date 2026/2/5 10:18
+     * @param dto
+     * @return PagingVO<SourcePlatformDTO>
+     */
+    @PostMapping("/feign/export/exportAdsErpInventoryDetailPlatform")
+    PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> exportAdsErpInventoryDetailPlatform(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto);
+    /**
+     * 朔源查询-库存流水
+     * @author will
+     * @date 2026/2/5 10:19
+     * @param dto
+     * @return PagingVO<SourceSelfDTO>
+     */
+    @PostMapping("/feign/export/exportAdsErpInventoryDetailSelf")
+    PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> exportAdsErpInventoryDetailSelf(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpReceiveFlowDiff")
+    PagingVO<AdsErpReceiveFlowDiffDTO.ListDTO> exportAdsErpReceiveFlowDiff(PagingDTO<AdsErpReceiveFlowDiffDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpReceiveInventoryFlow")
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourcePlatformFlowDTO> exportAdsErpReceiveInventoryFlow(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpReceiveTransfer")
+    PagingVO<AdsErpReceiveFlowDiffDetailDTO.SourceTransferInfoDTO> exportAdsErpReceiveTransfer(PagingDTO<AdsErpReceiveFlowDiffDetailDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportDiffOutstockSyncSourcePlatform")
+    PagingVO<AdsErpDiffOutstockSyncDTO.SourcePlatformDTO> exportDiffOutstockSyncSourcePlatform(PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
+
+
+    @PostMapping("/feign/export/exportDiffReturnInstockSyncSourcePlatform")
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.SourcePlatformDTO> exportDiffReturnInstockSyncSourcePlatform(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
 }

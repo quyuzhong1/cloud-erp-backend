@@ -62,6 +62,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @Resource
     @Lazy
     private LogisticsCarrierService logisticsCarrierService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -69,11 +71,18 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         if (CollectionUtils.isEmpty(detailList)) {
             return Boolean.FALSE;
         }
+        //查询渠道配置
+        Boolean flag = logisticsThirdChannelRefService.existRefBySalePlatform(billEntity.getSalesPlatform(), billEntity.getChannelId(), billEntity.getLogisticsSupplierId());
+
         String mainId = billEntity.getId();
         String channelId = billEntity.getChannelId();
         LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
         List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
         list.forEach(l -> {
+            if(!flag){
+                l.setTrackStatus(LogisticTrackStatusEnum.NOT_QUERY.getCode());
+                l.setTrackEnable(false);
+            }
             l.setMainId(mainId);
             if(StringUtils.isNotBlank(authEntity.getId())){
                 l.setLogisticsAuthId(authEntity.getId());
@@ -199,6 +208,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return baseMapper.listTrackDto(query);
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -382,7 +392,14 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             return;
         }
         this.lambdaUpdate().set(LogisticsBillDetailEntity::getTrackEnable, Boolean.FALSE)
+               .set(LogisticsBillDetailEntity::getTrackStatus, LogisticTrackStatusEnum.NOT_QUERY.getCode())
+               .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                .in(LogisticsBillDetailEntity::getId, detailIds).update();
+    }
+
+    @Override
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType) {
+        return baseMapper.listWaitingRegisterByConfig(query, platformType);
     }
 
     @Override

@@ -80,6 +80,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_B2C_APPLICATION;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_B2C_APPLICATION;
@@ -141,6 +142,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private OrderCategoryDetailService orderCategoryDetailService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -545,6 +548,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     public PagingVO<KolB2cApplicationDTO.ListDTO> paging(PagingDTO<KolB2cApplicationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        query.setOptimizeCountSql(false);
         IPage<KolB2cApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
@@ -986,10 +990,66 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             b2cDto.setSourceCode(entity.getCode());
             b2cDto.setSourceType(SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
             b2cDto.setDetailList(soB2cDetailList);
-            String b2cCode = soB2cService.processOrderCreation(b2cDto);
+            String b2cCode = processOrderCreation(b2cDto);
             resultMap.put(entity.getCode(),b2cCode);
         }
         return resultMap;
+    }
+
+
+    private String processOrderCreation(SoB2cDTO.AddDTO dto) {
+        // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
+        dto.checkAndSetAfterTaxAmount();
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
+        if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
+            throw new ServiceException("店铺已禁用，无法新增订单");
+        }
+
+        // 通过代理调用，确保 add() 方法上的独立事务生效
+        SoB2cEntity add = soB2cService.add(dto, null);
+        String id = add.getId();
+        //检查是否备案并修改状态
+        soB2cService.checkProductRegistrationAndUpdate(id, "");
+
+        //速卖通平台仓订单不走任何规则
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
+            return add.getCode();
+        }
+
+        // 通过代理调用，确保 orderRule() 方法上的独立事务生效
+        SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
+        //匹配成功
+        Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
+        Boolean isPass = orderRuleResult.getIsPass();
+
+        if (ruleMatch && isPass) {
+            // 通过代理调用，确保 warehouseRule() 方法上的独立事务生效
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRuleNotRequiresNew(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
+            Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+            if (warehouseRuleMatch) {
+                // 通过代理调用，确保 logisticsRule() 方法上的独立事务生效
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRuleNotRequiresNew(id, new HashMap<>(), false);
+                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
+                Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
+                //表示成功
+                if(isRuleMatch){
+                    //检查是否备案并修改状态
+                    soB2cService.checkProductRegistrationAndUpdate(id, "");
+                    //申报信息规则
+                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
+                }
+                SoB2cEntity entity = soB2cService.getById(id);
+                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
+                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
+                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
+                }
+            }
+        }
+        //自动计算预估运费到订单的预估运费字段（异步）
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
+        return add.getCode();
     }
 
     @Override
@@ -1331,6 +1391,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap,provinceMap,cityMap,districtMap);
 
         List<MultiErrorExcelData> errList = new ArrayList<>();
+        List<KolB2cApplicationDetailImportExcelDTO> detailErrorList = new ArrayList<>();
+        List<KolB2cApplicationAddressImportExcelDTO> addressErrorList = new ArrayList<>();
+        List<KolB2cApplicationImportExcelDTO> errorList = new ArrayList<>();
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
 
@@ -1339,18 +1402,23 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             EasyExcel.read(new ByteArrayInputStream(bytes), KolB2cApplicationAddressImportExcelDTO.class, addressListenerUtil).sheet(2).doRead();
 
             List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList = detailExcelListenerUtil.getSuccessList();
-            List<KolB2cApplicationDetailImportExcelDTO> detailErrorList = detailExcelListenerUtil.getErrorList();
+            detailErrorList = detailExcelListenerUtil.getErrorList();
 
             List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList = addressListenerUtil.getSuccessList();
-            List<KolB2cApplicationAddressImportExcelDTO> addressErrorList = addressListenerUtil.getErrorList();
+            addressErrorList = addressListenerUtil.getErrorList();
 
             List<KolB2cApplicationImportExcelDTO> successList = excelListenerUtil.getSuccessList();
-            List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            errorList = excelListenerUtil.getErrorList();
 
             List<String> errorNoList = errorList.stream().map(KolB2cApplicationImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+            Set<String> allMainNoSet = Stream.concat(successList.stream(), errorList.stream())
+                    .map(KolB2cApplicationImportExcelDTO::getNo)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toSet());
 
             List<KolB2cApplicationDetailImportExcelDTO> error1 = detailSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(error1)){
+                error1.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、主表数据异常；")));
                 detailErrorList.addAll(error1);
 
                 detailSuccessList = detailSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
@@ -1358,9 +1426,29 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
             List<KolB2cApplicationAddressImportExcelDTO> error2 = addressSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(error2)){
+                error2.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、主表数据异常；")));
                 addressErrorList.addAll(error2);
 
                 addressSuccessList = addressSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            // 明细/地址中的序号在sheet1不存在，按错误处理，避免“仅导入地址明细也提示成功”
+            List<KolB2cApplicationDetailImportExcelDTO> detailNoNotExistList = detailSuccessList.stream()
+                    .filter(e -> !allMainNoSet.contains(e.getNo()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(detailNoNotExistList)) {
+                detailNoNotExistList.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、序号在sheet1中不存在；")));
+                detailErrorList.addAll(detailNoNotExistList);
+                detailSuccessList = detailSuccessList.stream().filter(e -> allMainNoSet.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            List<KolB2cApplicationAddressImportExcelDTO> addressNoNotExistList = addressSuccessList.stream()
+                    .filter(e -> !allMainNoSet.contains(e.getNo()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(addressNoNotExistList)) {
+                addressNoNotExistList.forEach(e -> e.setErrorMsg(appendImportError(e.getErrorMsg(), "1、序号在sheet1中不存在；")));
+                addressErrorList.addAll(addressNoNotExistList);
+                addressSuccessList = addressSuccessList.stream().filter(e -> allMainNoSet.contains(e.getNo())).collect(Collectors.toList());
             }
 
             KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
@@ -1390,7 +1478,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(excelListenerUtil.getCount());
-        List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         MultiErrorExcelData sheet1 = new MultiErrorExcelData();
         sheet1.setSheetName("sheet1");
         sheet1.setSheetNo(0);
@@ -1398,7 +1485,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         sheet1.setDataResult(errorList);
         errList.add(0,sheet1);
         String url = "";
-        if (CollectionUtils.isNotEmpty(errorList)) {
+        int totalErrorCount = errorList.size() + detailErrorList.size() + addressErrorList.size();
+        if (totalErrorCount > 0) {
             String fileName = "B2C寄样申请错误信息.xlsx";
 //            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolB2cApplicationImportExcelDTO.class);
             File file = ExcelUtil.generateTemplateFile(fileName,errList);
@@ -1406,11 +1494,18 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setRemark("处理完成，失败" + totalErrorCount + "条");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    private String appendImportError(String sourceErrorMsg, String appendErrorMsg) {
+        if (StringUtils.isBlank(sourceErrorMsg)) {
+            return appendErrorMsg;
+        }
+        return sourceErrorMsg + appendErrorMsg;
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)

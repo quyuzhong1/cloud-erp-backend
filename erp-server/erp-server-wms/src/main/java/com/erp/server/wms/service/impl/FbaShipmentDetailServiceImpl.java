@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
+
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -122,11 +124,19 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
         detailEntityList.forEach(detailEntity -> {
             List<FbaShipmentReceiveEntity> collect = list.stream().filter(e -> e.getDetailId().equals(detailEntity.getId())).collect(Collectors.toList());
             int receiveQty = collect.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+            LocalDateTime receiveDate = collect.stream()
+                    .map(FbaShipmentReceiveEntity::getReceiveDate)
+                    .filter(Objects::nonNull)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(null);
             detailEntity.setReceiveQty(receiveQty);
-            int diffQty = receiveQty - detailEntity.getDeclareQty();
+            detailEntity.setReceiveDate(receiveDate);
+            int deliveryQty = detailEntity.getDeliveryQty() == null ? 0 : detailEntity.getDeliveryQty();
+            int diffQty = receiveQty - deliveryQty;
             detailEntity.setDiffQty(diffQty);
             this.lambdaUpdate().eq(FbaShipmentDetailEntity::getId,detailEntity.getId())
                     .set(FbaShipmentDetailEntity::getReceiveQty,receiveQty)
+                    .set(FbaShipmentDetailEntity::getReceiveDate,receiveDate)
                     .set(FbaShipmentDetailEntity::getDiffQty,diffQty)
                     .update();
         });

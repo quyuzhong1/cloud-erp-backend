@@ -16,6 +16,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -29,6 +30,7 @@ import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.enums.FbaReceiveHandleStatusEnum;
+import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.mapper.FbaShipmentReceiveMapper;
 import com.erp.server.wms.service.*;
@@ -63,6 +65,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentReceiveMapper, FbaShipmentReceiveEntity> implements FbaShipmentReceiveService {
+
+    private static final int MAX_LEN_ID_19 = 19;
+    private static final int MAX_LEN_16 = 16;
+    private static final int MAX_LEN_30 = 30;
+    private static final int MAX_LEN_64 = 64;
+    private static final int MAX_LEN_255 = 255;
 
     @Resource
     private DictBasicService dictBasicService;
@@ -137,6 +145,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> saveList, FbaShipmentEntity fbaShipmentEntity) {
+        normalizeForPersistence(saveList);
         // 检查数据
         long count = saveList.stream().map(FbaShipmentReceiveEntity::getFbaShipmentId).distinct().count();
         if (1 != count){
@@ -144,6 +153,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         }
         // 单据日期
         LocalDate billDate = saveList.get(0).getReceiveDate().toLocalDate();
+        String sourcePlatform = ShipmentSourceTypeEnum.FBT.getCode().equals(fbaShipmentEntity.getSourceType())
+                ? PlatformEnum.FBT.getName()
+                : PlatformEnum.LINGXING.getName();
+        saveList.forEach(item -> item.setSourcePlatform(sourcePlatform));
 
         for (FbaShipmentReceiveEntity entity : saveList) {
             if (CharSequenceUtil.isBlank(entity.getUniqueMd5()) ||
@@ -160,7 +173,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         // 查询记录是否已存在
         List<String> uniqueMd5List = saveList.stream().map(FbaShipmentReceiveEntity::getUniqueMd5).distinct().collect(Collectors.toList());
-        List<FbaShipmentReceiveEntity> oldEntityList =  this.listByUniqueMd5AndReceivedDate(uniqueMd5List, fbaShipmentEntity.getFbaShipmentId(), billDate);
+        List<FbaShipmentReceiveEntity> oldEntityList = this.listByUniqueMd5AndReceivedDate(uniqueMd5List, fbaShipmentEntity.getFbaShipmentId(), billDate, sourcePlatform);
         if (!CollectionUtils.isEmpty(oldEntityList)){
             // 查询数量变成的记录并反审核删除之前的的记录
             // 校验是否有变更签收记录或数量
@@ -451,10 +464,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     }
 
     @Override
-    public List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate) {
+    public List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate, String sourcePlatform) {
         return this.lambdaQuery()
                 .eq(FbaShipmentReceiveEntity::getFbaShipmentId, fbaShipmentId)
-                .eq(FbaShipmentReceiveEntity::getSourcePlatform, "lingxing")
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, sourcePlatform)
                 .and( st -> st.in(FbaShipmentReceiveEntity::getUniqueMd5, md5List)
                     .or(i-> i.eq(FbaShipmentReceiveEntity::getReceiveDate, LocalDateTime.of(billDate, LocalTime.MIN))
                     ))
@@ -476,15 +489,65 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     private void checkSkuMapping(List<FbaShipmentReceiveEntity> saveList) {
         List<String> skuMsgList = new LinkedList<>();
         saveList.stream()
-                .filter(e-> StringUtils.isBlank(e.getSkuId()))
-                .forEach(e-> {
-                    String msg = CharSequenceUtil.format("FBA签收记录数据异常:未找到平台sku映射数据, msku={}, fnSku={}", e.getMsku(), e.getFnSku());
+                .filter(e -> StringUtils.isBlank(e.getSkuId()))
+                .forEach(e -> {
+                    // 需求变更：映射缺失不阻断流程，兜底空串继续执行后续签收与调拨逻辑
+                    if (StringUtils.isBlank(e.getSkuNo())) {
+                        e.setSkuNo("");
+                    }
+                    e.setSkuId("");
+                    String msg = CharSequenceUtil.format("FBA签收记录映射缺失(已降级为空串继续): msku={}, fnSku={}", e.getMsku(), e.getFnSku());
                     skuMsgList.add(msg);
                 });
         if (!skuMsgList.isEmpty()) {
-            String msg = String.join(",", skuMsgList);
-            log.warn(msg);
-            throw new ServiceException(msg);
+            log.warn(String.join(",", skuMsgList));
+        }
+    }
+
+    private void normalizeForPersistence(List<FbaShipmentReceiveEntity> saveList) {
+        if (CollectionUtils.isEmpty(saveList)) {
+            return;
+        }
+        for (FbaShipmentReceiveEntity entity : saveList) {
+            if (entity == null) {
+                continue;
+            }
+            entity.setDetailId(normalizeText(entity.getDetailId(), MAX_LEN_ID_19, ""));
+            entity.setFbaShipmentId(normalizeText(entity.getFbaShipmentId(), MAX_LEN_64, ""));
+            entity.setAsin(normalizeText(entity.getAsin(), MAX_LEN_64, ""));
+            entity.setMsku(normalizeText(entity.getMsku(), MAX_LEN_64, ""));
+            entity.setFnSku(normalizeText(entity.getFnSku(), MAX_LEN_64, ""));
+            entity.setSkuNo(normalizeText(entity.getSkuNo(), MAX_LEN_64, ""));
+            entity.setSkuId(normalizeText(entity.getSkuId(), MAX_LEN_255, ""));
+            entity.setReceiveLocaleDate(normalizeText(entity.getReceiveLocaleDate(), MAX_LEN_64, ""));
+            entity.setReceiveUTCDate(normalizeText(entity.getReceiveUTCDate(), MAX_LEN_64, ""));
+            entity.setFulfillmentCenter(normalizeText(entity.getFulfillmentCenter(), MAX_LEN_16, ""));
+            entity.setUniqueMd5(normalizeText(entity.getUniqueMd5(), MAX_LEN_64, ""));
+            entity.setHandleStatus(normalizeText(entity.getHandleStatus(), MAX_LEN_64, FbaReceiveHandleStatusEnum.NONE.getCode()));
+            entity.setSourcePlatform(normalizeText(entity.getSourcePlatform(), MAX_LEN_64, ""));
+            entity.setSourceType(normalizeText(entity.getSourceType(), MAX_LEN_30, ""));
+            entity.setUniqueIndex(normalizeUniqueIndex(entity.getUniqueIndex()));
+        }
+    }
+
+    private String normalizeText(String value, int maxLen, String defaultValue) {
+        String normalized = CharSequenceUtil.blankToDefault(value, defaultValue);
+        if (normalized.length() > maxLen) {
+            return normalized.substring(0, maxLen);
+        }
+        return normalized;
+    }
+
+    private String normalizeUniqueIndex(String uniqueIndex) {
+        if (CharSequenceUtil.isBlank(uniqueIndex)) {
+            return "0";
+        }
+        try {
+            int value = Integer.parseInt(uniqueIndex);
+            value = Math.abs(value) & 0x7FFF;
+            return String.valueOf(value);
+        } catch (Exception ex) {
+            return String.valueOf(uniqueIndex.hashCode() & 0x7FFF);
         }
     }
 }

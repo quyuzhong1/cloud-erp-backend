@@ -407,8 +407,13 @@ public class FileUtil {
                 fileName = filePath.substring(filePath.lastIndexOf("/")+1);
             }
 
-            // 创建 MockMultipartFile 对象
-            return new MockMultipartFile(fileName, new ByteArrayInputStream(bytes));
+            // 创建 MockMultipartFile 对象，并设置 originalFilename
+            return new MockMultipartFile(
+                    "file",
+                    fileName,
+                    URLConnection.guessContentTypeFromName(fileName),
+                    new ByteArrayInputStream(bytes)
+            );
         } catch (IOException e) {
             // 捕获异常并抛出自定义的 ServiceException
             throw new ServiceException("未能获取文件");
@@ -457,8 +462,13 @@ public class FileUtil {
                 fileName = filePath.substring(filePath.lastIndexOf("/")+1);
             }
 
-            // 创建 MockMultipartFile 对象
-            return new MockMultipartFile(fileName, new ByteArrayInputStream(bytes));
+            // 创建 MockMultipartFile 对象，并设置 originalFilename
+            return new MockMultipartFile(
+                    "file",
+                    fileName,
+                    URLConnection.guessContentTypeFromName(fileName),
+                    new ByteArrayInputStream(bytes)
+            );
         } catch (IOException e) {
             // 捕获异常并抛出自定义的 ServiceException
             throw new ServiceException("未能获取文件");

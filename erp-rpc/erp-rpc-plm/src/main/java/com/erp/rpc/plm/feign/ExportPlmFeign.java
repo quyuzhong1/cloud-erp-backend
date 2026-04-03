@@ -75,4 +75,8 @@ public interface ExportPlmFeign {
      */
     @PostMapping("/feign/export/buildProductImagesFolderStructure")
     String buildProductImagesFolderStructure(@RequestBody @Validated RefProductImgAttachmentDTO.BatchDownloadDTO dto);
+
+
+    @PostMapping("/feign/export/productChange")
+    PagingVO<ProductChangeDTO.ListDTO> productChange(@RequestBody @Validated PagingDTO<ProductChangeDTO.PagingParamDTO> dto);
 }

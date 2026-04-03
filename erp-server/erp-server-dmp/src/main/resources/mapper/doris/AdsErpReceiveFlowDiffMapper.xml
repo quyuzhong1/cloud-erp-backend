@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.doris.AdsErpReceiveFlowDiffMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        unique_code, data_encrypt, source_system, source_platform, account_code, next_level_id, bill_topic, flow_id, node_id, instance_id, task_id, source_id, etl_status, check_key, check_month, check_month_query, source_system_name, platform_bill_status_name, platform_shop_name, platform_sales_platform_name, platform_order_code, platform_so_code, platform_outstock_code, stock_sku, stock_qty, platform_sku_no, platform_qty, platform_warehouse_name, warehouse_name, platform_bill_date, bill_name, bill_status_name, shop_name, sales_platform_name, order_code, so_code, outstock_code, sku_no, qty, erp_warehouse_name, bill_date, diff_qty, diff_tag, diff_tag_name, diff_desc, suggest_type, remark, exec_status, exec_status_name, finish_time
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO$ListDTO">
+		select 
+        t.id,
+        t.check_month checkMonth, 
+        t.source_system_name sourceSystemName, 
+        t.platform_bill_name platformBillName,
+        t.platform_bill_status_name platformBillStatusName,
+        t.op_code opCode,
+        t.biz_code bizCode,
+        t.stock_sku stockSku,
+        t.stock_qty stockQty,
+        t.stock_sku_qty stockSkuQty,
+        t.platform_sku_no platformSkuNo,
+        t.platform_qty platformQty,
+        t.platform_sku_qty platformSkuQty,
+        t.platform_warehouse_name platformWarehouseName,
+        t.warehouse_name warehouseName,
+        t.platform_bill_date platformBillDate,
+        t.bill_name billName,
+        t.bill_status_name billStatusName,
+        t.order_code orderCode,
+        t.transfer_info_code transferInfoCode,
+        t.sku_no skuNo,
+        t.qty,
+        t.sku_qty skuQty,
+        t.erp_warehouse_name erpWarehouseName,
+        t.bill_date billDate,
+        t.diff_qty diffQty, 
+        t.diff_tag_name diffTagName, 
+        t.diff_desc diffDesc,
+        t.suggest_type suggestType,
+        t.remark,
+        t.exec_status_name execStatusName,
+        t.finish_time finishTime,
+        t.create_time createTime
+        from
+        ads_erp_receive_flow_diff t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.check_month_query desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from ads_erp_receive_flow_diff where is_deleted = false group by approve_status
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO$TabListDTO">
+        SELECT
+        diff_tag AS tabFlag,
+        count(*)  AS count
+        FROM  ads_erp_receive_flow_diff
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY diff_tag
+    </select>
+
+	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO$TotalDTO">
+        select
+        IFNULL(sum( CASE WHEN platform_bill_name IS NOT NULL AND platform_bill_name != '' THEN 1 ELSE 0 END ), 0) AS totalPlatformQty,
+        IFNULL(sum( CASE WHEN bill_name IS NOT NULL AND bill_name != '' THEN 1 ELSE 0 END ),0) AS totalErpQty,
+        IFNULL(sum( abs( diff_qty ) ),0) AS totalDiffQty
+        from ads_erp_receive_flow_diff t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+</mapper>
