@@ -326,9 +326,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public void batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList,List<LogisticsBillCostDTO.AddDTO> dtoList) {
+    public List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList,
+                                                        List<LogisticsBillCostDTO.AddDTO> dtoList,String processingType) {
         if (CollUtil.isEmpty(dtoList)) {
-            return;
+            return Collections.emptyList();
         }
         List<LogisticsBillCostEntity> logisticsBillCostList = BeanUtil.copyToList(dtoList, LogisticsBillCostEntity.class);
         //导入数据批量处理
@@ -338,12 +339,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败");
         }
+        //导入确认
+        if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),processingType)) {
+            return logisticsBillCostList;
+        }
+        //批量修改对账状态为已确认
+        logisticsBillCostList.forEach(obj -> updateReconciliationStatus(obj.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getConfirmTime()));
+        return logisticsBillCostList;
     }
 
     @Override
-    public void batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList,List<LogisticsBillCostDTO.UpdateDTO> dtoList) {
+    public List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList,
+                                                           List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType) {
         if (CollUtil.isEmpty(dtoList)) {
-            return;
+            return Collections.emptyList();
         }
         List<LogisticsBillCostEntity> logisticsBillCostList = BeanUtil.copyToList(dtoList, LogisticsBillCostEntity.class);
         List<String> costIdList = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
@@ -405,7 +414,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostList));
         }
-
+        //导入确认
+        if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),processingType)) {
+            return logisticsBillCostList;
+        }
+        //批量修改对账状态为已确认
+        logisticsBillCostList.forEach(obj -> updateReconciliationStatus(obj.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getConfirmTime()));
+        return logisticsBillCostList;
     }
 
     /**
@@ -654,8 +669,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	throw new ServiceException("修改后对账状态不能和当前对账状态一样");
         }
         if(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(beforeReconciliationStatus)) {
-        	if(!ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
-        			&& !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus) 
+        	if(!ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+        			&& !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
         			&& !ReconciliationStatusEnum.INVALID.getCode().equals(reconciliationStatus)) {
         		throw new ServiceException("当前对账状态为待确认，只能修改为暂估确认/账单确认/作废");
         	}
@@ -669,24 +684,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         			throw new ServiceException("当前对账状态为暂估确认，核算状态为已生成不能修改为账单确认");
         		}
         	}else {
-        		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+        		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
             			&& "payment".equals(entity.getPayStatus()))) {
             		String p = entity.getPayType().equals("pay") ? "付" : "退";
             		throw new ServiceException("当前对账状态为暂估确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为非账单确认状态");
             	}
         	}
         }else if(ReconciliationStatusEnum.CONFIRMED.getCode().equals(beforeReconciliationStatus)) {
-        	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+        	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
         			&& "payment".equals(entity.getPayStatus()))) {
         		String p = entity.getPayType().equals("pay") ? "付" : "退";
         		throw new ServiceException("当前对账状态为账单确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为其他状态");
         	}
         }
-        
+
         if("refund".equals(entity.getPayType()) && ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)) {
         	throw new ServiceException("退款费用类型不能修改为暂估确认");
         }
-        
+
         //状态变更
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
         		.set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)

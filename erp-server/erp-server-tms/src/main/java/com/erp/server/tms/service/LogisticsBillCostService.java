@@ -79,7 +79,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return BatchResultDTO
      */
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
-    
+
     BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
     
     BatchResultDTO delete(String id);
@@ -265,7 +265,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param dtoList
      * @return List<AddDTO>
      */
-    void batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList);
+    List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList,String processingType);
 
     /**
      * @description: 批量导入新增
@@ -274,6 +274,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param dtoList
      * @return List<AddDTO>
      */
-    void batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList);
+    List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType);
 
 }

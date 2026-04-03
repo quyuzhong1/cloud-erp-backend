@@ -275,18 +275,36 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     @Override
     public void handleImportSuccessList(ImportHistoryRecordDTO.ImportSyncDTO importDTO,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
                                         List<JSONObject> successList, List<JSONObject> matchImportList, List<String> headList, Map<Integer, String> headMap) {
+        //数据处理
+        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = buildImportDataList(importDTO, costImportEntity, cfgImportDetailList,
+                successList, matchImportList, headList, headMap);
+        if (CollUtil.isEmpty(importDataList)) {
+            return;
+        }
+        //预处理直接跳过处理
+        if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(),importDTO.getProcessingType())) {
+            return;
+        }
+        importHistoryRecordService.importBatchAddOrUpdate(importDataList,importDTO.getProcessingType());
+    }
+
+    /**
+     * 导入数据处理（不落库）
+     */
+    private List<LogisticsBillCostDTO.ImportDataDTO> buildImportDataList(ImportHistoryRecordDTO.ImportSyncDTO importDTO,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
+                                        List<JSONObject> successList, List<JSONObject> matchImportList, List<String> headList, Map<Integer, String> headMap) {
         if (headList.size() != headList.stream().distinct().count()) {
             throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_HEAD_EXIST);
         }
         if (CollectionUtils.isEmpty(successList)) {
-            return;
+            return Collections.emptyList();
         }
         //查询配置的唯一键字段
         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
         if (CollUtil.isEmpty(uniqueKeyList)) {
             //上面有前置校验，这里只是为了防止空指针、遗漏
             log.warn("未配置唯一键字段，无法进行数据处理");
-            return;
+            return Collections.emptyList();
         }
 
         //查询配置类型
@@ -439,10 +457,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 updateMatchResult(Collections.singletonList(jsonObject),matchIndex.toString(), errorIndex.toString(), errorMsgList, matchImportList);
             }
         }
-        if (CollUtil.isEmpty(importDataList)) {
-            return;
-        }
-        importHistoryRecordService.importBatchAddOrUpdate(importDataList);
+        return importDataList;
     }
 
 
@@ -455,7 +470,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public  void importBatchAddOrUpdate(List<LogisticsBillCostDTO.ImportDataDTO> importDataList) {
+    public  void importBatchAddOrUpdate(List<LogisticsBillCostDTO.ImportDataDTO> importDataList,String processingType) {
          if (CollUtil.isEmpty(importDataList)) {
               return;
          }
@@ -473,11 +488,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         //新增物流费用
         List<LogisticsBillCostDTO.AddDTO> logisticsBillCostAddList = importDataList.stream().flatMap(obj -> obj.getAddBillCostList().stream()).filter(ObjectUtil::isNotNull).collect(Collectors.toList());
-        logisticsBillCostService.batchImportAdd(logisticsBillList,logisticsBillDetailList,logisticsBillCostAddList);
+        logisticsBillCostService.batchImportAdd(logisticsBillList,logisticsBillDetailList,logisticsBillCostAddList,processingType);
 
         //更新物流费用
         List<LogisticsBillCostDTO.UpdateDTO> logisticsBillCostUpdateList = importDataList.stream().flatMap(obj -> obj.getUpdateBillCostList().stream()).filter(ObjectUtil::isNotNull).collect(Collectors.toList());
-        logisticsBillCostService.batchImportUpdate( logisticsBillList,logisticsBillDetailList,logisticsBillCostUpdateList);
+        logisticsBillCostService.batchImportUpdate( logisticsBillList,logisticsBillDetailList,logisticsBillCostUpdateList,processingType);
 
         //新增费用项
         List<TmsCostDetailDTO.AddDTO> costDetailAddList = importDataList.stream().flatMap(obj -> obj.getAddCfgCostList().stream()).filter(ObjectUtil::isNotNull).collect(Collectors.toList());
@@ -724,11 +739,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
                 continue;
             }
-            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex())
-                    && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))
-                    && ((CharSequenceUtil.equals("costItem",obj.getTargetField()) && CharSequenceUtil.equals(obj.getSourceDetailField(),ObjectUtil.defaultIfNull(entry.getValue(),"").toString()))
-                    || !CharSequenceUtil.equals("costItem",obj.getTargetField()))
-            ).findFirst().orElse(null);
+            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(cfgDetailEntity)) {
                 log.warn("导入配置未找到字段【{}】的配置项",field);
                 continue;
@@ -856,8 +867,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         LogisticsBillCostEntity logisticsBillCostEntity;
 
-        //对账确认日期
-        List<Pair<String,LocalDateTime>> pairList = new ArrayList<>();
         LocalDateTime confirmTime = CharSequenceUtil.isBlank(excelDTO.getConfirmTimeStr()) ? LocalDateTime.now() : LocalDateUtil.stringToLocalDateTime(excelDTO.getConfirmTimeStr());
 
         if (CollUtil.isNotEmpty(logisticsBillVoList)) {
@@ -893,7 +902,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
 
             //数据格式化
-            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity.getLogisticsBillId(), excelDTO, importDTO, updateList, errorMsgList, cfgCostList);
+            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(confirmTime,logisticsBillCostEntity.getLogisticsBillId(), excelDTO,
+                    importDTO, updateList, errorMsgList, cfgCostList);
             //有错误信息直接跳过不暂处理
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 return importDataDTO;
@@ -928,7 +938,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             //格式化物流单和明细
             getAddImportLogisticBill(importDataDTO,excelDTO,costAttribution);
             //格式化物流费用单
-            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(importDataDTO.getLogisticsBillEntity().getId(),excelDTO, importDTO, updateList, errorMsgList, cfgCostList);
+            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(importDataDTO.getConfirmTime(),importDataDTO.getLogisticsBillEntity().getId(),excelDTO,
+                    importDTO, updateList, errorMsgList, cfgCostList);
             //有错误信息直接跳过不暂处理
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 return importDataDTO;
@@ -939,11 +950,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
           /*  updateDataDTO.setCostDetailList(updateList);
             BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE);
             pairList.add(new Pair<>(update.getId(),confirmTime));*/
-        }
-
-        //确认
-        if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),importDTO.getProcessingType())) {
-            pairList.forEach(obj -> logisticsBillCostService.updateReconciliationStatus(obj.getKey(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getValue()));
         }
         return importDataDTO;
     }
@@ -1004,6 +1010,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             addDTO.setActualWeight(logisticsBillCostEntity.getActualWeight());
             addDTO.setVolumeWeight(logisticsBillCostEntity.getVolumeWeight());
             addDTO.setBillingWeightLogistics(logisticsBillCostEntity.getBillingWeightLogistics());
+            addDTO.setConfirmTime(importDataDTO.getConfirmTime());
             String currency = dto.getCurrency();
             if(org.apache.commons.lang3.StringUtils.isBlank(currency)) {
                 currency = CurrencyEnum.CNY.getCurrencyCode();
@@ -1052,7 +1059,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO regenerateImportExcel(String id) {
+    public BatchResultDTO regenerateImportExcel(String id,String processingType) {
         ImportHistoryRecordEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "导入记录");
@@ -1062,7 +1069,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         importDTO.setFileUrl(entity.getFileUrl());
         ImportHistoryRecordDTO.ImportDTO dto = new ImportHistoryRecordDTO.ImportDTO();
         dto.setBusinessType(entity.getBusinessType());
-        dto.setProcessingType(ImportHistoryRecordProcessingTypeEnum.IMPORT.getCode());
+        dto.setProcessingType(processingType);
         dto.setReconciliationMonth(entity.getReconciliationMonth());
 
         //查询配置主表信息
@@ -1178,7 +1185,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param cfgCostList
      * @return void
      */
-    private LogisticsBillCostDTO.UpdateDTO handleLogisticsBillCostImportData( String logisticsBillId, ImportHistoryRecordExcelDTO excelDTO,
+    private LogisticsBillCostDTO.UpdateDTO handleLogisticsBillCostImportData(LocalDateTime confirmTime, String logisticsBillId, ImportHistoryRecordExcelDTO excelDTO,
                                                                              ImportHistoryRecordDTO.ImportSyncDTO importDTO,
                                                                              List<TmsCostDetailDTO.UpdateDTO> updateList,
                                                                              List<String> errorMsgList,
@@ -1189,7 +1196,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         updateDataDTO.setBillingWeightLogistics(CharSequenceUtil.isBlank(excelDTO.getBillingWeightLogistics()) ? null : new BigDecimal(excelDTO.getBillingWeightLogistics()));
         updateDataDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
         updateDataDTO.setPayType(excelDTO.getPayType());
-
+        updateDataDTO.setConfirmTime(confirmTime);
         //对账月份
         updateDataDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
         //尺寸

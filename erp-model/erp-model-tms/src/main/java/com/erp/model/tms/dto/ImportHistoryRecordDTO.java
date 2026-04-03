@@ -475,4 +475,21 @@ public class ImportHistoryRecordDTO implements Serializable {
             this.setUserId(baseImportDTO.getUserId());
         }
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RegenerateImportDTO {
+        /**
+         * 导入记录id集合
+         */
+        @NotBlank(message = "导入记录id不能为空")
+        private List<String> ids;
+
+        /**
+         * 处理类型，预处理（preprocessing）/正式导入（import）/导入确认（confirmImport）
+         */
+        private String processingType;
+    }
 }

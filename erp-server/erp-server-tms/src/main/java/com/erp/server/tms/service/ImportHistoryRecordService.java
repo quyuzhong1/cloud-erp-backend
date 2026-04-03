@@ -87,7 +87,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO regenerateImportExcel(String id);
+    BatchResultDTO regenerateImportExcel(String id,String processingType);
     /**
      * 导入
      * @author will
@@ -104,5 +104,5 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param importDataList
      * @return void
      */
-    void importBatchAddOrUpdate(List<LogisticsBillCostDTO.ImportDataDTO> importDataList);
+    void importBatchAddOrUpdate(List<LogisticsBillCostDTO.ImportDataDTO> importDataList,String processingType);
 }

@@ -749,7 +749,7 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 对账确认时间
     	 */
     	private LocalDateTime confirmTime;
-    	
+
     	/**
     	 * 新增付款/退款数据
     	 */
@@ -768,7 +768,10 @@ public class LogisticsBillCostDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
         /**
          * 计费重（物流商）
          */
@@ -851,6 +854,10 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
 
         /**
          * 对账状态
@@ -1007,7 +1014,29 @@ public class LogisticsBillCostDTO implements Serializable {
         private LocalDateTime confirmTime;
 
     }
-    
+
+    /**
+     * 批量更新对账状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateReconciliationStatusDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 状态 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=reconciliationStatus
+         */
+        private String reconciliationStatus;
+
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
+    }
+
     /**
      * 支付状态
      */
