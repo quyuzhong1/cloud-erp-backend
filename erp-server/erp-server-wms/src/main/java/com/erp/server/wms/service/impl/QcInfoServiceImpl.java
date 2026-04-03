@@ -1135,7 +1135,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcReportDetailService.add(id, dto.getReportDetailList());
             //质检备注暂存
             qcRemarkService.add(id, dto.getRemarkList());
-
+            //不良信息
+            qcDefectService.add(id,dto.getQcDefectList());
+            //质检标准
+            qcSamplingPlanRefService.add(id,dto.getQcStandardView());
             //质检类型
             String qcType = qcInfo.getQcType();
             String b2bQc = QcTypeEnum.B2B_OUTSIDE_QC.getCode();
