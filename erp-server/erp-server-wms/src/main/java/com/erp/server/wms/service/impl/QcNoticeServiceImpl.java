@@ -869,7 +869,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //质检结果 && 质检状态
             QcInfoEntity qcInfoEntity = qcInfos.stream()
-                    .filter(item -> Objects.equals(qcInfoView.getId(), item.getId()))
+                    .filter(item -> Objects.equals(qcInfoView.getId(), item.getSourceId()))
                     .findFirst()
                     .orElse(null);
             if (Objects.nonNull(qcInfoEntity)) {
