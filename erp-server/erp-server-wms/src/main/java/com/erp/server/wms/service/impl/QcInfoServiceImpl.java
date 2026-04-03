@@ -672,48 +672,49 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
         }
         QcNoticeDetailEntity qcNoticeDetail = qcNoticeDetailService.getById(sourceDetailId);
+        if (Objects.nonNull(qcNoticeDetail)) {
+            qcNoticeDetailService.lambdaUpdate()
+                    .set(QcNoticeDetailEntity::getQcUserId, qcUserId)
+                    .set(QcNoticeDetailEntity::getQcUserName, user.getUserName())
+                    .set(QcNoticeDetailEntity::getQcQty,totalQty)
+                    .set(QcNoticeDetailEntity::getQcDiffQty,qcNoticeDetail.getQcNoticeQty() - qcQty)
+                    .set(QcNoticeDetailEntity::getQcGoodQty,goodQty)
+                    .set(QcNoticeDetailEntity::getQcBadQty,badQty)
+                    .set(QcNoticeDetailEntity::getQcStatus,QcNoticeStatusEnum.FINISH.getCode())
+                    .eq(QcNoticeDetailEntity::getId, sourceDetailId)
+                    .update();
 
-        qcNoticeDetailService.lambdaUpdate()
-                .set(QcNoticeDetailEntity::getQcUserId, qcUserId)
-                .set(QcNoticeDetailEntity::getQcUserName, user.getUserName())
-                .set(QcNoticeDetailEntity::getQcQty,totalQty)
-                .set(QcNoticeDetailEntity::getQcDiffQty,qcNoticeDetail.getQcNoticeQty() - qcQty)
-                .set(QcNoticeDetailEntity::getQcGoodQty,goodQty)
-                .set(QcNoticeDetailEntity::getQcBadQty,badQty)
-                .set(QcNoticeDetailEntity::getQcStatus,QcNoticeStatusEnum.FINISH.getCode())
-                .eq(QcNoticeDetailEntity::getId, sourceDetailId)
-                .update();
+            //质检状态：待质检、部分质检、已质检
+            //待质检：质检通知单关联的所有质检单都为待质检
+            //已质检：质检通知单关联的所有质检单都质检完成（免检或已质检）
+            //部分质检：质检通知单关联的质检单，既有已质检又有待质检的
+            String mainId = qcNoticeDetail.getMainId();
+            List<QcInfoEntity> freshDetails = this.lambdaQuery()
+                    .eq(QcInfoEntity::getSourceId, mainId)
+                    .list();
+            long waitCount = freshDetails.stream()
+                    .filter(d -> d.getQcStatus() == QcBillStatusEnum.WAIT_QC)
+                    .count();
 
-        //质检状态：待质检、部分质检、已质检
-        //待质检：质检通知单关联的所有质检单都为待质检
-        //已质检：质检通知单关联的所有质检单都质检完成（免检或已质检）
-        //部分质检：质检通知单关联的质检单，既有已质检又有待质检的
-        String mainId = qcNoticeDetail.getMainId();
-        List<QcInfoEntity> freshDetails = this.lambdaQuery()
-                .eq(QcInfoEntity::getSourceId, mainId)
-                .list();
-        long waitCount = freshDetails.stream()
-                .filter(d -> d.getQcStatus() == QcBillStatusEnum.WAIT_QC)
-                .count();
+            long finishCount = freshDetails.stream()
+                    .filter(d -> d.getQcStatus() == QcBillStatusEnum.FINISH_QC)
+                    .count();
 
-        long finishCount = freshDetails.stream()
-                .filter(d -> d.getQcStatus() == QcBillStatusEnum.FINISH_QC)
-                .count();
+            // 更新主表状态
+            QcNoticeStatusEnum newStatus;
+            if (waitCount == 0 && finishCount == freshDetails.size()) {
+                newStatus = QcNoticeStatusEnum.FINISH;
+            } else if (finishCount > 0 && waitCount > 0) {
+                newStatus = QcNoticeStatusEnum.PART;
+            } else {
+                newStatus = QcNoticeStatusEnum.WAIT;
+            }
 
-        // 更新主表状态
-        QcNoticeStatusEnum newStatus;
-        if (waitCount == 0 && finishCount == freshDetails.size()) {
-            newStatus = QcNoticeStatusEnum.FINISH;
-        } else if (finishCount > 0 && waitCount > 0) {
-            newStatus = QcNoticeStatusEnum.PART;
-        } else {
-            newStatus = QcNoticeStatusEnum.WAIT;
+            qcNoticeService.lambdaUpdate()
+                    .set(QcNoticeEntity::getQcStatus, newStatus.getCode())
+                    .eq(QcNoticeEntity::getId, mainId)
+                    .update();
         }
-
-        qcNoticeService.lambdaUpdate()
-                .set(QcNoticeEntity::getQcStatus, newStatus.getCode())
-                .eq(QcNoticeEntity::getId, mainId)
-                .update();
     }
 
     /**
@@ -1245,6 +1246,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO finish(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        String sourceDetailId = entity.getSourceDetailId();
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
             throw new ServiceException(ApiError.PO_QC_VOIDED_OPERATION_NOT_ALLOWED, "完成质检");
@@ -1280,7 +1282,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
             //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId(),qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
+            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
@@ -1320,6 +1322,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchExemption(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
+        String sourceDetailId = entity.getSourceDetailId();
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
             throw new ServiceException(ApiError.PO_QC_VOIDED_OPERATION_NOT_ALLOWED, "免检");
@@ -1358,7 +1361,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
             //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId(),qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
+            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
