@@ -80,7 +80,8 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
             boolean hasDefectQty = addDTO.getBadQty() != null && addDTO.getBadQty() > 0;
             boolean hasProblemAttribute = StringUtils.isNotBlank(addDTO.getIssueProperty());
             boolean hasDefectDesc = StringUtils.isNotBlank(addDTO.getDefectDesc());
-            boolean hasDefectImage = !addDTO.getBadImageViewList().isEmpty();
+            boolean hasDefectImage = Objects.nonNull(addDTO.getBadImageViewList()) && !addDTO.getBadImageViewList().isEmpty();
+
 
             if ((hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage)
                     && !(hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc && hasDefectImage)) {
