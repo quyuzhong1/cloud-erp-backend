@@ -675,12 +675,43 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcNoticeDetailService.lambdaUpdate()
                 .set(QcNoticeDetailEntity::getQcUserId, qcUserId)
                 .set(QcNoticeDetailEntity::getQcUserName, user.getUserName())
-                .set(QcNoticeDetailEntity::getQcStatus,QcBillStatusEnum.FINISH_QC.getCode())
                 .set(QcNoticeDetailEntity::getQcQty,totalQty)
                 .set(QcNoticeDetailEntity::getQcDiffQty,qcNoticeDetail.getQcNoticeQty() - qcQty)
                 .set(QcNoticeDetailEntity::getQcGoodQty,goodQty)
                 .set(QcNoticeDetailEntity::getQcBadQty,badQty)
+                .set(QcNoticeDetailEntity::getQcStatus,QcNoticeStatusEnum.FINISH.getCode())
                 .eq(QcNoticeDetailEntity::getId, sourceDetailId)
+                .update();
+
+        //质检状态：待质检、部分质检、已质检
+        //待质检：质检通知单关联的所有质检单都为待质检
+        //已质检：质检通知单关联的所有质检单都质检完成（免检或已质检）
+        //部分质检：质检通知单关联的质检单，既有已质检又有待质检的
+        String mainId = qcNoticeDetail.getMainId();
+        List<QcNoticeDetailEntity> freshDetails = qcNoticeDetailService.lambdaQuery()
+                .eq(QcNoticeDetailEntity::getMainId, mainId)
+                .list();
+        long waitCount = freshDetails.stream()
+                .filter(d -> d.getQcStatus() == QcNoticeStatusEnum.WAIT.getCode())
+                .count();
+
+        long finishCount = freshDetails.stream()
+                .filter(d -> d.getQcStatus() == QcNoticeStatusEnum.FINISH.getCode())
+                .count();
+
+        // 更新主表状态
+        QcNoticeStatusEnum newStatus;
+        if (waitCount == 0 && finishCount == freshDetails.size()) {
+            newStatus = QcNoticeStatusEnum.FINISH;
+        } else if (finishCount > 0 && waitCount > 0) {
+            newStatus = QcNoticeStatusEnum.PART;
+        } else {
+            newStatus = QcNoticeStatusEnum.WAIT;
+        }
+
+        qcNoticeService.lambdaUpdate()
+                .set(QcNoticeEntity::getQcStatus, newStatus.getCode())
+                .eq(QcNoticeEntity::getId, mainId)
                 .update();
     }
 
