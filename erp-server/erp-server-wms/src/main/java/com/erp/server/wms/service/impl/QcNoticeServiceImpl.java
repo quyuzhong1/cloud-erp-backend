@@ -688,6 +688,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         List<QcNoticeDTO.QcInfoView> qcInfoViews = baseMapper.listQcInfoView(ids);
 
+        List<QcInfoEntity> qcInfo = qcInfoService.lambdaQuery()
+                .in(QcInfoEntity::getSourceId, ids)
+                .list();
+
         List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
         List<QcNoticeDTO.QcImageView> qcImageViews = new ArrayList<>();
         for (QcNoticeDTO.QcInfoView qcInfoView : qcInfoViews) {
@@ -709,6 +713,16 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcStandardView.setSamplingPlanId(samplingPlan.getId());
             qcStandardView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "抽样方案");
             qcStandardView.setSuggestSamplingQty(samplingPlan.getSampleQty());
+
+            //质检单信息
+            QcInfoEntity qcInfoEntity = qcInfo.stream()
+                    .filter(item -> Objects.equals(item.getSourceId(), qcInfoView.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(qcInfoEntity)) {
+                qcInfoView.setQcBillId(qcInfoEntity.getId());
+                qcInfoView.setQcBillCode(qcInfoEntity.getCode());
+            }
 
             //品类通用标准
             FileManagementDTO.AttachDTO attachDTO = fileManagementService.getCategoryGeneralStandardFile(qcInfoView.getSkuId());
@@ -852,6 +866,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     .findFirst()
                     .orElse(null);
             if (Objects.nonNull(qcInfoEntity)) {
+                qcInfoView.setQcBillId(qcInfoEntity.getId());
+                qcInfoView.setQcBillCode(qcInfoEntity.getCode());
                 qcInfoView.setQcStatus(qcInfoEntity.getCode());
                 qcInfoView.setQcStatusName(qcInfoEntity.getQcStatus().getName());
                 QcResultEntity qcResultEntity = qcResults.stream()
