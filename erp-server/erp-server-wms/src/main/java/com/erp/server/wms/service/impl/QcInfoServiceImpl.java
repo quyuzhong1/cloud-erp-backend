@@ -541,6 +541,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public QcInfoEntity finish(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
+        String sourceDetailId = bill.getSourceDetailId();
         if (Objects.isNull(bill)) {
             throw new ServiceException(ApiError.PO_QC_ORDER_NOT_FOUND);
         }
@@ -655,7 +656,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
 
             //回写质检通知单
-            reWriteQcNotice(dto.getQcUserId(),dto.getSourceDetailId(),qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
+            reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
             operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
         } else {
@@ -1110,6 +1111,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public QcInfoEntity exemption(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
+        String sourceDetailId = bill.getSourceDetailId();
         if (Objects.isNull(bill)) {
             throw new ServiceException(ApiError.PO_QC_ORDER_NOT_FOUND);
         }
@@ -1207,7 +1209,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
             //回写质检通知单
-            reWriteQcNotice(dto.getQcUserId(),dto.getSourceDetailId(),qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
+            reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(id));
