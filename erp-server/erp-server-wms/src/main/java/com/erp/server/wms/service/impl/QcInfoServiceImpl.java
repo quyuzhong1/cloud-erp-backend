@@ -584,16 +584,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String code = bill.getCode();
         BeanMapper.copy(dto, bill);
 
-        if (Objects.nonNull(dto.getQcInfo())
-                && StringUtils.isNotBlank(dto.getQcInfo().getId())) {
-            QcResultDTO.AddDTO qcInfoDTO = dto.getQcInfo();
-            QcResultEntity qcResult = qcResultService.getById(qcInfoDTO.getId());
-            if (Objects.nonNull(qcResult)) {
-                String msg = StrUtil.format("用户【{}】修改质检量从【{}}】为【{}】", UserContext.getDefaultLoginUser().getUserName(),qcResult.getQcQty(),dto.getQcInfo().getQcQty());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), billId, "修改");
-            }
-        }
-
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         if (CharSequenceUtil.isBlank(code)) {
@@ -665,7 +655,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
 
             //回写质检通知单
-            reWriteQcNotice(dto.getQcUserId(),dto.getSourceDetailId());
+            reWriteQcNotice(dto.getQcUserId(),dto.getSourceDetailId(),qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
             operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
         } else {
@@ -673,16 +663,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
     }
 
-    public void reWriteQcNotice(String qcUserId,String sourceDetailId){
+    @Transactional(rollbackFor = Exception.class)
+    public void reWriteQcNotice(String qcUserId,String sourceDetailId,Integer totalQty,Integer qcQty,Integer goodQty,Integer badQty){
         //更新质检通知单的质检员和质检状态
         SysUserDTO user = sysUserFeign.getSysUserById(qcUserId);
         if (Objects.isNull(user)) {
             throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
         }
+        QcNoticeDetailEntity qcNoticeDetail = qcNoticeDetailService.getById(sourceDetailId);
+
         qcNoticeDetailService.lambdaUpdate()
                 .set(QcNoticeDetailEntity::getQcUserId, qcUserId)
                 .set(QcNoticeDetailEntity::getQcUserName, user.getUserName())
                 .set(QcNoticeDetailEntity::getQcStatus,QcBillStatusEnum.FINISH_QC.getCode())
+                .set(QcNoticeDetailEntity::getQcQty,totalQty)
+                .set(QcNoticeDetailEntity::getQcDiffQty,qcNoticeDetail.getQcNoticeQty() - qcQty)
+                .set(QcNoticeDetailEntity::getQcGoodQty,goodQty)
+                .set(QcNoticeDetailEntity::getQcBadQty,badQty)
                 .eq(QcNoticeDetailEntity::getId, sourceDetailId)
                 .update();
     }
@@ -1131,16 +1128,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         String code = bill.getCode();
         BeanMapper.copy(dto, bill);
-
-        if (Objects.nonNull(dto.getQcInfo())
-                && StringUtils.isNotBlank(dto.getQcInfo().getId())) {
-            QcResultDTO.AddDTO qcInfoDTO = dto.getQcInfo();
-            QcResultEntity qcResult = qcResultService.getById(qcInfoDTO.getId());
-            if (Objects.nonNull(qcResult)) {
-                String msg = StrUtil.format("用户【{}】修改质检量从【{}}】为【{}】", UserContext.getDefaultLoginUser().getUserName(),qcResult.getQcQty(),dto.getQcInfo().getQcQty());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), id, "修改");
-            }
-        }
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         bill.setId(id);
@@ -1189,7 +1176,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
             //回写质检通知单
-            reWriteQcNotice(dto.getQcUserId(),dto.getSourceDetailId());
+            reWriteQcNotice(dto.getQcUserId(),dto.getSourceDetailId(),qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(id));
@@ -1258,8 +1245,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //自动完成入库单
             this.autoBatchStockInBill(ids);
 
+            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
             //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId());
+            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId(),qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
@@ -1335,8 +1323,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //自动完成入库单
             this.autoBatchStockInBill(ids);
 
+            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
             //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId());
+            reWriteQcNotice(entity.getQcUserId(),entity.getSourceDetailId(),qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
