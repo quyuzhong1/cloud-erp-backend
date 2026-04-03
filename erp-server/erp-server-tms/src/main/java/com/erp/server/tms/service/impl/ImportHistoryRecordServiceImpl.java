@@ -57,6 +57,7 @@ import groovy.lang.Lazy;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,6 +69,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_IMPORT_HISTORY_RECORD;
@@ -111,6 +113,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     @Resource
     @Lazy
     private ImportHistoryRecordService importHistoryRecordService;
+
+    @Resource
+    @Qualifier("importHistoryRecordPool")
+    private ExecutorService importHistoryRecordPool;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -305,7 +311,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         // 3. 构建 paramMap，收集唯一键所有唯一值
         Map<String, List<Object>> paramMap = buildParamMap(cfgImportDetailList, headMap, successList);
         // 4. 执行所有数据库预查询
-        PreQueryResult preQueryResult = preQueryDbData(paramMap, cfgImportDetailList, costImportEntity);
+        ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult = preQueryDbData(paramMap, costImportEntity);
         // 5. 判断纵向/横向模式
         boolean isVertical = isVerticalCostItem(cfgImportDetailList);
         if (isVertical) {
@@ -356,28 +362,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return paramMap;
     }
 
-    // 数据库预查询结果封装
-    private static class PreQueryResult {
-        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos;
-        Map<String, List<TmsCostDetailEntity>> mainIdListMap;
-        List<LogisticsBillCostEntity> logisticsBillCostList;
-        List<TmsCfgCostEntity> cfgCostList;
-        public PreQueryResult(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,
-                              Map<String, List<TmsCostDetailEntity>> mainIdListMap,
-                              List<LogisticsBillCostEntity> logisticsBillCostList,
-                              List<TmsCfgCostEntity> cfgCostList) {
-            this.logisticsBillVos = logisticsBillVos;
-            this.mainIdListMap = mainIdListMap;
-            this.logisticsBillCostList = logisticsBillCostList;
-            this.cfgCostList = cfgCostList;
-        }
-    }
-
     // 执行所有数据库预查询
-    private PreQueryResult preQueryDbData(Map<String, List<Object>> paramMap, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, CfgLogisticsCostImportEntity costImportEntity) {
+    private ImportHistoryRecordDTO.PreQueryResultDTO preQueryDbData(Map<String, List<Object>> paramMap, CfgLogisticsCostImportEntity costImportEntity) {
         // 查询配置类型
         String costAttribution = CharSequenceUtil.equals(costImportEntity.getBusinessType(), CfgLogisticsCostImportBusinessTypeEnum.LOGISTICS_BILL_COST.getCode()) ?
                 DictCostAttributionEnum.SELF_DELIVER.getCode() : DictCostAttributionEnum.LAST_MILE.getCode();
+        //来源类型
+        String sourceType = CharSequenceUtil.equals(costImportEntity.getBusinessType(),CfgLogisticsCostImportBusinessTypeEnum.LOGISTICS_BILL_COST.getCode()) ?
+                SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode() : SourceTypeEnum.LOGISTICS_BILL_COST.getCode();
+
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(costAttribution);
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillByUniqueKey(paramMap);
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
@@ -388,7 +381,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         List<String> logisticsBillDetailIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getDetailId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
-        return new PreQueryResult(logisticsBillVos, mainIdListMap, logisticsBillCostList, cfgCostList);
+        return new ImportHistoryRecordDTO.PreQueryResultDTO(costAttribution,sourceType,logisticsBillVos, mainIdListMap, logisticsBillCostList, cfgCostList);
     }
 
     // 判断是否为纵向费用项
@@ -396,18 +389,18 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return cfgImportDetailList.stream().anyMatch(obj -> CharSequenceUtil.equals(obj.getTargetField(), "costItem") && CharSequenceUtil.isNotBlank(obj.getSourceDetailField()));
     }
 
-    // 纵向费用项处理
+    // 纵向费用项处理（多线程）
     private List<LogisticsBillCostDTO.ImportDataDTO> processVerticalCostItems(
             List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
-            PreQueryResult preQueryResult,
+            ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
             ImportHistoryRecordDTO.ImportSyncDTO importDTO,
             CfgLogisticsCostImportEntity costImportEntity,
             List<JSONObject> successList,
             List<JSONObject> matchImportList,
             List<String> headList,
             Map<Integer, String> headMap) {
-        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = new ArrayList<>();
+        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
         List<Integer> uniqueIndexes = uniqueKeyList.stream()
                 .map(CfgLogisticsCostImportDetailEntity::getMappingIndex)
                 .filter(ObjectUtil::isNotNull)
@@ -420,70 +413,103 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 ));
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
-        for (Map.Entry<String, List<JSONObject>> entry : map.entrySet()) {
-            List<JSONObject> value = entry.getValue();
-            JSONObject successJson = new JSONObject();
-            List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
-            HashMap<String, String> currencyMap = new HashMap<>();
-            for (JSONObject jsonObject : value) {
-                jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
-                List<String> costErrorMsgList = new ArrayList<>();
-                List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, preQueryResult.cfgCostList, cfgImportDetailList, headList, preQueryResult.cfgCostList.get(0).getDictCostAttribution(), preQueryResult.cfgCostList.get(0).getDictCostAttribution(), costErrorMsgList, currencyMap);
-                if (CollectionUtils.isNotEmpty(costErrorMsgList)) {
-                    jsonObject.set(matchIndex.toString(), MATCH_FAIL);
-                    jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(costErrorMsgList));
-                    matchImportList.add(jsonObject);
-                    continue;
+        List<java.util.concurrent.Future<Void>> futures = new ArrayList<>();
+        int batchSize = 100;
+        List<Map.Entry<String, List<JSONObject>>> entryList = new ArrayList<>(map.entrySet());
+        for (int i = 0; i < entryList.size(); i += batchSize) {
+            int end = Math.min(entryList.size(), i + batchSize);
+            List<Map.Entry<String, List<JSONObject>>> batch = entryList.subList(i, end);
+            futures.add(importHistoryRecordPool.submit(() -> {
+                for (Map.Entry<String, List<JSONObject>> entry : batch) {
+                    List<JSONObject> value = entry.getValue();
+                    JSONObject successJson = new JSONObject();
+                    List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
+                    HashMap<String, String> currencyMap = new HashMap<>();
+                    for (JSONObject jsonObject : value) {
+                        jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
+                        List<String> costErrorMsgList = new ArrayList<>();
+                        List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, preQueryResult.getCfgCostList(), cfgImportDetailList, headList, preQueryResult.getSourceType(), preQueryResult.getDictCostAttribution(), costErrorMsgList, currencyMap);
+                        if (CollectionUtils.isNotEmpty(costErrorMsgList)) {
+                            jsonObject.set(matchIndex.toString(), MATCH_FAIL);
+                            jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(costErrorMsgList));
+                            synchronized (matchImportList) { matchImportList.add(jsonObject); }
+                            continue;
+                        }
+                        updateAllList.addAll(updateList);
+                    }
+                    List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateAllList);
+                    List<JSONObject> costSuccessList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
+                    if (CollUtil.isEmpty(costSuccessList)) {
+                        continue;
+                    }
+                    List<String> mainErrorMsgList = new ArrayList<>();
+                    try {
+                        LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
+                                preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList, preQueryResult.getDictCostAttribution(), preQueryResult.getMainIdListMap());
+                        if (importDataDTO != null) importDataList.add(importDataDTO);
+                    } catch (Exception e) {
+                        log.error("数据处理失败 ,e = {}", e.getMessage());
+                        mainErrorMsgList.add(e.getMessage());
+                    }
+                    updateMatchResult(costSuccessList, matchIndex.toString(), errorIndex.toString(), mainErrorMsgList, matchImportList);
                 }
-                updateAllList.addAll(updateList);
-            }
-            List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateAllList);
-            List<JSONObject> costSuccessList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
-            if (CollUtil.isEmpty(costSuccessList)) {
-                continue;
-            }
-            List<String> mainErrorMsgList = new ArrayList<>();
-            try {
-                LogisticsBillCostDTO.ImportDataDTO importDataDTO = addOrUpdateData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.logisticsBillCostList,
-                        preQueryResult.logisticsBillVos, preQueryResult.cfgCostList, importDTO, costImportEntity, mainErrorMsgList, preQueryResult.cfgCostList.get(0).getDictCostAttribution(), preQueryResult.mainIdListMap);
-                importDataList.add(importDataDTO);
-            } catch (Exception e) {
-                log.error("费用分类币种校验异常", e);
-                mainErrorMsgList.add(e.getMessage());
-            }
-            updateMatchResult(costSuccessList, matchIndex.toString(), errorIndex.toString(), mainErrorMsgList, matchImportList);
+                return null;
+            }));
+        }
+        List<Throwable> errors = new ArrayList<>();
+        for (java.util.concurrent.Future<Void> f : futures) {
+            try { f.get(); } catch (Exception ex) { log.error("horizontal future get error", ex); errors.add(ex); }
+        }
+        if (!errors.isEmpty()) {
+            throw new RuntimeException("多线程处理数据失败", errors.get(0));
         }
         return importDataList;
     }
 
-    // 横向费用项处理
+    // 横向费用项处理（多线程）
     private List<LogisticsBillCostDTO.ImportDataDTO> processHorizontalCostItems(
             List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
-            PreQueryResult preQueryResult,
+            ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
             ImportHistoryRecordDTO.ImportSyncDTO importDTO,
             CfgLogisticsCostImportEntity costImportEntity,
             List<JSONObject> successList,
             List<JSONObject> matchImportList,
             List<String> headList,
             Map<Integer, String> headMap) {
-        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = new ArrayList<>();
+        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
-        for (JSONObject jsonObject : successList) {
-            JSONObject successJson = new JSONObject();
-            List<String> errorMsgList = new ArrayList<>();
-            List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost(successJson, jsonObject, errorMsgList, preQueryResult.cfgCostList, cfgImportDetailList, headList, preQueryResult.cfgCostList.get(0).getDictCostAttribution());
-            List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateList);
-            try {
-                LogisticsBillCostDTO.ImportDataDTO importDataDTO = addOrUpdateData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.logisticsBillCostList,
-                        preQueryResult.logisticsBillVos, preQueryResult.cfgCostList, importDTO, costImportEntity, errorMsgList, preQueryResult.cfgCostList.get(0).getDictCostAttribution(), preQueryResult.mainIdListMap);
-                importDataList.add(importDataDTO);
-            } catch (Exception e) {
-                log.error("费用分类币种校验异常", e);
-                errorMsgList.add(e.getMessage());
-            }
-            updateMatchResult(Collections.singletonList(jsonObject), matchIndex.toString(), errorIndex.toString(), errorMsgList, matchImportList);
+        List<java.util.concurrent.Future<Void>> futures = new ArrayList<>();
+        int batchSize = 500;
+        for (int i = 0; i < successList.size(); i += batchSize) {
+            int end = Math.min(successList.size(), i + batchSize);
+            List<JSONObject> batch = successList.subList(i, end);
+            futures.add(importHistoryRecordPool.submit(() -> {
+                for (JSONObject jsonObject : batch) {
+                    JSONObject successJson = new JSONObject();
+                    List<String> errorMsgList = new ArrayList<>();
+                    List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost(successJson, jsonObject, errorMsgList, preQueryResult.getCfgCostList(), cfgImportDetailList, headList, preQueryResult.getDictCostAttribution());
+                    List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateList);
+                    try {
+                        LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
+                                preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, errorMsgList, preQueryResult.getDictCostAttribution(), preQueryResult.getMainIdListMap());
+                        if (importDataDTO != null) importDataList.add(importDataDTO);
+                    } catch (Exception e) {
+                        log.error("数据处理失败 ,e = {}", e.getMessage());
+                        errorMsgList.add(e.getMessage());
+                    }
+                    updateMatchResult(Collections.singletonList(jsonObject), matchIndex.toString(), errorIndex.toString(), errorMsgList, matchImportList);
+                }
+                return null;
+            }));
+        }
+        List<Throwable> errors = new ArrayList<>();
+        for (java.util.concurrent.Future<Void> f : futures) {
+            try { f.get(); } catch (Exception ex) { log.error("horizontal future get error", ex); errors.add(ex); }
+        }
+        if (!errors.isEmpty()) {
+            throw new RuntimeException("多线程处理数据失败", errors.get(0));
         }
         return importDataList;
     }
@@ -637,7 +663,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @return List<UpdateDTO>
      */
     private List<TmsCostDetailDTO.UpdateDTO> lineFormatCost (JSONObject successJson,JSONObject jsonObject,List<String> errorMsgList,List<TmsCfgCostEntity> cfgCostList,
-                                                             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String costAttribution) {
+                                                             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String cfgAttribution) {
         //查询币别
         String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
@@ -672,7 +698,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             //判断导入字段是否是费用项
             if ("costItem".equals(cfgDetailEntity.getTargetField())) {
                 //判断导入字段是否是费用项
-                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), cfgDetailEntity.getTargetDetailFieldName()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), cfgDetailEntity.getTargetDetailFieldName()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), cfgAttribution)).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
                     errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】", cfgDetailEntity.getTargetDetailFieldName()));
                     continue;
@@ -837,9 +863,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param errorMsgList
      * @return void
      */
-    private LogisticsBillCostDTO.ImportDataDTO addOrUpdateData(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList ,JSONObject successJson,List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
-                                 List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
-                                 CfgLogisticsCostImportEntity costImportEntity,   List<String> errorMsgList,String costAttribution,Map<String, List<TmsCostDetailEntity>> mainIdListMap) {
+    private LogisticsBillCostDTO.ImportDataDTO handleImportData(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList , JSONObject successJson, List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
+                                                                List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos, List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
+                                                                CfgLogisticsCostImportEntity costImportEntity, List<String> errorMsgList, String costAttribution, Map<String, List<TmsCostDetailEntity>> mainIdListMap) {
 
         ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
 
