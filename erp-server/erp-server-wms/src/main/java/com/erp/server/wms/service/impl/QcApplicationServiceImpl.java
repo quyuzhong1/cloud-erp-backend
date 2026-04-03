@@ -733,7 +733,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             //质检类型名称
             data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
             //质检状态名称
-            data.setQcStatusName(QcBillStatusEnum.getByCode(data.getQcStatus()).getName());
+            data.setQcStatusName(ObjectUtil.isNull(QcBillStatusEnum.getByCode(data.getQcStatus())) ? "" : QcBillStatusEnum.getByCode(data.getQcStatus()).getName());
             //质检结果名称
             data.setQcResultName(QcResultEnum.getByCode(data.getQcResult()));
             // 仓库名称
