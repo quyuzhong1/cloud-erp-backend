@@ -31,6 +31,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -55,6 +56,7 @@ import com.erp.server.wms.listener.VirtualWarehouseAllocationExcelListener;
 import com.erp.server.wms.listener.VirtualWarehouseAllocationTransferExcelListener;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.FastArrayList;
@@ -132,6 +134,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -393,36 +398,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @Async("wmsErpExecutor")
-    public Boolean asyncCompareInventory(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailEntityList) {
-        List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey("wdtCompareWarehouse");
-        List<String> needCompareWarehouse = CollUtil.isEmpty(list) ? Collections.emptyList() : list.stream().map(DictBasicDTO.ListDTO::getValue).collect(Collectors.toList());
-        if(CollUtil.isEmpty(needCompareWarehouse)){
-            return false;
-        }
-        //如果明细的调入调出仓库都不在需要比对的仓库列表中，则不触发库存比对任务
-        List<String> allDetailWarehouseList = Stream.concat(detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getWarehouseId), detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getToWarehouseId)).distinct().collect(Collectors.toList());
-        boolean needTrigger = allDetailWarehouseList.stream().anyMatch(needCompareWarehouse::contains);
-        if(!needTrigger){
-            return false;
-        }
-        //要比对的SKU
-        List<String> skuIdList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<DmpInoutDTO.CreateInputDTO> createDTOList = new ArrayList<>();
-        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
-        dto.setSystemCode(PlatformDictEnum.WDT.getCode());
-        dto.setBillType("queryInventory");
-        dto.setNextLevelId("1");
-        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        Map<String, Object> map = new HashMap<>();
-        map.put("erpWarehouseIdList", allDetailWarehouseList);
-        map.put("skuIdList", skuIdList);
-        dto.setDetailExtendJson(JSON.toJSONString(map));
-        createDTOList.add(dto);
-        dmpInoutTaskFeign.doHotfixReturnInputTask(createDTOList);
-        return true;
-    }
-
 
     /**
      * 处理分货推送
@@ -455,14 +430,18 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //生成平台取消分货同步单
             virtualWarehousePushHandleService.cancelAllocationPush(allocationEntity);
 
-            //异步触发库存比对任务
-            service.asyncCompareInventory(allocationEntity, detailEntityList);
-
             //调拨分货生成直接调拨单
             List<String> transferIdList = generateDirectTransferInfo(allocationEntity, detailEntityList, warehouseMap);
 
+            //生成旺店通同步库存比对任务
+            String taskId = syncWdtVirtualWarehousePushOrderService.saveWdtInventoryTask(allocationEntity, detailEntityList);
+            List<String> parentId = new ArrayList<>();
+            if(StringUtils.isNotBlank(taskId)){
+                parentId.add(taskId);
+            }
+
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, Collections.emptyList());
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, parentId);
         } else {
             //取消分货
             submitCheckQty(detailEntityList,allocationEntity);
