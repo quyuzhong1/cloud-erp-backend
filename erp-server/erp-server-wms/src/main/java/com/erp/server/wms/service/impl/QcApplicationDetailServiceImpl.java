@@ -376,7 +376,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
 
             //数量校验
             if ( detailEntity.getQty() > waitPushQty) {
-                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY, waitPushQty);
+                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY,poDetailEntity.getSkuNo(), waitPushQty);
             }
         }
     }
@@ -413,7 +413,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             //未入库数量
             Integer notPushQty = purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty;
             if (detailEntity.getQty() > notPushQty) {
-                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY, notPushQty);
+                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY, purchaseOrderDetailEntity.getSkuNo(),notPushQty);
             }
         }
     }
