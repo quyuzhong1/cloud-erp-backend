@@ -14,6 +14,9 @@ import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWra
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.AttachDTO;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -45,6 +48,7 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.QcNoticeDetailExcelListener;
 import com.erp.server.wms.mapper.QcNoticeMapper;
 import com.erp.server.wms.service.*;
@@ -466,6 +470,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format(ApiError.PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN.getMsg(),sb.toString()));
         }
         //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
+        List<String> qcIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+        deleteQcInfo(qcIdList);
+
+
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
@@ -1010,7 +1018,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcNoticeDetailIdList = dto.stream().map(QcNoticeDTO.QcInfoFullView::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<QcNoticeDetailEntity> noticeDetailList = qcNoticeDetailService.listByIds(qcNoticeDetailIdList);
         Map<String, QcNoticeDetailEntity> detailMap = noticeDetailList.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, t -> t));
-        
+
         // 保存用于比较操作日志的旧明细快照
         Map<String, QcNoticeDetailEntity> oldDetailSnapshotMap = new HashMap<>();
         for (QcNoticeDetailEntity detail : noticeDetailList) {
@@ -1089,7 +1097,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (Objects.nonNull(qcInfoView.getQcStandardView())) {
                 QcStandardRefEntity qcStandardRefEntity = new QcStandardRefEntity();
                 BeanUtils.copyProperties(qcInfoView.getQcStandardView(), qcStandardRefEntity);
-                qcStandardRefEntity.setMainId(qcInfoView.getQcBillId()); 
+                qcStandardRefEntity.setMainId(qcInfoView.getQcBillId());
                 standardRefBatchRemoveMainIds.add(qcInfoView.getQcBillId());
                 standardRefBatchSaveList.add(qcStandardRefEntity);
             }
@@ -1121,7 +1129,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         existing.setBadQty(defectView.getDefectQty());
                         existing.setMainId(qcInfoView.getQcBillId());
                         defectBatchUpdateList.add(existing);
-                        
+
                         //处理图片
                         if (Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty()) {
                             List<AttachDTO> attachDTOs = new ArrayList<>();
@@ -1141,9 +1149,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         newDefect.setDefectLevel(defectView.getDefectLevl());
                         newDefect.setBadQty(defectView.getDefectQty());
                         newDefect.setMainId(qcInfoView.getQcBillId());
-                        newDefect.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getIdStr()); 
+                        newDefect.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getIdStr());
                         defectBatchSaveList.add(newDefect);
-                        
+
                         String id = newDefect.getId();
                         if (Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty()) {
                             List<AttachDTO> attachDTOs = new ArrayList<>();
@@ -1211,7 +1219,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcResultBatchUpdateList.add(qcResult);
             }
 
-            //构建采购订单质检合格数量累计所需的参数 
+            //构建采购订单质检合格数量累计所需的参数
             if (qcInfo != null) {
                 String podId = qcResult != null ? qcResult.getPurchaseOrderDetailId() : null;
                 accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcResultView.getQcResult(), qcResultView.getLotQualifiedQty()));
@@ -1418,7 +1426,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (Objects.nonNull(qcInfoView.getQcStandardView())) {
                 QcStandardRefEntity qcStandardRefEntity = new QcStandardRefEntity();
                 BeanUtils.copyProperties(qcInfoView.getQcStandardView(), qcStandardRefEntity);
-                qcStandardRefEntity.setMainId(qcInfoView.getQcBillId()); 
+                qcStandardRefEntity.setMainId(qcInfoView.getQcBillId());
                 standardRefBatchRemoveMainIds.add(qcInfoView.getQcBillId());
                 standardRefBatchSaveList.add(qcStandardRefEntity);
             }
@@ -1450,7 +1458,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         existing.setBadQty(defectView.getDefectQty());
                         existing.setMainId(qcInfoView.getQcBillId());
                         defectBatchUpdateList.add(existing);
-                        
+
                         //处理图片
                         if (Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty()) {
                             List<AttachDTO> attachDTOs = new ArrayList<>();
@@ -1470,9 +1478,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         newDefect.setDefectLevel(defectView.getDefectLevl());
                         newDefect.setBadQty(defectView.getDefectQty());
                         newDefect.setMainId(qcInfoView.getQcBillId());
-                        newDefect.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getIdStr()); 
+                        newDefect.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getIdStr());
                         defectBatchSaveList.add(newDefect);
-                        
+
                         String id = newDefect.getId();
                         if (Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty()) {
                             List<AttachDTO> attachDTOs = new ArrayList<>();
@@ -1539,7 +1547,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcResultBatchUpdateList.add(qcResult);
             }
 
-            // 构建采购订单质检合格数量累计所需的参数 
+            // 构建采购订单质检合格数量累计所需的参数
             if (qcInfo != null) {
                 String podId = qcResult != null ? qcResult.getPurchaseOrderDetailId() : null;
                 accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcInfoView.getQcResult(), qcInfoView.getLotQualifiedQty()));
@@ -1567,7 +1575,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(detailMap.values())) qcNoticeDetailService.updateBatchById(detailMap.values());
         if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);
         if (CollUtil.isNotEmpty(qcResultBatchUpdateList)) qcResultService.updateBatchById(qcResultBatchUpdateList);
-        
+
         // 汇集并用1次远程Feign批量累加采购订单合格数
         qcInfoService.batchHandlePurchaseOrderQcAccumulation(accumulateParams);
         //更新收货单的待质检量
@@ -1802,10 +1810,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<PurchaseOrderDTO.QcQtyDTO> deductList = new ArrayList<>();
         for (QcResultEntity qr : qcResults) {
             // 只有判定合格且有合格数量的才需要冲销
-            if (qr != null && CharSequenceUtil.isNotBlank(qr.getPurchaseOrderDetailId()) 
+            if (qr != null && CharSequenceUtil.isNotBlank(qr.getPurchaseOrderDetailId())
                 && QcResultEnum.CONFORMITY.getCode().equals(qr.getQcResult())
                 && qr.getLotQualifiedQty() != null && qr.getLotQualifiedQty() > 0) {
-                
+
                 PurchaseOrderDTO.QcQtyDTO deduct = new PurchaseOrderDTO.QcQtyDTO();
                 deduct.setPurchaseOrderDetailId(qr.getPurchaseOrderDetailId());
                 deduct.setQcInfoId(qr.getMainId());
@@ -1813,7 +1821,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 deductList.add(deduct);
             }
         }
-        
+
         if (CollUtil.isNotEmpty(deductList)) {
             Boolean scmRes = scmTaskFeign.addQcGoodQty(deductList);
             if (scmRes != null && scmRes) {
