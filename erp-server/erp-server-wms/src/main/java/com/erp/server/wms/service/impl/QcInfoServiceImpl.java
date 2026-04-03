@@ -689,15 +689,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //已质检：质检通知单关联的所有质检单都质检完成（免检或已质检）
         //部分质检：质检通知单关联的质检单，既有已质检又有待质检的
         String mainId = qcNoticeDetail.getMainId();
-        List<QcNoticeDetailEntity> freshDetails = qcNoticeDetailService.lambdaQuery()
-                .eq(QcNoticeDetailEntity::getMainId, mainId)
+        List<QcInfoEntity> freshDetails = this.lambdaQuery()
+                .eq(QcInfoEntity::getSourceId, mainId)
                 .list();
         long waitCount = freshDetails.stream()
-                .filter(d -> d.getQcStatus() == QcNoticeStatusEnum.WAIT.getCode())
+                .filter(d -> d.getQcStatus() == QcBillStatusEnum.WAIT_QC)
                 .count();
 
         long finishCount = freshDetails.stream()
-                .filter(d -> d.getQcStatus() == QcNoticeStatusEnum.FINISH.getCode())
+                .filter(d -> d.getQcStatus() == QcBillStatusEnum.FINISH_QC)
                 .count();
 
         // 更新主表状态
