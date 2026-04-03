@@ -637,7 +637,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 缺陷数量
          */
-        private Integer badQty;
+        private Integer defectQty;
         /**
          * 问题属性type=qcProblemType
          */

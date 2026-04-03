@@ -772,7 +772,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                         QcNoticeDTO.QcImageView qcImageView = new QcNoticeDTO.QcImageView();
                         qcImageView.setImageType(type);
-
+                        qcImageView.setImageTypeName(QcStandardImageTypeEnum.getByCode(type));
                         List<String> imageUrlList = attachmentsOfType.stream()
                                 .map(WmsAttachmentEntity::getAttachUrl)
                                 .collect(Collectors.toList());
@@ -938,7 +938,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                         QcNoticeDTO.QcImageView qcImageView = new QcNoticeDTO.QcImageView();
                         qcImageView.setImageType(type);
-
+                        qcImageView.setImageTypeName(QcStandardImageTypeEnum.getByCode(type));
                         List<String> imageUrlList = attachmentsOfType.stream()
                                 .map(WmsAttachmentEntity::getAttachUrl)
                                 .collect(Collectors.toList());
@@ -1036,7 +1036,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (!qcInfoView.getDefectViewList().isEmpty()) {
                 for (QcNoticeDTO.DefectView defectView : qcInfoView.getDefectViewList()) {
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
-                    boolean hasDefectQty = defectView.getBadQty() != null && defectView.getBadQty() > 0;
+                    boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
                     boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();
@@ -1274,7 +1274,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (!qcInfoView.getDefectViewList().isEmpty()) {
                 for (QcNoticeDTO.DefectView defectView : qcInfoView.getDefectViewList()) {
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
-                    boolean hasDefectQty = defectView.getBadQty() != null && defectView.getBadQty() > 0;
+                    boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
                     boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();
