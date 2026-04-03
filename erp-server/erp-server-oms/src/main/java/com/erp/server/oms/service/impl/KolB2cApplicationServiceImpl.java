@@ -898,19 +898,19 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void handleDomesticCancelPushSuccess(KolB2cApplicationCancelCallbackDTO dto) {
-        if (ObjectUtil.isEmpty(dto) || StringUtils.isBlank(dto.getSubOrderId())) {
+        if (ObjectUtil.isEmpty(dto)) {
             return;
         }
-        KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(dto.getSubOrderId()).orElse(null);
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
         if (ObjectUtil.isEmpty(subEntity)) {
-            log.warn("处理中台B2C取消成功回调失败，拆分单不存在: subOrderId={}, syncTaskId={}",
-                    dto.getSubOrderId(), dto.getSyncTaskId());
+            log.warn("处理中台B2C取消成功回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
             return;
         }
         KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
         if (ObjectUtil.isEmpty(mainEntity)) {
-            log.warn("处理中台B2C取消成功回调失败，主单不存在: subOrderId={}, mainId={}, syncTaskId={}",
-                    dto.getSubOrderId(), subEntity.getSourceId(), dto.getSyncTaskId());
+            log.warn("处理中台B2C取消成功回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
             return;
         }
         boolean subNeedUpdate = !Objects.equals(KolSubB2cApplicationOrderStatusEnum.NOT.getCode(), subEntity.getOrderStatus());
@@ -965,19 +965,19 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void handleDomesticCancelPushFail(KolB2cApplicationCancelCallbackDTO dto) {
-        if (ObjectUtil.isEmpty(dto) || StringUtils.isBlank(dto.getSubOrderId())) {
+        if (ObjectUtil.isEmpty(dto)) {
             return;
         }
-        KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(dto.getSubOrderId()).orElse(null);
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
         if (ObjectUtil.isEmpty(subEntity)) {
-            log.warn("处理中台B2C取消失败回调失败，拆分单不存在: subOrderId={}, syncTaskId={}",
-                    dto.getSubOrderId(), dto.getSyncTaskId());
+            log.warn("处理中台B2C取消失败回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
             return;
         }
         KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
         if (ObjectUtil.isEmpty(mainEntity)) {
-            log.warn("处理中台B2C取消失败回调失败，主单不存在: subOrderId={}, mainId={}, syncTaskId={}",
-                    dto.getSubOrderId(), subEntity.getSourceId(), dto.getSyncTaskId());
+            log.warn("处理中台B2C取消失败回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
             return;
         }
         String billStatus = KolB2cApplicationDocumentStatusEnum.normalize(mainEntity.getBillStatus());
@@ -1464,6 +1464,26 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         userInfo.setUid(StrUtil.blankToDefault(entity.getCancelUserId(), "0"));
         userInfo.setUserName(StrUtil.blankToDefault(entity.getCancelUserName(), "system"));
         return userInfo;
+    }
+
+    private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(KolB2cApplicationCancelCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(dto.getSubOrderId())) {
+            KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(dto.getSubOrderId()).orElse(null);
+            if (ObjectUtil.isNotEmpty(subEntity)) {
+                return subEntity;
+            }
+        }
+        if (StringUtils.isBlank(dto.getSubOrderCode())) {
+            return null;
+        }
+        return kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getCode, dto.getSubOrderCode())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
     }
 
     /**
