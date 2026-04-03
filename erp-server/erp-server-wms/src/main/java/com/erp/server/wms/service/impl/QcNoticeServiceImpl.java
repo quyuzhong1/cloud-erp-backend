@@ -1261,7 +1261,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     boolean hasDefectQty = defectView.getBadQty() != null && defectView.getBadQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
-                    boolean hasDefectImage = !defectView.getBadImageViewList().isEmpty();
+                    boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();
 
                     if ((hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage)
                             && !(hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc && hasDefectImage)) {
