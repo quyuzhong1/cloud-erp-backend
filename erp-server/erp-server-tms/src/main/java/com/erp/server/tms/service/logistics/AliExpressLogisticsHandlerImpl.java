@@ -236,7 +236,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<DeclareProduct> declareProducts = LogisticsOrderConverter.INSTANCE.orderRequestProductByAliExpress(logisticsOrderVO.getLogisticsProductVOList());
         //对集合根据商品id进行合并，累加申报价，其他取值取其中一个集合值
         if(CollUtil.isNotEmpty(declareProducts)) {
-            declareProducts = new ArrayList<>(declareProducts.stream().collect(Collectors.toMap(DeclareProduct::getProduct_id, p -> p, (oldValue, newValue) -> {
+            declareProducts = new ArrayList<>(declareProducts.stream().collect(Collectors.toMap(v->v.getProduct_id()+v.getSku_code(), p -> p, (oldValue, newValue) -> {
                 BigDecimal oldAmount = CharSequenceUtil.isNotBlank(oldValue.getProduct_declare_amount()) ? new BigDecimal(oldValue.getProduct_declare_amount()) : BigDecimal.ZERO;
                 BigDecimal newAmount = CharSequenceUtil.isNotBlank(newValue.getProduct_declare_amount()) ? new BigDecimal(newValue.getProduct_declare_amount()) : BigDecimal.ZERO;
                 oldValue.setProduct_declare_amount(MathUtil.add(oldAmount, newAmount).toString());

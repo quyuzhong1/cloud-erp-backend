@@ -6,6 +6,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -14,6 +16,9 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -468,6 +473,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format(ApiError.PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN.getMsg(),sb.toString()));
         }
         //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
+        List<String> qcIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+        deleteQcInfo(qcIdList);
+
+
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
@@ -622,7 +631,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setBadDescription(qcNoticeDetail.getBadDesc());
             qcInfo.setHandleModeDict("waitHandle");//默认待定
-            qcInfo.setIsInsideQc(Boolean.FALSE);
+            //qcInfo.setIsInsideQc(Boolean.FALSE);
+            qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setId("");
             //抽样方案
             SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
@@ -630,6 +640,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             planParamDTO.setQty(qcNoticeDetail.getQcNoticeQty());
             planParamDTO.setSkuId(qcNoticeDetail.getSkuId());
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+            qcInfo.setQcQty(samplingPlan.getSampleQty());
             qcStandardAddDTO.setSamplingPlanId(samplingPlan.getId());
             qcStandardAddDTO.setSamplingPlanName(entity.getQcType() + "抽样方案");
             qcStandardAddDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
