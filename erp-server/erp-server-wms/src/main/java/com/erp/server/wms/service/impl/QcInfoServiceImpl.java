@@ -2961,7 +2961,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         listQcStandardResultDTO.setMajorRejectQty(samplingPlan.getMajorRejectQty());
 
         //质检项目
-        QcInfoDTO.QcInspectItemView qcInspectItemView = new QcInfoDTO.QcInspectItemView();
         QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
                 .eq(QcStandardEntity::getSkuId, dto.getSkuId())
                 .one();
@@ -2971,6 +2970,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     .list();
             if (!list.isEmpty()) {
                 for (QcStandardDetailEntity qcStandardDetailEntity : list) {
+                    QcInfoDTO.QcInspectItemView qcInspectItemView = new QcInfoDTO.QcInspectItemView();
                     qcInspectItemView.setInspectItem(qcStandardDetailEntity.getInspectItemName());
                     qcInspectItemView.setInspectRequirement(qcStandardDetailEntity.getInspectRequirement());
                     qcInspectItemViews.add(qcInspectItemView);
