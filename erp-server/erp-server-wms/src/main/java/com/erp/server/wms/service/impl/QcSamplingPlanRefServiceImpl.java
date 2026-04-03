@@ -236,6 +236,7 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
         QcNoticeDTO.QcStandardView qcStandardView = new QcNoticeDTO.QcStandardView();
         QcSamplingPlanRefEntity qcSamplingPlanRef = this.lambdaQuery()
                 .eq(QcSamplingPlanRefEntity::getMainId, id)
+                .last(" limit 1 ")
                 .one();
         if (Objects.nonNull(qcSamplingPlanRef)) {
             BeanUtils.copyProperties(qcSamplingPlanRef,qcStandardView);
