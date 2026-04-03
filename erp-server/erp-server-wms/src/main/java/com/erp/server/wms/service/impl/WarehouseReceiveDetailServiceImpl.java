@@ -403,7 +403,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             //采购订单明细下收货单的待质检数量汇总（不包括本单）
             Integer totalWaitQcQty = totalWaitQcQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPodId(), receiveDetailEntity.getPurchaseOrderDetailId()) && !CharSequenceUtil.equals(obj.getDetailId(), receiveDetailEntity.getId())).map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty).reduce(MathUtil.ZERO, Integer::sum);
            //待质检量=∑收货数量-质检合格量-∑待质检量,小于0时默认为0
-            Integer waitQcQty =  totalReceiveQty - totalLotQualifiedQty - totalWaitQcQty;
+            Integer waitQcQty =  totalReceiveQty - (ObjectUtil.isNull(totalLotQualifiedQty) ? MathUtil.ZERO : totalLotQualifiedQty) - totalWaitQcQty;
             if (waitQcQty < MathUtil.ZERO) {
                 waitQcQty = MathUtil.ZERO;
             }
