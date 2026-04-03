@@ -1811,7 +1811,7 @@ public enum ApiError implements Serializable {
     QC_STANDARD_SKU_EXISTS(11142, "该SKU已存在质检标准"),
     QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”关键字或对应数值"),
     QC_STANDARD_IMPORT_DETAIL_NOT_FOUND(11144, "未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）"),
-    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY(16006,"申请质检数量不能大于待发货数量，待发货数量：【{0}】"),
+    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY(16006,"申请质检数量不能大于剩余送货数量，剩余送货数量：【{0}】"),
     QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION(16007,"待发货来源质检申请单不允许操作"),
     QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
