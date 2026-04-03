@@ -711,6 +711,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
             qcInfoView.setSuggestSamplingQty(samplingPlan.getSampleQty());
             qcInfoView.setSamplingPlanId(samplingPlan.getId());
+            qcInfoView.setSamplingPlanCode(samplingPlan.getCode());
             qcInfoView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "通用抽样方案");
             qcInfoView.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
             qcInfoView.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
@@ -857,6 +858,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
             qcInfoView.setSuggestSamplingQty(samplingPlan.getSampleQty());
             qcInfoView.setSamplingPlanId(samplingPlan.getId());
+            qcInfoView.setSamplingPlanCode(samplingPlan.getCode());
             qcInfoView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "抽样方案");
             qcInfoView.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
             qcInfoView.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
