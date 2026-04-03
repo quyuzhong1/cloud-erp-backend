@@ -2191,6 +2191,6 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 质检合格量
          */
-        private BigDecimal qcGoodQty;
+        private Integer qcGoodQty;
     }
 }
