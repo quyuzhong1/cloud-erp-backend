@@ -313,9 +313,6 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         //退货信息
         List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIdList);
 
-        //根据来源明细id查询质检申请
-        List<QcApplicationDetailEntity> oldDetailList = this.listDetailBySourceDetailIds(podIdList);
-
         for ( QcApplicationDetailEntity detailEntity : qcApplicationDetailList) {
             //已送货数量
             Integer deliveredQty = MathUtil.ZERO;
@@ -377,11 +374,9 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
             //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
             Integer waitPushQty = poDetailEntity.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
 
-            //已申请数量（审核通过的质检申请单数量）
-            Integer hasPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getSourceDetailId()) && !CharSequenceUtil.equals(obj.getId(), detailEntity.getId())).map(QcApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //数量校验
-            if ( detailEntity.getQty() > waitPushQty - hasPushQty) {
-                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY, waitPushQty - hasPushQty);
+            if ( detailEntity.getQty() > waitPushQty) {
+                throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY, waitPushQty);
             }
         }
     }
@@ -402,17 +397,12 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         List<PoReturnDetailEntity> purchaseReturnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIdList);
         //查询入库数据
         List<PoInstockDetailEntity> stockInDetailList = poInstockDetailService.listDetailByPodIds(podIdList);
-        //根据来源明细id查询质检申请
-        List<QcApplicationDetailEntity> oldDetailList = this.listDetailBySourceDetailIds(podIdList);
         for (QcApplicationDetailEntity detailEntity : qcApplicationDetailList) {
             //采购明细
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if ( ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
-            //已申请数量（审核通过的质检申请单数量）
-            Integer hasPushQty = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getSourceDetailId()) && !CharSequenceUtil.equals(obj.getId(), detailEntity.getId())).map(QcApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-
             //退货补数量（审核通过的补货退货单数量）
             Integer returnQty = purchaseReturnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             //有效入库数量（未审核通过）
@@ -421,7 +411,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
                 effectiveStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getSourceDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             //未入库数量
-            Integer notPushQty = purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty - hasPushQty;
+            Integer notPushQty = purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty;
             if (detailEntity.getQty() > notPushQty) {
                 throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY, notPushQty);
             }
