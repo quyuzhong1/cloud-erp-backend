@@ -124,14 +124,16 @@ public class DmpCfgOutputServiceImpl extends SuperServiceImpl<DmpCfgOutputMapper
     */
     private void handleData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpCfgOutputDTO.CommonDTO commonDTO) {
         // 验证数据 & 数据赋值
-        if (StringUtils.isBlank(commonDTO.getExtendJson())) {
+        String extendJson = StringUtils.trim(commonDTO.getExtendJson());
+        if (StringUtils.isBlank(extendJson)) {
             dmpCfgOutputEntity.setExtendJson("{}");
         } else {
-            // 校验是否json格式
-            if (!JSON.isValid(commonDTO.getExtendJson())) {
+            try {
+                JSON.parse(extendJson);
+            } catch (Exception e) {
                 ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
-            dmpCfgOutputEntity.setExtendJson(commonDTO.getExtendJson());
+            dmpCfgOutputEntity.setExtendJson(extendJson);
         }
         if(DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgOutputEntity.getExecSystem())){
             if (StringUtils.isNotBlank(commonDTO.getInputConvertId())){
