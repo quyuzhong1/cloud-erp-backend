@@ -66,7 +66,7 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
     }
 
     @Override
-    public SysCommonDTO.AttachmentDTO getFeiShuFile(FileDTO.UploadDTO uploadDTO) throws Exception {
+    public SysCommonDTO.AttachmentDTO getFeiShuFile(FileDTO.UploadDTO uploadDTO) {
         String fileUrl = uploadDTO.getFileUrl();
         //校验url是否正确
         if (!isValidURL(fileUrl)) {
@@ -101,7 +101,12 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         // 使用策略模式处理不同类型的文件
         FeiShuFileHandler handler = FeiShuFileHandlers.get(fileType);
         if (handler != null) {
-            return handler.handle(fileToken, sheet, view, client);
+            try {
+                return handler.handle(fileToken, sheet, view, client);
+            } catch (Exception e) {
+                log.error("文件下载失败", e);
+                throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, e.getMessage());
+            }
         }
 
         throw new ServiceException(ApiError.FILE_UNSUPPORTED_TYPE, fileType);
