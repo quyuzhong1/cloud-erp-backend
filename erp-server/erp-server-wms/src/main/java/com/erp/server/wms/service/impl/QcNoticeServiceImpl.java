@@ -718,7 +718,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
 
             //质检项目
-            QcNoticeDTO.QcInspectItemView qcInspectItemView = new QcNoticeDTO.QcInspectItemView();
             QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
                     .eq(QcStandardEntity::getSkuId, qcInfoView.getSkuId())
                     .one();
@@ -728,6 +727,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         .list();
                 if (!list.isEmpty()) {
                     for (QcStandardDetailEntity qcStandardDetailEntity : list) {
+                        QcNoticeDTO.QcInspectItemView qcInspectItemView = new QcNoticeDTO.QcInspectItemView();
                         qcInspectItemView.setInspectItem(qcStandardDetailEntity.getInspectItemName());
                         qcInspectItemView.setInspectRequirement(qcStandardDetailEntity.getInspectRequirement());
                         qcInspectItemViews.add(qcInspectItemView);
@@ -882,7 +882,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
 
             //质检项目
-            QcNoticeDTO.QcInspectItemView qcInspectItemView = new QcNoticeDTO.QcInspectItemView();
             QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
                     .eq(QcStandardEntity::getSkuId, qcInfoView.getSkuId())
                     .one();
@@ -892,6 +891,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         .list();
                 if (!list.isEmpty()) {
                     for (QcStandardDetailEntity qcStandardDetailEntity : list) {
+                        QcNoticeDTO.QcInspectItemView qcInspectItemView = new QcNoticeDTO.QcInspectItemView();
                         qcInspectItemView.setInspectItem(qcStandardDetailEntity.getInspectItemName());
                         qcInspectItemView.setInspectRequirement(qcStandardDetailEntity.getInspectRequirement());
                         qcInspectItemViews.add(qcInspectItemView);
