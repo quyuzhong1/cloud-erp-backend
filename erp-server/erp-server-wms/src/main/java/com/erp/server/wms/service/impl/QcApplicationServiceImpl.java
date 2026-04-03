@@ -208,6 +208,11 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             throw new ServiceException(ApiError.QC_APPLICATION_DETAIL_NOT_EXIST);
         }
 
+        List<QcNoticeEntity> qcNoticeList = qcNoticeService.listBySourceId(entity.getId());
+        if (CollUtil.isNotEmpty(qcNoticeList)) {
+            throw new ServiceException(ApiError.QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH);
+        }
+
         QcNoticeDTO.AddDTO addDTO = new QcNoticeDTO.AddDTO();
         addDTO.setQcType(entity.getQcType());
         addDTO.setQcWarehouseId(entity.getWarehouseId());

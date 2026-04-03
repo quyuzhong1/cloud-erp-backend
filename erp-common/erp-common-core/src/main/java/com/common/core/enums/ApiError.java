@@ -1815,6 +1815,7 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION(16007,"待发货来源质检申请单不允许操作"),
     QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
+    QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
 
     ;
     @Getter
