@@ -17,6 +17,7 @@ import com.common.business.dto.ApproveDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -67,6 +68,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -607,6 +609,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             addDto.setSourceCode(entity.getCode());
             addDto.setSourceId(entity.getId());
             addDto.setSourceType(SourceTypeEnum.QC_NOTICE.getCode());
+            addDto.setPurchaseOrderId(entity.getPurchaseOrderId());
+            addDto.setPurchaseOrderCode(entity.getPurchaseOrderCode());
             //质检仓库
             addDto.setWarehouseId(entity.getQcWarehouseId());
 
@@ -1343,6 +1347,56 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     .set(QcInfoEntity::getQcStatus,QcBillStatusEnum.FINISH_QC)
                     .eq(QcInfoEntity::getSourceDetailId,qcNoticeDetailEntity.getId())
                     .update();
+
+            //回写质检结果
+            LambdaUpdateChainWrapper<QcResultEntity> qcResultUpdateWrapper = qcResultService.lambdaUpdate()
+                    .set(QcResultEntity::getQcQty, qcInfoView.getQcQty())
+                    .set(QcResultEntity::getQcResult, qcInfoView.getQcResult())
+                    .set(QcResultEntity::getLotQualifiedQty, qcInfoView.getLotQualifiedQty())
+                    .eq(QcResultEntity::getMainId,qcInfoView.getQcBillId());
+
+            if (Objects.nonNull(qcInfoView.getQcBadQty())
+                    && qcInfoView.getQcBadQty() >= 0
+                    && Objects.nonNull(qcInfoView.getQcGoodQty())
+                    && qcInfoView.getQcGoodQty() >= 0) {
+
+                if (qcInfoView.getQcBadQty() == 0 && qcInfoView.getQcGoodQty() == 0) {
+                    throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
+                }
+
+                BigDecimal qcGoodRate = BigDecimal.ZERO;
+                BigDecimal qcBadRate = BigDecimal.ZERO;
+                BigDecimal totalQty = BigDecimal.valueOf(qcInfoView.getQcGoodQty())
+                        .add(BigDecimal.valueOf(qcInfoView.getQcBadQty()));
+
+                if (qcInfoView.getQcGoodQty() == 0) {
+                    qcGoodRate = BigDecimal.ZERO;
+                }
+
+                if (qcInfoView.getQcBadQty() == 0) {
+                    qcBadRate = BigDecimal.ZERO;
+                }
+
+                if (qcInfoView.getQcBadQty() > 0 && qcInfoView.getQcGoodQty() > 0) {
+                    qcGoodRate = BigDecimal.valueOf(qcInfoView.getQcGoodQty())
+                            .divide(totalQty, 2, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100));
+
+                    qcBadRate = BigDecimal.valueOf(qcInfoView.getQcBadQty())
+                            .divide(totalQty, 2, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100));
+                }
+
+                qcResultUpdateWrapper
+                        .set(QcResultEntity::getQcGoodQty, qcInfoView.getQcGoodQty())
+                        .set(QcResultEntity::getQcBadQty, qcInfoView.getQcBadQty())
+                        .set(QcResultEntity::getQcGoodRate, qcGoodRate)
+                        .set(QcResultEntity::getQcBadRate, qcBadRate)
+                        .eq(QcResultEntity::getMainId,qcInfoView.getQcBillId())
+                        .update();
+            } else {
+                throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
+            }
 
             //等下用来生成分步式调出单
             detailMap.put(qcInfoView.getDetailId(), qcNoticeDetailEntity);
