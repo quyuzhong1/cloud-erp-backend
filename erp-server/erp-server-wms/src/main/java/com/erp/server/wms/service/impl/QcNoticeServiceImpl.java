@@ -613,11 +613,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             addDto.setQcProduct(qcProduct);
             //质检信息
             BeanMapper.copy(qcNoticeDetail, qcInfo);
+            qcInfo.setQcType(entity.getQcType());
             qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setBadDescription(qcNoticeDetail.getBadDesc());
             qcInfo.setHandleModeDict("waitHandle");//默认待定
             //qcInfo.setIsInsideQc(Boolean.FALSE);
-            qcInfo.setQcQty(qcNoticeDetail.getQcQty());
             qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setId("");
             //抽样方案
@@ -627,6 +627,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             planParamDTO.setSkuId(qcNoticeDetail.getSkuId());
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
             qcInfo.setQcQty(samplingPlan.getSampleQty());
+            qcInfo.setQcGoodQty(samplingPlan.getSampleQty());
+            qcInfo.setLotQualifiedQty(samplingPlan.getSampleQty());
             qcStandardAddDTO.setSamplingPlanId(samplingPlan.getId());
             qcStandardAddDTO.setSamplingPlanName(entity.getQcType() + "抽样方案");
             qcStandardAddDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
