@@ -785,8 +785,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
             if (queryResult.isSuccess()) {
                 updateZhongBaoStatus(sourceId, queryResult.getData().get(0).getStatus(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+                return;
             } else {
                 updateZhongBaoStatus(sourceId, ZhongBaoB2BDeliveryStatusEnum.CREATE_FAIR.getCode().toString(), fbaOutboundBill.getMsg(), "", "", "",null);
+                return;
             }
         }
 
