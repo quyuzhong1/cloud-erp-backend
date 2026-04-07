@@ -783,7 +783,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         if(Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),req.getThirdWarehouseProvideCode())) {
             B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
-            if (queryResult.isSuccess()) {
+            if (queryResult.isSuccess() && Objects.nonNull(queryResult.getData()) && !queryResult.getData().isEmpty()) {
                 updateZhongBaoStatus(sourceId, queryResult.getData().get(0).getStatus(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
                 return;
             } else {
