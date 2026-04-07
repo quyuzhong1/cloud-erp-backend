@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -67,7 +68,7 @@ public class QcApplicationEntity extends BaseEntity<QcApplicationEntity> {
     * 审核完成时间
     */
     @TableField("approve_time")
-    private LocalDate approveTime;
+    private LocalDateTime approveTime;
     /**
     * 质检类型
     */

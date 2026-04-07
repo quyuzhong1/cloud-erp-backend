@@ -1535,7 +1535,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         // 撤销质检扣减合格量
         QcResultDTO.ViewDTO qcInfo = qcResultService.getByMainId(entity.getId());
-        if (Objects.nonNull(qcInfo) && CharSequenceUtil.isNotBlank(qcInfo.getPurchaseOrderDetailId()) && Objects.nonNull(qcInfo.getQcGoodQty()) && qcInfo.getQcGoodQty() > 0) {
+        if (Objects.nonNull(qcInfo) && CharSequenceUtil.isNotBlank(qcInfo.getPurchaseOrderDetailId()) && qcInfo.getQcResult().equals(QcResultEnum.CONFORMITY.getCode()) && Objects.nonNull(qcInfo.getQcGoodQty()) && qcInfo.getQcGoodQty() > 0) {
             // 获取采购详情，校验扣减后的合格量是否为负数
             String podId = qcInfo.getPurchaseOrderDetailId();
             List<PurchaseOrderDetailEntity> podList = FeignQuery.create(PurchaseOrderDetailEntity.class).eq(PurchaseOrderDetailEntity::getId, podId).list();
