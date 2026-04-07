@@ -122,7 +122,7 @@ public class AssetPurchaseOrderImportExcelDTO implements Serializable {
     /**
      * 是否赠品
      */
-    @ExcelProperty("是否赠品")
+    @ExcelProperty("*是否赠品")
     @FieldValid(fieldName = "isGiftName", fieldValues = "是,否")
     private String isGiftName;
 
