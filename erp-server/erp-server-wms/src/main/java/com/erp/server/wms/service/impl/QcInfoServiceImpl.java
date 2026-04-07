@@ -2956,6 +2956,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcInfoDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
         List<QcInfoDTO.QcImageView> qcImageViews = new ArrayList<>();
 
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(dto.getSkuId()));
+        if (CollUtil.isEmpty(skuVOS)) {
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"sku");
+        }
         //抽样方案
         SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
         planParamDTO.setQcType(dto.getQcType());
