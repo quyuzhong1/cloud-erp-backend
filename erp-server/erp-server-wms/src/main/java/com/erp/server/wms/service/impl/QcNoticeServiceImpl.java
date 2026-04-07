@@ -1317,6 +1317,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //该sku待上架
             qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.WAIT.getCode());
             qcNoticeDetailService.updateById(qcNoticeDetailEntity);
+
+            //回写质检单
+            qcInfoService.lambdaUpdate()
+                    .set(QcInfoEntity::getQcStatus,QcBillStatusEnum.FINISH_QC)
+                    .eq(QcInfoEntity::getSourceDetailId,qcNoticeDetailEntity.getId())
+                    .update();
+
             //等下用来生成分步式调出单
             detailMap.put(qcInfoView.getDetailId(), qcNoticeDetailEntity);
             //等下用于回填主表状态
@@ -1392,7 +1399,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             updateById(qcNoticeEntity);
         }
-
     }
 
     @Override
