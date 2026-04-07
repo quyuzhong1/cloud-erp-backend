@@ -10,6 +10,7 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
@@ -676,16 +677,20 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         QcNoticeDetailEntity qcNoticeDetail = qcNoticeDetailService.getById(sourceDetailId);
         if (Objects.nonNull(qcNoticeDetail)) {
-            qcNoticeDetailService.lambdaUpdate()
-                    .set(QcNoticeDetailEntity::getQcQty,totalQty)
-                    .set(QcNoticeDetailEntity::getQcDiffQty,qcNoticeDetail.getQcNoticeQty() - qcQty)
-                    .set(QcNoticeDetailEntity::getQcGoodQty,goodQty)
-                    .set(QcNoticeDetailEntity::getQcBadQty,badQty)
-                    .set(QcNoticeDetailEntity::getQcStatus,QcNoticeStatusEnum.FINISH.getCode())
-                    .set(StringUtils.isNotBlank(qcUserId) ? QcNoticeDetailEntity::getQcUserId : null, qcUserId)
-                    .set(user != null ? QcNoticeDetailEntity::getQcUserName : null, user != null ? user.getUserName() : null)
-                    .eq(QcNoticeDetailEntity::getId, sourceDetailId)
-                    .update();
+            LambdaUpdateChainWrapper<QcNoticeDetailEntity> updateWrapper = qcNoticeDetailService.lambdaUpdate()
+                    .set(QcNoticeDetailEntity::getQcQty, totalQty)
+                    .set(QcNoticeDetailEntity::getQcDiffQty, qcNoticeDetail.getQcNoticeQty() - qcQty)
+                    .set(QcNoticeDetailEntity::getQcGoodQty, goodQty)
+                    .set(QcNoticeDetailEntity::getQcBadQty, badQty)
+                    .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.FINISH.getCode())
+                    .eq(QcNoticeDetailEntity::getId, sourceDetailId);
+
+            if (StringUtils.isNotBlank(qcUserId)) {
+                updateWrapper.set(QcNoticeDetailEntity::getQcUserId, qcUserId);
+                updateWrapper.set(QcNoticeDetailEntity::getQcUserName, user.getUserName());
+            }
+
+            updateWrapper.update();
 
             //质检状态：待质检、部分质检、已质检
             //待质检：质检通知单关联的所有质检单都为待质检
