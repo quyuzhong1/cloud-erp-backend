@@ -240,7 +240,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             return null;
         }
         List<String> skuIdList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<String> skuNoList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuNoList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         WdtCompareInventoryDTO wdtCompareInventoryDTO = WdtCompareInventoryDTO.builder()
                 .id(allocationEntity.getId())
                 .code(allocationEntity.getCode())
