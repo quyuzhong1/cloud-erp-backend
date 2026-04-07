@@ -667,20 +667,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Transactional(rollbackFor = Exception.class)
     public void reWriteQcNotice(String qcUserId,String sourceDetailId,Integer totalQty,Integer qcQty,Integer goodQty,Integer badQty){
         //更新质检通知单的质检员和质检状态
-        SysUserDTO user = sysUserFeign.getSysUserById(qcUserId);
-        if (Objects.isNull(user)) {
-            throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
+        SysUserDTO user = null;
+        if (StringUtils.isNotBlank(qcUserId)) {
+            user = sysUserFeign.getSysUserById(qcUserId);
+            if (Objects.isNull(user)) {
+                throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
+            }
         }
         QcNoticeDetailEntity qcNoticeDetail = qcNoticeDetailService.getById(sourceDetailId);
         if (Objects.nonNull(qcNoticeDetail)) {
             qcNoticeDetailService.lambdaUpdate()
-                    .set(QcNoticeDetailEntity::getQcUserId, qcUserId)
-                    .set(QcNoticeDetailEntity::getQcUserName, user.getUserName())
                     .set(QcNoticeDetailEntity::getQcQty,totalQty)
                     .set(QcNoticeDetailEntity::getQcDiffQty,qcNoticeDetail.getQcNoticeQty() - qcQty)
                     .set(QcNoticeDetailEntity::getQcGoodQty,goodQty)
                     .set(QcNoticeDetailEntity::getQcBadQty,badQty)
                     .set(QcNoticeDetailEntity::getQcStatus,QcNoticeStatusEnum.FINISH.getCode())
+                    .set(StringUtils.isNotBlank(qcUserId) ? QcNoticeDetailEntity::getQcUserId : null, qcUserId)
+                    .set(user != null ? QcNoticeDetailEntity::getQcUserName : null, user != null ? user.getUserName() : null)
                     .eq(QcNoticeDetailEntity::getId, sourceDetailId)
                     .update();
 
