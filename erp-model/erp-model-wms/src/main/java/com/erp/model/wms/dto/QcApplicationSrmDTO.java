@@ -87,7 +87,7 @@ public class QcApplicationSrmDTO implements Serializable {
         /**
         * 审核完成时间【可排序】
         */
-        private LocalDate approveTime;
+        private LocalDateTime approveTime;
 
         /**
         * 质检类型【可排序】
