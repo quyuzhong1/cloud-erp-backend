@@ -29,11 +29,29 @@ import cn.hutool.core.text.CharSequenceUtil;
 import lombok.Getter;
 
 public class SkuStdRetailPriceExcelListener extends AnalysisEventListener<SkuStdRetailPriceExcelDTO> {
+
+    private static final int BATCH_COUNT = 1000;
+
+    private final String taskId;
+
+    private final String importType;
+
+    private final Integer importCount;
+
+    @Getter
+    private Integer count = 0;
+
     @Getter
     private List<SkuStdRetailPriceExcelDTO> dataList = new ArrayList<>();
 
     @Getter
     private List<SkuStdRetailPriceExcelDTO> errorList = new ArrayList<>();
+
+    public SkuStdRetailPriceExcelListener(String taskId, String importType, Integer importCount) {
+        this.taskId = taskId;
+        this.importType = importType;
+        this.importCount = importCount;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

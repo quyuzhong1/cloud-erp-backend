@@ -3,6 +3,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.common.business.dto.base.BaseDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.common.business.dto.base.BaseResultDTO;
@@ -82,9 +83,11 @@ public interface SkuStdRetailPriceService extends SuperService<SkuStdRetailPrice
     */
     void exportList(SkuStdRetailPriceDTO.ExportDTO dto, HttpServletResponse response);
     
-    Boolean importExcel(FileSizeInfo excelFile, HttpServletResponse response) throws Exception;
-    
+    Boolean importExcel(BaseDTO.ImportDTO dto, HttpServletResponse response) throws Exception;
+
     Boolean exportExcel(SkuStdRetailPriceDTO.ExportDTO dto);
     
     Boolean setting(SkuStdRetailPriceDTO.SettingDTO dto);
+
+    void importSkuStdRetailPrice(BaseDTO.ImportDTO dto);
 }
