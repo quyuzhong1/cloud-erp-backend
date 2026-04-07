@@ -92,4 +92,19 @@ public class FbtInboundRepository {
     public void updateOverseasInventory(OverseasInventoryEntity entity) {
         overseasInventoryMapper.updateById(entity);
     }
+
+    public List<OverseasInventoryEntity> listOverseasInventoryByProvider(String overseasProviderId, String dictPlatform) {
+        LambdaQueryWrapper<OverseasInventoryEntity> wrapper = Wrappers.lambdaQuery();
+        if (overseasProviderId == null) {
+            wrapper.and(w -> w.isNull(OverseasInventoryEntity::getOverseasProviderId)
+                    .or()
+                    .eq(OverseasInventoryEntity::getOverseasProviderId, ""));
+        } else {
+            wrapper.eq(OverseasInventoryEntity::getOverseasProviderId, overseasProviderId);
+        }
+        if (dictPlatform != null) {
+            wrapper.eq(OverseasInventoryEntity::getDictPlatform, dictPlatform);
+        }
+        return overseasInventoryMapper.selectList(wrapper);
+    }
 }

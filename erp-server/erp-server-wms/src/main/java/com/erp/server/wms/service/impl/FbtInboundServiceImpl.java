@@ -51,6 +51,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FbtInboundServiceImpl implements FbtInboundService {
+
+    private static final String LOCK_KEY_PREFIX = "fbt:sync:";
+    private static final String SNAPSHOT_LOCK_KEY_PREFIX = LOCK_KEY_PREFIX + "snapshot:";
     private static final int DEFAULT_JOB_LOOKBACK_MINUTES = 30;
 
     @Resource
@@ -170,14 +173,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         for (Map.Entry<String, OverseasProviderEntity> entry : providerMap.entrySet()) {
             String shopId = entry.getKey();
             OverseasProviderEntity provider = entry.getValue();
-            List<TiktokFbtDTO.InventorySnapshotDTO> snapshots =
-                    tiktokFbtApiService.queryInventorySnapshots(shopId, null, null);
-            int handled = 0;
-            for (TiktokFbtDTO.InventorySnapshotDTO snapshot : snapshots) {
-                if (upsertInventorySnapshot(snapshot, provider)) {
-                    handled++;
-                }
-            }
+            int handled = syncInventorySnapshotsByShop(shopId, provider);
             log.info("FBT库存快照同步完成, shopId={}, handled={}", shopId, handled);
         }
     }
@@ -204,6 +200,18 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         if (provider == null && StrUtil.isNotBlank(snapshot.getShopId())) {
             provider = listAuthorizedFbtProviderMapByShopId().get(snapshot.getShopId());
         }
+        String shopId = snapshot.getShopId();
+        if (StrUtil.isBlank(shopId) && provider != null) {
+            OverseasProviderEntity finalProvider = provider;
+            shopId = listAuthorizedFbtProviderMapByShopId().entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && StrUtil.equals(entry.getValue().getId(), finalProvider.getId()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (provider != null && StrUtil.isNotBlank(shopId)) {
+            return syncInventorySnapshotsByShopWithThrottle(shopId, provider);
+        }
         return upsertInventorySnapshot(snapshot, provider);
     }
 
@@ -220,6 +228,24 @@ public class FbtInboundServiceImpl implements FbtInboundService {
 
     private List<String> listAuthorizedFbtShopIds() {
         return new ArrayList<>(listAuthorizedFbtProviderMapByShopId().keySet());
+    }
+
+    private boolean syncInventorySnapshotsByShopWithThrottle(String shopId, OverseasProviderEntity provider) {
+        if (StrUtil.isBlank(shopId) || provider == null || StrUtil.isBlank(provider.getId())) {
+            return false;
+        }
+        String lockKey = SNAPSHOT_LOCK_KEY_PREFIX + shopId;
+        Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, System.currentTimeMillis(), 30, TimeUnit.SECONDS);
+        if (!Boolean.TRUE.equals(locked)) {
+            log.info("FBT库存快照消息跳过重复全量同步, shopId={}, authId={}", shopId, provider.getId());
+            return true;
+        }
+        try {
+            syncInventorySnapshotsByShop(shopId, provider);
+            return true;
+        } finally {
+            redisTemplate.delete(lockKey);
+        }
     }
 
     private Map<String, OverseasProviderEntity> listAuthorizedFbtProviderMapByShopId() {
@@ -251,6 +277,21 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             result.putIfAbsent(shopId, provider);
         }
         return result;
+    }
+
+    private int syncInventorySnapshotsByShop(String shopId, OverseasProviderEntity provider) {
+        List<TiktokFbtDTO.InventorySnapshotDTO> snapshots =
+                tiktokFbtApiService.queryInventorySnapshots(shopId, null, null);
+        List<TiktokFbtDTO.InventorySnapshotDTO> aggregatedSnapshots =
+                aggregateInventorySnapshots(shopId, snapshots, provider);
+        int handled = 0;
+        for (TiktokFbtDTO.InventorySnapshotDTO snapshot : aggregatedSnapshots) {
+            if (upsertInventorySnapshot(snapshot, provider)) {
+                handled++;
+            }
+        }
+        cleanupSnapshotInventories(provider, aggregatedSnapshots);
+        return handled;
     }
 
     private String resolveProviderShopId(OverseasProviderEntity provider, Map<String, String> accountToShopIdMap) {
@@ -827,22 +868,29 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         if (StrUtil.isBlank(record.getWarehouseCode()) || StrUtil.isBlank(record.getSkuCode())) {
             return;
         }
+        InventoryWarehouseContext warehouseContext = resolveInventoryWarehouse(
+                provider,
+                record.getShopId(),
+                record.getWarehouseCode(),
+                null);
+        if (warehouseContext == null || StrUtil.isBlank(warehouseContext.getWarehouseCode())) {
+            return;
+        }
         String providerId = provider == null ? null : provider.getId();
-        OverseasInventoryEntity inventory = fbtInboundRepository.findOverseasInventory(record.getWarehouseCode(), record.getSkuCode(), providerId);
+        OverseasInventoryEntity inventory = fbtInboundRepository.findOverseasInventory(
+                warehouseContext.getWarehouseCode(), record.getSkuCode(), providerId);
         if (inventory == null) {
             inventory = new OverseasInventoryEntity();
-            inventory.setWarehouseCode(record.getWarehouseCode());
+            inventory.setWarehouseCode(warehouseContext.getWarehouseCode());
             inventory.setPlatformSku(record.getSkuCode());
             inventory.setPlatformSkuName(record.getSkuCode());
             inventory.setSellableQty(Math.max(record.getDeltaQty(), 0));
             inventory.setDictPlatform(PlatformEnum.FBT.getName());
             inventory.setDownloadTime(LocalDateTime.now());
             inventory.setOverseasProviderId(providerId);
-            if (provider != null && StrUtil.isNotBlank(provider.getShortName())) {
-                inventory.setName(provider.getShortName());
-            } else {
-                inventory.setName(record.getWarehouseCode());
-            }
+            inventory.setName(StrUtil.blankToDefault(
+                    warehouseContext.getWarehouseName(),
+                    StrUtil.blankToDefault(record.getWarehouseCode(), provider == null ? null : provider.getShortName())));
             fbtInboundRepository.saveOverseasInventory(inventory);
             return;
         }
@@ -854,7 +902,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             inventory.setOverseasProviderId(providerId);
         }
         if (StrUtil.isBlank(inventory.getName())) {
-            inventory.setName(record.getWarehouseCode());
+            inventory.setName(StrUtil.blankToDefault(warehouseContext.getWarehouseName(), warehouseContext.getWarehouseCode()));
         }
         fbtInboundRepository.updateOverseasInventory(inventory);
     }
@@ -864,17 +912,25 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             return false;
         }
         String providerId = provider == null ? null : provider.getId();
-        OverseasProviderWarehouseEntity providerWarehouse = findProviderWarehouse(provider, snapshot);
+        InventoryWarehouseContext warehouseContext = resolveInventoryWarehouse(
+                provider,
+                snapshot.getShopId(),
+                snapshot.getWarehouseCode(),
+                snapshot.getWarehouseName());
+        if (warehouseContext == null || StrUtil.isBlank(warehouseContext.getWarehouseCode())) {
+            return false;
+        }
+        OverseasProviderWarehouseEntity providerWarehouse = warehouseContext.getProviderWarehouse();
         OverseasInventoryEntity inventory = fbtInboundRepository.findOverseasInventory(
-                snapshot.getWarehouseCode(), snapshot.getSkuCode(), providerId);
+                warehouseContext.getWarehouseCode(), snapshot.getSkuCode(), providerId);
         if (inventory == null) {
             inventory = new OverseasInventoryEntity();
-            inventory.setWarehouseCode(snapshot.getWarehouseCode());
+            inventory.setWarehouseCode(warehouseContext.getWarehouseCode());
             inventory.setPlatformSku(snapshot.getSkuCode());
             inventory.setDictPlatform(PlatformEnum.FBT.getName());
             inventory.setOverseasProviderId(providerId);
         }
-        inventory.setName(StrUtil.blankToDefault(snapshot.getWarehouseName(), snapshot.getWarehouseCode()));
+        inventory.setName(StrUtil.blankToDefault(warehouseContext.getWarehouseName(), warehouseContext.getWarehouseCode()));
         inventory.setPlatformSkuName(StrUtil.blankToDefault(snapshot.getGoodsName(), snapshot.getSkuCode()));
         fillInventorySkuMapping(inventory, snapshot, provider, providerWarehouse);
         inventory.setSellableQty(defaultZero(snapshot.getAvailableQty()));
@@ -892,9 +948,157 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         return true;
     }
 
+    private List<TiktokFbtDTO.InventorySnapshotDTO> aggregateInventorySnapshots(String shopId,
+                                                                                List<TiktokFbtDTO.InventorySnapshotDTO> snapshots,
+                                                                                OverseasProviderEntity provider) {
+        if (CollUtil.isEmpty(snapshots)) {
+            return Collections.emptyList();
+        }
+        LinkedHashMap<String, TiktokFbtDTO.InventorySnapshotDTO> aggregated = new LinkedHashMap<>();
+        for (TiktokFbtDTO.InventorySnapshotDTO snapshot : snapshots) {
+            if (snapshot == null || StrUtil.isBlank(snapshot.getSkuCode())) {
+                continue;
+            }
+            InventoryWarehouseContext warehouseContext = resolveInventoryWarehouse(
+                    provider,
+                    shopId,
+                    snapshot.getWarehouseCode(),
+                    snapshot.getWarehouseName());
+            if (warehouseContext == null || StrUtil.isBlank(warehouseContext.getWarehouseCode())) {
+                continue;
+            }
+            String key = StrUtil.format("{}#{}", warehouseContext.getWarehouseCode(), snapshot.getSkuCode());
+            TiktokFbtDTO.InventorySnapshotDTO aggregatedSnapshot = aggregated.computeIfAbsent(key, k -> {
+                TiktokFbtDTO.InventorySnapshotDTO item = new TiktokFbtDTO.InventorySnapshotDTO();
+                item.setShopId(StrUtil.blankToDefault(shopId, snapshot.getShopId()));
+                item.setWarehouseCode(warehouseContext.getWarehouseCode());
+                item.setWarehouseName(warehouseContext.getWarehouseName());
+                item.setSkuCode(snapshot.getSkuCode());
+                item.setGoodsId(snapshot.getGoodsId());
+                item.setGoodsName(snapshot.getGoodsName());
+                item.setAvailableQty(0);
+                item.setReservedQty(0);
+                item.setUnfulfillableQty(0);
+                item.setInTransitQty(0);
+                item.setUpdatedTime(snapshot.getUpdatedTime());
+                return item;
+            });
+            aggregatedSnapshot.setAvailableQty(defaultZero(aggregatedSnapshot.getAvailableQty()) + defaultZero(snapshot.getAvailableQty()));
+            aggregatedSnapshot.setReservedQty(defaultZero(aggregatedSnapshot.getReservedQty()) + defaultZero(snapshot.getReservedQty()));
+            aggregatedSnapshot.setUnfulfillableQty(defaultZero(aggregatedSnapshot.getUnfulfillableQty()) + defaultZero(snapshot.getUnfulfillableQty()));
+            aggregatedSnapshot.setInTransitQty(defaultZero(aggregatedSnapshot.getInTransitQty()) + defaultZero(snapshot.getInTransitQty()));
+            if (StrUtil.isBlank(aggregatedSnapshot.getGoodsId()) && StrUtil.isNotBlank(snapshot.getGoodsId())) {
+                aggregatedSnapshot.setGoodsId(snapshot.getGoodsId());
+            }
+            if (StrUtil.isBlank(aggregatedSnapshot.getGoodsName()) && StrUtil.isNotBlank(snapshot.getGoodsName())) {
+                aggregatedSnapshot.setGoodsName(snapshot.getGoodsName());
+            }
+            aggregatedSnapshot.setUpdatedTime(laterDateTime(aggregatedSnapshot.getUpdatedTime(), snapshot.getUpdatedTime()));
+        }
+        return new ArrayList<>(aggregated.values());
+    }
+
+    private void cleanupSnapshotInventories(OverseasProviderEntity provider,
+                                            List<TiktokFbtDTO.InventorySnapshotDTO> aggregatedSnapshots) {
+        if (provider == null || StrUtil.isBlank(provider.getId())) {
+            return;
+        }
+        List<TiktokFbtDTO.InventorySnapshotDTO> snapshotList = aggregatedSnapshots == null
+                ? Collections.emptyList()
+                : aggregatedSnapshots;
+        Set<String> validInventoryKeys = snapshotList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StrUtil.isNotBlank(item.getWarehouseCode()) && StrUtil.isNotBlank(item.getSkuCode()))
+                .map(item -> buildInventoryKey(item.getWarehouseCode(), item.getSkuCode()))
+                .collect(Collectors.toSet());
+        List<OverseasInventoryEntity> inventoryList = fbtInboundRepository.listOverseasInventoryByProvider(
+                provider.getId(),
+                PlatformEnum.FBT.getName());
+        if (CollUtil.isEmpty(inventoryList)) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        for (OverseasInventoryEntity inventory : inventoryList) {
+            if (inventory == null || StrUtil.isBlank(inventory.getWarehouseCode()) || StrUtil.isBlank(inventory.getPlatformSku())) {
+                continue;
+            }
+            String inventoryKey = buildInventoryKey(inventory.getWarehouseCode(), inventory.getPlatformSku());
+            if (validInventoryKeys.contains(inventoryKey)) {
+                continue;
+            }
+            inventory.setSellableQty(0);
+            inventory.setReservedQty(0);
+            inventory.setFrozenQty(0);
+            inventory.setUnsellableQty(0);
+            inventory.setDeliverOnwayQty(0);
+            inventory.setDownloadTime(now);
+            fbtInboundRepository.updateOverseasInventory(inventory);
+        }
+    }
+
+    private InventoryWarehouseContext resolveInventoryWarehouse(OverseasProviderEntity provider,
+                                                                String shopId,
+                                                                String fallbackWarehouseCode,
+                                                                String fallbackWarehouseName) {
+        OverseasProviderWarehouseEntity shopBoundWarehouse = findShopBoundProviderWarehouse(provider, shopId);
+        if (shopBoundWarehouse != null && StrUtil.isNotBlank(shopBoundWarehouse.getPlatformWarehouseCode())) {
+            String warehouseName = firstMeaningful(
+                    shopBoundWarehouse.getPlatformWarehouseName(),
+                    shopBoundWarehouse.getWarehouseName(),
+                    fallbackWarehouseName,
+                    shopBoundWarehouse.getPlatformWarehouseCode());
+            return new InventoryWarehouseContext(shopBoundWarehouse, shopBoundWarehouse.getPlatformWarehouseCode(), warehouseName);
+        }
+        OverseasProviderWarehouseEntity matchedWarehouse = findProviderWarehouse(provider, fallbackWarehouseCode, fallbackWarehouseName);
+        if (matchedWarehouse != null && StrUtil.isNotBlank(matchedWarehouse.getPlatformWarehouseCode())) {
+            String warehouseName = firstMeaningful(
+                    matchedWarehouse.getPlatformWarehouseName(),
+                    matchedWarehouse.getWarehouseName(),
+                    fallbackWarehouseName,
+                    matchedWarehouse.getPlatformWarehouseCode());
+            return new InventoryWarehouseContext(matchedWarehouse, matchedWarehouse.getPlatformWarehouseCode(), warehouseName);
+        }
+        if (StrUtil.isBlank(fallbackWarehouseCode)) {
+            return null;
+        }
+        return new InventoryWarehouseContext(null,
+                fallbackWarehouseCode,
+                firstMeaningful(fallbackWarehouseName, fallbackWarehouseCode));
+    }
+
+    private OverseasProviderWarehouseEntity findShopBoundProviderWarehouse(OverseasProviderEntity provider, String shopId) {
+        if (provider == null || StrUtil.isBlank(provider.getId()) || StrUtil.isBlank(shopId)) {
+            return null;
+        }
+        ShopInfoEntity shopInfo;
+        try {
+            shopInfo = shopInfoFeign.getShopInfoById(shopId);
+        } catch (Exception e) {
+            log.warn("查询FBT店铺绑定仓失败, shopId={}, err={}", shopId, e.getMessage());
+            return null;
+        }
+        if (shopInfo == null || StrUtil.isBlank(shopInfo.getWarehouseId())) {
+            return null;
+        }
+        List<OverseasProviderWarehouseEntity> warehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .eq(OverseasProviderWarehouseEntity::getMainId, provider.getId())
+                .eq(OverseasProviderWarehouseEntity::getWarehouseId, shopInfo.getWarehouseId())
+                .list();
+        if (CollUtil.isEmpty(warehouseList)) {
+            return null;
+        }
+        return warehouseList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
+                .filter(item -> StrUtil.isNotBlank(item.getPlatformWarehouseCode()))
+                .findFirst()
+                .orElse(null);
+    }
+
     private OverseasProviderWarehouseEntity findProviderWarehouse(OverseasProviderEntity provider,
-                                                                  TiktokFbtDTO.InventorySnapshotDTO snapshot) {
-        if (provider == null || StrUtil.isBlank(provider.getId()) || snapshot == null) {
+                                                                  String platformWarehouseCode,
+                                                                  String platformWarehouseName) {
+        if (provider == null || StrUtil.isBlank(provider.getId())) {
             return null;
         }
         List<OverseasProviderWarehouseEntity> warehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
@@ -903,8 +1107,6 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         if (CollUtil.isEmpty(warehouseList)) {
             return null;
         }
-        String platformWarehouseCode = snapshot.getWarehouseCode();
-        String platformWarehouseName = snapshot.getWarehouseName();
         return warehouseList.stream()
                 .filter(Objects::nonNull)
                 .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
@@ -1006,6 +1208,46 @@ public class FbtInboundServiceImpl implements FbtInboundService {
 
     private Integer defaultZero(Integer value) {
         return value == null ? 0 : value;
+    }
+
+    private String buildInventoryKey(String warehouseCode, String skuCode) {
+        return StrUtil.format("{}#{}", warehouseCode, skuCode);
+    }
+
+    private LocalDateTime laterDateTime(LocalDateTime left, LocalDateTime right) {
+        if (left == null) {
+            return right;
+        }
+        if (right == null) {
+            return left;
+        }
+        return left.isAfter(right) ? left : right;
+    }
+
+    private static class InventoryWarehouseContext {
+        private final OverseasProviderWarehouseEntity providerWarehouse;
+        private final String warehouseCode;
+        private final String warehouseName;
+
+        private InventoryWarehouseContext(OverseasProviderWarehouseEntity providerWarehouse,
+                                          String warehouseCode,
+                                          String warehouseName) {
+            this.providerWarehouse = providerWarehouse;
+            this.warehouseCode = warehouseCode;
+            this.warehouseName = warehouseName;
+        }
+
+        public OverseasProviderWarehouseEntity getProviderWarehouse() {
+            return providerWarehouse;
+        }
+
+        public String getWarehouseCode() {
+            return warehouseCode;
+        }
+
+        public String getWarehouseName() {
+            return warehouseName;
+        }
     }
 
     private FbaShipmentReceiveEntity buildReceiveEntity(FbaShipmentEntity shipment, TiktokFbtDTO.InventoryRecordDTO record, String idempotentRecordId) {
