@@ -10,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,6 @@ public class QcStandardDTO {
          */
         private List<AttachDTO> attachmentList;
 
-        private  List<WmsAttachmentEntity> wmsAttachmentEntities;
 
 
     }
@@ -214,7 +214,7 @@ public class QcStandardDTO {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
         
         /**
          * 更新人姓名id
@@ -228,7 +228,7 @@ public class QcStandardDTO {
         /**
          * 更新时间
          */
-        private String updateTime;
+        private LocalDateTime updateTime;
     }
 
 
