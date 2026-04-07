@@ -163,7 +163,7 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
 
     List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(List<String> sourceIdList, String sourceType);
 
-    List<String> outputErrorCountMsg();
+    List<String> outputErrorCountMsg(String conditionSql);
 
 
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO);
