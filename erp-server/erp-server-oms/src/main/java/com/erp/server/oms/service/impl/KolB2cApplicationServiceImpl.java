@@ -806,7 +806,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             throw new ServiceException(ApiError.SAMPLE_B2C_CANCEL_ALREADY);
         }
         if (!Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CREATED.getCode())
-                && !Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode())) {
+                && !Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode())
+                && !Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELING.getCode())) {
             throw new ServiceException(ApiError.SAMPLE_B2C_CANCEL_STATUS_INVALID);
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -826,17 +827,20 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消成功", userInfo.getUserName(), entity.getCode(), "B2C寄样申请单");
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "取消操作");
             } else {
+                boolean retryFromCanceling = Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELING.getCode());
                 updateBillCancelStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CANCELING.getCode(), "", now, userInfo);
                 boolean hasSyncTask = cancelDomesticOrder(entity);
+                String msg;
                 if (hasSyncTask) {
-                    String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据发起取消，状态更新为【{}】", userInfo.getUserName(), entity.getCode(),
-                            "B2C寄样申请单", KolB2cApplicationDocumentStatusEnum.CANCELING.getName());
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "取消操作");
+                    msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据{}，状态更新为【{}】",
+                            userInfo.getUserName(), entity.getCode(), "B2C寄样申请单",
+                            retryFromCanceling ? "重新发起取消" : "发起取消",
+                            KolB2cApplicationDocumentStatusEnum.CANCELING.getName());
                 } else {
                     updateBillCancelStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(), "", now, userInfo);
-                    String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消成功", userInfo.getUserName(), entity.getCode(), "B2C寄样申请单");
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "取消操作");
+                    msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消成功", userInfo.getUserName(), entity.getCode(), "B2C寄样申请单");
                 }
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "取消操作");
             }
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL);
         } catch (Exception e) {
@@ -889,6 +893,107 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     entity.getCode(), "B2C寄样申请单", KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getName(), reason);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "取消回调");
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleDomesticCancelPushSuccess(KolB2cApplicationCancelCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return;
+        }
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
+        if (ObjectUtil.isEmpty(subEntity)) {
+            log.warn("处理中台B2C取消成功回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+            return;
+        }
+        KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            log.warn("处理中台B2C取消成功回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
+            return;
+        }
+        boolean subNeedUpdate = !Objects.equals(KolSubB2cApplicationOrderStatusEnum.NOT.getCode(), subEntity.getOrderStatus());
+        String billStatus = KolB2cApplicationDocumentStatusEnum.normalize(mainEntity.getBillStatus());
+        if (!subNeedUpdate && Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELED.getCode())) {
+            return;
+        }
+        if (subNeedUpdate) {
+            KolSubB2cApplicationEntity updateSubEntity = new KolSubB2cApplicationEntity();
+            updateSubEntity.setId(subEntity.getId());
+            updateSubEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOT.getCode());
+            kolSubB2cApplicationService.updateById(updateSubEntity);
+        }
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, mainEntity.getId())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        boolean allCanceled = CollUtil.isNotEmpty(subList) && subList.stream()
+                .allMatch(sub -> Objects.equals(KolSubB2cApplicationOrderStatusEnum.NOT.getCode(), sub.getOrderStatus()));
+        boolean mainNeedUpdate = allCanceled
+                && !Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELED.getCode());
+        if (mainNeedUpdate) {
+            LoginUser userInfo = buildCancelCallbackUser(mainEntity);
+            updateBillCancelStatus(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(),
+                    "", LocalDateTime.now(), userInfo);
+        }
+        String callbackMsg = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), ""), 0, 200);
+        String msg;
+        if (allCanceled) {
+            msg = StrUtil.format("中台取消推送成功回调，拆分单【{}】状态更新为【{}】，主单【{}】状态更新为【{}】{}",
+                    subEntity.getCode(),
+                    KolSubB2cApplicationOrderStatusEnum.NOT.getName(),
+                    mainEntity.getCode(),
+                    KolB2cApplicationDocumentStatusEnum.CANCELED.getName(),
+                    StringUtils.isNotBlank(callbackMsg) ? StrUtil.format("，回调结果：【{}】", callbackMsg) : "");
+        } else {
+            long canceledCount = Optional.ofNullable(subList).orElse(Collections.emptyList()).stream()
+                    .filter(sub -> Objects.equals(KolSubB2cApplicationOrderStatusEnum.NOT.getCode(), sub.getOrderStatus()))
+                    .count();
+            msg = StrUtil.format("中台取消推送成功回调，拆分单【{}】状态更新为【{}】，主单【{}】保持【{}】，待其余拆分单回调完成（{}/{}）{}",
+                    subEntity.getCode(),
+                    KolSubB2cApplicationOrderStatusEnum.NOT.getName(),
+                    mainEntity.getCode(),
+                    KolB2cApplicationDocumentStatusEnum.getName(billStatus),
+                    canceledCount,
+                    CollUtil.size(subList),
+                    StringUtils.isNotBlank(callbackMsg) ? StrUtil.format("，回调结果：【{}】", callbackMsg) : "");
+        }
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "取消回调");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleDomesticCancelPushFail(KolB2cApplicationCancelCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return;
+        }
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
+        if (ObjectUtil.isEmpty(subEntity)) {
+            log.warn("处理中台B2C取消失败回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+            return;
+        }
+        KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            log.warn("处理中台B2C取消失败回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
+            return;
+        }
+        String billStatus = KolB2cApplicationDocumentStatusEnum.normalize(mainEntity.getBillStatus());
+        if (Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELED.getCode())) {
+            return;
+        }
+        String failReason = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), "中台取消推送失败"), 0, 500);
+        LoginUser userInfo = buildCancelCallbackUser(mainEntity);
+        updateBillCancelStatus(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode(),
+                failReason, LocalDateTime.now(), userInfo);
+        String msg = StrUtil.format("中台取消推送失败回调，拆分单【{}】推送失败，主单【{}】状态更新为【{}】，原因：【{}】",
+                subEntity.getCode(),
+                mainEntity.getCode(),
+                KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getName(),
+                failReason);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "取消回调");
     }
 
     /**
@@ -1359,6 +1464,26 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         userInfo.setUid(StrUtil.blankToDefault(entity.getCancelUserId(), "0"));
         userInfo.setUserName(StrUtil.blankToDefault(entity.getCancelUserName(), "system"));
         return userInfo;
+    }
+
+    private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(KolB2cApplicationCancelCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(dto.getSubOrderId())) {
+            KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(dto.getSubOrderId()).orElse(null);
+            if (ObjectUtil.isNotEmpty(subEntity)) {
+                return subEntity;
+            }
+        }
+        if (StringUtils.isBlank(dto.getSubOrderCode())) {
+            return null;
+        }
+        return kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getCode, dto.getSubOrderCode())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
     }
 
     /**

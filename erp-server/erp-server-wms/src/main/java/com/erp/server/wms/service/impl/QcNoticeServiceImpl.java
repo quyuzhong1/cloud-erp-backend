@@ -6,6 +6,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -14,6 +16,9 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -468,6 +473,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format(ApiError.PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN.getMsg(),sb.toString()));
         }
         //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
+        List<String> qcIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+        deleteQcInfo(qcIdList);
+
+
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
@@ -576,14 +585,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
-        QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
-        //来源
-        addDto.setSourceCode(entity.getCode());
-        addDto.setSourceId(entity.getId());
-        addDto.setSourceType(SourceTypeEnum.QC_NOTICE.getCode());
-        //质检仓库
-        addDto.setWarehouseId(entity.getQcWarehouseId());
-
         List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         //人员
         List<String> userIds = qcNoticeDetails.stream().map(QcNoticeDetailEntity::getQcUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -596,9 +597,16 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<QcNoticeDTO.QcInspectItemAddDTO> qcInspectItemAddDTOS = new ArrayList<>();
         List<QcNoticeDTO.QcImageAddDTO> qcImageAddDTOS = new ArrayList<>();
         for (QcNoticeDetailEntity qcNoticeDetail : qcNoticeDetails) {
+            QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
             QcProductDTO.AddDTO qcProduct = new QcProductDTO.AddDTO();
             QcResultDTO.AddDTO qcInfo = new QcResultDTO.AddDTO();
             QcNoticeDTO.QcStandardAddDTO qcStandardAddDTO = new QcNoticeDTO.QcStandardAddDTO();
+            //来源
+            addDto.setSourceCode(entity.getCode());
+            addDto.setSourceId(entity.getId());
+            addDto.setSourceType(SourceTypeEnum.QC_NOTICE.getCode());
+            //质检仓库
+            addDto.setWarehouseId(entity.getQcWarehouseId());
 
             addDto.setSourceDetailId(qcNoticeDetail.getId());
             //质检日期
@@ -622,7 +630,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setBadDescription(qcNoticeDetail.getBadDesc());
             qcInfo.setHandleModeDict("waitHandle");//默认待定
-            qcInfo.setIsInsideQc(Boolean.FALSE);
+            //qcInfo.setIsInsideQc(Boolean.FALSE);
+            qcInfo.setQcQty(qcNoticeDetail.getQcQty());
+            qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setId("");
             //抽样方案
             SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
@@ -630,6 +640,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             planParamDTO.setQty(qcNoticeDetail.getQcNoticeQty());
             planParamDTO.setSkuId(qcNoticeDetail.getSkuId());
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+            qcInfo.setQcQty(samplingPlan.getSampleQty());
             qcStandardAddDTO.setSamplingPlanId(samplingPlan.getId());
             qcStandardAddDTO.setSamplingPlanName(entity.getQcType() + "抽样方案");
             qcStandardAddDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
@@ -674,9 +685,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             addDto.setQcStandardView(qcStandardAddDTO);
             addDto.setQcInfo(qcInfo);
+            //新增质检单
+            qcInfoService.add(addDto);
         }
-        //新增质检单
-        qcInfoService.add(addDto);
         return Boolean.TRUE;
     }
 
@@ -711,6 +722,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
             qcInfoView.setSuggestSamplingQty(samplingPlan.getSampleQty());
             qcInfoView.setSamplingPlanId(samplingPlan.getId());
+            qcInfoView.setSamplingPlanCode(samplingPlan.getCode());
             qcInfoView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "通用抽样方案");
             qcInfoView.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
             qcInfoView.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
@@ -772,7 +784,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                         QcNoticeDTO.QcImageView qcImageView = new QcNoticeDTO.QcImageView();
                         qcImageView.setImageType(type);
-
+                        qcImageView.setImageTypeName(QcStandardImageTypeEnum.getByCode(type));
                         List<String> imageUrlList = attachmentsOfType.stream()
                                 .map(WmsAttachmentEntity::getAttachUrl)
                                 .collect(Collectors.toList());
@@ -857,6 +869,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
             qcInfoView.setSuggestSamplingQty(samplingPlan.getSampleQty());
             qcInfoView.setSamplingPlanId(samplingPlan.getId());
+            qcInfoView.setSamplingPlanCode(samplingPlan.getCode());
             qcInfoView.setSamplingPlanName(QcTypeEnum.getByCode(qcInfoView.getQcType()) + "抽样方案");
             qcInfoView.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
             qcInfoView.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
@@ -938,7 +951,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                         QcNoticeDTO.QcImageView qcImageView = new QcNoticeDTO.QcImageView();
                         qcImageView.setImageType(type);
-
+                        qcImageView.setImageTypeName(QcStandardImageTypeEnum.getByCode(type));
                         List<String> imageUrlList = attachmentsOfType.stream()
                                 .map(WmsAttachmentEntity::getAttachUrl)
                                 .collect(Collectors.toList());
@@ -1036,7 +1049,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (!qcInfoView.getDefectViewList().isEmpty()) {
                 for (QcNoticeDTO.DefectView defectView : qcInfoView.getDefectViewList()) {
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
-                    boolean hasDefectQty = defectView.getBadQty() != null && defectView.getBadQty() > 0;
+                    boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
                     boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();
@@ -1274,7 +1287,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (!qcInfoView.getDefectViewList().isEmpty()) {
                 for (QcNoticeDTO.DefectView defectView : qcInfoView.getDefectViewList()) {
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
-                    boolean hasDefectQty = defectView.getBadQty() != null && defectView.getBadQty() > 0;
+                    boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
                     boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();

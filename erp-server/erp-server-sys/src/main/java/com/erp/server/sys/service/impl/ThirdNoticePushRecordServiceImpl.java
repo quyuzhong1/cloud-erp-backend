@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -103,7 +104,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE_RECORD;
-import static com.erp.server.sys.rocketmq.consumer.MqRecordConsumerService.TABLE_BUSINESS_KEY;
 
 /**
  * <p>
@@ -496,7 +496,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      */
     @Override
     public String getBusinessKeyWithCache(String table){
-        Object obj = redisUtil.hget(TABLE_BUSINESS_KEY, table);
+        Object obj = redisUtil.hget(RedisCacheConstants.TABLE_BUSINESS_KEY, table);
         String bussinessKey = "";
         if(Objects.nonNull(obj)){
             bussinessKey = String.valueOf(obj);
@@ -513,7 +513,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             bussinessKey = cfgQueryOptionEntityList.get(0).getBussinessKey();
 
             //缓存table 和 busineskey的映射关系，有效期1小时
-            redisUtil.hset(TABLE_BUSINESS_KEY,table,bussinessKey,3600);
+            redisUtil.hset(RedisCacheConstants.TABLE_BUSINESS_KEY,table,bussinessKey,3600);
         }
         return bussinessKey;
     }

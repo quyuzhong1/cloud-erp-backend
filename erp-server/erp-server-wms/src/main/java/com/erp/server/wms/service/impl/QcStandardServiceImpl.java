@@ -7,11 +7,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -63,8 +63,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_STANDARD
  * @since 2026-03-22
  */
 @Service
-public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStandardEntity>
-        implements QcStandardService {
+public class QcStandardServiceImpl extends SuperServiceImpl<QcStandardMapper, QcStandardEntity> implements QcStandardService {
 
     @Autowired
     private QcStandardDetailService qcStandardDetailService;
@@ -83,7 +82,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "addDTO.getSkuId()")
     public void add(QcStandardDTO.AddDTO addDTO) {
         //假如数据来源是导入，并且已存在SKU的质检标准则按更新逻辑走
         if (addDTO.getIsImport()) {
@@ -91,7 +89,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             if(Objects.nonNull(existEntity)){
                 String id = existEntity.getId();
                 List<WmsAttachmentEntity> attachmentList = addDTO.getWmsAttachmentEntities();
-                if (CollectionUtils.isNotEmpty(addDTO.getAttachmentList())) {
+                if (CollectionUtils.isNotEmpty(attachmentList)) {
                     List<QcStandardDTO.AttachDTO> attachList = new ArrayList<>();
                     List<WmsAttachmentEntity> productPhysical = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode())).collect(Collectors.toList());
                     if(CollectionUtils.isNotEmpty(productPhysical)){
@@ -186,7 +184,6 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "updateDTO.getSkuId()")
     public void update(QcStandardDTO.UpdateDTO updateDTO) {
         QcStandardEntity oldEntity = this.getById(updateDTO.getId());
         if (oldEntity == null) {

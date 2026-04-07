@@ -261,7 +261,7 @@ public class QcDefectDTO implements Serializable {
         /**
         * 缺陷数量
         */
-        private Integer badQty;
+        private Integer defectQty;
 
         /**
         * 不良描述

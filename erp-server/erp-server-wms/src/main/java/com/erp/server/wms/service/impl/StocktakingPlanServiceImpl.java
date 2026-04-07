@@ -28,7 +28,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
@@ -795,7 +795,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             boolean hasConflict = false;
             for (InventoryEntity item : inventoryList) {
                 String existKey = CharSequenceUtil.format(
-                        RedisKeyConstant.INVENTORY_LOCK,
+                        RedisCacheConstants.INVENTORY_LOCK,
                         "*",
                         item.getOrgId(),
                         item.getWarehouseId(),
@@ -824,6 +824,24 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                 idIterator.remove();
                 continue;
             }
+
+            //设置Redis锁
+            String planCode = entity.getCode();
+            inventoryList.forEach(item -> {
+                String redisKey = CharSequenceUtil.format(
+                        RedisCacheConstants.INVENTORY_LOCK,
+                        planCode,
+                        item.getOrgId(),
+                        item.getWarehouseId(),
+                        item.getWarehouseLocation(),
+                        item.getSkuId(),
+                        item.getDictInventoryStatus()
+                );
+                redisUtil.set(redisKey, planCode);
+                log.info("已设置库存锁定：key={}, value={}", redisKey, planCode);
+            });
+
+            log.info("盘点计划【{}】处理完成，共锁定{}条库存记录", entity.getId(), inventoryList.size());
         }
 
         //输出最终结果

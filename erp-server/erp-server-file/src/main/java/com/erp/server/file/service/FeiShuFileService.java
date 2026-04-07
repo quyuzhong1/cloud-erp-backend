@@ -11,5 +11,5 @@ import com.erp.model.sys.dto.SysCommonDTO;
  * @version: 1.0
  */
 public interface FeiShuFileService {
-    SysCommonDTO.AttachmentDTO getFeiShuFile(FileDTO.UploadDTO uploadDTO) throws Exception;
+    SysCommonDTO.AttachmentDTO getFeiShuFile(FileDTO.UploadDTO uploadDTO);
 }

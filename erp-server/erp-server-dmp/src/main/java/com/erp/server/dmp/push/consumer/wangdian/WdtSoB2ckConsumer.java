@@ -5,15 +5,21 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MessageUtils;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.DmpPushTaskService;
@@ -24,6 +30,7 @@ import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Response;
 import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.python.google.common.util.concurrent.RateLimiter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -54,6 +61,8 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
     private CommonService commonService;
     @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private OmsTaskFeign omsTaskFeign;
 
     // 在类中添加 Gson 实例
     private static final Gson gson = new Gson();
@@ -63,6 +72,11 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         dmpPushTaskService.updateStatus(paramDTO);
+        if (!StringUtils.equals(paramDTO.getSyncStatus(), SyncStatusEnum.FAILED_SYNC.getCode())) {
+            return;
+        }
+        DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(paramDTO.getDmpSyncTaskId());
+        notifyKolB2cCancelPushFail(dmpPushTaskEntity, paramDTO.getDmpSyncTaskId(), paramDTO.getResponseMsg());
     }
 
     @Override
@@ -77,6 +91,8 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
 
     @Override
     public ApiResult<?> handle(Object ext) {
+        String dmpSyncTaskId = JSONUtil.parseObj(ext).getStr("dmpSyncTaskId");
+        DmpPushTaskEntity dmpPushTaskEntity = StringUtils.isNotBlank(dmpSyncTaskId) ? dmpPushTaskService.getById(dmpSyncTaskId) : null;
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
 
@@ -124,7 +140,9 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                                     .collect(Collectors.joining(","));
                             return ApiResult.error(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
                         }else {
-                            return ApiResult.success(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
+                            String successMsg = MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg);
+                            notifyKolB2cCancelPushSuccess(dmpSyncTaskId, request, successMsg);
+                            return ApiResult.success(successMsg);
                         }
                     }else {
                         return ApiResult.error("返回结果为空");
@@ -136,18 +154,95 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
 //                    if (StringUtils.isNotBlank(msg)) {
 //                       throw new ServiceException(ApiError.ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2);
 //                    }
+                } else {
+                    throw new ServiceException(ApiError.BILL_DATA_LOCKED);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new ServiceException(ApiError.BILL_DATA_LOCKED);
 
             } finally {
-                lock.unlock();
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
             }
         } catch (Exception e) {
             log.error("推送旺店通失败:{}", e.getMessage(), e);
             throw e;
         }
-        return ApiResult.success();
+    }
+
+    private void notifyKolB2cCancelPushSuccess(String dmpSyncTaskId, PushSelf2Request request, String responseMsg) {
+        if (!isKolB2cCancelRequest(request)) {
+            log.info("旺店通B2C取消成功回调OMS跳过，当前请求不是取消报文: dmpSyncTaskId={}, tid={}",
+                    dmpSyncTaskId, getTid(request));
+            return;
+        }
+        String subOrderCode = getTid(request);
+        if (StringUtils.isBlank(subOrderCode)) {
+            log.warn("旺店通B2C取消成功回调OMS跳过，未解析到拆分单编码: dmpSyncTaskId={}", dmpSyncTaskId);
+            return;
+        }
+        KolB2cApplicationCancelCallbackDTO dto = new KolB2cApplicationCancelCallbackDTO();
+        dto.setSubOrderCode(subOrderCode);
+        dto.setSyncTaskId(dmpSyncTaskId);
+        dto.setResponseMsg(responseMsg);
+        try {
+            log.info("旺店通B2C取消成功回调OMS开始: dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
+            omsTaskFeign.handleKolB2cCancelPushSuccess(dto);
+            log.info("旺店通B2C取消成功回调OMS完成: dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
+        } catch (Exception e) {
+            log.warn("旺店通B2C取消成功回调OMS失败: dmpSyncTaskId={}, subOrderCode={}, err={}",
+                    dmpSyncTaskId, dto.getSubOrderCode(), e.getMessage(), e);
+        }
+    }
+
+    private void notifyKolB2cCancelPushFail(DmpPushTaskEntity dmpPushTaskEntity, String dmpSyncTaskId, String responseMsg) {
+        if (StringUtils.isBlank(dmpSyncTaskId)) {
+            return;
+        }
+        if (ObjectUtils.isEmpty(dmpPushTaskEntity)) {
+            log.warn("旺店通B2C取消失败回调OMS跳过，未找到推送任务: dmpSyncTaskId={}", dmpSyncTaskId);
+            return;
+        }
+        if (!StringUtils.equals(dmpPushTaskEntity.getSourceType(), SourceTypeEnum.WDT_SO_B2C.getCode())
+                || !StringUtils.equals(dmpPushTaskEntity.getSyncOperate(), SyncOperateEnum.OPERATE_INVALID.getCode())) {
+            return;
+        }
+        if (StringUtils.isBlank(dmpPushTaskEntity.getSourceId())) {
+            log.warn("旺店通B2C取消失败回调OMS跳过，sourceId为空: dmpSyncTaskId={}, sourceCode={}",
+                    dmpSyncTaskId, dmpPushTaskEntity.getSourceCode());
+            return;
+        }
+        KolB2cApplicationCancelCallbackDTO dto = new KolB2cApplicationCancelCallbackDTO();
+        dto.setSubOrderId(dmpPushTaskEntity.getSourceId());
+        dto.setSyncTaskId(dmpSyncTaskId);
+        dto.setResponseMsg(responseMsg);
+        try {
+            omsTaskFeign.handleKolB2cCancelPushFail(dto);
+        } catch (Exception e) {
+            log.warn("旺店通B2C取消失败回调OMS失败: dmpSyncTaskId={}, sourceId={}, sourceCode={}, err={}",
+                    dmpSyncTaskId, dmpPushTaskEntity.getSourceId(), dmpPushTaskEntity.getSourceCode(), e.getMessage(), e);
+        }
+    }
+
+    private boolean isKolB2cCancelRequest(PushSelf2Request request) {
+        if (request == null || CollUtil.isEmpty(request.getRawTradeList()) || CollUtil.isEmpty(request.getRawTradeOrderList())) {
+            return false;
+        }
+        PushSelf2Request.RawTrade rawTrade = request.getRawTradeList().get(0);
+        boolean tradeCanceled = Objects.equals(rawTrade.getProcessStatus(), PushSelf2Request.RawTrade.PROCESS_STATUS_CANCELED)
+                && Objects.equals(rawTrade.getTradeStatus(), PushSelf2Request.RawTrade.TRADE_STATUS_REFUNDED);
+        boolean orderCanceled = request.getRawTradeOrderList().stream().allMatch(order ->
+                Objects.equals(order.getStatus(), PushSelf2Request.RawTradeOrder.STATUS_REFUNDED)
+                        && Objects.equals(order.getRefundStatus(), PushSelf2Request.RawTradeOrder.REFUND_STATUS_SUCCESS));
+        return tradeCanceled && orderCanceled;
+    }
+
+    private String getTid(PushSelf2Request request) {
+        if (request == null || CollUtil.isEmpty(request.getRawTradeList()) || request.getRawTradeList().get(0) == null) {
+            return "";
+        }
+        return StringUtils.defaultString(request.getRawTradeList().get(0).getTid());
     }
 }

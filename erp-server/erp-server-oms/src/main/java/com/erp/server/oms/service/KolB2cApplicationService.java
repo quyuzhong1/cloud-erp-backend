@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.AddressParseDTO;
+import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -156,6 +157,18 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
      * @param failReason 取消失败原因
      */
     void refreshCancelStatusBySubOrder(String mainId, String failReason);
+
+    /**
+     * Handle domestic cancel success callback after DMP push success.
+     * @param dto callback payload
+     */
+    void handleDomesticCancelPushSuccess(KolB2cApplicationCancelCallbackDTO dto);
+
+    /**
+     * Handle domestic cancel fail callback after DMP push fail.
+     * @param dto callback payload
+     */
+    void handleDomesticCancelPushFail(KolB2cApplicationCancelCallbackDTO dto);
 
     /**
      * 撤销

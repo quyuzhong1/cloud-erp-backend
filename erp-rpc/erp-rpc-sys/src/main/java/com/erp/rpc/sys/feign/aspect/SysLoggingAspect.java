@@ -12,6 +12,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.GlobalExceptionHandler;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.utils.MD5Util;
@@ -294,8 +295,7 @@ public class SysLoggingAspect {
             token = request.getHeader("Authorization");
         }
         // 唯一标识（url +  token  + params）
-        String submitKey = "Idempotent:" + MD5Util.toMD5(url + "_" + token + ":" + params);
-        return submitKey;
+        return RedisCacheConstants.IDEM_REDISKEY + MD5Util.toMD5(url + "_" + token + ":" + params);
     }
 
     /**

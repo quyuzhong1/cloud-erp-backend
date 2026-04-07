@@ -513,6 +513,11 @@ public class QcNoticeDTO implements Serializable {
         private String samplingPlanId;
 
         /**
+         * 抽样方案编码
+         */
+        private String samplingPlanCode;
+
+        /**
          * 抽样方案名称
          */
         private String samplingPlanName;
@@ -637,7 +642,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 缺陷数量
          */
-        private Integer badQty;
+        private Integer defectQty;
         /**
          * 问题属性type=qcProblemType
          */
@@ -980,6 +985,11 @@ public class QcNoticeDTO implements Serializable {
          * 抽象方案id
          */
         private String samplingPlanId;
+
+        /**
+         * 抽象方案编码
+         */
+        private String samplingPlanCode;
 
         /**
          * 抽象方案名称
