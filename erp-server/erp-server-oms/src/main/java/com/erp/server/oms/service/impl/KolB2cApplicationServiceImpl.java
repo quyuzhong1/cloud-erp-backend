@@ -449,9 +449,18 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             throw new ServiceException("B2C寄样申请明细备注更新失败");
         }
 
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的明细备注", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
-        operateLogService.addModuleOperateLogByObj(oldDetail, detailEntity, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), id, msg);
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的明细【{}】备注，由[{}]变更为[{}]",
+                UserContext.getDefaultLoginUser().getUserName(),
+                entity.getCode(),
+                StrUtil.blankToDefault(detailEntity.getSkuNo(), detailId),
+                formatOperateLogValue(oldDetail.getRemark()),
+                formatOperateLogValue(newRemark));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), id, "编辑信息");
         return Boolean.TRUE;
+    }
+
+    private String formatOperateLogValue(String value) {
+        return StringUtils.isBlank(value) ? "空值" : value;
     }
 
     private void handleUpdateData(KolB2cApplicationDTO.UpdateDTO addDTO) {
