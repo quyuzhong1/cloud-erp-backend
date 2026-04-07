@@ -365,33 +365,35 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //审核通过时需要校验库存，质检通知数量必须小于等于可用库存，否则审核失败，提示库存不足
         if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
-            List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByMainIds(Collections.singletonList(dto.getId()));
-            List<String> skuIds = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            //质检仓库下的可用库存
-            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalDTOS = inventoryService.listSkuInventory(skuIds, entity.getQcWarehouseId(), null, InventoryStatusEnum.USABLE.getCode());
+            if (!Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())) {
+                List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByMainIds(Collections.singletonList(dto.getId()));
+                List<String> skuIds = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                //质检仓库下的可用库存
+                List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalDTOS = inventoryService.listSkuInventory(skuIds, entity.getQcWarehouseId(), null, InventoryStatusEnum.USABLE.getCode());
 
-            Map<String, Integer> skuInventoryMap = skuInventoryTotalDTOS.stream().collect(Collectors.toMap(InventoryQtyDTO.SkuInventoryTotalDTO::getSkuId, InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal));
-            StringBuffer sb = new StringBuffer();
-            for (QcNoticeDetailEntity detail : qcNoticeDetailEntities) {
-                String skuId = detail.getSkuId();
-                String skuNo = detail.getSkuNo();
-                Integer noticeQty = detail.getQcNoticeQty();
-                Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
-                if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                    String formattedMsg = MessageFormat.format(
-                            ApiError.PO_QC_STOCK_INSUFFICIENT.getMsg(),
-                            skuNo,
-                            noticeQty,
-                            inventoryQty
-                    );
-                    sb.append(formattedMsg);
-                    sb.append(";");
+                Map<String, Integer> skuInventoryMap = skuInventoryTotalDTOS.stream().collect(Collectors.toMap(InventoryQtyDTO.SkuInventoryTotalDTO::getSkuId, InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal));
+                StringBuffer sb = new StringBuffer();
+                for (QcNoticeDetailEntity detail : qcNoticeDetailEntities) {
+                    String skuId = detail.getSkuId();
+                    String skuNo = detail.getSkuNo();
+                    Integer noticeQty = detail.getQcNoticeQty();
+                    Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
+                    if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
+                        String formattedMsg = MessageFormat.format(
+                                ApiError.PO_QC_STOCK_INSUFFICIENT.getMsg(),
+                                skuNo,
+                                noticeQty,
+                                inventoryQty
+                        );
+                        sb.append(formattedMsg);
+                        sb.append(";");
+                    }
                 }
-            }
-            String msg = sb.toString();
-            if(StringUtils.isNotBlank(msg)){
-                msg = "审核失败，"+msg;
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
+                String msg = sb.toString();
+                if(StringUtils.isNotBlank(msg)){
+                    msg = "审核失败，"+msg;
+                    return BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
+                }
             }
         }
 
