@@ -15,9 +15,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
@@ -264,7 +263,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         checkCloseBill(closeDate, orgId, warehouseId, warehouseLocation, skuId, billDate, inventoryStatusEnum, lastStocktakingTaskList, userInfo);
         // 盘点冻结
-        String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
+        String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
         Collection<String> keys = redisUtil.keys(redisKey);
         if (CollUtil.isEmpty(keys)) {
             return;

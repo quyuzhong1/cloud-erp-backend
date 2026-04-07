@@ -16,7 +16,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -136,7 +136,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             }
         }
         //查询redis缓存标记
-        String existKey = RedisKeyConstant.REPORT_VIRTUAL_ORDER_DATA;
+        String existKey = RedisCacheConstants.REPORT_VIRTUAL_ORDER_DATA;
         boolean isHas = redisUtil.hasKey(existKey);
         if (isHas) {
           throw new ServiceException("已有任务进行中，请勿重复提交请求");

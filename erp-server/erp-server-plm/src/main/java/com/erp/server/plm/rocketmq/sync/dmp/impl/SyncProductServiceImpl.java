@@ -4,7 +4,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.utils.RedisUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -79,8 +79,8 @@ public class SyncProductServiceImpl implements SyncProductService {
         Map<String,List<NewProductDTO>> map = new HashMap<>();
         map.put("listingNotNullList", listingNotNullList);
         listingNotNullList.forEach(req -> {
-            if (ObjectUtil.isNotEmpty(redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo()))) {
-                redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600L);
+            if (ObjectUtil.isNotEmpty(redisUtil.hget(RedisCacheConstants.SKU_LISTING_TIME, req.getSkuNo()))) {
+                redisUtil.hset(RedisCacheConstants.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600L);
             }
         });
         // 异步推送到MQ

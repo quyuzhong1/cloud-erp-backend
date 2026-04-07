@@ -18,7 +18,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
@@ -192,7 +192,7 @@ public class StocktakingTaskController extends BaseController {
                     // 删除缓存
                     List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
                     detailList.forEach(detail -> {
-                        String key = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*",
+                        String key = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getSourceCode(), "*",
                                 detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
                         redisUtil.keys(key).forEach(item -> redisUtil.del(item));
                     });

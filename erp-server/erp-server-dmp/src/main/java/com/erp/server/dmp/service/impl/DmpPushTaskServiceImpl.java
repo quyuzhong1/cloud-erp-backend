@@ -490,7 +490,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 //            return;
 //        }
 //        //查询redis,预警8小时发送一次
-//        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, entity.getId());
+//        String existKey = StrUtil.format(RedisCacheConstants.DMP_PUSH_TASK_WARN, entity.getId());
 //        boolean isHas = redisUtil.hasKey(existKey);
 //        if (isHas) {
 //            return;

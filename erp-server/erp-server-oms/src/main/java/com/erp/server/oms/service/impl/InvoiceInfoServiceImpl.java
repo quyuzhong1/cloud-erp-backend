@@ -34,7 +34,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -43,7 +43,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
@@ -246,7 +245,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.INVOICE_INFO_KEY,keyName = "id",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.INVOICE_INFO_KEY,keyName = "id",waiteTime = 60)
     public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
         log.warn("开始生成nfe发票，订单id：【{}】,是否异步：【{}】",id,isAsync);
         SoB2cEntity soB2cEntity = soB2cService.getById(id);

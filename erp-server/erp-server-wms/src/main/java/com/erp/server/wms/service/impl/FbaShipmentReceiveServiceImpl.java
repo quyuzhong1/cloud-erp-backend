@@ -12,7 +12,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -406,7 +406,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     @Override
     public void sendWarnMsg(String tableId, String errorMsg) {
         //查询redis,预警8小时发送一次
-        String existKey = CharSequenceUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, tableId);
+        String existKey = CharSequenceUtil.format(RedisCacheConstants.DMP_PUSH_TASK_WARN, tableId);
         boolean isHas = redisUtil.hasKey(existKey);
         if (isHas) {
             return;
