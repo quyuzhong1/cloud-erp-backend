@@ -215,21 +215,4 @@ public class WmsExecutorPoolConfig {
 
         return service;
     }
-
-    /**
-     * 导入历史记录线程池
-     * @author will
-     * @date 2025/10/10 14:59
-     * @return ExecutorService
-     */
-    @Bean(name = "importHistoryRecordPool")
-    public ExecutorService importHistoryRecordPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(50, 100,
-                30L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(10000));
-        //设置线城池的饱和策略
-        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
-        service.setRejectedExecutionHandler(handler);
-        return service;
-    }
 }

@@ -32,17 +32,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param dto
      * @return
      */
-    BaseResultDTO.AddDTO add(ImportHistoryRecordDTO.AddDTO dto);
-
-    /**
-     * 修改
-     * @author will
-     * @date: 2026-01-19
-     * @param dto
-     * @return
-     */
-    Boolean update(ImportHistoryRecordDTO.UpdateDTO dto);
-
+    BaseResultDTO.AddDTO addOrUpdate(ImportHistoryRecordDTO.AddOrUpdateDTO dto);
 
     /**
      * 分页列表查询

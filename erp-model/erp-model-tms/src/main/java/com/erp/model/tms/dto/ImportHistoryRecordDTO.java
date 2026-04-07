@@ -267,25 +267,14 @@ public class ImportHistoryRecordDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-     * 修改
-     */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class AddOrUpdateDTO extends CommonDTO {
 
         /**
          * 主键id
          */
-        @NotBlank(message = "主键id不能为空")
         private String id;
-
     }
+
 
     @Data
     @NoArgsConstructor
@@ -483,7 +472,7 @@ public class ImportHistoryRecordDTO implements Serializable {
         /**
          * 导入记录id集合
          */
-        @NotBlank(message = "导入记录id不能为空")
+        @NotEmpty(message = "导入记录id不能为空")
         private List<String> ids;
 
         /**

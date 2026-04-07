@@ -176,11 +176,11 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     private void addMatchExcelResult() {
 
         //添加导入历史记录表数据
-        ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();
-        addDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
-        addDTO.setBusinessType(costImportEntity.getBusinessType());
-        addDTO.setFileUrl(importDTO.getFileUrl());
-        addDTO.setFileName(importDTO.getFileName());
+        ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO = new ImportHistoryRecordDTO.AddOrUpdateDTO();
+        addOrUpdateDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
+        addOrUpdateDTO.setBusinessType(costImportEntity.getBusinessType());
+        addOrUpdateDTO.setFileUrl(importDTO.getFileUrl());
+        addOrUpdateDTO.setFileName(importDTO.getFileName());
         //清洗结果
         String url = "";
         String fileName = "物流商费用导入结果.xlsx";
@@ -190,22 +190,22 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        addDTO.setCleanFileUrl(url);
-        addDTO.setCleanFileName(fileName);
+        addOrUpdateDTO.setCleanFileUrl(url);
+        addOrUpdateDTO.setCleanFileName(fileName);
         if (CharSequenceUtil.equals(importDTO.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
-            addDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
+            addOrUpdateDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
         } else {
-            addDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
+            addOrUpdateDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
         }
-        addDTO.setType(importDTO.getType());
-        addDTO.setOperationUserId(importDTO.getUserId());
-        addDTO.setImportCount(count);
+        addOrUpdateDTO.setType(importDTO.getType());
+        addOrUpdateDTO.setOperationUserId(importDTO.getUserId());
+        addOrUpdateDTO.setImportCount(count);
 
         //匹配结果序号
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         long errorCount = matchList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) obj.get(matchIndex.toString()))).count();
-        addDTO.setMatchCount((int)errorCount);
-        importHistoryRecordService.add(addDTO);
+        addOrUpdateDTO.setMatchCount((int)errorCount);
+        importHistoryRecordService.addOrUpdate(addOrUpdateDTO);
     }
 
     @Override

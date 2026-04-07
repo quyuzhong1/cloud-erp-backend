@@ -769,6 +769,11 @@ public class LogisticsBillCostDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
         /**
+         * 物流单id
+         */
+        private String logisticsBillId;
+
+        /**
          * 对账确认时间
          */
         private LocalDateTime confirmTime;
