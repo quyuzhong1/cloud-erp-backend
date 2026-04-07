@@ -394,8 +394,8 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
         // 设置detail的其他属性
         detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
         detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
-        detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
-        detail.setIsGift("是".equals(importExcelDTO.getIsGiftName()));
+        detail.setIsUrgent("是".equals(Objects.toString(importExcelDTO.getIsUrgentName(), "").trim()) ? Boolean.TRUE : Boolean.FALSE);
+        detail.setIsGift("是".equals(Objects.toString(importExcelDTO.getIsGiftName(), "").trim()));
         detail.setRemark(importExcelDTO.getRemark());
 
         List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
