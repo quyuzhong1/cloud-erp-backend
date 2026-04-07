@@ -12,7 +12,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
@@ -153,7 +153,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         if (CollUtil.isNotEmpty(skuNOList2)){
             this.lambdaUpdate().set(DmpSkuCostEntity::getIsDeleted, true).eq(DmpSkuCostEntity::getCostDate, localDate).in(DmpSkuCostEntity::getSkuNo, skuNOList2).update();
             skuNOList2.forEach(skuNo ->{
-                String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, skuNo);
+                String existKey = StrUtil.format(RedisCacheConstants.DMP_SKU_COST_CODE, skuNo);
                 boolean isHas = redisUtil.hasKey(existKey);
                 if (isHas) {
                     //删除缓存
@@ -262,7 +262,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
 
         for (String skuNo : distSkuNoList) {
             //查询redis中存储的成本信息
-            String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, skuNo);
+            String existKey = StrUtil.format(RedisCacheConstants.DMP_SKU_COST_CODE, skuNo);
             DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
             if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
                 redisSkuNoList.add(skuNo);
@@ -285,7 +285,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         }
         for (DmpSkuCostEntity dmpSkuCostEntity : dmpSkuCostList) {
             //添加缓存
-            String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, dmpSkuCostEntity.getSkuNo());
+            String existKey = StrUtil.format(RedisCacheConstants.DMP_SKU_COST_CODE, dmpSkuCostEntity.getSkuNo());
             redisUtil.set(existKey, dmpSkuCostEntity, RedisService.ONE_DAY_CACHE_TIME);
             resultList.add(dmpSkuCostEntity);
         }
@@ -297,7 +297,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
      * 添加redis缓存
      */
     private void setRedisSkuCost (DmpSkuCostEntity dmpSkuCostEntity) {
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, dmpSkuCostEntity.getSkuNo());
+        String existKey = StrUtil.format(RedisCacheConstants.DMP_SKU_COST_CODE, dmpSkuCostEntity.getSkuNo());
         boolean isHas = redisUtil.hasKey(existKey);
         if (isHas) {
             //删除缓存

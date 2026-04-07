@@ -17,7 +17,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
@@ -134,7 +134,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 600)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 600)
     public Boolean consumeMessage(String businessId,String msgId) {
 
         WmsVirtualDetailMsgEntity virtualDetailMsgEntity = wmsVirtualDetailMsgService.getById(msgId);
