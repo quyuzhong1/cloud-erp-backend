@@ -786,8 +786,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
 	@Override
-	public List<String> outputErrorCountMsg() {
-		return baseMapper.outputErrorCountMsg();
+	public List<String> outputErrorCountMsg(String conditionSql) {
+		return baseMapper.outputErrorCountMsg(conditionSql);
 	}
 
     @Override

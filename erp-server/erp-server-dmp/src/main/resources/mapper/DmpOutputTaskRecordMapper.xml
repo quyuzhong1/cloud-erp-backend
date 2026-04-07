@@ -406,6 +406,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
         AND t.is_deleted = false
 				and t.create_time <![CDATA[ < ]]> current_date
 				and l.id is not null and i.id is not null and k.id is not null
+				${conditionSql}
 				group by l."name",i.name,k.name order by k.name,i.name,count(*) desc
     </select>
     <select id="getSuccessData" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$SyncInfoDTO">
