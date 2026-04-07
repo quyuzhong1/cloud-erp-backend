@@ -1484,6 +1484,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     		viewDto.setDistrict(dictPartitionEntity.getCode());
     	}
 
+        CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(finalPartitionId) && e.getDictPlatform().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
+        if (null != cfgDeptRelationEntity){
+            deptId = cfgDeptRelationEntity.getDeptId();
+        }
         if (StringUtils.isNotBlank(deptId)){
             String finalDeptId = deptId;
             deptList.stream()
