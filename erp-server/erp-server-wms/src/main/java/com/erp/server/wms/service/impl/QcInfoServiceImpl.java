@@ -3010,7 +3010,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
                     QcInfoDTO.QcImageView qcImageView = new QcInfoDTO.QcImageView();
                     qcImageView.setImageType(type);
-
+                    qcImageView.setImageTypeName(WmsQcStandardImageTypeEnum.getName(type));
                     List<String> imageUrlList = attachmentsOfType.stream()
                             .map(WmsAttachmentEntity::getAttachUrl)
                             .collect(Collectors.toList());
