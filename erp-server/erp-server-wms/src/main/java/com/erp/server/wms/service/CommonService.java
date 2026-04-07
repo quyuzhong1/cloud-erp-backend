@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
 
+import com.common.business.service.SuperService;
 import com.common.business.vo.LoginUser;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -41,4 +44,7 @@ public interface CommonService {
      * @return SupplierEntity
      */
     SupplierEntity getSupplierEntity();
+
+    @Transactional(rollbackFor = Exception.class)
+    <T extends BaseEntity> void updateDetail(String businessId, String moduleType, SuperService service, List<T> detailList, List<T> oldDetailList, String keyFieldName);
 }
