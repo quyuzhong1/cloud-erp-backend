@@ -168,7 +168,9 @@
         qnd.putaway_qty AS putawayQty,
         qnd.bad_desc AS badDesc,
         qnd.qc_problem_dict AS qcProblemDict,
-        qnd.qc_date AS qcDate
+        qnd.qc_date AS qcDate,
+        qnd.qc_user_id as qcUserId,
+        qnd.qc_user_name as qcUserName
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
