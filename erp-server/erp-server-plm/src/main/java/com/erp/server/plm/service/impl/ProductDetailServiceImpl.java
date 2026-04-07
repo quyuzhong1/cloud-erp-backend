@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,10 +21,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.IsConstant;
+import com.common.business.annotation.MenuCode;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -2693,6 +2696,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    public void exportProductAll(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+        productSkuExcelDTO.setFieldList(buildAllExportFields());
+        downloadTaskFeign.saveDownloadTask("产品管理导出（全）", EXPORT_PLM_SKU_DYNAMIC.getCode(), productSkuExcelDTO);
+    }
+
+    @Override
     public PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO> dto ) {
         Page<ProductSkuExcelDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ProductDetailExcelExportDTO> pageData = productDetailMapper.getExportSkuExcel(query,dto.getParams());
@@ -2779,6 +2788,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             Map<String, String> finalDictValueMaps = dictValueMaps;
 
+            List<String> mainSupplierIds = list.stream()
+                    .map(ProductDetailExcelExportDTO::getMainSupplier)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(mainSupplierIds)
+                    ? new HashMap<>()
+                    : supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
             Map<String, BasicCategoryEntity> idBasicCategoryMaps = basicCategoryService.list().stream().collect(Collectors.toMap(BasicCategoryEntity::getId, b -> b));
             Map<String, List<BasicCategoryEntity>> idParentBasicCategoryListMaps = new HashMap<>();
             for(Map.Entry<String, BasicCategoryEntity> idBasicCategoryMap : idBasicCategoryMaps.entrySet()) {
@@ -2836,6 +2854,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         req.setPurchaseUser(userName);
                     }
                 }
+                if (StringUtils.isNotBlank(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                    req.setMainSupplier(supplierMap.get(req.getMainSupplier()).getName());
+                }
                 if (StringUtils.isNotBlank(req.getSaleCountry())) {
                     req.setSaleCountry(Arrays.stream(req.getSaleCountry().split(",")).filter(StringUtils::isNotBlank)
                             .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
@@ -2847,6 +2868,39 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             });
         }
         return new PagingVO<>(pageData);
+    }
+
+    private List<ProductSkuExcelDTO.ExportField> buildAllExportFields() {
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        boolean isAdmin = CollUtil.isNotEmpty(roleIdList) && roleIdList.contains("1");
+        Set<String> permissionCodeSet = CollUtil.isEmpty(requestPermissionsList)
+                ? Collections.emptySet()
+                : requestPermissionsList.stream()
+                .map(UserRequestPermissionsDTO::getPermissionsCode)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        List<ProductSkuExcelDTO.ExportField> fieldList = new ArrayList<>();
+        for (Field field : ProductDetailExcelExportDTO.class.getDeclaredFields()) {
+            ExcelProperty excelProperty = field.getAnnotation(ExcelProperty.class);
+            if (Objects.isNull(excelProperty) || excelProperty.value().length == 0) {
+                continue;
+            }
+            MenuCode menuCode = field.getAnnotation(MenuCode.class);
+            if (!isAdmin && Objects.nonNull(menuCode) && StringUtils.isNotBlank(menuCode.value()) && !permissionCodeSet.contains(menuCode.value())) {
+                continue;
+            }
+            ProductSkuExcelDTO.ExportField exportField = new ProductSkuExcelDTO.ExportField();
+            exportField.setField(field.getName());
+            exportField.setFieldName(excelProperty.value()[0]);
+            fieldList.add(exportField);
+        }
+        if (CollUtil.isEmpty(fieldList)) {
+            throw new ServiceException("暂无可导出的字段");
+        }
+        return fieldList;
     }
 
     private void getParentBasicCategory(String pid , Map<String, BasicCategoryEntity> idBasicCategoryMaps , List<BasicCategoryEntity> resultList){
