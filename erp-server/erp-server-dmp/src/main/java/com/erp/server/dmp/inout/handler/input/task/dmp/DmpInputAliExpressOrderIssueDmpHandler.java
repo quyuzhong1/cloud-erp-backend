@@ -128,8 +128,14 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         String buyerUserId = StringUtils.defaultIfBlank(
                                 ObjectUtil.defaultIfNull(v.get("buyerUserId"), "").toString(),
                                 snapshot.buyerLoginId);
-                        String issueRemark = AliExpressIssueSolutionResolver.pickIssueText(snapshot.reasonChinese, snapshot.reasonEnglish);
-                        String issueRemarkName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(snapshot.reasonEnglish, snapshot.reasonChinese);
+                        String returnReason = AliExpressIssueSolutionResolver.pickIssueText(
+                                v.get("remark"),
+                                snapshot.reasonChinese,
+                                snapshot.reasonEnglish);
+                        String returnReasonName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(
+                                v.get("remark"),
+                                snapshot.reasonChinese,
+                                snapshot.reasonEnglish);
                         String issueReason = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(snapshot.reasonChinese, snapshot.reasonEnglish);
                         v.put("sourceId", sourceId);
                         v.put("sourcePlatform", "AliExpress");
@@ -145,8 +151,8 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                             v.put("reason", issueReason);
                             v.put("remark", issueReason);
                         } else {
-                            v.put("remark", issueRemark);
-                            v.put("remarkName", issueRemarkName);
+                            v.put("remark", returnReason);
+                            v.put("remarkName", returnReasonName);
                         }
                         v.put("trackingNumber", AliExpressIssueSolutionResolver.trimForDb(snapshot.buyerReturnLogisticsNo));
                         v.put("logisticsSupplierCode", AliExpressIssueSolutionResolver.trimForDb(snapshot.buyerReturnLogisticsCompany));
@@ -161,8 +167,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                         if (isRefundInfo) {
                             v.put("status", AliExpressIssueSolutionResolver.resolveRefundStatus(snapshot.reverseDetailStatus, snapshot.issueStatus));
                         } else {
-                            String issueStatus = ObjectUtil.defaultIfNull(v.get("status"), "").toString();
-                            v.put("status", "finish".equals(issueStatus) ? "4" : "1");
+                            v.put("status", "1");
                         }
                         return false;
                     });
