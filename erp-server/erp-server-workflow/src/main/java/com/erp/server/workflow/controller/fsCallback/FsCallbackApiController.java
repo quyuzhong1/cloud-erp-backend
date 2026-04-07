@@ -1,6 +1,8 @@
 package com.erp.server.workflow.controller.fsCallback;
 
+import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
+import com.common.core.utils.HttpCommonUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
 import com.erp.model.workflow.dto.FsCallbackApiRespDTO;
@@ -18,6 +20,7 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 @Controller
 @Slf4j
@@ -74,5 +77,17 @@ public class FsCallbackApiController {
         log.warn("飞书事件触发器:url:{},method:{}，body:{}", request.getRequestURL(), request.getMethod(), requestBody);
         // 回调扩展包提供的事件回调处理器
         servletAdapter.handleEvent(request, response, fsCallbackEventHandler.getEventHandler());
+    }
+
+    /**
+     * 飞书表格文件记录新增或更新回调接口
+     */
+    @PostMapping("/fileRecordAddOrUpdate")
+    @ResponseBody
+    public FsCallbackApiRespDTO fileRecordAddOrUpdate(@RequestBody Map<String, String> req, HttpServletRequest request){
+        log.info("飞书表格文件更新回调开始：{}", JSON.toJSONString(req));
+        FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();
+        log.info("飞书表格文件更新回调结束：{}",JSON.toJSONString(resp));
+        return  resp;
     }
 }
