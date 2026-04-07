@@ -141,7 +141,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                             return ApiResult.error(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
                         }else {
                             String successMsg = MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg);
-                            notifyKolB2cCancelPushSuccess(dmpPushTaskEntity, dmpSyncTaskId, request, successMsg);
+                            notifyKolB2cCancelPushSuccess(dmpSyncTaskId, request, successMsg);
                             return ApiResult.success(successMsg);
                         }
                     }else {
@@ -172,8 +172,10 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
         }
     }
 
-    private void notifyKolB2cCancelPushSuccess(DmpPushTaskEntity dmpPushTaskEntity, String dmpSyncTaskId, PushSelf2Request request, String responseMsg) {
-        if (!isKolB2cCancelRequest(dmpPushTaskEntity, request)) {
+    private void notifyKolB2cCancelPushSuccess(String dmpSyncTaskId, PushSelf2Request request, String responseMsg) {
+        if (!isKolB2cCancelRequest(request)) {
+            log.info("旺店通B2C取消成功回调OMS跳过，当前请求不是取消报文: dmpSyncTaskId={}, tid={}",
+                    dmpSyncTaskId, getTid(request));
             return;
         }
         String subOrderCode = getTid(request);
@@ -182,17 +184,16 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
             return;
         }
         KolB2cApplicationCancelCallbackDTO dto = new KolB2cApplicationCancelCallbackDTO();
-        if (ObjectUtils.isNotEmpty(dmpPushTaskEntity) && StringUtils.isNotBlank(dmpPushTaskEntity.getSourceId())) {
-            dto.setSubOrderId(dmpPushTaskEntity.getSourceId());
-        }
         dto.setSubOrderCode(subOrderCode);
         dto.setSyncTaskId(dmpSyncTaskId);
         dto.setResponseMsg(responseMsg);
         try {
+            log.info("旺店通B2C取消成功回调OMS开始: dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
             omsTaskFeign.handleKolB2cCancelPushSuccess(dto);
+            log.info("旺店通B2C取消成功回调OMS完成: dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
         } catch (Exception e) {
-            log.warn("旺店通B2C取消成功回调OMS失败: dmpSyncTaskId={}, subOrderId={}, subOrderCode={}, err={}",
-                    dmpSyncTaskId, dto.getSubOrderId(), dto.getSubOrderCode(), e.getMessage(), e);
+            log.warn("旺店通B2C取消成功回调OMS失败: dmpSyncTaskId={}, subOrderCode={}, err={}",
+                    dmpSyncTaskId, dto.getSubOrderCode(), e.getMessage(), e);
         }
     }
 
@@ -225,11 +226,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
         }
     }
 
-    private boolean isKolB2cCancelRequest(DmpPushTaskEntity dmpPushTaskEntity, PushSelf2Request request) {
-        if (ObjectUtils.isNotEmpty(dmpPushTaskEntity)) {
-            return StringUtils.equals(dmpPushTaskEntity.getSourceType(), SourceTypeEnum.WDT_SO_B2C.getCode())
-                    && StringUtils.equals(dmpPushTaskEntity.getSyncOperate(), SyncOperateEnum.OPERATE_INVALID.getCode());
-        }
+    private boolean isKolB2cCancelRequest(PushSelf2Request request) {
         if (request == null || CollUtil.isEmpty(request.getRawTradeList()) || CollUtil.isEmpty(request.getRawTradeOrderList())) {
             return false;
         }
