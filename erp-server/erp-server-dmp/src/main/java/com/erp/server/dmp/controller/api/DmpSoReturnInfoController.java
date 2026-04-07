@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.constant.RedisCacheConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -86,7 +87,7 @@ public class DmpSoReturnInfoController extends BaseController {
     @PostMapping("/addGyyReturnOrder")
     public ApiResult<?> addGyyReturnOrder(@RequestBody DmpSoReturnInfoDTO.AddGyyReturnOrderDTO dto) {
     	Integer page = dto.getPage();
-    	String redisKey = "add:gyy:return";
+    	String redisKey = RedisCacheConstants.ADD_GYY_RETURN_ORDER_KEY;
     	if(page == null) {
         	Object object = redisUtil.get(redisKey);
         	if(object != null) {

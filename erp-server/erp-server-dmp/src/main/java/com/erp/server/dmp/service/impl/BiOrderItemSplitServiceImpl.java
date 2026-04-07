@@ -11,7 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -172,7 +172,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
             if(StrUtil.isBlank(orderItemBean.getSkuNo())){
                 continue;
             }
-            Object skuListing = redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo());
+            Object skuListing = redisUtil.hget(RedisCacheConstants.SKU_LISTING_TIME, orderItemBean.getSkuNo());
             if (ObjectUtil.isEmpty(skuListing)) {
                 Map<String, Object> resultMap = new HashMap<>();
                 resultMap.put("skuNo", orderItemBean.getSkuNo());
@@ -272,13 +272,13 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
         }*//* else {
-            Object sku = redisUtil.hget(RedisKeyConstant.SKU_NOT_LISTING_TIME, skuNo);
+            Object sku = redisUtil.hget(RedisCacheConstants.SKU_NOT_LISTING_TIME, skuNo);
             if (ObjectUtil.isNotEmpty(sku)) {
                 return;
             }
             LocalDateTime orderListingTime = baseMapper.getOrderListingTime(dto.getSkuNo());
             if (orderListingTime == null) {
-                redisUtil.hset(RedisKeyConstant.SKU_NOT_LISTING_TIME, skuNo, null, 24 * 3600);
+                redisUtil.hset(RedisCacheConstants.SKU_NOT_LISTING_TIME, skuNo, null, 24 * 3600);
                 return;
             }
             Map<String, Object> resultMap = new HashMap<>();
@@ -500,7 +500,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
     private SplitSkuDTO handleNewSplitSku (SplitSkuDTO splitSkuDTO, String skuNo,List<DmpSplitErrorLogEntity> errorList,BomChildrenSkuDTO bomChildrenSkuDTO) {
         SplitSkuDTO newSplitSkuDTO = new SplitSkuDTO();
         BeanMapperUtils.copy(splitSkuDTO,newSplitSkuDTO);
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, skuNo);
+        String existKey = StrUtil.format(RedisCacheConstants.DMP_SKU_COST_CODE, skuNo);
         DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
         newSplitSkuDTO.setOriginalCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : dmpSkuCostEntity.getCostPrice());
         //未找到成本添加错误日志
@@ -522,7 +522,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
             if (PlatformEnum.MABANG.getDesc().equals(splitSkuDTO.getPlatformSign())) {
                 bomSkuNo = splitSkuDTO.getMabangSkuNo();
             }
-            String bomKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, bomSkuNo);
+            String bomKey = StrUtil.format(RedisCacheConstants.DMP_SKU_COST_CODE, bomSkuNo);
             DmpSkuCostEntity bomCostEntity = (DmpSkuCostEntity) redisUtil.get(bomKey);
             newSplitSkuDTO.setOriginalCostPrice(ObjectUtil.isEmpty(bomCostEntity) ? BigDecimal.ZERO : bomCostEntity.getCostPrice());
             newSplitSkuDTO.setIsSplitSku(MathUtil.ONE);

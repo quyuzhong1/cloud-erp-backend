@@ -20,7 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -109,11 +109,11 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         List<RedisMabngSkuEntity> mabangSkuInfo = mongoService.findMongoData(new OrderMongoDTO(), 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, RedisMabngSkuEntity.class);
         if (CollectionUtil.isNotEmpty(mabangSkuInfo)){
             Map<String, RedisMabngSkuEntity> mabangFinacialSkuMap = mabangSkuInfo.stream().distinct().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
-            redisUtil.putAllHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, mabangFinacialSkuMap);
+            redisUtil.putAllHashMap(RedisCacheConstants.MABANG_FINANCIAL_SKU_LIST_KEY, mabangFinacialSkuMap);
             Map<String, RedisMabngSkuEntity> mabangStockSkuMap = mabangSkuInfo.stream().distinct()
                     .filter(sku -> StrUtil.isNotBlank(sku.getStockSku()) && StrUtil.isNotBlank(sku.getFinancial()))
                     .collect(Collectors.toMap(RedisMabngSkuEntity::getStockSku, e -> e, (existingPerson, newPerson) -> newPerson));
-            redisUtil.putAllHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, mabangStockSkuMap);
+            redisUtil.putAllHashMap(RedisCacheConstants.MABANG_STOCK_SKU_LIST_KEY, mabangStockSkuMap);
         }
 
         // 推送到MQ

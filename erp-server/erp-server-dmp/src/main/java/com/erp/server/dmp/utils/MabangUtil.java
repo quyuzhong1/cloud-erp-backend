@@ -6,7 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -87,7 +87,7 @@ public class MabangUtil {
 
         Map<String, MabangInOutStockDTO.SkuItem> skuItemMap = Maps.newHashMap();
         transferDetailList.stream().forEach(transferSku->{
-            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, transferSku.getSkuNo());
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisCacheConstants.MABANG_FINANCIAL_SKU_LIST_KEY, transferSku.getSkuNo());
             String gridCode = "";
             // 审核
             if(Objects.equals(SyncOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
