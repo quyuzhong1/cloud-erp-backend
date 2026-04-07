@@ -4082,10 +4082,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Transactional(rollbackFor = Exception.class)
     public Boolean addQcGoodQty(List<PurchaseOrderDTO.QcQtyDTO> dtoList) {
         if (CollectionUtils.isEmpty(dtoList)) {
-            return true;
+            return false;
         }
-        for (PurchaseOrderDTO.QcQtyDTO dto : dtoList) {
-            baseMapper.addQcGoodQty(dto);
+        int i = baseMapper.addQcGoodQty(dtoList.get(0));
+        if(i == 0){
+            return false;
         }
         return true;
     }

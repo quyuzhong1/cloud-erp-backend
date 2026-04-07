@@ -649,7 +649,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 qcQtyDTO.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
                 qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0);
                 if (qcQtyDTO.getQcGoodQty() > 0) {
-                    scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                    Boolean b = scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                    if(b){
+                        operateLogService.addModuleOperateLog(String.format("完成质检:本次质检合格量【%s】",qcQtyDTO.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");
+                    }
                 }
             }
             //批量去更新 质检数量
@@ -658,7 +661,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //回写质检通知单
             reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
-            operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
+            operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");
+            return bill;
         } else {
             return null;
         }
@@ -1304,7 +1308,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 qcQtyDTO.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
                 qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0);
                 if (qcQtyDTO.getQcGoodQty() > 0) {
-                    scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                    Boolean b = scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                    if(b){
+                        operateLogService.addModuleOperateLog(String.format("完成质检:本次质检合格量【%s】",qcQtyDTO.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), entity.getId(), "完成质检");
+                    }
                 }
             }
 
@@ -1550,7 +1557,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
                 qcQtyDTO.setPurchaseOrderDetailId(podId);
                 qcQtyDTO.setQcGoodQty(-billGoodQty); // 取反表示扣减
-                scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                Boolean b = scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                if(b){
+                    operateLogService.addModuleOperateLog(String.format("撤销质检:本次质检合格量【%s】",qcQtyDTO.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), entity.getId(), "撤销质检");
+                }
             }
         }
 
