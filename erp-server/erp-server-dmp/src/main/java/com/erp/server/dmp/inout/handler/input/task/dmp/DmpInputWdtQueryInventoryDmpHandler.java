@@ -21,6 +21,13 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.server.dmp.service.DictBasicService;
+import com.sdk.wangdian.sdk.Pager;
+import com.sdk.wangdian.sdk.api.wms.StockAPI;
+import com.sdk.wangdian.sdk.api.wms.dto.StockSearch2Request;
+import com.sdk.wangdian.sdk.api.wms.dto.StockSearch2Response;
+import com.sdk.wangdian.server.WangDianClientService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +43,7 @@ import java.util.stream.Stream;
  *
  * @author Administrator
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHandler {
@@ -48,6 +56,8 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
     private MQProducerService mqProducerService;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private WangDianClientService wangDianClientService;
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
@@ -64,14 +74,16 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
                 }
             }
         }
-
+        int pageSize = 1000;
         // 重置数据
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
             Map<String, Object> mongoData = mongoDataMaps.get(0);
-            List<Map> detailList = JSONUtil.toList((String) dmpDataMaps.get(0).get("detailList"), Map.class);
+            List<Map> wdtDetailList = JSONUtil.toList((String) dmpDataMaps.get(0).get("detailList"), Map.class);
             String erpWarehouseId = (String) mongoData.get("erpWarehouseId");
+            String thirdWarehouseCode = (String) mongoData.get("thirdWarehouseCode");
+            String batchNo = (String) mongoData.get("batchNo");
 
             InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
             dto.setWarehouseIdList(Collections.singletonList(erpWarehouseId));
@@ -95,7 +107,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
             List<InventoryQtyDTO.InventoryChangeDTO> inventoryChangeDTOS = inventoryFeign.listInventoryChangeByParam(inventoryChangeQueryDTO);
             //合并旺店通变更库存和erp变更库存成一个列表
             List<String> skuNoList = inventoryChangeDTOS.stream().map(InventoryQtyDTO.InventoryChangeDTO::getSkuNo).distinct().collect(Collectors.toList());
-            List<String> specNoList = detailList.stream().map(e -> (String) e.get("specNo")).collect(Collectors.toList());
+            List<String> specNoList = wdtDetailList.stream().map(e -> (String) e.get("specNo")).collect(Collectors.toList());
             List<String> changeSkuNoList = Stream.concat(skuNoList.stream(), specNoList.stream()).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             if(CollUtil.isNotEmpty(erpSkuIds)) {
                 changeSkuNoList = skuNoList;
@@ -108,22 +120,22 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
                 dmpInputDataDmpRelationMap.setValue(updateDmpDataMaps);
                 continue;
             }
+            List<StockSearch2Response.Detail> detailList = getWdtWarehouseDetail(thirdWarehouseCode, changeSkuNoList, pageSize, batchNo);
             for (String skuNo : changeSkuNoList) {
                 InventoryQtyDTO.InventoryDTO inventoryDTO = inventoryDTOS.stream().filter(e -> e.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-                Map map = detailList.stream().filter(e -> e.get("specNo").equals(skuNo)).findFirst().orElse(new HashMap());
-                TreeMap<String, Object> dmpDataMap = new TreeMap<>(map);
-                Boolean defect = (Boolean) dmpDataMap.getOrDefault("defect", Boolean.FALSE);
+                StockSearch2Response.Detail detail = detailList.stream().filter(e -> e.getSpecNo().equals(skuNo)).findFirst().orElse(null);
+                Boolean defect = Objects.nonNull(detail) ? detail.getDefect() : Boolean.FALSE;
                 if (defect) {
                     continue;//只更新正品类型的数据
                 }
                 //库存量
-                BigDecimal stockNum = (BigDecimal) dmpDataMap.getOrDefault("stockNum", BigDecimal.ZERO);
+                BigDecimal stockNum = Objects.nonNull(detail) ? detail.getStockNum() : BigDecimal.ZERO;
                 int erpUsableQty = Objects.nonNull(inventoryDTO) ? inventoryDTO.getQty() : 0;
                 //- 差异等于0：无需处理
                 if (erpUsableQty == stockNum.intValue()) {
                     continue;
                 }
-                buildMap(dmpDataMap, erpWarehouseId, inventoryDTO, updateDmpDataMaps, mongoData);
+                buildMap(detail, erpWarehouseId, inventoryDTO, updateDmpDataMaps, mongoData);
             }
             dmpInputDataDmpRelationMap.setValue(updateDmpDataMaps);
             //对异常进行mq预警
@@ -133,6 +145,42 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
                 this.sendWarnMsg((String) mongoData.get("inputTaskId"),(String) mongoData.get("batchNo"), warnMsg);
             }
         }
+    }
+
+    private List<StockSearch2Response.Detail> getWdtWarehouseDetail(String thirdWarehouseCode, List<String> changeSkuNoList, int pageSize, String batchNo) {
+        //获取全量sku旺店通库存
+        StockAPI stockAPI = wangDianClientService.get(StockAPI.class);
+        StockSearch2Request request = new StockSearch2Request();
+        request.setWarehouseNo(thirdWarehouseCode);
+        request.setSpecNos(changeSkuNoList);
+        List<StockSearch2Response.Detail> wdtDetailList = new ArrayList<>();
+        Pager pager = new Pager();
+        pager.setPageNo(0);
+        pager.setPageSize(pageSize);
+        pager.setCalcTotal(true);
+        boolean hasNext = true;
+        while (hasNext) {
+            StockSearch2Response response;
+            try {
+                response = stockAPI.search2(request, pager);
+                log.warn("旺店通查询库存, 仓库: {}, 批次: {}, 响应: {}", thirdWarehouseCode, batchNo, JSONUtil.toJsonStr(response));
+            } catch (Exception e) {
+                log.error("旺店通查询库存异常, 仓库: {}, 异常信息: {}", thirdWarehouseCode, e.getMessage(), e);
+                hasNext = false;
+                continue;
+            }
+            if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getDetailList())) {
+                hasNext = false;
+                continue;
+            }
+            Integer totalCount = response.getTotal();
+            if (totalCount <= (pager.getPageNo() + 1) * pageSize) {
+                hasNext = false;
+            }
+            pager.setPageNo(pager.getPageNo() + 1);
+            wdtDetailList.addAll(response.getDetailList());
+        }
+        return wdtDetailList;
     }
 
     private void sendWarnMsg(String inputTaskId,String batchNo, String warnMsg) {
@@ -150,7 +198,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
     }
 
 
-    private static void buildMap(TreeMap<String, Object> dmpDataMap, String erpWarehouseId, InventoryQtyDTO.InventoryDTO inventoryDTO, List<TreeMap<String, Object>> updateDmpDataMaps, Map<String, Object> mongoData) {
+    private static void buildMap(StockSearch2Response.Detail detail, String erpWarehouseId, InventoryQtyDTO.InventoryDTO inventoryDTO, List<TreeMap<String, Object>> updateDmpDataMaps, Map<String, Object> mongoData) {
         String batchNo = (String) mongoData.get("batchNo");
         String erpWarehouseName = (String) mongoData.get("erpWarehouseName");
         String thirdWarehouseId = (String) mongoData.get("thirdWarehouseId");
@@ -163,16 +211,18 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         String skuId = Objects.nonNull(inventoryDTO) ? inventoryDTO.getSkuId() : "";
         int erpUsableQty = Objects.nonNull(inventoryDTO) ? inventoryDTO.getQty() : 0;
         //可用库存数量
-        BigDecimal availableSendStock = (BigDecimal) dmpDataMap.getOrDefault("availableSendStock", BigDecimal.ZERO);
+        BigDecimal availableSendStock = Objects.nonNull(detail) ? detail.getAvailableSendStock() : BigDecimal.ZERO;
         //库存量
-        BigDecimal stockNum = (BigDecimal) dmpDataMap.getOrDefault("stockNum", BigDecimal.ZERO);
+        BigDecimal stockNum = Objects.nonNull(detail) ? detail.getStockNum() : BigDecimal.ZERO;
         //锁定量
-        BigDecimal lockNum = (BigDecimal) dmpDataMap.getOrDefault("lockNum", BigDecimal.ZERO);
+        BigDecimal lockNum = Objects.nonNull(detail) ? detail.getLockNum() : BigDecimal.ZERO;
         //第三方skuNo
-        String thirdSkuNo = (String) dmpDataMap.getOrDefault("specNo", skuNo);
+        String thirdSkuNo = detail.getSpecNo() != null ? detail.getSpecNo() : skuNo;
         if (CharSequenceUtil.isBlank(thirdSkuNo)) {
             return;//erp和旺店通都没有sku就不处理
         }
+
+        TreeMap<String, Object> dmpDataMap = new TreeMap<>();
         dmpDataMap.put("sourcePlatform", ThirdSysTypeEnum.WDT.getCode());
         dmpDataMap.put("billStatus", DmpOutputTaskRecordStatusEnum.INIT.getCode());
         dmpDataMap.put("erpWarehouseId", erpWarehouseId);
