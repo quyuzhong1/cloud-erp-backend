@@ -1,22 +1,31 @@
 package com.erp.server.plm.service.impl;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.math.BigDecimal;
-import java.net.SocketTimeoutException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.vo.LoginUser;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.plm.dto.excel.SkuStdRetailPriceExcelDTO;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.listener.SkuStdRetailPriceExcelListener;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -32,23 +41,18 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.file.dto.FileDTO.FileSizeInfo;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO.ExportDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO.SettingDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO.UpdateDTO;
-import com.erp.model.plm.dto.excel.SkuStdRetailPriceExcelDTO;
 import com.erp.model.plm.entity.PlmCfgSettingEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
-import com.erp.model.plm.enums.SkuStdSettingEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.plm.listener.SkuStdRetailPriceExcelListener;
 import com.erp.server.plm.mapper.SkuStdRetailPriceMapper;
 import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.CfgSettingService;
@@ -62,6 +66,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
 
 /**
  * <p>
@@ -88,6 +93,11 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
     
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
+
+    @Resource
+    private FileFeign fileFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -335,31 +345,76 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
    	}
    	
    	@Override
-	public Boolean importExcel(FileSizeInfo excelFile, HttpServletResponse response) throws Exception {
-   		SkuStdRetailPriceExcelListener billListener = new SkuStdRetailPriceExcelListener();
-        try {
-            EasyExcel.read(FastDFSClientUtil.getInputStream(excelFile.getFileUrl()), SkuStdRetailPriceExcelDTO.class, billListener).sheet(0).doRead();
-            List<SkuStdRetailPriceExcelDTO> errorList = billListener.getErrorList();
-            if (!errorList.isEmpty()) {
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/skuStdRetailPriceError.xlsx";
-                String name = "sku标准零售价错误信息.xlsx";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
-                }
-                return Boolean.FALSE;
-            }
-        }catch (Exception e) {
-        	log.error("导入失败" , e);
-            throw new ServiceException("导入失败");
-        }
+	public Boolean importExcel(BaseDTO.ImportDTO dto, HttpServletResponse response) throws Exception {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入sku标准零售价", FileTaskEventEnum.IMPORT_PLM_SKU_STD_RETAIL_PRICE.getCode(), dto);
         return Boolean.TRUE;
 	}
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importSkuStdRetailPrice(BaseDTO.ImportDTO dto) {
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+   		SkuStdRetailPriceExcelListener excelListenerUtil = new SkuStdRetailPriceExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SkuStdRetailPriceExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<SkuStdRetailPriceExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "sku标准零售价错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SkuStdRetailPriceExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+//        try {
+//            EasyExcel.read(FastDFSClientUtil.getInputStream(excelFile.getFileUrl()), SkuStdRetailPriceExcelDTO.class, billListener).sheet(0).doRead();
+//            List<SkuStdRetailPriceExcelDTO> errorList = billListener.getErrorList();
+//            if (!errorList.isEmpty()) {
+//                StringBuilder sb = new StringBuilder();
+//                String excelPath = "excel/skuStdRetailPriceError.xlsx";
+//                String name = "sku标准零售价错误信息.xlsx";
+//                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//                sb.append(date);
+//                sb.append(name);
+//                try {
+//                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+//                } catch (IOException e) {
+//                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
+//                }
+//            }
+//        }catch (Exception e) {
+//        	log.error("导入失败" , e);
+//            throw new ServiceException("导入失败");
+//        }
+    }
 
 	@Override
 	public Boolean exportExcel(ExportDTO dto) {
