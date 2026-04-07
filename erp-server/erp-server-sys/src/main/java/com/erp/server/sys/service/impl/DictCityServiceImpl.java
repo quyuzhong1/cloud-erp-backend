@@ -13,6 +13,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.DictCityConstants;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -21,6 +22,7 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.sys.mapper.DictCityMapper;
@@ -94,10 +96,13 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         //根据 国家code 获取城市信息
         List<DictCityEntity> allList = this.listByCountryCode(countryCode);
         List<DictCityDTO.ListDTO> flagList = BeanMapper.copyList(allList, DictCityDTO.ListDTO.class);
+        Map<String, DictCityEntity> cityEntityMap = allList.stream()
+                .filter(entity -> StringUtils.isNotBlank(entity.getId()))
+                .collect(Collectors.toMap(DictCityEntity::getId, entity -> entity, (o1, o2) -> o1));
         List<DictCityDTO.ListDTO> treeList = flagList.stream().
                 filter(item -> "0".equals(item.getParentId())).
                 map(obj -> {
-                    obj.setChildrenList(getChildren(obj, flagList));
+                    obj.setChildrenList(getChildren(obj, flagList, countryCode, cityEntityMap));
                     return obj;
                 }).collect(Collectors.toList());
 
@@ -484,14 +489,32 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
      * @author yl
      * @date 2023-05-11 17:26
      */
-    private List<DictCityDTO.ListDTO> getChildren(DictCityDTO.ListDTO item, List<DictCityDTO.ListDTO> flagList) {
+    private List<DictCityDTO.ListDTO> getChildren(DictCityDTO.ListDTO item, List<DictCityDTO.ListDTO> flagList, String countryCode, Map<String, DictCityEntity> cityEntityMap) {
         List<DictCityDTO.ListDTO> collect = flagList.stream().filter(city -> item.getId().equals(city.getParentId())).
                 map(c -> {
-                    c.setChildrenList(getChildren(c, flagList));
+                    c.setChildrenList(getChildren(c, flagList, countryCode, cityEntityMap));
                     return c;
                 }).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect) && isChinaCityWithoutDistrict(item, countryCode, cityEntityMap)) {
+            DictCityDTO.ListDTO noDistrict = new DictCityDTO.ListDTO();
+            noDistrict.setId(DictCityConstants.buildNoDistrictId(item.getId()));
+            noDistrict.setName(DictCityConstants.NO_DISTRICT_NAME);
+            noDistrict.setDisabled(Boolean.FALSE);
+            noDistrict.setParentId(item.getId());
+            return Collections.singletonList(noDistrict);
+        }
         return CollectionUtils.isEmpty(collect) ? null : collect;
 
+    }
+
+    private boolean isChinaCityWithoutDistrict(DictCityDTO.ListDTO item, String countryCode, Map<String, DictCityEntity> cityEntityMap) {
+        if (!CharSequenceUtil.equals(DictValueEnum.CN.getCode(), countryCode)) {
+            return false;
+        }
+        DictCityEntity cityEntity = cityEntityMap.get(item.getId());
+        return cityEntity != null
+                && CharSequenceUtil.equals(cityEntity.getType(), city)
+                && !Boolean.TRUE.equals(cityEntity.getDisabled());
     }
 
     @Override
