@@ -569,14 +569,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
-        QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
-        //来源
-        addDto.setSourceCode(entity.getCode());
-        addDto.setSourceId(entity.getId());
-        addDto.setSourceType(SourceTypeEnum.QC_NOTICE.getCode());
-        //质检仓库
-        addDto.setWarehouseId(entity.getQcWarehouseId());
-
         List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         //人员
         List<String> userIds = qcNoticeDetails.stream().map(QcNoticeDetailEntity::getQcUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -589,9 +581,16 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<QcNoticeDTO.QcInspectItemAddDTO> qcInspectItemAddDTOS = new ArrayList<>();
         List<QcNoticeDTO.QcImageAddDTO> qcImageAddDTOS = new ArrayList<>();
         for (QcNoticeDetailEntity qcNoticeDetail : qcNoticeDetails) {
+            QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
             QcProductDTO.AddDTO qcProduct = new QcProductDTO.AddDTO();
             QcResultDTO.AddDTO qcInfo = new QcResultDTO.AddDTO();
             QcNoticeDTO.QcStandardAddDTO qcStandardAddDTO = new QcNoticeDTO.QcStandardAddDTO();
+            //来源
+            addDto.setSourceCode(entity.getCode());
+            addDto.setSourceId(entity.getId());
+            addDto.setSourceType(SourceTypeEnum.QC_NOTICE.getCode());
+            //质检仓库
+            addDto.setWarehouseId(entity.getQcWarehouseId());
 
             addDto.setSourceDetailId(qcNoticeDetail.getId());
             //质检日期
@@ -616,6 +615,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcInfo.setBadDescription(qcNoticeDetail.getBadDesc());
             qcInfo.setHandleModeDict("waitHandle");//默认待定
             //qcInfo.setIsInsideQc(Boolean.FALSE);
+            qcInfo.setQcQty(qcNoticeDetail.getQcQty());
             qcInfo.setTotalQty(qcNoticeDetail.getQcNoticeQty());
             qcInfo.setId("");
             //抽样方案
@@ -669,9 +669,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             addDto.setQcStandardView(qcStandardAddDTO);
             addDto.setQcInfo(qcInfo);
+            //新增质检单
+            qcInfoService.add(addDto);
         }
-        //新增质检单
-        qcInfoService.add(addDto);
         return Boolean.TRUE;
     }
 
