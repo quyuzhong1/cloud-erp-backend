@@ -146,15 +146,20 @@ public class QcSamplingAqlRuleServiceImpl extends SuperServiceImpl<QcSamplingAql
         if (current == null) {
             return null;
         }
-        Integer sampleQty = current.getSampleQty();
+        Integer oldSampleQty = current.getSampleQty();
+        Integer newSampleQty = current.getSampleQty();
         //比较上级样本字码和本级样本字码是否一致
         if (!current.getParentCode().equals(current.getSampleQtyCode())){
             current = qcSamplingAqlRuleMapper.selectByCodeAndAql(current.getParentCode(), aqlValue);
+            if (current == null) {
+                return null;
+            }
+            newSampleQty = current.getSampleQty();
         }
         // 1. 若当前有值，直接返回
-        if (current != null && current.getAcceptQty() != null) {
-            //重置抽样数量，质检部说抽样数量不变
-            current.setSampleQty(sampleQty);
+        if (current.getAcceptQty() != null) {
+            //重置抽样数量，取抽样数量较大的那个
+            current.setSampleQty(oldSampleQty > newSampleQty ? oldSampleQty : newSampleQty);
             return current;
         }
         return null;
