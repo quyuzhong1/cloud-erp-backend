@@ -117,14 +117,16 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
     */
     private void handleData(DmpCfgEtlEntity dmpCfgEtlEntity, DmpCfgEtlDTO.CommonDTO addDTO) {
         // 验证数据 & 数据赋值
-        if (StringUtils.isBlank(addDTO.getExtendJson())) {
+        String extendJson = StringUtils.trim(addDTO.getExtendJson());
+        if (StringUtils.isBlank(extendJson)) {
             dmpCfgEtlEntity.setExtendJson("{}");
         } else {
-            // 校验是否json格式
-            if (!JSON.isValid(addDTO.getExtendJson())) {
+            try {
+                JSON.parse(extendJson);
+            } catch (Exception e) {
                 ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
-            dmpCfgEtlEntity.setExtendJson(addDTO.getExtendJson());
+            dmpCfgEtlEntity.setExtendJson(extendJson);
         }
         Integer count = lambdaQuery()
                 .eq(DmpCfgEtlEntity::getExecUrl, dmpCfgEtlEntity.getExecUrl())

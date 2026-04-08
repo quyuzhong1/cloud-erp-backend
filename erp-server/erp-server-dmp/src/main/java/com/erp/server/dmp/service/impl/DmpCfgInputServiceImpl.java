@@ -150,14 +150,16 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
                 throw new ServiceException("执行系统是RestCloud下, 执行Url不能重复");
             }
         }
-        if (StringUtils.isBlank(dmpCfgInputEntity.getExtendJson())) {
+        String extendJson = StringUtils.trim(dmpCfgInputEntity.getExtendJson());
+        if (StringUtils.isBlank(extendJson)) {
             dmpCfgInputEntity.setExtendJson("{}");
         } else {
-            // 校验是否json格式
-            if (!JSON.isValid(dmpCfgInputEntity.getExtendJson())) {
+            try {
+                JSON.parse(extendJson);
+            } catch (Exception e) {
                 ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
-            dmpCfgInputEntity.setExtendJson(dmpCfgInputEntity.getExtendJson());
+            dmpCfgInputEntity.setExtendJson(extendJson);
         }
     }
 
