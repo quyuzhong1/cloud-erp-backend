@@ -1344,10 +1344,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     && Objects.nonNull(qcInfoView.getQcGoodQty())
                     && qcInfoView.getQcGoodQty() >= 0) {
 
-                if (qcInfoView.getQcBadQty() == 0 && qcInfoView.getQcGoodQty() == 0) {
-                    throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
-                }
-
                 BigDecimal qcGoodRate = BigDecimal.ZERO;
                 BigDecimal qcBadRate = BigDecimal.ZERO;
                 BigDecimal totalQty = BigDecimal.valueOf(qcInfoView.getQcGoodQty())
