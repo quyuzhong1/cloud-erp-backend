@@ -752,11 +752,6 @@ public class QcNoticeDTO implements Serializable {
         private String purchaseOrderCode;
 
         /**
-         * 供应商id
-         */
-        private String supplierId;
-
-        /**
          * 质检人id
          */
         private String qcUserId;
