@@ -293,20 +293,6 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         // 部门ID
         String deptId = entity.getSalesDeptId();
 
-        if (StringUtils.isNotBlank(deptId)){
-            SysDepartmentEntity departmentDTO = deptList
-                    .stream()
-                    .filter(e -> e.getId().equals(deptId))
-                    .findFirst()
-                    .orElse(null);
-            if (null != departmentDTO){
-                // 部门编码
-                departmentCode = departmentDTO.getCode();
-                // 部门名称
-                departmentName = departmentDTO.getName();
-            }
-        }
-
         // 国家信息为空替换为客户对应国家
         if (StringUtils.isBlank(countryCode) && null != customerInfo){
             countryCode = customerInfo.getCountryId();
@@ -339,6 +325,24 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             militaryRegionCode = dictPartitionEntity.getCode();
             // 军区名称
             militaryRegionName = dictPartitionEntity.getName();
+        }
+        CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(finalPartitionId) && e.getDictPlatform().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
+        if (null != cfgDeptRelationEntity){
+            deptId = cfgDeptRelationEntity.getDeptId();
+        }
+        if (StringUtils.isNotBlank(deptId)){
+            String finalDeptId = deptId;
+            SysDepartmentEntity departmentDTO = deptList
+                    .stream()
+                    .filter(e -> e.getId().equals(finalDeptId))
+                    .findFirst()
+                    .orElse(null);
+            if (null != departmentDTO){
+                // 部门编码
+                departmentCode = departmentDTO.getCode();
+                // 部门名称
+                departmentName = departmentDTO.getName();
+            }
         }
         // 国家编码
         shudiyunB2cOrderDTO.setCountry_code(countryCode);
