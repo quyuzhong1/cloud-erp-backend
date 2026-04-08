@@ -1108,6 +1108,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
             //该sku待上架
             qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.WAIT.getCode());
+            qcNoticeDetailEntity.setQcDate(LocalDateTime.now());
             qcNoticeDetailService.updateById(qcNoticeDetailEntity);
 
             //回写质检单
@@ -1407,6 +1408,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
             //该sku待上架
             qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.WAIT.getCode());
+            qcNoticeDetailEntity.setQcDate(LocalDateTime.now());
             qcNoticeDetailService.updateById(qcNoticeDetailEntity);
 
             //回写质检单

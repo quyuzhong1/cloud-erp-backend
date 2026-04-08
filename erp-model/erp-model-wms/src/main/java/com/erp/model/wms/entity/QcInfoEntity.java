@@ -69,6 +69,12 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
     private String purchaseOrderCode;
 
     /**
+     * 采购订单明细id
+     */
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
+
+    /**
      * 质检状态
      */
     @TableField("qc_status")
