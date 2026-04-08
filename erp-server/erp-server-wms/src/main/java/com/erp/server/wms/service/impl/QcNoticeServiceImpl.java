@@ -52,6 +52,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.QcNoticeDetailExcelListener;
 import com.erp.server.wms.mapper.QcNoticeMapper;
 import com.erp.server.wms.service.*;
@@ -1078,7 +1079,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                                 BeanUtils.copyProperties(badImageView,attachDTO);
                                 attachDTOs.add(attachDTO);
                             }
-                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                            wmsAttachmentService.batchSave(attachDTOs, WmsConstant.BAD,id);
                         } else {
                             wmsAttachmentService.batchRemoveAttachment(Collections.singletonList(id));
                         }
@@ -1168,6 +1169,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", StrUtil.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
             // 记录主单完成质检操作
             operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
+            //质检单日志
+            operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcInfoView.getQcBillCode()), ModuleTypeEnum.QC_ORDER.getCode(), qcInfoView.getQcBillId(), "完成质检（详细）");
+
         }
         Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 
@@ -1350,7 +1354,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                                 attachDTOs.add(attachDTO);
 
                             }
-                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                            wmsAttachmentService.batchSave(attachDTOs,WmsConstant.BAD,id);
                         } else {
                             wmsAttachmentService.batchRemoveAttachment(Collections.singletonList(id));
                         }
@@ -1450,6 +1454,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", StrUtil.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
             // 记录主单完成质检操作
             operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
+            //质检单日志
+            operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcInfoView.getQcBillCode()), ModuleTypeEnum.QC_ORDER.getCode(), qcInfoView.getQcBillId(), "完成质检（简易）");
         }
         Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 
