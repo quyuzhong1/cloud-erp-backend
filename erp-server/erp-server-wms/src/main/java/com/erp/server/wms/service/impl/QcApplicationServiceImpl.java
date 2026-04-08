@@ -38,7 +38,7 @@ import com.erp.model.wms.entity.QcApplicationDetailEntity;
 import com.erp.model.wms.entity.QcApplicationEntity;
 import com.erp.model.wms.entity.QcNoticeEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.enums.QcNoticeStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -588,6 +588,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
 
         this.lambdaUpdate().eq(QcApplicationEntity::getId, id)
             .set(QcApplicationEntity::getApproveUserId, userInfo.getUid())
+            .set(QcApplicationEntity::getApproveUserName,userInfo.getUserName())
             .set(QcApplicationEntity::getApproveStatus, approveStatus)
             .set(QcApplicationEntity::getApproveTime, LocalDateTime.now())
             .update(new QcApplicationEntity());
@@ -602,6 +603,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     public void updateForDisApprove(String id, String approveStatus) {
         this.lambdaUpdate().eq(QcApplicationEntity::getId, id)
             .set(QcApplicationEntity::getApproveUserId, "")
+            .set(QcApplicationEntity::getApproveUserName,"")
             .set(QcApplicationEntity::getApproveStatus, approveStatus)
             .set(QcApplicationEntity::getApproveTime, null)
             .update(new QcApplicationEntity());
@@ -737,7 +739,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             //质检类型名称
             data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
             //质检状态名称
-            data.setQcStatusName(QcBillStatusEnum.getNameByCode(data.getQcStatus()));
+            data.setQcStatusName(QcNoticeStatusEnum.getNameByCode(data.getQcStatus()));
             //质检结果名称
             data.setQcResultName(QcResultEnum.getByCode(data.getQcResult()));
             // 仓库名称
