@@ -1,11 +1,9 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -15,14 +13,9 @@ import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.dmp.entity.DmpSoDetailEntity;
-import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.erp.server.dmp.service.DmpSoDetailService;
-import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoReturnInfoService;
 import com.erp.server.dmp.service.DmpSoRefundInfoService;
 
@@ -46,10 +39,6 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 	private DmpSoReturnInfoService dmpSoReturnInfoService;
     @Resource
     private DmpSoRefundInfoService dmpSoRefundInfoService;
-    @Resource
-    private DmpSoInfoService dmpSoInfoService;
-    @Resource
-    private DmpSoDetailService dmpSoDetailService;
 	
 	@Override
 	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(
@@ -59,7 +48,6 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
         boolean isRefundStorage = STORAGE_REFUND_INFO.equals(storageName) || STORAGE_REFUND_DETAIL.equals(storageName);
 		List<Map<String, Object>> resultDmpInputMongoChildList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
-            Map<String, DmpSoDetailEntity> orderSkuDetailMap = buildOrderSkuDetailMap(dmpInputMongoChildList);
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 				Boolean receiveGoods = false;
 				Object process_dto_list_obj = dmpInputMongoChild.get("process_dto_list");
@@ -101,19 +89,12 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 String reasonEnglish = ObjectUtil.defaultIfNull(dmpInputMongoChild.get("reason_english"), "").toString();
                 String issueReason = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(reasonChinese, reasonEnglish);
                 String issueReasonName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(reasonEnglish, reasonChinese);
-                DmpSoDetailEntity matchedSoDetail = orderSkuDetailMap.get(buildOrderSkuKey(parentOrderId, productId));
-                String resolvedSkuId = productId;
-                String resolvedSkuNo = productId;
-                if (matchedSoDetail != null) {
-                    resolvedSkuId = StringUtils.defaultIfBlank(matchedSoDetail.getSkuId(), resolvedSkuId);
-                    resolvedSkuNo = StringUtils.defaultIfBlank(matchedSoDetail.getSkuNo(), resolvedSkuNo);
-                }
 
 				resultDmpInputMongoChild.put("buyer_login_id" , dmpInputMongoChild.get("buyer_login_id"));
                 resultDmpInputMongoChild.put("sourcePlatform", "AliExpress");
 				resultDmpInputMongoChild.put("issue_id" , issueId);
-				resultDmpInputMongoChild.put("skuId" , resolvedSkuId);
-				resultDmpInputMongoChild.put("skuNo" , resolvedSkuNo);
+				resultDmpInputMongoChild.put("skuId" , productId);
+				resultDmpInputMongoChild.put("skuNo" , productId);
                 resultDmpInputMongoChild.put("skuName", AliExpressIssueSolutionResolver.trimForDb(dmpInputMongoChild.get("product_name")));
 				resultDmpInputMongoChild.put("detailStatus" , issueStatus);
 				resultDmpInputMongoChild.put("returnOriginalType" , reverseDetailStatus);
@@ -147,10 +128,6 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 resultDmpInputMongoChild.put("platformUpdateTime", AliExpressIssueSolutionResolver.getLatestEventTime(dmpInputMongoChild));
                 resultDmpInputMongoChild.put("returnTime", dmpInputMongoChild.get("gmt_create"));
                 resultDmpInputMongoChild.put("refundTime", dmpInputMongoChild.get("gmt_create"));
-                if (matchedSoDetail != null) {
-                    resultDmpInputMongoChild.put("soEntryId", matchedSoDetail.getId());
-                    resultDmpInputMongoChild.put("srcOrderDetailId", matchedSoDetail.getId());
-                }
                 if (isRefundStorage) {
                     resultDmpInputMongoChild.put("status", AliExpressIssueSolutionResolver.resolveRefundStatus(reverseDetailStatus, issueStatus));
                 } else {
@@ -163,74 +140,6 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 		}
 		return resultDmpInputMongoChildList;
 	}
-
-    private Map<String, DmpSoDetailEntity> buildOrderSkuDetailMap(List<Map<String, Object>> dmpInputMongoChildList) {
-        List<String> parentOrderIdList = dmpInputMongoChildList.stream()
-                .map(item -> ObjectUtil.defaultIfNull(item.get("parent_order_id"), "").toString())
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        List<String> productIdList = dmpInputMongoChildList.stream()
-                .map(item -> ObjectUtil.defaultIfNull(item.get("product_id"), "").toString())
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(parentOrderIdList) || CollUtil.isEmpty(productIdList)) {
-            return new HashMap<>();
-        }
-
-        List<DmpSoInfoEntity> soInfoList = dmpSoInfoService.lambdaQuery()
-                .in(DmpSoInfoEntity::getThirdCode, parentOrderIdList)
-                .eq(DmpSoInfoEntity::getSourcePlatform, DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())
-                .eq(DmpSoInfoEntity::getNextLevelId, nextLevelId)
-                .eq(DmpSoInfoEntity::getIsDeleted, false)
-                .list();
-        if (CollUtil.isEmpty(soInfoList)) {
-            return new HashMap<>();
-        }
-
-        Map<String, String> mainIdOrderIdMap = new HashMap<>();
-        List<String> mainIdList = new ArrayList<>();
-        for (DmpSoInfoEntity soInfoEntity : soInfoList) {
-            if (StringUtils.isBlank(soInfoEntity.getId()) || StringUtils.isBlank(soInfoEntity.getThirdCode())) {
-                continue;
-            }
-            mainIdOrderIdMap.putIfAbsent(soInfoEntity.getId(), soInfoEntity.getThirdCode());
-            mainIdList.add(soInfoEntity.getId());
-        }
-        if (CollUtil.isEmpty(mainIdList)) {
-            return new HashMap<>();
-        }
-
-        List<DmpSoDetailEntity> soDetailList = dmpSoDetailService.lambdaQuery()
-                .in(DmpSoDetailEntity::getMainId, mainIdList)
-                .in(DmpSoDetailEntity::getPlatformSpuNo, productIdList)
-                .eq(DmpSoDetailEntity::getIsDeleted, false)
-                .list();
-        if (CollUtil.isEmpty(soDetailList)) {
-            return new HashMap<>();
-        }
-
-        soDetailList.sort(Comparator
-                .comparing((DmpSoDetailEntity entity) -> entity.getCreateTime(),
-                        Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(DmpSoDetailEntity::getId, Comparator.nullsLast(Comparator.naturalOrder())));
-
-        Map<String, DmpSoDetailEntity> orderSkuDetailMap = new HashMap<>();
-        for (DmpSoDetailEntity soDetailEntity : soDetailList) {
-            String orderId = mainIdOrderIdMap.get(soDetailEntity.getMainId());
-            String platformSpuNo = soDetailEntity.getPlatformSpuNo();
-            if (StringUtils.isBlank(orderId) || StringUtils.isBlank(platformSpuNo)) {
-                continue;
-            }
-            orderSkuDetailMap.putIfAbsent(buildOrderSkuKey(orderId, platformSpuNo), soDetailEntity);
-        }
-        return orderSkuDetailMap;
-    }
-
-    private String buildOrderSkuKey(String parentOrderId, String productId) {
-        return StringUtils.defaultString(parentOrderId) + "_" + StringUtils.defaultString(productId);
-    }
 	
 	@Override
 	protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {

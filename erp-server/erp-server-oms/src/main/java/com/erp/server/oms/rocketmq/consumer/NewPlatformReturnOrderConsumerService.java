@@ -184,10 +184,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			refundOrderDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
 			refundOrderDetailEntity.setReturnQty(detail.getReturnQty());
 			refundOrderDetailEntity.setRemark(detail.getRemark());
-			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
-					.filter(v -> Objects.equals(v.getPlatformSkuNo(), detail.getPlatformSkuNo()))
-					.findFirst()
-					.orElse(null);
+			SoB2cDetailEntity soB2cDetailEntity = resolveSoDetail(detail.getPlatformSkuNo(), soB2cDetailEntityList, dto.getDictPlatform());
 			if (Objects.nonNull(soB2cDetailEntity)) {
 				refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
 				refundOrderDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
@@ -210,9 +207,45 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		return list;
 	}
 
+	private SoB2cDetailEntity resolveSoDetail(String platformSkuNo, List<SoB2cDetailEntity> soB2cDetailEntityList, String dictPlatform) {
+		if (CollectionUtils.isEmpty(soB2cDetailEntityList) || StringUtils.isBlank(platformSkuNo)) {
+			return null;
+		}
+		SoB2cDetailEntity matchedDetail = soB2cDetailEntityList.stream()
+				.filter(v -> Objects.equals(v.getPlatformSkuNo(), platformSkuNo))
+				.findFirst()
+				.orElse(null);
+		if (Objects.nonNull(matchedDetail)) {
+			return matchedDetail;
+		}
+		if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)) {
+			return soB2cDetailEntityList.stream()
+					.filter(v -> Objects.equals(v.getPlatformSpuNo(), platformSkuNo))
+					.findFirst()
+					.orElse(null);
+		}
+		return null;
+	}
+
 	private ListingInfoWithSkuMappingDTO resolveMappingByPlatformSku(String platformSkuNo, String dictPlatform, String shopId) {
 		if (StringUtils.isBlank(platformSkuNo) || StringUtils.isBlank(dictPlatform) || StringUtils.isBlank(shopId)) {
 			return null;
+		}
+		if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)) {
+			Map<String, List<ListingInfoWithSkuMappingDTO>> mappingMap = skuMappingService
+					.mapListingByPlatformSkuNo(Collections.singletonList(""),
+							Collections.singletonList(platformSkuNo),
+							dictPlatform,
+							shopId,
+							null,
+							null);
+			List<ListingInfoWithSkuMappingDTO> mappingDTOList = mappingMap.values().stream()
+					.flatMap(List::stream)
+					.collect(Collectors.toList());
+			if (CollectionUtils.isEmpty(mappingDTOList)) {
+				return null;
+			}
+			return skuMappingService.checkAndMappingDTO(mappingDTOList, platformSkuNo, dictPlatform, "");
 		}
 		List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService
 				.mapListingByPlatformSkuNo(Collections.singletonList(platformSkuNo),
