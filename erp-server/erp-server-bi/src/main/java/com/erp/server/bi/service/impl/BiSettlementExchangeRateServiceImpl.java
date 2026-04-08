@@ -349,6 +349,17 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         }
     }
 
+    @Override
+    public BiSettlementExchangeRateEntity getByExchangeParamUnique(BiSettlementExchangeRateDTO.ExchangeParamDTO exchangeParamDTO) {
+        return lambdaQuery().eq(BiSettlementExchangeRateEntity::getType, exchangeParamDTO.getType())
+                .eq(BiSettlementExchangeRateEntity::getTargetCurrencyCode, exchangeParamDTO.getTargetCurrencyCode())
+                .eq(BiSettlementExchangeRateEntity::getSourceCurrencyCode, exchangeParamDTO.getSourceCurrencyCode())
+                .eq(BiSettlementExchangeRateEntity::getSettlementDateBegin, exchangeParamDTO.getSettlementDateBegin())
+                .eq(BiSettlementExchangeRateEntity::getSettlementDateEnd, exchangeParamDTO.getSettlementDateEnd())
+                .last("limit 1")
+                .one();
+    }
+
     // 构建DmpPushMsgEntity
     private DmpPushMsgEntity buildDmpPushMsgEntity(BiSettlementExchangeRateEntity biSettlementExchangeRateEntity) {
         DmpPushMsgEntity dmpPushMsgEntity = new DmpPushMsgEntity();
