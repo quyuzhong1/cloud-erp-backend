@@ -50,7 +50,9 @@ public class SkuStdRetailPriceQueryHandler extends AbstractQueryHandler {
                 return " g.id is null ";
             }
         }
-
+        if("t.id".equals(field)){
+            return " ( g.id " + compareCodeSplicingValueSql +" or t.id " + compareCodeSplicingValueSql+" ) ";
+        }
         return null;
     }
 
