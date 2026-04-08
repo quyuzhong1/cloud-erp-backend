@@ -11,24 +11,26 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.InventoryOrderTypeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
-import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.server.dmp.service.DmpWdtWarehouseInventoryRecordService;
-import com.erp.server.dmp.service.ThirdMappingService;
-import com.erp.server.dmp.service.ThirdWarehouseService;
+import com.erp.server.dmp.service.*;
 import com.sdk.wangdian.enums.WdtInStockStatusEnum;
 import com.sdk.wangdian.enums.WdtOutStockStatusEnum;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
@@ -42,6 +44,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +77,10 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
     private ThirdWarehouseService thirdWarehouseService;
     @Resource
     private DmpWdtWarehouseInventoryRecordService dmpWdtWarehouseInventoryRecordService;
-
+    @Resource
+    private MQProducerService mqProducerService;
+    @Resource
+    private DictBasicService dictBasicService;
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         dmpPushTaskService.updateStatus(paramDTO);
@@ -125,6 +131,22 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
         if (CharSequenceUtil.isAllNotBlank(batchNo,warehouseNo,status) && CollUtil.isNotEmpty(skuNoList)){
             dmpWdtWarehouseInventoryRecordService.updateInventoryStatus(batchNo, warehouseNo, skuNoList, status, msg);
         }
+        if (DmpInputTaskStatusEnum.ERROR.getCode().equals(status)){
+            sendWarnMsg("", batchNo, msg);
+        }
+    }
+    private void sendWarnMsg(String inputTaskId,String batchNo, String warnMsg) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("旺店通库存同步预警");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTitle("库存同步报错，批次号：" + batchNo);
+        warnMsgInfo.setTableName("dmp_wdt_warehouse_inventory_record");
+        warnMsgInfo.setTableId(inputTaskId);
+        warnMsgInfo.setKeyInfo(warnMsg);
+        List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
+        warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList) ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : new ArrayList<>());
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
     private ApiResult<?> dataProcess(Object ext) {
