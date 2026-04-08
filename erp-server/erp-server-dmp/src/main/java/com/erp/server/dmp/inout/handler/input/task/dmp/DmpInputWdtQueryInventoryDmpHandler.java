@@ -217,7 +217,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         //锁定量
         BigDecimal lockNum = Objects.nonNull(detail) ? detail.getLockNum() : BigDecimal.ZERO;
         //第三方skuNo
-        String thirdSkuNo = detail.getSpecNo() != null ? detail.getSpecNo() : skuNo;
+        String thirdSkuNo = Objects.nonNull(detail) && CharSequenceUtil.isNotBlank(detail.getSpecNo()) ? detail.getSpecNo() : skuNo;
         if (CharSequenceUtil.isBlank(thirdSkuNo)) {
             return;//erp和旺店通都没有sku就不处理
         }
