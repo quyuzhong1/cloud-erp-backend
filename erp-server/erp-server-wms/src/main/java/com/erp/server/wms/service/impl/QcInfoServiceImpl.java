@@ -1030,16 +1030,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
         }
         BeanMapper.copy(dto, bill);
-        if (Objects.nonNull(dto.getQcInfo())
-                && StringUtils.isNotBlank(dto.getQcInfo().getId())) {
-            QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
-            QcResultEntity qcResult = qcResultService.getById(qcInfo.getId());
-            if (Objects.nonNull(qcResult)) {
-                String msg = StrUtil.format("用户【{}】修改质检量从【{}}】为【{}】", UserContext.getDefaultLoginUser().getUserName(),qcResult.getQcQty(),dto.getQcInfo().getQcQty());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), billId, "暂存");
-            }
-        }
-
         bill.setId(billId);
 //        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
 //        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
