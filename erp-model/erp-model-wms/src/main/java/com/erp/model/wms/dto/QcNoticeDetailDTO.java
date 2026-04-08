@@ -148,6 +148,11 @@ public class QcNoticeDetailDTO implements Serializable {
          * 供应商id
          */
         private String supplierId;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
     }
 
     /**

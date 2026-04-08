@@ -231,6 +231,10 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             addDetailDTO.setQcUserId(dto.getQcUserId());
             addDetailDTO.setSourceDetailId(detailEntity.getId());
             addDetailDTO.setSupplierId(detailEntity.getSupplierId());
+            if (Objects.equals(SourceTypeEnum.PURCHASE_ORDER.getCode(),entity.getSourceType())
+                    || Objects.equals(SourceTypeEnum.WAIT_DELIVERY.getCode(),entity.getSourceType())) {
+                addDetailDTO.setPurchaseOrderDetailId(detailEntity.getSourceDetailId());
+            }
             addDetailList.add(addDetailDTO);
         }
         addDTO.setDetailList(addDetailList);
