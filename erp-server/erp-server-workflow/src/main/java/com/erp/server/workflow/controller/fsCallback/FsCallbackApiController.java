@@ -85,9 +85,9 @@ public class FsCallbackApiController {
     @PostMapping("/fileRecordAddOrUpdate")
     @ResponseBody
     public FsCallbackApiRespDTO fileRecordAddOrUpdate(@RequestBody Map<String, String> req, HttpServletRequest request){
-        log.info("飞书表格文件更新回调开始：{}", JSON.toJSONString(req));
+        log.warn("飞书表格文件更新回调开始：{}", JSON.toJSONString(req));
         FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();
-        log.info("飞书表格文件更新回调结束：{}",JSON.toJSONString(resp));
+        log.warn("飞书表格文件更新回调结束：{}",JSON.toJSONString(resp));
         return  resp;
     }
 }
