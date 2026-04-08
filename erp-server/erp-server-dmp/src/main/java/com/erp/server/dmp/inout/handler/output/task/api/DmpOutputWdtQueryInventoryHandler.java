@@ -33,9 +33,6 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class DmpOutputWdtQueryInventoryHandler extends DmpOutputWdtBaseTaskHandler {
-    @Resource
-    private SysUserFeign sysUserFeign;
-
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
