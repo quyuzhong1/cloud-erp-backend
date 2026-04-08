@@ -269,27 +269,40 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
         result.setPlanType(matchedPlan.getPlanType());
         result.setQcLevel(matchedPlan.getQcLevel());
         if (PlanTypeEnum.GB.getCode().equals(matchedPlan.getPlanType())) {
+            String generalAql = matchedPlan.getGeneralAql();
+            String majorAql = matchedPlan.getMajorAql();
             AqlSamplingRequest request = AqlSamplingRequest.builder()
                     .sampleQty(planDTO.getQty())
                     .qcLevel(matchedPlan.getQcLevel())
-                    .aqlValue(matchedPlan.getGeneralAql())
+                    .aqlValue(generalAql)
                     .build();
             //根据方案类型获取抽样方案（一般缺陷）
             AqlSamplingResponse generalSamplingResponse = qcSamplingAqlRuleService.calculateSamplingPlan(request);
             if (generalSamplingResponse == null) {
-                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL, matchedPlan.getGeneralAql());
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL, generalAql);
+            }
+            if (CharSequenceUtil.isNotBlank(generalSamplingResponse.getErrorMsg())){
+                throw new ServiceException(generalSamplingResponse.getErrorMsg());
             }
             result.setLotRange(generalSamplingResponse.getLotRange());
             result.setRangFrom(generalSamplingResponse.getRangFrom());
             result.setRangTo(generalSamplingResponse.getRangTo());
             result.setGeneralAcceptQty(generalSamplingResponse.getAcceptQty());
             result.setGeneralRejectQty(generalSamplingResponse.getRejectQty());
-            result.setSampleQty(generalSamplingResponse.getSampleQty());
+            if (MathUtil.compareTo(generalAql, majorAql) <= 0){
+                result.setSampleQty(generalSamplingResponse.getSampleQty());
+            }
             //根据方案类型获取抽样方案（严重缺陷）
-            request.setAqlValue(matchedPlan.getMajorAql());
+            request.setAqlValue(majorAql);
             AqlSamplingResponse majorSamplingResponse = qcSamplingAqlRuleService.calculateSamplingPlan(request);
             if (majorSamplingResponse == null) {
-                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL, matchedPlan.getMajorAql());
+                throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL, majorAql);
+            }
+            if (CharSequenceUtil.isNotBlank(majorSamplingResponse.getErrorMsg())){
+                throw new ServiceException(majorSamplingResponse.getErrorMsg());
+            }
+            if (MathUtil.compareTo(generalAql, majorAql) > 0){
+                result.setSampleQty(majorSamplingResponse.getSampleQty());
             }
             result.setMajorAcceptQty(majorSamplingResponse.getAcceptQty());
             result.setMajorRejectQty(majorSamplingResponse.getRejectQty());
@@ -305,11 +318,15 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
             throw new ServiceException(ApiError.PO_QC_SAMPLING_PLAN_DETAIL_FOUND,
                     QcTypeEnum.getByCode(planDTO.getQcType()), planDTO.getSkuNo());
         }
-        result.setRate(detailEntity.getRate());
+        if (PlanTypeEnum.ALL.getCode().equals(matchedPlan.getPlanType()) || PlanTypeEnum.FIXED.getCode().equals(matchedPlan.getPlanType())){
+            result.setSampleQty( Objects.nonNull(detailEntity.getQty()) && detailEntity.getQty() < planDTO.getQty() ? detailEntity.getQty() : planDTO.getQty());
+        }else if (PlanTypeEnum.RATE.getCode().equals(matchedPlan.getPlanType())){
+            result.setRate(detailEntity.getRate());
+            result.setSampleQty(MathUtil.multiplyWithTwo(MathUtil.divide(new BigDecimal(planDTO.getQty()), MathUtil.BigDecimal_100), detailEntity.getRate() , 0).intValue());
+        }
         result.setRangFrom(detailEntity.getRangFrom());
         result.setRangTo(detailEntity.getRangTo());
         result.setLotRange(detailEntity.getRangFrom() + "~" + detailEntity.getRangTo());
-        result.setSampleQty( Objects.nonNull(detailEntity.getQty()) && detailEntity.getQty() < planDTO.getQty() ? detailEntity.getQty() : planDTO.getQty());
         result.setGeneralAcceptQty(detailEntity.getGeneralAcceptQty());
         result.setGeneralRejectQty(detailEntity.getGeneralRejectQty());
         result.setMajorAcceptQty(detailEntity.getMajorAcceptQty());
