@@ -634,7 +634,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
 
             //质检项目
-            QcNoticeDTO.QcInspectItemAddDTO qcInspectItemAddDTO = new QcNoticeDTO.QcInspectItemAddDTO();
             QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
                     .eq(QcStandardEntity::getSkuId, qcNoticeDetail.getSkuId())
                     .one();
@@ -644,6 +643,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         .list();
                 if (!list.isEmpty()) {
                     for (QcStandardDetailEntity qcStandardDetailEntity : list) {
+                        QcNoticeDTO.QcInspectItemAddDTO qcInspectItemAddDTO = new QcNoticeDTO.QcInspectItemAddDTO();
                         qcInspectItemAddDTO.setInspectItem(qcStandardDetailEntity.getInspectItemName());
                         qcInspectItemAddDTO.setInspectRequirement(qcStandardDetailEntity.getInspectRequirement());
                         qcInspectItemAddDTOS.add(qcInspectItemAddDTO);
@@ -717,7 +717,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //质检单信息
             QcInfoEntity qcInfoEntity = qcInfo.stream()
-                    .filter(item -> Objects.equals(item.getSourceId(), qcInfoView.getId()))
+                    .filter(item -> Objects.equals(item.getSourceDetailId(), qcInfoView.getDetailId()))
                     .findFirst()
                     .orElse(null);
             if (Objects.nonNull(qcInfoEntity)) {
