@@ -489,6 +489,10 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
      * @author yl
      * @date 2023-05-11 17:26
      */
+    private List<DictCityDTO.ListDTO> getChildren(DictCityDTO.ListDTO item, List<DictCityDTO.ListDTO> flagList) {
+        return getChildren(item, flagList, null, Collections.emptyMap());
+    }
+
     private List<DictCityDTO.ListDTO> getChildren(DictCityDTO.ListDTO item, List<DictCityDTO.ListDTO> flagList, String countryCode, Map<String, DictCityEntity> cityEntityMap) {
         List<DictCityDTO.ListDTO> collect = flagList.stream().filter(city -> item.getId().equals(city.getParentId())).
                 map(c -> {
