@@ -1238,6 +1238,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
         }
 
+
         if (null != dictPartitionEntity){
             // 军区编码
             shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
@@ -1467,7 +1468,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     		// 区域编码
     		viewDto.setProvince(dictCountryEntity.getRegionCode());
     	}
-    	
+
     	String finalPartitionId = partitionId;
     	DictPartitionEntity dictPartitionEntity = null;
     	if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
@@ -1475,7 +1476,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     		if(customerInfo != null) {
                 deptId = customerInfo.getSalesDeptId();
     		}
-    	} else {
+        } else {
     		dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
     	}
     	
@@ -1484,7 +1485,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     		viewDto.setDistrict(dictPartitionEntity.getCode());
     	}
 
-        CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(finalPartitionId) && e.getDictPlatform().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
+        String lastPartitionId = dictPartitionEntity != null ? dictPartitionEntity.getId() : finalPartitionId;
+        CfgDeptRelationEntity cfgDeptRelationEntity = deptRelationList.stream().filter(e -> e.getPartitionId().equals(lastPartitionId) && e.getDictPlatform().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
         if (null != cfgDeptRelationEntity){
             deptId = cfgDeptRelationEntity.getDeptId();
         }
