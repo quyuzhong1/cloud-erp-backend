@@ -1069,12 +1069,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                     QcDefectEntity qcDefectEntity = new QcDefectEntity();
                     BeanUtils.copyProperties(defectView, qcDefectEntity);
+                    qcDefectEntity.setDefectLevel(defectView.getDefectLevl());
+                    qcDefectEntity.setBadQty(defectView.getDefectQty());
                     qcDefectEntity.setMainId(qcInfoView.getQcBillId());
 
                     // 查询是否已存在
                     QcDefectEntity existing = qcDefectService.getOne(
                             new QueryWrapper<QcDefectEntity>()
                                     .eq("main_id", qcInfoView.getQcBillId())
+                                    .eq("defect_level",defectView.getDefectLevl())
                     );
 
                     if (existing != null) {
@@ -1307,12 +1310,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                     QcDefectEntity qcDefectEntity = new QcDefectEntity();
                     BeanUtils.copyProperties(defectView, qcDefectEntity);
+                    qcDefectEntity.setDefectLevel(defectView.getDefectLevl());
+                    qcDefectEntity.setBadQty(defectView.getDefectQty());
                     qcDefectEntity.setMainId(qcInfoView.getQcBillId());
 
                     // 查询是否已存在
                     QcDefectEntity existing = qcDefectService.getOne(
                             new QueryWrapper<QcDefectEntity>()
                                     .eq("main_id", qcInfoView.getQcBillId())
+                                    .eq("defect_level",defectView.getDefectLevl())
                     );
 
                     if (existing != null) {
@@ -1360,10 +1366,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     && Objects.nonNull(qcInfoView.getQcGoodQty())
                     && qcInfoView.getQcGoodQty() >= 0) {
 
-                if (qcInfoView.getQcBadQty() == 0 && qcInfoView.getQcGoodQty() == 0) {
-                    throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
-                }
-
                 BigDecimal qcGoodRate = BigDecimal.ZERO;
                 BigDecimal qcBadRate = BigDecimal.ZERO;
                 BigDecimal totalQty = BigDecimal.valueOf(qcInfoView.getQcGoodQty())
@@ -1379,12 +1381,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                 if (qcInfoView.getQcBadQty() > 0 && qcInfoView.getQcGoodQty() > 0) {
                     qcGoodRate = BigDecimal.valueOf(qcInfoView.getQcGoodQty())
-                            .divide(totalQty, 2, RoundingMode.HALF_UP)
-                            .multiply(BigDecimal.valueOf(100));
+                            .divide(totalQty, 4, RoundingMode.HALF_UP);
 
                     qcBadRate = BigDecimal.valueOf(qcInfoView.getQcBadQty())
-                            .divide(totalQty, 2, RoundingMode.HALF_UP)
-                            .multiply(BigDecimal.valueOf(100));
+                            .divide(totalQty, 4, RoundingMode.HALF_UP);
                 }
 
                 qcResultUpdateWrapper

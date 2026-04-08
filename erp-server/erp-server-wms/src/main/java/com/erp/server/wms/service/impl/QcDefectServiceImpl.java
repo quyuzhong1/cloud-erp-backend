@@ -150,6 +150,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 QcDefectDTO.ViewDTO viewDTO = new QcDefectDTO.ViewDTO();
                 List<QcDefectDTO.BadImageView> badImageViews = new ArrayList<>();
                 BeanUtils.copyProperties(qcDefectEntity,viewDTO);
+                viewDTO.setDefectQty(qcDefectEntity.getBadQty());
                 viewDTO.setDefectLevelName(WmsDefectLevelEnum.getName(viewDTO.getDefectLevelName()));
                 List<WmsAttachmentEntity> attachments = attachmentService.getByBusinessId(qcDefectEntity.getId(), WmsConstant.BAD);
                 for (WmsAttachmentEntity attachment : attachments) {
