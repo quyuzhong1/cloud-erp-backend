@@ -520,8 +520,12 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @RequestPermissions("scm:purchaseApplication:exportAll")
     @LogAction(value = LogActionEnum.EXPORT, desc = "全量导出采购申请单")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:purchaseApplication:exportAll",
+            tableAlias = "so"
+    )
     @PostMapping(value = "/exportAllExcel")
     public ApiResult<Object> exportAllExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto) {
         Boolean flag = purchaseApplicationService.exportAllExcel(dto);
