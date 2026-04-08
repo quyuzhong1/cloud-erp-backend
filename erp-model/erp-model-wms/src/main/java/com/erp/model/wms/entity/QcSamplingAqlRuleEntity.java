@@ -32,6 +32,11 @@ public class QcSamplingAqlRuleEntity extends BaseEntity<QcSamplingAqlRuleEntity>
     @TableField("sample_qty_code")
     private String sampleQtyCode;
     /**
+     * 上级样本量字码（A/B/C...R）
+     */
+    @TableField("parent_code")
+    private String parentCode;
+    /**
     * 样本量（与字码绑定）
     */
     @TableField("sample_qty")
