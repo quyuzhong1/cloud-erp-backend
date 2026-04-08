@@ -103,58 +103,58 @@ public class RegionMatcher {
         if (matches == null || matches.isEmpty()) {
             return result;
         }
-        RegionNode district = selectBest(matches, RegionLevel.DISTRICT);
-        MatchedNode districtNode = selectBestNode(matches, RegionLevel.DISTRICT);
+        MatchedNode provinceNode = selectBestNode(matches, RegionLevel.PROVINCE);
+        RegionNode province = provinceNode == null ? null : provinceNode.getNode();
 
-        RegionNode city = null;
-        MatchedNode cityNode = null;
-        RegionNode province = null;
-        MatchedNode provinceNode = null;
+        MatchedNode cityNode = selectBestCityNode(matches, province);
+        RegionNode city = cityNode == null ? null : cityNode.getNode();
+
+        MatchedNode districtNode = selectBestDistrictNode(matches, province, city);
+        RegionNode district = districtNode == null ? null : districtNode.getNode();
 
         if (district != null) {
             city = parentOfLevel(district, RegionLevel.CITY);
             province = parentOfLevel(district, RegionLevel.PROVINCE);
-            if (districtNode != null) {
+            result.setMatchedDistrictToken(districtNode.getAlias());
+        }
+        if (city == null && cityNode != null) {
+            city = cityNode.getNode();
+        }
+        if (province == null && provinceNode != null) {
+            province = provinceNode.getNode();
+        }
+        if (city == null && province != null) {
+            cityNode = selectBestCityNode(matches, province);
+            city = cityNode == null ? null : cityNode.getNode();
+        }
+        if (district == null) {
+            districtNode = selectBestDistrictNode(matches, province, city);
+            district = districtNode == null ? null : districtNode.getNode();
+            if (district != null) {
                 result.setMatchedDistrictToken(districtNode.getAlias());
-            }
-        } else {
-            city = selectBest(matches, RegionLevel.CITY);
-            cityNode = selectBestNode(matches, RegionLevel.CITY);
-            if (city != null) {
-                province = parentOfLevel(city, RegionLevel.PROVINCE);
-                if (cityNode != null) {
-                    result.setMatchedCityToken(cityNode.getAlias());
+                if (city == null) {
+                    city = parentOfLevel(district, RegionLevel.CITY);
                 }
-            }
-            if (province == null) {
-                province = selectBest(matches, RegionLevel.PROVINCE);
-                provinceNode = selectBestNode(matches, RegionLevel.PROVINCE);
-                if (provinceNode != null) {
-                    result.setMatchedProvinceToken(provinceNode.getAlias());
+                if (province == null) {
+                    province = parentOfLevel(district, RegionLevel.PROVINCE);
                 }
             }
         }
-
-        if (province == null) {
-            province = selectBest(matches, RegionLevel.PROVINCE);
-            provinceNode = selectBestNode(matches, RegionLevel.PROVINCE);
-        }
-        if (city == null) {
-            city = selectBest(matches, RegionLevel.CITY);
-            cityNode = selectBestNode(matches, RegionLevel.CITY);
+        if (province == null && city != null) {
+            province = parentOfLevel(city, RegionLevel.PROVINCE);
         }
 
         if (province != null) {
             result.setProvinceId(province.getId());
             result.setProvince(province.getName());
-            if (result.getMatchedProvinceToken() == null && provinceNode != null) {
+            if (provinceNode != null) {
                 result.setMatchedProvinceToken(provinceNode.getAlias());
             }
         }
         if (city != null) {
             result.setCityId(city.getId());
             result.setCity(city.getName());
-            if (result.getMatchedCityToken() == null && cityNode != null) {
+            if (cityNode != null) {
                 result.setMatchedCityToken(cityNode.getAlias());
             }
         }
@@ -170,12 +170,86 @@ public class RegionMatcher {
         return node == null ? null : node.getNode();
     }
 
+    private MatchedNode selectBestCityNode(List<MatchedNode> matches, RegionNode province) {
+        List<MatchedNode> candidates = filterByLevel(matches, RegionLevel.CITY);
+        if (province != null) {
+            candidates.removeIf(candidate -> !isSameAncestor(candidate.getNode(), province, RegionLevel.PROVINCE));
+        }
+        List<MatchedNode> supported = new ArrayList<MatchedNode>();
+        for (MatchedNode candidate : candidates) {
+            if (hasMatchedAncestor(candidate.getNode(), RegionLevel.PROVINCE, matches)) {
+                supported.add(candidate);
+            }
+        }
+        return pickBest(supported.isEmpty() ? candidates : supported);
+    }
+
+    private MatchedNode selectBestDistrictNode(List<MatchedNode> matches, RegionNode province, RegionNode city) {
+        List<MatchedNode> candidates = filterByLevel(matches, RegionLevel.DISTRICT);
+        if (city != null) {
+            candidates.removeIf(candidate -> !isSameAncestor(candidate.getNode(), city, RegionLevel.CITY));
+        }
+        if (province != null) {
+            candidates.removeIf(candidate -> !isSameAncestor(candidate.getNode(), province, RegionLevel.PROVINCE));
+        }
+        List<MatchedNode> citySupported = new ArrayList<MatchedNode>();
+        for (MatchedNode candidate : candidates) {
+            if (hasMatchedAncestor(candidate.getNode(), RegionLevel.CITY, matches)) {
+                citySupported.add(candidate);
+            }
+        }
+        if (!citySupported.isEmpty()) {
+            return pickBest(citySupported);
+        }
+        List<MatchedNode> provinceSupported = new ArrayList<MatchedNode>();
+        for (MatchedNode candidate : candidates) {
+            if (hasMatchedAncestor(candidate.getNode(), RegionLevel.PROVINCE, matches)) {
+                provinceSupported.add(candidate);
+            }
+        }
+        return pickBest(provinceSupported.isEmpty() ? candidates : provinceSupported);
+    }
+
     private MatchedNode selectBestNode(List<MatchedNode> matches, RegionLevel level) {
-        return matches.stream()
-                .filter(m -> m.getNode().getLevel() == level)
+        return pickBest(filterByLevel(matches, level));
+    }
+
+    private List<MatchedNode> filterByLevel(List<MatchedNode> matches, RegionLevel level) {
+        List<MatchedNode> candidates = new ArrayList<MatchedNode>();
+        for (MatchedNode match : matches) {
+            if (match.getNode().getLevel() == level) {
+                candidates.add(match);
+            }
+        }
+        return candidates;
+    }
+
+    private MatchedNode pickBest(List<MatchedNode> candidates) {
+        return candidates.stream()
                 .max(Comparator.comparingInt(MatchedNode::getLength)
                         .thenComparingInt(m -> -m.getStart()))
                 .orElse(null);
+    }
+
+    private boolean hasMatchedAncestor(RegionNode node, RegionLevel ancestorLevel, List<MatchedNode> matches) {
+        RegionNode ancestor = parentOfLevel(node, ancestorLevel);
+        if (ancestor == null || ancestor == node) {
+            return false;
+        }
+        for (MatchedNode match : matches) {
+            if (match.getNode().getLevel() == ancestorLevel && StringUtils.equals(match.getNode().getId(), ancestor.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isSameAncestor(RegionNode node, RegionNode expectedAncestor, RegionLevel ancestorLevel) {
+        if (expectedAncestor == null) {
+            return true;
+        }
+        RegionNode ancestor = parentOfLevel(node, ancestorLevel);
+        return ancestor != null && StringUtils.equals(ancestor.getId(), expectedAncestor.getId());
     }
 
     private RegionNode parentOfLevel(RegionNode node, RegionLevel target) {
