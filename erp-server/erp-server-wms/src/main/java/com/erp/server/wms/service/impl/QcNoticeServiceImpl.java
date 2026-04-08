@@ -774,15 +774,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                         qcImageViews.add(qcImageView);
                     }
-
                     qcStandardView.setQcImageViewDTOList(qcImageViews);
                 }
             }
-
             qcInfoView.setQcStandardView(qcStandardView);
             qcInfoView.setQcTypeName(QcTypeEnum.getByCode(qcInfoView.getQcType()));
         }
-
         return qcInfoViews;
     }
 
@@ -1316,6 +1313,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (!qcInfoView.getDefectViewList().isEmpty()) {
                 List<QcNoticeDTO.DefectView> defectViewList = qcInfoView.getDefectViewList();
                 for (QcNoticeDTO.DefectView defectView : defectViewList) {
+                    if (StringUtils.isBlank(defectView.getDefectLevl())) {
+                        continue;
+                    }
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
                     boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
@@ -1372,7 +1372,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                                 BeanUtils.copyProperties(badImageView,attachDTO);
                                 attachDTOs.add(attachDTO);
                             }
-                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                            wmsAttachmentService.batchSave(attachDTOs,WmsConstant.BAD,id);
                         }
                     }
                 }

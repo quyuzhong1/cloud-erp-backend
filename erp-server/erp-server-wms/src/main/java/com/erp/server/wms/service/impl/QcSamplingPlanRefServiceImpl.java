@@ -9,6 +9,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.QcStandardImageTypeEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.server.wms.mapper.QcSamplingPlanRefMapper;
 import com.erp.server.wms.service.*;
@@ -23,6 +24,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -255,11 +257,27 @@ public class QcSamplingPlanRefServiceImpl extends SuperServiceImpl<QcSamplingPla
                         .eq(QcStandardImageRefEntity::getMainId, qcSamplingPlanRef.getId())
                         .list();
                 if (!imageList.isEmpty()) {
-                    List<QcNoticeDTO.QcImageView> qcImageViews = BeanMapper.copyList(imageList, QcNoticeDTO.QcImageView.class);
+                    List<QcNoticeDTO.QcImageView> qcImageViews = new ArrayList<>();
+                    Map<String, List<QcStandardImageRefEntity>> map = imageList.stream()
+                            .collect(Collectors.groupingBy(QcStandardImageRefEntity::getImageType));
+                    for (QcStandardImageTypeEnum value : QcStandardImageTypeEnum.values()) {
+                        List<QcStandardImageRefEntity> orDefault = map.getOrDefault(value.getCode(),null);
+                        if (Objects.nonNull(orDefault)) {
+                            QcNoticeDTO.QcImageView qcImageView = new QcNoticeDTO.QcImageView();
+                            List<String> urls = orDefault.stream()
+                                    .map(item -> item.getImageUrl())
+                                    .collect(Collectors.toList());
+                            for (QcStandardImageRefEntity qcStandardImageRefEntity : orDefault) {
+                                qcImageView.setImageTypeName(QcStandardImageTypeEnum.getByCode(qcStandardImageRefEntity.getImageType()));
+                                qcImageView.setImageType(qcStandardImageRefEntity.getImageType());
+                            }
+                            qcImageView.setImageUrlList(urls);
+                            qcImageViews.add(qcImageView);
+                        }
+                    }
                     qcStandardView.setQcImageViewDTOList(qcImageViews);
                 }
             }
-            return qcStandardView;
         }
         return qcStandardView;
     }
