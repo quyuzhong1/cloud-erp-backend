@@ -52,6 +52,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.ImportHistoryRecordExcelListener;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.*;
+import com.google.common.base.Stopwatch;
 import groovy.lang.Lazy;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +70,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -165,7 +167,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         //根据文件URL查询是否已存在记录，存在则更新，不存在则新增
         ImportHistoryRecordEntity old = this.getByFileUrl(entity.getFileUrl());
-        entity.setId(old.getId());
+        if (ObjectUtil.isNotEmpty(old)) {
+            entity.setId(old.getId());
+        }
     }
 
 
@@ -267,9 +271,17 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     @Override
     public void handleImportSuccessList(ImportHistoryRecordDTO.ImportSyncDTO importDTO,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
                                         List<JSONObject> successList, List<JSONObject> matchImportList, List<String> headList, Map<Integer, String> headMap) {
+        // 计时器-开始
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        log.warn("处理条数={}，开始处理时间 ={}",successList.size(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
         //数据处理
         List<LogisticsBillCostDTO.ImportDataDTO> importDataList = buildImportDataList(importDTO, costImportEntity, cfgImportDetailList,
                 successList, matchImportList, headList, headMap);
+
+        //处理数据结束时间
+        log.warn("结束处理时间 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
         if (CollUtil.isEmpty(importDataList)) {
             return;
         }
@@ -278,6 +290,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             return;
         }
         importHistoryRecordService.importBatchAddOrUpdate(importDataList,importDTO.getProcessingType());
+
+        //数据落库结束时间
+        log.warn("保存处理时间 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
     }
 
     /**
