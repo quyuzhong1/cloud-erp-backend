@@ -21,6 +21,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -647,7 +648,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
             //累加质检合格量(结果：合格)
-            handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getQcGoodQty());
+            QcInfoServiceImpl bean = ApplicationContextUtils.getBean(QcInfoServiceImpl.class);
+            bean.handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getQcGoodQty());
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
 
@@ -1296,7 +1298,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //累加质检合格量(结果：合格)
             if (Objects.nonNull(qcResult)) {
-                handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getQcGoodQty());
+                QcInfoServiceImpl bean = ApplicationContextUtils.getBean(QcInfoServiceImpl.class);
+                bean.handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getQcGoodQty());
             }
 
             //批量去更新 质检数量
@@ -1321,7 +1324,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param qcGoodQty 质检合格数量，用于累计到采购订单
      * @return void
      */
-    private void handlePurchaseOrderQcAccumulation(QcInfoEntity entity,String finalPurchaseOrderDetailId,String qcResult,Integer qcGoodQty) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Override
+    public void handlePurchaseOrderQcAccumulation(QcInfoEntity entity, String finalPurchaseOrderDetailId, String qcResult, Integer qcGoodQty) {
         // 根据来源类型追溯采购订单明细ID
         if (CharSequenceUtil.isBlank(finalPurchaseOrderDetailId)) {
             String sourceType = entity.getSourceType();
@@ -1349,6 +1355,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                                 }
                             }
                         }
+                    }
+                }else if(SourceTypeEnum.PURCHASE_ORDER.getCode().equals(sourceType)){
+                    QcResultDTO.ViewDTO qcResultView = qcResultService.getByMainId(entity.getId());
+                    if(Objects.nonNull(qcResultView) && StringUtils.isNotBlank(qcResultView.getPurchaseOrderDetailId())){
+                        finalPurchaseOrderDetailId = qcResultView.getPurchaseOrderDetailId();
                     }
                 }
                 // 如果找到了，同步更新到 qc_result 表
