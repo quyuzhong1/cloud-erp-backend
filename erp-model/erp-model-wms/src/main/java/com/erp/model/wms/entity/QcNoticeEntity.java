@@ -37,11 +37,7 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
      */
     @TableField("purchase_order_code")
     private String purchaseOrderCode;
-    /**
-     * 供应商id
-     */
-    @TableField("supplier_id")
-    private String supplierId;
+
     /**
     * 单据状态
     */

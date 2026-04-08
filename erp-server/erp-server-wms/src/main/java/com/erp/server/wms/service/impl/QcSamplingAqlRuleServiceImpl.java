@@ -143,37 +143,25 @@ public class QcSamplingAqlRuleServiceImpl extends SuperServiceImpl<QcSamplingAql
     // 补充：箭头规则处理（核心逻辑）
     private QcSamplingAqlRuleEntity getAqlJudgeWithArrowRule(String sampleCode, String aqlValue) {
         QcSamplingAqlRuleEntity current = qcSamplingAqlRuleMapper.selectByCodeAndAql(sampleCode, aqlValue);
+        if (current == null) {
+            return null;
+        }
+        Integer oldSampleQty = current.getSampleQty();
+        Integer newSampleQty = current.getSampleQty();
         //比较上级样本字码和本级样本字码是否一致
         if (!current.getParentCode().equals(current.getSampleQtyCode())){
             current = qcSamplingAqlRuleMapper.selectByCodeAndAql(current.getParentCode(), aqlValue);
+            if (current == null) {
+                return null;
+            }
+            newSampleQty = current.getSampleQty();
         }
         // 1. 若当前有值，直接返回
-        if (current != null && current.getAcceptQty() != null) {
+        if (current.getAcceptQty() != null) {
+            //重置抽样数量，取抽样数量较大的那个
+            current.setSampleQty(oldSampleQty > newSampleQty ? oldSampleQty : newSampleQty);
             return current;
         }
-//        // 2. 处理向下箭头（↓）：按字码顺序（A→B→C→...→R）找下一个有值的
-//        List<String> codeOrder = Arrays.asList("A","B","C","D","E","F","G","H","J","K","L","M","N","P","Q","R");
-//        int currentIndex = codeOrder.indexOf(sampleCode);
-//        // 向下箭头：往后找
-//        for (int i = currentIndex + 1; i < codeOrder.size(); i++) {
-//            QcSamplingAqlRuleEntity next = qcSamplingAqlRuleMapper.selectByCodeAndAql(codeOrder.get(i), aqlValue);
-//            if (next != null && next.getAcceptQty() != null) {
-//                return next;
-//            }
-//        }
-//        // 3. 处理向上箭头（↑）：往前找
-//        for (int i = currentIndex - 1; i >= 0; i--) {
-//            QcSamplingAqlRuleEntity prev = qcSamplingAqlRuleMapper.selectByCodeAndAql(codeOrder.get(i), aqlValue);
-//            if (prev != null && prev.getAcceptQty() != null) {
-//                // 向上箭头：样本量保持当前字码的，判定数用前面的
-//                QcSamplingAqlRuleEntity result = new QcSamplingAqlRuleEntity();
-//                result.setSampleQtyCode(sampleCode);
-//                result.setSampleQty(getSampleSizeByCode(sampleCode)); // 取当前字码的样本量
-//                result.setAcceptQty(prev.getAcceptQty());
-//                result.setRejectQty(prev.getRejectQty());
-//                return result;
-//            }
-//        }
         return null;
     }
 

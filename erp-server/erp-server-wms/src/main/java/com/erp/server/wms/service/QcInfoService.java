@@ -9,6 +9,8 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
@@ -109,6 +111,10 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return java.lang.Boolean
      */
     BatchResultDTO finish(QcInfoEntity entity);
+
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    void handlePurchaseOrderQcAccumulation(QcInfoEntity entity, String finalPurchaseOrderDetailId, String qcResult, Integer qcGoodQty);
 
     /**
      * 批量完成免检
