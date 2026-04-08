@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.AttachDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.QcDefectDTO;
@@ -68,10 +69,10 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 .map(QcDefectEntity::getId)
                 .collect(Collectors.toSet());
 
-        // 准备要新增、更新和删除的记录
-        List<QcDefectEntity> toAdd = new ArrayList<>();
         List<QcDefectEntity> toUpdate = new ArrayList<>();
         List<String> toDeleteIds = new ArrayList<>();
+        List<AttachDTO> addAttachDTOS = new ArrayList<>();
+        List<AttachDTO> updateAttachDTOS = new ArrayList<>();
 
         // 处理新增和更新
         for (QcDefectDTO.AddDTO addDTO : qcDefectList) {
@@ -81,7 +82,6 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
             boolean hasProblemAttribute = StringUtils.isNotBlank(addDTO.getIssueProperty());
             boolean hasDefectDesc = StringUtils.isNotBlank(addDTO.getDefectDesc());
             boolean hasDefectImage = Objects.nonNull(addDTO.getBadImageViewList()) && !addDTO.getBadImageViewList().isEmpty();
-
 
             if ((hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage)
                     && !(hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc && hasDefectImage)) {
@@ -94,7 +94,20 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 QcDefectEntity newEntity = new QcDefectEntity();
                 BeanUtils.copyProperties(addDTO, newEntity);
                 newEntity.setMainId(billId); // 确保设置主ID
-                toAdd.add(newEntity);
+                //新增缺陷记录
+                save(newEntity);
+
+                // 处理新增的附件
+                if (hasDefectImage) {
+                    for (QcDefectDTO.BadImageView badImageView : addDTO.getBadImageViewList()) {
+                        AttachDTO attachDTO = new AttachDTO();
+                        attachDTO.setBusinessId(newEntity.getId());
+                        attachDTO.setAttachUrl(badImageView.getAttachUrl());
+                        attachDTO.setAttachName(badImageView.getAttachName());
+                        addAttachDTOS.add(attachDTO);
+                    }
+                    attachmentService.batchSave(addAttachDTOS, WmsConstant.BAD, newEntity.getId());
+                }
             } else {
                 // 更新记录 - 检查是否存在
                 if (existingIds.contains(addDTO.getId())) {
@@ -105,6 +118,18 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
 
                     BeanUtils.copyProperties(addDTO, existingEntity);
                     toUpdate.add(existingEntity);
+
+                    // 处理更新的附件
+                    if (hasDefectImage) {
+                        for (QcDefectDTO.BadImageView badImageView : addDTO.getBadImageViewList()) {
+                            AttachDTO attachDTO = new AttachDTO();
+                            attachDTO.setBusinessId(existingEntity.getId());
+                            attachDTO.setAttachUrl(badImageView.getAttachUrl());
+                            attachDTO.setAttachName(badImageView.getAttachName());
+                            updateAttachDTOS.add(attachDTO);
+                        }
+                        attachmentService.batchSave(addAttachDTOS, WmsConstant.BAD, addDTO.getId());
+                    }
                 } else {
                     continue;
                 }
@@ -117,7 +142,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
 
-        // 找出需要删除的记录（存在于exitList但defectLevel不在新数据中）
+        // 找出需要删除的记录
         for (QcDefectEntity entity : exitList) {
             if (StringUtils.isNotBlank(entity.getDefectLevel())
                     && !newDefectLevels.contains(entity.getDefectLevel())) {
@@ -126,16 +151,15 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
         }
 
         // 执行数据库操作
-        if (!toAdd.isEmpty()) {
-            saveBatch(toAdd); // 新增
-        }
         if (!toUpdate.isEmpty()) {
-            updateBatchById(toUpdate); // 更新
+            updateBatchById(toUpdate); // 更新缺陷记录
         }
         if (!toDeleteIds.isEmpty()) {
-            removeByIds(toDeleteIds); // 删除
+            attachmentService.batchRemoveAttachment(toDeleteIds);
+            removeByIds(toDeleteIds); // 删除缺陷记录
         }
     }
+
 
     @Override
     public List<QcDefectDTO.ViewDTO> getByMainId(String id) {
@@ -157,6 +181,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                     QcDefectDTO.BadImageView badImageView = new QcDefectDTO.BadImageView();
                     badImageView.setAttachName(attachment.getAttachName());
                     badImageView.setAttachUrl(attachment.getAttachUrl());
+                    badImageViews.add(badImageView);
                 }
                 viewDTO.setBadImageViewList(badImageViews);
                 addDTOS.add(viewDTO);

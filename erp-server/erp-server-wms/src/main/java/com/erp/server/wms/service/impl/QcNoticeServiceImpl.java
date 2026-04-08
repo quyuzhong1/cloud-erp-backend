@@ -1021,6 +1021,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
         }
 
+        List<String> qcInfoIds = dto.stream().map(QcNoticeDTO.QcInfoFullView::getQcBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        Map<String, QcInfoEntity> qcInfoEntityMap = qcInfoService.mapByIds(qcInfoIds);
+
         //质检通知单审核通过更新质检单
         for (QcNoticeDTO.QcInfoFullView qcInfoView : dto) {
             if (Objects.isNull(qcInfoView.getQcResultView())) {
@@ -1173,6 +1176,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
             }
 
+            //处理采购订单质检合格数量累计
+            QcInfoEntity qcInfoEntity = qcInfoEntityMap.get(qcInfoView.getQcBillId());
+            if(Objects.nonNull(qcInfoEntity)){
+//                QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(qcInfoView.getQcBillId());
+//                qcInfoService.handlePurchaseOrderQcAccumulation(qcInfoEntity,qcInfoView.getQcResult(),qcResult.getPurchaseOrderDetailId(),qcInfoView.getQcGoodQty());
+                qcInfoService.handlePurchaseOrderQcAccumulation(qcInfoEntity,"",qcResultView.getQcResult(),qcResultView.getQcGoodQty());
+            }
+
             //等下用来生成分步式调出单
             detailMap.put(qcInfoView.getDetailId(), qcNoticeDetailEntity);
             //等下用于回填主表状态
@@ -1309,6 +1320,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 throw new ServiceException( ApiError.PO_QC_PACKAGE_NOT_FOUND, str);
             }
         }
+
+        List<String> qcInfoIds = dto.stream().map(QcNoticeDTO.QcInfoView::getQcBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        Map<String, QcInfoEntity> qcInfoEntityMap = qcInfoService.mapByIds(qcInfoIds);
 
         //质检通知单审核通过更新质检单
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
@@ -1458,6 +1472,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         .update();
             } else {
                 throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
+            }
+
+            //处理采购订单质检合格数量累计
+            QcInfoEntity qcInfoEntity = qcInfoEntityMap.get(qcInfoView.getQcBillId());
+            if(Objects.nonNull(qcInfoEntity)){
+//                QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(qcInfoView.getQcBillId());
+//                qcInfoService.handlePurchaseOrderQcAccumulation(qcInfoEntity,qcInfoView.getQcResult(),qcResult.getPurchaseOrderDetailId(),qcInfoView.getQcGoodQty());
+                qcInfoService.handlePurchaseOrderQcAccumulation(qcInfoEntity,"",qcInfoView.getQcResult(),qcInfoView.getQcGoodQty());
             }
 
             //等下用来生成分步式调出单
