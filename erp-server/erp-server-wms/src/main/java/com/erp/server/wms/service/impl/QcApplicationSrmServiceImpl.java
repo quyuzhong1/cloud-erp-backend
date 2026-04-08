@@ -29,6 +29,7 @@ import com.erp.model.wms.dto.QcApplicationDTO;
 import com.erp.model.wms.dto.QcApplicationDetailDTO;
 import com.erp.model.wms.dto.QcApplicationSrmDTO;
 import com.erp.model.wms.entity.QcApplicationEntity;
+import com.erp.model.wms.enums.QcNoticeStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -231,7 +232,7 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
             //质检类型名称
             data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
             //质检状态名称
-            data.setQcStatusName(QcTypeEnum.getByCode(data.getQcStatus()));
+            data.setQcStatusName(QcNoticeStatusEnum.getNameByCode(data.getQcStatus()));
             //质检结果名称
             data.setQcResultName(QcResultEnum.getByCode(data.getQcResult()));
 
