@@ -782,7 +782,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         bom.setState(BomStateEnum.AUDIT_ING.getState());
         //校验bom （销售套装BOM）
-        if(bom.getType().equals(BomTypeEnum.SINGLE.getType())){
+        if(bom.getType().equals(BomTypeEnum.COMBINATION.getType())){
             List<BomSkuEntity> bomSkuEntityList = bomSkuService.lambdaQuery().eq(BomSkuEntity::getBomId,bomId).list();
             if (CollectionUtils.isNotEmpty(bomSkuEntityList)){
                 Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
