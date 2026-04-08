@@ -1113,6 +1113,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //回写质检单
             qcInfoService.lambdaUpdate()
                     .set(QcInfoEntity::getQcStatus,QcBillStatusEnum.FINISH_QC)
+                    .set(QcInfoEntity::getQcFinishTime,LocalDateTime.now())
                     .eq(QcInfoEntity::getSourceDetailId,qcNoticeDetailEntity.getId())
                     .update();
 
@@ -1411,6 +1412,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //回写质检单
             qcInfoService.lambdaUpdate()
                     .set(QcInfoEntity::getQcStatus,QcBillStatusEnum.FINISH_QC)
+                    .set(QcInfoEntity::getQcFinishTime,LocalDateTime.now())
                     .eq(QcInfoEntity::getSourceDetailId,qcNoticeDetailEntity.getId())
                     .update();
 
