@@ -89,7 +89,7 @@
         qn.source_type as sourceType,
         qn.purchase_order_id as purchaseOrderId,
         qn.purchase_order_code as purchaseOrderCode,
-        qn.supplier_id as supplierId,
+        qnd.supplier_id as supplierId,
         qn.plan_qc_date as planQcDate
         FROM
         qc_notice AS qn

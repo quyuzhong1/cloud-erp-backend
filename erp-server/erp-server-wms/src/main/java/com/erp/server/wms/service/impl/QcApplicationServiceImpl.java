@@ -230,6 +230,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             addDetailDTO.setQcNoticeQty(detailEntity.getQty());
             addDetailDTO.setQcUserId(dto.getQcUserId());
             addDetailDTO.setSourceDetailId(detailEntity.getId());
+            addDetailDTO.setSupplierId(detailEntity.getSupplierId());
             addDetailList.add(addDetailDTO);
         }
         addDTO.setDetailList(addDetailList);
