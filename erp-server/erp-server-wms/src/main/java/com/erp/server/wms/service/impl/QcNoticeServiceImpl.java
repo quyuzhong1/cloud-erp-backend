@@ -1188,8 +1188,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
                         transferOutDetail.setSkuId(detailEntity.getSkuId());
                         transferOutDetail.setQty(detailEntity.getQcGoodQty());
-//                        String code = qcInfoMap.get(detailEntity.getId()).getCode();
-//                        transferOutDetail.setRemark(StrUtil.format(remark,code));
+                        QcNoticeDTO.QcInfoFullView qcInfoFullView = dto.stream()
+                                .filter(item -> Objects.equals(item.getId(), detailEntity.getMainId()))
+                                .findFirst()
+                                .orElse(null);
+                        if (Objects.nonNull(qcInfoFullView)) {
+                            transferOutDetail.setRemark(StrUtil.format(remark,qcInfoFullView.getQcBillCode()));
+                        }
                         transferOutDetail.setSourceDetailId(detailEntity.getId());
 //                    transferOutDetail.setOutWarehouseLocation("");
                         transferOutDetail.setUnit("Pcs");
@@ -1273,8 +1278,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 throw new ServiceException( ApiError.PO_QC_PACKAGE_NOT_FOUND, str);
             }
         }
-        //质检单map
-        Map<String, QcInfoEntity> qcInfoMap = new HashMap<>();
 
         //质检通知单审核通过更新质检单
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
@@ -1467,8 +1470,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
                         transferOutDetail.setSkuId(detailEntity.getSkuId());
                         transferOutDetail.setQty(detailEntity.getQcGoodQty());
-//                        String code = qcInfoMap.get(detailEntity.getId()).getCode();
-//                        transferOutDetail.setRemark(StrUtil.format(remark,code));
+                        QcNoticeDTO.QcInfoView qcInfoView = dto.stream()
+                                .filter(item -> Objects.equals(item.getId(), detailEntity.getMainId()))
+                                .findFirst()
+                                .orElse(null);
+                        if (Objects.nonNull(qcInfoView)) {
+                            transferOutDetail.setRemark(StrUtil.format(remark,qcInfoView.getQcBillCode()));
+                        }
                         transferOutDetail.setSourceDetailId(detailEntity.getId());
 //                    transferOutDetail.setOutWarehouseLocation("");
                         transferOutDetail.setUnit("Pcs");
