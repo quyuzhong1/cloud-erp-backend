@@ -93,6 +93,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 // 新增记录
                 QcDefectEntity newEntity = new QcDefectEntity();
                 BeanUtils.copyProperties(addDTO, newEntity);
+                newEntity.setBadQty(addDTO.getDefectQty());
                 newEntity.setMainId(billId); // 确保设置主ID
                 //新增缺陷记录
                 save(newEntity);
@@ -117,6 +118,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                             .orElseThrow(() -> new ServiceException("记录不存在"));
 
                     BeanUtils.copyProperties(addDTO, existingEntity);
+                    existingEntity.setBadQty(addDTO.getDefectQty());
                     toUpdate.add(existingEntity);
 
                     // 处理更新的附件
@@ -128,7 +130,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                             attachDTO.setAttachName(badImageView.getAttachName());
                             updateAttachDTOS.add(attachDTO);
                         }
-                        attachmentService.batchSave(addAttachDTOS, WmsConstant.BAD, addDTO.getId());
+                        attachmentService.batchSave(updateAttachDTOS, WmsConstant.BAD, addDTO.getId());
                     }
                 } else {
                     continue;
