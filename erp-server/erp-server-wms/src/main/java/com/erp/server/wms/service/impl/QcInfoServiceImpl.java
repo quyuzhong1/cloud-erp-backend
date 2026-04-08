@@ -229,6 +229,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private QcNoticeDetailService qcNoticeDetailService;
 
     @Resource
+    private QcApplicationDetailService qcApplicationDetailService;
+
+    @Resource
     private QcEffectivenessService qcEffectivenessService;
     /**
      * 保存 质检单
@@ -644,17 +647,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
             //累加质检合格量(结果：合格)
-            if (Objects.nonNull(qcInfo) && CharSequenceUtil.isNotBlank(qcInfo.getPurchaseOrderDetailId()) && qcInfo.getQcResult().equals(QcResultEnum.CONFORMITY.getCode())) {
-                PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
-                qcQtyDTO.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
-                qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0);
-                if (qcQtyDTO.getQcGoodQty() > 0) {
-                    Boolean b = scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
-                    if(b){
-                        operateLogService.addModuleOperateLog(String.format("完成质检:本次质检合格量【%s】",qcQtyDTO.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");
-                    }
-                }
-            }
+            handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getQcGoodQty());
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
 
@@ -1302,17 +1295,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             updateProductPack(ids);
 
             //累加质检合格量(结果：合格)
-            QcResultDTO.ViewDTO qcInfo = qcResultService.getByMainId(entity.getId());
-            if (Objects.nonNull(qcInfo) && CharSequenceUtil.isNotBlank(qcInfo.getPurchaseOrderDetailId()) && qcInfo.getQcResult().equals(QcResultEnum.CONFORMITY.getCode())) {
-                PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
-                qcQtyDTO.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
-                qcQtyDTO.setQcGoodQty(qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0);
-                if (qcQtyDTO.getQcGoodQty() > 0) {
-                    Boolean b = scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
-                    if(b){
-                        operateLogService.addModuleOperateLog(String.format("完成质检:本次质检合格量【%s】",qcQtyDTO.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), entity.getId(), "完成质检");
-                    }
-                }
+            if (Objects.nonNull(qcResult)) {
+                handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getQcGoodQty());
             }
 
             //批量去更新 质检数量
@@ -1321,6 +1305,72 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        }
+    }
+
+    /**
+     * 处理采购订单质检合格数量累计
+     * <p>
+     * 该方法主要完成两个功能：
+     * 1. 根据来源类型和来源明细ID追溯并补全采购订单明细ID
+     * 2. 当质检结果为合格时，将合格数量累计到对应的采购订单
+     *
+     * @param entity 质检单实体对象，用于获取来源类型和来源明细ID
+     * @param finalPurchaseOrderDetailId 采购订单明细ID，如果为空则尝试从来源数据中追溯
+     * @param qcResult 质检结果编码，用于判断是否为合格
+     * @param qcGoodQty 质检合格数量，用于累计到采购订单
+     * @return void
+     */
+    private void handlePurchaseOrderQcAccumulation(QcInfoEntity entity,String finalPurchaseOrderDetailId,String qcResult,Integer qcGoodQty) {
+        // 根据来源类型追溯采购订单明细ID
+        if (CharSequenceUtil.isBlank(finalPurchaseOrderDetailId)) {
+            String sourceType = entity.getSourceType();
+            String sourceDtlId = entity.getSourceDetailId();
+            if (CharSequenceUtil.isNotBlank(sourceType) && CharSequenceUtil.isNotBlank(sourceDtlId)) {
+                if (SourceTypeEnum.PO_RECEIVE.getCode().equals(sourceType)) {
+                    WarehouseReceiveDetailEntity wrd = warehouseReceiveDetailService.getById(sourceDtlId);
+                    if (wrd != null) {
+                        finalPurchaseOrderDetailId = wrd.getPurchaseOrderDetailId();
+                    }
+                } else if (SourceTypeEnum.QC_NOTICE.getCode().equals(sourceType)) {
+                    QcNoticeDetailEntity qnd = qcNoticeDetailService.getById(sourceDtlId);
+                    if (qnd != null && CharSequenceUtil.isNotBlank(qnd.getMainId())) {
+                        QcNoticeEntity notice = qcNoticeService.getById(qnd.getMainId());
+                        if (notice != null) {
+                            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(notice.getSourceType())) {
+                                WarehouseReceiveDetailEntity wrd = warehouseReceiveDetailService.getById(qnd.getSourceDetailId());
+                                if (wrd != null) {
+                                    finalPurchaseOrderDetailId = wrd.getPurchaseOrderDetailId();
+                                }
+                            } else if (SourceTypeEnum.QC_APPLICATION.getCode().equals(notice.getSourceType())) {
+                                QcApplicationDetailEntity qad = qcApplicationDetailService.getById(qnd.getSourceDetailId());
+                                if (qad != null) {
+                                    finalPurchaseOrderDetailId = qad.getSourceDetailId();
+                                }
+                            }
+                        }
+                    }
+                }
+                // 如果找到了，同步更新到 qc_result 表
+                if (CharSequenceUtil.isNotBlank(finalPurchaseOrderDetailId)) {
+                    qcResultService.lambdaUpdate()
+                            .set(QcResultEntity::getPurchaseOrderDetailId, finalPurchaseOrderDetailId)
+                            .eq(QcResultEntity::getMainId, entity.getId())
+                            .update();
+                }
+            }
+        }
+        // 质检合格时累计合格数量到采购订单
+        if (qcResult.equals(QcResultEnum.CONFORMITY.getCode())) {
+            PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
+            qcQtyDTO.setPurchaseOrderDetailId(finalPurchaseOrderDetailId);
+            qcQtyDTO.setQcGoodQty(qcGoodQty != null ? qcGoodQty : 0);
+            if (qcQtyDTO.getQcGoodQty() > 0) {
+                Boolean b = scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
+                if (b) {
+                    operateLogService.addModuleOperateLog(String.format("完成质检:本次质检合格量【%s】", qcQtyDTO.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), entity.getId(), "完成质检");
+                }
+            }
         }
     }
 

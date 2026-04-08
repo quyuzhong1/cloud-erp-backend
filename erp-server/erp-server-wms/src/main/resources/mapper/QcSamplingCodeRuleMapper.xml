@@ -47,5 +47,12 @@
             qc_sampling_code_rule
                  WHERE disabled = false AND is_deleted =false AND  min_lot_qty <![CDATA[ <= ]]> #{lotQty} AND max_lot_qty >= #{lotQty} LIMIT 1
     </select>
+    <select id="getRuleBySampleCode" resultType="com.erp.model.wms.entity.QcSamplingCodeRuleEntity">
+        SELECT
+            *
+        FROM
+            qc_sampling_code_rule
+                 WHERE disabled = false AND is_deleted =false AND sample_qty_code = #{sampleCode} LIMIT 1
+    </select>
 
 </mapper>
