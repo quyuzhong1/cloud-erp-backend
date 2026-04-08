@@ -3,6 +3,7 @@ package com.erp.server.workflow.controller.fsCallback;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.core.utils.HttpCommonUtil;
+import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
 import com.erp.model.workflow.dto.FsCallbackApiRespDTO;
@@ -10,11 +11,9 @@ import com.erp.server.workflow.handler.CfgApproveSyncCallbackHandler;
 import com.erp.server.workflow.handler.FsCallbackEventHandler;
 import com.lark.oapi.sdk.servlet.ext.ServletAdapter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.annotation.Resource;
@@ -26,6 +25,12 @@ import java.util.Map;
 @Slf4j
 @RequestMapping("/fs/callback/api")
 public class FsCallbackApiController {
+
+    @Value("${restcloud.url:172.16.100.96}")
+    private String restcloudUrl;
+
+    @Value("${restcloud.port:8080}")
+    private String restcloudPort;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -84,8 +89,9 @@ public class FsCallbackApiController {
      */
     @PostMapping("/fileRecordAddOrUpdate")
     @ResponseBody
-    public FsCallbackApiRespDTO fileRecordAddOrUpdate(@RequestBody Map<String, String> req, HttpServletRequest request){
+    public FsCallbackApiRespDTO fileRecordAddOrUpdate(@RequestParam Map<String, String> req, HttpServletRequest request){
         log.warn("飞书表格文件更新回调开始：{}", JSON.toJSONString(req));
+
         FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();
         log.warn("飞书表格文件更新回调结束：{}",JSON.toJSONString(resp));
         return  resp;
