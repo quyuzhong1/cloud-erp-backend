@@ -1053,12 +1053,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                     QcDefectEntity qcDefectEntity = new QcDefectEntity();
                     BeanUtils.copyProperties(defectView, qcDefectEntity);
+                    qcDefectEntity.setDefectLevel(defectView.getDefectLevl());
+                    qcDefectEntity.setBadQty(defectView.getDefectQty());
                     qcDefectEntity.setMainId(qcInfoView.getQcBillId());
 
                     // 查询是否已存在
                     QcDefectEntity existing = qcDefectService.getOne(
                             new QueryWrapper<QcDefectEntity>()
                                     .eq("main_id", qcInfoView.getQcBillId())
+                                    .eq("defect_level",defectView.getDefectLevl())
                     );
 
                     if (existing != null) {
@@ -1291,12 +1294,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                     QcDefectEntity qcDefectEntity = new QcDefectEntity();
                     BeanUtils.copyProperties(defectView, qcDefectEntity);
+                    qcDefectEntity.setDefectLevel(defectView.getDefectLevl());
+                    qcDefectEntity.setBadQty(defectView.getDefectQty());
                     qcDefectEntity.setMainId(qcInfoView.getQcBillId());
 
                     // 查询是否已存在
                     QcDefectEntity existing = qcDefectService.getOne(
                             new QueryWrapper<QcDefectEntity>()
                                     .eq("main_id", qcInfoView.getQcBillId())
+                                    .eq("defect_level",defectView.getDefectLevl())
                     );
 
                     if (existing != null) {
