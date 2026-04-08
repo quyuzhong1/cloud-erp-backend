@@ -1359,10 +1359,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                 if (qcInfoView.getQcBadQty() > 0 && qcInfoView.getQcGoodQty() > 0) {
                     qcGoodRate = BigDecimal.valueOf(qcInfoView.getQcGoodQty())
-                            .divide(totalQty, 4, RoundingMode.HALF_UP)
+                            .divide(totalQty, 4, RoundingMode.HALF_UP);
 
                     qcBadRate = BigDecimal.valueOf(qcInfoView.getQcBadQty())
-                            .divide(totalQty, 4, RoundingMode.HALF_UP)
+                            .divide(totalQty, 4, RoundingMode.HALF_UP);
                 }
 
                 qcResultUpdateWrapper
