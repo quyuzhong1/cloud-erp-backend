@@ -23,6 +23,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -136,9 +137,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     private FileManagementService fileManagementService;
 
     @Resource
-    private QcStandardSkuRefService qcStandardSkuRefService;
-
-    @Resource
     private QcStandardService qcStandardService;
 
     @Resource
@@ -149,15 +147,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Resource
     private QcDefectService qcDefectService;
-
-    @Resource
-    private QcStandardImageRefService qcStandardImageRefService;
-
-    @Resource
-    private QcApplicationService qcApplicationService;
-
-    @Resource
-    private QcApplicationDetailService qcApplicationDetailService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -1033,8 +1022,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 throw new ServiceException( ApiError.PO_QC_PACKAGE_NOT_FOUND, str);
             }
         }
-        //质检单map
-        Map<String, QcInfoEntity> qcInfoMap = new HashMap<>();
 
         //质检通知单审核通过更新质检单
         for (QcNoticeDTO.QcInfoFullView qcInfoView : dto) {
@@ -1081,12 +1068,38 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     );
 
                     if (existing != null) {
+                        String id = existing.getId();
+                        //处理图片
+                        if (Objects.nonNull(defectView.getBadImageViewList())
+                                && !defectView.getBadImageViewList().isEmpty()) {
+                            List<AttachDTO> attachDTOs = new ArrayList<>();
+                            for (QcNoticeDTO.BadImageView badImageView : defectView.getBadImageViewList()) {
+                                AttachDTO attachDTO = new AttachDTO();
+                                BeanUtils.copyProperties(badImageView,attachDTO);
+                                attachDTOs.add(attachDTO);
+                            }
+                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                        } else {
+                            wmsAttachmentService.batchRemoveAttachment(Collections.singletonList(id));
+                        }
                         // 更新操作
                         qcDefectEntity.setId(existing.getId());
                         qcDefectService.updateById(qcDefectEntity);
                     } else {
                         // 新增操作
                         qcDefectService.save(qcDefectEntity);
+                        String id = qcDefectEntity.getId();
+                        if (Objects.nonNull(defectView.getBadImageViewList())
+                                && defectView.getBadImageViewList().isEmpty()) {
+                            List<AttachDTO> attachDTOs = new ArrayList<>();
+                            for (QcNoticeDTO.BadImageView badImageView : defectView.getBadImageViewList()) {
+                                AttachDTO attachDTO = new AttachDTO();
+                                BeanUtils.copyProperties(badImageView,attachDTO);
+                                attachDTOs.add(attachDTO);
+
+                            }
+                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                        }
                     }
                 }
             }
@@ -1296,7 +1309,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //不良信息
             if (!qcInfoView.getDefectViewList().isEmpty()) {
-                for (QcNoticeDTO.DefectView defectView : qcInfoView.getDefectViewList()) {
+                List<QcNoticeDTO.DefectView> defectViewList = qcInfoView.getDefectViewList();
+                for (QcNoticeDTO.DefectView defectView : defectViewList) {
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
                     boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
@@ -1322,12 +1336,39 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     );
 
                     if (existing != null) {
+                        String id = existing.getId();
+                        //处理图片
+                        if (Objects.nonNull(defectView.getBadImageViewList())
+                                && !defectView.getBadImageViewList().isEmpty()) {
+                            List<AttachDTO> attachDTOs = new ArrayList<>();
+                            for (QcNoticeDTO.BadImageView badImageView : defectView.getBadImageViewList()) {
+                                AttachDTO attachDTO = new AttachDTO();
+                                BeanUtils.copyProperties(badImageView,attachDTO);
+                                attachDTOs.add(attachDTO);
+
+                            }
+                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                        } else {
+                            wmsAttachmentService.batchRemoveAttachment(Collections.singletonList(id));
+                        }
+
                         // 更新操作
-                        qcDefectEntity.setId(existing.getId());
+                        qcDefectEntity.setId(id);
                         qcDefectService.updateById(qcDefectEntity);
                     } else {
                         // 新增操作
                         qcDefectService.save(qcDefectEntity);
+                        String id = qcDefectEntity.getId();
+                        if (Objects.nonNull(defectView.getBadImageViewList())
+                                && defectView.getBadImageViewList().isEmpty()) {
+                            List<AttachDTO> attachDTOs = new ArrayList<>();
+                            for (QcNoticeDTO.BadImageView badImageView : defectView.getBadImageViewList()) {
+                                AttachDTO attachDTO = new AttachDTO();
+                                BeanUtils.copyProperties(badImageView,attachDTO);
+                                attachDTOs.add(attachDTO);
+                            }
+                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                        }
                     }
                 }
             }
