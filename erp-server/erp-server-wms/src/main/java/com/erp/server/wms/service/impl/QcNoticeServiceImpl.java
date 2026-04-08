@@ -1938,9 +1938,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //质检状态
         data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
 
-        SupplierEntity supplier = supplierFeign.getSupplierById(data.getSupplierId());
-        if (Objects.nonNull(supplier)) {
-            data.setSupplierName(supplier.getName());
+        if (StringUtils.isNotBlank(data.getSupplierId())) {
+            SupplierEntity supplier = supplierFeign.getSupplierById(data.getSupplierId());
+            if (Objects.nonNull(supplier)) {
+                data.setSupplierName(supplier.getName());
+            }
         }
 
         if(CollUtil.isNotEmpty(data.getDetailList())){
