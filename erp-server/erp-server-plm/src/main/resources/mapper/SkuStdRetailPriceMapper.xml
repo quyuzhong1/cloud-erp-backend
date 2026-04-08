@@ -53,17 +53,15 @@
 				G.update_time as updateTime
 			FROM
 				product_detail T
-                inner join product_bom_sku pbs on t.id = pbs.sku_id and pbs.is_deleted = false
 			    LEFT JOIN sku_std_retail_price G ON T.ID = G.sku_id
 				AND G.is_deleted =
 				FALSE LEFT JOIN product_sale h ON T.ID = h.sku_id 
 				AND h.is_deleted =
 				FALSE LEFT JOIN sku_biz_statistics j ON T.ID = j.sku_id 
 				AND j.is_deleted = FALSE
-			    Left join product_bom_sku pbs on t.id = pbs.sku_id
-
 		WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
+		and t.id not in (select distinct parent_sku_id from product_bom_sku where is_deleted = false)
         <if test="params.ids != null and params.ids.size > 0">
             and g.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
