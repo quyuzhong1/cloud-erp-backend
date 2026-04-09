@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -226,6 +227,57 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds) {
         return lambdaQuery().in(LogisticsBillEntity::getSourceId, sourceIds).list();
     }
+
+    @Override
+    public Boolean batchImportAdd(List<LogisticsBillEntity> addDTOList) {
+        if (CollUtil.isEmpty(addDTOList)) {
+            return Boolean.TRUE;
+        }
+        List<LogisticsBillEntity> logisticsBillList = BeanUtil.copyToList(addDTOList, LogisticsBillEntity.class);
+        // 数据处理
+        batchHandleData(logisticsBillList);
+        boolean save = super.saveBatch(logisticsBillList);
+        if (!save) {
+            throw new ServiceException("物流单保存失败");
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 新增修改处理数据
+     */
+    private void batchHandleData(List<LogisticsBillEntity> logisticsBillList ) {
+        //查询分摊设置
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+
+        for (LogisticsBillEntity logisticsBillEntity : logisticsBillList) {
+            //费用分摊配置查询
+            logisticsBillEntity.setIsAllocateCostRequired(Boolean.FALSE);
+            if (ObjectUtil.isNotEmpty(cfgSetting) && ObjectUtil.isNotEmpty(cfgSetting.getDataJson())) {
+                CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
+                if (CollUtil.isNotEmpty(allocationSettingDTO.getPackageBillTypeList())) {
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.OTHER.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.OTHER.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2C.getCode())
+                            && (CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) || CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.B2C.getCode()))) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2B.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_INFO.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.AFTER_SALE.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.AFTER_SALE.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                }
+            }
+        }
+    }
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
