@@ -138,7 +138,8 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
         // 查询当前店铺
         ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
-
+        entity.setCountryId(currentShopEntity.getDictCountryCode());
+        entity.setCountryName(currentShopEntity.getCountryName());
         // 查询仓库中心对应国家并设置对应店铺
         checkAndSetCountryWithShop(entity, dto, currentShopEntity);
 
@@ -199,26 +200,25 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         entity.setShopName(currentShopEntity.getName());
         dto.setShopName(currentShopEntity.getName());
         // 查询仓库中心对应国家
-//        String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
-//        // 没有配置处理
-//        if (StringUtils.isEmpty(country)) {
-//            log.error("未找到系统仓储中心:{}", entity.getFulfillmentCenter());
-//            try {
-//                // 未找到系统仓储中心发送预警, 不影响主流程
-//                dmpTaskFeign.sendWarnMsg(dto.getDmpSyncTaskId());
-//            } catch (Exception e) {
-//                log.error("未找到系统仓储中心,发送预警失败:code={}, error={}", entity.getFulfillmentCenter(), ExceptionUtil.stacktraceToString(e, 2000));
-//            }
-//            return;
-//        }
+        String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
+        // 没有配置处理
+        if (StringUtils.isEmpty(country)) {
+            log.error("未找到系统仓储中心:{}", entity.getFulfillmentCenter());
+            try {
+                // 未找到系统仓储中心发送预警, 不影响主流程
+                dmpTaskFeign.sendWarnMsg(dto.getDmpSyncTaskId());
+            } catch (Exception e) {
+                log.error("未找到系统仓储中心,发送预警失败:code={}, error={}", entity.getFulfillmentCenter(), ExceptionUtil.stacktraceToString(e, 2000));
+            }
+            return;
+        }
         if (StringUtils.isEmpty(currentShopEntity.getDictCountryCode())){
             throw new ServiceException("店铺数据异常:国家为空，shopId=" +  currentShopEntity.getId());
         }
-        String country = currentShopEntity.getDictCountryCode();
         // 国家一致
-//        if (currentShopEntity.getDictCountryCode().equalsIgnoreCase(country)) {
-//            return;
-//        }
+        if (currentShopEntity.getDictCountryCode().equalsIgnoreCase(country)) {
+            return;
+        }
         // 查询对应sellerId的国家店铺
         ShopInfoDTO.RelatedDTO requestDTO = new ShopInfoDTO.RelatedDTO();
         requestDTO.setCountry(country);
