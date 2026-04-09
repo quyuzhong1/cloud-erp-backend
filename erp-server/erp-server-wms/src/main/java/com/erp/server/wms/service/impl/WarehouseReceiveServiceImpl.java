@@ -587,8 +587,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 srmDeliveryOrderFeign.confirmReceiveStatus(detailIdsByDeliverySource);
             }
 
-            //生成质检通知单
-            generateQcNotice(entity,receiveDetailList);
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -809,6 +807,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             addDetail.setSourceDetailId(warehouseReceiveDetailEntity.getId());
             addDetail.setQcNoticeQty(warehouseReceiveDetailEntity.getReceiveQty());
             addDetail.setSupplierId(entity.getSupplierId());
+            addDetail.setPurchaseOrderDetailId(warehouseReceiveDetailEntity.getPurchaseOrderDetailId());
             addDetailDTOs.add(addDetail);
         }
         addDTO.setDetailList(addDetailDTOs);
