@@ -48,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.text.MessageFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -104,7 +105,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .count();
         if(count > 0){
             LogisticsBillCostDTO.PushDTO bean = JSONUtil.toBean(json, LogisticsBillCostDTO.PushDTO.class);
-            throw new ServiceException("【{0}】费用分摊生成中,剩余待执行任务数量【{1}】，请勿重复提交",bean.getReportDate(),count);
+            throw new ServiceException(MessageFormat.format("【{0}】费用分摊生成中,剩余待执行任务数量【{1}】，请勿重复提交",bean.getReportDate(),count));
 
         }
 
