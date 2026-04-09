@@ -14,6 +14,7 @@
             and approve_status = 'approve'
             and disabled = false
             and type = 'HLTX01_SYS'
+            and is_deleted = false
         </where>
     </select>
 
@@ -27,6 +28,7 @@
             and approve_status = 'approve'
             and disabled = false
             and type = 'HLTX01_SYS'
+            and is_deleted = false
         </where>
     </select>
 

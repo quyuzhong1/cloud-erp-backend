@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
+import com.common.core.entity.BaseEntity;
 
 /**
  * @Classname WorkflowBusinessEntity
@@ -17,7 +17,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("workflow_business")
-public class WorkflowBusinessEntity implements Serializable {
+public class WorkflowBusinessEntity extends BaseEntity<WorkflowBusinessEntity> {
 
     /**
      * 表id

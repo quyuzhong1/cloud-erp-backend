@@ -6,7 +6,7 @@
       SELECT u.uid,u.user_name,u.real_name,u.mobile,u.last_login_time,u.is_deleted,u.last_login_ip,
       u.login_count,u.create_time,u.update_time,u.user_account,u.email,u.head_icon,u.user_state
       FROM sys_user_info u INNER JOIN sys_user_third t
-      ON t.user_id=u.uid WHERE t.third_union_id=#{params.thirdPartyUnionId}
+      ON t.user_id=u.uid and t.is_deleted = false WHERE t.third_union_id=#{params.thirdPartyUnionId}
       AND t.third_party_type=#{params.thirdPartyType}  and u.is_deleted = false
     </select>
 
@@ -19,7 +19,7 @@
        u.code
       FROM sys_user_info u
       INNER JOIN sys_user_third t
-      ON t.user_id=u.uid
+      ON t.user_id=u.uid and t.is_deleted = false
       WHERE u.is_deleted = false
     </select>
     <select id="getUserByThird" resultType="com.erp.model.sys.entity.SysUserThirdEntity">
@@ -33,8 +33,8 @@
                update_time
         FROM
             sys_user_third
-        WHERE
-            third_party_type = #{platform} and ( third_open_id = #{thirdId}   OR  third_user_id = #{thirdId}  OR  third_union_id = #{thirdId}  )
+        WHERE is_deleted = false
+           and third_party_type = #{platform} and ( third_open_id = #{thirdId}   OR  third_user_id = #{thirdId}  OR  third_union_id = #{thirdId}  )
             LIMIT 1
     </select>
     <select id="getUserByThirdList" resultType="com.erp.model.sys.entity.SysUserThirdEntity">
@@ -48,8 +48,8 @@
                update_time
         FROM
             sys_user_third
-        WHERE
-            third_party_type = #{platform} and (
+        WHERE is_deleted = false
+            and third_party_type = #{platform} and (
                 <foreach collection="thirdIds" item="item" open="(" close=")" separator="OR">
                     third_open_id = #{item}  OR  third_user_id  = #{item} OR  third_union_id = #{item}
                 </foreach>

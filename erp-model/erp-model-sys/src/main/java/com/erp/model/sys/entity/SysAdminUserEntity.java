@@ -3,7 +3,8 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
-import java.util.Date;
+import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 
 /**
  * @Classname SysUserInfoEntity
@@ -11,9 +12,10 @@ import java.util.Date;
  * @Date 2022-07-01 16:27
  * @Created by yl
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_admin_user")
-public class SysAdminUserEntity {
+public class SysAdminUserEntity extends BaseEntity<SysAdminUserEntity> {
 
     @TableId(value = "user_id",type =IdType.ASSIGN_ID )
     private String userId;
@@ -40,9 +42,4 @@ public class SysAdminUserEntity {
     @TableField(value = "real_name")
     private String realName;
 
-    @TableField(value = "create_time", fill= FieldFill.INSERT)
-    private Date createTime;
-
-    @TableField(value = "update_time", fill= FieldFill.INSERT_UPDATE)
-    private Date updateTime;
 }

@@ -6,9 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
+import com.common.core.entity.BaseEntity;
 
 /**
  * @author Will
@@ -16,13 +17,11 @@ import java.io.Serializable;
  * @description: API平台表
  * @date 2023/1/11 14:43
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName(value ="platform")
 @NoArgsConstructor
-public class PlatformEntity implements Serializable {
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+public class PlatformEntity extends BaseEntity<PlatformEntity> {
 
     /**
      * 主键id

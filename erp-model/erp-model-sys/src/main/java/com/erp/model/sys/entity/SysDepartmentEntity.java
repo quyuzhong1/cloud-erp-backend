@@ -3,8 +3,8 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 
 /**
  * 部门表
@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
  * @email ylstrive@gmail.com
  * @date 2022-07-11 14:05:47
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_department")
-public class SysDepartmentEntity implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class SysDepartmentEntity extends BaseEntity<SysDepartmentEntity> {
 
 	/**
 	 * $column.comments
@@ -42,16 +42,7 @@ public class SysDepartmentEntity implements Serializable {
 
 	//1 部门  2 小组
 	private Integer type;
-	/**
-	 * 创建时间
-	 */
-	@TableField(fill= FieldFill.INSERT)
-	private LocalDateTime createTime;
-	/**
-	 * 更新时间
-	 */
-	@TableField(fill= FieldFill.INSERT_UPDATE)
-	private LocalDateTime updateTime;
+
 	/**
 	 * 父级id
 	 */
@@ -75,10 +66,4 @@ public class SysDepartmentEntity implements Serializable {
 	@TableField("disabled")
 	private Boolean disabled;
 
-	/**
-	 * 用户删除状态 false:正常 true：已删除
-	 */
-	@TableField(value = "is_deleted")
-	@TableLogic
-	private Boolean isDeleted;
 }

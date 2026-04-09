@@ -3,8 +3,8 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Date;
+import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 
 /**
  * 菜单表
@@ -13,10 +13,10 @@ import java.util.Date;
  * @email ylstrive@gmail.com
  * @date 2022-07-11 14:05:47
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_menu")
-public class SysMenuEntity implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class SysMenuEntity extends BaseEntity<SysMenuEntity> {
 
 	/**
 	 * $column.comments
@@ -41,16 +41,6 @@ public class SysMenuEntity implements Serializable {
 	 */
 	private String menuCode;
 
-	/**
-	 * 创建时间
-	 */
-	@TableField(fill= FieldFill.INSERT)
-	private Date createTime;
-	/**
-	 * 更新时间
-	 */
-	@TableField(fill= FieldFill.INSERT_UPDATE)
-	private Date updateTime;
 	/**
 	 * 菜单链接
 	 */

@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSaveRoleUserDTO;
 import com.erp.model.sys.entity.SysRoleUserEntity;
@@ -13,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,10 +51,20 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
             }
             if(CollectionUtils.isNotEmpty(roleIds)){
                 List<SysRoleUserEntity> saveList = new LinkedList<>();
+                LocalDateTime now = LocalDateTime.now();
+                LoginUser loginUser = UserContext.getNonLoginUser();
+                String currentUserId = loginUser.getUid();
+                String userName = loginUser.getUserName();
                 for (String roleId : roleIds) {
                     SysRoleUserEntity entity = new SysRoleUserEntity();
                     entity.setRoleId(roleId);
                     entity.setUserId(uid);
+                    entity.setUpdateTime(now);
+                    entity.setUpdateUserId(currentUserId);
+                    entity.setUpdateUserName(userName);
+                    entity.setCreateTime(now);
+                    entity.setCreateUserId(currentUserId);
+                    entity.setCreateUserName(userName);
                     saveList.add(entity);
                 }
                 this.saveBatch(saveList);
@@ -130,10 +143,20 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         removeRoleUser(roleId, userIds);
         //在添加
         List<SysRoleUserEntity> addList = new LinkedList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String currentUserId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         for (String userId : userIds) {
             SysRoleUserEntity entity = new SysRoleUserEntity();
             entity.setUserId(userId);
             entity.setRoleId(roleId);
+            entity.setUpdateTime(now);
+            entity.setUpdateUserId(currentUserId);
+            entity.setUpdateUserName(userName);
+            entity.setCreateTime(now);
+            entity.setCreateUserId(currentUserId);
+            entity.setCreateUserName(userName);
             addList.add(entity);
         }
         if (CollectionUtils.isNotEmpty(addList)) {

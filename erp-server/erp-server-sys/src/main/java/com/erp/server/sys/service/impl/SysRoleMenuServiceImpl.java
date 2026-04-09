@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,12 +84,22 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         String roleId = batchDTO.getRoleId();
         List<SysRoleMenuEntity> batchList = new LinkedList<>();
         removeByRoleId(roleId);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         if (CollectionUtils.isNotEmpty(menuIds)) {
             for (SysRoleMenuDataScopeDTO menuId : menuIds) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
                 entity.setMenuId(menuId.getMenuId());
                 entity.setRoleId(roleId);
                 entity.setDataScope(menuId.getDataScope());
+                entity.setUpdateTime(now);
+                entity.setUpdateUserId(userId);
+                entity.setUpdateUserName(userName);
+                entity.setCreateTime(now);
+                entity.setCreateUserId(userId);
+                entity.setCreateUserName(userName);
                 batchList.add(entity);
             }
             return this.saveBatch(batchList);
@@ -521,6 +534,16 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         entity.setMenuId(dto.getMenuId());
         entity.setRoleId(dto.getRoleId());
         entity.setDataScope(dto.getDataScope());
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        entity.setCreateTime(now);
+        entity.setCreateUserId(userId);
+        entity.setCreateUserName(userName);
         return this.save(entity);
 
     }

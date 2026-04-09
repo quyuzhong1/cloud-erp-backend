@@ -3,8 +3,8 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Date;
+import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 
 /**
  * @Classname SysPostEntity
@@ -12,9 +12,10 @@ import java.util.Date;
  * @Date 2022-07-12 9:55
  * @Created by yl
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_post")
-public class SysPostEntity  implements Serializable {
+public class SysPostEntity extends BaseEntity<SysPostEntity> {
 
     @TableId(value = "id",type = IdType.ASSIGN_ID )
     private String id;
@@ -24,10 +25,4 @@ public class SysPostEntity  implements Serializable {
 
     private String postRemark;
 
-
-    @TableField(fill= FieldFill.INSERT)
-    private Date createTime;
-
-    @TableField(fill= FieldFill.INSERT_UPDATE)
-    private Date updateTime;
 }

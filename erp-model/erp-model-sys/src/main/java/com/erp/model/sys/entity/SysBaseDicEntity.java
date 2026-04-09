@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
+import com.common.core.entity.BaseEntity;
 
 /**
  * <p>
@@ -20,9 +20,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("sys_base_dic")
-public class SysBaseDicEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class SysBaseDicEntity extends BaseEntity<SysBaseDicEntity> {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Integer id;
