@@ -172,7 +172,8 @@
         wr.receive_org_name as receiveOrgName,
         po.purchase_org_id as purchaseOrgId,
         po.purchase_org_name as purchaseOrgName,
-        wr.source_code as deliveryCode
+        wr.source_code as deliveryCode,
+        wrd.wait_qc_qty as waitQcQty
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         LEFT join purchase_order po on po.id = wr.purchase_order_id and po.is_deleted = FALSE
