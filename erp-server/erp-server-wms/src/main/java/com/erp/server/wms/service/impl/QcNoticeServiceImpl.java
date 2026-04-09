@@ -1666,17 +1666,16 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     //撤销质检通知单状态
     private void cancelQcNotice(QcNoticeEntity qcNoticeEntity, List<String> detailIds ) {
         List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceDetailIds(detailIds);
-        List<String> qcInfoIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
         //删除质检单以及其明细
-        deleteQcInfo(qcInfoIdList);
+        //deleteQcInfo(qcInfoIdList);
+
+        qcInfoService.lambdaUpdate()
+                .set(QcInfoEntity::getQcStatus,QcBillStatusEnum.WAIT_QC)
+                .in(QcInfoEntity::getSourceDetailId, detailIds)
+                .update();
 
         qcNoticeDetailService.lambdaUpdate()
                 .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.WAIT.getCode())
-                .set(QcNoticeDetailEntity::getQcQty, 0)
-                .set(QcNoticeDetailEntity::getQcDiffQty, 0)
-                .set(QcNoticeDetailEntity::getQcGoodQty, 0)
-                .set(QcNoticeDetailEntity::getQcBadQty, 0)
-                .set(QcNoticeDetailEntity::getQcDate, null)
                 .in(QcNoticeDetailEntity::getId, detailIds)
                 .update();
         //查询其余明细的质检状态,是否有包含任一的质检完成状态
