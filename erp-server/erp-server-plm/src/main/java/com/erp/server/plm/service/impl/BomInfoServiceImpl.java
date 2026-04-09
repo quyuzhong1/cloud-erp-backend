@@ -78,6 +78,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -803,8 +804,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 }
                 if(CollUtil.isNotEmpty(notHaveRetailSet)) {
                     String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-                    return BatchResultDTO.fail(bomId, String.valueOf(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getCode()), StrUtil.format(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getMsg(),allSku));
-
+                    return BatchResultDTO.fail(bomId, String.valueOf(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getCode()), MessageFormat.format(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getMsg(),allSku));
                 }
             }
         }
