@@ -655,7 +655,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            skuStr = valCell.toString().trim();
+                            skuStr = String.valueOf(valCell).trim();
                         break;
                     }
                 }
@@ -720,7 +720,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            skuStr = valCell.toString().trim();
+                            skuStr = String.valueOf(valCell).trim();
                         break;
                     }
                 }
@@ -879,7 +879,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            skuStr = valCell.toString().trim();
+                            skuStr = String.valueOf(valCell).trim();
+                        
                         break;
                     }
                 }
