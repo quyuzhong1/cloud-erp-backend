@@ -415,7 +415,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     public void updateWaitQcQty(String qcId) {
         QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = qcResultService.getLotQualifiedQtyByMainId(qcId);
-        if (ObjectUtil.isEmpty(lotQualifiedQtyDTO) || ObjectUtil.isNull(lotQualifiedQtyDTO.getLotQualifiedQty())) {
+        if (ObjectUtil.isEmpty(lotQualifiedQtyDTO) || ObjectUtil.isNull(lotQualifiedQtyDTO.getTotalLotQualifiedQty())) {
             return;
         }
         //采购收货来源直接取来源明细id
@@ -433,7 +433,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
         }
         //待质检量=∑收货数量-质检合格量-∑待质检量,小于0时默认为0
-        Integer waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getLotQualifiedQty();
+        Integer waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalLotQualifiedQty();
         if (waitQcQty < MathUtil.ZERO) {
             waitQcQty = MathUtil.ZERO;
         }
