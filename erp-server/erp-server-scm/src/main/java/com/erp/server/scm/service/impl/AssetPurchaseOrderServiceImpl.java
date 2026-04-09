@@ -1235,6 +1235,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                             BeanMapperUtils.copy(moldDetailImportDTO, assetPurchaseOrderDetailEntity);
                             assetPurchaseOrderDetailEntity.setMainId(entity.getId()); // 关联主表ID
                             assetPurchaseOrderDetailEntity.setIsGift(Boolean.TRUE.equals(moldDetailImportDTO.getIsGift()));
+                            assetPurchaseOrderDetailEntity.setRemark(moldDetailImportDTO.getRemark());
 
                             AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
                                     .eq(AssetNoticeDetailEntity::getMainId, firstMoldImportDTO.getSourceId())
