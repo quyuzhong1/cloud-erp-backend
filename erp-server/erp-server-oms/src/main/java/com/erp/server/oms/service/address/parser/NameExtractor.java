@@ -22,6 +22,8 @@ public class NameExtractor {
             "^(?:\\s|,|，|;|；|:|：|-|_|/|\\\\)*([0-9A-Za-z一二三四五六七八九十百]+)?(楼|层|栋|幢|座|号|室|单元|楼栋|门牌).*");
     private static final Pattern ADDRESS_PLACE_SUFFIX_PATTERN = Pattern.compile(
             "^(?:\\s|,|，|;|；|:|：|-|_|/|\\\\)*(大厦|广场|中心|公寓|花园|小区|大楼|商厦|产业园|工业园|园区|城|苑).*");
+    private static final Pattern ADDRESS_STREET_SUFFIX_PATTERN = Pattern.compile(
+            "^(?:\\s|,|，|;|；|:|：|-|_|/|\\\\)*(街|路|道|巷|弄|镇|村|屯).*");
 
     public ExtractedName extract(String textWithoutPhone, int phoneStartIndex) {
         if (textWithoutPhone == null || textWithoutPhone.trim().isEmpty()) {
@@ -153,6 +155,7 @@ public class NameExtractor {
         }
         String suffix = text.substring(end);
         return ADDRESS_BUILDING_SUFFIX_PATTERN.matcher(suffix).matches()
+                || ADDRESS_STREET_SUFFIX_PATTERN.matcher(suffix).matches()
                 || ADDRESS_PLACE_SUFFIX_PATTERN.matcher(suffix).matches();
     }
 
