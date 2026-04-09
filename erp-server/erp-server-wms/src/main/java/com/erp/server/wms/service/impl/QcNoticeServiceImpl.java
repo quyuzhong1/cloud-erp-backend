@@ -587,7 +587,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             addDto.setPurchaseOrderCode(entity.getPurchaseOrderCode());
             //质检仓库
             addDto.setWarehouseId(entity.getQcWarehouseId());
-
+            //供应商
+            addDto.setSupplierId(qcNoticeDetail.getSupplierId());
             addDto.setSourceDetailId(qcNoticeDetail.getId());
             //质检日期
             addDto.setQcDate(LocalDate.now());
