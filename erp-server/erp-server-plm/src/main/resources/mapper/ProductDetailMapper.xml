@@ -1307,7 +1307,8 @@
             pl.customs_code AS customsCode,
             pl.first_qty AS firstQty,
             pl.second_qty AS secondQty,
-            ps.sale_state AS salesStatus
+            ps.sale_state AS salesStatus,
+            pl.combination_declare_type AS combinationDeclareType
         FROM product_detail pd
         LEFT JOIN product_info pi
         ON pi.id = pd.product_id AND pi.is_deleted = FALSE
