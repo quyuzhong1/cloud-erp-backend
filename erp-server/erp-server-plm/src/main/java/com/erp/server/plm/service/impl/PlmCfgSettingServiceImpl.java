@@ -9,7 +9,7 @@ import com.erp.model.plm.entity.PlmCfgSettingEntity;
 import com.erp.model.plm.enums.PlmCfgSettingEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
 import com.erp.server.plm.mapper.CfgSettingMapper;
-import com.erp.server.plm.service.CfgSettingService;
+import com.erp.server.plm.service.PlmCfgSettingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +30,10 @@ import static cn.hutool.core.collection.CollUtil.isEmpty;
  */
 @Slf4j
 @Service
-public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, PlmCfgSettingEntity> implements CfgSettingService {
+public class PlmCfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, PlmCfgSettingEntity> implements PlmCfgSettingService {
 
     @Resource
-    private CfgSettingService service;
+    private PlmCfgSettingService service;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
