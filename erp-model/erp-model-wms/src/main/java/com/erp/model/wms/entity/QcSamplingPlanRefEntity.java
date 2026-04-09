@@ -37,6 +37,11 @@ public class QcSamplingPlanRefEntity extends BaseEntity<QcSamplingPlanRefEntity>
     @TableField("sampling_plan_id")
     private String samplingPlanId;
     /**
+     * 抽样方案编码
+     */
+    @TableField("sampling_plan_code")
+    private String samplingPlanCode;
+    /**
     * 建议抽样数量
     */
     @TableField("suggest_sampling_qty")
