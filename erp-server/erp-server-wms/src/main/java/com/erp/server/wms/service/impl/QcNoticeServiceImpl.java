@@ -646,6 +646,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcInfo.setQcGoodQty(samplingPlan.getSampleQty());
             qcInfo.setLotQualifiedQty(samplingPlan.getSampleQty());
             qcStandardAddDTO.setSamplingPlanId(samplingPlan.getId());
+            qcStandardAddDTO.setSamplingPlanCode(samplingPlan.getCode());
             qcStandardAddDTO.setSamplingPlanName(entity.getQcType() + "抽样方案");
             qcStandardAddDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
             //品类通用标准
