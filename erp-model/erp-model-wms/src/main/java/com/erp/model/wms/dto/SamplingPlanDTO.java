@@ -402,6 +402,11 @@ public class SamplingPlanDTO implements Serializable {
         private BigDecimal rate;
 
         /**
+        * 一般缺陷AQL
+         */
+        private String generalAql;
+
+        /**
          * 一般缺陷允收数（Ac）
          */
         private Integer generalAcceptQty;
@@ -409,6 +414,10 @@ public class SamplingPlanDTO implements Serializable {
          * 一般缺陷拒收数(Re)
          */
         private Integer generalRejectQty;
+        /**
+        * 严重缺陷AQL
+        */
+        private String majorAql;;
         /**
          * 严重缺陷允收数（Ac）
          */
