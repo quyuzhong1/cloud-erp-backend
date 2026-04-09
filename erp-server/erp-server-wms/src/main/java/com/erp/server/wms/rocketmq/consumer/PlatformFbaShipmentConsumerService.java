@@ -231,8 +231,6 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         entity.setShopId(shopInfoEntity.getId());
         entity.setShopName(shopInfoEntity.getName());
         entity.setCountryId(shopInfoEntity.getDictCountryCode());
-        // 查询国家信息
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
-        entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
+        entity.setCountryName(shopInfoEntity.getCountryName());
     }
 }
