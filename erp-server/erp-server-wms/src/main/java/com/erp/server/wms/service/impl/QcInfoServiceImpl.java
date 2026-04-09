@@ -681,6 +681,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     .set(QcNoticeDetailEntity::getQcGoodQty, goodQty)
                     .set(QcNoticeDetailEntity::getQcBadQty, badQty)
                     .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.FINISH.getCode())
+                    .set(QcNoticeDetailEntity::getQcDate,LocalDateTime.now())
                     .eq(QcNoticeDetailEntity::getId, sourceDetailId);
 
             if (StringUtils.isNotBlank(qcUserId)) {
