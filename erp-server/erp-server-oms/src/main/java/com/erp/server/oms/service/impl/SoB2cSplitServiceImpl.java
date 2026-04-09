@@ -1393,7 +1393,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         .entrySet()
                         .stream()
                         .filter(entry -> cnyCurrencySkuKeyList.contains(entry.getKey()))
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                        .collect(Collectors.toMap(e-> e.getKey().split("\\|")[0], Map.Entry::getValue, (v1, v2) -> v1));
             }
         }
         return null;
