@@ -30,6 +30,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcNoticeDetailImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -39,6 +40,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -138,6 +140,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Resource
     private QcDefectService qcDefectService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -1753,6 +1758,31 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     .set(QcNoticeEntity::getQcTImeliness, this.getHoursDiff(qcNoticeEntity.getApproveTime(),LocalDateTime.now()))
                     .eq(QcNoticeEntity::getId, qcNoticeEntity.getId())
                     .update();
+        }
+
+        // 🚨 撤销质检后，扣减采购订单已质检合格数量
+        List<QcResultEntity> qcResults = qcResultService.getByMainIdList(qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList()));
+        List<PurchaseOrderDTO.QcQtyDTO> deductList = new ArrayList<>();
+        for (QcResultEntity qr : qcResults) {
+            // 只有判定合格且有合格数量的才需要冲销
+            if (qr != null && CharSequenceUtil.isNotBlank(qr.getPurchaseOrderDetailId()) 
+                && QcResultEnum.CONFORMITY.getCode().equals(qr.getQcResult())
+                && qr.getQcGoodQty() != null && qr.getQcGoodQty() > 0) {
+                
+                PurchaseOrderDTO.QcQtyDTO deduct = new PurchaseOrderDTO.QcQtyDTO();
+                deduct.setPurchaseOrderDetailId(qr.getPurchaseOrderDetailId());
+                deduct.setQcGoodQty(-qr.getQcGoodQty()); // 传负数进行扣减
+                deductList.add(deduct);
+            }
+        }
+        
+        if (CollUtil.isNotEmpty(deductList)) {
+            Boolean scmRes = scmTaskFeign.addQcGoodQty(deductList);
+            if (scmRes != null && scmRes) {
+                for (PurchaseOrderDTO.QcQtyDTO d : deductList) {
+                    log.info("质检撤销同步扣减采购合格量成功，POD: {}, Qty: {}", d.getPurchaseOrderDetailId(), d.getQcGoodQty());
+                }
+            }
         }
     }
 
