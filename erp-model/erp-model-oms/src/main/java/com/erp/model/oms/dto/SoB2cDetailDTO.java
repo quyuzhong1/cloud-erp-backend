@@ -422,6 +422,14 @@ public class SoB2cDetailDTO implements Serializable {
         private BigDecimal firstMileShippingCost;
         //清关税费
         private BigDecimal clearanceCustomsTax;
+        /**
+         * 分摊来源
+         */
+        private String priceAllocationSource;
+        /**
+         * 分摊来源金额
+         */
+        private BigDecimal allocationAmount;
     }
 
     /**
