@@ -1,5 +1,10 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.AsyncTaskDetailRecordEntity;
 import com.erp.model.tms.entity.AsyncTaskRecordEntity;
 import com.erp.model.tms.enums.AsyncTaskRecordStatusEnum;
@@ -37,7 +42,8 @@ public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecord
                 .eq(AsyncTaskRecordEntity::getStatus, AsyncTaskRecordStatusEnum.ING.getCode())
                 .count();
         if(count > 0){
-            return null;
+            LogisticsBillCostDTO.PushDTO bean = JSONUtil.toBean(json, LogisticsBillCostDTO.PushDTO.class);
+            throw new ServiceException("【{0}】费用分摊生成中,剩余待执行任务数量【{1}】，请勿重复提交",bean.getReportDate(),count);
         }
 
         AsyncTaskRecordEntity entity = new AsyncTaskRecordEntity();
