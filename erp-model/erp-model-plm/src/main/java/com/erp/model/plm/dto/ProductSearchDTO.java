@@ -241,6 +241,11 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 销售方式(后端用)
          */
         private String saleMethod;
+        
+        /**
+         * 是否可以查未审核通过的数据
+         */
+        private Boolean isNotPass = false;
     }
 
     @Data
@@ -366,6 +371,11 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 标准零售价
          */
         private BigDecimal retailPrice = BigDecimal.ZERO;
+        
+        /**
+         * sku名称
+         */
+        private String skuName;
     }
 
 }

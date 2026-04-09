@@ -41,6 +41,9 @@ public class ImportPlmFeignController {
     @Resource
     private ProductChangeService productChangeService;
 
+    @Resource
+    private SkuStdRetailPriceService skuStdRetailPriceService;
+
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
@@ -136,6 +139,17 @@ public class ImportPlmFeignController {
             productChangeService.importProductChange(dto);
         } catch (Exception e) {
             log.error("导入产品信息变更失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+
+    @PostMapping("/importSkuStdRetailPrice")
+    public void importSkuStdRetailPrice(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            skuStdRetailPriceService.importSkuStdRetailPrice(dto);
+        } catch (Exception e) {
+            log.error("导入sku标准零售价失败", e);
             updateTask(dto.getTaskId(), e);
         }
     }
