@@ -1080,7 +1080,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 throw new ServiceException(ApiError.WH_STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
             }
             String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
-            redisUtil.set(redisKey, cn.hutool.core.date.DateUtil.now());
+            redisUtil.set(redisKey, planCode);
         });
         // 3. 对库存记录进行分组，按照分单规则进行分组
         SeparateRuleEnum separateRule = entity.getSeparateRule();
@@ -1142,7 +1142,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
         inventoryList.stream().forEach(item -> {
             String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
-            redisUtil.set(redisKey, cn.hutool.core.date.DateUtil.now());
+            redisUtil.set(redisKey, planCode);
         });
         // 3. 对库存记录进行分组，按照分单规则进行分组
         SeparateRuleEnum separateRule = entity.getSeparateRule();
