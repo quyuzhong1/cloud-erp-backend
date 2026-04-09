@@ -783,6 +783,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     public BatchResultDTO invalid(String id, String remark) {
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        validateInvalidNoApprovedSoB2c(entity);
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT.getCode(), entity.getApproveStatus()))) {
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
@@ -1519,6 +1520,26 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
     private String getIsInternationalName(Boolean isInternational) {
         return Boolean.TRUE.equals(isInternational) ? "国外" : "国内";
+    }
+
+    private void validateInvalidNoApprovedSoB2c(KolB2cApplicationEntity entity) {
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, entity.getId())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(subList)) {
+            return;
+        }
+        List<String> subIds = subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+        boolean hasApprovedSoB2c = soB2cService.lambdaQuery()
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                .in(SoB2cEntity::getSourceId, subIds)
+                .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .eq(SoB2cEntity::getIsDeleted, false)
+                .count() > 0;
+        if (hasApprovedSoB2c) {
+            throw new ServiceException("关联B2C销售订单已审核通过，不允许作废B2C寄样申请单");
+        }
     }
 
     private String resolveBillStatus(String billStatus, String approveStatus) {
