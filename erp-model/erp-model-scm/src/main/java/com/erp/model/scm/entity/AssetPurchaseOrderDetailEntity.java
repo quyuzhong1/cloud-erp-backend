@@ -87,6 +87,11 @@ public class AssetPurchaseOrderDetailEntity extends BaseEntity<AssetPurchaseOrde
     @TableField("is_urgent")
     private Boolean isUrgent;
     /**
+    * 是否赠品
+    */
+    @TableField("is_gift")
+    private Boolean isGift;
+    /**
     * 备注
     */
     @TableField("remark")
@@ -142,6 +147,8 @@ public class AssetPurchaseOrderDetailEntity extends BaseEntity<AssetPurchaseOrde
     public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
 
     public static final String IS_URGENT = "is_urgent";
+
+    public static final String IS_GIFT = "is_gift";
 
     public static final String REMARK = "remark";
 

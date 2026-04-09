@@ -449,6 +449,11 @@ public class ProductDetailDTO implements Serializable {
          *产品属性id
          */
         private String propertyId;
+        
+        /**
+         * sku名称
+         */
+        private String skuName;
     }
     @Data
     @NoArgsConstructor

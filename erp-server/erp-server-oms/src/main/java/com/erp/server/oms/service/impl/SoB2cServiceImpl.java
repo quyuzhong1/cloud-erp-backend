@@ -11468,13 +11468,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse) {
+    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse,SoB2cEntity oldSoB2cEntity) {
         //检查发货限制
         String restrictionMsg = this.checkDeliveryRestriction(dto.getId(), RuleOrderHandleEnum.DeliveryRestrictionEnum.NO_OUTBOUND_DELIVERY.getCode());
         if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
             throw new ServiceException(restrictionMsg);
         }
         dto.setLogisticsChannelCode(baseDTO.getCode());
+        Boolean isThirdWarehouse = Objects.nonNull(overseasWarehouse);
         //生成发货单和出库单
         try {
             UserContext.setIsUserSystem(true);
@@ -11483,7 +11484,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } catch (Exception e) {
             log.error("生成发货单，出库单失败:{}", e.getMessage());
             //回退订单状态
-            soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, null).set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()).set(SoB2cEntity::getIsNotOutbound, false)
+            soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, oldSoB2cEntity.getSoOutstockDate()).set(SoB2cEntity::getBillStatus, oldSoB2cEntity.getBillStatus()).set(SoB2cEntity::getIsNotOutbound, oldSoB2cEntity.getIsNotOutbound())
                     .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
             throw new ServiceException(CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage()));
         } finally {
