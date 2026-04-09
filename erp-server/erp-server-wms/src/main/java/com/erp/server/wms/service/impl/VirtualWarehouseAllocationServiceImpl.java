@@ -417,11 +417,18 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //生成自动借调直接调拨单
             List<String> transferIdList = generateAutoTransferInfo(allocationEntity, transferWarehouseList);
 
+            //生成旺店通同步库存比对任务
+            String taskId = syncWdtVirtualWarehousePushOrderService.saveWdtInventoryTask(allocationEntity, detailEntityList);
+            List<String> parentId = new ArrayList<>();
+            if(StringUtils.isNotBlank(taskId)){
+                parentId.add(taskId);
+            }
+
             //校验总库存
             submitCheckQty(detailEntityList,allocationEntity);
 
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,Collections.emptyList());
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,parentId);
 
         } else if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(allocationEntity.getType())) {
             //调拨分货
