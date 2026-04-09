@@ -415,7 +415,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     public void updateWaitQcQty(String qcId) {
         QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = qcResultService.getLotQualifiedQtyByMainId(qcId);
-        if (ObjectUtil.isEmpty(lotQualifiedQtyDTO)) {
+        if (ObjectUtil.isEmpty(lotQualifiedQtyDTO) || ObjectUtil.isNull(lotQualifiedQtyDTO.getLotQualifiedQty())) {
             return;
         }
         //采购收货来源直接取来源明细id
