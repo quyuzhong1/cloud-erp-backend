@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.QcInfoEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
@@ -1702,6 +1703,16 @@ public class QcInfoDTO implements Serializable {
          * 图片url
          */
         private List<String> imageUrlList;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class BatchQcAccumulationParam {
+        private QcInfoEntity entity;
+        private String purchaseOrderDetailId;
+        private String qcResult;
+        private Integer qcGoodQty;
     }
 
 }

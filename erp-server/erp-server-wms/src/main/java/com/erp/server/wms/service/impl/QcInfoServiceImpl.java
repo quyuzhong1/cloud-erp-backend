@@ -648,8 +648,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
             //累加质检合格量(结果：合格)
-            QcInfoServiceImpl bean = ApplicationContextUtils.getBean(QcInfoServiceImpl.class);
-            bean.handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getQcGoodQty());
+            handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getQcGoodQty());
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
 
@@ -1289,8 +1288,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //累加质检合格量(结果：合格)
             if (Objects.nonNull(qcResult)) {
-                QcInfoServiceImpl bean = ApplicationContextUtils.getBean(QcInfoServiceImpl.class);
-                bean.handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getQcGoodQty());
+                handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getQcGoodQty());
             }
 
             //批量去更新 质检数量
@@ -1315,10 +1313,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param qcGoodQty 质检合格数量，用于累计到采购订单
      * @return void
      */
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Override
-    public void handlePurchaseOrderQcAccumulation(QcInfoEntity entity, String finalPurchaseOrderDetailId, String qcResult, Integer qcGoodQty) {
+    private void handlePurchaseOrderQcAccumulation(QcInfoEntity entity, String finalPurchaseOrderDetailId, String qcResult, Integer qcGoodQty) {
         // 根据来源类型追溯采购订单明细ID
         if (CharSequenceUtil.isBlank(finalPurchaseOrderDetailId)) {
             String sourceType = entity.getSourceType();
@@ -1371,6 +1366,160 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 Boolean b = scmTaskFeign.addQcGoodQty(Collections.singletonList(qcQtyDTO));
                 if (b) {
                     operateLogService.addModuleOperateLog(String.format("完成质检:本次质检合格量【%s】", qcQtyDTO.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), entity.getId(), "完成质检");
+                }
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public void batchHandlePurchaseOrderQcAccumulation(List<QcInfoDTO.BatchQcAccumulationParam> params) {
+        if (CollUtil.isEmpty(params)) {
+            return;
+        }
+
+        // 1. 批量补全缺失的 purchaseOrderDetailId (溯源)
+        Map<String, String> entityIdToPodIdMap = new HashMap<>();
+
+        Map<String, List<QcInfoDTO.BatchQcAccumulationParam>> missingMap = params.stream()
+                .filter(p -> CharSequenceUtil.isBlank(p.getPurchaseOrderDetailId())
+                        && CharSequenceUtil.isNotBlank(p.getEntity().getSourceType())
+                        && CharSequenceUtil.isNotBlank(p.getEntity().getSourceDetailId()))
+                .collect(Collectors.groupingBy(p -> p.getEntity().getSourceType()));
+
+        // 1.1 处理 PO_RECEIVE
+        if (missingMap.containsKey(SourceTypeEnum.PO_RECEIVE.getCode())) {
+            List<QcInfoDTO.BatchQcAccumulationParam> list = missingMap.get(SourceTypeEnum.PO_RECEIVE.getCode());
+            Set<String> sourceDetailIds = list.stream().map(p -> p.getEntity().getSourceDetailId()).collect(Collectors.toSet());
+            List<WarehouseReceiveDetailEntity> wrdList = warehouseReceiveDetailService.listByIds(new ArrayList<>(sourceDetailIds));
+            Map<String, String> wrdMap = wrdList.stream().collect(Collectors.toMap(WarehouseReceiveDetailEntity::getId, WarehouseReceiveDetailEntity::getPurchaseOrderDetailId, (a, b) -> a));
+            for (QcInfoDTO.BatchQcAccumulationParam p : list) {
+                String podId = wrdMap.get(p.getEntity().getSourceDetailId());
+                if (CharSequenceUtil.isNotBlank(podId)) entityIdToPodIdMap.put(p.getEntity().getId(), podId);
+            }
+        }
+
+        // 1.2 处理 QC_NOTICE
+        if (missingMap.containsKey(SourceTypeEnum.QC_NOTICE.getCode())) {
+            List<QcInfoDTO.BatchQcAccumulationParam> list = missingMap.get(SourceTypeEnum.QC_NOTICE.getCode());
+            Set<String> noticeDtlIds = list.stream().map(p -> p.getEntity().getSourceDetailId()).collect(Collectors.toSet());
+            List<QcNoticeDetailEntity> qndList = qcNoticeDetailService.listByIds(new ArrayList<>(noticeDtlIds));
+            Set<String> noticeMainIds = qndList.stream().map(QcNoticeDetailEntity::getMainId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toSet());
+            
+            if (CollUtil.isNotEmpty(noticeMainIds)) {
+                List<QcNoticeEntity> noticeList = qcNoticeService.listByIds(new ArrayList<>(noticeMainIds));
+                Map<String, QcNoticeEntity> noticeMap = noticeList.stream().collect(Collectors.toMap(QcNoticeEntity::getId, v -> v, (a, b) -> a));
+                
+                Set<String> wrdToFetch = new HashSet<>();
+                Set<String> qadToFetch = new HashSet<>();
+                
+                for (QcNoticeDetailEntity qnd : qndList) {
+                    QcNoticeEntity notice = noticeMap.get(qnd.getMainId());
+                    if (notice != null && CharSequenceUtil.isNotBlank(qnd.getSourceDetailId())) {
+                        if (SourceTypeEnum.PO_RECEIVE.getCode().equals(notice.getSourceType())) {
+                            wrdToFetch.add(qnd.getSourceDetailId());
+                        } else if (SourceTypeEnum.QC_APPLICATION.getCode().equals(notice.getSourceType())) {
+                            qadToFetch.add(qnd.getSourceDetailId());
+                        }
+                    }
+                }
+                
+                Map<String, String> wrdMap = new HashMap<>();
+                if (CollUtil.isNotEmpty(wrdToFetch)) {
+                    List<WarehouseReceiveDetailEntity> wrds = warehouseReceiveDetailService.listByIds(new ArrayList<>(wrdToFetch));
+                    wrdMap = wrds.stream().collect(Collectors.toMap(WarehouseReceiveDetailEntity::getId, WarehouseReceiveDetailEntity::getPurchaseOrderDetailId, (a, b) -> a));
+                }
+                
+                Map<String, String> qadMap = new HashMap<>();
+                if (CollUtil.isNotEmpty(qadToFetch)) {
+                    List<QcApplicationDetailEntity> qads = qcApplicationDetailService.listByIds(new ArrayList<>(qadToFetch));
+                    qadMap = qads.stream().collect(Collectors.toMap(QcApplicationDetailEntity::getId, QcApplicationDetailEntity::getSourceDetailId, (a, b) -> a));
+                }
+                
+                Map<String, String> qndToPodMap = new HashMap<>();
+                for (QcNoticeDetailEntity qnd : qndList) {
+                    QcNoticeEntity notice = noticeMap.get(qnd.getMainId());
+                    if (notice != null) {
+                        if (SourceTypeEnum.PO_RECEIVE.getCode().equals(notice.getSourceType())) {
+                            qndToPodMap.put(qnd.getId(), wrdMap.get(qnd.getSourceDetailId()));
+                        } else if (SourceTypeEnum.QC_APPLICATION.getCode().equals(notice.getSourceType())) {
+                            qndToPodMap.put(qnd.getId(), qadMap.get(qnd.getSourceDetailId()));
+                        }
+                    }
+                }
+                
+                for (QcInfoDTO.BatchQcAccumulationParam p : list) {
+                    String podId = qndToPodMap.get(p.getEntity().getSourceDetailId());
+                    if (CharSequenceUtil.isNotBlank(podId)) entityIdToPodIdMap.put(p.getEntity().getId(), podId);
+                }
+            }
+        }
+
+        // 获取所有涉及的 qc_result 实体以供 updateBatchById 及 步骤1.3溯源 使用
+        Set<String> mainIds = params.stream().map(p -> p.getEntity().getId()).collect(Collectors.toSet());
+        List<QcResultEntity> existResults = qcResultService.lambdaQuery().in(QcResultEntity::getMainId, mainIds).list();
+        Map<String, QcResultEntity> resultMap = existResults.stream().collect(Collectors.toMap(QcResultEntity::getMainId, v -> v, (a, b) -> a));
+
+        // 1.3 处理 PURCHASE_ORDER
+        if (missingMap.containsKey(SourceTypeEnum.PURCHASE_ORDER.getCode())) {
+            List<QcInfoDTO.BatchQcAccumulationParam> list = missingMap.get(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            for (QcInfoDTO.BatchQcAccumulationParam p : list) {
+                QcResultEntity qr = resultMap.get(p.getEntity().getId());
+                if (qr != null && CharSequenceUtil.isNotBlank(qr.getPurchaseOrderDetailId())) {
+                    entityIdToPodIdMap.put(p.getEntity().getId(), qr.getPurchaseOrderDetailId());
+                }
+            }
+        }
+
+        // 2. 准备批量更新及 RPC 集合
+        List<PurchaseOrderDTO.QcQtyDTO> qcQtyDTOList = new ArrayList<>();
+        List<QcResultEntity> qcResultUpdateList = new ArrayList<>();
+
+        for (QcInfoDTO.BatchQcAccumulationParam param : params) {
+            String podId = param.getPurchaseOrderDetailId();
+            if (CharSequenceUtil.isBlank(podId)) {
+                podId = entityIdToPodIdMap.get(param.getEntity().getId());
+            }
+            
+            if (CharSequenceUtil.isBlank(podId)) {
+                continue; // 无法溯源的跳过批量 RPC
+            }
+
+            QcResultEntity qr = resultMap.get(param.getEntity().getId());
+            if (qr != null) {
+                qr.setPurchaseOrderDetailId(podId);
+                qcResultUpdateList.add(qr);
+            }
+
+            if (QcResultEnum.CONFORMITY.getCode().equals(param.getQcResult())) {
+                PurchaseOrderDTO.QcQtyDTO qcQtyDTO = new PurchaseOrderDTO.QcQtyDTO();
+                qcQtyDTO.setPurchaseOrderDetailId(podId);
+                qcQtyDTO.setQcGoodQty(param.getQcGoodQty() != null ? param.getQcGoodQty() : 0);
+                if (qcQtyDTO.getQcGoodQty() > 0) {
+                    qcQtyDTOList.add(qcQtyDTO);
+                }
+            }
+        }
+
+        // 3. 批量更新 qc_result 表
+        if (CollUtil.isNotEmpty(qcResultUpdateList)) {
+            qcResultService.updateBatchById(qcResultUpdateList);
+        }
+
+        // 4. 发起唯一 1 次聚合批量 Feign 调用
+        if (CollUtil.isNotEmpty(qcQtyDTOList)) {
+            Boolean success = scmTaskFeign.addQcGoodQty(qcQtyDTOList);
+            if (success) {
+                for (QcInfoDTO.BatchQcAccumulationParam param : params) {
+                    if (QcResultEnum.CONFORMITY.getCode().equals(param.getQcResult()) && param.getQcGoodQty() != null && param.getQcGoodQty() > 0) {
+                        operateLogService.addModuleOperateLog(
+                                String.format("完成质检:本次质检合格量【%s】", param.getQcGoodQty()), 
+                                ModuleTypeEnum.QC_ORDER.getCode(), 
+                                param.getEntity().getId(), 
+                                "完成质检"
+                        );
+                    }
                 }
             }
         }

@@ -4086,9 +4086,25 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(dtoList)) {
             return false;
         }
-        int i = baseMapper.addQcGoodQty(dtoList.get(0));
-        if(i == 0){
-            return false;
+        //dtoList 根据purchaseOrderDetailId 汇总qcGoodQty之和
+        Map<String, Integer> qcGoodQtyMap = dtoList.stream()
+                .filter(e -> Objects.nonNull(e.getQcGoodQty()) && e.getQcGoodQty() != 0)
+                .collect(Collectors.groupingBy(
+                        PurchaseOrderDTO.QcQtyDTO::getPurchaseOrderDetailId,
+                        Collectors.summingInt(PurchaseOrderDTO.QcQtyDTO::getQcGoodQty)
+                ));
+        // 构建汇总后的列表
+        List<PurchaseOrderDTO.QcQtyDTO> aggregatedList = qcGoodQtyMap.entrySet().stream()
+                .map(entry -> {
+                    PurchaseOrderDTO.QcQtyDTO dto = new PurchaseOrderDTO.QcQtyDTO();
+                    dto.setPurchaseOrderDetailId(entry.getKey());
+                    dto.setQcGoodQty(entry.getValue());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        for (PurchaseOrderDTO.QcQtyDTO dto : aggregatedList) {
+            baseMapper.addQcGoodQty(dto);
         }
         return true;
     }
