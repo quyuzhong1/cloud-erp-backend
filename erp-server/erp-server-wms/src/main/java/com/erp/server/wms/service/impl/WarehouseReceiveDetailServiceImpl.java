@@ -384,8 +384,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         }
 
         //查询采购订单下的质检批次合格数量汇总
-        List<QcResultDTO.TotalLotQualifiedQtyDTO> totalLotQualifiedQtyList = qcResultService.getTotalLotQualifiedQtyBySourceDetailId(podIdList);
-        Map<String, Integer> totalLotQualifiedQtyMap = totalLotQualifiedQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getSourceDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalLotQualifiedQty));
+        List<QcResultDTO.TotalLotQualifiedQtyDTO> totalLotQualifiedQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
+        Map<String, Integer> totalLotQualifiedQtyMap = totalLotQualifiedQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalLotQualifiedQty));
 
         //查询采购订单下的其他收货单的收货数量汇总
         List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQty(podIdList);

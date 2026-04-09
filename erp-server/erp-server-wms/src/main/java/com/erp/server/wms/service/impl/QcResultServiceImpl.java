@@ -471,8 +471,8 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     }
 
     @Override
-    public List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyBySourceDetailId(List<String> sourceDetailIdList) {
-        return baseMapper.getTotalLotQualifiedQtyBySourceDetailId(sourceDetailIdList);
+    public List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyByPodId(List<String> podIdList) {
+        return baseMapper.getTotalLotQualifiedQtyByPodId(podIdList);
     }
 
     @Override

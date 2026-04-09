@@ -45,13 +45,13 @@ public interface QcResultMapper extends BaseMapper<QcResultEntity> {
      */
     int getReQcCount();
     /**
-     * 来源明细id获取质检合格数量汇总
+     * 采购订单明细id获取质检合格数量汇总
      * @author will
      * @date 2026/3/30 15:13
-     * @param sourceDetailIdList
+     * @param podIdList
      * @return  List<QcResultDTO.TotalLotQualifiedQtyDTO>
      */
-    List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyBySourceDetailId(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
+    List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyByPodId(@Param("podIdList")List<String> podIdList);
     /**
      * 主表id获取质检合格数量汇总
      * @author will
