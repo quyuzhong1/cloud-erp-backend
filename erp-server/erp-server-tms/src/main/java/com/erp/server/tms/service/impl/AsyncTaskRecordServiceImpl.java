@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -43,7 +44,7 @@ public class AsyncTaskRecordServiceImpl extends SuperServiceImpl<AsyncTaskRecord
                 .count();
         if(count > 0){
             LogisticsBillCostDTO.PushDTO bean = JSONUtil.toBean(json, LogisticsBillCostDTO.PushDTO.class);
-            throw new ServiceException("【{0}】费用分摊生成中,剩余待执行任务数量【{1}】，请勿重复提交",bean.getReportDate(),count);
+            throw new ServiceException(MessageFormat.format("【{0}】费用分摊生成中,剩余待执行任务数量【{1}】，请勿重复提交",bean.getReportDate(),count));
         }
 
         AsyncTaskRecordEntity entity = new AsyncTaskRecordEntity();
