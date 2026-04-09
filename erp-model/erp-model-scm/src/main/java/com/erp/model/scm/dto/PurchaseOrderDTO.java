@@ -2192,5 +2192,9 @@ public class PurchaseOrderDTO implements Serializable {
          * 质检合格量
          */
         private Integer qcGoodQty;
+        /**
+         * 质检但id
+         */
+        private String qcInfoId;
     }
 }

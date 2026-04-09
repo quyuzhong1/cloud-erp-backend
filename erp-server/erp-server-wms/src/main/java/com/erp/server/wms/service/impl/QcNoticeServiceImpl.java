@@ -1787,6 +1787,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 
                 PurchaseOrderDTO.QcQtyDTO deduct = new PurchaseOrderDTO.QcQtyDTO();
                 deduct.setPurchaseOrderDetailId(qr.getPurchaseOrderDetailId());
+                deduct.setQcInfoId(qr.getMainId());
                 deduct.setQcGoodQty(-qr.getQcGoodQty()); // 传负数进行扣减
                 deductList.add(deduct);
             }
@@ -1797,6 +1798,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (scmRes != null && scmRes) {
                 for (PurchaseOrderDTO.QcQtyDTO d : deductList) {
                     log.info("质检撤销同步扣减采购合格量成功，POD: {}, Qty: {}", d.getPurchaseOrderDetailId(), d.getQcGoodQty());
+                    operateLogService.addModuleOperateLog(String.format("撤销质检:本次质检合格量【%s】",d.getQcGoodQty()), ModuleTypeEnum.QC_ORDER.getCode(), d.getQcInfoId(), "撤销质检");
+
                 }
             }
         }
