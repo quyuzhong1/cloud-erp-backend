@@ -655,8 +655,9 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            skuStr = String.valueOf(valCell).trim();
-                        break;
+                            valCell.setCellType(CellType.STRING);
+                            skuStr = valCell.getStringCellValue().trim();
+                            break;
                     }
                 }
                 if (StringUtils.isNotBlank(skuStr))
@@ -720,8 +721,9 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            skuStr = String.valueOf(valCell).trim();
-                        break;
+                            valCell.setCellType(CellType.STRING);
+                            skuStr = valCell.getStringCellValue().trim();
+                            break;
                     }
                 }
                 if (StringUtils.isNotBlank(skuStr))
@@ -879,9 +881,9 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            skuStr = String.valueOf(valCell).trim();
-                        
-                        break;
+                            valCell.setCellType(CellType.STRING);
+                            skuStr = valCell.getStringCellValue().trim();
+                            break;
                     }
                 }
                 if (StringUtils.isNotBlank(skuStr))
