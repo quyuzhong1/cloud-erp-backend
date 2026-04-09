@@ -607,6 +607,6 @@ public class QcResultDTO {
         /**
          * 批次合格量
          */
-        private Integer lotQualifiedQty;
+        private Integer totalLotQualifiedQty;
     }
 }
