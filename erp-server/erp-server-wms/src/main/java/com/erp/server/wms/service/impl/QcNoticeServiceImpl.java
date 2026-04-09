@@ -974,8 +974,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcNoticeDetailIdList = dto.stream().map(QcNoticeDTO.QcInfoFullView::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<QcNoticeDetailEntity> noticeDetailList = qcNoticeDetailService.listByIds(qcNoticeDetailIdList);
         Map<String, QcNoticeDetailEntity> detailMap = noticeDetailList.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, t -> t));
+        
+        // 保存用于比较操作日志的旧明细快照
+        Map<String, QcNoticeDetailEntity> oldDetailSnapshotMap = new HashMap<>();
+        for (QcNoticeDetailEntity detail : noticeDetailList) {
+            QcNoticeDetailEntity snapshot = new QcNoticeDetailEntity();
+            BeanUtils.copyProperties(detail, snapshot);
+            oldDetailSnapshotMap.put(detail.getId(), snapshot);
+        }
+
         //不参与本次质检的明细
-        List<QcNoticeDetailEntity> leftDetailList = qcNoticeDetailService.lambdaQuery().notIn(QcNoticeDetailEntity::getId, qcNoticeDetailIdList).list();
+        List<QcNoticeDetailEntity> leftDetailList = qcNoticeDetailService.lambdaQuery()
+                .in(QcNoticeDetailEntity::getMainId,qcNoticeIdList)
+                .notIn(QcNoticeDetailEntity::getId, qcNoticeDetailIdList)
+                .list();
 
         //仓库
         List<String> qcWarehouseId = qcNoticeList.stream().map(QcNoticeEntity::getQcWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -1009,6 +1021,23 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcInfoIds = dto.stream().map(QcNoticeDTO.QcInfoFullView::getQcBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         Map<String, QcInfoEntity> qcInfoEntityMap = qcInfoService.mapByIds(qcInfoIds);
 
+        // 批量预查数据
+        List<QcDefectEntity> existDefectList = CollUtil.isNotEmpty(qcInfoIds) ? qcDefectService.lambdaQuery().in(QcDefectEntity::getMainId, qcInfoIds).list() : new ArrayList<>();
+        Map<String, QcDefectEntity> existDefectMap = existDefectList.stream().collect(Collectors.toMap(k -> k.getMainId() + "_" + k.getDefectLevel(), v -> v, (a, b) -> a));
+        List<QcResultEntity> existQcResultList = CollUtil.isNotEmpty(qcInfoIds) ? qcResultService.getByMainIdList(qcInfoIds) : new ArrayList<>();
+        Map<String, QcResultEntity> qcResultMap = existQcResultList.stream().collect(Collectors.toMap(QcResultEntity::getMainId, v -> v, (a, b) -> a));
+
+        // 批量更新集合
+        List<String> standardRefBatchRemoveMainIds = new ArrayList<>();
+        List<QcStandardRefEntity> standardRefBatchSaveList = new ArrayList<>();
+        List<QcDefectEntity> defectBatchSaveList = new ArrayList<>();
+        List<QcDefectEntity> defectBatchUpdateList = new ArrayList<>();
+        List<String> attachmentIdBatchRemoveList = new ArrayList<>();
+        Map<String, List<AttachDTO>> attachmentBatchSaveMap = new HashMap<>(); // key: defectId, value: attachments
+        List<QcInfoEntity> qcInfoBatchUpdateList = new ArrayList<>();
+        List<QcResultEntity> qcResultBatchUpdateList = new ArrayList<>();
+        List<QcInfoDTO.BatchQcAccumulationParam> accumulateParams = new ArrayList<>();
+
         //质检通知单审核通过更新质检单
         for (QcNoticeDTO.QcInfoFullView qcInfoView : dto) {
             if (Objects.isNull(qcInfoView.getQcResultView())) {
@@ -1016,23 +1045,26 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             QcRemarkDTO.QcResultView qcResultView = qcInfoView.getQcResultView();
             if(qcResultView.getQcGoodQty().equals(0)
-                    && qcResultView.getQcGoodQty().equals(0)){
+                    && qcResultView.getQcBadQty().equals(0)){
                 throw new ServiceException( ApiError.PO_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN, qcInfoView.getSkuNo());
             }
 
             //质检标准
             if (Objects.nonNull(qcInfoView.getQcStandardView())) {
                 QcStandardRefEntity qcStandardRefEntity = new QcStandardRefEntity();
-                BeanUtils.copyProperties(qcInfoView.getQcStandardView(),qcStandardRefEntity);
-                UpdateWrapper<QcStandardRefEntity> updateWrapper = new UpdateWrapper<>();
-                updateWrapper.eq("main_id", qcInfoView.getQcBillId());
-                qcStandardRefService.saveOrUpdate(qcStandardRefEntity,updateWrapper);
+                BeanUtils.copyProperties(qcInfoView.getQcStandardView(), qcStandardRefEntity);
+                qcStandardRefEntity.setMainId(qcInfoView.getQcBillId()); 
+                standardRefBatchRemoveMainIds.add(qcInfoView.getQcBillId());
+                standardRefBatchSaveList.add(qcStandardRefEntity);
             }
 
             //不良信息
-            if (!qcInfoView.getDefectViewList().isEmpty()) {
+            if (CollUtil.isNotEmpty(qcInfoView.getDefectViewList())) {
                 List<QcNoticeDTO.DefectView> defectViewList = qcInfoView.getDefectViewList();
                 for (QcNoticeDTO.DefectView defectView : defectViewList) {
+                    if (StringUtils.isBlank(defectView.getDefectLevl())) {
+                        continue;
+                    }
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
                     boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
@@ -1044,147 +1076,139 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         throw new ServiceException(ApiError.PO_QC_DEFECT_INFO_INCOMPLETE);
                     }
 
-                    QcDefectEntity qcDefectEntity = new QcDefectEntity();
-                    BeanUtils.copyProperties(defectView, qcDefectEntity);
-                    qcDefectEntity.setDefectLevel(defectView.getDefectLevl());
-                    qcDefectEntity.setBadQty(defectView.getDefectQty());
-                    qcDefectEntity.setMainId(qcInfoView.getQcBillId());
-
-                    // 查询是否已存在
-                    QcDefectEntity existing = qcDefectService.getOne(
-                            new QueryWrapper<QcDefectEntity>()
-                                    .eq("main_id", qcInfoView.getQcBillId())
-                                    .eq("defect_level",defectView.getDefectLevl())
-                    );
+                    QcDefectEntity existing = existDefectMap.get(qcInfoView.getQcBillId() + "_" + defectView.getDefectLevl());
 
                     if (existing != null) {
                         String id = existing.getId();
+                        BeanUtils.copyProperties(defectView, existing);
+                        existing.setDefectLevel(defectView.getDefectLevl());
+                        existing.setBadQty(defectView.getDefectQty());
+                        existing.setMainId(qcInfoView.getQcBillId());
+                        defectBatchUpdateList.add(existing);
+                        
                         //处理图片
-                        if (Objects.nonNull(defectView.getBadImageViewList())
-                                && !defectView.getBadImageViewList().isEmpty()) {
+                        if (Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty()) {
                             List<AttachDTO> attachDTOs = new ArrayList<>();
                             for (QcNoticeDTO.BadImageView badImageView : defectView.getBadImageViewList()) {
                                 AttachDTO attachDTO = new AttachDTO();
-                                BeanUtils.copyProperties(badImageView,attachDTO);
+                                BeanUtils.copyProperties(badImageView, attachDTO);
                                 attachDTOs.add(attachDTO);
-
                             }
-                            wmsAttachmentService.batchSave(attachDTOs,WmsConstant.BAD,id);
+                            attachmentBatchSaveMap.put(id, attachDTOs);
                         } else {
-                            wmsAttachmentService.batchRemoveAttachment(Collections.singletonList(id));
+                            attachmentIdBatchRemoveList.add(id);
                         }
-
-                        // 更新操作
-                        qcDefectEntity.setId(id);
-                        qcDefectService.updateById(qcDefectEntity);
                     } else {
                         // 新增操作
-                        qcDefectService.save(qcDefectEntity);
-                        String id = qcDefectEntity.getId();
-                        if (Objects.nonNull(defectView.getBadImageViewList())
-                                && defectView.getBadImageViewList().isEmpty()) {
+                        QcDefectEntity newDefect = new QcDefectEntity();
+                        BeanUtils.copyProperties(defectView, newDefect);
+                        newDefect.setDefectLevel(defectView.getDefectLevl());
+                        newDefect.setBadQty(defectView.getDefectQty());
+                        newDefect.setMainId(qcInfoView.getQcBillId());
+                        newDefect.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getIdStr()); 
+                        defectBatchSaveList.add(newDefect);
+                        
+                        String id = newDefect.getId();
+                        if (Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty()) {
                             List<AttachDTO> attachDTOs = new ArrayList<>();
                             for (QcNoticeDTO.BadImageView badImageView : defectView.getBadImageViewList()) {
                                 AttachDTO attachDTO = new AttachDTO();
-                                BeanUtils.copyProperties(badImageView,attachDTO);
+                                BeanUtils.copyProperties(badImageView, attachDTO);
                                 attachDTOs.add(attachDTO);
                             }
-                            wmsAttachmentService.batchSave(attachDTOs,"qc_defect",id);
+                            attachmentBatchSaveMap.put(id, attachDTOs);
                         }
                     }
                 }
             }
 
-            //回写质检通知单
+            //回写修改装载质检通知单
             QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
             qcNoticeDetailEntity.setQcQty(qcResultView.getQcQty());
             qcNoticeDetailEntity.setQcGoodQty(qcResultView.getQcGoodQty());
             qcNoticeDetailEntity.setQcBadQty(qcResultView.getQcBadQty());
             qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcNoticeQty() - qcResultView.getQcQty());
-//            qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getHandleModeDict());
-            //qcNoticeDetailEntity.setQcDate(nowTime);
             qcNoticeDetailEntity.setQcUserId(qcInfoView.getQcUserId());
             qcNoticeDetailEntity.setQcUserName(userInfoMap.getOrDefault(qcInfoView.getQcUserId(),""));
-            //该sku已完成质检
             qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
-            //该sku待上架
             qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.WAIT.getCode());
-            qcNoticeDetailEntity.setQcDate(LocalDateTime.now());
-            qcNoticeDetailService.updateById(qcNoticeDetailEntity);
+            qcNoticeDetailEntity.setQcDate(nowTime);
 
-            //回写质检单
-            qcInfoService.lambdaUpdate()
-                    .set(QcInfoEntity::getQcStatus,QcBillStatusEnum.FINISH_QC)
-                    .set(QcInfoEntity::getQcFinishTime,LocalDateTime.now())
-                    .eq(QcInfoEntity::getSourceDetailId,qcNoticeDetailEntity.getId())
-                    .update();
-
-            //回写质检结果
-            LambdaUpdateChainWrapper<QcResultEntity> qcResultUpdateWrapper = qcResultService.lambdaUpdate()
-                    .set(QcResultEntity::getQcQty, qcResultView.getQcQty())
-                    .set(QcResultEntity::getQcResult, qcResultView.getQcResult())
-                    .set(QcResultEntity::getLotQualifiedQty, qcResultView.getLotQualifiedQty())
-                    .eq(QcResultEntity::getMainId,qcInfoView.getQcBillId());
-
-            if (Objects.nonNull(qcResultView.getQcBadQty())
-                    && qcResultView.getQcBadQty() >= 0
-                    && Objects.nonNull(qcResultView.getQcGoodQty())
-                    && qcResultView.getQcGoodQty() >= 0) {
-
-                BigDecimal qcGoodRate = BigDecimal.ZERO;
-                BigDecimal qcBadRate = BigDecimal.ZERO;
-                BigDecimal totalQty = BigDecimal.valueOf(qcResultView.getQcGoodQty())
-                        .add(BigDecimal.valueOf(qcResultView.getQcBadQty()));
-
-                if (qcResultView.getQcGoodQty() == 0) {
-                    qcGoodRate = BigDecimal.ZERO;
-                }
-
-                if (qcResultView.getQcBadQty() == 0) {
-                    qcBadRate = BigDecimal.ZERO;
-                }
-
-                if (qcResultView.getQcBadQty() > 0 && qcResultView.getQcGoodQty() > 0) {
-                    qcGoodRate = BigDecimal.valueOf(qcResultView.getQcGoodQty())
-                            .divide(totalQty, 4, RoundingMode.HALF_UP);
-
-                    qcBadRate = BigDecimal.valueOf(qcResultView.getQcBadQty())
-                            .divide(totalQty, 4, RoundingMode.HALF_UP);
-                }
-
-                qcResultUpdateWrapper
-                        .set(QcResultEntity::getQcGoodQty, qcResultView.getQcGoodQty())
-                        .set(QcResultEntity::getQcBadQty, qcResultView.getQcBadQty())
-                        .set(QcResultEntity::getQcGoodRate, qcGoodRate)
-                        .set(QcResultEntity::getQcBadRate, qcBadRate)
-                        .eq(QcResultEntity::getMainId,qcInfoView.getQcBillId())
-                        .update();
-            } else {
-                throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
+            //质检单
+            QcInfoEntity qcInfo = qcInfoEntityMap.get(qcInfoView.getQcBillId());
+            if (qcInfo != null) {
+                qcInfo.setQcStatus(QcBillStatusEnum.FINISH_QC);
+                qcInfo.setQcFinishTime(nowTime);
+                qcInfoBatchUpdateList.add(qcInfo);
             }
 
-            //处理采购订单质检合格数量累计
-            QcInfoEntity qcInfoEntity = qcInfoEntityMap.get(qcInfoView.getQcBillId());
-            if(Objects.nonNull(qcInfoEntity)){
-                QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(qcInfoView.getQcBillId());
-                // 汇集并用1次远程Feign批量累加采购订单合格数
-                List<QcInfoDTO.BatchQcAccumulationParam> accumulateParams = new ArrayList<>();
+            //质检结果
+            QcResultEntity qcResult = qcResultMap.get(qcInfoView.getQcBillId());
+            if (qcResult != null) {
+                qcResult.setQcQty(qcResultView.getQcQty());
+                qcResult.setQcResult(qcResultView.getQcResult());
+                qcResult.setLotQualifiedQty(qcResultView.getLotQualifiedQty());
+
+                if (Objects.nonNull(qcResultView.getQcBadQty()) && qcResultView.getQcBadQty() >= 0
+                        && Objects.nonNull(qcResultView.getQcGoodQty()) && qcResultView.getQcGoodQty() >= 0) {
+                    BigDecimal qcGoodRate = BigDecimal.ZERO;
+                    BigDecimal qcBadRate = BigDecimal.ZERO;
+                    BigDecimal totalQty = BigDecimal.valueOf(qcResultView.getQcGoodQty()).add(BigDecimal.valueOf(qcResultView.getQcBadQty()));
+
+                    if (qcResultView.getQcGoodQty() == 0) {
+                        qcGoodRate = BigDecimal.ZERO;
+                    }
+
+                    if (qcResultView.getQcBadQty() == 0) {
+                        qcBadRate = BigDecimal.ZERO;
+                    }
+
+                    if (qcResultView.getQcBadQty() > 0 && qcResultView.getQcGoodQty() > 0) {
+                        qcGoodRate = BigDecimal.valueOf(qcResultView.getQcGoodQty()).divide(totalQty, 4, RoundingMode.HALF_UP);
+                        qcBadRate = BigDecimal.valueOf(qcResultView.getQcBadQty()).divide(totalQty, 4, RoundingMode.HALF_UP);
+                    }
+                    qcResult.setQcGoodQty(qcResultView.getQcGoodQty());
+                    qcResult.setQcBadQty(qcResultView.getQcBadQty());
+                    qcResult.setQcGoodRate(qcGoodRate);
+                    qcResult.setQcBadRate(qcBadRate);
+                } else {
+                    throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
+                }
+                qcResultBatchUpdateList.add(qcResult);
+            }
+
+            //构建采购订单质检合格数量累计所需的参数 
+            if (qcInfo != null) {
                 String podId = qcResult != null ? qcResult.getPurchaseOrderDetailId() : null;
-                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfoEntity,podId,qcResultView.getQcResult(),qcResultView.getQcGoodQty()));
-                qcInfoService.batchHandlePurchaseOrderQcAccumulation(accumulateParams);
+                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcResultView.getQcResult(), qcResultView.getQcGoodQty()));
             }
 
-            //等下用来生成分步式调出单
-            detailMap.put(qcInfoView.getDetailId(), qcNoticeDetailEntity);
-            //等下用于回填主表状态
+            // 日志记录
             leftDetailList.add(qcNoticeDetailEntity);
-            //质检通知单日志
-            operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", StrUtil.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
-            // 记录主单完成质检操作
+            QcNoticeDetailEntity snapshot = oldDetailSnapshotMap.get(qcInfoView.getDetailId());
+            operateLogService.addModuleOperateLogByObj(snapshot, qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "", StrUtil.format("【{}】", qcNoticeDetailEntity.getSkuNo()));
             operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
-            //质检单日志
-            operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcInfoView.getQcBillCode()), ModuleTypeEnum.QC_ORDER.getCode(), qcInfoView.getQcBillId(), "完成质检（简易）");
+            operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcInfoView.getQcBillCode()), ModuleTypeEnum.QC_ORDER.getCode(), qcInfoView.getQcBillId(), "完成质检（详细）");
         }
+
+        // ====== 统一执行批量持久化 ======
+        if (CollUtil.isNotEmpty(standardRefBatchRemoveMainIds)) {
+            qcStandardRefService.remove(new QueryWrapper<QcStandardRefEntity>().in("main_id", standardRefBatchRemoveMainIds));
+        }
+        if (CollUtil.isNotEmpty(standardRefBatchSaveList)) qcStandardRefService.saveBatch(standardRefBatchSaveList);
+        if (CollUtil.isNotEmpty(defectBatchSaveList)) qcDefectService.saveBatch(defectBatchSaveList);
+        if (CollUtil.isNotEmpty(defectBatchUpdateList)) qcDefectService.updateBatchById(defectBatchUpdateList);
+        if (CollUtil.isNotEmpty(attachmentIdBatchRemoveList)) wmsAttachmentService.batchRemoveAttachment(attachmentIdBatchRemoveList);
+        for (Map.Entry<String, List<AttachDTO>> entry : attachmentBatchSaveMap.entrySet()) {
+            wmsAttachmentService.batchSave(entry.getValue(), WmsConstant.BAD, entry.getKey());
+        }
+        if (CollUtil.isNotEmpty(detailMap.values())) qcNoticeDetailService.updateBatchById(detailMap.values());
+        if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);
+        if (CollUtil.isNotEmpty(qcResultBatchUpdateList)) qcResultService.updateBatchById(qcResultBatchUpdateList);
+        
+        // 汇集并用1次远程Feign批量累加采购订单合格数
+        qcInfoService.batchHandlePurchaseOrderQcAccumulation(accumulateParams);
+
         Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 
         //以单据维度生成分步式调出单。
