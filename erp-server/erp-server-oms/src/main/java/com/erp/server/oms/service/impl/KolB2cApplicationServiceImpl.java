@@ -832,7 +832,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             if (Boolean.TRUE.equals(entity.getIsInternational())) {
                 cancelInternationalOrder(entity);
                 updateBillCancelStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(), "", now, userInfo);
-                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消成功", userInfo.getUserName(), entity.getCode(), "B2C寄样申请单");
+                markApplicationInvalidOnCancel(entity.getId(), "B2C寄样单取消自动作废");
+                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消成功，并自动作废", userInfo.getUserName(), entity.getCode(), "B2C寄样申请单");
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "取消操作");
             } else {
                 boolean retryFromCanceling = Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELING.getCode());
@@ -1459,6 +1460,13 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .set(KolB2cApplicationEntity::getCancelTime, now)
                 .set(KolB2cApplicationEntity::getCancelUserId, userInfo.getUid())
                 .set(KolB2cApplicationEntity::getCancelUserName, userInfo.getUserName())
+                .update(new KolB2cApplicationEntity());
+    }
+
+    private void markApplicationInvalidOnCancel(String id, String invalidRemark) {
+        lambdaUpdate().eq(KolB2cApplicationEntity::getId, id)
+                .set(KolB2cApplicationEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(KolB2cApplicationEntity::getInvalidRemark, StrUtil.blankToDefault(invalidRemark, ""))
                 .update(new KolB2cApplicationEntity());
     }
 
