@@ -29,7 +29,9 @@
        <result column="play_count" property="playCount" />
        <result column="comment_count" property="commentCount" />
        <result column="like_count" property="likeCount" />
+       <result column="collect_count" property="collectCount" />
        <result column="repost_count" property="repostCount" />
+       <result column="coin_count" property="coinCount" />
        <result column="unique_key" property="uniqueKey" />
     </resultMap>
 
@@ -44,7 +46,7 @@
         update_time,
         version,
         is_deleted,
-        type, media_platform, third_platform, platform_account_id, platform_account_name, publish_time, url, url_hash, title, content, insert_timestamp, insert_time, follower_count, view_count, play_count, comment_count, like_count, repost_count, unique_key
+        type, media_platform, third_platform, platform_account_id, platform_account_name, publish_time, url, url_hash, title, content, insert_timestamp, insert_time, follower_count, view_count, play_count, comment_count, like_count, collect_count, repost_count, coin_count, unique_key
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.KolSocialMediaDTO$ListDTO">
@@ -67,7 +69,9 @@
             ksm.play_count AS playCount,
             ksm.comment_count AS commentCount,
             ksm.like_count AS likeCount,
+            ksm.collect_count AS collectCount,
             ksm.repost_count AS repostCount,
+            ksm.coin_count AS coinCount,
             ksm.unique_key AS uniqueKey,
             ksm.create_time AS createTime,
             ksm.create_user_id AS createUserId,
