@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -802,7 +803,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 }
                 if(CollUtil.isNotEmpty(notHaveRetailSet)) {
                     String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-                    throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+                    return BatchResultDTO.fail(bomId, String.valueOf(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getCode()), StrUtil.format(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getMsg(),allSku));
+
                 }
             }
         }
