@@ -801,14 +801,22 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         addDTO.setQcType(QcTypeEnum.STOCK_IN.getCode());
         addDTO.setPurchaseOrderId(entity.getPurchaseOrderId());
         addDTO.setPurchaseOrderCode(entity.getPurchaseOrderCode());
+        addDTO.setRemark(CharSequenceUtil.format("采购收货单【{}】审核通过，待质检SKU自动生成质检通知单",entity.getCode()));
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : receiveDetailList) {
             QcNoticeDetailDTO.AddDTO addDetail = new QcNoticeDetailDTO.AddDTO();
             BeanUtils.copyProperties(warehouseReceiveDetailEntity,addDetail);
             addDetail.setSourceDetailId(warehouseReceiveDetailEntity.getId());
-            addDetail.setQcNoticeQty(warehouseReceiveDetailEntity.getReceiveQty());
+            //待质检数量为0则无需生成
+            if (MathUtil.compareTo(warehouseReceiveDetailEntity.getWaitQcQty(), MathUtil.ZERO) <= 0) {
+                continue;
+            }
+            addDetail.setQcNoticeQty(warehouseReceiveDetailEntity.getWaitQcQty());
             addDetail.setSupplierId(entity.getSupplierId());
             addDetail.setPurchaseOrderDetailId(warehouseReceiveDetailEntity.getPurchaseOrderDetailId());
             addDetailDTOs.add(addDetail);
+        }
+        if (CollUtil.isEmpty(addDetailDTOs)) {
+            return;
         }
         addDTO.setDetailList(addDetailDTOs);
         qcNoticeService.add(addDTO);
