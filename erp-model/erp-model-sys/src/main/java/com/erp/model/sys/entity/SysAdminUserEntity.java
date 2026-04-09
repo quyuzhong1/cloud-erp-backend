@@ -3,21 +3,19 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
-import com.common.core.entity.BaseEntity;
-import lombok.EqualsAndHashCode;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @Classname SysUserInfoEntity
-
  * @Date 2022-07-01 16:27
  * @Created by yl
  */
-@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_admin_user")
-public class SysAdminUserEntity extends BaseEntity<SysAdminUserEntity> {
+public class SysAdminUserEntity implements Serializable {
 
-    @TableId(value = "user_id",type =IdType.ASSIGN_ID )
+    @TableId(value = "user_id", type = IdType.ASSIGN_ID)
     private String userId;
 
     //用户名
@@ -41,5 +39,54 @@ public class SysAdminUserEntity extends BaseEntity<SysAdminUserEntity> {
 
     @TableField(value = "real_name")
     private String realName;
+
+    /**
+     * 创建人id
+     */
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
+    private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserId;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserName;
+
+    /**
+     * 更新时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    /**
+     * 乐观锁版本号
+     */
+    @Version
+    private Integer version;
+
+    /**
+     * 逻辑删除字段
+     */
+    @TableField(value = "is_deleted")
+    @TableLogic
+    private Boolean isDeleted;
 
 }

@@ -19,11 +19,6 @@ import lombok.EqualsAndHashCode;
 public class SysRoleUserEntity extends BaseEntity<SysRoleUserEntity> {
 
 	/**
-	 * $column.comments
-	 */
-	@TableId(type = IdType.ASSIGN_ID)
-	private String id;
-	/**
 	 * 角色id
 	 */
 	private String roleId;

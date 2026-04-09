@@ -19,11 +19,6 @@ import lombok.EqualsAndHashCode;
 public class SysUserThirdEntity extends BaseEntity<SysUserThirdEntity> {
 
 	/**
-	 * $column.comments
-	 */
-	@TableId(type = IdType.ASSIGN_ID)
-	private String id;
-	/**
 	 * 用户id
 	 */
 	private String userId;

@@ -1,9 +1,9 @@
 package com.erp.model.sys.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
-
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
@@ -16,12 +16,6 @@ import lombok.EqualsAndHashCode;
 @Data
 @TableName("sys_code")
 public class SysCodeEntity extends BaseEntity<SysCodeEntity> {
-
-    /**
-     * 主键id
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 类目

@@ -19,11 +19,6 @@ import lombok.EqualsAndHashCode;
 public class SysRoleMenuEntity extends BaseEntity<SysRoleMenuEntity> {
 
 	/**
-	 * $column.comments
-	 */
-	@TableId(type = IdType.ASSIGN_ID)
-	private String id;
-	/**
 	 * 菜单id
 	 */
 	private String menuId;

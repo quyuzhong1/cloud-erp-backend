@@ -1,15 +1,12 @@
 package com.erp.model.dmp.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import com.common.core.entity.BaseEntity;
 
 /**
  * @author Will
@@ -19,15 +16,9 @@ import com.common.core.entity.BaseEntity;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName(value ="platform")
+@TableName(value = "platform")
 @NoArgsConstructor
 public class PlatformEntity extends BaseEntity<PlatformEntity> {
-
-    /**
-     * 主键id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 平台名称
@@ -42,7 +33,8 @@ public class PlatformEntity extends BaseEntity<PlatformEntity> {
     private String taskName;
 
     public PlatformEntity(PlatformEnum kingdee) {
-        this.id = kingdee.getCode().toString();
+        super();
+        this.setId(kingdee.getCode().toString());
         this.name = kingdee.getDesc();
     }
 }

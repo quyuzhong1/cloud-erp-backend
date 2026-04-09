@@ -86,20 +86,14 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         removeByRoleId(roleId);
         LocalDateTime now = LocalDateTime.now();
         LoginUser loginUser = UserContext.getNonLoginUser();
-        String userId = loginUser.getUid();
-        String userName = loginUser.getUserName();
         if (CollectionUtils.isNotEmpty(menuIds)) {
             for (SysRoleMenuDataScopeDTO menuId : menuIds) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
                 entity.setMenuId(menuId.getMenuId());
                 entity.setRoleId(roleId);
                 entity.setDataScope(menuId.getDataScope());
-                entity.setUpdateTime(now);
-                entity.setUpdateUserId(userId);
-                entity.setUpdateUserName(userName);
-                entity.setCreateTime(now);
-                entity.setCreateUserId(userId);
-                entity.setCreateUserName(userName);
+                // 处理公共字段
+                handleCommonField(entity, now, loginUser);
                 batchList.add(entity);
             }
             return this.saveBatch(batchList);
@@ -263,10 +257,14 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         List<String> menuIds = getMenuIdByRoleId(copyRoleId);
         if (CollectionUtils.isNotEmpty(menuIds)) {
             List<SysRoleMenuEntity> addList = new LinkedList<>();
+            LocalDateTime now = LocalDateTime.now();
+            LoginUser loginUser = UserContext.getNonLoginUser();
             for (String menuId : menuIds) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
                 entity.setRoleId(newRoleId);
                 entity.setMenuId(menuId);
+                // 处理公共字段
+                handleCommonField(entity, now, loginUser);
                 addList.add(entity);
             }
             this.saveBatch(addList);
@@ -536,16 +534,19 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         entity.setDataScope(dto.getDataScope());
         LocalDateTime now = LocalDateTime.now();
         LoginUser loginUser = UserContext.getNonLoginUser();
-        String userId = loginUser.getUid();
-        String userName = loginUser.getUserName();
-        entity.setUpdateTime(now);
-        entity.setUpdateUserId(userId);
-        entity.setUpdateUserName(userName);
-        entity.setCreateTime(now);
-        entity.setCreateUserId(userId);
-        entity.setCreateUserName(userName);
+        // 处理公共字段
+        handleCommonField(entity, now, loginUser);
         return this.save(entity);
 
+    }
+
+    private static void handleCommonField(SysRoleMenuEntity entity, LocalDateTime now, LoginUser loginUser) {
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(loginUser.getUid());
+        entity.setUpdateUserName(loginUser.getUserName());
+        entity.setCreateTime(now);
+        entity.setCreateUserId(loginUser.getUid());
+        entity.setCreateUserName(loginUser.getUserName());
     }
 
     @Override

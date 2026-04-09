@@ -243,9 +243,12 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
      * @param num
      */
     public void updateNumByCode (String id,Integer num) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
       lambdaUpdate().eq(SysCodeEntity::getId,id)
               .set(SysCodeEntity::getNum,num + 1)
               .set(SysCodeEntity::getUpdateTime, LocalDateTime.now())
+              .set(SysCodeEntity::getUpdateUserId, loginUser.getUid())
+              .set(SysCodeEntity::getUpdateUserName, loginUser.getUserName())
               .update();
     }
 

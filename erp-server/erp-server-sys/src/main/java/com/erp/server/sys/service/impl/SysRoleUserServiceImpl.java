@@ -53,23 +53,26 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
                 List<SysRoleUserEntity> saveList = new LinkedList<>();
                 LocalDateTime now = LocalDateTime.now();
                 LoginUser loginUser = UserContext.getNonLoginUser();
-                String currentUserId = loginUser.getUid();
-                String userName = loginUser.getUserName();
                 for (String roleId : roleIds) {
                     SysRoleUserEntity entity = new SysRoleUserEntity();
                     entity.setRoleId(roleId);
                     entity.setUserId(uid);
-                    entity.setUpdateTime(now);
-                    entity.setUpdateUserId(currentUserId);
-                    entity.setUpdateUserName(userName);
-                    entity.setCreateTime(now);
-                    entity.setCreateUserId(currentUserId);
-                    entity.setCreateUserName(userName);
+                    // 处理公共字段
+                    handleCommonField(entity, now, loginUser);
                     saveList.add(entity);
                 }
                 this.saveBatch(saveList);
             }
         }
+    }
+
+    private static void handleCommonField(SysRoleUserEntity entity, LocalDateTime now, LoginUser loginUser) {
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(loginUser.getUid());
+        entity.setUpdateUserName(loginUser.getUserName());
+        entity.setCreateTime(now);
+        entity.setCreateUserId(loginUser.getUid());
+        entity.setCreateUserName(loginUser.getUserName());
     }
 
     /**
@@ -145,18 +148,12 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         List<SysRoleUserEntity> addList = new LinkedList<>();
         LocalDateTime now = LocalDateTime.now();
         LoginUser loginUser = UserContext.getNonLoginUser();
-        String currentUserId = loginUser.getUid();
-        String userName = loginUser.getUserName();
         for (String userId : userIds) {
             SysRoleUserEntity entity = new SysRoleUserEntity();
             entity.setUserId(userId);
             entity.setRoleId(roleId);
-            entity.setUpdateTime(now);
-            entity.setUpdateUserId(currentUserId);
-            entity.setUpdateUserName(userName);
-            entity.setCreateTime(now);
-            entity.setCreateUserId(currentUserId);
-            entity.setCreateUserName(userName);
+            // 处理公共字段
+            handleCommonField(entity, now, loginUser);
             addList.add(entity);
         }
         if (CollectionUtils.isNotEmpty(addList)) {
@@ -179,10 +176,14 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         List<SysRoleUserEntity> roleUserList = roleUserList(copyRoleId);
         if (CollectionUtils.isNotEmpty(roleUserList)) {
             List<SysRoleUserEntity> addList = new LinkedList<>();
+            LocalDateTime now = LocalDateTime.now();
+            LoginUser loginUser = UserContext.getNonLoginUser();
             for (SysRoleUserEntity entity : roleUserList) {
                 SysRoleUserEntity addEntity = new SysRoleUserEntity();
                 addEntity.setRoleId(newRoleId);
                 addEntity.setUserId(entity.getUserId());
+                // 处理公共字段
+                handleCommonField(addEntity, now, loginUser);
                 addList.add(addEntity);
             }
             this.saveBatch(addList);
