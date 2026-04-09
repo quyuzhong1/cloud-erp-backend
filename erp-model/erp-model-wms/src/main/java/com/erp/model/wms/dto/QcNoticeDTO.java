@@ -866,6 +866,10 @@ public class QcNoticeDTO implements Serializable {
          */
         private String samplingPlanId;
         /**
+         * 抽样方案编码
+         */
+        private String samplingPlanCode;
+        /**
          * 抽样方案名称
          */
         private String samplingPlanName;
