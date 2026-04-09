@@ -218,7 +218,17 @@ public class BomInfoController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        boolean b = resultDTOS.stream().allMatch(BatchResultDTO::getSuccess);
+        if (b) {
+            return success(resultDTOS);
+        }else {
+            boolean b1 = resultDTOS.stream().anyMatch(e -> e.getCode().equals(String.valueOf(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getCode())));
+            if(b1){
+                return failure(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getCode(),"请求失败！",resultDTOS);
+            }else {
+                return failure(resultDTOS);
+            }
+        }
     }
 
     /**
