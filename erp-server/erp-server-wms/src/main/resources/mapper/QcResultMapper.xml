@@ -79,19 +79,19 @@
     </select>
 
     <!-- 根据来源单id查询合格数量汇总 -->
-    <select id="getTotalLotQualifiedQtyBySourceDetailId"
+    <select id="getTotalLotQualifiedQtyByPodId"
             resultType="com.erp.model.wms.dto.QcResultDTO$TotalLotQualifiedQtyDTO">
         select
-        qi.source_detail_id,
+        qr.purchase_order_detail_id,
         sum(lot_qualified_qty) as totalLotQualifiedQty
         from qc_result qr
         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
         where qr.is_deleted = FALSE and qi.qc_status = 'finishQc'
-        and qi.source_detail_id in
-        <foreach collection="sourceDetailIdList" item="sourceDetailId" open="(" separator="," close=")">
-            #{sourceDetailId}
+        and qr.purchase_order_detail_id in
+        <foreach collection="podIdList" item="podId" open="(" separator="," close=")">
+            #{podId}
         </foreach>
-        group by qi.source_detail_id
+        group by qr.purchase_order_detail_id
     </select>
 
     <!-- 根据来源单id查询合格数量汇总 -->

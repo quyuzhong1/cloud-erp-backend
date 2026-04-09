@@ -384,8 +384,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         }
 
         //查询采购订单下的质检批次合格数量汇总
-        List<QcResultDTO.TotalLotQualifiedQtyDTO> totalLotQualifiedQtyList = qcResultService.getTotalLotQualifiedQtyBySourceDetailId(podIdList);
-        Map<String, Integer> totalLotQualifiedQtyMap = totalLotQualifiedQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getSourceDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalLotQualifiedQty));
+        List<QcResultDTO.TotalLotQualifiedQtyDTO> totalLotQualifiedQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
+        Map<String, Integer> totalLotQualifiedQtyMap = totalLotQualifiedQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalLotQualifiedQty));
 
         //查询采购订单下的其他收货单的收货数量汇总
         List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQty(podIdList);
@@ -415,7 +415,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     public void updateWaitQcQty(String qcId) {
         QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = qcResultService.getLotQualifiedQtyByMainId(qcId);
-        if (ObjectUtil.isEmpty(lotQualifiedQtyDTO)) {
+        if (ObjectUtil.isEmpty(lotQualifiedQtyDTO) || ObjectUtil.isNull(lotQualifiedQtyDTO.getTotalLotQualifiedQty())) {
             return;
         }
         //采购收货来源直接取来源明细id
@@ -433,7 +433,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
         }
         //待质检量=∑收货数量-质检合格量-∑待质检量,小于0时默认为0
-        Integer waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getLotQualifiedQty();
+        Integer waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalLotQualifiedQty();
         if (waitQcQty < MathUtil.ZERO) {
             waitQcQty = MathUtil.ZERO;
         }

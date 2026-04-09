@@ -22,6 +22,7 @@ import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
 import com.erp.model.tms.entity.CfgSettingEntity;
@@ -47,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.text.MessageFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -102,7 +104,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
                 .count();
         if(count > 0){
-            return null;
+            LogisticsBillCostDTO.PushDTO bean = JSONUtil.toBean(json, LogisticsBillCostDTO.PushDTO.class);
+            throw new ServiceException(MessageFormat.format("【{0}】费用分摊生成中,剩余待执行任务数量【{1}】，请勿重复提交",bean.getReportDate(),count));
+
         }
 
         TmsAsyncTaskRecordEntity entity = new TmsAsyncTaskRecordEntity();

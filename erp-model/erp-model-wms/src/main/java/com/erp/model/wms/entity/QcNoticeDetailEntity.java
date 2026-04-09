@@ -123,10 +123,17 @@ public class QcNoticeDetailEntity extends BaseEntity<QcNoticeDetailEntity> {
     private String sourceDetailId;
 
     /**
-     * 供应商id
+     * 采购订单明细id
      */
     @TableField("supplier_id")
     private String supplierId;
+
+
+    /**
+     * 供应商id
+     */
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
 
 
     public static final String MAIN_ID = "main_id";

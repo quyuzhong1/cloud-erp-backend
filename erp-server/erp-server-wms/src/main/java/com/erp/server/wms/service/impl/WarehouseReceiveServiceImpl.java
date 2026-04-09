@@ -28,7 +28,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
-import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
@@ -67,6 +66,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -588,8 +588,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 srmDeliveryOrderFeign.confirmReceiveStatus(detailIdsByDeliverySource);
             }
 
-            //生成质检通知单
-            generateQcNotice(entity,receiveDetailList);
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -602,193 +600,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个收货单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
-    }
-
-    /**
-     * 自动生成质检通知单
-     * @author will
-     * @date 2026/3/30 18:53
-     * @param entity
-     * @param receiveDetailList
-     * @return  void
-     */
-    private void generateQcNotice(WarehouseReceiveEntity entity,List<WarehouseReceiveDetailEntity> receiveDetailList) {
-        QcNoticeDTO.AddDTO addDTO = new QcNoticeDTO.AddDTO();
-        addDTO.setSourceId(entity.getId());
-        addDTO.setSourceCode(entity.getCode());
-        addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
-        addDTO.setQcWarehouseId(entity.getDeliveryWarehouseId());
-        addDTO.setPutawayWarehouseId(entity.getDeliveryWarehouseId());
-        addDTO.setQcType(QcTypeEnum.STOCK_IN.getCode());
-        addDTO.setRemark(CharSequenceUtil.format("采购收货单【{}】审核通过，待质检SKU自动生成质检通知单",entity.getCode()));
-        List<QcNoticeDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
-        for (WarehouseReceiveDetailEntity detailEntity : receiveDetailList) {
-            QcNoticeDetailDTO.AddDTO detailDTO = new QcNoticeDetailDTO.AddDTO();
-            detailDTO.setSourceDetailId(detailEntity.getId());
-            detailDTO.setSkuId(detailEntity.getSkuId());
-            detailDTO.setSkuNo(detailEntity.getSkuNo());
-            detailDTO.setQcNoticeQty(detailEntity.getWaitQcQty());
-            detailDTOList.add(detailDTO);
-        }
-        addDTO.setDetailList(detailDTOList);
-        qcNoticeService.add(addDTO);
-    }
-
-    /**
-     * 生成质检单
-     *
-     * @param ids
-     * @return void
-     * @author yl
-     * @date 2023-04-25 19:22
-     */
-    private void createQcBill(List<String> ids) {
-        List<QcInfoDTO.ReceiveToQcDTO> qcList = baseMapper.getQcList(ids);
-        List<String> skuIds = qcList.stream().map(QcInfoDTO.ReceiveToQcDTO::getSkuId).collect(Collectors.toList());
-        List<String> purchaseOrderIds = qcList.stream().map(QcInfoDTO.ReceiveToQcDTO::getPurchaseOrderId).collect(Collectors.toList());
-        //获取到sku 信息
-        List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
-        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIds);
-        String sourceType = SourceTypeEnum.PO_RECEIVE.getCode();
-        for (QcInfoDTO.ReceiveToQcDTO item : qcList) {
-            String skuId = item.getSkuId();
-            ProductVO.ProductPackVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
-                    findFirst().orElse(new ProductVO.ProductPackVO());
-            SkuVO productDetailEntity = skuNoList.stream().filter(s -> s.getSkuId().equals(skuId)).
-                    findFirst().orElse(new SkuVO());
-            item.setSourceType(sourceType);
-            item.setProductGrade(sku.getProductGrade());
-            item.setSaleMethod(productDetailEntity.getSaleMethod());
-            item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(sku.getBoxHeight());
-            item.setBoxLength(sku.getBoxLength());
-            item.setBoxWeight(sku.getBoxWeight());
-            item.setBoxWidth(sku.getBoxWidth());
-            item.setProductHeight(sku.getProductHeight());
-            item.setProductLength(sku.getProductLength());
-            item.setProductWidth(sku.getProductWidth());
-            item.setProductNetWeight(sku.getProductNetWeight());
-            PurchaseOrderDetailEntity entity = purchaseOrderDetailEntities.stream().filter(p -> p.getId().equals(item.getPurchaseOrderDetailId())).
-                    findFirst().orElse(new PurchaseOrderDetailEntity());
-            item.setFirstMassProduct(entity.getFirstMassProduct());
-
-        }
-        //添加质检单的
-        List<QcInfoDTO.ReceiveToQcDTO> addList = new ArrayList<>(qcList.size());
-        //获取到审核通过的 且启用的质检规则
-        List<QcRuleEntity> qcRuleList = qcRuleService.listByApprove();
-        //新品质检
-        String newProduct = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
-        List<String> productGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(newProduct)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
-        String newProductGrade = String.join(",", productGradeList);
-
-        //销售方式
-        List<String> saleMethodList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(newProduct)).map(QcRuleEntity::getSaleMethod).collect(Collectors.toList());
-        String newSaleMethod = String.join(",", saleMethodList);
-
-        //入库质检
-        String stockIn = QcTypeEnum.STOCK_IN.getCode();
-        List<String> stockInProductGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(stockIn)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
-        String stockInProductGrade = String.join(",", stockInProductGradeList);
-
-        List<String> stockInSaleMethodList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(stockIn)).map(QcRuleEntity::getSaleMethod).collect(Collectors.toList());
-        String stockInSaleMethod = String.join(",", stockInSaleMethodList);
-        //新品 并且符合等级的
-        List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(q.getFirstMassProduct())).collect(Collectors.toList());
-        for (QcInfoDTO.ReceiveToQcDTO newItem : newProductList) {
-            //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((CharSequenceUtil.isNotBlank(newProductGrade) && CharSequenceUtil.isNotBlank(newSaleMethod))) {
-                QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                BeanMapper.copy(newItem, newQc);
-                newQc.setQcType(newProduct);
-                addList.add(newQc);
-            } else if (CharSequenceUtil.isBlank(newProductGrade)) {
-                if (CharSequenceUtil.isNotBlank(newItem.getSaleMethod())) {
-                    String[] split = newItem.getSaleMethod().split(",");
-                    for (String s : split) {
-                        if (newSaleMethod.contains(s)) {
-                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                            BeanMapper.copy(newItem, newQc);
-                            newQc.setQcType(newProduct);
-                            addList.add(newQc);
-                            break;
-                        }
-                    }
-                }
-            } else if (CharSequenceUtil.isBlank(newSaleMethod)) {
-                if (CharSequenceUtil.isNotBlank(newItem.getProductGrade())) {
-                    String[] split = newItem.getProductGrade().split(",");
-                    for (String s : split) {
-                        if (newProductGrade.contains(s)) {
-                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                            BeanMapper.copy(newItem, newQc);
-                            newQc.setQcType(newProduct);
-                            addList.add(newQc);
-                            break;
-                        }
-                    }
-                }
-            } else {
-                //包含的时候就要弄
-                if (newProductGrade.contains(newItem.getProductGrade()) && newSaleMethod.contains(newItem.getSaleMethod())) {
-                    QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                    BeanMapper.copy(newItem, newQc);
-                    newQc.setQcType(newProduct);
-                    addList.add(newQc);
-                }
-            }
-        }
-        //旧品 并且符合等级的
-        List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(q.getFirstMassProduct())).collect(Collectors.toList());
-        for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
-            if ((CharSequenceUtil.isNotBlank(stockInProductGrade) && CharSequenceUtil.isNotBlank(stockInSaleMethod))) {
-                QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
-                BeanMapper.copy(stockInItem, stockInQc);
-                stockInQc.setQcType(stockIn);
-                addList.add(stockInQc);
-            } else if (CharSequenceUtil.isBlank(stockInProductGrade)) {
-                if (CharSequenceUtil.isNotBlank(stockInItem.getSaleMethod())) {
-                    String[] split = stockInItem.getSaleMethod().split(",");
-                    for (String s : split) {
-                        if (stockInSaleMethod.contains(s)) {
-                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                            BeanMapper.copy(stockInItem, newQc);
-                            newQc.setQcType(stockIn);
-                            addList.add(newQc);
-                            break;
-                        }
-                    }
-                }
-            } else if (CharSequenceUtil.isBlank(stockInSaleMethod)) {
-                if (CharSequenceUtil.isNotBlank(stockInItem.getProductGrade())) {
-                    String[] split = stockInItem.getProductGrade().split(",");
-                    for (String s : split) {
-                        if (stockInProductGrade.contains(s)) {
-                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                            BeanMapper.copy(stockInItem, newQc);
-                            newQc.setQcType(stockIn);
-                            addList.add(newQc);
-                            break;
-                        }
-                    }
-                }
-            } else {
-                //包含的时候就要弄
-                if (stockInProductGrade.contains(stockInItem.getProductGrade()) && stockInSaleMethod.contains(stockInItem.getSaleMethod())) {
-                    QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                    BeanMapper.copy(stockInItem, newQc);
-                    newQc.setQcType(stockIn);
-                    addList.add(newQc);
-                }
-            }
-        }
-        //自动生成功能系统标识
-        Boolean originalValue = UserContext.getIsUserSystem();
-        UserContext.setIsUserSystem(Boolean.TRUE);
-        qcInfoService.autoReceiveToQcDTO(addList);
-        //恢复系统标识
-        UserContext.setIsUserSystem(originalValue);
     }
 
 
@@ -804,13 +615,22 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         addDTO.setQcType(QcTypeEnum.STOCK_IN.getCode());
         addDTO.setPurchaseOrderId(entity.getPurchaseOrderId());
         addDTO.setPurchaseOrderCode(entity.getPurchaseOrderCode());
+        addDTO.setRemark(CharSequenceUtil.format("采购收货单【{}】审核通过，待质检SKU自动生成质检通知单",entity.getCode()));
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : receiveDetailList) {
             QcNoticeDetailDTO.AddDTO addDetail = new QcNoticeDetailDTO.AddDTO();
             BeanUtils.copyProperties(warehouseReceiveDetailEntity,addDetail);
             addDetail.setSourceDetailId(warehouseReceiveDetailEntity.getId());
-            addDetail.setQcNoticeQty(warehouseReceiveDetailEntity.getReceiveQty());
+            //待质检数量为0则无需生成
+            if (MathUtil.compareTo(warehouseReceiveDetailEntity.getWaitQcQty(), MathUtil.ZERO) <= 0) {
+                continue;
+            }
+            addDetail.setQcNoticeQty(warehouseReceiveDetailEntity.getWaitQcQty());
             addDetail.setSupplierId(entity.getSupplierId());
+            addDetail.setPurchaseOrderDetailId(warehouseReceiveDetailEntity.getPurchaseOrderDetailId());
             addDetailDTOs.add(addDetail);
+        }
+        if (CollUtil.isEmpty(addDetailDTOs)) {
+            return;
         }
         addDTO.setDetailList(addDetailDTOs);
         qcNoticeService.add(addDTO);

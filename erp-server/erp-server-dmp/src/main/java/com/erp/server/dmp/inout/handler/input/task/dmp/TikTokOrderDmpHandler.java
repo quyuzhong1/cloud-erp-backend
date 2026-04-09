@@ -241,14 +241,18 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put("platformUpdateTime", payTime);
                 }
 
-                //发货时间
-                Object deliveryTimeObj = dmpDataMap.get("deliveryTime");
-                if (deliveryTimeObj != null) {
-                    if (Long.valueOf(deliveryTimeObj + "") > 0) {
-                        // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                        LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj + "")), ZoneId.systemDefault());
-                        dmpDataMap.put("deliveryTime", payTime);
-                    }
+                // 发货时间:
+                // TikTok平台仓/FBT订单优先取 rts_time，保持后续销售出库单出库日期与平台履约时间口径一致。
+                Long deliveryEpochSeconds = isPlatformWarehouseOrder
+                        ? firstPositiveLongValue(dmpDataMap, "rtsTime", "rts_time", "deliveryTime", "delivery_time")
+                        : firstPositiveLongValue(dmpDataMap, "deliveryTime", "delivery_time", "rtsTime", "rts_time");
+                if (deliveryEpochSeconds != null) {
+                    LocalDateTime deliveryTime = LocalDateTime.ofInstant(
+                            Instant.ofEpochSecond(deliveryEpochSeconds),
+                            ZoneId.systemDefault());
+                    dmpDataMap.put("deliveryTime", deliveryTime);
+                } else {
+                    dmpDataMap.put("deliveryTime", null);
                 }
 
                 //支付信息
@@ -278,6 +282,30 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             }
         }
         return "";
+    }
+
+    private Long firstPositiveLongValue(Map<String, Object> dataMap, String... keys) {
+        if (dataMap == null || keys == null) {
+            return null;
+        }
+        for (String key : keys) {
+            Object value = dataMap.get(key);
+            if (value == null) {
+                continue;
+            }
+            String text = String.valueOf(value).trim();
+            if (StringUtils.isBlank(text)) {
+                continue;
+            }
+            try {
+                long parsed = Long.parseLong(text);
+                if (parsed > 0) {
+                    return parsed;
+                }
+            } catch (NumberFormatException ignore) {
+            }
+        }
+        return null;
     }
 
     private boolean isTikTokPlatformWarehouseOrder(String fulfillmentType) {

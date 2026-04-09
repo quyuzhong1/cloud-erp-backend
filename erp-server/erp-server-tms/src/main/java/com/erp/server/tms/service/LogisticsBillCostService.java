@@ -79,7 +79,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return BatchResultDTO
      */
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
-    
+
     BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
     
     BatchResultDTO delete(String id);
@@ -261,5 +261,23 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
+
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList,String processingType);
+
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType);
 
 }

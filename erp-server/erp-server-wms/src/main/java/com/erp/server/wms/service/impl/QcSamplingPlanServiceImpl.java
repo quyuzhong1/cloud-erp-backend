@@ -270,7 +270,9 @@ public class QcSamplingPlanServiceImpl extends SuperServiceImpl<QcSamplingPlanMa
         result.setQcLevel(matchedPlan.getQcLevel());
         if (PlanTypeEnum.GB.getCode().equals(matchedPlan.getPlanType())) {
             String generalAql = matchedPlan.getGeneralAql();
+            result.setGeneralAql(generalAql);
             String majorAql = matchedPlan.getMajorAql();
+            result.setMajorAql(majorAql);
             AqlSamplingRequest request = AqlSamplingRequest.builder()
                     .sampleQty(planDTO.getQty())
                     .qcLevel(matchedPlan.getQcLevel())

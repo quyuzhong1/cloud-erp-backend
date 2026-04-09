@@ -155,6 +155,11 @@ public class QcResultDTO {
         @NotNull(message = "批次合格量不允许为空")
         @Min(value = 0,message = "批次合格量最小为0")
         private Integer  lotQualifiedQty;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 
 
@@ -574,9 +579,9 @@ public class QcResultDTO {
     @NoArgsConstructor
     public static class TotalLotQualifiedQtyDTO {
         /**
-         * 来源明细id
+         * 采购订单明细id
          */
-        private String sourceDetailId;
+        private String purchaseOrderDetailId;
         /**
          * 批次合格量汇总
          */
@@ -602,6 +607,6 @@ public class QcResultDTO {
         /**
          * 批次合格量
          */
-        private Integer lotQualifiedQty;
+        private Integer totalLotQualifiedQty;
     }
 }
