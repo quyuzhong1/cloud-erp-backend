@@ -4,8 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
-import java.util.Date;
+import com.common.core.entity.BaseEntity;
 
 /**
  * (CustomizeFieldDisplay)实体类
@@ -16,33 +15,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("customize_field_layout")
-public class CustomizeFieldLayoutEntity implements Serializable {
-    private static final long serialVersionUID = -23577872711182914L;
-    /**
-     * 表id
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
-    /**
-     * 创建用户id
-     */
-    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
-    private String createUserId;
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time",fill = FieldFill.INSERT)
-    private Date createTime;
-    /**
-     * 更改用户id
-     */
-    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
-    private String updateUserId;
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+public class CustomizeFieldLayoutEntity extends BaseEntity<CustomizeFieldLayoutEntity> {
 
     /**
      * 字段名称

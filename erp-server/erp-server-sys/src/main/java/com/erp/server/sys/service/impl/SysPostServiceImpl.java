@@ -8,6 +8,8 @@ import com.common.business.dto.base.BasePagingSearchDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -23,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -59,6 +62,16 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
         }
         SysPostEntity entity = new SysPostEntity();
         BeanMapperUtils.copy(dto, entity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        entity.setCreateTime(now);
+        entity.setCreateUserId(userId);
+        entity.setCreateUserName(userName);
         return this.save(entity);
     }
 
@@ -85,6 +98,10 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
     public boolean updatePost(SysPostDTO dto) {
         SysPostEntity entity = new SysPostEntity();
         BeanMapperUtils.copy(dto, entity);
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        entity.setUpdateTime(LocalDateTime.now());
+        entity.setUpdateUserId(loginUser.getUid());
+        entity.setUpdateUserName(loginUser.getUserName());
         return this.updateById(entity);
     }
 

@@ -1,17 +1,14 @@
 package com.erp.model.sys.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
-
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author yl
@@ -20,12 +17,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("sys_base_dic")
-public class SysBaseDicEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private Integer id;
+public class SysBaseDicEntity extends BaseEntity<SysBaseDicEntity> {
 
     /**
      * 字典属性

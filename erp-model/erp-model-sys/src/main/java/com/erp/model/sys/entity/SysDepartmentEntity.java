@@ -1,84 +1,63 @@
 package com.erp.model.sys.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 /**
  * 部门表
- * 
+ *
  * @author yl
  * @email ylstrive@gmail.com
  * @date 2022-07-11 14:05:47
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_department")
-public class SysDepartmentEntity implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class SysDepartmentEntity extends BaseEntity<SysDepartmentEntity> {
 
-	/**
-	 * $column.comments
-	 */
-	@TableId(type = IdType.INPUT)
-	private String id;
+    /**
+     * 编码
+     */
+    @TableField("code")
+    private String code;
 
-	/**
-	 * 编码
-	 */
-	@TableField("code")
-	private String code;
+    /**
+     * $column.comments
+     */
+    private String name;
 
-	/**
-	 * $column.comments
-	 */
-	private String name;
+    /**
+     * 备注
+     */
+    private String remark;
 
-	/**
-	 * 备注
-	 */
-	private String remark;
+    //1 部门  2 小组
+    private Integer type;
 
-	//1 部门  2 小组
-	private Integer type;
-	/**
-	 * 创建时间
-	 */
-	@TableField(fill= FieldFill.INSERT)
-	private LocalDateTime createTime;
-	/**
-	 * 更新时间
-	 */
-	@TableField(fill= FieldFill.INSERT_UPDATE)
-	private LocalDateTime updateTime;
-	/**
-	 * 父级id
-	 */
-	private String parentId;
+    /**
+     * 父级id
+     */
+    private String parentId;
 
-	/**
-	 * 同步金蝶id
-	 */
-	@TableField("sync_kingdee_id")
-	private String syncKingdeeId;
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
-	/**
-	 * 所有上级IDS
-	 */
-	@TableField(exist = false)
-	private String path = "";
+    /**
+     * 所有上级IDS
+     */
+    @TableField(exist = false)
+    private String path = "";
 
-	/**
-	 * 是否禁用
-	 */
-	@TableField("disabled")
-	private Boolean disabled;
+    /**
+     * 是否禁用
+     */
+    @TableField("disabled")
+    private Boolean disabled;
 
-	/**
-	 * 用户删除状态 false:正常 true：已删除
-	 */
-	@TableField(value = "is_deleted")
-	@TableLogic
-	private Boolean isDeleted;
 }

@@ -1,29 +1,19 @@
 package com.erp.model.workflow.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
-
 /**
  * @Classname WorkflowBusinessEntity
-
  * @Date 2023-01-30 15:08
  * @Created by yl
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("workflow_business")
-public class WorkflowBusinessEntity implements Serializable {
-
-    /**
-     * 表id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class WorkflowBusinessEntity extends BaseEntity<WorkflowBusinessEntity> {
 
     /**
      * 业务流程的key
