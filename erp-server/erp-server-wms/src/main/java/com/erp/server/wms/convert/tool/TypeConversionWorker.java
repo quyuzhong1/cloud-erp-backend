@@ -73,6 +73,14 @@ public class TypeConversionWorker {
         return value.stripTrailingZeros().toPlainString();
     }
 
+    @Named("decimal2ToPlainString")
+    public String decimal2ToPlainString(BigDecimal value){
+        if (Objects.isNull(value)){
+            return "";
+        }
+        return value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    }
+
     @Named("booleanToInt")
     public Integer booleanToInt(Boolean value){
         return Boolean.TRUE.equals(value) ? 1 : -1;

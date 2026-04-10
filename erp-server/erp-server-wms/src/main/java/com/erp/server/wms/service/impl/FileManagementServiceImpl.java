@@ -180,7 +180,7 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
             List<String> skuIds = skuRefEntityList.stream().map(QcStandardSkuRefEntity::getSkuId).collect(Collectors.toList());
             Integer count = baseMapper.countBySkuAndFileType(skuIds, fileType, entity.getId());
             if (count > 0) {
-                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, skuRefEntityList.stream().map(QcStandardSkuRefEntity::getProductName).collect(Collectors.joining(",")), fileType);
+                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, skuRefEntityList.stream().map(QcStandardSkuRefEntity::getSkuNo).collect(Collectors.joining(",")), WmsFileTypeEnum.getName(fileType));
             }
         } else if (WmsFileTypeEnum.MANUFACTURING_REPORT.getCode().equals(fileType)) {
             // 量产报告
@@ -195,7 +195,7 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
             entity.setProductName(skuVOS.get(0).getSkuName());
             Integer count = baseMapper.countBySkuAndFileType(Collections.singletonList(entity.getSkuId()), fileType, entity.getId());
             if (count > 0) {
-                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, skuVOS.get(0).getSkuName(), fileType);
+                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, skuVOS.get(0).getSkuNo(), WmsFileTypeEnum.getName(fileType));
             }
             if (CollUtil.isEmpty(skuRefEntityList)){
                 skuRefEntityList.add(FileManagementConverter.INSTANCE.skuVOToSkuRefEntity(skuVOS.get(0)));
@@ -213,7 +213,7 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
             Integer count = this.lambdaQuery().eq(FileManagementEntity::getFirstCategoryId, entity.getFirstCategoryId()).eq(FileManagementEntity::getFileType, fileType)
                     .ne(CharSequenceUtil.isNotBlank(entity.getId()), FileManagementEntity::getId, entity.getId()).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.FILE_MANAGEMENT_CATEGORY_TYPE_EXIST, categoryEntityList.get(0).getName(), fileType);
+                throw new ServiceException(ApiError.FILE_MANAGEMENT_CATEGORY_TYPE_EXIST, categoryEntityList.get(0).getName(), WmsFileTypeEnum.getName(fileType));
             }
         }
     }
