@@ -79,6 +79,16 @@ public interface AssetLocationService extends SuperService<AssetLocationEntity> 
     BaseResultDTO.AddDTO addAndSubmit(AssetLocationDTO.AddDTO dto);
 
     /**
+     * 新增并提交且审核通过
+     *
+     * @param dto
+     * @return BaseResultDTO.AddDTO
+     * @author wuht
+     * @date: 2026-03-10
+     */
+    BaseResultDTO.AddDTO addAndSubmitAndApprove(AssetLocationDTO.AddDTO dto);
+
+    /**
      * 修改并提交审核
      *
      * @param dto

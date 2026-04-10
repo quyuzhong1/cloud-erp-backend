@@ -19,6 +19,11 @@
        <result column="approve_time" property="approveTime" />
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
+       <result column="bill_status" property="billStatus" />
+       <result column="cancel_fail_reason" property="cancelFailReason" />
+       <result column="cancel_time" property="cancelTime" />
+       <result column="cancel_user_id" property="cancelUserId" />
+       <result column="cancel_user_name" property="cancelUserName" />
        <result column="code" property="code" />
        <result column="apply_date" property="applyDate" />
        <result column="sample_type" property="sampleType" />
@@ -55,6 +60,11 @@ kba.approve_status AS approveStatus,
 kba.approve_time AS approveTime,
 kba.approve_user_id AS approveUserId,
 kba.approve_user_name AS approveUserName,
+kba.bill_status AS billStatus,
+kba.cancel_fail_reason AS cancelFailReason,
+kba.cancel_time AS cancelTime,
+kba.cancel_user_id AS cancelUserId,
+kba.cancel_user_name AS cancelUserName,
 kba.code AS code,
 kba.apply_date AS applyDate,
 kba.sample_type AS sampleType,

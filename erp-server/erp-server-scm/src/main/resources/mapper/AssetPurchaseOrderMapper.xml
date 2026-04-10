@@ -71,6 +71,7 @@
             apod.total_amount as totalAmount,
             apod.currency as currency,
             apod.currency_symbol as currencySymbol,
+            apod.is_gift as isGift,
             apod.remark as remark,
             apo.approve_user_id as approveUserId,
             apo.approve_user_name as approveUserName,

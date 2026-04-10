@@ -35,4 +35,7 @@ public interface ImportPlmFeign {
     @PostMapping("/feign/import/importProductChange")
     void importProductChange(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importSkuStdRetailPrice")
+    void importSkuStdRetailPrice(@RequestBody BaseDTO.ImportDTO dto);
+
 }

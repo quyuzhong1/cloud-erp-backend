@@ -56,8 +56,7 @@ public class KolB2cApplicationApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
-        BatchResultDTO resultDTO = kolB2cApplicationService.disApprove(dto.getId());
-        return resultDTO.getSuccess();
+        throw new ServiceException(ApiError.SAMPLE_B2C_DISAPPROVE_FORBIDDEN);
     }
 
     @Override
