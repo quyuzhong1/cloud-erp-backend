@@ -158,8 +158,8 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      * 根据质检单id 获取到质检合格的数量汇总
      * @author will
      * @date 2026/3/30 15:12
-      * @param qcId
+      * @param qcIdList
      * @return  QcResultDTO.LotQualifiedQtyDTO
      */
-    QcResultDTO.LotQualifiedQtyDTO getLotQualifiedQtyByMainId(String qcId);
+    List<QcResultDTO.LotQualifiedQtyDTO> getLotQualifiedQtyByMainIdList(List<String> qcIdList);
 }

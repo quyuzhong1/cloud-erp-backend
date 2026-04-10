@@ -122,9 +122,10 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
      * 更新收货单下的待质检数量
      * @author will
      * @date 2026/3/30 17:43
-     * @param qcId
+     * @param qcIdList
+     * @param isFinishQc
      * @return  void
      */
-    void updateWaitQcQty(String qcId);
+    void updateWaitQcQty(List<String> qcIdList,Boolean isFinishQc);
 
 }

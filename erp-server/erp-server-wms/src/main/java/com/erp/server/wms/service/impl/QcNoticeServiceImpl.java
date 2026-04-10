@@ -153,6 +153,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @Resource
     private WmsAttachmentService wmsAttachmentService;
 
+    @Resource
+    private WarehouseReceiveDetailService warehouseReceiveDetailService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1211,7 +1215,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(detailMap.values())) qcNoticeDetailService.updateBatchById(detailMap.values());
         if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);
         if (CollUtil.isNotEmpty(qcResultBatchUpdateList)) qcResultService.updateBatchById(qcResultBatchUpdateList);
-        
+
+        //更新收货单的待质检量
+        List<String> qcIdList = qcInfoBatchUpdateList.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+        warehouseReceiveDetailService.updateWaitQcQty(qcIdList,Boolean.TRUE);
+
         // 汇集并用1次远程Feign批量累加采购订单合格数
         qcInfoService.batchHandlePurchaseOrderQcAccumulation(accumulateParams);
 
@@ -1541,6 +1549,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         
         // 汇集并用1次远程Feign批量累加采购订单合格数
         qcInfoService.batchHandlePurchaseOrderQcAccumulation(accumulateParams);
+        //更新收货单的待质检量
+        List<String> qcIdList = qcInfoBatchUpdateList.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+        warehouseReceiveDetailService.updateWaitQcQty(qcIdList,Boolean.TRUE);
 
         Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 
@@ -1760,6 +1771,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     .eq(QcNoticeEntity::getId, qcNoticeEntity.getId())
                     .update();
         }
+
+        //更新收货单的待质检量
+        List<String> qcIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+        warehouseReceiveDetailService.updateWaitQcQty(qcIdList,Boolean.FALSE);
 
         // 🚨 撤销质检后，扣减采购订单已质检合格数量
         List<QcResultEntity> qcResults = qcResultService.getByMainIdList(qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList()));
