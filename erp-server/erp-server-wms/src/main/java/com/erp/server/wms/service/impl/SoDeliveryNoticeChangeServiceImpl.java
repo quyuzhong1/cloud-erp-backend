@@ -470,6 +470,13 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 if(Objects.nonNull(existEntity)){
                     throw new ServiceException("发货通知单明细中已存在SKU【{}】,不允许新增",detail.getSkuNo());
                 }
+                if(StringUtils.isNotBlank(soDeliveryNotice.getVirtualWarehouseId()) ){
+                    SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(v -> v.getId().equals(detail.getSoDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到销售订单明细数据"));
+                    SkuVO ignoreSku = ignoreInventorySkuList.stream().filter(v -> v.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(null);
+                    if(Objects.isNull(ignoreSku) && soDetailEntity.getFrozenQty() < detail.getNewQty()){
+                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN,soDetailEntity.getSkuNo());
+                    }
+                }
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = BeanUtil.copyProperties(detail,SoDeliveryNoticeDetailEntity.class);
                 soDeliveryNoticeDetailEntity.setMainId(soDeliveryNotice.getId());
                 soDeliveryNoticeDetailEntity.setSourceDetailId(detail.getSoDetailId());
@@ -737,7 +744,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(data.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
-            data.setSaleQty(soDetailEntity.getDeliveryQty());
+            data.setSaleQty(soDetailEntity.getBoxQty());
             List<SoDeliveryNoticeDetailEntity> currentNoticeDetailList = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(data.getSoDetailId())).collect(Collectors.toList());
             data.setAllNoticeQty(currentNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(0, Integer::sum));
             data.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(data.getChangeType()));
