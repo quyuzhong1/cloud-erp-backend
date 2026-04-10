@@ -1881,14 +1881,37 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
         }
         String b2c = OrderTypeEnum.B2C.getCode();
+
+        List<String> customerIds = list.stream()
+                .map(SoOutstockDTO.PagingViewDTO::getCustomerId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> customerPartitionIdMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(customerIds)) {
+            List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
+            if (CollectionUtils.isNotEmpty(customerInfoEntities)) {
+                customerPartitionIdMap = customerInfoEntities.stream()
+                        .filter(item -> StringUtils.isNotBlank(item.getId()))
+                        .filter(item -> StringUtils.isNotBlank(item.getPartitionId()))
+                        .filter(item -> StringUtils.equalsAny(item.getBusinessMode(),
+                                CustomerInfoBusinessModeEnum.O2B.getCode(),
+                                CustomerInfoBusinessModeEnum.X2B.getCode()))
+                        .collect(Collectors.toMap(CustomerInfoEntity::getId,
+                                CustomerInfoEntity::getPartitionId,
+                                (a, b) -> a));
+            }
+        }
+
+        list.forEach(item -> {
+            if (StringUtils.isBlank(item.getPartitionId())) {
+                item.setPartitionId(customerPartitionIdMap.get(item.getCustomerId()));
+            }
+        });
+
 //        List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //跟踪单号
 //        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(ids);
-
-        //根据客户id集合查询客户信息
-//        List<String> customerIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-//        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
-//        Map<String, String> customerPlatformTypeMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType));
 
         //查询审核流程
         List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
@@ -2009,7 +2032,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
     }
-
 
     /**
      * 导出销售出库单
