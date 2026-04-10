@@ -7,7 +7,9 @@ import java.util.Objects;
 
 public enum MessageTypeEnum {
     QC("qc","质检通知", "请及时查收消息"),
-    SYS("sys","系统通知", "版本升级通知"),
+    PDA("pda","PDA升级通知", "版本升级通知"),
+    SYS("sys","系统公告", "版本升级通知"),
+    SYS_VERSION("sysVersion","版本更新", "版本更新内容"),
     ;
     /**
      * 类型

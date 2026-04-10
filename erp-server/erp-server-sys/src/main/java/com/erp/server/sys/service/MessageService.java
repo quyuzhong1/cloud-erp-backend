@@ -1,12 +1,12 @@
 package com.erp.server.sys.service;
-import com.erp.model.sys.entity.MessageEntity;
-import com.common.business.service.SuperService;
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.SysVersionDTO;
+import com.erp.model.sys.entity.MessageEntity;
+import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.MessageDTO;
 
- import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -67,4 +67,87 @@ public interface MessageService extends SuperService<MessageEntity> {
      * @return java.lang.Boolean
      **/
     Boolean closeMessageNotice();
+
+    /**
+     * 新增系统通知
+     * @author wtr
+     * @date: 2026-04-10
+     * @param dto
+     * @return
+     */
+    BaseResultDTO.AddDTO add(MessageDTO.AddDTO dto);
+
+    /**
+     * 修改
+     * @author wtr
+     * @date: 2026-04-10
+     * @param dto
+     * @return
+     */
+    Boolean update(MessageDTO.UpdateDTO dto);
+
+    /**
+     * 详情
+     * @author wtr
+     * @date: 2026-04-10
+     * @param id
+     * @return
+     */
+    MessageDTO.ViewDTO view(String id);
+
+    /**
+     * 删除
+     * @author wtr
+     * @date: 2026-04-10
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     * 新增版本更新
+     * @author wtr
+     * @date: 2026-04-10
+     * @param dto
+     * @return
+     */
+    BaseResultDTO.AddDTO addSysVersion(SysVersionDTO.AddDTO dto);
+
+    /**
+     * 版本更新列表查询
+     * @author wtr
+     * @date: 2026-04-10
+     * @param
+     * @return
+     */
+    PagingVO<SysVersionDTO.ListDTO>  pagingSysVersion(PagingDTO<SysVersionDTO.PagingParamDTO> dto);
+
+    /**
+     * PC端系统通知历史消息查询
+     * @param dto
+     * @return
+     */
+    PagingVO<MessageDTO.ListHistoryMessageDTO>  pagingHistoryMessage(PagingDTO<MessageDTO.HistoryMessagePagingParamDTO> dto);
+
+    /**
+     * PC端系统通知历史消息已读
+     */
+    boolean readHistoryMessage(MessageDTO.ReadHistoryMessageDTO dto);
+
+    /**
+     * PC端版本更新历史消息查询
+     * @param dto
+     * @return
+     */
+    PagingVO<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(PagingDTO<SysVersionDTO.HistoryVersionPagingParamDTO> dto);
+
+    /**
+     * PC端版本更新历史消息已读
+     */
+    boolean readHistoryVersion(SysVersionDTO.ReadHistoryVersionDTO dto);
+
+    /**
+     *
+     */
+    SysVersionDTO.LatestVersionDTO getLatestVersion();
 }

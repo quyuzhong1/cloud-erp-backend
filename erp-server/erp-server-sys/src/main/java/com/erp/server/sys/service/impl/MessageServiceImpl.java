@@ -1,13 +1,28 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.core.utils.MathUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.model.scm.entity.AssetNoticeEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.MessageDTO;
+import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
@@ -16,16 +31,17 @@ import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
+import com.erp.server.sys.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -46,13 +62,16 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Resource
     private RedisService redisService;
 
+    @Resource
+    private OperateLogService operateLogService;
+
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode()));
         List<MessageDTO.NotReadMessageNum> notReadMessageNumList = baseMapper.listNotReadMessageNum(paramDTO);
         notReadMessageNumList.forEach(n -> {
         	MessageTypeEnum messageTypeEnum = MessageTypeEnum.getMessageTypeEnum(n.getType());
@@ -72,7 +91,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setType(type);
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.PC.getCode()));
         if(pageNo == null) {
         	pageNo = 1;
         }
@@ -151,7 +170,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         String uid = userInfo.getUid();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode()));
 
         List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
 
@@ -177,11 +196,120 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode()));
 
         List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
         redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public BaseResultDTO.AddDTO add(MessageDTO.AddDTO addDTO) {
+        MessageEntity messageEntity = new MessageEntity();
+        BeanMapperUtils.copy(addDTO, messageEntity);
+        messageEntity.setApplication(MessageTypeEnum.SYS.getCode());
+        // 数据处理
+        handleData(messageEntity);
+
+        log.info("开始新增系统通知");
+        boolean save = super.save(messageEntity);
+        if(!save) {
+            throw new ServiceException("系统通知保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】标题为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统通知" , messageEntity.getNoticeTitle());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.MESSAGE.getCode(), messageEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(messageEntity.getId(), "");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean update(MessageDTO.UpdateDTO addOrUpdateDTO) {
+        MessageEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "系统通知"));
+        MessageEntity messageEntity = BeanMapperUtils.map(MessageEntity.class, addOrUpdateDTO);
+
+        // 数据处理
+        handleData(messageEntity);
+        log.info("编辑 开始修改数据，id：【{}】", old.getId());
+        boolean save = super.updateById(messageEntity);
+        if(!save) {
+            throw new ServiceException("保存失败");
+        }
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录日志数据，id：【{}】", messageEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(),  "系统通知");
+        operateLogService.addModuleOperateLogByObj(old, messageEntity, ModuleTypeEnum.MESSAGE.getCode(), messageEntity.getId(),"", msg);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public MessageDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        return null;
+    }
+
+    @Override
+    public BaseResultDTO.AddDTO addSysVersion(SysVersionDTO.AddDTO addDTO) {
+        MessageEntity messageEntity = new MessageEntity();
+        BeanMapperUtils.copy(addDTO, messageEntity);
+        messageEntity.setApplication(MessageTypeEnum.SYS_VERSION.getCode());
+        // 数据处理
+        handleData(messageEntity);
+
+        log.info("开始新增系统通知");
+        boolean save = super.save(messageEntity);
+        if(!save) {
+            throw new ServiceException("系统通知保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】标题为【{}】", UserContext.getDefaultLoginUser().getUserName(), "版本更新" , messageEntity.getNoticeTitle());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SYS_VERSION.getCode(), messageEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(messageEntity.getId(), "");
+    }
+
+    @Override
+    public PagingVO<SysVersionDTO.ListDTO> pagingSysVersion(PagingDTO<SysVersionDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<MessageDTO.ListHistoryMessageDTO> pagingHistoryMessage(PagingDTO<MessageDTO.HistoryMessagePagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public boolean readHistoryMessage(MessageDTO.ReadHistoryMessageDTO dto) {
+        return false;
+    }
+
+    @Override
+    public PagingVO<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(PagingDTO<SysVersionDTO.HistoryVersionPagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public boolean readHistoryVersion(SysVersionDTO.ReadHistoryVersionDTO dto) {
+        return false;
+    }
+
+    @Override
+    public SysVersionDTO.LatestVersionDTO getLatestVersion() {
+        return null;
+    }
+
+    private void handleData(MessageEntity messageEntity) {
+        if (Objects.nonNull(messageEntity.getNoticeTime())
+                && messageEntity.getNoticeTime().isAfter(LocalDateTime.now())) {
+            throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
+        }
     }
 
 }

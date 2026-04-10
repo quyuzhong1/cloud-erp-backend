@@ -17,7 +17,7 @@ import com.common.core.controller.vo.ApiResult;
 
 
 /**
- * 系统版本控制
+ * 系统通知-PDA升级通知
  * @author Luo_WG
  * @since 2023-08-14
  */
@@ -30,7 +30,7 @@ public class PdaVersionController extends BaseController {
     private PdaVersionService pdaVersionService;
 
     /**
-     * 发版信息列表分页查询
+     *  系统通知列表分页查询
      * @Author Luo_WG
      * @Date 2023/9/11 16:01
      * @param dto

@@ -205,6 +205,7 @@ public enum ApiError implements Serializable {
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
 
     COMMON_NO_SKU(98128,"SKU不存在"),
+    COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */

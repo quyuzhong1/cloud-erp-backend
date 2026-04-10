@@ -205,6 +205,8 @@ public enum ModuleTypeEnum {
     PRODUCT_BU("160", "产品BU线"),
 
     PRODUCT_CHANGE("161", "产品变更单"),
+    MESSAGE("162","系统通知"),
+    SYS_VERSION("163","版本更新"),
 
 
 

@@ -34,15 +34,20 @@ public class PdaVersionDTO implements Serializable {
         private String id;
 
         /**
-         * 下拉获取地址：sys/common/enumDropDown?type=SysType
-         * 发版类型：ALL PC PDA
+         * 通知类型
          */
-        private String type;
+        private String releaseType;
 
         /**
          * 通知类型
          */
-        private String releaseType;
+        private String releaseTypeName;
+
+        /**
+         * 下拉获取地址：sys/common/enumDropDown?type=SysType
+         * 发版类型：ALL PC PDA
+         */
+        private String type;
 
         /**
          * 类型名称
@@ -55,11 +60,6 @@ public class PdaVersionDTO implements Serializable {
         private String pdaVersion;
 
         /**
-         * 升级内容描述
-         */
-        private String remark;
-
-        /**
          * 是否强制更新
          */
         private Boolean force;
@@ -70,9 +70,14 @@ public class PdaVersionDTO implements Serializable {
         private String url;
 
         /**
-         * 升级时间
+         * 升级内容描述
          */
-        private LocalDateTime upgradeTime;
+        private String dataJson;
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
 
         /**
          * 创建人名称
@@ -85,6 +90,11 @@ public class PdaVersionDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
          * 修改人名称
          */
         private String updateUserName;
@@ -93,6 +103,12 @@ public class PdaVersionDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+
+
+        /**
+         * 升级时间
+         */
+        private LocalDateTime upgradeTime;
     }
 
 

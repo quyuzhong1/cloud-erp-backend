@@ -33,25 +33,58 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.sys.dto.PdaVersionDTO$PagingDTO">
-        SELECT
-        pv.id,
-        pv.create_user_name,
-        pv.create_time,
-        pv.update_user_name,
-        pv.update_time,
-        pv.pda_version,
-        pv.remark,
-        pv.force,
-        pv.url,
-        pv.type,
-        pv.upgrade_time,
-        CASE WHEN pv.release_type = 0 THEN '升级通知' ELSE '系统通知' END AS releaseType
-        FROM pda_version pv
-        WHERE pv.is_deleted = FALSE
-        <if test="params.searchKeyword !='' and params.searchKeyword != null ">
-            AND pv.remark ILIKE concat('%', #{params.searchKeyword}::text ,'%')
-        </if>
-        ORDER BY pv.create_time DESC
+        SELECT * FROM (
+            SELECT
+            pv.id AS id,
+            CASE WHEN pv.release_type = 0 THEN '升级通知' ELSE '系统通知' END AS releaseType,
+            pv.type AS type,
+            pv.pda_version AS pdaVersion,
+            pv.force AS force,
+            pv.url AS url,
+            pv.remark AS dataJson,
+            pv.create_user_name AS createUserId,
+            pv.create_user_name AS createUserName,
+            pv.create_time AS createTime,
+            pv.update_user_id AS updateUserId,
+            pv.update_user_name AS updateUserName,
+            pv.update_time AS updateTime,
+            pv.upgrade_time AS upgradeTime
+            FROM
+            pda_version pv
+            WHERE
+            pv.is_deleted = FALSE
+            <if test="params.searchKeyword !='' and params.searchKeyword != null ">
+                AND pv.remark ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+            </if>
+
+            UNION ALL
+
+            SELECT
+            m.id AS id,
+            '系统通知' AS releaseType,
+            m.application AS type,
+            m.upgrade_version AS pdaVersion,
+            false AS force,
+            '' AS url,
+            m.data_json AS remark,
+            m.create_user_id AS createUserId,
+            m.create_user_name AS createUserName,
+            m.create_time AS createTime,  -- 统一列别名
+            m.update_user_id AS updateUserId,
+            m.update_user_name AS updateUserName,
+            m.update_time AS updateTime,
+            m.notice_time AS upgradeTime
+            FROM
+            message m
+            WHERE
+            m.is_deleted = FALSE
+            AND m.type = 'sys'
+            <if test="params.searchKeyword !='' and params.searchKeyword != null ">
+                AND m.data_json ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+            </if>
+        ) AS combined_data
+        ORDER BY combined_data.createTime DESC
+
     </select>
 
     <select id="getPdaVersion" resultType="com.erp.model.sys.entity.PdaVersionEntity">
