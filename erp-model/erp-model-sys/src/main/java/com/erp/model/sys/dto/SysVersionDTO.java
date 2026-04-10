@@ -23,36 +23,6 @@ public class SysVersionDTO {
     public static class AddDTO{
 
         /**
-         * 消息类型
-         */
-        private String type;
-
-        /**
-         * 数据集json
-         */
-        private String dataJson;
-
-        /**
-         * 应用类型：PDA、PC
-         */
-        private String application;
-
-        /**
-         * 通知标题
-         */
-        public String noticeTitle;
-
-        /**
-         * 通知时间类型
-         */
-        public String noticeTimeType;
-
-        /**
-         * 通知时间
-         */
-        public LocalDateTime noticeTime;
-
-        /**
          * 升级版本号
          */
         public String upgradeVersion;
@@ -61,6 +31,11 @@ public class SysVersionDTO {
          * 过期时间
          */
         public LocalDateTime expireTime;
+
+        /**
+         * 版本更新内容
+         */
+        private String dataJson;
     }
 
     @Data

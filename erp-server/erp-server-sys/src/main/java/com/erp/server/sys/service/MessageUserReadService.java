@@ -52,4 +52,9 @@ public interface MessageUserReadService extends SuperService<MessageUserReadEnti
      * @return java.lang.Boolean
      **/
     Boolean readByMessageId(String messageId, String userId);
+
+    /**
+     * 根据消息id删除读取记录
+     */
+    Boolean removeByMessageId(String messageId);
 }

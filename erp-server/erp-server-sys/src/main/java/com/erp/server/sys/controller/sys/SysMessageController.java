@@ -14,10 +14,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.scm.dto.AssetNoticeDTO;
-import com.erp.model.scm.entity.AssetNoticeEntity;
 import com.erp.model.sys.dto.MessageDTO;
-import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.server.sys.handler.SysVersionQueryHandler;
@@ -37,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
 import static com.common.core.controller.vo.ApiResult.error;
 import static com.common.core.controller.vo.ApiResult.success;
 
@@ -134,7 +130,7 @@ public class SysMessageController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = messageService.delete(id);
+                deleteResult = messageService.deleteMessage(id);
             }catch (Exception e){
                 log.error("删除失败",e);
                 MessageEntity entity = idEntityMap.get(id);

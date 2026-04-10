@@ -3,12 +3,16 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -18,7 +22,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.AssetNoticeDTO;
+import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.model.scm.entity.AssetNoticeDetailEntity;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.MessageDTO;
@@ -26,6 +33,7 @@ import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
+import com.erp.model.sys.enums.NoticeTimeTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
@@ -208,6 +216,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageEntity messageEntity = new MessageEntity();
         BeanMapperUtils.copy(addDTO, messageEntity);
         messageEntity.setApplication(MessageTypeEnum.SYS.getCode());
+        //这两个字段要注意,当初设计的时候就是这样对应的
+        messageEntity.setType(addDTO.getReleaseType());
+        messageEntity.setApplication(addDTO.getType());
         // 数据处理
         handleData(messageEntity);
 
@@ -229,7 +240,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "系统通知"));
         MessageEntity messageEntity = BeanMapperUtils.map(MessageEntity.class, addOrUpdateDTO);
-
+        //这两个字段要注意,当初设计的时候就是这样对应的
+        messageEntity.setType(addOrUpdateDTO.getReleaseType());
+        messageEntity.setApplication(addOrUpdateDTO.getType());
         // 数据处理
         handleData(messageEntity);
         log.info("编辑 开始修改数据，id：【{}】", old.getId());
@@ -247,12 +260,39 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public MessageDTO.ViewDTO view(String id) {
-        return null;
+        MessageEntity messageEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到数据"));
+        MessageDTO.ViewDTO data = BeanMapperUtils.map(MessageDTO.ViewDTO.class, messageEntity);
+        // 数据填充处理
+        fillOne(data);
+        return data;
     }
 
     @Override
-    public BatchResultDTO delete(String id) {
-        return null;
+    public BatchResultDTO deleteMessage(String id) {
+        MessageEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
+
+        log.info("删除 开始删除数据，id：【{}】", id);
+        super.removeById(id);
+
+        messageUserReadService.removeByMessageId(id);
+
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "", "系统公告");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.MESSAGE.getCode(), entity.getId(), "删除");
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public BatchResultDTO deleteVersion(String id) {
+        MessageEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
+
+        log.info("删除 开始删除数据，id：【{}】", id);
+        super.removeById(id);
+
+        messageUserReadService.removeByMessageId(id);
+
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "", "版本更新");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SYS_VERSION.getCode(), entity.getId(), "删除");
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -276,8 +316,16 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
-    public PagingVO<SysVersionDTO.ListDTO> pagingSysVersion(PagingDTO<SysVersionDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<SysVersionDTO.ListDTO> pagingSysVersion(PagingDTO<SysVersionDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SysVersionDTO.ListDTO> pageData = this.baseMapper.pagingSysVersion(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 
     @Override
@@ -310,6 +358,15 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
                 && messageEntity.getNoticeTime().isAfter(LocalDateTime.now())) {
             throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
         }
+    }
+
+    public void fillOne(MessageDTO.ViewDTO data){
+        data.setTypeName(MessageTypeEnum.getName(data.getType()));
+        data.setReleaseTypeName(NoticeTimeTypeEnum.getName(data.getType()));
+    }
+
+    public void fillList(List<SysVersionDTO.ListDTO> records){
+
     }
 
 }

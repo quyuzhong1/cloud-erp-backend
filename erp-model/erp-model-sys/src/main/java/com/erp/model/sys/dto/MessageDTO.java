@@ -1,14 +1,11 @@
 package com.erp.model.sys.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -121,19 +118,21 @@ public class MessageDTO implements Serializable {
     public static class AddDTO{
 
         /**
-         * 通知类型
+         * 通知类型(当前字段为message的type字段，对应pda_version的release_type字段)
+         *
          */
-        private String type;
+        private String releaseType;
 
         /**
-         * 数据集json
+         * 通知内容
          */
         private String dataJson;
 
         /**
-         * 应用类型：PDA、PC
+         * 通知系统：PDA、PC(当前字段为message的application字段，对应pda_version的type字段)
+         *
          */
-        private String application;
+        private String type;
 
         /**
          * 通知标题
@@ -141,7 +140,7 @@ public class MessageDTO implements Serializable {
         public String noticeTitle;
 
         /**
-         * 通知时间类型
+         * 通知时间类型 /sys/dictBasic/list?type=noticeTiming
          */
         public String noticeTimeType;
 
@@ -168,9 +167,10 @@ public class MessageDTO implements Serializable {
         private String id;
 
         /**
-         * 通知类型
+         * 通知类型(当前字段为message的type字段，对应pda_version的release_type字段)
+         *
          */
-        private String type;
+        private String releaseType;
 
         /**
          * 数据集json
@@ -178,9 +178,10 @@ public class MessageDTO implements Serializable {
         private String dataJson;
 
         /**
-         * 应用类型：PDA、PC
+         * 应用类型：PDA、PC(当前字段为message的application字段，对应pda_version的type字段)
+         *
          */
-        private String application;
+        private String type;
 
         /**
          * 通知标题
@@ -234,24 +235,24 @@ public class MessageDTO implements Serializable {
         private String id;
 
         /**
-         * 通知类型
+         * 通知类型(当前字段为message的type字段，对应pda_version的release_type字段)
          */
-        private String type;
+        private String releaseType;
 
         /**
          * 通知类型名称
          */
+        private String releaseTypeName;
+
+        /**
+         * 应用类型：PDA、PC(当前字段为message的application字段，对应pda_version的type字段)
+         */
+        private String type;
+
+        /**
+         * 应用类型：PDA、PC MessageTypeEnum
+         */
         private String typeName;
-
-        /**
-         * 应用类型：PDA、PC
-         */
-        private String application;
-
-        /**
-         * 应用类型：PDA、PC
-         */
-        private String applicationName;
 
         /**
          * 通知标题

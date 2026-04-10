@@ -12,26 +12,21 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.server.sys.handler.SysVersionQueryHandler;
 import com.erp.server.sys.service.MessageService;
-import com.erp.server.sys.service.MessageUserReadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import javax.annotation.Resource;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import static com.common.core.controller.vo.ApiResult.error;
 import static com.common.core.controller.vo.ApiResult.success;
 
@@ -73,7 +68,7 @@ public class SysVersionController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:assetNotice:paging",
+            menuCode = "sys:sysVersion:paging",
             tableAlias = "an"
     )
     @WebAdvanceQuery(handler = SysVersionQueryHandler.class)
@@ -91,7 +86,7 @@ public class SysVersionController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "sys:sysMessage:delete",
+            menuCode = "sys:sysVersion:delete",
             serviceClass = MessageService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除")
@@ -103,7 +98,7 @@ public class SysVersionController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = messageService.delete(id);
+                deleteResult = messageService.deleteVersion(id);
             }catch (Exception e){
                 log.error("删除失败",e);
                 MessageEntity entity = idEntityMap.get(id);
@@ -133,7 +128,7 @@ public class SysVersionController {
     }
 
     /**
-     * PC端系统通知历史消息已读
+     * PC端版本更新历史消息已读
      * @return
      */
     @PostMapping("/readHistoryVersion")

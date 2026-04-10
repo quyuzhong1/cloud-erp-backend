@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.server.sys.mapper.MessageUserReadMapper;
 import com.erp.server.sys.service.MessageUserReadService;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -49,5 +51,12 @@ public class MessageUserReadServiceImpl extends SuperServiceImpl<MessageUserRead
                 .eq(MessageUserReadEntity::getMessageId, messageId)
                 .eq(MessageUserReadEntity::getUserId, userId)
                 .update();
+    }
+
+    @Override
+    public Boolean removeByMessageId(String messageId) {
+        LambdaUpdateWrapper<MessageUserReadEntity> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(MessageUserReadEntity::getMessageId, messageId);
+        return remove(wrapper);
     }
 }

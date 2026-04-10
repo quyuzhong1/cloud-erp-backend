@@ -96,13 +96,22 @@ public interface MessageService extends SuperService<MessageEntity> {
     MessageDTO.ViewDTO view(String id);
 
     /**
-     * 删除
+     * 删除系统通知
      * @author wtr
      * @date: 2026-04-10
      * @param id
      * @return
      */
-    BatchResultDTO delete(String id);
+    BatchResultDTO deleteMessage(String id);
+
+    /**
+     * 删除版本更新
+     * @author wtr
+     * @date: 2026-04-10
+     * @param id
+     * @return
+     */
+    BatchResultDTO deleteVersion(String id);
 
     /**
      * 新增版本更新
