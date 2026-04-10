@@ -12,30 +12,30 @@ import lombok.Data;
 public class SkuStdRetailPriceExcelDTO implements Serializable {
 
 	/**
-     * 周期
+     * SKU
      */
     @ExcelProperty(value = "*SKU")
     @FieldValid(fieldName = "SKU", isNotBlank = true)
 	private String skuNo;
 	
 	/**
-     * 周期
+     * 标准零售价
      */
     @ExcelProperty(value = "*标准零售价")
     @FieldValid(fieldName = "标准零售价", isNotBlank = true , formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
 	private String stdRetailPriceVat;
 	
     /**
-     * 库存SKU
+     * 币别
      */
     @ExcelProperty(value = "*币别")
     @FieldValid(fieldName = "币别", isNotBlank = true)
     private String currency;
     /**
-     * 仓库名称
+     * 税率
      */
-    @ExcelProperty(value = "*税率")
-    @FieldValid(fieldName = "税率", isNotBlank = true , formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @ExcelProperty(value = "税率")
+    @FieldValid(fieldName = "税率" , formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String vatRate;
 
     /**
