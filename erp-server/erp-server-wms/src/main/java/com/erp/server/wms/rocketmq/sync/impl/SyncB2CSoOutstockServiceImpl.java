@@ -412,7 +412,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         log.info("旺店通同步订单标签到erp："+ JSONUtil.toJsonStr(soOutstock));
         // 记录最新出库日期
         List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+//        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
 
         //保存销售出库单
         soOutstockService.save(soOutstock);

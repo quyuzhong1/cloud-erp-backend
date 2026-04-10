@@ -44,6 +44,8 @@ public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsu
     private KolSubB2cApplicationService kolSubB2cApplicationService;
     @Resource
     private KolSubB2cApplicationDetailService kolSubB2cApplicationDetailService;
+    @Resource
+    private KolB2cApplicationService kolB2cApplicationService;
 
     @Override
     public String getBizName() {
@@ -107,8 +109,19 @@ public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsu
         if (detailList != null && !detailList.isEmpty()) {
             kolSubB2cApplicationDetailService.updateBatchById(detailList);
         }
+        kolB2cApplicationService.refreshCancelStatusBySubOrder(entity.getSourceId(), buildCancelFailReason(entity, dto));
         //记录更新日志
         String msg =  CharSequenceUtil.format("拉取旺店通B2C销售订单【{}】状态更新", entity.getCode());
         operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getSourceId(), msg);
+    }
+
+    private String buildCancelFailReason(KolSubB2cApplicationEntity entity, WdtKolB2cApplicationDTO dto) {
+        if (Objects.equals(KolSubB2cApplicationOrderStatusEnum.NOT.getCode(), dto.getOrderStatus())) {
+            return "";
+        }
+        String orderStatusName = StringUtils.defaultIfBlank(KolSubB2cApplicationOrderStatusEnum.getName(dto.getOrderStatus()), dto.getOrderStatus());
+        String deliveryStatusName = StringUtils.defaultIfBlank(KolSubB2cApplicationDeliveryStatusEnum.getName(dto.getDeliveryStatus()), dto.getDeliveryStatus());
+        return StringUtils.substring(CharSequenceUtil.format("旺店通回传拆分单【{}】取消未成功，当前订单状态【{}】，发货状态【{}】",
+                entity.getCode(), orderStatusName, deliveryStatusName), 0, 500);
     }
 }
