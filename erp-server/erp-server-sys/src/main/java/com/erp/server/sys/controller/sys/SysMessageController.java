@@ -1,4 +1,4 @@
-package com.erp.server.sys.controller.pda;
+package com.erp.server.sys.controller.sys;
 
 import com.common.business.threadlocal.UserContext;
 import com.erp.model.sys.entity.MessageEntity;
@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @RestController
-@RequestMapping("/messageNotice")
-public class MessageNoticeController {
+@RequestMapping("/sysMessage")
+public class SysMessageController {
 
     @Resource
     private MessageService messageService;
