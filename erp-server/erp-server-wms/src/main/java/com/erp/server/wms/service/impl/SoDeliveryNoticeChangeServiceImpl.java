@@ -458,7 +458,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(soDeliveryNotice.getId());
         List<String> soDetailIds = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(soDetailIds);
+        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainId(soDeliveryNotice.getSourceId());
         List<SoDeliveryNoticeChangeDetailEntity> sourceDetailList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> addList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> updateList = new ArrayList<>();
