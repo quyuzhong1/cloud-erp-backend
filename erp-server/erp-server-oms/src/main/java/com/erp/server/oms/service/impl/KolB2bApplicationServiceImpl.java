@@ -193,6 +193,44 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         return Boolean.TRUE;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateDetailRemark(String id, String detailId, String remark) {
+        KolB2bApplicationEntity entity = super.getById(id);
+        entity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B寄样申请主单"));
+
+        KolB2bApplicationDetailEntity detailEntity = kolB2bApplicationDetailService.lambdaQuery()
+                .eq(KolB2bApplicationDetailEntity::getId, detailId)
+                .eq(KolB2bApplicationDetailEntity::getMainId, id)
+                .one();
+        detailEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException("B2B寄样申请明细不存在"));
+
+        String newRemark = StrUtil.nullToEmpty(remark);
+        if (Objects.equals(detailEntity.getRemark(), newRemark)) {
+            return Boolean.TRUE;
+        }
+
+        KolB2bApplicationDetailEntity oldDetail = BeanMapperUtils.map(KolB2bApplicationDetailEntity.class, detailEntity);
+        detailEntity.setRemark(newRemark);
+        boolean update = kolB2bApplicationDetailService.updateById(detailEntity);
+        if (!update) {
+            throw new ServiceException("B2B寄样申请明细备注更新失败");
+        }
+
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的明细【{}】备注，由[{}]变更为[{}]",
+                UserContext.getDefaultLoginUser().getUserName(),
+                entity.getCode(),
+                StrUtil.blankToDefault(detailEntity.getSkuNo(), detailId),
+                formatOperateLogValue(oldDetail.getRemark()),
+                formatOperateLogValue(newRemark));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2B_APPLICATION.getCode(), id, "编辑信息");
+        return Boolean.TRUE;
+    }
+
+    private String formatOperateLogValue(String value) {
+        return StringUtils.isBlank(value) ? "空值" : value;
+    }
+
 
     @Override
     public PagingVO<KolB2bApplicationDTO.ListDTO> paging(PagingDTO<KolB2bApplicationDTO.PagingParamDTO> pagingParamDTO) {
@@ -951,6 +989,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             viewDTO.setProductName(skuVO.getSkuName());
+            viewDTO.setSpuNo(skuVO.getSpuNo());
             viewDTO.setBrandName(skuVO.getBrandName());
         }
         data.setDetailList(detailDTOList);

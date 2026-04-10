@@ -738,9 +738,9 @@ public class LogisticsChannelDTO implements Serializable {
          * 物流轨迹查询方式
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=trackQueryMode
          */
-        @NotBlank(message = "物流轨迹查询方式不能为空")
-        @Size(max = 30, message = "物流轨迹查询方式最大长度不能超过30位")
-        private String trackQueryMode;
+//        @NotBlank(message = "物流轨迹查询方式不能为空")
+//        @Size(max = 30, message = "物流轨迹查询方式最大长度不能超过30位")
+//        private String trackQueryMode;
 
 
         /**

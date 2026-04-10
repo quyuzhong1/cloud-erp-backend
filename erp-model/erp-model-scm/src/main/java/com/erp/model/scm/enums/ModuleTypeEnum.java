@@ -231,6 +231,7 @@ public enum ModuleTypeEnum {
     B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
     DMP_ADS_ERP_DIFF_OUTSTOCK_SYNC("158", "出库同步差异"),
     DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("159", "退货同步差异"),
+    SKU_STD_RETAIL_PRICE("160", "sku标准零售价"),
 
     // doris
     ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),

@@ -54,6 +54,11 @@ public class KolB2cApplicationDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * SPU编码
+         */
+        private String spuNo;
+
+        /**
         * 品牌id
         */
         private String brandId;
@@ -140,6 +145,11 @@ public class KolB2cApplicationDetailDTO implements Serializable {
          * SKU编码
          */
         private String skuNo;
+
+        /**
+         * SPU编码
+         */
+        private String spuNo;
 
         /**
          * 产品名称
