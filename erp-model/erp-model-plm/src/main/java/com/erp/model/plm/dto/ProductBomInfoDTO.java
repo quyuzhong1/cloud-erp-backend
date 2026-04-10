@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
@@ -52,5 +53,16 @@ public class ProductBomInfoDTO implements Serializable {
          */
         @NotNull(message = "b2c订单详情id不能为空")
         private String soB2cDetailId;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    public static class FeiShuDto {
+        /**
+         * 飞书消息文本，直接使用返回的提示信息
+         */
+        @NotBlank(message = "飞书消息不能为空")
+        private String feishuText;
+
     }
 }
