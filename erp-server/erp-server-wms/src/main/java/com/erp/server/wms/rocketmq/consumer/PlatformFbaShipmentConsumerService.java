@@ -234,6 +234,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         if (StringUtils.isEmpty(currentShopEntity.getDictCountryCode())){
             throw new ServiceException("店铺数据异常:国家为空，shopId=" +  currentShopEntity.getId());
         }
+        String country = currentShopEntity.getDictCountryCode();
         // 国家一致
 //        if (currentShopEntity.getDictCountryCode().equalsIgnoreCase(country)) {
 //            return;
