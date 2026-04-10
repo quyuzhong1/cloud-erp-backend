@@ -37,6 +37,7 @@ import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.common.core.enums.ApiError.FILE_EXCEL_PARSING_FIELD_EXCEPTION;
@@ -729,7 +730,7 @@ public class ExcelUtil {
 
         try {
             File tempDirectory = FileUtils.getTempDirectory();
-            File filePath = new File(tempDirectory,"template"+ LocalDate.now() +".xlsx");
+            File filePath = new File(tempDirectory,"template"+ LocalDateTime.now() +".xlsx");
             File tempFile = File.createTempFile(fileName, ".xlsx");
             if (!filePath.exists()) {
                 EasyExcel.write(filePath).sheet(fileName).doWrite(new ArrayList<>());
