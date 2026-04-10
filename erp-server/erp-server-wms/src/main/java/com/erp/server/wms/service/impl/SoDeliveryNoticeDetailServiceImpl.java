@@ -14,8 +14,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
@@ -41,6 +44,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -100,6 +104,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         }
         List<SoDeliveryNoticeDetailEntity> detailEntityList = this.listDetailBySourceDetailIds(detailIds);
         List<SoDeliveryNoticeDetailEntity> list = new ArrayList<>();
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
 
         for (SoDeliveryNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
@@ -110,7 +115,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
                 throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES,soDetailEntity.getSkuNo());
             }
             if(StringUtils.isNotBlank(soInfoEntity.getVirtualWarehouseId())){
-                if (soDetailEntity.getFrozenQty() < detailDto.getDeliveryQty() ) {
+                SkuVO ignoreSku = ignoreInventorySkuList.stream().filter(sku -> sku.getSkuId().equals(soDetailEntity.getDeliverySkuId())).findFirst().orElse(null);
+                if (Objects.isNull(ignoreSku) && soDetailEntity.getFrozenQty() < detailDto.getDeliveryQty() ) {
                     throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN,soDetailEntity.getSkuNo());
                 }
             }
