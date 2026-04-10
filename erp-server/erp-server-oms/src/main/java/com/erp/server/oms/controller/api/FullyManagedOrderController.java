@@ -1142,9 +1142,16 @@ public class FullyManagedOrderController extends BaseController {
                 resultDTOS.add(result);
                 continue;
             }
-            //订单更换发货SKU操作只能在待提交和审核不通过状态操作
-            if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
+            //订单更换发货SKU操作只能在待提交、审核不通过或已发货状态操作
+            if (!Boolean.TRUE.equals(soB2cService.allowChangeDeliverySku(entity))){
                 result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.SO_REPLACE_SKU_STATUS_INVALID.getMsg(), entity.getCode()));
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                soB2cService.checkGeneratedDeliveryForOperation(entity.getId(), "更换SKU");
+            } catch (Exception e) {
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), e.getMessage());
                 resultDTOS.add(result);
                 continue;
             }

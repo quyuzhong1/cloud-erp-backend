@@ -9232,12 +9232,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = listByIds(ids);
-        //订单更换发货SKU操作只能在待提交和审核不通过状态操作
-        List<SoB2cEntity> notChangeList = soB2cEntityList.stream().filter(e -> !(ApproveStatusEnum.WAIT_SUBMIT.equals(e.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(e.getApproveStatus()))).collect(Collectors.toList());
+        //订单更换发货SKU操作只能在待提交、审核不通过或已发货状态操作
+        List<SoB2cEntity> notChangeList = soB2cEntityList.stream().filter(e -> !Boolean.TRUE.equals(allowChangeDeliverySku(e))).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notChangeList)) {
             List<String> codeList = notChangeList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
             String msg = getChangeSkuView(codeList);
             throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, msg);
+        }
+        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            checkGeneratedDeliveryForOperation(soB2cEntity.getId(), "更换SKU");
         }
         List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuViewDTOS = baseMapper.listChangeDeliverySkuView(ids);
         List<String> skuIds = changeDeliverySkuViewDTOS.stream().map(SoB2cDTO.ChangeDeliverySkuViewDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -9251,6 +9254,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         });
         return changeDeliverySkuViewDTOS;
+    }
+
+    @Override
+    public Boolean allowChangeDeliverySku(SoB2cEntity entity) {
+        if (Objects.isNull(entity)) {
+            return Boolean.FALSE;
+        }
+        return ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus())
+                || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())
+                || StrUtil.equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(), entity.getBillStatus());
+    }
+
+    @Override
+    public void checkGeneratedDeliveryForOperation(String soId, String operationName) {
+        if (StrUtil.isBlank(soId)) {
+            return;
+        }
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(soId));
+        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryEntities = thirdWarehouseDeliveryFeign.listBySourceId(Collections.singletonList(soId));
+        if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities) || CollectionUtils.isNotEmpty(thirdWarehouseDeliveryEntities)) {
+            throw new ServiceException(CharSequenceUtil.format("已生成B2C发货单或三方仓发货单，不允许操作{}", operationName));
+        }
     }
 
     private String getChangeSkuView(List<String> codeList) {
