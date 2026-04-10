@@ -650,7 +650,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //累加质检合格量(结果：合格)
             handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getQcGoodQty());
             //批量去更新 质检数量
-            warehouseReceiveDetailService.updateWaitQcQty(bill.getId());
+            warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(bill.getId()),Boolean.TRUE);
 
             //回写质检通知单
             reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
@@ -1208,6 +1208,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //回写质检通知单
             reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
+            //批量去更新 质检数量
+            warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(bill.getId()),Boolean.TRUE);
+
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(id));
             //操作日志
@@ -1292,7 +1295,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
 
             //批量去更新 质检数量
-            warehouseReceiveDetailService.updateWaitQcQty(entity.getId());
+            warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(entity.getId()),Boolean.TRUE);
 
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
         } else {
@@ -1578,6 +1581,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //回写质检通知单
             reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
+            //批量去更新 质检数量
+            warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(entity.getId()),Boolean.TRUE);
+
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
         }
@@ -1622,6 +1628,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         operateLogService.batchAddModuleOperateLog("质检单【%s】取消操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "取消质检");
         boolean result = this.updateBatchById(qcList);
         if (result){
+
+            //更新收货单的待质检量
+            List<String> qcIdList = qcList.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+            warehouseReceiveDetailService.updateWaitQcQty(qcIdList,Boolean.FALSE);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -1773,6 +1783,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         operateLogService.batchAddModuleOperateLog("质检单【%s】撤销质检", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "撤销质检");
         boolean result = this.updateBatchById(qcList);
         if (result){
+            //更新收货单的待质检量
+            List<String> qcIdList = qcList.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
+            warehouseReceiveDetailService.updateWaitQcQty(qcIdList,Boolean.FALSE);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);

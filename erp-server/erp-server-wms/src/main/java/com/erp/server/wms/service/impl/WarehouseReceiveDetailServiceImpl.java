@@ -413,31 +413,55 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     }
 
     @Override
-    public void updateWaitQcQty(String qcId) {
-        QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = qcResultService.getLotQualifiedQtyByMainId(qcId);
-        if (ObjectUtil.isEmpty(lotQualifiedQtyDTO) || ObjectUtil.isNull(lotQualifiedQtyDTO.getTotalLotQualifiedQty())) {
+    public void updateWaitQcQty(List<String> qcIdList,Boolean isFinishQc) {
+        List<QcResultDTO.LotQualifiedQtyDTO> lotQualifiedQtyList = qcResultService.getLotQualifiedQtyByMainIdList(qcIdList);
+        if (CollUtil.isEmpty(lotQualifiedQtyList)) {
             return;
         }
-        //采购收货来源直接取来源明细id
-        String sourceDetailId = lotQualifiedQtyDTO.getSourceDetailId();
-        //质检通知单来源需要取质检通知单明细的来源明细id
-        if (CharSequenceUtil.equals(lotQualifiedQtyDTO.getSourceType(), SourceTypeEnum.QC_NOTICE.getCode())) {
-                QcNoticeDetailEntity qcNoticeDetailEntity = qcNoticeDetailService.getById(lotQualifiedQtyDTO.getSourceDetailId());
+        List<String> sourceDetailIdList = lotQualifiedQtyList.stream().map(QcResultDTO.LotQualifiedQtyDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        //采购收货明细信息
+        Map<String, WarehouseReceiveDetailEntity> warehouseReceiveDetailEntityMap = this.mapByIds(sourceDetailIdList);
+        //质检通知单信息
+        Map<String, QcNoticeDetailEntity> qcNoticeDetailEntityMap = qcNoticeDetailService.mapByIds(sourceDetailIdList);
+
+        //需要更新的采购收货明细信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = new ArrayList<>();
+
+        //更新待质检数量
+        List<String> distQcIdList = qcIdList.stream().distinct().collect(Collectors.toList());
+        for (String distQcId : distQcIdList) {
+            QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = lotQualifiedQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getQcId(), distQcId)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(lotQualifiedQtyDTO)) {
+                continue;
+            }
+            //采购收货来源直接取来源明细id
+            String sourceDetailId = lotQualifiedQtyDTO.getSourceDetailId();
+            //质检通知单来源需要取质检通知单明细的来源明细id
+            if (CharSequenceUtil.equals(lotQualifiedQtyDTO.getSourceType(), SourceTypeEnum.QC_NOTICE.getCode())) {
+                QcNoticeDetailEntity qcNoticeDetailEntity = qcNoticeDetailEntityMap.get(lotQualifiedQtyDTO.getSourceDetailId());
                 if (ObjectUtil.isEmpty(qcNoticeDetailEntity)) {
                     throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"质检通知单明细");
                 }
-             sourceDetailId = qcNoticeDetailEntity.getSourceDetailId();
+                sourceDetailId = qcNoticeDetailEntity.getSourceDetailId();
+            }
+            WarehouseReceiveDetailEntity receiveDetailEntity = warehouseReceiveDetailEntityMap.get(sourceDetailId);
+            if (ObjectUtil.isEmpty(receiveDetailEntity)) {
+                throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
+            }
+            Integer waitQcQty = MathUtil.ZERO;
+            if (isFinishQc) {
+                //待质检量=∑收货数量-质检合格量,小于0时默认为0
+                waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalLotQualifiedQty();
+            } else {
+                //待质检量=∑收货数量+质检合格量,小于0时默认为0
+                waitQcQty = receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getTotalLotQualifiedQty();
+            }
+            if (waitQcQty < MathUtil.ZERO) {
+                waitQcQty = MathUtil.ZERO;
+            }
+            receiveDetailEntity.setWaitQcQty(waitQcQty);
+            receiveDetailList.add(receiveDetailEntity);
         }
-        WarehouseReceiveDetailEntity receiveDetailEntity = this.getById(sourceDetailId);
-        if (ObjectUtil.isEmpty(receiveDetailEntity)) {
-            throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
-        }
-        //待质检量=∑收货数量-质检合格量-∑待质检量,小于0时默认为0
-        Integer waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalLotQualifiedQty();
-        if (waitQcQty < MathUtil.ZERO) {
-            waitQcQty = MathUtil.ZERO;
-        }
-        receiveDetailEntity.setWaitQcQty(waitQcQty);
-        super.updateById(receiveDetailEntity);
+        super.updateBatchById(receiveDetailList);
     }
 }
