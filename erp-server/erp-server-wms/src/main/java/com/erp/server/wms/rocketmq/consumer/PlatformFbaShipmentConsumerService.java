@@ -157,12 +157,8 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
         // 查询当前店铺
         ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
-
-        //国家
-        entity.setCountryId(dto.getFulfillmentCenterCountry());
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getFulfillmentCenterCountry());
-        entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
-
+        entity.setCountryId(currentShopEntity.getDictCountryCode());
+        entity.setCountryName(currentShopEntity.getCountryName());
         // 查询仓库中心对应国家并设置对应店铺
         checkAndSetCountryWithShop(entity, dto, currentShopEntity);
 
@@ -197,9 +193,6 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
                     .collect(Collectors.toList());
         }
 
-        // 查询国家信息
-        //DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
-        //entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
         // 新增或更新
         FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentId(entity.getFbaShipmentId());
@@ -241,7 +234,6 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         if (StringUtils.isEmpty(currentShopEntity.getDictCountryCode())){
             throw new ServiceException("店铺数据异常:国家为空，shopId=" +  currentShopEntity.getId());
         }
-        String country = currentShopEntity.getDictCountryCode();
         // 国家一致
 //        if (currentShopEntity.getDictCountryCode().equalsIgnoreCase(country)) {
 //            return;
@@ -258,8 +250,6 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         entity.setShopId(shopInfoEntity.getId());
         entity.setShopName(shopInfoEntity.getName());
         entity.setCountryId(shopInfoEntity.getDictCountryCode());
-        // 查询国家信息
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
-        entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
+        entity.setCountryName(shopInfoEntity.getCountryName());
     }
 }

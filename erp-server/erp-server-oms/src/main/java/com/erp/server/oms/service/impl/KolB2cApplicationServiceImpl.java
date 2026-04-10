@@ -145,9 +145,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
-    private AddressParseService addressParseService;
-    @Resource
     private SoB2cRuleService soB2cRuleService;
+    @Resource
+    private AddressParseService addressParseService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -786,6 +786,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     public BatchResultDTO invalid(String id, String remark) {
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+//        validateNoApprovedSoB2c(entity, "作废");
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT.getCode(), entity.getApproveStatus()))) {
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
@@ -807,7 +808,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancel(String id) {
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
-        String billStatus = KolB2cApplicationDocumentStatusEnum.normalize(entity.getBillStatus());
+        validateNoApprovedSoB2c(entity, "取消");
+        String billStatus = resolveBillStatus(entity.getBillStatus(), entity.getApproveStatus());
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())) {
             throw new ServiceException(ApiError.SAMPLE_B2C_CANCEL_APPROVE_REQUIRED);
         }
@@ -871,7 +873,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             log.warn("刷新B2C寄样申请取消状态失败，主单不存在: mainId={}", mainId);
             return;
         }
-        String billStatus = KolB2cApplicationDocumentStatusEnum.normalize(entity.getBillStatus());
+        String billStatus = resolveBillStatus(entity.getBillStatus(), entity.getApproveStatus());
         if (!Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELING.getCode())
                 && !Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode())) {
             return;
@@ -924,7 +926,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             return;
         }
         boolean subNeedUpdate = !Objects.equals(KolSubB2cApplicationOrderStatusEnum.NOT.getCode(), subEntity.getOrderStatus());
-        String billStatus = KolB2cApplicationDocumentStatusEnum.normalize(mainEntity.getBillStatus());
+        String billStatus = resolveBillStatus(mainEntity.getBillStatus(), mainEntity.getApproveStatus());
         if (!subNeedUpdate && Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELED.getCode())) {
             return;
         }
@@ -990,7 +992,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
             return;
         }
-        String billStatus = KolB2cApplicationDocumentStatusEnum.normalize(mainEntity.getBillStatus());
+        String billStatus = resolveBillStatus(mainEntity.getBillStatus(), mainEntity.getApproveStatus());
         if (Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CANCELED.getCode())) {
             return;
         }
@@ -1345,7 +1347,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
 
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-        data.setBillStatus(KolB2cApplicationDocumentStatusEnum.normalize(data.getBillStatus()));
+        data.setBillStatus(resolveBillStatus(data.getBillStatus(), data.getApproveStatus()));
         data.setBillStatusName(KolB2cApplicationDocumentStatusEnum.getName(data.getBillStatus()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         String sampleTypeName = map.get(data.getSampleType());
@@ -1538,7 +1540,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         // 属性赋值
         for(KolB2cApplicationDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            data.setBillStatus(KolB2cApplicationDocumentStatusEnum.normalize(data.getBillStatus()));
+            data.setBillStatus(resolveBillStatus(data.getBillStatus(), data.getApproveStatus()));
             data.setBillStatusName(KolB2cApplicationDocumentStatusEnum.getName(data.getBillStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             String sampleTypeName = map.get(data.getSampleType());
@@ -1577,6 +1579,35 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
     private String getIsInternationalName(Boolean isInternational) {
         return Boolean.TRUE.equals(isInternational) ? "国外" : "国内";
+    }
+
+    private void validateNoApprovedSoB2c(KolB2cApplicationEntity entity, String actionName) {
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, entity.getId())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(subList)) {
+            return;
+        }
+        List<String> sourceIds = subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+        boolean hasApprovedSoB2c = soB2cService.lambdaQuery()
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                .in(SoB2cEntity::getSourceId, sourceIds)
+                .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                .eq(SoB2cEntity::getIsDeleted, false)
+                .count() > 0;
+        if (hasApprovedSoB2c) {
+            throw new ServiceException(StrUtil.format("关联B2C销售订单已审核通过，不允许{}B2C寄样申请单", actionName));
+        }
+    }
+
+    private String resolveBillStatus(String billStatus, String approveStatus) {
+        if (StringUtils.isNotBlank(billStatus)) {
+            return KolB2cApplicationDocumentStatusEnum.normalize(billStatus);
+        }
+        return Objects.equals(ApproveStatusEnum.APPROVE.getCode(), approveStatus)
+                ? KolB2cApplicationDocumentStatusEnum.CREATED.getCode()
+                : KolB2cApplicationDocumentStatusEnum.WAIT.getCode();
     }
 
     /**
