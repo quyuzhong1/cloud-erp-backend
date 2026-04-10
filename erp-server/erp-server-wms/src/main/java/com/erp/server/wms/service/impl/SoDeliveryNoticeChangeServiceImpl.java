@@ -458,16 +458,24 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(soDeliveryNotice.getId());
         List<String> soDetailIds = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(soDetailIds);
+        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainId(soDeliveryNotice.getSourceId());
         List<SoDeliveryNoticeChangeDetailEntity> sourceDetailList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> addList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> updateList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> deleteList = new ArrayList<>();
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         for (SoDeliveryNoticeChangeDetailEntity detail : detailList) {
             if(SoDeliveryNoticeChangeTypeEnum.ADD.getCode().equals(detail.getChangeType())){
                 SoDeliveryNoticeDetailEntity existEntity = soDeliveryNoticeDetailList.stream().filter(v->v.getSourceDetailId().equals(detail.getSoDetailId())).findFirst().orElse(null);
                 if(Objects.nonNull(existEntity)){
                     throw new ServiceException("发货通知单明细中已存在SKU【{}】,不允许新增",detail.getSkuNo());
+                }
+                if(StringUtils.isNotBlank(soDeliveryNotice.getVirtualWarehouseId()) ){
+                    SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(v -> v.getId().equals(detail.getSoDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到销售订单明细数据"));
+                    SkuVO ignoreSku = ignoreInventorySkuList.stream().filter(v -> v.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(null);
+                    if(Objects.isNull(ignoreSku) && soDetailEntity.getFrozenQty() < detail.getNewQty()){
+                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN,soDetailEntity.getSkuNo());
+                    }
                 }
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = BeanUtil.copyProperties(detail,SoDeliveryNoticeDetailEntity.class);
                 soDeliveryNoticeDetailEntity.setMainId(soDeliveryNotice.getId());
@@ -483,7 +491,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到发货通知单明细数据",detail.getSkuNo()));
                 if(StringUtils.isNotBlank(soDeliveryNotice.getVirtualWarehouseId()) ){
                     SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(v -> v.getId().equals(detail.getSoDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到销售订单明细数据"));
-                    if(soDetailEntity.getFrozenQty() < detail.getNewQty() - soDeliveryNoticeDetailEntity.getDeliveryQty()){
+                    SkuVO ignoreSku = ignoreInventorySkuList.stream().filter(v -> v.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(null);
+                    if(Objects.isNull(ignoreSku) && soDetailEntity.getFrozenQty() < detail.getNewQty() - soDeliveryNoticeDetailEntity.getDeliveryQty()){
                         throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN,soDetailEntity.getSkuNo());
                     }
                 }
@@ -735,7 +744,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(data.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
-            data.setSaleQty(soDetailEntity.getDeliveryQty());
+            data.setSaleQty(soDetailEntity.getBoxQty());
             List<SoDeliveryNoticeDetailEntity> currentNoticeDetailList = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(data.getSoDetailId())).collect(Collectors.toList());
             data.setAllNoticeQty(currentNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(0, Integer::sum));
             data.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(data.getChangeType()));

@@ -10,7 +10,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -146,6 +148,16 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     public String add(BiSettlementExchangeRateDTO.AddDTO addDTO) {
         BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
         BeanMapperUtils.copy(addDTO,entity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        entity.setCreateTime(now);
+        entity.setCreateUserId(userId);
+        entity.setCreateUserName(userName);
         boolean save = this.save(entity);
         if (!save) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
@@ -157,6 +169,13 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     public Boolean update(BiSettlementExchangeRateDTO.UpdateDTO updateDTO) {
         BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
         BeanMapperUtils.copy(updateDTO,entity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
         boolean update = this.updateById(entity);
         if (!update) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
