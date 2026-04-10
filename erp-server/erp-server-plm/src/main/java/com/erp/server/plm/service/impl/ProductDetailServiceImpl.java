@@ -338,6 +338,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductRefBuService productRefBuService;
 
+    @Resource
+    private ProductRefSkuService productRefSkuService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -592,6 +595,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
+        productNoSpecDetailAllDTO.setProductRefSkuList(productRefSkuService.listBySkuId(noSpecDetailById.getSkuId()));
 
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
@@ -738,6 +742,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.listBySkuId(skuId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
+        productNoSpecDetailAllDTO.setProductRefSkuList(productRefSkuService.listBySkuId(skuId));
 
 
         //产品辅料信息
@@ -992,6 +997,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         productManyDetail.setProductCertificateShowDTOList(certificateShowDTOList);
+        productManyDetail.setProductRefSkuList(productRefSkuService.listByProductId(productId));
         //产品选择的变体查询
         List<ProductVariantOptionEntity> productVariantOptionEntityList = productVariantOptionService.list(productId);
         productManyDetail.setProductVariantOptionEntityList(productVariantOptionEntityList);
@@ -1501,6 +1507,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCertificateList.forEach(obj -> obj.setSkuId(skuId));
             productCertificateService.productAddOrUpdate(productCertificateList);
         }
+        if (productNoSpecDTO.getProductRefSkuList() != null) {
+            productRefSkuService.replaceNoSpec(id, skuId, productNoSpecDTO.getProductRefSkuList());
+        }
 
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(id);
@@ -1911,6 +1920,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(productCertificateList)) {
             productCertificateService.productAddOrUpdate(productCertificateList);
         }
+        if (productManySpecDTO.getProductRefSkuList() != null) {
+            List<ProductDetailEntity> currentSkuList = this.getSkuListByProductId(productInfoDTO.getId());
+            productRefSkuService.replaceManySpec(productInfoDTO.getId(), currentSkuList, productManySpecDTO.getProductRefSkuList());
+        }
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(productInfoDTO.getId());
 
@@ -2258,21 +2271,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(idList);
-        //2.删除包装信息
+        //2.删除关联SKU信息
+        productRefSkuService.removeBySkuIds(idList);
+        //3.删除包装信息
         productPackService.removePack(idList);
-        //3.删除物流信息
+        //4.删除物流信息
         productLogisticsService.removeLogistics(idList);
-        //4.删除销售信息
+        //5.删除销售信息
         productSaleService.removeSale(idList);
-        //5.删除采购信息
+        //6.删除采购信息
         productPurchaseService.removePurchase(idList);
-        //6.删除成本信息
+        //7.删除成本信息
         productCostService.removeCost(idList);
-        //7.删除任务关联sku 信息
+        //8.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(idList);
-        //7.删除目的国海关编码
+        //9.删除目的国海关编码
         productCustomsService.removeBySkuId(idList);
-        //8.删除sku信息
+        //10.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
         ProductDetailEntity productDetailEntity = this.getById(skuId);
@@ -2334,23 +2349,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(skuIds);
-        //2.删除包装信息
+        //2.删除关联SKU信息
+        productRefSkuService.removeBySkuIds(skuIds);
+        //3.删除包装信息
         productPackService.removePack(skuIds);
-        //3.删除物流信息
+        //4.删除物流信息
         productLogisticsService.removeLogistics(skuIds);
-        //4.删除销售信息
+        //5.删除销售信息
         productSaleService.removeSale(skuIds);
-        //5.删除采购信息
+        //6.删除采购信息
         productPurchaseService.removePurchase(skuIds);
-        //6.删除成本信息
+        //7.删除成本信息
         productCostService.removeCost(skuIds);
-        //7.删除目的国海关编码
+        //8.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
 
-        //8.删除产品与BU线关联（避免删除产品后删除BU线仍提示已绑定产品）
+        //9.删除产品与BU线关联（避免删除产品后删除BU线仍提示已绑定产品）
         productRefBuService.removeByProductId(id);
 
-        //9.删除spu信息
+        //10.删除spu信息
         ProductInfoEntity infoEntity = productInfoService.getById(id);
         if (ObjectUtil.isNotEmpty(infoEntity)) {
             productInfoService.removeById(infoEntity.getId());
@@ -3180,6 +3197,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             });
             //批量更新产品明细归属spu
             this.lambdaUpdate().in(ProductDetailEntity::getId, skuIds).set(ProductDetailEntity::getProductId, newProductId).update();
+            productRefSkuService.updateProductIdBySkuIds(skuIds, newProductId);
             //调整前后校验spu是否存在关联关系，不存在，就删除
             //根据产品id获取sku明细列表
             List<ProductDetailEntity> productDetailEntityList = this.lambdaQuery().select(ProductDetailEntity::getId,ProductDetailEntity::getProductId).in(ProductDetailEntity::getProductId, oldProductIds).list();
@@ -4637,19 +4655,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(ids);
-        //2.删除包装信息
+        //2.删除关联SKU信息
+        productRefSkuService.removeBySkuIds(ids);
+        //3.删除包装信息
         productPackService.removePack(ids);
-        //3.删除物流信息
+        //4.删除物流信息
         productLogisticsService.removeLogistics(ids);
-        //4.删除销售信息
+        //5.删除销售信息
         productSaleService.removeSale(ids);
-        //5.删除采购信息
+        //6.删除采购信息
         productPurchaseService.removePurchase(ids);
-        //6.删除成本信息
+        //7.删除成本信息
         productCostService.removeCost(ids);
-        //7.删除任务关联sku 信息
+        //8.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(ids);
-        //8.删除sku信息
+        //9.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductDetailEntity::getId, ids);
         List<ProductDetailEntity> productDetailEntityList = this.listByIds(ids);
