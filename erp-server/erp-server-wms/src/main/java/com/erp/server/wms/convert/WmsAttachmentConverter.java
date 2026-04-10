@@ -49,7 +49,7 @@ public interface WmsAttachmentConverter {
     @Mapping(target = "businessId", source = "id")
     WmsAttachmentEntity updateFileManagementToAttachment(FileManagementDTO.UpdateDTO addOrUpdateDTO);
 
-    @Mapping(target = "attachSizeStr",source = "attachSize",qualifiedByName = "decimalToPlainString")
+    @Mapping(target = "attachSizeStr",source = "attachSize",qualifiedByName = "decimal2ToPlainString")
     FileManagementDTO.VersionDTO entityToVersionDTO(WmsAttachmentEntity attachmentEntity);
     List<FileManagementDTO.VersionDTO> entityToVersionDTO(List<WmsAttachmentEntity> attachmentEntityList);
 }
