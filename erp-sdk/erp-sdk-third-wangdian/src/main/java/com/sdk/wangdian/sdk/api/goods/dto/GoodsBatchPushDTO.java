@@ -68,7 +68,7 @@ public class GoodsBatchPushDTO {
         @SerializedName("sn_type")
         private int snType;
         @SerializedName("retail_price")
-        private int retailPrice;
+        private BigDecimal retailPrice;
         @SerializedName("wholesale_price")
         private int wholesalePrice;
         @SerializedName("market_price")
