@@ -285,6 +285,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             attaches.add(new AntuCreateOutboundReq.Attach(createOutboundReq.getFileType(),Integer.valueOf(createOutboundReq.getFileId())));
             antuCreateOutboundReq.setAttach(attaches);
         }
+        antuCreateOutboundReq.setItems(items);
         antuCreateOutboundReq.setOrderKind("B2B");
         return antuCreateOutboundReq;
     }
