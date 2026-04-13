@@ -84,7 +84,7 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
             if (flag) {
                 List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList(1);
                 MessageEntity messageEntity = new MessageEntity();
-                messageEntity.setType(MessageTypeEnum.SYS.getCode());
+                messageEntity.setType(MessageTypeEnum.PDA.getCode());
                 messageEntity.setRemark(dto.getRemark());
                 LinkedHashMap<String, Object> map = new LinkedHashMap();
                 map.put("version", dto.getPdaVersion());

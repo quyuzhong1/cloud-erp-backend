@@ -13,7 +13,7 @@ import java.util.Objects;
  **/
 public enum NoticeTimeTypeEnum {
     NOW("now","立即通知"),
-    TIMING("pda","定时通知"),
+    TIMING("timing","定时通知"),
     ;
     /**
      * 类型
