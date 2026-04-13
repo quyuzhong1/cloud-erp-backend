@@ -266,7 +266,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
                 dto.setDetailList(Collections.emptyList());
             }else {
                 LogisticsThirdChannelRefDetailDTO.AddDTO addDTO = detailList.get(0);
-                addDTO.setMobile(importLogisticsThirdChannelRefExcelDTO.getMobile());
+                addDTO.setMobile(importLogisticsThirdChannelRefExcelDTO.getShopPhone());
                 dto.setDetailList(Collections.singletonList(addDTO));
             }
             try {
