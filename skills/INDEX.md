@@ -1,7 +1,7 @@
-# Antigravity Skill 索引中心 (v2.0)
+# Skill 索引中心
 
 ## 📌 任务路由逻辑
-1. **数据库任务 (DDL/DML)**: 加载 `core/constants.md` + `database/ddl_dml_lite.md`。
+1. **数据库任务 (DDL/DML)**: 加载 `core/constants.md` + `database/pgsql.md`。
 2. **后端开发 (CRUD/异常)**: 加载 `core/constants.md` + `backend/api_logic.md` + `backend/exceptions_lite.md`。
 3. **自动化配置 (高级查询)**: 仅在生成配置 SQL 时加载 `automation/query_gen_lite.md`，并在需要下拉框时检索 `data/query_option_lite.md`。
 
