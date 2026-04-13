@@ -1075,6 +1075,7 @@ public enum ApiError implements Serializable {
     PO_QC_NOTICE_FINISH(9668,"【{0}】已质检完成"),
     PO_QC_NOTICE_DETAIL_NOT_FOUND(9669,"没有找到质检通知单明细"),
     PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9670,"良品/不良品数量不允许小于0或空"),
+    PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
