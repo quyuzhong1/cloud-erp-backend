@@ -1903,9 +1903,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
+        Map<String, String> finalCustomerPartitionIdMap = customerPartitionIdMap;
         list.forEach(item -> {
             if (StringUtils.isBlank(item.getPartitionId())) {
-                item.setPartitionId(customerPartitionIdMap.get(item.getCustomerId()));
+                item.setPartitionId(finalCustomerPartitionIdMap.get(item.getCustomerId()));
             }
         });
 
