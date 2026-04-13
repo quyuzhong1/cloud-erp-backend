@@ -55,6 +55,11 @@ public class PdaVersionDTO implements Serializable {
         private String typeName;
 
         /**
+         * 通知标题
+         */
+        private String noticeTitle;
+
+        /**
          * pda版本
          */
         private String pdaVersion;
@@ -103,7 +108,6 @@ public class PdaVersionDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
-
 
         /**
          * 升级时间

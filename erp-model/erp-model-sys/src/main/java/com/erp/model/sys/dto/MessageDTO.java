@@ -232,11 +232,13 @@ public class MessageDTO implements Serializable {
 
         /**
          * 通知类型(当前字段为message的type字段，对应pda_version的release_type字段)
+         * ReleaseTypeEnum
          */
         private String releaseType;
 
         /**
          * 通知类型名称
+         * ReleaseTypeEnum
          */
         private String releaseTypeName;
 
@@ -259,6 +261,11 @@ public class MessageDTO implements Serializable {
          * 通知时间类型
          */
         public String noticeTimeType;
+
+        /**
+         * 通知时间类型名称
+         */
+        public String noticeTimeTypeName;
 
         /**
          * 通知时间

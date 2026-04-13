@@ -25,6 +25,7 @@ import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.NoticeTimeTypeEnum;
+import com.erp.model.sys.enums.ReleaseTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
@@ -259,6 +260,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public MessageDTO.ViewDTO view(String id) {
         MessageEntity messageEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到数据"));
         MessageDTO.ViewDTO data = BeanMapperUtils.map(MessageDTO.ViewDTO.class, messageEntity);
+        //这两个字段要注意,当初设计的时候就是这样对应的
+        data.setType(messageEntity.getApplication());
+        data.setReleaseType(messageEntity.getType());
         // 数据填充处理
         fillOne(data);
         return data;
@@ -378,14 +382,15 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     private void handleData(MessageEntity messageEntity) {
         if (Objects.nonNull(messageEntity.getNoticeTime())
-                && messageEntity.getNoticeTime().isAfter(LocalDateTime.now())) {
+                && messageEntity.getNoticeTime().isBefore(LocalDateTime.now())) {
             throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
         }
     }
 
     public void fillOne(MessageDTO.ViewDTO data){
         data.setTypeName(MessageTypeEnum.getName(data.getType()));
-        data.setReleaseTypeName(NoticeTimeTypeEnum.getName(data.getType()));
+        data.setReleaseTypeName(ReleaseTypeEnum.getName(data.getReleaseType()));
+        data.setNoticeTimeTypeName(NoticeTimeTypeEnum.getName(data.getType()));
     }
 
     public void fillList(List<SysVersionDTO.ListDTO> records){
