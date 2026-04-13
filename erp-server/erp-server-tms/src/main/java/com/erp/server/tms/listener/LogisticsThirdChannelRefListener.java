@@ -215,7 +215,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                         e.setDictPlatform(dict.getCode());
                     }
                 }else if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(e.getPushType())||LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(e.getPushType())){
-                    if (CharSequenceUtil.isBlank(e.getMobile()) && e.getIsPushMobile()){
+                    if (CharSequenceUtil.isBlank(e.getShopPhone()) && e.getIsPushMobile()){
                         errorMsgList.add("手机号不能为空");
                     }
                 }
