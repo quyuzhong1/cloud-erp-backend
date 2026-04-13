@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
@@ -10,15 +11,19 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.antu.dto.request.AntuGetOutboundRefReq;
+import com.sdk.wms.antu.dto.response.AntuOutboundResp;
+import com.sdk.wms.antu.dto.response.AntuResponse;
+import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
+import com.sdk.wms.jifeng.dto.request.JiFengCreateB2BOutboundRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
-import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
-import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
-import com.sdk.wms.jifeng.dto.response.JiFengOutboundResp;
-import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
+import com.sdk.wms.jifeng.dto.response.*;
+import com.sdk.wms.jifeng.enums.JiFengEnums;
 import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -226,7 +231,11 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-        return null;
+        JiFengBaseResp<String>  resp = jiFengService.cancelB2BOutbound(ThirdWarehouseContext.getAuthMap(), cancelOutboundReq.getOrderCode());
+        if(!isSuccess(resp)){
+            return failure(resp.getMessage());
+        }
+        return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
@@ -240,7 +249,25 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
-        return null;
+        List<ThirdWarehouseQueryFbaOutboundResponse> resultList = new ArrayList<>();
+        req.getErpOrderCodeList().forEach(code -> {
+            JiFengBaseResp<JiFengB2BOutboundResp> resp = jiFengService.getB2BOrder(ThirdWarehouseContext.getAuthMap(), code);
+            if (!isSuccess(resp)) {
+                throw new ServiceException("查询B2B订单失败," + resp.getMessage());
+            }
+            if (Objects.nonNull(resp.getData())) {
+                JiFengB2BOutboundResp jiFengB2BOutboundResp = resp.getData();
+                ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+                res.setCode(code);
+                res.setTrackNo(jiFengB2BOutboundResp.getTrackingNo());
+                if(Objects.nonNull(jiFengB2BOutboundResp.getShippedTime())){
+                    res.setDeliveryTimeStr(jiFengB2BOutboundResp.getShippedTime());
+                }
+                res.setStatus(JiFengEnums.B2BOrderStatusEnum.getErpOrderStatus(jiFengB2BOutboundResp.getStatus().toString()));
+                resultList.add(res);
+            }
+        });
+        return success(resultList);
     }
 
     @Override
@@ -301,8 +328,49 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     };
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return failure("ERP功能暂不支持");
+        JiFengCreateB2BOutboundRequest jiFengCreateB2BOutboundRequest = this.buildB2BOrderDTO(createOutboundReq);
+        JiFengBaseResp<JiFengCreateB2bOrderResp> resp = jiFengService.createB2BOutbound(ThirdWarehouseContext.getAuthMap(), jiFengCreateB2BOutboundRequest);
+        if(!isSuccess(resp)){
+            return failure(resp.getMessage());
+        }
+        return success(resp.getData().getOutboundNo());
     }
+
+    private JiFengCreateB2BOutboundRequest buildB2BOrderDTO(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        JiFengCreateB2BOutboundRequest jiFengCreateB2BOutboundRequest = new JiFengCreateB2BOutboundRequest();
+        jiFengCreateB2BOutboundRequest.setErpNo(createOutboundReq.getReferenceNo());
+        jiFengCreateB2BOutboundRequest.setWarehouse(createOutboundReq.getThirdWarehouseCode());
+        jiFengCreateB2BOutboundRequest.setDestination(2);
+        jiFengCreateB2BOutboundRequest.setLogisticType(Integer.valueOf(createOutboundReq.getChannelCode()));
+        jiFengCreateB2BOutboundRequest.setRemark(createOutboundReq.getRemark());
+        jiFengCreateB2BOutboundRequest.setOutboundType(2);
+        jiFengCreateB2BOutboundRequest.setAddressVo(JiFengCreateB2BOutboundRequest.AddressVoDTO.builder()
+                        .buyerName(createOutboundReq.getReceiverName())
+                        .buyerPhone(createOutboundReq.getTelNumber())
+                        .recipientCountry(createOutboundReq.getReceiverCountryCode())
+                        .recipientProvince(createOutboundReq.getProvince())
+                        .recipientCity(createOutboundReq.getCity())
+                        .recipientAddress(createOutboundReq.getAddress1())
+
+                .build());
+        List<JiFengCreateB2BOutboundRequest.SkuInfoListDTO> skuListDTOS = new ArrayList<>();
+        createOutboundReq.getItems().forEach(item -> {
+            JiFengCreateB2BOutboundRequest.SkuInfoListDTO skuListDTO = new JiFengCreateB2BOutboundRequest.SkuInfoListDTO();
+            skuListDTO.setSku(item.getWarehousePlatformSku());
+            skuListDTO.setCount(item.getDeliveryQty());
+            skuListDTOS.add(skuListDTO);
+        });
+        if(StringUtils.isNotBlank(createOutboundReq.getFileUrl())) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOnce("url", createOutboundReq.getFileUrl());
+            jsonObject.putOnce("name", createOutboundReq.getFileName());
+            jiFengCreateB2BOutboundRequest.setFileInfo(JiFengCreateB2BOutboundRequest.FileInfoDTO.builder()
+                            .otherJson(jsonObject.toString())
+                    .build());
+        }
+        return jiFengCreateB2BOutboundRequest;
+    }
+
     public <T> boolean isSuccess(JiFengBaseResp<T> resp){
         return resp.getCode()==0;
     }

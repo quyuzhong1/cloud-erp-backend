@@ -27,4 +27,6 @@ public class GoodCangConstants {
 
     public static final String INVENTORY_AGE_LIST = "/public_open/inventory/inventory_age_list";
     public static final String GET_INVENTORY_LOG = "/public_open/inventory/get_inventory_log";
+
+    public static final String METHOD_GET_CREATE_B2B_BILL = "/public_open/order/create_other_order";
 }

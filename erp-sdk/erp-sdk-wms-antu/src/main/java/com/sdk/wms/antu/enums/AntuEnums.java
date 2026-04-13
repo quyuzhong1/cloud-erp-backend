@@ -5,6 +5,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import io.seata.common.util.StringUtils;
 import lombok.Getter;
 
@@ -195,6 +196,47 @@ public enum AntuEnums {
                     .filter(item -> code.equals(item.getCode()))
                     .findFirst()
                     .map(AntuEnums.OrderStatusEnum::getName)
+                    .orElse(null);
+        }
+    }
+
+    /**
+     * 入库单状态
+     */
+    @Getter
+    public enum B2BOrderStatusEnum {
+        NEW("C","待发货审核", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        FIRST_JOURNEY_ON_THE_WAY("W","待发货", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        INITIAL_RECEIVING("D","已发货", ThirdDeliveryStatusEnum.SHIPPED),
+        IN_TRANSIT("H","暂存", null),
+        RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
+        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
+        ABANDONMENT("X","废弃", ThirdDeliveryStatusEnum.CANCEL_DELIVERY)
+        ;
+        private final String code;
+        private final String name;
+        private final ThirdDeliveryStatusEnum erpSoStatus;
+
+
+        B2BOrderStatusEnum(String code, String name, ThirdDeliveryStatusEnum erpsoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpSoStatus = erpsoStatus;
+        }
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getErpSoStatus)
+                    .map(ThirdDeliveryStatusEnum::getCode)
+                    .orElse("");
+        }
+
+        public static String getName(String code){
+            return Arrays.stream(AntuEnums.B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(AntuEnums.B2BOrderStatusEnum::getName)
                     .orElse(null);
         }
     }

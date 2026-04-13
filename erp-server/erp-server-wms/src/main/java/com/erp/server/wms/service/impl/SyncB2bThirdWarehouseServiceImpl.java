@@ -23,11 +23,13 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
@@ -58,6 +60,10 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private SoInfoFeign soInfoFeign;
     @Resource
     private FileFeign fileFeign;
+
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
@@ -158,6 +164,14 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
+        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null);
+        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? attachmentList.get(0).getAttachName() : null);
+        List<LogisticsChannelEntity> list = logisticsFeign.getChannelByCode(req.getChannelCode());
+        if(CollUtil.isNotEmpty(list)){
+            LogisticsChannelEntity logisticsChannelEntity = list.get(0);
+            req.setIsInsurance(logisticsChannelEntity.getIsApiInsurance());
+            req.setIsSignature(logisticsChannelEntity.getIsApiSign());
+        }
         if (CollUtil.isNotEmpty(attachmentList)) {
             String url = FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl();
             byte[] bytes = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
