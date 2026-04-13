@@ -2365,7 +2365,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         addTaskDTO.setSourceCode(entity.getCode());
         addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
-        addTaskDTO.setTraceId(MDC.get("traceId"));
+        addTaskDTO.setTraceId(TraceContext.traceId());
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", entity.getId());

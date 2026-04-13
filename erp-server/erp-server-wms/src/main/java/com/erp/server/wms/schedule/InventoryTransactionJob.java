@@ -60,7 +60,6 @@ public class InventoryTransactionJob {
         for(InventoryTransactionEntity l : list) {
         	inventoryTransactionToInventoryHisPool.execute(() -> {
         		String inventoryId = l.getInventoryId();
-            	MDC.put("traceId", inventoryId);
     			try {
     				inventoryTransactionService.inventoryIdToInventoryHis(inventoryId , "");
     			} catch (Exception e) {
