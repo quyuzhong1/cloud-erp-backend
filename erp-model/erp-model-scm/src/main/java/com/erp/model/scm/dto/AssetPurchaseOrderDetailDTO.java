@@ -106,6 +106,11 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
+        * 是否赠品
+        */
+        private Boolean isGift;
+
+        /**
         * 备注
         */
         private String remark;
@@ -289,6 +294,11 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
+        * 是否赠品，默认否
+        */
+        private Boolean isGift;
+
+        /**
         * 备注
         */
         private String remark;
@@ -419,6 +429,11 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
          * 是否加急
          */
         private Boolean isUrgent;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
 
         /**
          * 计划交期

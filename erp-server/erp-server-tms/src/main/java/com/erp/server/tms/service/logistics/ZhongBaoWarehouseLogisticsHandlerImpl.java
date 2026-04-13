@@ -69,7 +69,7 @@ public class ZhongBaoWarehouseLogisticsHandlerImpl extends AbstractLogisticsHand
                 .collect(Collectors.toMap(OverseasProviderWarehouseEntity::getPlatformWarehouseCode,
                         OverseasProviderWarehouseEntity::getId,(v1,v2)->v1));
         for (String platformWarehouseCode : platformWarehouseCodeList) {
-            ChannelRequest channelRequest = ChannelRequest.builder().warehouseCode(platformWarehouseCode).commonParam(CommonRequest.builder().pageParam(PageRequest.builder().pageNum("0").pageSize("10").build()).build()).build();
+            ChannelRequest channelRequest = ChannelRequest.builder().warehouseCode(platformWarehouseCode).commonParam(CommonRequest.builder().pageParam(PageRequest.builder().pageNum(0).pageSize(10).build()).build()).build();
             List<ChannelResponse.Channel> channels = zhongbaoService.chanelList(authMap,channelRequest);
             if (CollUtil.isEmpty(channels)){
                 continue;

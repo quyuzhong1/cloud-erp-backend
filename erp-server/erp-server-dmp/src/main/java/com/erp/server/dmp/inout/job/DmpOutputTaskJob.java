@@ -265,7 +265,11 @@ public class DmpOutputTaskJob {
 	
 	@XxlJob("outputErrorCountMsg")
 	public ReturnT outputErrorCountMsg(){
-		dmpOutputUtils.outputErrorCountMsg();
+		String jobParam = XxlJobHelper.getJobParam();
+		if(StringUtils.isBlank(jobParam)) {
+			jobParam = " and 1 = 1 ";
+		}
+		dmpOutputUtils.outputErrorCountMsg(jobParam);
 		return ReturnT.SUCCESS;
 	}
 }
