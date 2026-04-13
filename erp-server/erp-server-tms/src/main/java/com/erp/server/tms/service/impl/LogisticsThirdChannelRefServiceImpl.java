@@ -83,6 +83,9 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsThirdChannelRefDTO.AddDTO addDTO) {
+        if(addDTO.getIsPushMobile() && StringUtils.isBlank(addDTO.getPushType())){
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED);
+        }
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity = new LogisticsThirdChannelRefEntity();
         BeanMapperUtils.copy(addDTO, logisticsThirdChannelRefEntity);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
@@ -95,7 +98,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         log.info("开始新增物流-第三方渠道关系单");
         boolean save = super.save(logisticsThirdChannelRefEntity);
         if(!save) {
-            throw new ServiceException("物流-第三方渠道关系单保存失败");
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_SAVE_FAILED);
         }
 
         // 操作日志
@@ -112,6 +115,9 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsThirdChannelRefDTO.UpdateDTO addOrUpdateDTO) {
+        if(addOrUpdateDTO.getIsPushMobile() && StringUtils.isBlank(addOrUpdateDTO.getPushType())){
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED);
+        }
         LogisticsThirdChannelRefEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流-第三方渠道关系单"));
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity =  BeanMapperUtils.map(LogisticsThirdChannelRefEntity.class, addOrUpdateDTO);
@@ -124,7 +130,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         log.info("编辑 开始修改物流-第三方渠道关系单数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsThirdChannelRefEntity);
         if(!save) {
-            throw new ServiceException("物流-第三方渠道关系单保存失败");
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_SAVE_FAILED);
         }
         //修改明细数据（包含增删改）（如果有明细的话）
         logisticsThirdChannelRefDetailService.updateDetail(logisticsThirdChannelRefEntity,detailList);
@@ -170,7 +176,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
 
     @Override
     public LogisticsThirdChannelRefDTO.ViewDTO view(String id) {
-        LogisticsThirdChannelRefEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到渠道配置数据"));
+        LogisticsThirdChannelRefEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_NOT_FOUND));
         LogisticsThirdChannelRefDTO.ViewDTO data = BeanMapperUtils.map(LogisticsThirdChannelRefDTO.ViewDTO.class, entity);
         data.setPlatformTypeName(TrackPlatformTypeEnum.getName(entity.getPlatformType()));
         data.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(entity.getPushType()));
@@ -199,7 +205,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         //检查是否引用
         Integer count = logisticsBillDetailService.countByThirdRefId(entity.getId());
         if (count > 0){
-            return BatchResultDTO.fail(entity.getLogisticsChannelName(), entity.getLogisticsSupplierName(),"该渠道配置已被使用，不能删除");
+            return BatchResultDTO.fail(entity.getLogisticsChannelName(), entity.getLogisticsSupplierName(),ApiError.LOGISTICS_THIRD_CHANNEL_IN_USE_DELETE_FORBIDDEN.getMsg());
         }
         //主表
         this.removeById(entity.getId());
@@ -212,10 +218,10 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         LogisticsThirdChannelRefEntity entity = this.getById(id);
         if (Objects.isNull(entity)){
-            return BatchResultDTO.fail(id, id,"未找到渠道配置数据");
+            return BatchResultDTO.fail(id, id, ApiError.LOGISTICS_THIRD_CHANNEL_NOT_FOUND.getMsg());
         }
         if (entity.getDisabled().equals(disabled)){
-            return BatchResultDTO.fail(id, entity.getLogisticsSupplierName(),"渠道配置数据状态未变更");
+            return BatchResultDTO.fail(id, entity.getLogisticsSupplierName(), ApiError.LOGISTICS_THIRD_CHANNEL_STATUS_UNCHANGED.getMsg());
         }
         this.lambdaUpdate().set(LogisticsThirdChannelRefEntity::getDisabled, disabled).eq(LogisticsThirdChannelRefEntity::getId, id).update();
         String msg = CharSequenceUtil.format("用户【{}】变更我司渠道为【{}】的【{}】单据状态为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getLogisticsChannelName(), "物流-第三方渠道关系单", disabled ? "停用" : "启用");
@@ -321,7 +327,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
                 .ne(CharSequenceUtil.isNotBlank(logisticsThirdChannelRefEntity.getId()), LogisticsThirdChannelRefEntity::getId, logisticsThirdChannelRefEntity.getId())
                 .count();
         if (count > 0) {
-            throw new ServiceException("同一个查询服务商下我司物流商【{}】+渠道【{}】，查询物流商+渠道仅可创建一条",
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_DUPLICATE,
                     logisticsThirdChannelRefEntity.getLogisticsSupplierName(), logisticsThirdChannelRefEntity.getLogisticsChannelName());
         }
 
@@ -332,7 +338,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             if (Objects.nonNull(supplierEntity)) {
                 logisticsThirdChannelRefEntity.setLogisticsSupplierName(supplierEntity.getShortName());
             } else {
-                throw new ServiceException("物流商不存在");
+                throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_SUPPLIER_NOT_FOUND);
             }
         }
 
@@ -345,20 +351,20 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
                 logisticsThirdChannelRefEntity.setLogisticsChannelCode(logisticsChannelEntity.getCode());
                 logisticsThirdChannelRefEntity.setLogisticsChannelName(logisticsChannelEntity.getName());
             } else {
-                throw new ServiceException("物流商渠道不存在");
+                throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_CHANNEL_NOT_FOUND);
             }
         }
 
         String thirdSupplierName = logisticsThirdChannelRefEntity.getThirdSupplierName();
         BasicQueryLogisticsProviderEntity basicQueryLogisticsProviderEntity = basicQueryLogisticsProviderService.lambdaQuery().eq(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, thirdSupplierName).last(" limit 1 ").one();
         if(Objects.isNull(basicQueryLogisticsProviderEntity)){
-            throw new ServiceException("查询物流商【{}】不存在", thirdSupplierName);
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND, thirdSupplierName);
         }else {
             logisticsThirdChannelRefEntity.setThirdChannelName(basicQueryLogisticsProviderEntity.getCompanyCode());
             logisticsThirdChannelRefEntity.setThirdSupplierCode(basicQueryLogisticsProviderEntity.getLogisticsNameEn());
 
             if(!Objects.equals(basicQueryLogisticsProviderEntity.getIsRegisterPhone(),logisticsThirdChannelRefEntity.getIsPushMobile())){
-                throw new ServiceException("是否推送电话不能修改");
+                throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE);
             }
         }
 
@@ -367,14 +373,14 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             if (logisticsThirdChannelRefEntity.getIsPushMobile()) {
                 //手机号必填
                 detailList.stream().filter(detail -> StrUtil.isBlank(detail.getMobile())).forEach(detail -> {
-                    throw new ServiceException("手机号码不能为空");
+                    throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_MOBILE_REQUIRED);
                 });
             }
         } else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode())) {
             if (logisticsThirdChannelRefEntity.getIsPushMobile()) {
                 //店铺Id必填
                 detailList.stream().filter(detail -> StrUtil.isBlank(detail.getShopId())).forEach(detail -> {
-                    throw new ServiceException("店铺Id不能为空");
+                    throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_SHOP_ID_REQUIRED);
                 });
             }
 
@@ -382,12 +388,12 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             if (logisticsThirdChannelRefEntity.getIsPushMobile()) {
                 //平台必填
                 detailList.stream().filter(detail -> StrUtil.isBlank(detail.getDictPlatform())).forEach(detail -> {
-                    throw new ServiceException("平台不能为空");
+                    throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED);
                 });
             }
         } else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.ORDER_RECEIVER.getCode())) {
             if (CollUtil.isNotEmpty(detailList)) {
-                throw new ServiceException("推送明细不需要配置");
+                throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED);
             }
         }
     }
