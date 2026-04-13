@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -196,9 +197,17 @@ public class SysMessageController {
 
                     MessageEntity message = null;
                     MessageUserReadEntity firstUnReadUser = null;
+                    LocalDateTime now = LocalDateTime.now();
                     for (MessageUserReadEntity unReadUser : unReadUsers) {
                         message = messageService.getById(unReadUser.getMessageId());
                         if (message != null) {
+                            // 检查消息是否过期
+                            LocalDateTime expireTime = message.getExpireTime();
+                            if (expireTime != null && expireTime.isBefore(now)) {
+                                // 消息已过期，跳过
+                                log.info("Message {} has expired, skipping", message.getId());
+                                continue;
+                            }
                             firstUnReadUser = unReadUser;
                             break;
                         }
