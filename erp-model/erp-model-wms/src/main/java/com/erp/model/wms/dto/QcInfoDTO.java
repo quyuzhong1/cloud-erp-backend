@@ -1054,6 +1054,10 @@ public class QcInfoDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 产品名称
+         */
+        private String productName;
+        /**
          * EAN码
          */
         private String ean;

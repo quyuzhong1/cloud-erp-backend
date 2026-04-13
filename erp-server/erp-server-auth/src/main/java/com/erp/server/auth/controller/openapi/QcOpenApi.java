@@ -50,7 +50,7 @@ public class QcOpenApi {
      * @param dto
      * @return
      */
-    @PostMapping("/qcExemption")
+    @OpenApi("/qcExemption")
     public ApiResult<BatchResultDTO> qcExemption(@RequestBody @Validated BaseIdDTO dto){
         return qcInfoFeign.qcExemption(dto);
     }
@@ -61,7 +61,7 @@ public class QcOpenApi {
      * @param dto
      * @return
      */
-    @PostMapping("/qcView")
+    @OpenApi("/qcView")
     public ApiResult<QcInfoDTO.ViewDTO> qcView(@RequestBody @Validated BaseIdDTO dto) {
         return qcInfoFeign.qcView(dto);
     }
@@ -71,7 +71,7 @@ public class QcOpenApi {
      * @param dto
      * @return
      */
-    @PostMapping("/qcDraft")
+    @OpenApi("/qcDraft")
     public ApiResult<?> qcDraft(@RequestBody QcInfoDTO.SaveOrUpdateDTO dto){
         return qcInfoFeign.qcDraft(dto);
     }
@@ -81,7 +81,7 @@ public class QcOpenApi {
      * @param dto
      * @return
      */
-    @PostMapping("/qcFinish")
+    @OpenApi("/qcFinish")
     public ApiResult<?> qcFinish(@RequestBody @Validated({AddGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
         return qcInfoFeign.qcFinish(dto);
     }
@@ -92,7 +92,7 @@ public class QcOpenApi {
      * @param dto
      * @return
      */
-    @PostMapping("/getQcStandard")
+    @OpenApi("/getQcStandard")
     public ApiResult<QcNoticeDTO.QcStandardView> getQcStandard(@RequestBody @Validated BaseIdDTO dto) {
         return qcInfoFeign.getQcStandard(dto);
     }
