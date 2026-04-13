@@ -252,7 +252,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         * 推送类型:sender=发件人,receiver=收件人,orderReceiver=订单收件人,shopSender=发件人-店铺,platformSender=发件人-平台
          * LogisticsThirdChannelRefPushTypeEnum
         */
-        @NotBlank(message = "推送类型不能为空")
+//        @NotBlank(message = "推送类型不能为空")
         @Size(max = 50,message = "推送类型最大长度不能超过50位")
         private String pushType;
 
