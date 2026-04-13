@@ -1999,7 +1999,7 @@
         pd.unit_name,
         pd.status,
         pd.variant_property as variantProperty,
-        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location as warehouseLocation
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
