@@ -54,12 +54,6 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
     private String application;
 
     /**
-     * 是否已发送
-     */
-    @TableField("is_send")
-    public Boolean isSend;
-
-    /**
      * 通知标题
      */
     @TableField("notice_title")
@@ -88,7 +82,7 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
      */
     @TableField("expire_time")
     public LocalDateTime expireTime;
-    
+
     /**
      * 是否已读
      */
