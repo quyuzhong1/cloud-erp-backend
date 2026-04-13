@@ -473,7 +473,7 @@
         qb.source_id AS sourceId,
         qb.source_code AS sourceCode
         FROM qc_info qb
-        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
+        LEFT JOIN qc_product qp ON qp.main_id=qb.id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         and qb.invalid_status=FALSE
         <if test="params.userId != null and params.userId != ''">
