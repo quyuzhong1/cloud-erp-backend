@@ -145,53 +145,6 @@ public class ImlService {
             throw new RuntimeException("请求异常: " + e.getMessage(), e);
         }
     }
-
-//    public static void main(String[] args) {
-//        ImlCreateInboundReq imlCreateInboundReq = ImlCreateInboundReq.builder()
-//                .needCustomerAudit("N")
-//                .platformOrderNo("TESTFHD20251015001")
-//                .bizType("TOC")
-//                .destWarehouseCode("ceshi")
-//                .customsType("SEPARATE_TAX")
-//                .inboundType("DIRECT")
-//                .logisticsCode("IML-RU")
-//                .expectedDate(new Date().getTime())
-//                .direct( ImlCreateInboundReq.DirectDTO.builder()
-//                        .trackingNumber("123456987")
-//                        .build())
-//                .boxs(Arrays.asList(
-//                        ImlCreateInboundReq.BoxsDTO.builder()
-//                                .boxNo("BOX001")
-//                                .boxLength(new BigDecimal("1.1"))
-//                                .boxWidth(new BigDecimal("1.1"))
-//                                .boxHeight(new BigDecimal("1.1"))
-//                                .boxWeight(new BigDecimal("1.1"))
-//                                .boxDetails(Arrays.asList(
-//                                        ImlCreateInboundReq.BoxsDTO.BoxDetailsDTO.builder()
-//                                                .skuCode("HXPENG-TESTTEST")
-//                                                .quantity(1)
-//                                                .build()
-//                                ))
-//                                .build()
-//                ))
-//                .attachments(Arrays.asList(
-//                        ImlCreateInboundReq.AttachmentsDTO.builder()
-//                                .fileName("test.pdf")
-//                                .fileType("pdf")
-//                                .fileData("OTHER")
-//                                .build()
-//                ))
-//                .build();
-//        String timestamp = String.valueOf(new Date().getTime());
-//        String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(imlCreateInboundReq));
-//        Map<String,String> headerMap = new HashMap<>();
-//        headerMap.put("x-app-id",APP_ID);
-//        headerMap.put("x-app-sign",appSign);
-//        headerMap.put("x-request-time",timestamp);
-//        headerMap.put("x-request-token",REQUEST_TOKEN);
-//        String bodyStr = OkHttpUtils.doPostJson(API_URL,JSONObject.toJSONString(imlCreateInboundReq), headerMap);
-//        System.out.println(bodyStr);
-//    }
     /**
      * 获取仓库列表
      */
@@ -299,6 +252,18 @@ public class ImlService {
     }
 
 
+    /**
+     * 查询出库单
+     */
+    public ImlBaseResp<ImlQueryOutboundResp> queryOutboundBill(@Valid ImlQueryOutboundReq imlQueryOutboundReq){
+        String path = "open-sdk/oms/get_outbound_order";
+        Map<String, String> headerMap = ImlUtils.buildHearderMap(JSONObject.toJSONString(imlQueryOutboundReq));
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(imlQueryOutboundReq));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(imlQueryOutboundReq), headerMap);
+        ImlBaseResp<ImlQueryOutboundResp> respDto = ImlUtils.parseToImlResp(bodyStr, ImlQueryOutboundResp.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        return respDto;
+    }
     /**
      * 上传面单
      */
