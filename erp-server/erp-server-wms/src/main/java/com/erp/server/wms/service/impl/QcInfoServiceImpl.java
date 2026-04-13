@@ -3264,9 +3264,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        //TODO 数据组装
+        buildQcPagingView(list);
 
         return new PagingVO<>(pageData);
+    }
+
+    private void buildQcPagingView(List<QcInfoDTO.OpenPagingViewDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> skuIds = list.stream().map(QcInfoDTO.OpenPagingViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        list.forEach(item -> {
+            item.setQcStatusName(QcBillStatusEnum.getNameByCode(item.getQcStatus()));
+            skuVOS.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().ifPresent(skuVO -> {
+                item.setProductName(skuVO.getSkuName());
+            });
+        });
     }
 
     @Override
