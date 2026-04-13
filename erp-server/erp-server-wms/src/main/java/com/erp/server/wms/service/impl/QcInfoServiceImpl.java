@@ -554,6 +554,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.equals(bill.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
             throw new ServiceException(ApiError.PO_QC_VOIDED_OPERATION_NOT_ALLOWED, "完成质检");
         }
+        // 检查质检结果是否为空
+        if (StringUtils.isBlank(dto.getQcInfo().getQcResult())) {
+            throw new ServiceException(ApiError.PO_QC_RESULT_NOT_EMPTY);
+        }
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
         //采购订单
@@ -1280,6 +1284,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             this.autoBatchStockInBill(ids);
 
             QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
+            // 检查质检结果是否为空
+            if (StringUtils.isBlank(qcResult.getQcResult())) {
+                throw new ServiceException(ApiError.PO_QC_RESULT_NOT_EMPTY);
+            }
             //回写质检通知单
             reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
