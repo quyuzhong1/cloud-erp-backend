@@ -83,9 +83,6 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsThirdChannelRefDTO.AddDTO addDTO) {
-        if(addDTO.getIsPushMobile() && StringUtils.isBlank(addDTO.getPushType())){
-            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED);
-        }
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity = new LogisticsThirdChannelRefEntity();
         BeanMapperUtils.copy(addDTO, logisticsThirdChannelRefEntity);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
@@ -115,9 +112,6 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsThirdChannelRefDTO.UpdateDTO addOrUpdateDTO) {
-        if(addOrUpdateDTO.getIsPushMobile() && StringUtils.isBlank(addOrUpdateDTO.getPushType())){
-            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED);
-        }
         LogisticsThirdChannelRefEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流-第三方渠道关系单"));
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity =  BeanMapperUtils.map(LogisticsThirdChannelRefEntity.class, addOrUpdateDTO);
@@ -363,9 +357,12 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             logisticsThirdChannelRefEntity.setThirdChannelName(basicQueryLogisticsProviderEntity.getCompanyCode());
             logisticsThirdChannelRefEntity.setThirdSupplierCode(basicQueryLogisticsProviderEntity.getLogisticsNameEn());
 
-            if(!Objects.equals(basicQueryLogisticsProviderEntity.getIsRegisterPhone(),logisticsThirdChannelRefEntity.getIsPushMobile())){
-                throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE);
-            }
+            Boolean isRegisterPhone = basicQueryLogisticsProviderEntity.getIsRegisterPhone();
+            Boolean isPushMobile = logisticsThirdChannelRefEntity.getIsPushMobile();
+            String pushType = logisticsThirdChannelRefEntity.getPushType();
+
+            // 校验推送手机号配置规则
+            validatePushMobileConfig(isRegisterPhone, isPushMobile, pushType);
         }
 
         // 验证数据 & 数据赋值
@@ -395,6 +392,28 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             if (CollUtil.isNotEmpty(detailList)) {
                 throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED);
             }
+        }
+    }
+
+    /**
+     * 校验推送手机号配置规则
+     * 业务规则:
+     * 1. 如果物流商要求注册手机号(isRegisterPhone=true),则必须开启推送手机号,且推送类型必填
+     * 2. 如果物流商不要求注册手机号(isRegisterPhone=false),但开启了推送手机号,则推送类型必填
+     *
+     * @param isRegisterPhone 物流商是否要求注册手机号
+     * @param isPushMobile 是否开启推送手机号
+     * @param pushType 推送类型
+     */
+    private void validatePushMobileConfig(Boolean isRegisterPhone, Boolean isPushMobile, String pushType) {
+        // 规则1: 物流商要求注册手机号时,必须开启推送
+        if (Boolean.TRUE.equals(isRegisterPhone) && !Boolean.TRUE.equals(isPushMobile)) {
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE);
+        }
+
+        // 规则2: 开启推送手机号时,推送类型必填
+        if (Boolean.TRUE.equals(isPushMobile) && StringUtils.isBlank(pushType)) {
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED);
         }
     }
 
