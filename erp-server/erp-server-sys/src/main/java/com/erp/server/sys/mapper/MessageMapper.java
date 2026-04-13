@@ -47,4 +47,10 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
     List<MessageDTO.NotReadMessageNum> listNotReadMessageNum(@Param("param") MessageDTO.PdaParamDTO param);
 
     IPage<SysVersionDTO.ListDTO> pagingSysVersion(Page query, @Param("params") SysVersionDTO.PagingParamDTO params);
+
+    IPage<MessageDTO.ListHistoryMessageDTO> pagingHistoryMessage(Page query, @Param("params") MessageDTO.HistoryMessagePagingParamDTO params, @Param("userId") String userId);
+
+    IPage<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(Page query, @Param("params") SysVersionDTO.HistoryVersionPagingParamDTO params, @Param("userId") String userId);
+
+    SysVersionDTO.LatestVersionDTO getLatestVersion();
 }

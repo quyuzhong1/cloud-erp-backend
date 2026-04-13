@@ -330,27 +330,49 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public PagingVO<MessageDTO.ListHistoryMessageDTO> pagingHistoryMessage(PagingDTO<MessageDTO.HistoryMessagePagingParamDTO> dto) {
-        return null;
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<MessageDTO.ListHistoryMessageDTO> pageData = this.baseMapper.pagingHistoryMessage(query, dto.getParams(), userInfo.getUid());
+        
+        // 填充类型名称
+        if (pageData.getRecords() != null && !pageData.getRecords().isEmpty()) {
+            pageData.getRecords().forEach(item -> {
+                item.setTypeName(MessageTypeEnum.getName(item.getType()));
+            });
+        }
+        
+        return new PagingVO(pageData);
     }
 
     @Override
     public boolean readHistoryMessage(MessageDTO.ReadHistoryMessageDTO dto) {
-        return false;
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        messageUserReadService.readByMessageId(dto.getMessageId(), userInfo.getUid());
+        redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
+        return true;
     }
 
     @Override
     public PagingVO<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(PagingDTO<SysVersionDTO.HistoryVersionPagingParamDTO> dto) {
-        return null;
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<SysVersionDTO.ListHistoryVersionDTO> pageData = this.baseMapper.pagingHistoryVersion(query, dto.getParams(), userInfo.getUid());
+        return new PagingVO(pageData);
     }
 
     @Override
     public boolean readHistoryVersion(SysVersionDTO.ReadHistoryVersionDTO dto) {
-        return false;
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        messageUserReadService.readByMessageId(dto.getMessageId(), userInfo.getUid());
+        redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
+        return true;
     }
 
     @Override
     public SysVersionDTO.LatestVersionDTO getLatestVersion() {
-        return null;
+        return this.baseMapper.getLatestVersion();
     }
 
     private void handleData(MessageEntity messageEntity) {

@@ -122,8 +122,16 @@ public class SysVersionDTO {
 
     @Data
     @NoArgsConstructor
-    public static class HistoryVersionPagingParamDTO{
+    public static class HistoryVersionPagingParamDTO extends SortDTO{
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
     @Data

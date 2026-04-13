@@ -283,7 +283,7 @@ public class MessageDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class HistoryMessagePagingParamDTO{
+    public static class HistoryMessagePagingParamDTO extends SortDTO {
         /**
          * id
          */
@@ -318,12 +318,55 @@ public class MessageDTO implements Serializable {
          * 是否已读
          */
         private Boolean isRead;
+        
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
     @Data
     @NoArgsConstructor
     public static class ListHistoryMessageDTO{
+        /**
+         * id
+         */
+        private String id;
 
+        /**
+         * 标题
+         */
+        private String noticeTitle;
+
+        /**
+         * 通知类型
+         */
+        private String type;
+
+        /**
+         * 通知类型名称
+         */
+        private String typeName;
+
+        /**
+         * 通知时间
+         */
+        private String noticeTime;
+
+        /**
+         * 通知内容
+         */
+        private String dataJson;
+
+        /**
+         * 是否已读
+         */
+        private Boolean isRead;
     }
 
     @Data

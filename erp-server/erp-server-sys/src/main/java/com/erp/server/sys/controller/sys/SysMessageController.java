@@ -17,6 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
+import com.erp.server.sys.handler.SysMessageQueryHandler;
 import com.erp.server.sys.handler.SysVersionQueryHandler;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
@@ -154,7 +155,7 @@ public class SysMessageController {
      * @return
      */
     @PostMapping("/pagingHistoryMessage")
-    @WebAdvanceQuery(handler = SysVersionQueryHandler.class)
+    @WebAdvanceQuery(handler = SysMessageQueryHandler.class)
     public ApiResult<PagingVO<MessageDTO.ListHistoryMessageDTO>> pagingHistoryMessage(@RequestBody @Validated PagingDTO<MessageDTO.HistoryMessagePagingParamDTO> dto) {
         return success(messageService.pagingHistoryMessage(dto));
     }
