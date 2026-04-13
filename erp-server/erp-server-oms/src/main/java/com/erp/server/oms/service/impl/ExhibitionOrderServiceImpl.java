@@ -72,6 +72,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -927,7 +928,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             addTaskDTO.setSourceCode(entity.getCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
             addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE);//subType
-            addTaskDTO.setTraceId(MDC.get("traceId"));
+            addTaskDTO.setTraceId(TraceContext.traceId());
 
             Map<String, Object> map = new HashMap<>();
             map.put("soId", list.get(0).getId());
@@ -1070,7 +1071,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             addTaskDTO.setSourceCode(entity.getCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
             addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE);//subType
-            addTaskDTO.setTraceId(MDC.get("traceId"));
+            addTaskDTO.setTraceId(TraceContext.traceId());
 
             Map<String, Object> map = new HashMap<>();
             map.put("id", entity.getId());

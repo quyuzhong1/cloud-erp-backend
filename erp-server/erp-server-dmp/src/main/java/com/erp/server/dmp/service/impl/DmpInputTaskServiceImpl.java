@@ -26,6 +26,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.OperateLogService;
 import org.apache.commons.lang.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -145,7 +146,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     		}
 			errorBeforeStatus = dmpInputTaskEntity.getStatus() + "@@";
     	}
-    	String errorMessage = errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e);
+    	String errorMessage = errorBeforeStatus + "traceId=【" + TraceContext.traceId() + "】" + ExceptionUtil.stacktraceToString(e);
 		boolean update = lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
 				.set(DmpInputTaskEntity::getErrorCount, errorCount)
 				.set(errorFlag , DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
