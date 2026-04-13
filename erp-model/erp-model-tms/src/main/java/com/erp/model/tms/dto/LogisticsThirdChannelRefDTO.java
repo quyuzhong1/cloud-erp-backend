@@ -209,8 +209,8 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         /**
         * 第三方物流商名称
         */
-        @NotBlank(message = "第三方物流商名称不能为空")
-        @Size(max = 100,message = "第三方物流商名称最大长度不能超过100位")
+        @NotBlank(message = "查询物流商(中文)不能为空")
+//        @Size(max = 100,message = "第三方物流商名称最大长度不能超过100位")
         private String thirdSupplierName;
 
         /**
