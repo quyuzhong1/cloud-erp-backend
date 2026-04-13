@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 
 
@@ -57,6 +58,36 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
      */
     @TableField("is_send")
     public Boolean isSend;
+
+    /**
+     * 通知标题
+     */
+    @TableField("notice_title")
+    public String noticeTitle;
+
+    /**
+     * 通知时间类型
+     */
+    @TableField("notice_time_type")
+    public String noticeTimeType;
+
+    /**
+     * 通知时间
+     */
+    @TableField("notice_time")
+    public LocalDateTime noticeTime;
+
+    /**
+     * 升级版本号
+     */
+    @TableField("upgrade_version")
+    public String upgradeVersion;
+
+    /**
+     * 过期时间
+     */
+    @TableField("expire_time")
+    public LocalDateTime expireTime;
     
     /**
      * 是否已读

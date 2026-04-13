@@ -2,13 +2,18 @@ package com.erp.model.sys.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import java.util.Objects;
 
-public enum SysTypeEnum {
-    //ALL("ALL","全部"),
-    PC("PC","PC端"),
-    PDA("PDA","PDA"),
+/**
+ * @Author: wtr
+ * @Date: 2026/4/10 15:41
+ * @Param:
+ * @Return:
+ * @Description:
+ **/
+public enum NoticeTimeTypeEnum {
+    NOW("now","立即通知"),
+    TIMING("pda","定时通知"),
     ;
     /**
      * 类型
@@ -21,7 +26,8 @@ public enum SysTypeEnum {
      */
     private String name;
 
-    SysTypeEnum(String code, String name) {
+
+    NoticeTimeTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -34,22 +40,22 @@ public enum SysTypeEnum {
         return name;
     }
 
+
     public static String getName(String code) {
-        for (SysTypeEnum sysTypeEnum : SysTypeEnum.values()) {
-            if (code.equals(sysTypeEnum.getCode())) {
-                return sysTypeEnum.getName();
+        for (NoticeTimeTypeEnum messageTypeEnum : NoticeTimeTypeEnum.values()) {
+            if (code.equals(messageTypeEnum.getCode())) {
+                return messageTypeEnum.getName();
             }
         }
         return "";
     }
 
     public static String getCodeByName(String name) {
-        for (SysTypeEnum sysTypeEnum : SysTypeEnum.values()) {
-            if(Objects.equals(name, sysTypeEnum.name)) {
-                return sysTypeEnum.code;
+        for (NoticeTimeTypeEnum messageTypeEnum : NoticeTimeTypeEnum.values()) {
+            if(Objects.equals(name, messageTypeEnum.name)) {
+                return messageTypeEnum.code;
             }
         }
         return "";
     }
-
 }

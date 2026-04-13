@@ -207,6 +207,8 @@ public enum ModuleTypeEnum {
 
     PRODUCT_CHANGE("161", "产品变更单"),
     QC_SAMPLING_PLAN("162", "抽样方案单"),
+    MESSAGE("162","系统通知"),
+    SYS_VERSION("163","版本更新"),
 
     QC_APPLICATION("163", "质检申请单"),
     FILE_MANAGEMENT("164", "文件管理"),

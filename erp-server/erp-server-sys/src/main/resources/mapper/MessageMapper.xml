@@ -115,4 +115,65 @@
         and mur.is_read = false 
         GROUP BY m."type"
     </select>
+
+    <select id="pagingSysVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$ListDTO">
+        select * from
+    </select>
+
+    <select id="pagingHistoryMessage" resultType="com.erp.model.sys.dto.MessageDTO$ListHistoryMessageDTO">
+        SELECT
+            m.id,
+            m.notice_title,
+            m.type,
+            m.data_json,
+            m.create_time as noticeTime,
+            COALESCE(mur.is_read, FALSE) as isRead
+        FROM message m
+        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE AND mur.user_id = #{userId}
+        WHERE m.is_deleted = FALSE
+        AND m.application = 'PC'
+        <if test="params.id != null and params.id != ''">
+            AND m.id = #{params.id}
+        </if>
+        <if test="params.noticeTitle != null and params.noticeTitle != ''">
+            AND m.notice_title LIKE CONCAT('%', #{params.noticeTitle}, '%')
+        </if>
+        <if test="params.type != null and params.type != ''">
+            AND m.type = #{params.type}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <select id="pagingHistoryVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$ListHistoryVersionDTO">
+        SELECT
+            m.id,
+            m.upgrade_version as upgradeVersion,
+            m.data_json,
+            m.create_time as noticeTime,
+            COALESCE(mur.is_read, FALSE) as isRead
+        FROM message m
+        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE AND mur.user_id = #{userId}
+        WHERE m.is_deleted = FALSE
+        AND m.application = 'sysVersion'
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <select id="getLatestVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$LatestVersionDTO">
+        SELECT
+            m.id,
+            m.upgrade_version as upgradeVersion,
+            m.data_json
+        FROM message m
+        WHERE m.is_deleted = FALSE
+        AND m.application = 'SYS_VERSION'
+        AND (m.expire_time IS NULL OR m.expire_time >= NOW())
+        ORDER BY m.create_time DESC
+        LIMIT 1
+    </select>
 </mapper>
