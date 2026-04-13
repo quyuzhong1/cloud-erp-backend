@@ -2,31 +2,22 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.scm.dto.AssetNoticeDTO;
-import com.erp.model.scm.dto.AssetNoticeDetailDTO;
-import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.entity.AssetNoticeDetailEntity;
-import com.erp.model.scm.entity.AssetNoticeEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.dto.SysVersionDTO;
@@ -40,13 +31,12 @@ import com.erp.server.sys.mapper.MessageMapper;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
 import com.erp.server.sys.service.OperateLogService;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -72,6 +62,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
@@ -231,6 +224,10 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】标题为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统通知" , messageEntity.getNoticeTitle());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.MESSAGE.getCode(), messageEntity.getId(), "新增操作");
+        
+        // 为所有用户创建未读记录
+        createMessageUserReadRecords(messageEntity.getId());
+        
         return new BaseResultDTO.AddDTO(messageEntity.getId(), "");
     }
 
@@ -312,6 +309,10 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】标题为【{}】", UserContext.getDefaultLoginUser().getUserName(), "版本更新" , messageEntity.getNoticeTitle());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SYS_VERSION.getCode(), messageEntity.getId(), "新增操作");
+        
+        // 为所有用户创建未读记录
+        createMessageUserReadRecords(messageEntity.getId());
+        
         return new BaseResultDTO.AddDTO(messageEntity.getId(), "");
     }
 
@@ -389,6 +390,37 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     public void fillList(List<SysVersionDTO.ListDTO> records){
 
+    }
+
+    /**
+     * 为所有用户创建消息未读记录
+     * @param messageId 消息ID
+     */
+    private void createMessageUserReadRecords(String messageId) {
+        try {
+            // 获取所有用户
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            if (CollectionUtils.isEmpty(userList)) {
+                return;
+            }
+
+            // 为每个用户创建未读记录
+            List<MessageUserReadEntity> messageUserReadEntities = new ArrayList<>();
+            for (FindUserDTO user : userList) {
+                MessageUserReadEntity messageUserReadEntity = new MessageUserReadEntity();
+                messageUserReadEntity.setMessageId(messageId);
+                messageUserReadEntity.setUserId(user.getUserId());
+                messageUserReadEntity.setIsRead(Boolean.FALSE);
+                messageUserReadEntities.add(messageUserReadEntity);
+            }
+
+            // 批量保存
+            if (CollectionUtils.isNotEmpty(messageUserReadEntities)) {
+                messageUserReadService.saveBatch(messageUserReadEntities);
+            }
+        } catch (Exception e) {
+            log.error("创建消息未读记录失败", e);
+        }
     }
 
 }

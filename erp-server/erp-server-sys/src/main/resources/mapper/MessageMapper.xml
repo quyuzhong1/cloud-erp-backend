@@ -117,7 +117,20 @@
     </select>
 
     <select id="pagingSysVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$ListDTO">
-        select * from
+        SELECT
+            m.id,
+            m.upgrade_version as upgradeVersion,
+            m.create_user_id as createUserId,
+            m.create_user_name as createUserName,
+            m.create_time as createTime,
+            m.expire_time as expireTime
+        FROM message m
+        WHERE m.is_deleted = FALSE
+        AND m.application = 'sysVersion'
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY m.create_time DESC
     </select>
 
     <select id="pagingHistoryMessage" resultType="com.erp.model.sys.dto.MessageDTO$ListHistoryMessageDTO">
