@@ -184,7 +184,7 @@
             m.data_json
         FROM message m
         WHERE m.is_deleted = FALSE
-        AND m.application = 'SYS_VERSION'
+        AND m.application = 'sysVersion'
         AND (m.expire_time IS NULL OR m.expire_time >= NOW())
         ORDER BY m.create_time DESC
         LIMIT 1
