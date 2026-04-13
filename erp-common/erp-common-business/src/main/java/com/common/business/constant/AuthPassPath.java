@@ -19,7 +19,7 @@ public class AuthPassPath {
             "/webhook/tiktok;"+
             "/fs/callback/api;/thirdProcessDefinition/getFsAppId;"+
             "/sso/login;" +
-            "/messageNotice/stream;"
+            "/sysMessage/stream;"
             ;
 
 
