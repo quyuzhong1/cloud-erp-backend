@@ -1559,6 +1559,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.PO_QC_EXEMPT_ALLOWED_STATUS_ONLY);
         }
+        if(entity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+            throw new ServiceException("数据来源质检通知单不可在此操作");
+        }
         List<String> ids = Collections.singletonList(entity.getId());
 
         //质检通知单不检查数量
