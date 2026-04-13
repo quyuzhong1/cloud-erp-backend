@@ -147,14 +147,14 @@ public class DmpOutputUtils{
 		return update;
 	}
 	
-	public void outputErrorCountMsg() {
+	public void outputErrorCountMsg(String conditionSql) {
 		WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName("预警消息");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
         warnMsgInfo.setTitle("今天之前中台各业务推送失败数量汇总");
         warnMsgInfo.setTableName("dmp_output_task_record");
         warnMsgInfo.setTableId("无");
-        List<String> outputErrorCountMsg = dmpOutputTaskRecordService.outputErrorCountMsg();
+        List<String> outputErrorCountMsg = dmpOutputTaskRecordService.outputErrorCountMsg(conditionSql);
         if(CollUtil.isEmpty(outputErrorCountMsg)) {
         	warnMsgInfo.setKeyInfo("无推送失败数据");
         }else {

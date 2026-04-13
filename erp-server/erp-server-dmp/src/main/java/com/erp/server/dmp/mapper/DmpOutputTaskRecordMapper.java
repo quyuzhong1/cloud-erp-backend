@@ -104,7 +104,7 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
 
     List<DmpOutputTaskRecordEntity> getOutputTaskRecord(@Param("sourceCode") String sourceCode, @Param("outputClass") String outputClass);
     
-    List<String> outputErrorCountMsg();
+    List<String> outputErrorCountMsg(String conditionSql);
 
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(@Param("params") DmpSyncTaskDTO.OneDTO params);
 

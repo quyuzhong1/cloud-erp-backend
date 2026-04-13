@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -514,16 +515,18 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         List<JSONObject> list = new ArrayList<>();
         for (AssetPurchaseOrderDetailEntity detailEntity : details) {
             JSONObject jsonObject = new JSONObject();
+            BigDecimal taxPrice = detailEntity.getTaxPrice() == null ? BigDecimal.ZERO : detailEntity.getTaxPrice();
+            BigDecimal taxRate = detailEntity.getTaxRate() == null ? BigDecimal.ZERO : detailEntity.getTaxRate();
             jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getAssetCode());
             jsonObject.set("purchaseQty",detailEntity.getPurchaseQty());
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
-            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
-            jsonObject.set("taxPrice",detailEntity.getTaxPrice());
+            jsonObject.set("price", MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, taxRate)) );
+            jsonObject.set("taxPrice",taxPrice);
             //新品首批
             //jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
 
-            jsonObject.set("taxRate",MathUtil.multiplyWithTwo(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("taxRate",MathUtil.multiplyWithTwo(taxRate,MathUtil.BigDecimal_100));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 //采购组织编码
                 String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
@@ -531,7 +534,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
                 jsonObject.set("receiveOrgCode", purchaseOrgCode);
                 jsonObject.set("purchaseOrgCode", purchaseOrgCode);
             }
-            jsonObject.set("isGift",Boolean.FALSE);
+            jsonObject.set("isGift",Boolean.TRUE.equals(detailEntity.getIsGift()));
             jsonObject.set("tag",detailEntity.getTag());
             jsonObject.set("endReceive",detailEntity.getEndReceive());
             jsonObject.set("detailRemark",detailEntity.getRemark());
