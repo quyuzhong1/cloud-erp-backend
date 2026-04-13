@@ -1030,6 +1030,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (Objects.isNull(qc)) {
                 throw new ServiceException(ApiError.PO_QC_ORDER_NOT_FOUND);
             }
+            dto.setQcStatus(qc.getQcStatus().getCode());
         }
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
@@ -3247,6 +3248,43 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
         }
         return listQcStandardResultDTO;
+    }
+
+    @Override
+    public PagingVO<QcInfoDTO.OpenPagingViewDTO> qcPaging(PagingDTO<QcInfoDTO.OpenPagingParamDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        QcInfoDTO.OpenPagingParamDTO params = dto.getParams();
+        //构建查询条件
+        buildOpenPagingQuery(params);
+        IPage pageData = baseMapper.qcPaging(query, params);
+        List<QcInfoDTO.OpenPagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        //TODO 数据组装
+
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public QcInfoDTO.ViewDTO qcView(String id) {
+        QcInfoDTO.ViewDTO view = this.view(id);
+        return view;
+    }
+
+    private void buildOpenPagingQuery(QcInfoDTO.OpenPagingParamDTO params) {
+        if (Objects.isNull(params)){
+            params = new QcInfoDTO.OpenPagingParamDTO();
+        }
+        if (CharSequenceUtil.isBlank(params.getUserId())){
+            //默认查询当前登录人相关的质检单
+            String currentUserId = UserContext.getDefaultLoginUser().getUid();
+            params.setUserId(currentUserId);
+        }
+        if (CollUtil.isEmpty(params.getQcStatusList())){
+            //默认查询待质检和待复检的质检单
+            params.setQcStatusList(Arrays.asList(QcBillStatusEnum.WAIT_QC.getCode(), QcBillStatusEnum.WAIT_RE_QC.getCode()));
+        }
     }
 
     /**
