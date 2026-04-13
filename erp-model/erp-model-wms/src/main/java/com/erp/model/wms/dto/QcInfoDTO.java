@@ -614,6 +614,27 @@ public class QcInfoDTO implements Serializable {
          * 质检标准
          */
         private QcNoticeDTO.QcStandardView qcStandardView;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+        /**
+         * 一般缺陷允收数（Re）
+         */
+        private Integer generalAcceptQty;
     }
 
 
