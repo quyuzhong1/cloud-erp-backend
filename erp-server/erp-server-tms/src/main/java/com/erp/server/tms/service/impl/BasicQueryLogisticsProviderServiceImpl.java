@@ -55,7 +55,7 @@ public class BasicQueryLogisticsProviderServiceImpl extends SuperServiceImpl<Bas
 
     @Override
     public List<BasicQueryLogisticsProviderDTO.ListAllVO> listAll(BasicQueryLogisticsProviderDTO.ListAllParamDTO paramDTO) {
-        if(StringUtils.isBlank(paramDTO.getLogisticsNameCn())){
+        if(StringUtils.isBlank(paramDTO.getTrackPlatformType())){
             return Lists.newArrayList();
         }
         List<BasicQueryLogisticsProviderEntity> list = this.lambdaQuery()

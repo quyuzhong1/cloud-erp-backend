@@ -226,8 +226,6 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
-
-
         List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.lambdaQuery().list();
         Map<String, LogisticsChannelEntity> logisticsChannelMap = logisticsChannelService.list().stream().collect(Collectors.toMap(LogisticsChannelEntity::getName, Function.identity(), (o1, o2) -> o1));
         Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap = basicQueryLogisticsProviderService.list().stream().collect(Collectors.toMap(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, Function.identity(), (o1, o2) -> o1));
