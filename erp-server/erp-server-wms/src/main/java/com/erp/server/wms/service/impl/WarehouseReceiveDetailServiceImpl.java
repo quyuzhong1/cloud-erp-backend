@@ -412,6 +412,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         super.updateBatchById(receiveDetailLIst);
     }
 
+
     @Override
     public void updateWaitQcQty(List<String> qcIdList,Boolean isFinishQc) {
         List<QcResultDTO.LotQualifiedQtyDTO> lotQualifiedQtyList = qcResultService.getLotQualifiedQtyByMainIdList(qcIdList);
@@ -419,10 +420,14 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             return;
         }
         List<String> sourceDetailIdList = lotQualifiedQtyList.stream().map(QcResultDTO.LotQualifiedQtyDTO::getSourceDetailId).distinct().collect(Collectors.toList());
-        //采购收货明细信息
-        Map<String, WarehouseReceiveDetailEntity> warehouseReceiveDetailEntityMap = this.mapByIds(sourceDetailIdList);
         //质检通知单信息
         Map<String, QcNoticeDetailEntity> qcNoticeDetailEntityMap = qcNoticeDetailService.mapByIds(sourceDetailIdList);
+        if (ObjectUtil.isNotEmpty(qcNoticeDetailEntityMap)) {
+            List<String> qcNoticeSourceDetailIdList = qcNoticeDetailEntityMap.values().stream().map(QcNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            sourceDetailIdList.addAll(qcNoticeSourceDetailIdList);
+        }
+        //采购收货明细信息
+        Map<String, WarehouseReceiveDetailEntity> warehouseReceiveDetailEntityMap = this.mapByIds(sourceDetailIdList);
 
         //需要更新的采购收货明细信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = new ArrayList<>();

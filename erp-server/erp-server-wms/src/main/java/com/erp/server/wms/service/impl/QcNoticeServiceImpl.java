@@ -1179,26 +1179,24 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                 if (Objects.nonNull(qcResultView.getQcBadQty()) && qcResultView.getQcBadQty() >= 0
                         && Objects.nonNull(qcResultView.getQcGoodQty()) && qcResultView.getQcGoodQty() >= 0) {
-                    BigDecimal qcGoodRate = BigDecimal.ZERO;
-                    BigDecimal qcBadRate = BigDecimal.ZERO;
-                    BigDecimal totalQty = BigDecimal.valueOf(qcResultView.getQcGoodQty()).add(BigDecimal.valueOf(qcResultView.getQcBadQty()));
 
-                    if (qcResultView.getQcGoodQty() == 0) {
-                        qcGoodRate = BigDecimal.ZERO;
-                    }
+                    Integer goodQty = qcResultView.getQcGoodQty();
+                    Integer badQty = qcResultView.getQcBadQty();
+                    BigDecimal totalQty = BigDecimal.valueOf(goodQty + badQty);
 
-                    if (qcResultView.getQcBadQty() == 0) {
-                        qcBadRate = BigDecimal.ZERO;
-                    }
+                    // 合格率
+                    BigDecimal qcGoodRate = (goodQty == 0) ? BigDecimal.ZERO
+                            : BigDecimal.valueOf(goodQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
-                    if (qcResultView.getQcBadQty() > 0 && qcResultView.getQcGoodQty() > 0) {
-                        qcGoodRate = BigDecimal.valueOf(qcResultView.getQcGoodQty()).divide(totalQty, 4, RoundingMode.HALF_UP);
-                        qcBadRate = BigDecimal.valueOf(qcResultView.getQcBadQty()).divide(totalQty, 4, RoundingMode.HALF_UP);
-                    }
-                    qcResult.setQcGoodQty(qcResultView.getQcGoodQty());
-                    qcResult.setQcBadQty(qcResultView.getQcBadQty());
+                    // 不合格率
+                    BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
+                            : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
+
+                    qcResult.setQcGoodQty(goodQty);
+                    qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
                     qcResult.setQcBadRate(qcBadRate);
+
                 } else {
                     throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
                 }
@@ -1510,24 +1508,21 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
                 if (Objects.nonNull(qcInfoView.getQcBadQty()) && qcInfoView.getQcBadQty() >= 0
                         && Objects.nonNull(qcInfoView.getQcGoodQty()) && qcInfoView.getQcGoodQty() >= 0) {
-                    BigDecimal qcGoodRate = BigDecimal.ZERO;
-                    BigDecimal qcBadRate = BigDecimal.ZERO;
-                    BigDecimal totalQty = BigDecimal.valueOf(qcInfoView.getQcGoodQty()).add(BigDecimal.valueOf(qcInfoView.getQcBadQty()));
 
-                    if (qcInfoView.getQcGoodQty() == 0) {
-                        qcGoodRate = BigDecimal.ZERO;
-                    }
+                    Integer goodQty = qcInfoView.getQcGoodQty();
+                    Integer badQty = qcInfoView.getQcBadQty();
+                    BigDecimal totalQty = BigDecimal.valueOf(goodQty + badQty);
 
-                    if (qcInfoView.getQcBadQty() == 0) {
-                        qcBadRate = BigDecimal.ZERO;
-                    }
+                    // 合格率
+                    BigDecimal qcGoodRate = (goodQty == 0) ? BigDecimal.ZERO
+                            : BigDecimal.valueOf(goodQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
-                    if (qcInfoView.getQcBadQty() > 0 && qcInfoView.getQcGoodQty() > 0) {
-                        qcGoodRate = BigDecimal.valueOf(qcInfoView.getQcGoodQty()).divide(totalQty, 4, RoundingMode.HALF_UP);
-                        qcBadRate = BigDecimal.valueOf(qcInfoView.getQcBadQty()).divide(totalQty, 4, RoundingMode.HALF_UP);
-                    }
-                    qcResult.setQcGoodQty(qcInfoView.getQcGoodQty());
-                    qcResult.setQcBadQty(qcInfoView.getQcBadQty());
+                    // 不合格率
+                    BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
+                            : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
+
+                    qcResult.setQcGoodQty(goodQty);
+                    qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
                     qcResult.setQcBadRate(qcBadRate);
                 } else {
