@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.QcApplicationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.QcApplicationEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_time" property="approveTime" />
+       <result column="qc_type" property="qcType" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="plan_qc_date" property="planQcDate" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        qa.id,
+        qa.create_time as createTime,
+        qa.update_time as updateTime,
+        qa.create_user_name as createUserName,
+        qa.create_user_id as createUserId,
+        qa.update_user_name as updateUserName,
+        qa.update_user_id as updateUserId,
+        qa.version,
+        qa.is_deleted as isDeleted,
+        qa.code,
+        qa.source_id as sourceId,
+        qa.source_code as sourceCode,
+        qa.source_type as sourceType,
+      qa.approve_status as approveStatus,
+      qa.approve_user_id as approveUserId,
+      qa.approve_user_name as approveUserName,
+      qa.approve_time as approveTime,
+      qa.qc_type as qcType,
+      qa.warehouse_id as warehouseId,
+      qa.plan_qc_date as planQcDate,
+      qa.remark
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.QcApplicationDTO$ListDTO">
+            select
+                <include refid="Base_Column_List" />,
+                qad.id as detailId,
+                qad.sku_id as skuId,
+                qad.sku_no as skuNo,
+                qad.supplier_id as supplierId,
+                pd.name as productName,
+                qnd.qc_status as qcStatus,
+                qr.qc_result as qcResult,
+                qr.lot_qualified_qty as batchQty,
+                qnd.qc_good_qty as qcGoodQty,
+                qnd.qc_bad_qty as qcBadQty,
+                qnd.qc_qty as qcQty,
+                qad.qty
+            from qc_application qa
+            inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
+            left join product_detail pd on pd.id = qad.sku_id and pd.is_deleted = FALSE
+            left join qc_notice_detail qnd on qad.id = qnd.source_detail_id and qnd.is_deleted = false
+            left join qc_notice qn on qa.id = qn.source_id and qnd.main_id = qn.id and qn.is_deleted = false
+            left join qc_info qi on qn.id = qi.source_id and qnd.id = qi.source_detail_id and qi.is_deleted = false
+            left join qc_result qr on qi.id = qr.main_id and qr.is_deleted = false
+        WHERE ${params.sqlMap.default}
+            and qa.is_deleted = FALSE
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+        qa.id DESC
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="srmPaging" resultType="com.erp.model.wms.dto.QcApplicationSrmDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />,
+        qad.id as detailId,
+        qad.sku_id as skuId,
+        qad.sku_no as skuNo,
+        qad.supplier_id as supplierId,
+        pd.name as productName,
+        qnd.qc_status as qcStatus,
+        qr.qc_result as qcResult,
+        qr.lot_qualified_qty as batchQty,
+        qnd.qc_good_qty as qcGoodQty,
+        qnd.qc_bad_qty as qcBadQty,
+        qnd.qc_qty as qcQty,
+        qad.qty
+        from qc_application qa
+        inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
+        left join product_detail pd on pd.id = qad.sku_id and pd.is_deleted = FALSE
+        left join qc_notice qn on qa.id = qn.source_id and qn.is_deleted = false
+        left join qc_notice_detail qnd on qad.id = qnd.source_detail_id and qnd.is_deleted = false
+        left join qc_info qi on qn.id = qi.source_id and qnd.id = qi.source_detail_id and qi.is_deleted = false
+        left join qc_result qr on qi.id = qr.main_id and qr.is_deleted = false
+        WHERE ${params.sqlMap.default}
+        and qa.is_deleted = FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qa.id DESC
+    </select>
+
+    <!-- tab统计 -->
+    <select id="tabList" resultType="com.erp.model.wms.dto.QcApplicationDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  qc_application
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+    <!-- srm端tab统计 -->
+    <select id="srmTabList" resultType="com.erp.model.wms.dto.QcApplicationDTO$TabListDTO">
+        SELECT
+        qa.approve_status AS tabFlag,
+        count(distinct qa.id)  AS count
+        FROM  qc_application qa
+        inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
+        WHERE qa.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params != null and params.supplierId != null and params.supplierId != ''">
+           and qad.supplier_id = #{params.supplierId}
+        </if>
+        GROUP BY qa.approve_status
+    </select>
+
+</mapper>

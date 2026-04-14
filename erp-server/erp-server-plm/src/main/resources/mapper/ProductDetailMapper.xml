@@ -2454,4 +2454,48 @@
         and pi.property = '资产'
 
     </select>
+
+    <!-- 根据skuNo集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息） -->
+    <select id="listSkuPurchaseBySkuNos" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pi.spec_type,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
+        pi.category_id as categoryId,
+        pi.sale_method,
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
+        pp.moq,
+        pp.main_supplier as supplierId,
+        pp.main_supplier as mainSupplier,
+        pp.second_supplier as secondSupplier,
+        pp.ean,
+        pp.delivery_cycle as deliveryCycle
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        WHERE
+        pd.is_deleted = FALSE
+        <if test="skuNos != null and skuNos.size>0">
+            AND pd.sku_no IN
+            <foreach collection="skuNos" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+    </select>
 </mapper>

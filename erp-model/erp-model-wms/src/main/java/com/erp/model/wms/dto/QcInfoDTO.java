@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.QcInfoEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
@@ -66,6 +67,11 @@ public class QcInfoDTO implements Serializable {
         private String purchaseOrderId;
 
         /**
+         * 采购订单号
+         */
+        private String purchaseOrderCode;
+
+        /**
          * 仓库id
          */
         @NotBlank(message = "仓库不能为空")
@@ -115,6 +121,10 @@ public class QcInfoDTO implements Serializable {
         @Valid
         private QcProductDTO.AddDTO qcProduct;
 
+        /**
+         * 不良信息
+         */
+        private List<QcDefectDTO.AddDTO> qcDefectList;
 
         /**
          * 质检信息
@@ -136,6 +146,10 @@ public class QcInfoDTO implements Serializable {
         private List<QcRemarkDTO.AddDTO> remarkList;
 
 
+        /**
+         * 质检标准
+         */
+        private QcNoticeDTO.QcStandardAddDTO qcStandardView;
     }
 
 
@@ -475,6 +489,11 @@ public class QcInfoDTO implements Serializable {
          */
         private String purchaseOrderCode;
 
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderDetailId;
+
 
         /**
          * 供应商id
@@ -558,6 +577,11 @@ public class QcInfoDTO implements Serializable {
         @Valid
         private QcProductDTO.ViewDTO qcProduct;
 
+        /**
+         * 不良信息
+         */
+        private List<QcDefectDTO.ViewDTO> qcDefectList;
+
 
         /**
          * 质检信息
@@ -578,7 +602,10 @@ public class QcInfoDTO implements Serializable {
          */
         private List<QcRemarkDTO.AddDTO> remarkList;
 
-
+        /**
+         * 质检标准
+         */
+        private QcNoticeDTO.QcStandardView qcStandardView;
     }
 
 
@@ -1553,6 +1580,139 @@ public class QcInfoDTO implements Serializable {
          */
         private String remark;
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListQcStandardParamDTO{
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "sku不允许为空")
+        private String skuId;
+
+        /**
+         * 质检类型
+         */
+        @NotBlank(message = "质检类型不允许为空")
+        private String qcType;
+
+        /**
+         * 总数量
+         */
+        @NotBlank(message = "总数量不允许为空")
+        private Integer qty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListQcStandardResultDTO{
+
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 抽样比例%
+         */
+        private BigDecimal samplingRate;
+
+        /**
+         * 一般缺陷允收数（Ac）
+         */
+        private Integer generalAcceptQty;
+
+        /**
+         * 一般缺陷拒收数(Re)
+         */
+        private Integer generalRejectQty;
+
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+
+        /**
+         * 严重缺陷拒收数(Re)
+         */
+        private Integer majorRejectQty;
+
+        /**
+         * 附件url
+         */
+        private String attachUrl;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemView>  qcInspectItemViewDTOList;
+
+        /**
+         * 参考图片
+         */
+        private List<QcImageView>  qcImageViewDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInspectItemView{
+
+        /**
+         * 质检项目
+         */
+        private String inspectItem;
+
+        /**
+         * 质检要求
+         */
+        private String inspectRequirement;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcImageView{
+
+        /**
+         * 图片类型
+         */
+        private String imageType;
+
+        /**
+         * 图片类型名称
+         */
+        private String imageTypeName;
+
+        /**
+         * 图片url
+         */
+        private List<String> imageUrlList;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class BatchQcAccumulationParam {
+        private QcInfoEntity entity;
+        private String purchaseOrderDetailId;
+        private String qcResult;
+        private Integer qcGoodQty;
     }
 
 }

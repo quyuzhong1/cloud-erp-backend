@@ -1,7 +1,7 @@
 package com.erp.server.fms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.fms.entity.AttachmentEntity;
+import com.erp.model.fms.entity.FmsAttachmentEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2025-10-16
  */
 @Mapper
-public interface AttachmentMapper extends BaseMapper<AttachmentEntity> {
+public interface AttachmentMapper extends BaseMapper<FmsAttachmentEntity> {
 
 }
 

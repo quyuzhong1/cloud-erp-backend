@@ -63,6 +63,7 @@ import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -2055,6 +2056,25 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
+    public void confirmImport(String id, String reconciliationStatus, LocalDateTime confirmTime) {
+        LogisticsBillCostEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
+
+        //状态变更
+        lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
+                .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
+                .set(LogisticsBillCostEntity::getConfirmTime, confirmTime)
+                .set(LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
+                .update();
+
+        // 状态变更日志
+        log.info("状态变更日志数据，id集合：【{}】", id);
+        String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
+    }
+
+    @Override
     public List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
 //        String type = dto.getType();
 //        String reportDate = dto.getReportDate();
@@ -2532,8 +2552,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return new LogisticsBillCostDTO.TotalCountDTO();
         }
 
-        List<String> mainIdList = list.stream().map(LogisticsBillCostDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        Map<String, List<CostViewDTO>> costListMap = tmsCostDetailService.listCostByMainIdList(mainIdList).stream()
+        List<String> idList = list.stream().map(LogisticsBillCostDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<List<String>> idListPartition = Lists.partition(idList, 50000);
+
+        //分页查询数据
+        List<CostViewDTO> detailList = new ArrayList<>();
+        for (List<String> mainIdList : idListPartition) {
+            List<CostViewDTO> tmsCostDetailList = tmsCostDetailService.listCostByMainIdList(mainIdList);
+            detailList.addAll(tmsCostDetailList);
+        }
+        Map<String, List<CostViewDTO>> costListMap = detailList.stream()
                 .collect(Collectors.groupingBy(l -> l.getMainId() + "_" + l.getDictCostCategory() + "_" + l.getType()));
 
         for (LogisticsBillCostDTO.ListDTO listDTO : list) {

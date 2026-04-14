@@ -1,5 +1,7 @@
 package com.erp.server.dmp.push.service.business.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -12,7 +14,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -22,6 +26,7 @@ import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeTransferInConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +49,9 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 
 
     @Override
@@ -72,6 +80,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
          */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map);
+            operateDelete(apiUtils,platformEntity,map,operate);
         }
         /**
          * 审核
@@ -143,6 +152,8 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         JSONObject model;
         try {
+            //改为用code查询
+            map.remove("syncKingdeeId");
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //新增数据
@@ -187,7 +198,28 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
      * 新增
      */
     public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
+        //推送前，判断来源单是否已经推送金蝶
+        Object object = map.get("list");
+        if(Objects.nonNull(object)){
+            JSONArray list = JSONUtil.parseArray(object);
+            if(CollectionUtils.isNotEmpty(list)){
+                JSONObject jsonObject = (JSONObject)list.get(0);
+                String sourceCode = jsonObject.getStr("sourceCode", "");
+                if (CharSequenceUtil.isNotBlank(sourceCode)){
+                    List<DmpOutputTaskRecordEntity> taskRecordEntityList = dmpOutputTaskRecordService.getOutputTaskRecord(sourceCode, "DmpOutputErpPushTaskHandler");
+                    if (CollUtil.isEmpty(taskRecordEntityList)){
+                        throw new ServiceException(CharSequenceUtil.format("存在未完成的上游单据【{}】，未推送完成，不能新增",sourceCode));
+                    }else {
+                        //存在未完成的任务记录，直接返回
+                        taskRecordEntityList.stream().filter(item -> !DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(item.getStatus())).findFirst().ifPresent(item -> {
+                            //错误日志
+                            throw new ServiceException(CharSequenceUtil.format("存在未完成的上游单据【{}】，状态为【{}】，不能新增",item.getSourceCode(),DmpOutputTaskRecordStatusEnum.getName(item.getStatus())));
+                        });
+                    }
 
+                }
+            }
+        }
         Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,ApiModuleTypeEnum.TRANSFER_IN.getCode());
         if (isAdd) {
             //给明细id赋值

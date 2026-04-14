@@ -15,6 +15,7 @@ import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.LogisticsBillCostService;
@@ -119,6 +120,7 @@ public class SmallBagCostAllocationJob {
                 .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
                 .in(LogisticsBillCostEntity::getType, Arrays.asList(DictCostAttributionEnum.SELF_DELIVER.getCode() , DictCostAttributionEnum.LAST_MILE.getCode()))
                 .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
+                .in(LogisticsBillCostEntity::getReconciliationStatus,Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()))
                 .list();
             if(CollUtil.isNotEmpty(list)) {
             	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");

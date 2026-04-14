@@ -146,4 +146,20 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      * @Date 2025-07-03
      **/
     Map<String, String> listQcItemRolePeople(QcResultDTO.QcItemRolePeopleDTO dto );
+    /**
+     * 根据质检单的采购订单明细id 获取到质检合格的数量汇总
+     * @author will
+     * @date 2026/3/30 15:12
+     * @param podIdList
+     * @return  List<QcResultDTO.TotalLotQualifiedQtyDTO>
+     */
+    List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyByPodId(List<String> podIdList);
+    /**
+     * 根据质检单id 获取到质检合格的数量汇总
+     * @author will
+     * @date 2026/3/30 15:12
+      * @param qcIdList
+     * @return  QcResultDTO.LotQualifiedQtyDTO
+     */
+    List<QcResultDTO.LotQualifiedQtyDTO> getLotQualifiedQtyByMainIdList(List<String> qcIdList);
 }

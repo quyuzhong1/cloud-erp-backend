@@ -219,4 +219,21 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return List<PurchaseOrderAdjustResultDTO>
      */
     List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> listAdjustPurchaseOrder(List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList);
+
+    /**
+     * @description: 采购订单下推质检通知数据回显
+     * @author will
+     * @date 2026/3/23 14:48
+     * @param dto
+     * @return PurchaseOrderDetailDTO.ListPushQcApplicationDTO
+     */
+    List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto);
+    /**
+     * @description: srm待发货下推质检通知数据回显
+     * @author will
+     * @date 2026/3/23 14:48
+     * @param dto
+     * @return PurchaseOrderDetailDTO.ListPushQcApplicationDTO
+     */
+    List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushSrmQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto);
 }

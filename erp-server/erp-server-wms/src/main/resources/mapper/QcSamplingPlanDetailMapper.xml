@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.QcSamplingPlanDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.QcSamplingPlanDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="rang_from" property="rangFrom" />
+       <result column="rang_to" property="rangTo" />
+       <result column="rate" property="rate" />
+       <result column="qty" property="qty" />
+       <result column="general_accept_qty" property="generalAcceptQty" />
+       <result column="general_reject_qty" property="generalRejectQty" />
+       <result column="major_accept_qty" property="majorAcceptQty" />
+       <result column="major_reject_qty" property="majorRejectQty" />
+       <result column="main_id" property="mainId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        rang_from, rang_to, rate, qty, general_accept_qty, general_reject_qty, major_accept_qty, major_reject_qty, main_id
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SamplingPlanDetailDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from qc_sampling_plan_detail where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SamplingPlanDetailDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SamplingPlanDetailDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  qc_sampling_plan_detail
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>
