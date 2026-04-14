@@ -55,7 +55,11 @@ import java.util.stream.Collectors;
 public class FbtInboundServiceImpl implements FbtInboundService {
 
     private static final String LOCK_KEY_PREFIX = "fbt:sync:";
+    private static final String INVENTORY_LOCK_KEY_PREFIX = "fbt:inventory:";
     private static final int DEFAULT_JOB_LOOKBACK_MINUTES = 30;
+    private static final long INVENTORY_LOCK_EXPIRE_SECONDS = 30L;
+    private static final long INVENTORY_LOCK_WAIT_MILLIS = 5000L;
+    private static final long INVENTORY_LOCK_RETRY_MILLIS = 100L;
 
     @Resource
     private TiktokFbtApiService tiktokFbtApiService;
@@ -961,6 +965,23 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         if (warehouseContext == null || StrUtil.isBlank(warehouseContext.getWarehouseCode())) {
             return null;
         }
+        String inventoryLockKey = buildInventoryLockKey(providerId, warehouseContext.getWarehouseCode(), snapshot.getSkuCode());
+        boolean locked = acquireInventoryLock(inventoryLockKey);
+        try {
+            OverseasInventoryEntity inventory = doUpsertInventorySnapshot(snapshot, provider, providerId, warehouseContext);
+            cleanupDuplicateInventories(providerId, warehouseContext.getWarehouseCode(), snapshot.getSkuCode(), inventory == null ? null : inventory.getId());
+            return inventory;
+        } finally {
+            if (locked) {
+                redisTemplate.delete(inventoryLockKey);
+            }
+        }
+    }
+
+    private OverseasInventoryEntity doUpsertInventorySnapshot(TiktokFbtDTO.InventorySnapshotDTO snapshot,
+                                                              OverseasProviderEntity provider,
+                                                              String providerId,
+                                                              InventoryWarehouseContext warehouseContext) {
         OverseasInventoryEntity inventory = findInventoryForUpsert(
                 providerId,
                 warehouseContext.getWarehouseCode(),
@@ -1159,6 +1180,78 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         inventory.setDownloadTime(now);
         inventory.setIsDeleted(true);
         fbtInboundRepository.updateOverseasInventory(inventory);
+    }
+
+    private void cleanupDuplicateInventories(String providerId,
+                                             String warehouseCode,
+                                             String skuCode,
+                                             String keepInventoryId) {
+        if (StrUtil.isBlank(warehouseCode) || StrUtil.isBlank(skuCode)) {
+            return;
+        }
+        List<OverseasInventoryEntity> inventoryList;
+        if (StrUtil.isNotBlank(providerId)) {
+            inventoryList = fbtInboundRepository.listOverseasInventoryByProviderAndSku(
+                    providerId,
+                    PlatformEnum.FBT.getName(),
+                    skuCode);
+        } else {
+            inventoryList = fbtInboundRepository.listOverseasInventoryByPlatformAndSku(
+                    PlatformEnum.FBT.getName(),
+                    skuCode);
+        }
+        List<OverseasInventoryEntity> duplicateList = inventoryList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StrUtil.equals(warehouseCode, item.getWarehouseCode()))
+                .filter(item -> StrUtil.isBlank(providerId)
+                        ? StrUtil.isBlank(item.getOverseasProviderId())
+                        : StrUtil.equals(providerId, item.getOverseasProviderId()))
+                .sorted(Comparator
+                        .comparing((OverseasInventoryEntity item) -> !StrUtil.equals(keepInventoryId, item.getId()))
+                        .thenComparing(item -> item.getUpdateTime() == null ? LocalDateTime.MIN : item.getUpdateTime(), Comparator.reverseOrder()))
+                .collect(Collectors.toList());
+        if (duplicateList.size() <= 1) {
+            return;
+        }
+        String targetKeepId = StrUtil.isNotBlank(keepInventoryId) ? keepInventoryId : duplicateList.get(0).getId();
+        LocalDateTime now = LocalDateTime.now();
+        for (OverseasInventoryEntity inventory : duplicateList) {
+            if (StrUtil.equals(targetKeepId, inventory.getId())) {
+                continue;
+            }
+            markInventoryDeleted(inventory, now);
+        }
+    }
+
+    private String buildInventoryLockKey(String providerId, String warehouseCode, String skuCode) {
+        return INVENTORY_LOCK_KEY_PREFIX
+                + StrUtil.blankToDefault(providerId, "blank")
+                + ":"
+                + StrUtil.blankToDefault(warehouseCode, "blank")
+                + ":"
+                + StrUtil.blankToDefault(skuCode, "blank");
+    }
+
+    private boolean acquireInventoryLock(String lockKey) {
+        long deadline = System.currentTimeMillis() + INVENTORY_LOCK_WAIT_MILLIS;
+        while (System.currentTimeMillis() <= deadline) {
+            Boolean locked = redisTemplate.opsForValue().setIfAbsent(
+                    lockKey,
+                    System.currentTimeMillis(),
+                    INVENTORY_LOCK_EXPIRE_SECONDS,
+                    TimeUnit.SECONDS);
+            if (Boolean.TRUE.equals(locked)) {
+                return true;
+            }
+            try {
+                Thread.sleep(INVENTORY_LOCK_RETRY_MILLIS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        log.warn("FBT库存落库获取锁超时，继续按当前数据落库, lockKey={}", lockKey);
+        return false;
     }
 
     private OverseasInventoryEntity findInventoryForUpsert(String providerId,
