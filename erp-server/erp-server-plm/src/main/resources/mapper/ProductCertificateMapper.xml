@@ -194,4 +194,39 @@
         pc.update_time desc
     </select>
 
+    <select id="existsValidCertificate" resultType="boolean">
+        select exists (
+            select 1
+            from product_certificate pc
+            inner join attachment att
+                on att.business_id = pc.id
+               and att.is_deleted = false
+            where pc.is_deleted = false
+              and pc.sku_id = #{skuId}
+              and pc.dict_project = #{dictProject}
+              <if test="excludeId != null and excludeId != ''">
+                  and pc.id != #{excludeId}
+              </if>
+        )
+    </select>
+
+    <select id="listValidCertificateKeys" resultType="com.erp.model.plm.entity.ProductCertificateEntity">
+        select distinct
+            pc.sku_id as skuId,
+            pc.dict_project as dictProject
+        from product_certificate pc
+        inner join attachment att
+            on att.business_id = pc.id
+           and att.is_deleted = false
+        where pc.is_deleted = false
+          and pc.sku_id in
+          <foreach collection="skuIdList" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+          and pc.dict_project in
+          <foreach collection="dictProjectList" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+    </select>
+
 </mapper>
