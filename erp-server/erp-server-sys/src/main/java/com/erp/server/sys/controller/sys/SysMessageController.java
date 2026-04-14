@@ -220,7 +220,10 @@ public class SysMessageController {
                     }
 
                     try {
-                        String eventData = message.getDataJson();
+                        // 构建返回的 JSON 对象
+                        String eventData = String.format("{\"noticeTitle\":\"%s\",\"content\":\"%s\"}", 
+                                message.getNoticeTitle(), 
+                                message.getDataJson().replace("\"", "\\\""));
                         emitter.send(SseEmitter.event().data(eventData));
 
                         if (firstUnReadUser != null) {
