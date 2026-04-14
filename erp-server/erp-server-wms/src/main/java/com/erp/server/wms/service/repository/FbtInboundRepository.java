@@ -107,4 +107,15 @@ public class FbtInboundRepository {
         }
         return overseasInventoryMapper.selectList(wrapper);
     }
+
+    public List<OverseasInventoryEntity> listOverseasInventoryByPlatformAndSku(String dictPlatform, String platformSku) {
+        LambdaQueryWrapper<OverseasInventoryEntity> wrapper = Wrappers.lambdaQuery();
+        if (dictPlatform != null) {
+            wrapper.eq(OverseasInventoryEntity::getDictPlatform, dictPlatform);
+        }
+        if (platformSku != null) {
+            wrapper.eq(OverseasInventoryEntity::getPlatformSku, platformSku);
+        }
+        return overseasInventoryMapper.selectList(wrapper);
+    }
 }
