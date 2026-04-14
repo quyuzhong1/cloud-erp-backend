@@ -926,11 +926,17 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         OverseasProviderWarehouseEntity providerWarehouse = warehouseContext.getProviderWarehouse();
         OverseasInventoryEntity inventory = fbtInboundRepository.findOverseasInventory(
                 warehouseContext.getWarehouseCode(), snapshot.getSkuCode(), providerId);
+        if (inventory == null && StrUtil.isNotBlank(providerId)) {
+            inventory = fbtInboundRepository.findOverseasInventory(
+                    warehouseContext.getWarehouseCode(), snapshot.getSkuCode());
+        }
         if (inventory == null) {
             inventory = new OverseasInventoryEntity();
             inventory.setWarehouseCode(warehouseContext.getWarehouseCode());
             inventory.setPlatformSku(snapshot.getSkuCode());
-            inventory.setDictPlatform(PlatformEnum.FBT.getName());
+        }
+        inventory.setDictPlatform(PlatformEnum.FBT.getName());
+        if (StrUtil.isNotBlank(providerId) && StrUtil.isBlank(inventory.getOverseasProviderId())) {
             inventory.setOverseasProviderId(providerId);
         }
         inventory.setName(StrUtil.blankToDefault(warehouseContext.getWarehouseName(), warehouseContext.getWarehouseCode()));
@@ -1088,15 +1094,25 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         if (provider == null || StrUtil.isBlank(provider.getId()) || StrUtil.isBlank(skuCode)) {
             return;
         }
-        List<OverseasInventoryEntity> inventoryList = fbtInboundRepository.listOverseasInventoryByProvider(
-                provider.getId(),
-                PlatformEnum.FBT.getName());
+        Set<String> providerWarehouseCodes = listProviderWarehouseCodes(provider);
+        if (StrUtil.isNotBlank(keepWarehouseCode)) {
+            providerWarehouseCodes.add(keepWarehouseCode);
+        }
+        List<OverseasInventoryEntity> inventoryList = fbtInboundRepository.listOverseasInventoryByPlatformAndSku(
+                PlatformEnum.FBT.getName(),
+                skuCode);
         if (CollUtil.isEmpty(inventoryList)) {
             return;
         }
         LocalDateTime now = LocalDateTime.now();
         for (OverseasInventoryEntity inventory : inventoryList) {
-            if (inventory == null || !StrUtil.equals(skuCode, inventory.getPlatformSku())) {
+            if (inventory == null) {
+                continue;
+            }
+            boolean sameProviderInventory = StrUtil.equals(provider.getId(), inventory.getOverseasProviderId());
+            boolean legacyProviderInventory = StrUtil.isBlank(inventory.getOverseasProviderId())
+                    && providerWarehouseCodes.contains(inventory.getWarehouseCode());
+            if (!sameProviderInventory && !legacyProviderInventory) {
                 continue;
             }
             if (StrUtil.equals(keepWarehouseCode, inventory.getWarehouseCode())) {
@@ -1112,6 +1128,24 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         }
     }
 
+    private Set<String> listProviderWarehouseCodes(OverseasProviderEntity provider) {
+        if (provider == null || StrUtil.isBlank(provider.getId())) {
+            return new HashSet<>();
+        }
+        List<OverseasProviderWarehouseEntity> warehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .eq(OverseasProviderWarehouseEntity::getMainId, provider.getId())
+                .list();
+        if (CollUtil.isEmpty(warehouseList)) {
+            return new HashSet<>();
+        }
+        return warehouseList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
+                .map(OverseasProviderWarehouseEntity::getPlatformWarehouseCode)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toCollection(HashSet::new));
+    }
+
     private InventoryWarehouseContext resolveInventoryWarehouse(OverseasProviderEntity provider,
                                                                 String shopId,
                                                                 String fallbackWarehouseCode,
@@ -1119,8 +1153,8 @@ public class FbtInboundServiceImpl implements FbtInboundService {
         OverseasProviderWarehouseEntity shopBoundWarehouse = findShopBoundProviderWarehouse(provider, shopId);
         if (shopBoundWarehouse != null && StrUtil.isNotBlank(shopBoundWarehouse.getPlatformWarehouseCode())) {
             String warehouseName = firstMeaningful(
-                    shopBoundWarehouse.getPlatformWarehouseName(),
                     shopBoundWarehouse.getWarehouseName(),
+                    shopBoundWarehouse.getPlatformWarehouseName(),
                     fallbackWarehouseName,
                     shopBoundWarehouse.getPlatformWarehouseCode());
             return new InventoryWarehouseContext(shopBoundWarehouse, shopBoundWarehouse.getPlatformWarehouseCode(), warehouseName);
