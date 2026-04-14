@@ -35,6 +35,7 @@ import com.erp.model.fms.dto.excel.AssetAcceptExcelDTO;
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.fms.entity.AssetAcceptPersonEntity;
+import com.erp.model.fms.entity.AttachmentEntity;
 import com.erp.model.plm.entity.CfgMouldSettingEntity;
 import com.erp.model.fms.entity.FmsAttachmentEntity;
 import com.erp.model.fms.enums.UnitEnum;

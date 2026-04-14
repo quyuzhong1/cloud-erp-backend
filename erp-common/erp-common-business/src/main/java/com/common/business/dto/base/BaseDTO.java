@@ -162,15 +162,4 @@ public class BaseDTO implements Serializable {
          */
         private String attachName;
     }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class DictDTO implements Serializable {
-        /**
-         * 附件id
-         */
-        @NotBlank(message = "字典key不能为空")
-        private String key;
-    }
 }
