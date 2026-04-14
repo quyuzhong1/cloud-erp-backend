@@ -128,16 +128,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         }
 
         // 保存附件 (标准化接收规则)
-        List<WmsAttachmentEntity> wmsAttachmentEntities = addDTO.getWmsAttachmentEntities();
-        if (addDTO.getIsImport() && CollectionUtils.isNotEmpty(wmsAttachmentEntities)) {
-            for (WmsAttachmentEntity wmsAttachmentEntity : wmsAttachmentEntities) {
-                wmsAttachmentEntity.setBusinessId(entity.getId());
-                wmsAttachmentEntity.setId(IdWorker.getIdStr());
-            }
-            wmsAttachmentService.saveBatch(wmsAttachmentEntities);
-        } else {
-            addAttachments(addDTO.getAttachmentList(), entity.getId());
-        }
+        addAttachments(addDTO.getAttachmentList(), entity.getId());
     }
 
     private static void findSkuNo(QcStandardEntity entity) {
