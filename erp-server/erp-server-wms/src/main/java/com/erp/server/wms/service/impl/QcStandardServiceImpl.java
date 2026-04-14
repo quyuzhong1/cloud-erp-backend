@@ -278,10 +278,14 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if (CollectionUtils.isNotEmpty(oldAttachments)) {
             List<String> deleteUrlList = oldAttachments.stream()
                     .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                    .filter(StringUtils::isNotBlank)
                     .filter(url -> !newUrlSet.contains(url))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(deleteUrlList)) {
-                wmsAttachmentService.deleteByUrlList(deleteUrlList);
+//                wmsAttachmentService.deleteByUrlList(deleteUrlList);
+                LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.in(WmsAttachmentEntity::getAttachUrl, deleteUrlList);
+                wmsAttachmentService.remove(queryWrapper);
 
                 // 记录审计日志
                 List<Pair<String, String>> removePairList = oldAttachments.stream()
@@ -537,9 +541,14 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService
                 .getByBusinessIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(attachmentList)) {
-            List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+            List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).filter(StringUtils::isNotBlank)
                     .collect(Collectors.toList());
-            wmsAttachmentService.deleteByUrlList(urlList);
+//            wmsAttachmentService.deleteByUrlList(urlList);
+            if(CollUtil.isNotEmpty(urlList)){
+                LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.in(WmsAttachmentEntity::getAttachUrl, urlList);
+                wmsAttachmentService.remove(queryWrapper);
+            }
         }
 
         // 记录审计日志
@@ -813,8 +822,14 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (CollectionUtils.isNotEmpty(oldAttachments)) {
                         List<String> oldUrls = oldAttachments.stream()
                                 .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                                .filter(StringUtils::isNotBlank)
                                 .collect(Collectors.toList());
-                        wmsAttachmentService.deleteByUrlList(oldUrls);
+//                        wmsAttachmentService.deleteByUrlList(oldUrls);
+                        if(CollUtil.isNotEmpty(oldUrls)){
+                            LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+                            queryWrapper.in(WmsAttachmentEntity::getAttachUrl, oldUrls);
+                            wmsAttachmentService.remove(queryWrapper);
+                        }
                     }
                     if (CollectionUtils.isNotEmpty(attachmentList)) {
                         // 插入新附件
