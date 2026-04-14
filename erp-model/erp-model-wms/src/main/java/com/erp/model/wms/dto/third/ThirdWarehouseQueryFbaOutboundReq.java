@@ -25,4 +25,10 @@ public class ThirdWarehouseQueryFbaOutboundReq extends ThirdWarehouseAuth{
     @NotEmpty(message = "发货单号不能为空")
     private List<String> erpOrderCodeList;
 
+    /**
+     * 第三方仓订单号
+     * 某些仓库取消后立即查询状态时，需要按平台单号查询
+     */
+    private List<String> platformOrderCodeList;
+
 }
