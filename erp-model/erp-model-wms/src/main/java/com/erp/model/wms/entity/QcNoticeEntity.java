@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -25,6 +26,17 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 @TableName("qc_notice")
 public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
+
+    /**
+     * 采购订单id
+     */
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
+    /**
+     * 采购订单编码
+     */
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
 
     /**
     * 单据状态
@@ -94,6 +106,29 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     @TableField("invalid_remark")
     private String invalidRemark;
 
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 期望质检日期
+     */
+    @TableField("plan_qc_date")
+    private LocalDate planQcDate;
 
     public static final String APPROVE_STATUS = "approve_status";
 

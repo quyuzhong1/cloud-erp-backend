@@ -122,14 +122,14 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         List<String> attachmentUrlList = dto.getAttachmentUrlList();
         //附件名
         List<String> attachmentNameList = dto.getAttachmentNameList();
-        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        List<ScmAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity attachment = new AttachmentEntity();
+                ScmAttachmentEntity attachment = new ScmAttachmentEntity();
                 attachment.setAttachUrl(attachmentUrlList.get(i));
                 attachment.setAttachName(attachmentNameList.get(i));
                 attachment.setBusinessId(id);
@@ -245,12 +245,12 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                 TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
                 //获取到表名
                 String type = tableName.value();
-                List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+                List<ScmAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
                 for (int i = 0; i < attachmentUrlList.size(); i++) {
                     if(!add.contains(attachmentUrlList.get(i))){
                         continue;
                     }
-                    AttachmentEntity addAttachment = new AttachmentEntity();
+                    ScmAttachmentEntity addAttachment = new ScmAttachmentEntity();
                     addAttachment.setAttachUrl(attachmentUrlList.get(i));
                     addAttachment.setAttachName(attachmentNameList.get(i));
                     addAttachment.setBusinessId(entity.getId());
@@ -353,7 +353,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
         //获取到表名
         String type = tableName.value();
-        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        List<ScmAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         List<SupplierCredentialEntity> dbList = this.getList(supplierId);
 
 
@@ -384,7 +384,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
 
                 for (int i = 0; i < attachmentUrlList.size(); i++) {
-                    AttachmentEntity addAttachment = new AttachmentEntity();
+                    ScmAttachmentEntity addAttachment = new ScmAttachmentEntity();
                     addAttachment.setAttachUrl(attachmentUrlList.get(i));
                     addAttachment.setAttachName(attachmentNameList.get(i));
                     addAttachment.setBusinessId(entity.getId());

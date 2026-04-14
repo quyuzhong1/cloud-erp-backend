@@ -78,6 +78,11 @@ public class BomCombinationDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+        
+        /**
+         * 标准零售价(含税)
+         */
+        private BigDecimal stdRetailPriceVat;
     }
 
     @Data

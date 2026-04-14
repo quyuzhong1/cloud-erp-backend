@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -21,7 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("attachment")
-public class AttachmentEntity extends BaseEntity<AttachmentEntity> {
+public class FmsAttachmentEntity extends BaseEntity<FmsAttachmentEntity> {
 
     /**
      * 文件地址url
@@ -46,7 +47,16 @@ public class AttachmentEntity extends BaseEntity<AttachmentEntity> {
      */
     @TableField("type")
     private String type;
-
+    /**
+     * 附件大小
+     */
+    @TableField("attach_size")
+    private BigDecimal attachSize;
+    /**
+     * 文件版本
+     */
+    @TableField("attach_version")
+    private Integer attachVersion;
 
     public static final String ATTACH_URL = "attach_url";
 

@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseOrderDTO.QcQtyDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.server.scm.service.*;
@@ -168,6 +169,16 @@ public class PurchaseOrderFeignController {
     @PostMapping("/listPurchaseOrderDetailByOrderId")
     public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailByOrderId(@RequestBody String id) {
         return purchaseOrderDetailService.listPurchaseOrderDetailByOrderId(id);
+    }
+
+    /**
+     * 累加质检合格量
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/addQcGoodQty")
+    public Boolean addQcGoodQty(@RequestBody List<PurchaseOrderDTO.QcQtyDTO> dtoList) {
+        return purchaseOrderService.addQcGoodQty(dtoList);
     }
 
     /**

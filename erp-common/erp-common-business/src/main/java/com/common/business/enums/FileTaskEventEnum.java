@@ -105,6 +105,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_PRODUCT_IMG_ATTACHMENT("IMPORT_PLM_PRODUCT_IMG_ATTACHMENT", "批量上传图片","com.erp.rpc.plm.feign.ImportPlmFeign","importBatchUpload",""),
     EXPORT_PLM_PRODUCT_CHANGE("EXPORT_PLM_PRODUCT_CHANGE", "产品信息变更","","",""),
     IMPORT_PLM_PRODUCT_CHANGE("IMPORT_PLM_PRODUCT_CHANGE","导入产品信息变更","com.erp.rpc.plm.feign.ImportPlmFeign","importProductChange",""),
+    EXPORT_PLM_SKU_STD_RETAIL_PRICE("EXPORT_PLM_SKU_STD_RETAIL_PRICE", "sku标准零售价","","",""),
+    IMPORT_PLM_SKU_STD_RETAIL_PRICE("IMPORT_PLM_SKU_STD_RETAIL_PRICE", "导入sku标准零售价","com.erp.rpc.plm.feign.ImportPlmFeign","importSkuStdRetailPrice",""),
 
     //oms
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
@@ -242,6 +244,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_FIRST_MILE_PACKING_BOX("EXPORT_WMS_FIRST_MILE_PACKING_BOX", "箱号对照表清单导出","","",""),
     EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH("EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH", "仓位补货","","",""),
     EXPORT_WMS_DAILY_QC_BILL("EXPORT_WMS_DAILY_QC_BILL", "质检日报数据","","",""),
+    EXPORT_WMS_QC_STANDARD("EXPORT_WMS_QC_STANDARD", "质检标准数据","","","ExportWmsQcStandardHandler"),
     EXPORT_WMS_QC_BILL("EXPORT_WMS_QC_BILL", "质检单数据","","",""),
     EXPORT_WMS_QC_REPORT_DETAIL("EXPORT_WMS_QC_REPORT_DETAIL", "质检报告数据","","",""),
     EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL("EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL", "质检报表质检人员","","",""),
@@ -319,6 +322,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT("EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT", "B2B三方发货单导出","","",""),
     EXPORT_WMS_AWD_OUT_STOCK("EXPORT_WMS_AWD_OUT_STOCK", "AWD出库货件导出","","",""),
     EXPORT_WMS_AWD_INVENTORY("EXPORT_WMS_AWD_INVENTORY", "AWD库存导出","","",""),
+
+    EXPORT_WMS_QC_APPLICATION("EXPORT_WMS_QC_APPLICATION", "质检申请导出","","",""),
+    IMPORT_WMS_QC_APPLICATION_DETAIL("IMPORT_WMS_QC_APPLICATION_DETAIL", "质检申请明细导入","com.erp.rpc.wms.feign.ImportWmsFeign","importQcApplicationDetail",""),
 
 
     //tms

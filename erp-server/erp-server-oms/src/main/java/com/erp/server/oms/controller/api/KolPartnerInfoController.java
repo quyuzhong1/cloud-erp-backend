@@ -27,6 +27,7 @@ import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolPartnerInfoDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -284,6 +285,14 @@ public class KolPartnerInfoController extends BaseController {
     @PostMapping("/partnerAddressList")
     public ApiResult<List<KolPartnerInfoDTO.PartnerAddressDTO>> partnerAddressList(@RequestBody @Validated KolPartnerInfoDTO.AddressSelectDTO dto) {
         return success(kolPartnerInfoService.partnerAddressList(dto));
+    }
+
+    /**
+     * 地址解析
+     */
+    @PostMapping("/addressParse")
+    public ApiResult<AddressParseDTO.ParseResultDTO> addressParse(@RequestBody @Validated AddressParseDTO.ParseRequestDTO dto) {
+        return success(kolPartnerInfoService.addressParse(dto));
     }
 
 
