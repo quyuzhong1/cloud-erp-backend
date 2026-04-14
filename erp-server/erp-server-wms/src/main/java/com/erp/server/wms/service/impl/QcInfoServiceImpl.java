@@ -62,6 +62,7 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.convert.QcInfoConverter;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.query.QcInfoQueryHandler;
@@ -593,7 +594,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             billId = IdWorker.getIdStr();
         }
         String code = bill.getCode();
-        BeanMapper.copy(dto, bill);
+        bill = QcInfoConverter.INSTANCE.toEntity(dto);
 
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
