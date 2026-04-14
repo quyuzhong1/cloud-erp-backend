@@ -185,6 +185,29 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
         List<ThirdWarehouseQueryFbaOutboundResponse> resultList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(req.getPlatformOrderCodeList())) {
+            AntuGetOutboundReq antuGetOutboundReq = AntuGetOutboundReq.builder()
+                    .orderCodeArr(req.getPlatformOrderCodeList())
+                    .build();
+            AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(antuGetOutboundReq, getPlatForm());
+            if (!isSuccess(response.getAsk())) {
+                throw new ServiceException("查询B2B订单失败," + response.getMessage());
+            }
+            if (CollUtil.isNotEmpty(response.getData())) {
+                response.getData().forEach(antuOutboundResp -> {
+                    ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+                    res.setCode(antuOutboundResp.getReferenceNo());
+                    res.setPlatformOrderCode(antuOutboundResp.getOrderCode());
+                    res.setTrackNo(antuOutboundResp.getTrackNo());
+                    if (Objects.nonNull(antuOutboundResp.getOutBoundTime())) {
+                        res.setDeliveryTimeStr(antuOutboundResp.getOutBoundTime().toString());
+                    }
+                    res.setStatus(AntuEnums.B2BOrderStatusEnum.getErpOrderStatus(antuOutboundResp.getOrderStatus()));
+                    resultList.add(res);
+                });
+            }
+            return success(resultList);
+        }
         req.getErpOrderCodeList().forEach(code -> {
             AntuGetOutboundRefReq antuGetOutboundReq = AntuGetOutboundRefReq.builder()
                     .referenceNo(code)

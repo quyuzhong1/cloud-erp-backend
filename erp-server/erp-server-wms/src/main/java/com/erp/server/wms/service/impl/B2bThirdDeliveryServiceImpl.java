@@ -1100,6 +1100,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
         queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getErpOrderCode()));
+        if (CharSequenceUtil.isNotBlank(req.getOrderCode())) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(req.getOrderCode()));
+        }
         queryOutboundReq.setAuthId(req.getAuthId());
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
 
