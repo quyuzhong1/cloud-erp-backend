@@ -7,10 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
@@ -181,18 +178,20 @@ public class LogisticsThirdChannelRefController extends BaseController {
         return success();
     }
     /**
-     * 导入
-     * @author zdy
-     * @date: 2025/7/31 9:10
-     * @param excelFile
+     *  异步导入
+     * @author jack
+     * @date:  2026-04-14
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/importExcel")
     @LogAction(value = LogActionEnum.IMPORT, desc = "物流-第三方渠道关系表导入")
-    public ApiResult<?> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean b = logisticsThirdChannelRefService.importExcel(excelFile, response);
-        return b ? success("导入成功") : failure("导入失败");
+    public ApiResult<?> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = logisticsThirdChannelRefService.importFile(dto);
+        return result ? success("导入成功") : failure("导入失败");
     }
+
+
     /**
      * 启用/停用
      * @author ZDY

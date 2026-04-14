@@ -1,9 +1,11 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -85,6 +87,9 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
+    @Transactional(rollbackFor = Exception.class)
+    void handleImportFile(List<ImportLogisticsThirdChannelRefExcelDTO> successList, List<String> errorNoList, List<ImportLogisticsThirdChannelRefExcelDTO> errorList, String importType);
+
     void downloadTemplate(HttpServletResponse response);
 
     /**
@@ -112,4 +117,8 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
      * @date 2026-04-02
      */
     List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> listByTrackNos(List<String> trackNos);
+
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    void importLogisticsThirdChannelRef(BaseDTO.ImportDTO dto);
 }

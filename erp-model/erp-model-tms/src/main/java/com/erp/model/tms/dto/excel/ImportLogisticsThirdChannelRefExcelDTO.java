@@ -87,7 +87,7 @@ public class ImportLogisticsThirdChannelRefExcelDTO implements Serializable {
      * *是否推送电话
      */
     @ExcelProperty(value = "*是否推送电话", index = 6)
-    @FieldValid(fieldName = "是否推送电话",isNotBlank = true ,maxLength = 64,fieldValues = "是，否")
+    @FieldValid(fieldName = "是否推送电话",isNotBlank = true ,maxLength = 64)
     private String pushMobileName;
     @ExcelIgnore
     private Boolean isPushMobile;
