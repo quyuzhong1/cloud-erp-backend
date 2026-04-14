@@ -1804,12 +1804,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             // 只有判定合格且有合格数量的才需要冲销
             if (qr != null && CharSequenceUtil.isNotBlank(qr.getPurchaseOrderDetailId()) 
                 && QcResultEnum.CONFORMITY.getCode().equals(qr.getQcResult())
-                && qr.getQcGoodQty() != null && qr.getQcGoodQty() > 0) {
+                && qr.getLotQualifiedQty() != null && qr.getLotQualifiedQty() > 0) {
                 
                 PurchaseOrderDTO.QcQtyDTO deduct = new PurchaseOrderDTO.QcQtyDTO();
                 deduct.setPurchaseOrderDetailId(qr.getPurchaseOrderDetailId());
                 deduct.setQcInfoId(qr.getMainId());
-                deduct.setQcGoodQty(-qr.getQcGoodQty()); // 传负数进行扣减
+                deduct.setQcGoodQty(-qr.getLotQualifiedQty()); // 传负数进行扣减
                 deductList.add(deduct);
             }
         }
