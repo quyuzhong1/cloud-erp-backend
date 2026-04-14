@@ -275,11 +275,14 @@ public class QcStandardServiceImpl extends SuperServiceImpl<QcStandardMapper, Qc
         if (CollectionUtils.isNotEmpty(oldAttachments)) {
             List<String> deleteUrlList = oldAttachments.stream()
                     .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                    .filter(StringUtils::isNotBlank)
                     .filter(url -> !newUrlSet.contains(url))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(deleteUrlList)) {
-                wmsAttachmentService.deleteByUrlList(deleteUrlList);
-
+                List<String> ids = oldAttachments.stream().filter(e ->deleteUrlList.contains(e.getAttachUrl())).map(WmsAttachmentDTO.UpdateDTO::getId)
+                        .collect(Collectors.toList());
+                wmsAttachmentService.removeByIds(ids);
+//                wmsAttachmentService.deleteByUrlList(deleteUrlList);
                 // 记录审计日志
                 List<Pair<String, String>> removePairList = oldAttachments.stream()
                         .filter(obj -> deleteUrlList.contains(obj.getAttachUrl()))
@@ -534,9 +537,10 @@ public class QcStandardServiceImpl extends SuperServiceImpl<QcStandardMapper, Qc
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService
                 .getByBusinessIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(attachmentList)) {
-            List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+            List<String> ids = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getId)
                     .collect(Collectors.toList());
-            wmsAttachmentService.deleteByUrlList(urlList);
+            wmsAttachmentService.removeByIds(ids);
+//            wmsAttachmentService.deleteByUrlList(urlList);
         }
 
         // 记录审计日志
@@ -808,10 +812,14 @@ public class QcStandardServiceImpl extends SuperServiceImpl<QcStandardMapper, Qc
                     List<WmsAttachmentDTO.UpdateDTO> oldAttachments = wmsAttachmentService
                             .getByBusinessIds(Collections.singletonList(existing.getId()));
                     if (CollectionUtils.isNotEmpty(oldAttachments)) {
-                        List<String> oldUrls = oldAttachments.stream()
-                                .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                        List<String> ids = oldAttachments.stream().map(WmsAttachmentDTO.UpdateDTO::getId)
                                 .collect(Collectors.toList());
-                        wmsAttachmentService.deleteByUrlList(oldUrls);
+                        wmsAttachmentService.removeByIds(ids);
+//                        List<String> oldUrls = oldAttachments.stream()
+//                                .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+//                                .filter(StringUtils::isNotBlank)
+//                                .collect(Collectors.toList());
+//                        wmsAttachmentService.deleteByUrlList(oldUrls);
                     }
                     if (CollectionUtils.isNotEmpty(attachmentList)) {
                         // 插入新附件
