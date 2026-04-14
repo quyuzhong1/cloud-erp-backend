@@ -95,8 +95,12 @@ public class QcInfoFeignController extends BaseController {
         if (null == entity) {
             return failure("质检单不存在");
         }
-        BatchResultDTO resultDTO = qcInfoService.batchExemption(entity);
-        return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
+        try {
+            BatchResultDTO resultDTO = qcInfoService.batchExemption(entity);
+            return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
 
 
@@ -109,8 +113,12 @@ public class QcInfoFeignController extends BaseController {
     @LogViewService
     @PostMapping("/qcView")
     public ApiResult<QcInfoDTO.ViewDTO> qcView(@RequestBody @Validated BaseIdDTO dto) {
-        QcInfoDTO.ViewDTO view = qcInfoService.qcView(dto.getId());
-        return success(view);
+        try {
+            QcInfoDTO.ViewDTO view = qcInfoService.qcView(dto.getId());
+            return success(view);
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
 
     /**
@@ -122,8 +130,12 @@ public class QcInfoFeignController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "暂存质检单")
     @PostMapping("/qcDraft")
     public ApiResult<?> qcDraft(@RequestBody QcInfoDTO.SaveOrUpdateDTO dto) {
-        QcInfoEntity entity = qcInfoService.draft(dto);
-        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
+        try {
+            QcInfoEntity entity = qcInfoService.draft(dto);
+            return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
 
     /**
@@ -135,8 +147,12 @@ public class QcInfoFeignController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "完成质检:id={id}")
     @PostMapping("/qcFinish")
     public ApiResult<?> qcFinish(@RequestBody @Validated({AddGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
-        QcInfoEntity entity = qcInfoService.finish(dto);
-        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
+        try {
+            QcInfoEntity entity = qcInfoService.finish(dto);
+            return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
 
     /**
@@ -147,7 +163,11 @@ public class QcInfoFeignController extends BaseController {
      */
     @PostMapping("/getQcStandard")
     public ApiResult<QcNoticeDTO.QcStandardView> getQcStandard(@RequestBody @Validated BaseIdDTO dto) {
-        QcNoticeDTO.QcStandardView qcStandardView = qcSamplingPlanRefService.getByMainId(dto.getId());
-        return success(qcStandardView);
+        try {
+            QcNoticeDTO.QcStandardView qcStandardView = qcSamplingPlanRefService.getByMainId(dto.getId());
+            return success(qcStandardView);
+        }catch (Exception e){
+            return failure(e.getMessage());
+        }
     }
 }

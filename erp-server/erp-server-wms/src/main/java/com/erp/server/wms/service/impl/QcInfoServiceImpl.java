@@ -1038,15 +1038,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             dto.setQcStatus(qc.getQcStatus().getCode());
         }
-        BeanMapper.copy(dto, bill);
-        bill.setId(billId);
-//        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
-//        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
-//        if (ObjectUtils.isNotEmpty(qcProduct)) {
-//            compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-//            compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-//            compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-//        }
+        dto.setId(billId);
+        bill = QcInfoConverter.INSTANCE.toEntity(dto);
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         String skuId = dto.getQcProduct().getSkuId();
@@ -3323,6 +3316,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(view.getQcInfo().getIsInside())){
             view.getQcInfo().setIsInside(QcTypeEnum.OUTSIDE_QC.getCode().equals(qcType) || QcTypeEnum.B2B_OUTSIDE_QC.getCode().equals(qcType) ? Boolean.FALSE : Boolean.TRUE);
         }
+        view.getQcInfo().setQcQty(view.getQcInfo().getQcQty() == 0 ? null : view.getQcInfo().getQcQty());
+        view.getQcInfo().setQcBadQty(view.getQcInfo().getQcBadQty() == 0 ? null : view.getQcInfo().getQcBadQty());
+
         //获取对应抽样方案
         SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
         planParamDTO.setQcType(view.getQcInfo().getQcType());
