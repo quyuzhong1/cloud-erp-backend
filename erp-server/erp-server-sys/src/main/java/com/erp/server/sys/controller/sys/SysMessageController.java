@@ -208,6 +208,15 @@ public class SysMessageController {
                                 log.info("Message {} has expired, skipping", message.getId());
                                 continue;
                             }
+                            
+                            // 检查定时通知时间
+                            LocalDateTime noticeTime = message.getNoticeTime();
+                            if (noticeTime != null && noticeTime.isAfter(now)) {
+                                // 还没到通知时间，跳过
+                                log.info("Message {} notice time not reached, skipping", message.getId());
+                                continue;
+                            }
+                            
                             firstUnReadUser = unReadUser;
                             break;
                         }
@@ -220,7 +229,10 @@ public class SysMessageController {
                     }
 
                     try {
-                        String eventData = message.getDataJson();
+                        // 构建返回的 JSON 对象
+                        String eventData = String.format("{\"noticeTitle\":\"%s\",\"content\":\"%s\"}", 
+                                message.getNoticeTitle(), 
+                                message.getDataJson().replace("\"", "\\\""));
                         emitter.send(SseEmitter.event().data(eventData));
 
                         if (firstUnReadUser != null) {
