@@ -67,6 +67,7 @@ public interface B2bThirdDeliveryConverter {
     ThirdWarehouseCreateFbaOutboundReq.Item toCreateFbaOutboundReqItem(B2bThirdDeliveryDetailEntity entity);
 
     List<ThirdWarehouseQueryFbaOutboundResponse> toB2bThirdDeliveryQueryDTO(List<DaMaiGetFbaOrderResp> dataList);
+    @Mapping(target = "status", expression = "java(com.sdk.wms.damai.enums.DaMaiEnums.B2BOrderStatusEnum.getErpOrderStatus(data.getStatus()))")
     @Mapping(target = "trackNo", source = "mainTrackingNo")
     @Mapping(target = "platformOrderCode", source = "fbaSoNo")
     @Mapping(target = "errorType", source = "seType")
