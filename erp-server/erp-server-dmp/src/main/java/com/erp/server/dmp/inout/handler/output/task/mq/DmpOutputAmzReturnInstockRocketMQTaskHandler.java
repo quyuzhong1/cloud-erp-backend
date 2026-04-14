@@ -112,7 +112,9 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
         if (this.validateDataBlack(dmpMainEntity, cfgOutputId)) {
             return null;
         }
-
+        if (CollectionUtils.isEmpty(dmpDetailList)) {
+            return null;
+        }
         PlatformReturnInstockDTO dto = BeanUtil.copyProperties(dmpMainEntity, PlatformReturnInstockDTO.class);
         String sourcePlatform = dmpMainEntity.getSourcePlatform();
         dto.setPlatform(sourcePlatform);
@@ -128,7 +130,7 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
 
         // 固定退货退款
         dto.setReturnType(ReturnTypeEnum.DEDUCTION.getCode());
-        dto.setUniqueId(CharSequenceUtil.format("return_instock_{}_{}_{}", dmpMainEntity.getPlatformOrderNo(), dmpMainEntity.getAuthId(), null == putAwayTime ? "" : putAwayTime.toString()));
+        dto.setUniqueId(dmpDetailList.get(0).getThirdDetailId());
         // 明细
         List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
         dto.setProductDetailList(detailList);
