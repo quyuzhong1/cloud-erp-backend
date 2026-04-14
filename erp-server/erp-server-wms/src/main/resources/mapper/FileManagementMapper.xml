@@ -71,8 +71,8 @@
         </if>
         fm.create_time desc
     </select>
-    <select id="countBySkuAndFileType" resultType="java.lang.Integer">
-        SELECT COUNT(*)
+    <select id="countBySkuAndFileType" resultType="com.erp.model.wms.dto.FileManagementDTO$CountDTO">
+        SELECT fm.id,fm.file_type,qssr.sku_id,qssr.sku_no
         FROM file_management fm
         left join qc_standard_sku_ref qssr on fm.id = qssr.main_id and qssr.is_deleted = FALSE
         WHERE fm.is_deleted = FALSE
@@ -82,6 +82,9 @@
             <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+        </if>
+        <if test="skuIds == null or skuIds.size == 0">
+            and qssr.sku_id is null
         </if>
         <if test="id != null and id != ''">
           AND fm.id != #{id}

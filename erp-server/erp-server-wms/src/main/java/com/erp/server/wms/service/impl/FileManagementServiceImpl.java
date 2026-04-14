@@ -128,16 +128,14 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         String fileId = wmsAttachmentService.saveByVersion(attachmentEntity);
         fileManagementEntity.setFileId(fileId);
         List<QcStandardSkuRefEntity> skuRefEntityList = Collections.emptyList();
-        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addOrUpdateDTO.getFileType())) {
-            if (!fileId.equals(old.getFileId())) {
-                List<String> skuNoList = qcStandardService.listSkuNoByUrl(addOrUpdateDTO.getAttachUrl());
-                List<SkuVO> skuVOS = plmTaskFeign.listAllStatusSkuBySkuNos(skuNoList);
-                if (CollUtil.isEmpty(skuVOS)) {
-                    throw new ServiceException("SKU未查询到记录");
-                }
-                skuRefEntityList = FileManagementConverter.INSTANCE.skuVOToSkuRefEntity(skuVOS);
+        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addOrUpdateDTO.getFileType()) && !fileId.equals(old.getFileId())) {
+            List<String> skuNoList = qcStandardService.listSkuNoByUrl(addOrUpdateDTO.getAttachUrl());
+            List<SkuVO> skuVOS = plmTaskFeign.listAllStatusSkuBySkuNos(skuNoList);
+            if (CollUtil.isEmpty(skuVOS)) {
+                throw new ServiceException("SKU未查询到记录");
             }
-        }else {
+            skuRefEntityList = FileManagementConverter.INSTANCE.skuVOToSkuRefEntity(skuVOS);
+        } else {
             skuRefEntityList = qcStandardSkuRefService.listByMainId(old.getId());
         }
         // 数据处理
@@ -178,9 +176,9 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         String fileType = entity.getFileType();
         if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(fileType)) {
             List<String> skuIds = skuRefEntityList.stream().map(QcStandardSkuRefEntity::getSkuId).collect(Collectors.toList());
-            Integer count = baseMapper.countBySkuAndFileType(skuIds, fileType, entity.getId());
-            if (count > 0) {
-                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, skuRefEntityList.stream().map(QcStandardSkuRefEntity::getSkuNo).collect(Collectors.joining(",")), WmsFileTypeEnum.getName(fileType));
+            List<FileManagementDTO.CountDTO> countDTOS = baseMapper.countBySkuAndFileType(skuIds, fileType, entity.getId());
+            if (CollUtil.isNotEmpty(countDTOS)) {
+                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, countDTOS.stream().map(FileManagementDTO.CountDTO::getSkuNo).distinct().collect(Collectors.joining(",")), WmsFileTypeEnum.getName(fileType));
             }
         } else if (WmsFileTypeEnum.MANUFACTURING_REPORT.getCode().equals(fileType)) {
             // 量产报告
@@ -193,9 +191,9 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
             }
             entity.setSkuNo(skuVOS.get(0).getSkuNo());
             entity.setProductName(skuVOS.get(0).getSkuName());
-            Integer count = baseMapper.countBySkuAndFileType(Collections.singletonList(entity.getSkuId()), fileType, entity.getId());
-            if (count > 0) {
-                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, skuVOS.get(0).getSkuNo(), WmsFileTypeEnum.getName(fileType));
+            List<FileManagementDTO.CountDTO> countDTOS = baseMapper.countBySkuAndFileType(Collections.singletonList(entity.getSkuId()), fileType, entity.getId());
+            if (CollUtil.isNotEmpty(countDTOS)) {
+                throw new ServiceException(ApiError.FILE_MANAGEMENT_SKU_TYPE_EXIST, countDTOS.stream().map(FileManagementDTO.CountDTO::getSkuNo).distinct().collect(Collectors.joining(",")), WmsFileTypeEnum.getName(fileType));
             }
             if (CollUtil.isEmpty(skuRefEntityList)){
                 skuRefEntityList.add(FileManagementConverter.INSTANCE.skuVOToSkuRefEntity(skuVOS.get(0)));
