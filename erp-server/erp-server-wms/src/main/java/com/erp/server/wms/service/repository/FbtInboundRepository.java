@@ -92,4 +92,50 @@ public class FbtInboundRepository {
     public void updateOverseasInventory(OverseasInventoryEntity entity) {
         overseasInventoryMapper.updateById(entity);
     }
+
+    public List<OverseasInventoryEntity> listOverseasInventoryByProvider(String overseasProviderId, String dictPlatform) {
+        LambdaQueryWrapper<OverseasInventoryEntity> wrapper = Wrappers.lambdaQuery();
+        if (overseasProviderId == null) {
+            wrapper.and(w -> w.isNull(OverseasInventoryEntity::getOverseasProviderId)
+                    .or()
+                    .eq(OverseasInventoryEntity::getOverseasProviderId, ""));
+        } else {
+            wrapper.eq(OverseasInventoryEntity::getOverseasProviderId, overseasProviderId);
+        }
+        if (dictPlatform != null) {
+            wrapper.eq(OverseasInventoryEntity::getDictPlatform, dictPlatform);
+        }
+        return overseasInventoryMapper.selectList(wrapper);
+    }
+
+    public List<OverseasInventoryEntity> listOverseasInventoryByPlatformAndSku(String dictPlatform, String platformSku) {
+        LambdaQueryWrapper<OverseasInventoryEntity> wrapper = Wrappers.lambdaQuery();
+        if (dictPlatform != null) {
+            wrapper.eq(OverseasInventoryEntity::getDictPlatform, dictPlatform);
+        }
+        if (platformSku != null) {
+            wrapper.eq(OverseasInventoryEntity::getPlatformSku, platformSku);
+        }
+        return overseasInventoryMapper.selectList(wrapper);
+    }
+
+    public List<OverseasInventoryEntity> listOverseasInventoryByProviderAndSku(String overseasProviderId,
+                                                                               String dictPlatform,
+                                                                               String platformSku) {
+        LambdaQueryWrapper<OverseasInventoryEntity> wrapper = Wrappers.lambdaQuery();
+        if (overseasProviderId != null) {
+            wrapper.eq(OverseasInventoryEntity::getOverseasProviderId, overseasProviderId);
+        } else {
+            wrapper.and(w -> w.isNull(OverseasInventoryEntity::getOverseasProviderId)
+                    .or()
+                    .eq(OverseasInventoryEntity::getOverseasProviderId, ""));
+        }
+        if (dictPlatform != null) {
+            wrapper.eq(OverseasInventoryEntity::getDictPlatform, dictPlatform);
+        }
+        if (platformSku != null) {
+            wrapper.eq(OverseasInventoryEntity::getPlatformSku, platformSku);
+        }
+        return overseasInventoryMapper.selectList(wrapper);
+    }
 }
