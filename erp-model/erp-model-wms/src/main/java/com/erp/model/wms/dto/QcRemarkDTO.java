@@ -96,6 +96,11 @@ public class QcRemarkDTO implements Serializable {
          */
         private String qcResultName;
         /**
+         * 是否内检
+         */
+        @NotNull(message = "是否内检不允许为空")
+        private Boolean isInside;
+        /**
          * 是否库内抽检
          */
         @NotNull(message = "是否库内抽检不允许为空")

@@ -653,7 +653,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
             //累加质检合格量(结果：合格)
-            handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(), qcInfo.getQcResult(), qcInfo.getQcGoodQty());
+            handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getLotQualifiedQty());
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(bill.getId()), Boolean.TRUE);
 
@@ -1301,7 +1301,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //累加质检合格量(结果：合格)
             if (Objects.nonNull(qcResult)) {
-                handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(), qcResult.getQcResult(), qcResult.getQcGoodQty());
+                handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getLotQualifiedQty());
             }
 
             //批量去更新 质检数量
@@ -1773,7 +1773,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<PurchaseOrderDetailEntity> podList = FeignQuery.create(PurchaseOrderDetailEntity.class).eq(PurchaseOrderDetailEntity::getId, podId).list();
             if (CollUtil.isNotEmpty(podList)) {
                 PurchaseOrderDetailEntity pod = podList.get(0);
-                int billGoodQty = qcInfo.getQcGoodQty();
+                int billGoodQty = qcInfo.getLotQualifiedQty();
                 int currentGoodQty = pod.getQcGoodQty() != null ? pod.getQcGoodQty() : 0;
                 if (currentGoodQty < billGoodQty) {
                     throw new ServiceException("撤销质检失败：采购订单明细扣减后的质检合格量不能小于0");
@@ -3205,15 +3205,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         planParamDTO.setQty(dto.getQty());
         planParamDTO.setSkuId(dto.getSkuId());
 
-        SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+        SamplingPlanDTO.PlanDTO samplingPlan = null;
+        try {
+            samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+        } catch (Exception e) {
+            log.error("获取抽样方案失败", e);
+            samplingPlan = null;
+        }
 
-        listQcStandardResultDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
-        listQcStandardResultDTO.setSamplingPlanId(samplingPlan.getId());
-        listQcStandardResultDTO.setSamplingPlanName(QcTypeEnum.getByCode(dto.getQcType()) + "通用抽样方案");
-        listQcStandardResultDTO.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
-        listQcStandardResultDTO.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
-        listQcStandardResultDTO.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
-        listQcStandardResultDTO.setMajorRejectQty(samplingPlan.getMajorRejectQty());
+        if (samplingPlan != null) {
+            listQcStandardResultDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
+            listQcStandardResultDTO.setSamplingPlanId(samplingPlan.getId());
+            listQcStandardResultDTO.setSamplingPlanName(QcTypeEnum.getByCode(dto.getQcType()) + "通用抽样方案");
+            listQcStandardResultDTO.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
+            listQcStandardResultDTO.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
+            listQcStandardResultDTO.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
+            listQcStandardResultDTO.setMajorRejectQty(samplingPlan.getMajorRejectQty());
+        }
 
         //质检项目
         QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
