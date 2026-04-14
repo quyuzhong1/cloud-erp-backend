@@ -172,6 +172,15 @@ public class SysMessageController {
         return success();
     }
 
+    /**
+     * 获取系统通知未读数量
+     * @return
+     */
+    @GetMapping("/unreadCount")
+    public ApiResult<Integer> getUnreadCount() {
+        return success(messageService.getSysMessageUnreadCount());
+    }
+
     @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
