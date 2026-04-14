@@ -918,7 +918,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
             }
 
-
             qcResultView.setQcType(qcInfoView.getQcType());
             qcResultView.setQcTypeName(QcTypeEnum.getByCode(qcInfoView.getQcType()));
             qcResultView.setQcQty(samplingPlan.getSampleQty());
