@@ -3327,9 +3327,16 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         planParamDTO.setQcType(view.getQcInfo().getQcType());
         planParamDTO.setQty(view.getQcInfo().getTotalQty());
         planParamDTO.setSkuId(view.getQcProduct().getSkuId());
-        SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
-        view.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
-        view.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
+        SamplingPlanDTO.PlanDTO samplingPlan = null;
+        try {
+            samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+        } catch (Exception e) {
+            log.error("获取抽样方案失败", e);
+        }
+        if (Objects.nonNull(samplingPlan)){
+            view.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
+            view.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
+        }
         return view;
     }
 
