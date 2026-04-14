@@ -166,8 +166,10 @@ public enum BusinessNoTypeEnum {
     CODE_FYPZ(123 ,"FYPZ","费用配置",BusinessNoConstant.FYPZ),
 
     CODE_BG(122 ,"BG","产品信息变更单",BusinessNoConstant.BG),
+    CODE_ZJSQ(124 ,"ZJSQ","质检申请",BusinessNoConstant.ZJSQ),
 
-
+    CODE_CYFA(123 ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
+    CODE_WDGL(124 ,"WDGL","文件管理",BusinessNoConstant.WDGL),
 
     ;
 

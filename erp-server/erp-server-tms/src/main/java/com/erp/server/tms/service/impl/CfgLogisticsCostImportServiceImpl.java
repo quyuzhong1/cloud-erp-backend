@@ -200,7 +200,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             String oldDictPlatformName ="";
             String newDictPlatformName ="";
             //物流商
-            List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAll(false);
+            List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
             if(Objects.equals(CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),old.getCfgType())){
                 BaseDropDownDTO.DisabledDTO disabledDTO = logisticsSupplierList.stream().filter(e -> e.getCode().equals(oldDictPlatform)).findFirst().orElse(new BaseDropDownDTO.DisabledDTO());
                 oldDictPlatformName = disabledDTO.getValue();
@@ -451,7 +451,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             String dictPlatformName ="";
             if(Objects.equals(CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),data.getCfgType())){
                 //物流商
-                List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAll(false);
+                List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
                 BaseDropDownDTO.DisabledDTO disabledDTO = logisticsSupplierList.stream().filter(e -> e.getCode().equals(data.getDictPlatform())).findFirst().orElse(new BaseDropDownDTO.DisabledDTO());
                 dictPlatformName = disabledDTO.getValue();
             }else {
@@ -480,7 +480,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
        List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
        Map<String, String> map = dictBasicEntities.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getCode, DictBasicDTO.ViewDTO::getName, (o1, o2) -> o1));
        //物流商
-       List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAll(false);
+       List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
        Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue, (o1, o2) -> o1));
        //销售平台
        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
@@ -557,7 +557,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
         Map<String, String> dictBasicMap = dictBasicEntities.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
         //物流商
-        List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAll(false);
+        List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
         Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode, (o1, o2) -> o1));
         //销售平台
         List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();

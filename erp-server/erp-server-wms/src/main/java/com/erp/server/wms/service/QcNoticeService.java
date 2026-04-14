@@ -1,14 +1,13 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.QcNoticeDetailDTO;
-import com.erp.model.wms.entity.QcNoticeEntity;
-import com.common.business.service.SuperService;
+
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.QcNoticeDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.entity.QcNoticeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -162,7 +161,11 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
 
     List<QcNoticeDTO.QcInfoView> generateQcInfoView(List<String> ids);
 
+    List<QcNoticeDTO.QcInfoFullView> generateQcInfoFullView(QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO);
+
     void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto);
+
+    void generateFullQcInfo(List<QcNoticeDTO.QcInfoFullView> dto);
 
     int getHoursDiff(LocalDateTime approveTime, LocalDateTime nowTime);
 
@@ -171,4 +174,14 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     List<BatchResultDTO>  checkInventory(QcNoticeDTO.AddDTO dto);
 
     QcNoticeDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    List<QcNoticeDTO.PrintQcStandardDTO> printQcStandard(QcNoticeDTO.PrintQcStandardParamDTO paramDTO);
+    /**
+     * 根据质检单的来源明细id 获取到质检合格的数量汇总
+     * @author will
+     * @date 2026/3/23 12:25
+     * @param sourceId
+     * @return  List<QcNoticeEntity>
+     */
+    List<QcNoticeEntity> listBySourceId(String sourceId);
 }

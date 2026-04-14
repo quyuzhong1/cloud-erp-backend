@@ -199,4 +199,8 @@ public class WarehouseReceiveExportExcelDTO {
      * 送货单号
      */
     private String deliveryCode;
+    /**
+     * 待质检量
+     */
+    private Integer waitQcQty;
 }

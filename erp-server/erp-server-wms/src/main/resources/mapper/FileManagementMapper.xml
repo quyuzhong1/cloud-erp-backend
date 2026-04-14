@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FileManagementMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FileManagementEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="file_type" property="fileType" />
+       <result column="first_category_id" property="firstCategoryId" />
+       <result column="first_category_name" property="firstCategoryName" />
+       <result column="product_name" property="productName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        code,file_type, first_category_id, first_category_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.FileManagementDTO$ListDTO">
+        SELECT
+            fm.id,
+            fm.code as code,
+            qssr.id as skuRefId,
+            qssr.sku_id as skuId,
+            qssr.sku_no as skuNo,
+            fm.file_type as fileType,
+            fm.first_category_id as firstCategoryId,
+            fm.first_category_name as firstCategoryName,
+            qssr.product_name as productName,
+            a.id as fileId,
+            a.attach_name as attachName,
+            a.attach_version as attachVersion,
+            a.attach_url as attachUrl,
+            fm.remark as remark,
+            fm.create_user_name as createUserName,
+            fm.update_user_name as updateUserName,
+            fm.create_time as createTime,
+            fm.update_time as updateTime
+        FROM file_management fm
+        LEFT JOIN attachment a on fm.file_id = a.id and a.is_deleted=false
+        left join qc_standard_sku_ref qssr on fm.id = qssr.main_id and qssr.is_deleted = FALSE
+        where  ${params.sqlMap.default}
+        AND fm.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fm.create_time desc
+    </select>
+    <select id="countBySkuAndFileType" resultType="com.erp.model.wms.dto.FileManagementDTO$CountDTO">
+        SELECT fm.id,fm.file_type,qssr.sku_id,qssr.sku_no
+        FROM file_management fm
+        left join qc_standard_sku_ref qssr on fm.id = qssr.main_id and qssr.is_deleted = FALSE
+        WHERE fm.is_deleted = FALSE
+        AND fm.file_type = #{fileType}
+        <if test="skuIds != null and skuIds.size > 0">
+            and qssr.sku_id in
+            <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="skuIds == null or skuIds.size == 0">
+            and qssr.sku_id is null
+        </if>
+        <if test="id != null and id != ''">
+          AND fm.id != #{id}
+        </if>
+    </select>
+
+    <select id="getCategoryGeneralStandardFileUrl"
+            resultType="com.erp.model.wms.dto.FileManagementDTO$AttachDTO">
+        SELECT
+            A.attach_name AS attachName,
+            A.attach_url AS attachUrl
+        FROM
+            file_management fm
+            LEFT JOIN qc_standard_sku_ref qssr ON fm.ID = qssr.main_id AND qssr.is_deleted = FALSE
+            LEFT JOIN attachment A ON fm.file_id = A.ID AND A.is_deleted = FALSE
+        WHERE
+            qssr.sku_id = #{skuId}
+            AND fm.file_type = 'categoryGeneralStandard'
+            AND A.ID = ( SELECT a2.ID FROM attachment a2 WHERE a2.ID = fm.file_id ORDER BY a2.attach_version DESC LIMIT 1 );
+    </select>
+</mapper>

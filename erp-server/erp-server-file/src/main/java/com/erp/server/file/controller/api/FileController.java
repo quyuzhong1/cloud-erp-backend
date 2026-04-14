@@ -11,6 +11,7 @@ import com.erp.model.file.dto.FileDTO;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileService;
+import com.erp.server.file.service.FeiShuFileService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -31,6 +34,8 @@ import java.util.List;
 public class FileController extends BaseController {
     @Resource
     private FileRegistry fileRegistry;
+    @Resource
+    private FeiShuFileService feiShuFileService;
 
     /**
      * 上传文件
@@ -43,7 +48,7 @@ public class FileController extends BaseController {
         FileService fileService = fileRegistry.getHandler();
         String url = fileService.uploadFile(multipartFile);
         String fileName = multipartFile.getOriginalFilename();
-        return success(new SysCommonDTO.AttachmentDTO(fileName, url));
+        return success(new SysCommonDTO.AttachmentDTO(fileName, url, new BigDecimal(multipartFile.getSize()).divide(new BigDecimal(1024 * 1024), 4, RoundingMode.HALF_UP)));
     }
 
     /**
@@ -85,7 +90,7 @@ public class FileController extends BaseController {
         for (MultipartFile file : multipartFile) {
             String filePath = fileService.uploadFile(file);
             String fileName = file.getOriginalFilename();
-            list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath));
+            list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath, new BigDecimal(file.getSize()).divide(new BigDecimal(1024 * 1024), 4, RoundingMode.HALF_UP)));
         }
         return success(list);
     }
@@ -109,12 +114,13 @@ public class FileController extends BaseController {
      * @return
      */
     @PostMapping(value = "/uploadFileByBase64")
-    public String uploadFileByBase64(@RequestBody FileDTO.UploadBase64 uploadBase64){
+    public SysCommonDTO.AttachmentDTO uploadFileByBase64(@RequestBody FileDTO.UploadBase64 uploadBase64){
         FileService fileService = fileRegistry.getHandler();
         String[] parts = uploadBase64.getBase64().split(",");
         byte[] bytes = Base64.getDecoder().decode(parts.length > 1 ? parts[1] : parts[0]);
         String fileName = uploadBase64.getFileName();
-        return FastDFSClientUtil.publicUrl + fileService.uploadFile(bytes,fileName,null);
+        String url = FastDFSClientUtil.publicUrl + fileService.uploadFile(bytes, fileName, null);
+        return new SysCommonDTO.AttachmentDTO(fileName, url, new BigDecimal(bytes.length).divide(new BigDecimal(1024 * 1024), 4, RoundingMode.HALF_UP));
     }
 
     /**
@@ -138,5 +144,17 @@ public class FileController extends BaseController {
     public String mergeFiles(@RequestBody List<String> fileIds){
         FileService fileService = fileRegistry.getHandler();
         return fileService.mergeFiles(fileIds);
+    }
+
+    /**
+     * 上传飞书文件链接
+     *
+     * @param uploadDTO
+     * @return
+     */
+    @PostMapping(value = "/getFeiShuFile")
+    public ApiResult<SysCommonDTO.AttachmentDTO> getFeiShuFile(@RequestBody FileDTO.UploadDTO uploadDTO) {
+        SysCommonDTO.AttachmentDTO attachmentDTO = feiShuFileService.getFeiShuFile(uploadDTO);
+        return success(attachmentDTO);
     }
 }

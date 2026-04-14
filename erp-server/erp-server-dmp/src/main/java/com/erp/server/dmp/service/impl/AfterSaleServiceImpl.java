@@ -35,7 +35,6 @@ import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.enums.ThirdMappingSystemEnum;
-import com.erp.model.dmp.enums.ThirdMappingTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -321,7 +320,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             List<String> attachUrlList = addDTO.getAttachUrlList();
             List<String> attachNameList = addDTO.getAttachNameList();
             for (int i = 0; i < attachUrlList.size(); i++) {
-                AttachmentEntity entity = new AttachmentEntity();
+                DmpAttachmentEntity entity = new DmpAttachmentEntity();
                 entity.setAttachName(attachNameList.get(i));
                 entity.setAttachUrl(attachUrlList.get(i));
                 entity.setType("after_sale");
@@ -332,7 +331,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //保存小程序附件
         if (CollUtil.isNotEmpty(addDTO.getAttachmentList())) {
             for (String attachment : addDTO.getAttachmentList()) {
-                AttachmentEntity entity = new AttachmentEntity();
+                DmpAttachmentEntity entity = new DmpAttachmentEntity();
                 entity.setAttachName(attachment);
                 entity.setAttachUrl(attachment);
                 entity.setType("after_sale");
@@ -497,13 +496,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
 
             // 删除明细数据
-            attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
+            attachmentService.lambdaUpdate().eq(DmpAttachmentEntity::getType, "after_sale").eq(DmpAttachmentEntity::getBusinessId, updateDTO.getId()).remove();
             //保存web附件
             if (CollUtil.isNotEmpty(updateDTO.getAttachNameList()) && CollUtil.isNotEmpty(updateDTO.getAttachUrlList())) {
                 List<String> attachUrlList = updateDTO.getAttachUrlList();
                 List<String> attachNameList = updateDTO.getAttachNameList();
                 for (int i = 0; i < attachUrlList.size(); i++) {
-                    AttachmentEntity entity = new AttachmentEntity();
+                    DmpAttachmentEntity entity = new DmpAttachmentEntity();
                     entity.setAttachName(attachNameList.get(i));
                     entity.setAttachUrl(attachUrlList.get(i));
                     entity.setType("after_sale");
@@ -514,7 +513,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             //保存小程序附件
             if (CollUtil.isNotEmpty(updateDTO.getAttachmentList())) {
                 for (String attachment : updateDTO.getAttachmentList()) {
-                    AttachmentEntity entity = new AttachmentEntity();
+                    DmpAttachmentEntity entity = new DmpAttachmentEntity();
                     entity.setAttachName(attachment);
                     entity.setAttachUrl(attachment);
                     entity.setType("after_sale");

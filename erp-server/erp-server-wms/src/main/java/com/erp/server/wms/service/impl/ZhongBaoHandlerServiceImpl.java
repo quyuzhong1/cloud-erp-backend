@@ -91,17 +91,11 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq) {
         ProductRequest productRequest = ProductRequest.builder().commonParam(CommonRequest.builder()
-                .pageParam(PageRequest.builder().pageSize("1").pageNum("10").build()).build()).status(3).build();
-
-        GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
-                .page(1)
-                .pageSize(100)
-                .productSkuArr(productReq.getSkuNoList())
-                .build();
+                .pageParam(PageRequest.builder().pageSize(100).pageNum(0).build()).build()).status(3).build();
         List<ProductResponse.Product> respList = new ArrayList<>();
         int pageNum = 1;
         while (true) {
-         productRequest.getCommonParam().setPageParam(PageRequest.builder().pageSize("100").pageNum(String.valueOf(pageNum)).build());
+         productRequest.getCommonParam().setPageParam(PageRequest.builder().pageSize(100).pageNum(pageNum).build());
             BaseResponse<ProductResponse> response = zhongbaoService.productList(productRequest);
             if (!response.getSuccess()) {
                 log.error(getPlatForm() +"查询产品信息异常" + response);
