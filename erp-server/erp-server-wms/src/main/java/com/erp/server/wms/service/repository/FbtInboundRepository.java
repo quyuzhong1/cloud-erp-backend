@@ -118,4 +118,24 @@ public class FbtInboundRepository {
         }
         return overseasInventoryMapper.selectList(wrapper);
     }
+
+    public List<OverseasInventoryEntity> listOverseasInventoryByProviderAndSku(String overseasProviderId,
+                                                                               String dictPlatform,
+                                                                               String platformSku) {
+        LambdaQueryWrapper<OverseasInventoryEntity> wrapper = Wrappers.lambdaQuery();
+        if (overseasProviderId != null) {
+            wrapper.eq(OverseasInventoryEntity::getOverseasProviderId, overseasProviderId);
+        } else {
+            wrapper.and(w -> w.isNull(OverseasInventoryEntity::getOverseasProviderId)
+                    .or()
+                    .eq(OverseasInventoryEntity::getOverseasProviderId, ""));
+        }
+        if (dictPlatform != null) {
+            wrapper.eq(OverseasInventoryEntity::getDictPlatform, dictPlatform);
+        }
+        if (platformSku != null) {
+            wrapper.eq(OverseasInventoryEntity::getPlatformSku, platformSku);
+        }
+        return overseasInventoryMapper.selectList(wrapper);
+    }
 }
