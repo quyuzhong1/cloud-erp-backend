@@ -63,6 +63,7 @@ import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -2900,8 +2901,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return new LogisticsBillCostDTO.TotalCountDTO();
         }
 
-        List<String> mainIdList = list.stream().map(LogisticsBillCostDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        Map<String, List<CostViewDTO>> costListMap = tmsCostDetailService.listCostByMainIdList(mainIdList).stream()
+        List<String> idList = list.stream().map(LogisticsBillCostDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<List<String>> idListPartition = Lists.partition(idList, 50000);
+
+        //分页查询数据
+        List<CostViewDTO> detailList = new ArrayList<>();
+        for (List<String> mainIdList : idListPartition) {
+            List<CostViewDTO> tmsCostDetailList = tmsCostDetailService.listCostByMainIdList(mainIdList);
+            detailList.addAll(tmsCostDetailList);
+        }
+        Map<String, List<CostViewDTO>> costListMap = detailList.stream()
                 .collect(Collectors.groupingBy(l -> l.getMainId() + "_" + l.getDictCostCategory() + "_" + l.getType()));
 
         for (LogisticsBillCostDTO.ListDTO listDTO : list) {
