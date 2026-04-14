@@ -21,7 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -253,7 +253,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
      * 添加redis缓存
      */
     private void setRedisExchangeRate(BiSettlementExchangeRateEntity entity) {
-        String existKey = CharSequenceUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE, entity.getTargetCurrencyCode(), entity.getSourceCurrencyCode());
+        String existKey = CharSequenceUtil.format(RedisCacheConstants.SETTLEMENT_EXCHANGE_RATE, entity.getTargetCurrencyCode(), entity.getSourceCurrencyCode());
         List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(entity.getTargetCurrencyCode(), entity.getSourceCurrencyCode());
         if (CollectionUtils.isEmpty(rateList)) {
             throw new ServiceException(CharSequenceUtil.format("目标币别【{}】、原币别【{}】未查询到汇率", entity.getTargetCurrencyCode(), entity.getSourceCurrencyCode()));
