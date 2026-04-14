@@ -1,5 +1,6 @@
 package com.erp.server.auth.controller.openapi;
 
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignInvoke;
@@ -8,7 +9,6 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.wms.feign.WmsFeign;
 import com.erp.server.auth.config.OpenApi;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -37,11 +37,11 @@ public class CommonOpenApi {
 
     /**
      * WMS字典列表
-     * @param key
+     * @param dictDTO
      * @return
      */
     @OpenApi("wmsDict")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> wmsDictList(@RequestParam("key") String key) {
-        return wmsFeign.dictList(key);
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> wmsDictList(@RequestBody BaseDTO.DictDTO dictDTO) {
+        return wmsFeign.dictList(dictDTO.getKey());
     }
 }
