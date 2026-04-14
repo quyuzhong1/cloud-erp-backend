@@ -156,6 +156,16 @@ public interface MessageService extends SuperService<MessageEntity> {
     boolean readHistoryVersion(SysVersionDTO.ReadHistoryVersionDTO dto);
 
     /**
+     * 获取系统通知未读数量
+     */
+    int getSysMessageUnreadCount();
+
+    /**
+     * 获取版本更新未读数量
+     */
+    int getSysVersionUnreadCount();
+
+    /**
      *
      */
     SysVersionDTO.LatestVersionDTO getLatestVersion();

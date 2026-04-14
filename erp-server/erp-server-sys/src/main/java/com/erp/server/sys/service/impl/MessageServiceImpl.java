@@ -424,8 +424,32 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
                 messageUserReadService.saveBatch(messageUserReadEntities);
             }
         } catch (Exception e) {
-            log.error("创建消息未读记录失败", e);
-        }
+        log.error("创建消息未读记录失败", e);
     }
+}
+
+@Override
+public int getSysMessageUnreadCount() {
+    String userId = UserContext.getDefaultLoginUser().getUid();
+    // 统计系统通知未读数量，type 为 "sys"
+    return messageUserReadService.lambdaQuery()
+            .eq(MessageUserReadEntity::getUserId, userId)
+            .eq(MessageUserReadEntity::getIsRead, Boolean.FALSE)
+            .inSql(MessageUserReadEntity::getMessageId, "SELECT id FROM message WHERE is_deleted = FALSE AND type = 'sys'")
+            .count()
+            .intValue();
+}
+
+@Override
+public int getSysVersionUnreadCount() {
+    String userId = UserContext.getDefaultLoginUser().getUid();
+    // 统计版本更新未读数量，type 为 "version"
+    return messageUserReadService.lambdaQuery()
+            .eq(MessageUserReadEntity::getUserId, userId)
+            .eq(MessageUserReadEntity::getIsRead, Boolean.FALSE)
+            .inSql(MessageUserReadEntity::getMessageId, "SELECT id FROM message WHERE is_deleted = FALSE AND type = 'sysVersion'")
+            .count()
+            .intValue();
+}
 
 }

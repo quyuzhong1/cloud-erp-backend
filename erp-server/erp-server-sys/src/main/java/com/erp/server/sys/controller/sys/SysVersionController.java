@@ -14,14 +14,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
+import com.erp.model.sys.dto.MessageDTO;
 import com.erp.server.sys.handler.SysVersionQueryHandler;
 import com.erp.server.sys.service.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +135,15 @@ public class SysVersionController {
     public ApiResult<?> readHistoryVersion(@RequestBody SysVersionDTO.ReadHistoryVersionDTO dto) {
         messageService.readHistoryVersion(dto);
         return success();
+    }
+
+    /**
+     * 获取版本更新未读数量
+     * @return
+     */
+    @GetMapping("/unreadCount")
+    public ApiResult<Integer> getUnreadCount() {
+        return success(messageService.getSysVersionUnreadCount());
     }
 
     /**
