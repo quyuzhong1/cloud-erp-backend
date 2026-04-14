@@ -1770,7 +1770,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<PurchaseOrderDetailEntity> podList = FeignQuery.create(PurchaseOrderDetailEntity.class).eq(PurchaseOrderDetailEntity::getId, podId).list();
             if (CollUtil.isNotEmpty(podList)) {
                 PurchaseOrderDetailEntity pod = podList.get(0);
-                int billGoodQty = qcInfo.getQcGoodQty();
+                int billGoodQty = qcInfo.getLotQualifiedQty();
                 int currentGoodQty = pod.getQcGoodQty() != null ? pod.getQcGoodQty() : 0;
                 if (currentGoodQty < billGoodQty) {
                     throw new ServiceException("撤销质检失败：采购订单明细扣减后的质检合格量不能小于0");
