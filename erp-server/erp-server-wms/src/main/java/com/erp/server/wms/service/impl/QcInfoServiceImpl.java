@@ -652,7 +652,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
             //累加质检合格量(结果：合格)
-            handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getQcGoodQty());
+            handlePurchaseOrderQcAccumulation(bill, qcInfo.getPurchaseOrderDetailId(),qcInfo.getQcResult(),qcInfo.getLotQualifiedQty());
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(bill.getId()),Boolean.TRUE);
 
@@ -1299,7 +1299,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //累加质检合格量(结果：合格)
             if (Objects.nonNull(qcResult)) {
-                handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getQcGoodQty());
+                handlePurchaseOrderQcAccumulation(entity, qcResult.getPurchaseOrderDetailId(),qcResult.getQcResult(),qcResult.getLotQualifiedQty());
             }
 
             //批量去更新 质检数量
