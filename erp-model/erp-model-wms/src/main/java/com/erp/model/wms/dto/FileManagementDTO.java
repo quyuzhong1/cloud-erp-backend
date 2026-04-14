@@ -403,4 +403,13 @@ public class FileManagementDTO implements Serializable {
          */
         private String attachName;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class CountDTO {
+        private String id;
+        private String fileType;
+        private String skuId;
+        private String skuNo;
+    }
 }
