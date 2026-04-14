@@ -260,6 +260,7 @@
         oi.sale_return_in_transit_qty as saleReturnInTransitQty
         FROM overseas_inventory AS oi
         LEFT JOIN overseas_provider_warehouse AS opw ON opw.platform_warehouse_code = oi.warehouse_code AND oi.overseas_provider_id = opw.main_id AND opw.is_deleted = FALSE AND opw.disabled =FALSE
+        LEFT JOIN warehouse AS fw ON oi.dict_platform = 'fbt' AND fw.id = oi.warehouse_code AND fw.is_deleted = FALSE
         LEFT JOIN overseas_provider AS op ON op.ID = oi.overseas_provider_id AND op.is_deleted = FALSE
         LEFT JOIN (
         SELECT
@@ -289,6 +290,8 @@
         COALESCE(SUM(oi.frozen_qty),0) as frozenQty,
         COALESCE(SUM(oi.shipped_qty),0) as shippedQty
         FROM overseas_inventory as oi
+        LEFT JOIN overseas_provider_warehouse AS opw ON opw.platform_warehouse_code = oi.warehouse_code AND oi.overseas_provider_id = opw.main_id AND opw.is_deleted = FALSE AND opw.disabled =FALSE
+        LEFT JOIN warehouse AS fw ON oi.dict_platform = 'fbt' AND fw.id = oi.warehouse_code AND fw.is_deleted = FALSE
         LEFT JOIN overseas_provider as op
         on op.id = oi.overseas_provider_id and op.is_deleted = false
         <where>
@@ -333,6 +336,7 @@
         oi.sale_return_in_transit_qty as saleReturnInTransitQty
         FROM overseas_inventory AS oi
         LEFT JOIN overseas_provider_warehouse AS opw ON oi.overseas_provider_id = opw.main_id and opw.platform_warehouse_code = oi.warehouse_code AND opw.is_deleted = FALSE AND opw.disabled =FALSE
+        LEFT JOIN warehouse AS fw ON oi.dict_platform = 'fbt' AND fw.id = oi.warehouse_code AND fw.is_deleted = FALSE
         LEFT JOIN overseas_provider AS op ON op.ID = oi.overseas_provider_id AND op.is_deleted = FALSE
         LEFT JOIN (
         SELECT
