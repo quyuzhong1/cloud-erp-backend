@@ -50,6 +50,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import javax.annotation.Resource;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -832,8 +833,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                         }
                         wmsAttachmentService.saveBatch(attachmentList);
                     }
-
                     // 3. 记录主表日志
+                    bean.lambdaUpdate().set(QcStandardEntity::getUpdateTime, LocalDateTime.now()).eq(QcStandardEntity::getId, existing.getId()).update();
                     String msg = StrUtil.format("用户【{}】通过导入更新了质检标准，SKU编号【{}】",
                             UserContext.getDefaultLoginUser().getUserName(), existing.getSkuNo());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_STANDARD.getCode(), existing.getId(), "导入更新");
