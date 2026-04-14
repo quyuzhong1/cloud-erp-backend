@@ -1,5 +1,6 @@
 package com.erp.server.mrp.config;
 
+import com.common.business.config.TraceableThreadPoolTaskExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -9,7 +10,7 @@ public class ThreadPoolConfig {
 
     @Bean("mrpExecutor")
     public ThreadPoolTaskExecutor threadPoolExecutor() {
-        ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(75);
         // 设置最大线程数
