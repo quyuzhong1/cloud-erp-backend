@@ -107,7 +107,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                         attachDTO.setAttachName(badImageView.getAttachName());
                         addAttachDTOS.add(attachDTO);
                     }
-                    attachmentService.batchSave(addAttachDTOS, WmsConstant.BAD, newEntity.getId());
+                    attachmentService.batchSave(addAttachDTOS, WmsConstant.QC_DEFECT, newEntity.getId());
                 }
             } else {
                 // 更新记录 - 检查是否存在
@@ -130,7 +130,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                             attachDTO.setAttachName(badImageView.getAttachName());
                             updateAttachDTOS.add(attachDTO);
                         }
-                        attachmentService.batchSave(updateAttachDTOS, WmsConstant.BAD, addDTO.getId());
+                        attachmentService.batchSave(updateAttachDTOS, WmsConstant.QC_DEFECT, addDTO.getId());
                     }
                 } else {
                     continue;
@@ -178,7 +178,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 BeanUtils.copyProperties(qcDefectEntity,viewDTO);
                 viewDTO.setDefectQty(qcDefectEntity.getBadQty());
                 viewDTO.setDefectLevelName(WmsDefectLevelEnum.getName(viewDTO.getDefectLevel()));
-                List<WmsAttachmentEntity> attachments = attachmentService.getByBusinessId(qcDefectEntity.getId(), WmsConstant.BAD);
+                List<WmsAttachmentEntity> attachments = attachmentService.getByBusinessId(qcDefectEntity.getId(), WmsConstant.QC_DEFECT);
                 for (WmsAttachmentEntity attachment : attachments) {
                     QcDefectDTO.BadImageView badImageView = new QcDefectDTO.BadImageView();
                     badImageView.setAttachName(attachment.getAttachName());

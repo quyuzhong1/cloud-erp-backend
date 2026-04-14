@@ -126,10 +126,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         qcResultEntity.setMainId(billId);
         qcResultEntity.setId(id);
         qcResultEntity.setIsInside(isInside);
-        //
-        List<String> imageNameList = qcInfo.getBadImageNameList();
-        List<String> imageUrlList = qcInfo.getBadImageUrlList();
-        wmsAttachmentService.batchSave(imageUrlList, imageNameList, WmsConstant.BAD, id);
         //质检附件
         List<String> qcAttachmentNameList = qcInfo.getQcAttachmentNameList();
         //质检附件url
@@ -195,11 +191,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         if (qcInfo != null) {
             BeanMapper.copy(qcInfo, qcInfoView);
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(qcInfo.getId()));
-            List<String> imageUrlList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> nameList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-            qcInfoView.setBadImageNameList(nameList);
-            qcInfoView.setBadImageUrlList(imageUrlList);
-
 
             List<String> qcAttachmentUrlList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> qcAttachmentNameList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());

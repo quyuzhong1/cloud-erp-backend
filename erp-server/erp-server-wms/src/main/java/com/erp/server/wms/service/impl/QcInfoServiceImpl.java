@@ -2822,7 +2822,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 }
 
                 // 不良附件
-                String qcBadKey = item.getQcResultId() + "_" + WmsConstant.BAD;
+                String qcBadKey = item.getQcResultId() + "_" + WmsConstant.QC_DEFECT;
                 if (badAttachmentMap.containsKey(qcBadKey)) {
                     List<WmsAttachmentDTO.UpdateDTO> attachList = badAttachmentMap.get(qcBadKey);
                     qcDailyReportDTO.setBadAttachments(attachList);
