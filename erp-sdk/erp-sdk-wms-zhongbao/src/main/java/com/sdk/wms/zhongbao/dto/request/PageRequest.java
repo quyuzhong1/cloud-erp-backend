@@ -14,7 +14,7 @@ import lombok.Data;
 @Builder
 public class PageRequest {
     //页码：默认=>1
-    private String pageNum;
+    private Integer pageNum;
     //每页条数：默认=>10
-    private String pageSize;
+    private Integer pageSize;
 }

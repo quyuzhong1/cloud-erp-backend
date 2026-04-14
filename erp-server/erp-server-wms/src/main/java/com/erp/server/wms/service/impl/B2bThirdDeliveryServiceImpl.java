@@ -781,24 +781,24 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
 
-        if(Objects.equals(queryResult.getCode(),"200")
-                && !queryResult.getData().isEmpty()
-                && Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),queryResult.getData().get(0).getPlatform())) {
+        if(Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),req.getThirdWarehouseProvideCode())) {
             B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
-            updateZhongBaoStatus(sourceId, queryResult.getData().get(0).getStatus(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
-        }else if (!Objects.equals(queryResult.getCode(),"200")
-                && !queryResult.getData().isEmpty()
-                && Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),queryResult.getData().get(0).getPlatform())){
-            updateZhongBaoStatus(sourceId, ZhongBaoB2BDeliveryStatusEnum.CREATE_FAIR.getCode().toString(), fbaOutboundBill.getMsg(), "", "", "",null);
-        }else {
-            B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
-            if (CharSequenceUtil.isNotBlank(convertDTO.getPlatformOrderCode())) {
-                // 查询发现订单实际已创建成功
-                this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+            if (queryResult.isSuccess() && Objects.nonNull(queryResult.getData()) && !queryResult.getData().isEmpty()) {
+                updateZhongBaoStatus(sourceId, queryResult.getData().get(0).getStatus(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+                return;
             } else {
-                // 确认创建失败
-                this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+                updateZhongBaoStatus(sourceId, ZhongBaoB2BDeliveryStatusEnum.CREATE_FAIR.getCode().toString(), fbaOutboundBill.getMsg(), "", "", "",null);
+                return;
             }
+        }
+
+        B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
+        if (CharSequenceUtil.isNotBlank(convertDTO.getPlatformOrderCode())) {
+            // 查询发现订单实际已创建成功
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+        } else {
+            // 确认创建失败
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
         }
     }
 

@@ -30,12 +30,12 @@ public class ThirdWarehouseFeignController extends BaseController {
     private OverseasProviderService overseasProviderService;
     @PostMapping("/createOutboundOrder")
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundOrder(@RequestBody ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        try {
+//        try {
             ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(createOutboundReq.getThirdWarehouseProvideCode());
             return service.createOutboundBill(createOutboundReq, createOutboundReq.getAuthId());
-        } catch (ServiceException serviceException) {
-            return failure(serviceException.getMsg());
-        }
+//        } catch (ServiceException serviceException) {
+//            return failure(serviceException.getMsg());
+//        }
     }
 
 

@@ -17,12 +17,13 @@ public interface LogisticsThirdChannelRefConverter {
     LogisticsThirdChannelRefConverter INSTANCE = Mappers.getMapper(LogisticsThirdChannelRefConverter.class);
 
     @Mappings({
-
+    
             @Mapping(target = "detailList", ignore = true),
             @Mapping(target = "disabled", constant = "false"),
             @Mapping(target = "logisticsChannelCode",  ignore = true),
-            @Mapping(target = "remark", constant = "excel导入"),
-            @Mapping(target = "thirdChannelCode",  ignore = true)
+            @Mapping(target = "remark", constant = "excel 导入"),
+            @Mapping(target = "thirdChannelCode",  ignore = true),
+            @Mapping(target = "dictPlatform", source = "mainDictPlatform")
     })
     LogisticsThirdChannelRefDTO.AddDTO convertImportToAddDTO(ImportLogisticsThirdChannelRefExcelDTO importLogisticsThirdChannelRefExcelDTO);
     @Mappings({

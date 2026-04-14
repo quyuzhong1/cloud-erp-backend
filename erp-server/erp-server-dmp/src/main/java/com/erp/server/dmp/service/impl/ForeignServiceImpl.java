@@ -21,4 +21,9 @@ public class ForeignServiceImpl implements ForeignService {
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return foreignMapper.listTrackDto(query);
     }
+
+    @Override
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType) {
+        return foreignMapper.listWaitingRegisterByConfig(query, platformType);
+    }
 }

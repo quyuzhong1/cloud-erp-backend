@@ -375,7 +375,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(pushDTO)) {
                 continue;
             }
-            PushSelf2Request request = syncWangDianSoB2cService.newSyncKolB2c(pushDTO, null);
+            PushSelf2Request request = syncWangDianSoB2cService.newSyncKolB2c(pushDTO, null, syncParamDetailDTO.getSyncOperate());
             if(Objects.isNull(request)){
                 log.warn("newSyncKolB2c >>>> 未找到KOL-B2C拆分单: sourceId={}", sourceId);
                 continue;

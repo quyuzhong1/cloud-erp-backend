@@ -91,6 +91,7 @@
         lb.transport_no as transportNo,
         lb.sales_platform as salesPlatform,
         lb.shop_id as shopId,
+        lb.sales_platform as salesPlatform,
         lc.track_query_type as trackQueryType
         from logistics_bill_detail lbd
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
@@ -151,5 +152,79 @@
                 </foreach>
             </if>
         </where>
+    </select>
+    <select id="listWaitingRegisterByConfig" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
+        SELECT
+            lbd.id,
+            lbd.track_no,
+            lbd.platform_order_no,
+            lb.carrier_id AS carrierId,
+            lb.tel_number AS telNumber,
+            lb.channel_id AS channelId,
+            lb.channel_name AS channelName,
+            lb.transport_no AS transportNo,
+            lb.sales_platform AS salesPlatform,
+            lb.shop_id AS shopId,
+            lc.track_query_type AS trackQueryType,
+            best_match.cfgId ,
+            best_match.cfgTime,
+            lb.delivery_time
+        FROM logistics_bill_detail lbd
+        INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
+        LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
+        INNER JOIN LATERAL (
+        SELECT ltcr.id AS cfgId,ltcr.create_time as cfgTime
+        FROM logistics_third_channel_ref ltcr
+        WHERE  ltcr.disabled = false
+        AND ltcr.is_deleted = false
+        AND ltcr.platform_type = #{platformType}
+        AND ltcr.dict_platform = lb.sales_platform
+        AND (
+        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id) OR
+        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all') OR
+        (ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
+        )
+        ORDER BY
+        CASE
+        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id THEN 1
+        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all' THEN 2
+        WHEN ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all' THEN 3
+        END ASC
+        LIMIT 1
+        ) AS best_match ON TRUE
+        WHERE lbd.is_deleted = false
+        <if test="query.trackTime != null">
+            and lbd.track_time > #{query.trackTime}
+        </if>
+          <if test="query.registerStatus != null">
+            and lbd.register_status = #{query.registerStatus}
+          </if>
+          <if test="query.trackEnable != null">
+            and lbd.track_enable = #{query.trackEnable}
+          </if>
+          AND lbd.track_status NOT IN ('sign','manualComplete','systemComplete','deliveryFail')
+          AND (lbd.track_no != '' OR lb.transport_no != '')
+          <if test="query.transportType != null and query.transportType == 'expressDelivery'">
+              AND lb.order_type IN ('B2B','B2C','AfterSale')
+          </if>
+          <if test="query.transportType != null and query.transportType == 'ocean'">
+              AND lb.order_type = 'firstMile'
+          </if>
+          <if test="query.trackNoList != null and query.trackNoList.size > 0">
+              AND lbd.track_no IN
+              <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
+          <if test="query.transportNoList != null and query.transportNoList.size > 0">
+              AND lb.transport_no IN
+              <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
+          <if test="query.salesPlatform != null and query.salesPlatform != ''">
+              and lb.sales_platform = #{query.salesPlatform}
+          </if>
+            AND lb.delivery_time &gt;= best_match.cfgTime
     </select>
 </mapper>
