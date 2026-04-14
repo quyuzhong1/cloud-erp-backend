@@ -934,7 +934,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
             }
 
-
             qcResultView.setQcType(qcInfoView.getQcType());
             qcResultView.setQcTypeName(QcTypeEnum.getByCode(qcInfoView.getQcType()));
             qcResultView.setQcQty(samplingPlan.getSampleQty());
@@ -1230,7 +1229,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //构建采购订单质检合格数量累计所需的参数 
             if (qcInfo != null) {
                 String podId = qcResult != null ? qcResult.getPurchaseOrderDetailId() : null;
-                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcResultView.getQcResult(), qcResultView.getQcGoodQty()));
+                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcResultView.getQcResult(), qcResultView.getLotQualifiedQty()));
             }
 
             // 日志记录
@@ -1558,7 +1557,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             // 构建采购订单质检合格数量累计所需的参数 
             if (qcInfo != null) {
                 String podId = qcResult != null ? qcResult.getPurchaseOrderDetailId() : null;
-                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcInfoView.getQcResult(), qcInfoView.getQcGoodQty()));
+                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcInfoView.getQcResult(), qcInfoView.getLotQualifiedQty()));
             }
 
             // 日志记录 (使用先前克隆出的 oldDetailSnapshotMap 快照来进行差异比较)
@@ -1820,12 +1819,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             // 只有判定合格且有合格数量的才需要冲销
             if (qr != null && CharSequenceUtil.isNotBlank(qr.getPurchaseOrderDetailId()) 
                 && QcResultEnum.CONFORMITY.getCode().equals(qr.getQcResult())
-                && qr.getQcGoodQty() != null && qr.getQcGoodQty() > 0) {
+                && qr.getLotQualifiedQty() != null && qr.getLotQualifiedQty() > 0) {
                 
                 PurchaseOrderDTO.QcQtyDTO deduct = new PurchaseOrderDTO.QcQtyDTO();
                 deduct.setPurchaseOrderDetailId(qr.getPurchaseOrderDetailId());
                 deduct.setQcInfoId(qr.getMainId());
-                deduct.setQcGoodQty(-qr.getQcGoodQty()); // 传负数进行扣减
+                deduct.setQcGoodQty(-qr.getLotQualifiedQty()); // 传负数进行扣减
                 deductList.add(deduct);
             }
         }
