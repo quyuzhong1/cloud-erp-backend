@@ -5,21 +5,31 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDetailDTO;
 import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
 import com.erp.model.tms.enums.TrackPlatformTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.convert.LogisticsThirdChannelRefConverter;
 import com.erp.server.tms.listener.LogisticsThirdChannelRefListener;
 import com.erp.server.tms.mapper.LogisticsThirdChannelRefMapper;
@@ -38,9 +48,12 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,6 +65,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF;
 import static com.common.business.threadlocal.UserContext.getDefaultLoginUser;
 
 /**
@@ -79,6 +93,13 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     private LogisticsBillDetailService logisticsBillDetailService;
     @Resource
     private BasicQueryLogisticsProviderService basicQueryLogisticsProviderService;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private FileFeign fileFeign;
+    @Resource
+    private DictBasicService dictBasicService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -226,33 +247,34 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
-        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.lambdaQuery().list();
-        Map<String, LogisticsChannelEntity> logisticsChannelMap = logisticsChannelService.list().stream().collect(Collectors.toMap(LogisticsChannelEntity::getName, Function.identity(), (o1, o2) -> o1));
-        Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap = basicQueryLogisticsProviderService.list().stream().collect(Collectors.toMap(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, Function.identity(), (o1, o2) -> o1));
-        LogisticsThirdChannelRefListener excelListener = new LogisticsThirdChannelRefListener(logisticsSupplierEntities,logisticsChannelMap,queryLogisticsProviderMap);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), ImportLogisticsThirdChannelRefExcelDTO.class, excelListener).sheet(0).doRead();
-        } catch (Exception e) {
-            log.error("物流-第三方渠道关系单导入错误", e);
-            return Boolean.FALSE;
-        }
-        //导入数据处理
-        List<ImportLogisticsThirdChannelRefExcelDTO> successList = excelListener.getSuccessList();
-        //导出错误数据
-        List<ImportLogisticsThirdChannelRefExcelDTO> errorList = excelListener.getErrorList();
-        //处理校验导入成功数据
-        handleImportFile(successList, errorList);
-
-        if (!errorList.isEmpty()) {
-            String fileName = "物流-第三方渠道关系单导入错误信息";
-            ExcelUtil.export(fileName, "导入异常", errorList, ImportLogisticsThirdChannelRefExcelDTO.class, response);
-            return Boolean.FALSE;
-        }
+//        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.lambdaQuery().list();
+//        Map<String, LogisticsChannelEntity> logisticsChannelMap = logisticsChannelService.list().stream().collect(Collectors.toMap(LogisticsChannelEntity::getName, Function.identity(), (o1, o2) -> o1));
+//        Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap = basicQueryLogisticsProviderService.list().stream().collect(Collectors.toMap(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, Function.identity(), (o1, o2) -> o1));
+//        LogisticsThirdChannelRefListener excelListener = new LogisticsThirdChannelRefListener(logisticsSupplierEntities,logisticsChannelMap,queryLogisticsProviderMap);
+//        try {
+//            EasyExcel.read(excelFile.getInputStream(), ImportLogisticsThirdChannelRefExcelDTO.class, excelListener).sheet(0).doRead();
+//        } catch (Exception e) {
+//            log.error("物流-第三方渠道关系单导入错误", e);
+//            return Boolean.FALSE;
+//        }
+//        //导入数据处理
+//        List<ImportLogisticsThirdChannelRefExcelDTO> successList = excelListener.getSuccessList();
+//        //导出错误数据
+//        List<ImportLogisticsThirdChannelRefExcelDTO> errorList = excelListener.getErrorList();
+//        //处理校验导入成功数据
+//        handleImportFile(successList, errorList);
+//
+//        if (!errorList.isEmpty()) {
+//            String fileName = "物流-第三方渠道关系单导入错误信息";
+//            ExcelUtil.export(fileName, "导入异常", errorList, ImportLogisticsThirdChannelRefExcelDTO.class, response);
+//            return Boolean.FALSE;
+//        }
         return Boolean.TRUE;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void handleImportFile(List<ImportLogisticsThirdChannelRefExcelDTO> successList, List<ImportLogisticsThirdChannelRefExcelDTO> errorList) {
+    @Override
+    public void handleImportFile(List<ImportLogisticsThirdChannelRefExcelDTO> successList, List<String> errorNoList, List<ImportLogisticsThirdChannelRefExcelDTO> errorList, String importType) {
         //组装入库数据
         Map<String, List<ImportLogisticsThirdChannelRefExcelDTO>> groupMap = successList.stream().collect(Collectors.groupingBy(ImportLogisticsThirdChannelRefExcelDTO::getSerialNumber));
         for (Map.Entry<String, List<ImportLogisticsThirdChannelRefExcelDTO>> entry : groupMap.entrySet()) {
@@ -313,8 +335,8 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     * 新增修改处理数据
     */
     private void handleData(LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity, List<LogisticsThirdChannelRefDetailEntity> detailList) {
-        //同一个查询服务商下我司物流商+渠道，查询物流商+渠道仅可创建一条
-        Integer count = this.lambdaQuery().eq(LogisticsThirdChannelRefEntity::getPlatformType, logisticsThirdChannelRefEntity.getPlatformType())
+        //平台+我司物流商+渠道唯一
+        Integer count = this.lambdaQuery()
                 .eq(LogisticsThirdChannelRefEntity::getLogisticsSupplierId, logisticsThirdChannelRefEntity.getLogisticsSupplierId())
                 .eq(LogisticsThirdChannelRefEntity::getLogisticsChannelId, logisticsThirdChannelRefEntity.getLogisticsChannelId())
                 .eq(LogisticsThirdChannelRefEntity::getDictPlatform, logisticsThirdChannelRefEntity.getDictPlatform())
@@ -434,5 +456,62 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             return Collections.emptyList();
         }
         return baseMapper.listByTrackNos(trackNos);
+    }
+
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入物流-第三方渠道关系表", IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importLogisticsThirdChannelRef(BaseDTO.ImportDTO dto) {
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.lambdaQuery().list();
+        List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.list();
+        Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap = basicQueryLogisticsProviderService.list().stream().collect(Collectors.toMap(e -> e.getLogisticsNameCn() +":"+e.getTrackPlatformType(), Function.identity(), (o1, o2) -> o1));
+        Map<String, String> shopMap = FeignQuery.list(ShopInfoEntity.class).stream().collect(Collectors.toMap(ShopInfoEntity::getName, ShopInfoEntity::getId, (o1, o2) -> o1));
+        Map<String, String> dictMap = dictBasicService.getByKey("channelSalesPlatform").stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
+        LogisticsThirdChannelRefListener excelListenerUtil = new LogisticsThirdChannelRefListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),logisticsSupplierEntities,logisticsChannelEntities,shopMap,dictMap,queryLogisticsProviderMap);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), ImportLogisticsThirdChannelRefExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        }  catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<ImportLogisticsThirdChannelRefExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "样品借用单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, ImportLogisticsThirdChannelRefExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 }

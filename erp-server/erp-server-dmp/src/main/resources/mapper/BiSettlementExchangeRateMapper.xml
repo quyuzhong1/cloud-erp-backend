@@ -2,8 +2,29 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.dmp.mapper.BiSettlementExchangeRateMapper">
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.BiSettlementExchangeRateDTO$ListDTO">
+        select
+        bser.id,
+        bser.source_currency_code as sourceCurrencyCode,
+        bser.target_currency_code as targetCurrencyCode,
+        bser.exchange_rate as exchangeRate,
+        bser.indirect_exchange_rate as indirectExchangeRate,
+        bser.settlement_date_begin as settlementDateBegin,
+        bser.settlement_date_end as settlementDateEnd,
+        bser.disabled as disabled,
+        bser.approve_status as approveStatus
+        from bi_settlement_exchange_rate bser
+        where is_deleted = false
+        <if test="params.currencyList != null and params.currencyList.size > 0">
+            and bser.source_currency_code in
+            <foreach collection="params.currencyList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by bser.settlement_date_begin desc
+    </select>
 
-    <select id="findByCurrencyAndDate" resultType="com.erp.model.bi.entity.BiSettlementExchangeRateEntity">
+    <select id="findByCurrencyAndDate" resultType="com.erp.model.dmp.entity.BiSettlementExchangeRateEntity">
         select id, settlement_date_begin, settlement_date_end, exchange_rate, source_currency_code, target_currency_code, update_time
         from bi_settlement_exchange_rate
         <where>
@@ -19,7 +40,7 @@
     </select>
 
     <!-- 根据目标币别和来源币别查询已审核启用汇率信息 -->
-    <select id="listByCurrencyCode" resultType="com.erp.model.bi.entity.BiSettlementExchangeRateEntity">
+    <select id="listByCurrencyCode" resultType="com.erp.model.dmp.entity.BiSettlementExchangeRateEntity">
         select id, settlement_date_begin, settlement_date_end, exchange_rate, source_currency_code, target_currency_code, update_time
         from bi_settlement_exchange_rate
         <where>
