@@ -6990,6 +6990,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean updateBillStatus(String id, SoB2cBillStatusEnum soB2cBillStatusEnum) {
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getBillStatus, soB2cBillStatusEnum.getCode())
+                .setSql("version = version + 1")
                 .update(new SoB2cEntity());
     }
 
