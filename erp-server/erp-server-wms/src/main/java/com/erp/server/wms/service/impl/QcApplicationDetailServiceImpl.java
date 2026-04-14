@@ -307,7 +307,7 @@ public class QcApplicationDetailServiceImpl extends SuperServiceImpl<QcApplicati
         //送货信息
         List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailDTOByDetailSourceIds(podIdList);
         //查询采购签收信息
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = warehouseReceiveService.getReceiveListByPurchaseOrderIds(Collections.singletonList(qcApplicationEntity.getId()));
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = warehouseReceiveService.getReceiveListByPurchaseOrderIds(Collections.singletonList(qcApplicationEntity.getSourceId()));
         //入库信息
         List<PoInstockDetailEntity> stockInDetailList = poInstockDetailService.listDetailByPodIds(podIdList);
         //退货信息
