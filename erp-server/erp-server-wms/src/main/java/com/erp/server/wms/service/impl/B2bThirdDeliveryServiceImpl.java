@@ -1076,14 +1076,53 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return;
         }
         ApiResult<String> fbaOutboundBill = cancelFbaOutboundBill(thirdWarehouseService, req, 0);
-        if (fbaOutboundBill.isSuccess()) {
-            // 创建成功
-            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
-        } else {
+        if (!fbaOutboundBill.isSuccess()) {
             // 创建失败
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
             soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(), fbaOutboundBill.getMsg(), entity.getTrackNo(), "");
+            return;
         }
+
+        if (B2bThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode().equalsIgnoreCase(fbaOutboundBill.getData())) {
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
+            soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(),
+                    CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败"), entity.getTrackNo(), "");
+            return;
+        }
+
+        proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
+        tryHandleCancelFbaOutboundResult(sourceId, thirdWarehouseService, req);
+    }
+
+    private void tryHandleCancelFbaOutboundResult(String sourceId, ThirdWarehouseService thirdWarehouseService, ThirdWarehouseCancelFbaOutboundReq req) {
+        if (CharSequenceUtil.isBlank(req.getErpOrderCode())) {
+            return;
+        }
+        ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
+        queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getErpOrderCode()));
+        queryOutboundReq.setAuthId(req.getAuthId());
+        queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+
+        ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult;
+        try {
+            queryResult = thirdWarehouseService.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
+        } catch (Exception e) {
+            log.warn("取消B2B三方出库后立即查询状态失败,sourceId={},erpOrderCode={},msg={}", sourceId, req.getErpOrderCode(), e.getMessage());
+            return;
+        }
+        if (!queryResult.isSuccess() || CollUtil.isEmpty(queryResult.getData())) {
+            return;
+        }
+        ThirdWarehouseQueryFbaOutboundResponse response = queryResult.getData().get(0);
+        if (Objects.isNull(response) || CharSequenceUtil.isBlank(response.getStatus())) {
+            return;
+        }
+        String providerCode = CharSequenceUtil.blankToDefault(response.getPlatform(), req.getThirdWarehouseProvideCode());
+        if (PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)) {
+            this.handleZhongBaoResultData(sourceId, response);
+            return;
+        }
+        this.handleResultData(sourceId, response);
     }
 
     @Override
