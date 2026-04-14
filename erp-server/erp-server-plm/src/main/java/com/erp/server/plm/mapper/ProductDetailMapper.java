@@ -365,7 +365,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<SkuVO> listByApprovePropertyNotAsset(@Param("skuNos") List<String> skuNos);
 
     List<SkuVO> listAssetProduct();
-
+    /**
+     * 根据skuNos 集合获取到sku基础信息 + 产品信息 + 采购信息
+     * @author Will
+     * @date: 2024/10/24 12:09
+     * @param skuNos
+     * @return List<ProductSearchDTO.SkuListDTO>
+     */
+    List<SkuVO> listSkuPurchaseBySkuNos(@Param("skuNos")List<String> skuNos);
 }
 
 

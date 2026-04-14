@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @author Lambda
@@ -27,6 +28,36 @@ public class WmsAttachmentDTO  implements Serializable {
         private String fileName;
 
         private String url;
+
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddVersionDTO {
+        /**
+         * 业务id
+         */
+        private String businessId;
+        /**
+         * 附件url
+         */
+        private String attachUrl;
+        /**
+         * 附件名称
+         */
+        private String attachName;
+        /**
+         * 附件类型
+         */
+        private String type;
+        /**
+         * 附件版本
+         */
+        private Integer attachVersion;
+        /**
+         * 附件大小
+         */
+        private BigDecimal attachSize;
 
     }
 

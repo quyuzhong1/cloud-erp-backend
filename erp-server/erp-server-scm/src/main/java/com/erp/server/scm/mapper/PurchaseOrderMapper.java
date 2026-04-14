@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseOrderDTO.QcQtyDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierPurchaseQuantityEntity;
 import com.erp.model.srm.dto.CfgSettingDTO;
@@ -243,4 +244,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return IPage<AdjustListDTO>
      */
     IPage<PurchaseOrderDTO.AdjustListDTO> adjustPaging(Page query,@Param("params") PurchaseOrderDTO.SearchAdjustParamDTO params);
+
+    /**
+     * 更新质检合格量
+     * @param dto
+     * @return
+     */
+    int addQcGoodQty(@Param("dto") PurchaseOrderDTO.QcQtyDTO dto);
 }

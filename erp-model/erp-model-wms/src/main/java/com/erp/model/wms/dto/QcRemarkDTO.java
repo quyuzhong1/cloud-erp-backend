@@ -1,10 +1,14 @@
 package com.erp.model.wms.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -55,6 +59,91 @@ public class QcRemarkDTO implements Serializable {
 
 
         private String mainId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcResultView {
+        /**
+         * 质检类型
+         */
+        @NotBlank(message = "质检类型不允许为空")
+        private String qcType;
+        /**
+         * 质检类型
+         */
+        private String qcTypeName;
+        /**
+         * 质检数量
+         */
+        @NotNull(message = "质检数量不允许为空")
+        private Integer qcQty;
+
+        /**
+         * 总数量
+         */
+        @NotNull(message = "总数量不允许为空")
+        private Integer totalQty;
+
+        /**
+         * 检验结果 QcResultEnum
+         */
+        @NotBlank(message = "检验结果不允许为空")
+        private String qcResult;
+        /**
+         * 检验结果名称
+         */
+        private String qcResultName;
+        /**
+         * 是否库内抽检
+         */
+        @NotNull(message = "是否库内抽检不允许为空")
+        private boolean isInsideQc;
+        /**
+         * 检验合格量
+         */
+        @NotNull(message = "检验合格量不允许为空")
+        private Integer qcGoodQty;
+        /**
+         * 检验合格率
+         */
+        private BigDecimal qcGoodRate;
+        /**
+         * 批次合格量
+         */
+        @NotNull(message = "批次合格量不允许为空")
+        private Integer lotQualifiedQty;
+        /**
+         * 抽检结果
+         */
+        private String qcSampleResult;
+        /**
+         * 抽样比例
+         */
+        private BigDecimal qcSamplingRate;
+        /**
+         * 检验不良量
+         */
+        @NotNull(message = "检验不良量不允许为空")
+        private Integer qcBadQty;
+        /**
+         * 检验不良率
+         */
+        private String qcBadRate;
+        /**
+         * 处理措施type=handleModeType
+         */
+        @NotBlank(message = "处理措施不允许为空")
+        private String handleModeDict;
+        /**
+         * 附件url
+         */
+        private String attachurl;
+        /**
+         * 附件名称
+         */
+        private String attachName;
 
     }
 }

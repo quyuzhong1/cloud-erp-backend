@@ -60,4 +60,14 @@ public enum QcBillStatusEnum implements EnumMessage {
         return null;
     }
 
+    public static String getNameByCode(String code) {
+
+        QcBillStatusEnum[] eumnList = QcBillStatusEnum.values();
+        for (QcBillStatusEnum item : eumnList) {
+            if (item.getCode().equals(code)) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
 }

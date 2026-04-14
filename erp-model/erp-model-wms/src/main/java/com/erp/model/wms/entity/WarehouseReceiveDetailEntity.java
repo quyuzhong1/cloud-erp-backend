@@ -61,6 +61,12 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     private Integer exceedQty;
 
     /**
+     * 待质检数
+     */
+    @TableField("wait_qc_qty")
+    private Integer waitQcQty;
+
+    /**
      * 备注
      */
     @TableField("remark")
