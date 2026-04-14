@@ -926,12 +926,17 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
             }
 
-
             qcResultView.setQcType(qcInfoView.getQcType());
             qcResultView.setQcTypeName(QcTypeEnum.getByCode(qcInfoView.getQcType()));
-            qcResultView.setQcQty(samplingPlan.getSampleQty());
+
             qcResultView.setTotalQty(qcInfoView.getQcNoticeQty());
-            qcResultView.setQcSamplingRate(MathUtil.divide(new BigDecimal(samplingPlan.getSampleQty()), new BigDecimal(qcInfoView.getQcNoticeQty())));
+            if (Objects.nonNull(samplingPlan)) {
+                qcResultView.setQcQty(samplingPlan.getSampleQty());
+                qcResultView.setQcSamplingRate(MathUtil.divide(new BigDecimal(samplingPlan.getSampleQty()), new BigDecimal(qcInfoView.getQcNoticeQty())));
+            } else {
+                qcResultView.setQcQty(0);
+                qcResultView.setQcSamplingRate(BigDecimal.ZERO);
+            }
             qcInfoView.setQcResultView(qcResultView);
 
             //品类通用标准
