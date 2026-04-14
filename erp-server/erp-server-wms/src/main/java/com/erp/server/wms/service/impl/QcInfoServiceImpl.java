@@ -3201,15 +3201,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         planParamDTO.setQty(dto.getQty());
         planParamDTO.setSkuId(dto.getSkuId());
 
-        SamplingPlanDTO.PlanDTO samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+        SamplingPlanDTO.PlanDTO samplingPlan = null;
+        try {
+            samplingPlan = qcSamplingPlanService.getSamplingPlan(planParamDTO);
+        } catch (Exception e) {
+            log.error("获取抽样方案失败", e);
+            samplingPlan = null;
+        }
 
-        listQcStandardResultDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
-        listQcStandardResultDTO.setSamplingPlanId(samplingPlan.getId());
-        listQcStandardResultDTO.setSamplingPlanName(QcTypeEnum.getByCode(dto.getQcType()) + "通用抽样方案");
-        listQcStandardResultDTO.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
-        listQcStandardResultDTO.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
-        listQcStandardResultDTO.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
-        listQcStandardResultDTO.setMajorRejectQty(samplingPlan.getMajorRejectQty());
+        if (samplingPlan != null) {
+            listQcStandardResultDTO.setSuggestSamplingQty(samplingPlan.getSampleQty());
+            listQcStandardResultDTO.setSamplingPlanId(samplingPlan.getId());
+            listQcStandardResultDTO.setSamplingPlanName(QcTypeEnum.getByCode(dto.getQcType()) + "通用抽样方案");
+            listQcStandardResultDTO.setGeneralAcceptQty(samplingPlan.getGeneralAcceptQty());
+            listQcStandardResultDTO.setGeneralRejectQty(samplingPlan.getGeneralRejectQty());
+            listQcStandardResultDTO.setMajorAcceptQty(samplingPlan.getMajorAcceptQty());
+            listQcStandardResultDTO.setMajorRejectQty(samplingPlan.getMajorRejectQty());
+        }
 
         //质检项目
         QcStandardEntity qcStandardEntity = qcStandardService.lambdaQuery()
