@@ -7,6 +7,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.common.business.config.TraceableExecutorService;
+import com.common.business.config.TraceableThreadPoolTaskExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -24,7 +25,7 @@ import java.util.concurrent.*;
 public class ThreadPoolConfig {
     @Bean("tmsExecutor")
     public ThreadPoolTaskExecutor  threadPoolExecutor() {
-        ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(8);
         // 设置最大线程数
@@ -43,7 +44,7 @@ public class ThreadPoolConfig {
 
     @Bean("tmsTransferChannelExecutor")
     public ThreadPoolTaskExecutor threadPoolTransferChannelExecutor() {
-        ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor  executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(8);
         // 设置最大线程数
