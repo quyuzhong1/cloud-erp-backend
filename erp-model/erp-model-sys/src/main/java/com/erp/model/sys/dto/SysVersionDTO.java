@@ -53,6 +53,11 @@ public class SysVersionDTO {
         private String upgradeVersion;
 
         /**
+         * 版本更新内容
+         */
+        private String dataJson;
+
+        /**
          * 创建人id
          */
         private String createUserId;
@@ -161,5 +166,10 @@ public class SysVersionDTO {
          * 内容
          */
         private String dataJson;
+
+        /**
+         * 通知时间
+         */
+        private LocalDateTime noticeTime;
     }
 }

@@ -120,6 +120,7 @@
         SELECT
             m.id,
             m.upgrade_version as upgradeVersion,
+            m.data_json as dataJson,
             m.create_user_id as createUserId,
             m.create_user_name as createUserName,
             m.create_time as createTime,
@@ -181,7 +182,8 @@
         SELECT
             m.id,
             m.upgrade_version as upgradeVersion,
-            m.data_json
+            m.data_json,
+            m.create_time as noticeTime
         FROM message m
         WHERE m.is_deleted = FALSE
         AND m.application = 'sysVersion'
