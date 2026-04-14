@@ -1214,7 +1214,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //构建采购订单质检合格数量累计所需的参数 
             if (qcInfo != null) {
                 String podId = qcResult != null ? qcResult.getPurchaseOrderDetailId() : null;
-                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcResultView.getQcResult(), qcResultView.getQcGoodQty()));
+                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcResultView.getQcResult(), qcResultView.getLotQualifiedQty()));
             }
 
             // 日志记录
@@ -1542,7 +1542,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             // 构建采购订单质检合格数量累计所需的参数 
             if (qcInfo != null) {
                 String podId = qcResult != null ? qcResult.getPurchaseOrderDetailId() : null;
-                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcInfoView.getQcResult(), qcInfoView.getQcGoodQty()));
+                accumulateParams.add(new QcInfoDTO.BatchQcAccumulationParam(qcInfo, podId, qcInfoView.getQcResult(), qcInfoView.getLotQualifiedQty()));
             }
 
             // 日志记录 (使用先前克隆出的 oldDetailSnapshotMap 快照来进行差异比较)
