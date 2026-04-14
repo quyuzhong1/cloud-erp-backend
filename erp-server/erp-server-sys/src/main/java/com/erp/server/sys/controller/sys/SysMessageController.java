@@ -208,6 +208,15 @@ public class SysMessageController {
                                 log.info("Message {} has expired, skipping", message.getId());
                                 continue;
                             }
+                            
+                            // 检查定时通知时间
+                            LocalDateTime noticeTime = message.getNoticeTime();
+                            if (noticeTime != null && noticeTime.isAfter(now)) {
+                                // 还没到通知时间，跳过
+                                log.info("Message {} notice time not reached, skipping", message.getId());
+                                continue;
+                            }
+                            
                             firstUnReadUser = unReadUser;
                             break;
                         }
