@@ -91,41 +91,41 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             QcStandardEntity existEntity = lambdaQuery().eq(QcStandardEntity::getSkuId, addDTO.getSkuId()).last(" limit 1 ").one();
             if(Objects.nonNull(existEntity)){
                 String id = existEntity.getId();
-                List<WmsAttachmentEntity> attachmentList = addDTO.getWmsAttachmentEntities();
-                if (CollectionUtils.isNotEmpty(addDTO.getAttachmentList())) {
-                    List<QcStandardDTO.AttachDTO> attachList = new ArrayList<>();
-                    List<WmsAttachmentEntity> productPhysical = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode())).collect(Collectors.toList());
-                    if(CollectionUtils.isNotEmpty(productPhysical)){
-                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
-                        attachDTO.setType(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode());
-                        List<String> attachmentNameList = new ArrayList<>();
-                        List<String> attachmentUrlList = new ArrayList<>();
-
-                        for (WmsAttachmentEntity entity : productPhysical) {
-                            attachmentNameList.add(entity.getAttachName());
-                            attachmentUrlList.add(entity.getAttachUrl());
-                        }
-                        attachDTO.setAttachmentNameList(attachmentNameList);
-                        attachDTO.setAttachmentUrlList(attachmentUrlList);
-                        attachList.add(attachDTO);
-                    }
-                    List<WmsAttachmentEntity> packagingAccessories = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode())).collect(Collectors.toList());
-                    if(CollectionUtils.isNotEmpty(packagingAccessories)){
-                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
-                        attachDTO.setType(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode());
-                        List<String> attachmentNameList = new ArrayList<>();
-                        List<String> attachmentUrlList = new ArrayList<>();
-
-                        for (WmsAttachmentEntity entity : packagingAccessories) {
-                            attachmentNameList.add(entity.getAttachName());
-                            attachmentUrlList.add(entity.getAttachUrl());
-                        }
-                        attachDTO.setAttachmentNameList(attachmentNameList);
-                        attachDTO.setAttachmentUrlList(attachmentUrlList);
-                        attachList.add(attachDTO);
-                    }
-                    addDTO.setAttachmentList(attachList);
-                }
+//                List<WmsAttachmentEntity> attachmentList = addDTO.getWmsAttachmentEntities();
+//                if (CollectionUtils.isNotEmpty(addDTO.getAttachmentList())) {
+//                    List<QcStandardDTO.AttachDTO> attachList = new ArrayList<>();
+//                    List<WmsAttachmentEntity> productPhysical = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode())).collect(Collectors.toList());
+//                    if(CollectionUtils.isNotEmpty(productPhysical)){
+//                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
+//                        attachDTO.setType(QcStandardImageTypeEnum.PRODUCT_PHYSICAL.getCode());
+//                        List<String> attachmentNameList = new ArrayList<>();
+//                        List<String> attachmentUrlList = new ArrayList<>();
+//
+//                        for (WmsAttachmentEntity entity : productPhysical) {
+//                            attachmentNameList.add(entity.getAttachName());
+//                            attachmentUrlList.add(entity.getAttachUrl());
+//                        }
+//                        attachDTO.setAttachmentNameList(attachmentNameList);
+//                        attachDTO.setAttachmentUrlList(attachmentUrlList);
+//                        attachList.add(attachDTO);
+//                    }
+//                    List<WmsAttachmentEntity> packagingAccessories = attachmentList.stream().filter(e -> e.getType().equals(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode())).collect(Collectors.toList());
+//                    if(CollectionUtils.isNotEmpty(packagingAccessories)){
+//                        QcStandardDTO.AttachDTO attachDTO = new QcStandardDTO.AttachDTO();
+//                        attachDTO.setType(QcStandardImageTypeEnum.PACKAGING_ACCESSORIES.getCode());
+//                        List<String> attachmentNameList = new ArrayList<>();
+//                        List<String> attachmentUrlList = new ArrayList<>();
+//
+//                        for (WmsAttachmentEntity entity : packagingAccessories) {
+//                            attachmentNameList.add(entity.getAttachName());
+//                            attachmentUrlList.add(entity.getAttachUrl());
+//                        }
+//                        attachDTO.setAttachmentNameList(attachmentNameList);
+//                        attachDTO.setAttachmentUrlList(attachmentUrlList);
+//                        attachList.add(attachDTO);
+//                    }
+//                    addDTO.setAttachmentList(attachList);
+//                }
 
                 QcStandardDTO.UpdateDTO updateDTO = BeanMapperUtils.map(QcStandardDTO.UpdateDTO.class, addDTO);
                 updateDTO.setId(id);
