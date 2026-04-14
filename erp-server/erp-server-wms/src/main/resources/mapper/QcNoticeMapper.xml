@@ -206,10 +206,13 @@
         qnd.putaway_qty AS putawayQty,
         qnd.bad_desc AS badDesc,
         qnd.qc_problem_dict AS qcProblemDict,
-        qnd.qc_date AS qcDate
+        qnd.qc_date AS qcDate,
+        qi.id AS qcBillId,
+				qi.code AS qcBillCode
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+        LEFT JOIN qc_info AS qi ON qi.source_detail_id = qnd.id
         WHERE
         qn.is_deleted = FALSE
         AND qn.approve_status = 'approve'
