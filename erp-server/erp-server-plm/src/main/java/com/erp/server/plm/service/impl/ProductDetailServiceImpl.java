@@ -334,7 +334,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductRefBuService productRefBuService;
-    
+
     @Resource
     private SkuStdRetailPriceService skuStdRetailPriceService;
 
@@ -868,11 +868,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> costDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_COST_SHOW_LIST, skuFiledConfigList);
             costShow.setDisableFieldList(costDisableFields);
         }
-        
+
         productManyDetail.setProductCostShowDTOList(costShowDTOList);
-        
+
         productManyDetail.setProductRetailPriceShowDTOList(this.getProductRetailPriceShowDTOList(list));
-        
+
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -4987,6 +4987,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
+    	Boolean isNotPass = skuParamDTO.getIsNotPass();
+        if(isNotPass != null && isNotPass) {
+        	skuParamDTO.setStatusList(new ArrayList<>());
+        }else {
+        	//已存在数据
+            skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        }
         //已存在数据
         if (CollUtil.isEmpty(skuParamDTO.getStatusList())){
             skuParamDTO.setStatusList(Collections.singletonList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
