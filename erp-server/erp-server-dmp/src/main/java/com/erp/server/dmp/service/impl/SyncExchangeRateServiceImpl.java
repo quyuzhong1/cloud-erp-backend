@@ -45,12 +45,14 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeExchangeRate(DmpExchangeRateDTO dto) {
+        //数据格式化
+        BiSettlementExchangeRateEntity newExchangeRate = handleDmpExchangeRate(dto);
+
         //根据汇率类型-月份-源币种-目标币种查询已存在的汇率数据
-        BiSettlementExchangeRateDTO.ExchangeParamDTO  exchangeParamDTO = new  BiSettlementExchangeRateDTO.ExchangeParamDTO(dto.getType(),dto.getSettlementDateBegin(),dto.getSettlementDateEnd(),dto.getTargetCurrencyCode(),dto.getSourceCurrencyCode());
+        BiSettlementExchangeRateDTO.ExchangeParamDTO  exchangeParamDTO = new  BiSettlementExchangeRateDTO.ExchangeParamDTO(newExchangeRate.getType(),newExchangeRate.getSettlementDateBegin(),newExchangeRate.getSettlementDateEnd(),newExchangeRate.getTargetCurrencyCode(),newExchangeRate.getSourceCurrencyCode());
         ValidatorUtil.validateEntity(exchangeParamDTO);
         BiSettlementExchangeRateEntity oldExchangeRate = biSettlementExchangeRateService.getByExchangeParamUnique(exchangeParamDTO);
-        //数据格式化
-        BiSettlementExchangeRateEntity newExchangeRate = handleDmpExchangeRate(dto, oldExchangeRate);
+
         if (ObjectUtils.isEmpty(oldExchangeRate)) {
             //非已审核数据无需新增
             if (!ApproveStatusEnum.APPROVE.getStatus().equals(newExchangeRate.getApproveStatus())) {
@@ -61,6 +63,8 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
             //提交并审核
             submitAndApprove(id);
         } else {
+            //id赋值
+            newExchangeRate.setId(oldExchangeRate.getId());
             /**
              * 判断现有状态
              * 1、现有状态为已审核或审核中时需要反审核后更新数据
@@ -82,19 +86,14 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
 
     /**
      * @param dto
-     * @param oldExchangeRate
      * @return BiSettlementExchangeRateEntity
      * @description: 处理数据
      * @author Will
      * @date: 2023/8/14 18:53
      */
-    private BiSettlementExchangeRateEntity handleDmpExchangeRate(DmpExchangeRateDTO dto, BiSettlementExchangeRateEntity oldExchangeRate) {
+    private BiSettlementExchangeRateEntity handleDmpExchangeRate(DmpExchangeRateDTO dto) {
         BiSettlementExchangeRateEntity newExchangeRate = new BiSettlementExchangeRateEntity();
         BeanMapperUtils.copy(dto, newExchangeRate);
-        //主表id赋值
-        if (ObjectUtils.isNotEmpty(oldExchangeRate)) {
-            newExchangeRate.setId(oldExchangeRate.getId());
-        }
         //审核状态
         if (KingdeeDocStatusEnum.APPROVED.getCode().equals(dto.getApproveStatus())) {
             newExchangeRate.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());

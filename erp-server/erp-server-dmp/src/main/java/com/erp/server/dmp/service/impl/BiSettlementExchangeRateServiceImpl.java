@@ -303,8 +303,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新单据汇率
             updateSettlementExchangeRate(list);
-            //添加redis
-            list.stream().forEach(this::setRedisExchangeRate);
             //同步订货通
             createSyncDhtMsg(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -344,8 +342,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         log.info("汇率反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
         //更新单据为待提交
         updateApproveStatusForApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        //添加redis
-        list.stream().forEach(this::setRedisExchangeRate);
         return Boolean.TRUE;
     }
 
