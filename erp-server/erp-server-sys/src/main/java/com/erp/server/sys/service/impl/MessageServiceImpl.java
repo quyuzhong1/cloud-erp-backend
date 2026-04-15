@@ -20,7 +20,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.MessageDTO;
-import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
@@ -375,7 +374,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Override
     public boolean readHistoryVersion(SysVersionDTO.ReadHistoryVersionDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        messageUserReadService.readByMessageId(dto.getMessageId(), userInfo.getUid());
+        messageUserReadService.readByMessageId(dto.getId(), userInfo.getUid());
         redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
         return true;
     }
