@@ -152,6 +152,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK_DYNAMIC;
 
 /**
  * <p>
@@ -1696,6 +1697,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return new PagingVO<>(page);
     }
 
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+        PagingVO<SoOutstockDTO.PagingViewDTO> paging = this.exportSoOutStock(dto);
+        List<SoOutstockDTO.ExportField> fieldList = dto.getParams().getFieldList();
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+        if (CollUtil.isNotEmpty(paging.getList()) && CollUtil.isNotEmpty(fieldList)) {
+            List<String> fieldCodeList = fieldList.stream().map(SoOutstockDTO.ExportField::getField).distinct().collect(Collectors.toList());
+            LinkedHashMap<String, String> fieldMap = fieldList.stream().collect(Collectors.toMap(SoOutstockDTO.ExportField::getField,
+                    SoOutstockDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+            dynamicExcelDTO.setHeaders(fieldMap);
+            for (SoOutstockDTO.PagingViewDTO pagingViewDTO : paging.getList()) {
+                LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>) BeanUtil.beanToMap(pagingViewDTO);
+                LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
+                for (String fieldCode : fieldCodeList) {
+                    exportMap.put(fieldCode, excelMap.get(fieldCode));
+                }
+                data.add(exportMap);
+            }
+        }
+        dynamicExcelDTO.setData(data);
+        dynamicExcelDTO.setSheetName("销售订单出库列表");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), paging.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
+    }
+
     /**
      * 作废
      *
@@ -2021,7 +2047,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public Boolean exportExcel(SoOutstockDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
+        if (CollUtil.isEmpty(dto.getFieldList())) {
+            downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
+        } else {
+            downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK_DYNAMIC.getCode(), dto);
+        }
         return Boolean.TRUE;
     }
 

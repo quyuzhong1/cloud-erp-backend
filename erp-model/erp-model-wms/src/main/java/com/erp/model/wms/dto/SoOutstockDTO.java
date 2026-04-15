@@ -1287,6 +1287,26 @@ public class SoOutstockDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 自定义导出字段
+         */
+        private List<ExportField> fieldList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段编码
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String fieldName;
     }
 
     @Data
