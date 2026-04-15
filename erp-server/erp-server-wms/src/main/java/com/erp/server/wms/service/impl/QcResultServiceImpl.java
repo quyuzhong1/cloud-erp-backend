@@ -274,15 +274,25 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Override
     public void updateQcQty(List<String> ids) {
         if (CollectionUtils.isNotEmpty(ids)) {
-            LambdaUpdateWrapper<QcResultEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.set(QcResultEntity::getQcBadQty, 0);
-            updateWrapper.set(QcResultEntity::getQcGoodQty, 0);
-            updateWrapper.set(QcResultEntity::getQcQty, 0);
-            updateWrapper.set(QcResultEntity::getQcBadRate, 0);
-            updateWrapper.set(QcResultEntity::getQcGoodRate, 0);
-            updateWrapper.set(QcResultEntity::getQcSampleRate, 0);
-            updateWrapper.in(QcResultEntity::getMainId, ids);
-            this.update(updateWrapper);
+
+            List<QcResultEntity> qcResultEntities = this.lambdaQuery()
+                    .in(QcResultEntity::getMainId, ids)
+                    .list();
+            
+            for (QcResultEntity entity : qcResultEntities) {
+                entity.setQcBadQty(0);
+                entity.setQcGoodQty(0);
+                entity.setQcQty(0);
+                entity.setQcBadRate(BigDecimal.ZERO);
+                entity.setQcGoodRate(BigDecimal.ZERO);
+                entity.setQcSampleRate(BigDecimal.ZERO);
+                entity.setQcResult(QcResultEnum.CONFORMITY.getCode());
+                entity.setLotQualifiedQty(entity.getTotalQty());
+            }
+            
+            if (CollectionUtils.isNotEmpty(qcResultEntities)) {
+                this.updateBatchById(qcResultEntities);
+            }
         }
 
     }
