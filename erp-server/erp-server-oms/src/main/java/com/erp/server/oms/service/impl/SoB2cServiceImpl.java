@@ -146,7 +146,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.jetbrains.annotations.NotNull;
-import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;

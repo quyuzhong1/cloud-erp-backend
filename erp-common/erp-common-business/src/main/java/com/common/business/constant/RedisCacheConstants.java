@@ -52,7 +52,7 @@ public interface RedisCacheConstants {
      * 平台token
      * platform-token:平台名称:店铺ID
      */
-    String REDIS_PLATFORM_TOKEN = "third:platform:token:{}:{}";
+    String REDIS_PLATFORM_TOKEN = "platform-token:{}:{}";
     /**
      * 登录错误Key : 系统:用户账号
      */
