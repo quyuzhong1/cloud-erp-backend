@@ -488,7 +488,7 @@
             </foreach>
         </if>
         <if test="params.searchKey != null and params.searchKey != ''">
-            and CONCAT(qb.code, ' ',qb.source_code, ' ',qp.sku_no, ' ',qp.ean) LIKE CONCAT('%', #{params.searchKey}, '%')
+            and CONCAT(qb.code, ' ',qb.source_code, ' ',qp.sku_no, ' ',qp.ean) LIKE CONCAT('%', #{params.searchKey}::text, '%')
         </if>
         ORDER BY
         qb.create_time DESC
