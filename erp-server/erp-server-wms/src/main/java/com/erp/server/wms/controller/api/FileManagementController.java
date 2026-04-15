@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -16,11 +17,15 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FileManagementDTO;
 import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.entity.FileManagementEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.WmsFileTypeEnum;
+import com.erp.server.wms.convert.FileManagementConverter;
+import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.service.FileManagementService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,15 +57,39 @@ public class FileManagementController extends BaseController {
     /**
      * 新增
      *
-     * @param dto
+     * @param addDTO
      * @return ApiResult<String>
      * @author zdy
      * @date: 2026-03-20
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "文件管理新增")
-    public ApiResult<List<BatchResultDTO>> add(@RequestBody @Validated FileManagementDTO.AddDTO dto) {
-        List<BatchResultDTO> resultDTOS = fileManagementService.add(dto);
+    public ApiResult<List<BatchResultDTO>> add(@RequestBody @Validated FileManagementDTO.AddDTO addDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<SkuVO> skuVOS = null;
+        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addDTO.getFileType())) {
+            skuVOS = fileManagementService.getSkuVOS(addDTO.getAttachUrl());
+        }
+        FileManagementEntity fileManagementEntity = FileManagementConverter.INSTANCE.addDTOToEntity(addDTO);
+        WmsAttachmentEntity attachmentEntity = WmsAttachmentConverter.INSTANCE.addFileManagementToAttachment(addDTO);
+        // 数据处理 应对多个sku情况，目前只有评审报告会有多个sku
+        List<FileManagementEntity> entityList = fileManagementService.handleData(fileManagementEntity, skuVOS);
+        for (FileManagementEntity entity : entityList) {
+            BatchResultDTO resultDTO = null;
+            WmsAttachmentEntity newAttachmentEntity = new WmsAttachmentEntity();
+            BeanMapperUtils.copy(attachmentEntity, newAttachmentEntity);
+            try {
+                if (CharSequenceUtil.isBlank(entity.getId())){
+                    resultDTO = fileManagementService.addEntity(entity, newAttachmentEntity);
+                }else {
+                    resultDTO = fileManagementService.updateEntity(entity, newAttachmentEntity);
+                }
+            }catch (Exception e){
+                log.error("文件管理新增失败，skuNo：{}，fileName：{}", entity.getSkuNo(), addDTO.getAttachName(), e);
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 
     }
@@ -68,7 +97,7 @@ public class FileManagementController extends BaseController {
     /**
      * 修改
      *
-     * @param dto
+     * @param addOrUpdateDTO
      * @return ApiResult
      * @author zdy
      * @date: 2026-03-20
@@ -80,8 +109,32 @@ public class FileManagementController extends BaseController {
             menuCode = "wms:fileManagement:update",
             serviceClass = FileManagementService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> update(@RequestBody @Validated FileManagementDTO.UpdateDTO dto) {
-        List<BatchResultDTO> resultDTOS = fileManagementService.update(dto);
+    public ApiResult<List<BatchResultDTO>> update(@RequestBody @Validated FileManagementDTO.UpdateDTO addOrUpdateDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        FileManagementEntity fileManagementEntity = BeanMapperUtils.map(FileManagementEntity.class, addOrUpdateDTO);
+        WmsAttachmentEntity attachmentEntity = WmsAttachmentConverter.INSTANCE.updateFileManagementToAttachment(addOrUpdateDTO);
+        List<SkuVO> skuVOS = null;
+        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addOrUpdateDTO.getFileType())) {
+            skuVOS = fileManagementService.getSkuVOS(addOrUpdateDTO.getAttachUrl());
+        }
+        // 数据处理
+        List<FileManagementEntity> entityList = fileManagementService.handleData(fileManagementEntity, skuVOS);
+        for (FileManagementEntity entity : entityList) {
+            BatchResultDTO resultDTO = null;
+            WmsAttachmentEntity newAttachmentEntity = new WmsAttachmentEntity();
+            BeanMapperUtils.copy(attachmentEntity, newAttachmentEntity);
+            try {
+                if (CharSequenceUtil.isBlank(entity.getId())){
+                    resultDTO = fileManagementService.addEntity(entity, newAttachmentEntity);
+                }else {
+                    resultDTO = fileManagementService.updateEntity(entity, newAttachmentEntity);
+                }
+            }catch (Exception e){
+                log.error("文件管理修改失败，skuNo：{}，fileName：{}", entity.getSkuNo(), addOrUpdateDTO.getAttachName(), e);
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
