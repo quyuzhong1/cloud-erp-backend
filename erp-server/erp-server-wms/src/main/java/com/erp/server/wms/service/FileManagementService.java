@@ -25,7 +25,7 @@ public interface FileManagementService extends SuperService<FileManagementEntity
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(FileManagementDTO.AddDTO dto);
+    List<BatchResultDTO> add(FileManagementDTO.AddDTO dto);
 
     /**
     * 修改
@@ -34,7 +34,7 @@ public interface FileManagementService extends SuperService<FileManagementEntity
     * @param dto
     * @return
     */
-    Boolean update(FileManagementDTO.UpdateDTO dto);
+    List<BatchResultDTO> update(FileManagementDTO.UpdateDTO dto);
 
 
     /**

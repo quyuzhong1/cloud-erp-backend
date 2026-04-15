@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -575,9 +576,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         if (isApiPushDelivery(entity)) {
             createB2bDeliveryIntercept(entity, remark, Boolean.TRUE);
-            //调三方仓
-            sendB2bThirdWarehousePushTask(entity, null, SyncOperateEnum.OPERATE_INVALID.getCode());
-            updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
+            ThirdWarehouseCancelFbaOutboundReq cancelReq = BeanUtil.toBean(syncB2bThirdWarehouseService.newSyncDataToThirdWarehouseCancel(entity), ThirdWarehouseCancelFbaOutboundReq.class);
+            proxyService.cancelFbaOutbound(cancelReq);
+            BatchResultDTO resultDTO = buildDeliveryInterceptResult(id, entity.getCode());
+            String msg = CharSequenceUtil.format("用户【{}】同步发起发货拦截，结果：{}", UserContext.getDefaultLoginUser().getUserName(), resultDTO.getMsg());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "发货拦截");
+            return resultDTO;
         } else {
             // 手工发货类型不生成B2B拦截单，直接取消发货
             updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", "", "", "", null);
@@ -585,6 +589,32 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "发货拦截");
         }
         return BatchResultDTO.success(id, entity.getCode(), "提交发货拦截成功");
+    }
+
+    private BatchResultDTO buildDeliveryInterceptResult(String id, String code) {
+        SoB2bDeliveryInterceptEntity interceptEntity = soB2bDeliveryInterceptService.getLatestBySourceId(id);
+        if (Objects.nonNull(interceptEntity)
+                && SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(interceptEntity.getHandleStatus())) {
+            String msg = CharSequenceUtil.blankToDefault(interceptEntity.getHandleRemark(),
+                    HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult()) ? "拦截成功" : "拦截失败");
+            if (HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult())) {
+                return BatchResultDTO.success(id, code, msg);
+            }
+            if (HandleResultEnum.FAILURE.getCode().equals(interceptEntity.getHandleResult())) {
+                return BatchResultDTO.fail(id, code, msg);
+            }
+        }
+
+        B2bThirdDeliveryEntity latestEntity = this.getById(id);
+        if (Objects.nonNull(latestEntity)) {
+            if (ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(latestEntity.getStatus())) {
+                return BatchResultDTO.success(id, code, "拦截成功");
+            }
+            if (ThirdDeliveryStatusEnum.INTERCEPTING.getCode().equals(latestEntity.getStatus())) {
+                return BatchResultDTO.success(id, code, "同步发起发货拦截成功，等待三方仓处理");
+            }
+        }
+        return BatchResultDTO.fail(id, code, "发货拦截失败");
     }
 
     @Override

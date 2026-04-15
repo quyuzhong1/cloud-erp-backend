@@ -18,6 +18,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoB2bDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2bDeliveryInterceptDetailDTO;
@@ -29,6 +30,7 @@ import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.InterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2bDeliveryInterceptSourceTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2bDeliveryInterceptMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -184,6 +186,8 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
             record.setInterceptStatusName(InterceptStatusEnum.getName(record.getInterceptStatus()));
             record.setBillTypeName(OrderTypeEnum.getName(record.getBillType()));
             record.setSourceTypeName(SoB2bDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
+            record.setDeliveryMethodName(DeliveryModeEnum.getName(record.getDeliveryMethod()));
+            record.setStatusName(ThirdDeliveryStatusEnum.getName(record.getStatus()));
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(item -> item.getId().equals(record.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(productDetailEntity)) {
                 record.setProductName(productDetailEntity.getName());
