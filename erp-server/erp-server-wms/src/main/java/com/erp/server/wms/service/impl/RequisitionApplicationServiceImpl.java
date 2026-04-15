@@ -1613,15 +1613,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         //回写要货申请的头程发货单生成状态
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                List<String> requisitionIds = dto.getFbaBindShipmentViewDTOS().stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getId).distinct().collect(Collectors.toList());
-                for (String requisitionId : requisitionIds) {
-                    writeBackRequisitionDeliveryPushDownStatus(requisitionId);
-                }
-            }
-        });
+        List<String> requisitionIds = dto.getFbaBindShipmentViewDTOS().stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getId).distinct().collect(Collectors.toList());
+        for (String requisitionId : requisitionIds) {
+            writeBackRequisitionDeliveryPushDownStatus(requisitionId);
+        }
     }
 
     private void generateDeliveryWithFbt(RequisitionApplicationEntity entity, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList) {
