@@ -358,6 +358,11 @@ public class SoB2bDeliveryInterceptDTO implements Serializable {
         private String soCode;
 
         /**
+         * 发货单号
+         */
+        private String soDeliveryCode;
+
+        /**
          * 三方发货单号
          */
         private String thirdDeliveryCode;
@@ -406,6 +411,16 @@ public class SoB2bDeliveryInterceptDTO implements Serializable {
          * 物流渠道名称
          */
         private String logisticsChannelName;
+
+        /**
+         * 交货方式
+         */
+        private String deliveryMethod;
+
+        /**
+         * 交货方式名称
+         */
+        private String deliveryMethodName;
 
         /**
          * 单据类型
@@ -496,6 +511,16 @@ public class SoB2bDeliveryInterceptDTO implements Serializable {
          * 来源类型名称
          */
         private String sourceTypeName;
+
+        /**
+         * 发货单状态
+         */
+        private String status;
+
+        /**
+         * 发货单状态名称
+         */
+        private String statusName;
 
         /**
          * 平台订单号
