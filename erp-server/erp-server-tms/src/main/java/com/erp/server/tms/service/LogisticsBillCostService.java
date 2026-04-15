@@ -4,14 +4,11 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 
@@ -273,7 +270,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param dtoList
      * @return List<AddDTO>
      */
-    List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList,String processingType);
+    List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList, String processingType);
 
     /**
      * @description: 批量导入新增
@@ -282,6 +279,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param dtoList
      * @return List<AddDTO>
      */
-    List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType);
+    List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList, String processingType);
 
 }
