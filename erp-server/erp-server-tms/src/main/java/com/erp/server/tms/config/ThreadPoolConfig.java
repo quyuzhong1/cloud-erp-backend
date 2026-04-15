@@ -105,6 +105,7 @@ public class ThreadPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        // 2. 用 TraceableExecutorService 包装（自动传递 TraceId）
+        return new TraceableExecutorService(service);
     }
 }
