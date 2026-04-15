@@ -357,7 +357,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Override
     public boolean readHistoryMessage(MessageDTO.ReadHistoryMessageDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        messageUserReadService.readByMessageId(dto.getMessageId(), userInfo.getUid());
+        messageUserReadService.readByMessageId(dto.getId(), userInfo.getUid());
         redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
         return true;
     }
