@@ -3,28 +3,30 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.PlatformReturnInstockDTO;
-import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
-import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundDetailEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.sdk.wms.goodcang.enums.GoodCangEnums;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -79,12 +81,23 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
                 }
             }
         }
+
+        // 店铺信息
+        List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class)
+                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode())
+                .ne(ShopInfoEntity::getPlatformShopCode, "")
+                .list();
+        Map<String, ShopInfoEntity> shopMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(shopList)) {
+            shopMap = shopList.stream().collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        }
+
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
             DmpThirdReturnInboundEntity dmpMainEntity = dmpMainEntityMap.get(changId);
             List<DmpThirdReturnInboundDetailEntity> dmpDetailEntityList = dmpDetailEntityMap.getOrDefault(changId, Collections.emptyList());
-            PlatformReturnInstockDTO dto = this.convert(dmpMainEntity, dmpDetailEntityList, cfgOutputId);
+            PlatformReturnInstockDTO dto = this.convert(dmpMainEntity, dmpDetailEntityList, cfgOutputId, shopMap.get(dmpMainEntity.getNextLevelId()));
             if (null != dto) {
                 map.put(dmpMainEntity.getId(), JSON.toJSONString(dto));
             }
@@ -95,18 +108,29 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
     /**
      * 解析退货单入库数据
      **/
-    public PlatformReturnInstockDTO convert(DmpThirdReturnInboundEntity dmpMainEntity, List<DmpThirdReturnInboundDetailEntity> dmpDetailList, String cfgOutputId) {
+    public PlatformReturnInstockDTO convert(DmpThirdReturnInboundEntity dmpMainEntity, List<DmpThirdReturnInboundDetailEntity> dmpDetailList, String cfgOutputId, ShopInfoEntity shopInfoEntity) {
         if (this.validateDataBlack(dmpMainEntity, cfgOutputId)) {
             return null;
         }
-
+        if (CollectionUtils.isEmpty(dmpDetailList)) {
+            return null;
+        }
         PlatformReturnInstockDTO dto = BeanUtil.copyProperties(dmpMainEntity, PlatformReturnInstockDTO.class);
         String sourcePlatform = dmpMainEntity.getSourcePlatform();
         dto.setPlatform(sourcePlatform);
-        dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
+        LocalDateTime putAwayTime = dmpMainEntity.getPutAwayTime();
+        if (null != shopInfoEntity && null != putAwayTime) {
+            if (StringUtils.isNotBlank(shopInfoEntity.getReturnTimeZone())){
+                // 转换为店铺所在时区的时间
+                OffsetDateTime offsetDateTime = putAwayTime.atOffset(ZoneOffset.UTC);
+                putAwayTime = offsetDateTime.atZoneSameInstant(ZoneId.of(shopInfoEntity.getReturnTimeZone())).toLocalDateTime();
+            }
+        }
+        dto.setPutawayTime(putAwayTime);
+
         // 固定退货退款
         dto.setReturnType(ReturnTypeEnum.DEDUCTION.getCode());
-        dto.setUniqueId(CharSequenceUtil.format("return_instock_{}_{}_{}", dmpMainEntity.getPlatformOrderNo(), dmpMainEntity.getAuthId(), dmpMainEntity.getBatchNo()));
+        dto.setUniqueId(dmpDetailList.get(0).getThirdDetailId());
         // 明细
         List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
         dto.setProductDetailList(detailList);

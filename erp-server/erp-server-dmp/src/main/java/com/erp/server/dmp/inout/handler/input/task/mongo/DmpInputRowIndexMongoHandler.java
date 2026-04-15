@@ -25,19 +25,25 @@ public class DmpInputRowIndexMongoHandler extends DmpInputBaseMongoHandler{
 	public static final String UNIQUE_FIELD_SET_INDEX_KEY = "uniqueFieldSetIndexKey";
 
 	public static final String ROW_INDEX_UNIQUE_MD5 = "rowIndexUniqueMd5";
-	public static final String STR = "_";
+	public static final String STR = "|";
 
+    /**
+     * 唯一建配置必须添加indexNumber
+     */
 	@Override
 	protected List<Map<String, Object>> getDataList(DmpInputTaskFileContentTypeEnum contentType , List<String> resultList) {
 		List<Map<String, Object>> dataList = super.getDataList(contentType, resultList);
 
 		Map<String, Integer> uniqueFieldSetIndexMap = new HashMap<>();
 
-		List<Map<String, Object>> resultDataList = new LinkedList<>();
 		for (Map<String, Object> respMap : dataList) {
 			StringBuilder uniqueFieldSetIndexKeyBuilder = new StringBuilder();
 			uniqueFieldSetIndexKeyBuilder.append(nextLevelId).append(STR);
 			for (String uniqueField : uniqueFieldSet) {
+                // 原始key移除生成的indexNumber和uniqueFieldSetIndexKey，避免重复添加到唯一键组合中
+                if (INDEX_NUMBER.equalsIgnoreCase(uniqueField)) {
+                    continue;
+                }
 				String value = respMap.getOrDefault(uniqueField, "").toString();
 				uniqueFieldSetIndexKeyBuilder
 						.append(value)
@@ -55,6 +61,6 @@ public class DmpInputRowIndexMongoHandler extends DmpInputBaseMongoHandler{
 			// 累计次数
 			uniqueFieldSetIndexMap.put(uniqueFieldSetIndexKey, indexNumber + 1);
 		}
-		return resultDataList;
+		return dataList;
 	}
 }
