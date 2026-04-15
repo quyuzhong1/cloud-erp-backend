@@ -38,6 +38,7 @@
             sbdi.intercept_status,
             sbdi.handle_status,
             sbdi.handle_result,
+            sbdi.handle_remark AS handleRemark,
             sbdi.remark,
             sbdi.create_user_name,
             sbdi.handle_user_name,
