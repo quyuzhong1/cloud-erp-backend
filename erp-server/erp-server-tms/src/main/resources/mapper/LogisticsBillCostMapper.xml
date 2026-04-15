@@ -330,14 +330,17 @@
     </select>
 
     <!-- 统计总数 -->
-    <select id="listTotalCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
+    <select id="listTotalCostValueCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TotalCountDTO">
         select
-            lbc.id,
-            lbc.billing_weight_logistics as billingWeightLogistics,
-            lb.delivery_time as deliveryTime,
-            lbc.currency
+            sum(lbc.billing_weight_logistics) as totalBillingWeightLogistics,
+            sum((case when tcc.dict_cost_category = 'shippingCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualShippingCost,
+            sum((case when tcc.dict_cost_category = 'declareCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeclareCost,
+            sum((case when tcc.dict_cost_category = 'deductibleTax' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeductibleTax,
+            sum((case when tcc.dict_cost_category = 'otherCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualOtherCost
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        inner join tms_cost_detail tcd on tcd.main_id = lbc.id and tcd.is_deleted = false
+        inner join tms_cfg_cost tcc on tcd.cfg_cost_id = tcc.id and tcc.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false
@@ -373,6 +376,21 @@
           </if>
           and lbc.reconciliation_month = #{params.reportDate}
           AND lbc.id NOT IN ( SELECT DISTINCT cost_id FROM small_bag_cost_allocation_main WHERE is_deleted = FALSE AND ( report_date = #{params.reportDate} OR report_status = 'confirmed' ))
+    </select>
+
+    <!-- 查询计费重合计 -->
+    <select id="listTotalBillingWeightLogisticsCount" resultType="java.math.BigDecimal">
+        select
+            sum(lbc.billing_weight_logistics) as totalBillingWeightLogistics
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and lbc.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
     </select>
 
 </mapper>
