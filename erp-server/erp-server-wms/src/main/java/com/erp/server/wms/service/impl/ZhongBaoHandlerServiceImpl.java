@@ -290,7 +290,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
                     thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getReferenceNo());
                     thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
+                    thirdWarehouseQueryFbaOutboundResponse.setStatus(ZhongBaoB2BDeliveryStatusEnum.getErpOrderStatus(dataList.getStatus().toString()));
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     Calendar now = Calendar.getInstance();
                     String delievery = sdf.format(now.getTime());
