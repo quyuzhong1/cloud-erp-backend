@@ -103,7 +103,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
             errorMsgList.addAll(msgList);
         }
 
-        String mainDictPlatformName = excelDTO.getMainDictPlatformName().trim();
+        String mainDictPlatformName = excelDTO.getMainDictPlatformName();
         PlatformDictEnum platformDict = PlatformDictEnum.getByName(mainDictPlatformName);
         if (Objects.isNull(platformDict)) {
             errorMsgList.add("服务商不存在");
@@ -153,14 +153,6 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
             }
         }
 
-        //是否推送电话
-        if (CharSequenceUtil.isNotBlank(excelDTO.getPushMobileName()) && excelDTO.getPushMobileName().equals("是")) {
-            excelDTO.setIsPushMobile(Boolean.TRUE);
-        } else if (CharSequenceUtil.isNotBlank(excelDTO.getPushMobileName()) && excelDTO.getPushMobileName().equals("否")) {
-            excelDTO.setIsPushMobile(Boolean.FALSE);
-        } else {
-            errorMsgList.add("是否推送电话必须是是/否");
-        }
 
         //查询物流商
         String thirdSupplierName = excelDTO.getThirdSupplierName();
@@ -187,30 +179,41 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
             excelDTO.setPushType(pushType);
         }
 
-        if (CharSequenceUtil.isNotBlank(excelDTO.getPushType()) && excelDTO.getIsPushMobile()) {
-            if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(excelDTO.getPushType()) && excelDTO.getIsPushMobile()) {
-                String shopId = shopMap.get(excelDTO.getShopName());
-                if (CharSequenceUtil.isBlank(shopId)) {
-                    errorMsgList.add(CharSequenceUtil.format("店铺【{}】未匹配到", excelDTO.getShopName()));
-                } else {
-                    excelDTO.setShopId(shopId);
-                }
-            } else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(excelDTO.getPushType()) && excelDTO.getIsPushMobile()) {
-                if (CharSequenceUtil.isBlank(excelDTO.getShopName())) {
-                    errorMsgList.add("平台不能为空");
-                }
-                String code = dictMap.get(excelDTO.getShopName());
-                if (CharSequenceUtil.isBlank(code)) {
-                    errorMsgList.add(CharSequenceUtil.format("平台【{}】未匹配到", excelDTO.getShopName()));
-                } else {
-                    excelDTO.setDictPlatform(code);
-                }
-            } else if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(excelDTO.getPushType()) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(excelDTO.getPushType())) {
-                if (CharSequenceUtil.isBlank(excelDTO.getShopPhone()) && excelDTO.getIsPushMobile()) {
-                    errorMsgList.add("手机号不能为空");
+        //是否推送电话
+        if (CharSequenceUtil.isNotBlank(excelDTO.getPushMobileName()) && excelDTO.getPushMobileName().equals("是")) {
+            excelDTO.setIsPushMobile(Boolean.TRUE);
+
+            if (CharSequenceUtil.isNotBlank(excelDTO.getPushType()) && excelDTO.getIsPushMobile()) {
+                if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(excelDTO.getPushType()) && excelDTO.getIsPushMobile()) {
+                    String shopId = shopMap.get(excelDTO.getShopName());
+                    if (CharSequenceUtil.isBlank(shopId)) {
+                        errorMsgList.add(CharSequenceUtil.format("店铺【{}】未匹配到", excelDTO.getShopName()));
+                    } else {
+                        excelDTO.setShopId(shopId);
+                    }
+                } else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(excelDTO.getPushType()) && excelDTO.getIsPushMobile()) {
+                    if (CharSequenceUtil.isBlank(excelDTO.getShopName())) {
+                        errorMsgList.add("平台不能为空");
+                    }
+                    String code = dictMap.get(excelDTO.getShopName());
+                    if (CharSequenceUtil.isBlank(code)) {
+                        errorMsgList.add(CharSequenceUtil.format("平台【{}】未匹配到", excelDTO.getShopName()));
+                    } else {
+                        excelDTO.setDictPlatform(code);
+                    }
+                } else if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(excelDTO.getPushType()) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(excelDTO.getPushType())) {
+                    if (CharSequenceUtil.isBlank(excelDTO.getShopPhone()) && excelDTO.getIsPushMobile()) {
+                        errorMsgList.add("手机号不能为空");
+                    }
                 }
             }
+        } else if (CharSequenceUtil.isNotBlank(excelDTO.getPushMobileName()) && excelDTO.getPushMobileName().equals("否")) {
+            excelDTO.setIsPushMobile(Boolean.FALSE);
+        } else {
+            errorMsgList.add("是否推送电话必须是是/否");
         }
+
+
 
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {

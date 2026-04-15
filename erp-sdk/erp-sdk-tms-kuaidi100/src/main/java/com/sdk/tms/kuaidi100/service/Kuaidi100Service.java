@@ -47,9 +47,9 @@ public class Kuaidi100Service {
             Map<String, String> headers = new HashMap<>();
             headers.put("Content-Type", "application/x-www-form-urlencoded");
 
-            log.info("快递100实时查询请求参数：{}", formParams);
+            log.warn("快递100实时查询请求参数：{}", formParams);
             String response = OkHttpUtils.doPost(QUERY_URL, formParams, headers);
-            log.info("快递100实时查询响应结果：{}", response);
+            log.warn("快递100实时查询响应结果：{}", response);
 
             return JSONObject.parseObject(response, Kuaidi100QueryResponse.class);
         } catch (Exception e) {
