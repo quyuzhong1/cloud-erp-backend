@@ -238,7 +238,6 @@ public enum ModuleTypeEnum {
     DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("159", "退货同步差异"),
     SO_B2B_DELIVERY_INTERCEPT("165", "B2B发货拦截单"),
     SKU_STD_RETAIL_PRICE("160", "sku标准零售价"),
-    SO_B2B_DELIVERY_INTERCEPT("165", "B2B发货拦截单"),
 
     // doris
     ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),
