@@ -3,7 +3,7 @@ package com.erp.server.fms.service;
 import com.common.business.dto.AttachDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.fms.dto.AttachmentDTO;
-import com.erp.model.fms.entity.AttachmentEntity;
+import com.erp.model.fms.entity.FmsAttachmentEntity;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
  * @author wuht
  * @since 2025-10-16
  */
-public interface AttachmentService extends SuperService<AttachmentEntity> {
+public interface AttachmentService extends SuperService<FmsAttachmentEntity> {
 
     /**
      * 批量保存附件信息

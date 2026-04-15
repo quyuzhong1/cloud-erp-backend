@@ -32,6 +32,7 @@ import com.erp.server.wms.utils.VirtualInventoryRedisUtil;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.redisson.RedissonMultiLock;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -326,10 +327,9 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
 			transactionId = RootContext.getXID().replace(":", "_");
 			transactionType = "global";
 		}else {
-			transactionId = MDC.get("traceId");
-			if(StringUtils.isBlank(transactionId)) {
+			transactionId = TraceContext.traceId();
+			if(StringUtils.isBlank(transactionId) || "N/A".equals(transactionId) || "Ignored_Trace".equals(transactionId)) {
 				transactionId = transactionFlowEntityList.get(0).getId();
-				MDC.put("traceId", transactionId);
 			}
 			transactionType = "local";
 		}
@@ -736,7 +736,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
 		if(inGlobalTransaction) {
 			transactionId = RootContext.getXID().replace(":", "_");
 		}else {
-			transactionId = MDC.get("traceId");
+			transactionId = TraceContext.traceId();
 		}
 		
 		Integer redisQty = 0;

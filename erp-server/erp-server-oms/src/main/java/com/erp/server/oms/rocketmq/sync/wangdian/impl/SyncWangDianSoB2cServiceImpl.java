@@ -51,7 +51,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
-        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap);
+        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
         KolSubB2cApplicationEntity entity = pushDTO.getEntity();
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
@@ -65,7 +65,29 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public DmpPushTaskEntity syncCancelDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
+        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_INVALID.getCode());
+        KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_SO_B2C.getCode());
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_INVALID.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(request));
+        omsPushMsgService.save(omsPushMsgEntity);
+        return null;
+    }
+
+    @Override
     public PushSelf2Request newSyncKolB2c(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
+        return newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+
+    @Override
+    public PushSelf2Request newSyncKolB2c(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap, String syncOperate) {
         //判断skuMap不能为null 不能为空
         if (skuMap == null || skuMap.isEmpty()) {
             List<String> skuIds = pushDTO.getDetailList().stream().map(KolSubB2cApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -193,6 +215,14 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
             rawTradeOrder.setRemark(detailEntity.getRemark());
             rawTradeOrder.setJson("");
             rawTradeOrderList.add(rawTradeOrder);
+        }
+        if (StringUtils.equals(syncOperate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
+            rawTrade.setTradeStatus(PushSelf2Request.RawTrade.TRADE_STATUS_REFUNDED);
+            rawTrade.setProcessStatus(PushSelf2Request.RawTrade.PROCESS_STATUS_CANCELED);
+            for (PushSelf2Request.RawTradeOrder rawTradeOrder : rawTradeOrderList) {
+                rawTradeOrder.setStatus(PushSelf2Request.RawTradeOrder.STATUS_REFUNDED);
+                rawTradeOrder.setRefundStatus(PushSelf2Request.RawTradeOrder.REFUND_STATUS_SUCCESS);
+            }
         }
         request.setRawTradeList(rawTradeList);
         request.setRawTradeOrderList(rawTradeOrderList);

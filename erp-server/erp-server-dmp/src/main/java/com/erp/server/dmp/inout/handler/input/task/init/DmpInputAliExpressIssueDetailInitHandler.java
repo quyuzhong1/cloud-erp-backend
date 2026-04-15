@@ -71,18 +71,20 @@ public class DmpInputAliExpressIssueDetailInitHandler extends DmpInputInitHandle
         String token = aliExpressShopInfoDTO.getToken();
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
 		
-        IopRequest request = new IopRequest();
         String typeId = dmpCfgInputEntity.getTypeId();
-        
         DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
-        
         String apiType = dmpCfgApiEntity.getApiType();
-		request.setApiName(apiType);
 		
 		List<JSONObject> result = new ArrayList<>();
         for(Map<String, Object> findMongo : findMongoData) {
+            IopRequest request = new IopRequest();
+            request.setApiName(apiType);
             request.addApiParameter("buyer_login_id", findMongo.get("buyer_login_id").toString());
             request.addApiParameter("issue_id", findMongo.get("issue_id").toString());
+            Object channelSellerId = findMongo.get("channel_seller_id");
+            if (channelSellerId != null && StringUtils.isNotBlank(channelSellerId.toString())) {
+                request.addApiParameter("channel_seller_id", channelSellerId.toString());
+            }
             
         	JSONObject data = null;
         	long sleepTime = 1000;
@@ -102,7 +104,10 @@ public class DmpInputAliExpressIssueDetailInitHandler extends DmpInputInitHandle
         			count = count + 1;
         		}
         	}
-        	result.add(data.getJSONObject("result_object"));
+            JSONObject resultObject = data.getJSONObject("result_object");
+            if (resultObject != null) {
+                result.add(resultObject);
+            }
         }
         
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
@@ -134,10 +139,8 @@ public class DmpInputAliExpressIssueDetailInitHandler extends DmpInputInitHandle
         	}
         	String sub_msg = errorResponse.getString("sub_msg");
         	if("未找到纠纷记录或当前状态不可处理!".equals(sub_msg)) {
-        		data = new JSONObject();
-        		data.put("result_object", "{}");
-        		return data;
-        	}
+                return new JSONObject();
+            }
         	String code = errorResponse.getString("code");
         	if(!"ApiCallLimit".equals(code) && !"15".equals(code) && !"UnknownRuntimeException".equals(code)) {
         		throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + errorResponse.getString("msg"));

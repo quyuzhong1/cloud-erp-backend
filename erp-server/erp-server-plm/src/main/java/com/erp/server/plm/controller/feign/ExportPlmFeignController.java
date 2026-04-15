@@ -1,25 +1,86 @@
 package com.erp.server.plm.controller.feign;
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.DynamicExcelDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.*;
-import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
-import com.erp.model.plm.dto.excel.TaskExportDTO;
-import com.erp.model.plm.vo.BomExportExcelVO;
-import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
-import com.erp.server.plm.query.*;
-import com.erp.server.plm.service.*;
+import javax.annotation.Resource;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
+import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.dto.MoldInfoDTO;
+import com.erp.model.plm.dto.MoldMonitorDTO;
+import com.erp.model.plm.dto.MoldRefSkuDTO;
+import com.erp.model.plm.dto.MouldInfoDTO;
+import com.erp.model.plm.dto.PilotApplicationDTO;
+import com.erp.model.plm.dto.ProductCertificateDTO;
+import com.erp.model.plm.dto.ProductChangeDTO;
+import com.erp.model.plm.dto.ProductCustomsDTO;
+import com.erp.model.plm.dto.ProductDetailExcelExportDTO;
+import com.erp.model.plm.dto.ProductPlanSearchDTO;
+import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.dto.ProductShowDTO;
+import com.erp.model.plm.dto.ProductSkuExcelDTO;
+import com.erp.model.plm.dto.ProductTaskViewDTO;
+import com.erp.model.plm.dto.ProductTaskViewSearchDTO;
+import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
+import com.erp.model.plm.dto.ProjectReportFormsDTO;
+import com.erp.model.plm.dto.ProjectTaskTimeRecordDTO;
+import com.erp.model.plm.dto.RefProductImgAttachmentDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
+import com.erp.model.plm.dto.SkuStdCostDetailDTO;
+import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
+import com.erp.model.plm.dto.TaskDTO;
+import com.erp.model.plm.dto.TaskPagingDTO;
+import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
+import com.erp.model.plm.vo.BomExportExcelVO;
+import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
+import com.erp.server.plm.query.BomInfoHandler;
+import com.erp.server.plm.query.CfgMoldAlertRuleQueryHandler;
+import com.erp.server.plm.query.CfgMoldReturnAlertRuleQueryHandler;
+import com.erp.server.plm.query.MoldInfoQueryHandler;
+import com.erp.server.plm.query.MoldMonitorQueryHandler;
+import com.erp.server.plm.query.MoldRefSkuQueryHandler;
+import com.erp.server.plm.query.MouldInfoQueryHandler;
+import com.erp.server.plm.query.OrderTrackingHandler;
+import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.query.ProductChangeQueryHandler;
+import com.erp.server.plm.query.ProjectReportFormsQueryHandler;
+import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
+import com.erp.server.plm.query.SkuStdRetailPriceQueryHandler;
+import com.erp.server.plm.service.BomInfoService;
+import com.erp.server.plm.service.CfgMoldAlertRuleService;
+import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
+import com.erp.server.plm.service.LogisticsProductService;
+import com.erp.server.plm.service.MoldInfoService;
+import com.erp.server.plm.service.MoldMonitorService;
+import com.erp.server.plm.service.MoldRefSkuService;
+import com.erp.server.plm.service.MouldInfoService;
+import com.erp.server.plm.service.PilotApplicationService;
+import com.erp.server.plm.service.ProductCertificateService;
+import com.erp.server.plm.service.ProductChangeService;
+import com.erp.server.plm.service.ProductCustomsService;
+import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.ProductInfoService;
+import com.erp.server.plm.service.ProductPlanService;
+import com.erp.server.plm.service.ProjectPlanTaskService;
+import com.erp.server.plm.service.ProjectReportFormsService;
+import com.erp.server.plm.service.ProjectTaskTimeRecordService;
+import com.erp.server.plm.service.ProjectTaskViewService;
+import com.erp.server.plm.service.RefProductImgAttachmentService;
+import com.erp.server.plm.service.SkuStdCostDetailService;
+import com.erp.server.plm.service.SkuStdRetailPriceService;
+import com.erp.server.plm.service.TaskService;
 
 @RestController
 @RequestMapping("/feign/export/")
@@ -68,6 +129,8 @@ public class ExportPlmFeignController {
     private RefProductImgAttachmentService refProductImgAttachmentService;
     @Resource
     private ProductChangeService productChangeService;
+    @Resource
+    private SkuStdRetailPriceService skuStdRetailPriceService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -210,5 +273,11 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = ProductChangeQueryHandler.class)
     public PagingVO<ProductChangeDTO.ListDTO> productChange(@RequestBody @Validated PagingDTO<ProductChangeDTO.PagingParamDTO> dto) {
         return productChangeService.paging(dto);
+    }
+    
+    @PostMapping("/skuStdRetailPrice")
+    @WebAdvanceQuery(handler = SkuStdRetailPriceQueryHandler.class)
+    public PagingVO<SkuStdRetailPriceDTO.ListDTO> skuStdRetailPrice(@RequestBody @Validated PagingDTO<SkuStdRetailPriceDTO.PagingParamDTO> dto) {
+    	return skuStdRetailPriceService.paging(dto);
     }
 }

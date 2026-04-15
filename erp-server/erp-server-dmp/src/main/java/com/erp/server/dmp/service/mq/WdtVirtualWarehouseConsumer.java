@@ -1,16 +1,19 @@
 package com.erp.server.dmp.service.mq;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
+import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -79,10 +82,35 @@ public class WdtVirtualWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends Abs
     public ApiResult<?> handle(Object ext) {
         log.info("旺店通仓库数据处理：{}", JSONUtil.parse(ext).toString());
         ErpWarehouseDto entity = JSONUtil.toBean(ext.toString(), ErpWarehouseDto.class);
-        //入库
+        String warehouseId = StrUtil.blankToDefault(entity.getWarehouseId(),
+                StrUtil.blankToDefault(entity.getUniqueId(), entity.getCode()));
+        String code = StrUtil.blankToDefault(entity.getCode(), warehouseId);
+        String sysType = StrUtil.blankToDefault(entity.getSysType(), PlatformDictEnum.WDT.getCode());
+        String category = ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode();
+
+        ThirdWarehouseEntity existEntity = thirdWarehouseService.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
+                .eq(ThirdWarehouseEntity::getSysType, sysType)
+                .eq(ThirdWarehouseEntity::getCategory, category)
+                .eq(ThirdWarehouseEntity::getCode, code), false);
+
+        if (Objects.nonNull(existEntity)) {
+            ThirdWarehouseDTO.UpdateDTO updateDTO = new ThirdWarehouseDTO.UpdateDTO();
+            BeanUtils.copyProperties(entity, updateDTO);
+            updateDTO.setId(existEntity.getId());
+            updateDTO.setWarehouseId(warehouseId);
+            updateDTO.setCode(code);
+            updateDTO.setSysType(sysType);
+            updateDTO.setCategory(category);
+            thirdWarehouseService.update(updateDTO);
+            return ApiResult.success();
+        }
+
         ThirdWarehouseDTO.AddDTO addDTO = new ThirdWarehouseDTO.AddDTO();
-        BeanUtils.copyProperties(entity,addDTO);
-        addDTO.setCategory(ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode());
+        BeanUtils.copyProperties(entity, addDTO);
+        addDTO.setWarehouseId(warehouseId);
+        addDTO.setCode(code);
+        addDTO.setSysType(sysType);
+        addDTO.setCategory(category);
         thirdWarehouseService.add(addDTO);
         return ApiResult.success();
     }

@@ -1,5 +1,6 @@
 package com.erp.server.oms.config;
 
+import com.common.business.config.TraceableExecutorService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,7 +17,7 @@ public class OmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     
 }

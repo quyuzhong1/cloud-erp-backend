@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.config;
 
+import com.common.business.config.TraceableExecutorService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,7 +16,7 @@ public class DmpInoutExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "dmpDoOutputErrorTask")
@@ -26,7 +27,7 @@ public class DmpInoutExecutorPoolConfig {
     	//设置线城池的饱和策略
     	RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
     	service.setRejectedExecutionHandler(handler);
-    	return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "dmpOutputExecutorPool")
@@ -37,7 +38,7 @@ public class DmpInoutExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "dmpTabListExecutorPool")
@@ -48,7 +49,7 @@ public class DmpInoutExecutorPoolConfig {
     	//设置线城池的饱和策略
     	RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
     	service.setRejectedExecutionHandler(handler);
-    	return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "dmpListTimeExecutorPool")
@@ -59,7 +60,7 @@ public class DmpInoutExecutorPoolConfig {
     	//设置线城池的饱和策略
     	RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
     	service.setRejectedExecutionHandler(handler);
-    	return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "dmpSdyOutputExecutorPool")
@@ -70,7 +71,7 @@ public class DmpInoutExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "dmpSdyOutputPushExecutorPool")
@@ -81,7 +82,7 @@ public class DmpInoutExecutorPoolConfig {
     	//设置线城池的饱和策略
     	RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
     	service.setRejectedExecutionHandler(handler);
-    	return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "dmpInputDbNextPageFinishPool")
@@ -92,6 +93,6 @@ public class DmpInoutExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
 }

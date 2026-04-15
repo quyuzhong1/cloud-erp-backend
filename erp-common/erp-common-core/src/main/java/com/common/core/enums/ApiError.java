@@ -203,7 +203,7 @@ public enum ApiError implements Serializable {
     COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
     COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
-
+    COMMON_STATUS_SAME(92134,"存在相同状态"),
     COMMON_NO_SKU(98128,"SKU不存在"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
@@ -290,6 +290,13 @@ public enum ApiError implements Serializable {
     FILE_OPERATION_INTERRUPTED(2438, "操作被中断"),
     FILE_ZIP_EMPTY(2439, "ZIP文件中没有找到文件"),
     FILE_CHECK_SIZE_FAILED(2440, "检查ZIP文件大小失败: {0}"),
+    FILE_MANAGEMENT_SKU_TYPE_EXIST(2441, "SKU【{0}】类型【{1}】已存在"),
+    FILE_MANAGEMENT_CATEGORY_TYPE_EXIST(2442, "品类【{0}】类型【{1}】已存在"),
+
+    FILE_URL_INVALID(2443, "文件url格式错误"),
+    FILE_UNSUPPORTED_TYPE(2444, "不支持的文件类型【{0}】"),
+    FILE_DOWNLOAD_FAILED(2445, "文件下载失败【{0}】"),
+    FILE_SHEET_NOT_EXIST(2446,"未找到配置的sheet页名称"),
 
     /**
      * 单据相关提示 从3000 - 3500
@@ -684,6 +691,10 @@ public enum ApiError implements Serializable {
     PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE(5115, "产品尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
     PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
     PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
+    PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
+    PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
+    PRODUCT_RETAIL_SKU_DUPLICATE(5122, "已存在同SKU同币种零售价,不可重复创建"),
+
 
     /**
      * BOM 错误信息 6000 - 6499
@@ -866,6 +877,8 @@ public enum ApiError implements Serializable {
     PO_SUBMIT_OR_REJECT_EXPORT_CONTRACT_FORBIDDEN(9517,"待提交和审核不通过采购订单不支持导出采购合同"),
 
     PO_APPROVED_ONLY_CAN_PUSH_RECEIPT(9518,"只有已审核采购订单能下推签收单"),
+    PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION(9518,"只有已审核采购订单能下推质检申请单"),
+
     PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT(9519,"只有已确认或送货中的采购订单明细允许下推签收单"),
     PO_APPROVED_ONLY_CAN_PUSH_INBOUND(9520,"只有已审核采购订单支持下推采购入库单"),
     PO_RECEIVE_ALREADY_PUSHED_REVERSE_FORBIDDEN(9521,"已存在下推收货单，不支持反审核"),
@@ -910,6 +923,32 @@ public enum ApiError implements Serializable {
     PO_QC_CANCEL_ALLOWED_STATUS_ONLY(9554,"仅待质检状态的质检单允许执行取消操作"),
     PO_QC_DELETE_ALLOWED_STATUS_ONLY(9555,"仅待质检、已取消、暂存状态的质检单允许删除"),
     PO_QC_REVOKE_ALLOWED_STATUS_ONLY(9556,"仅免检或已质检状态的质检单允许撤销质检"),
+    PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS(9557,"质检类型【{0}】已存在全量的抽样方案，不能重复配置"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置全部SKU"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置相同SKU【{1}】"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS(9559,"抽样方案明细区间不连续【{0},{1}】->【{2},{3}】"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID(9560,"抽样方案明细抽样数量只能输入大于0的整数"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS(9561,"抽样方案明细抽样数量不能大于批量范围"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID(9562,"检验水平不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID(9563,"严重缺陷AQL不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY(9563,"严重缺陷AQL应该为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID(9564,"一般缺陷AQL不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY(9564,"一般缺陷AQL应该为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID(9564,"严重缺陷AQL枚举不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID(9565,"一般缺陷AQL枚举不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY(9566,"抽样方案明细要为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY(9567,"抽样方案明细不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID(9568,"抽样方案明细范围不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO(9569,"范围必须大于等于0"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL(9570,"范围前后值不能相同"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END(9571,"起始值不能大于结束值"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND(9572,"未找到抽样方案质检类型单数据"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID(9573,"抽样比例明细抽样比例只能输入大于等于0的小数且小于等于100"),
+    PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL(9574,"质检类型【{0}】不存在抽样方案"),
+    PO_QC_SAMPLING_PLAN_NOT_FOUND(9575,"未找到抽样方案【{0}】，SKU【{1}】不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_FOUND(9576,"未找到抽样方案明细【{0}】，SKU【{1}】不存在"),
+    PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL(9577,"一般缺陷AQL【{0}】方案不存在"),
+    PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL(9578,"严重缺陷AQL【{0}】方案不存在"),
 
     PO_SUBCONTRACT_ORDER_NOT_FOUND(9557,"未找到委外订单"),
     PO_SUBCONTRACT_DETAIL_NOT_FOUND(9558,"未找到委外订单明细"),
@@ -943,6 +982,7 @@ public enum ApiError implements Serializable {
     PO_INSTOCK_DETAIL_SKU_NOT_EXIST(9583,"sku【{0}】在采购收货单中未找到"),
     PO_PUSH_DOWN_CHANGE_EXISTS(9584,"采购订单已下推采购变更单"),
     PO_PUSH_DOWN_DELIVERY_EXISTS(9585,"采购订单已下推送货单"),
+    PO_PUSH_DOWN_QC_APPLICATION_EXISTS(9585,"采购订单已下质检申请单【{0}】"),
     PO_SUPPLIER_CONFIRM_NOT_ALLOWED(9586,"采购订单【{0}】未审核完成不支持确认"),
     PO_DETAIL_SUPPLIER_CONFIRM_NOT_ALLOWED(9587,"采购订单【{0}】非待确认不支持确认"),
     PO_SKU_PUSH_DOWN_NOT_ALLOWED(9588,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持下推"),
@@ -1028,6 +1068,13 @@ public enum ApiError implements Serializable {
     PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
     PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE(9668,"返修委外订单不允许反审核"),
     PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
+    PO_QC_DEFECT_INFO_INCOMPLETE(9666,"缺陷信息必须同时填写或同时不填写"),
+    PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9667,"采购收货单待质检数量不允许小于0"),
+    PO_QC_DEFECT_LEVEL_DUPLICATE(9668,"缺陷等级不能重复"),
+    PO_QC_NOTICE_FINISH(9668,"【{0}】已质检完成"),
+    PO_QC_NOTICE_DETAIL_NOT_FOUND(9669,"没有找到质检通知单明细"),
+    PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9670,"良品/不良品数量不允许小于0或空"),
+    PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1140,7 +1187,8 @@ public enum ApiError implements Serializable {
     SO_NOT_FOUND(10579,"销售订单不存在"),
     SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN(10580,"销售订单已下推销售出库单，不支持反审核"),
     SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND(10581,"退货数量不能大于已出库数量"),
-    SO_DELIVERY_QTY_EXCEEDS_SALES(10582,"发货总数量不能大于销售数量"),
+    SO_DELIVERY_QTY_EXCEEDS_SALES(10582,"sku【{0}】发货总数量不能大于销售数量"),
+    SO_DELIVERY_QTY_EXCEEDS_FROZEN(10582,"sku【{0}】发货数量不能大于锁定数量"),
     SO_DELIVERY_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN(10583,"销售退货通知单已下推，不支持反审核"),
     SO_DELIVERY_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN(10584,"销售退货签收单已下推，不支持反审核"),
     SO_DELIVERY_RETURN_ORDER_APPROVED_REQUIRED_NOTICE(10585,"仅已审核的销售退货订单才允许下推销售退货通知单"),
@@ -1251,6 +1299,7 @@ public enum ApiError implements Serializable {
     SO_B2C_SPLIT_BY_WAREHOUSE_FORBIDDEN(10690,"订单明细仓库一致，无法按仓库维度拆分"),
     SO_B2C_LOGISTICS_PLATFORM_REQUIRED(10691,"B2C销售订单【{0}】物流下单平台不能为空"),
     SO_B2C_MULTI_CHANNEL_FORBIDDEN(10692,"B2C销售订单【{0}】不支持设置多个销售渠道"),
+    SO_B2C_SPLIT_KOL_FORBIDDEN(10727,"销售订单由寄样申请单生成，无法拆单"),
     SO_DETAIL_SKU_ALL_EMPTY_FORBIDDEN(10693,"销售订单【{0}】明细中sku不能全部为空"),
     SO_REPLACE_SKU_STATUS_INVALID(10694,"销售订单【{0}】只能在待提交和审核不通过状态更换发货SKU"),
     SO_B2B_SALESMAN_CHANGE(10695,"b2b客户销售员变更单" ),
@@ -1494,6 +1543,12 @@ public enum ApiError implements Serializable {
     SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY(12012,"资产验收数量不能大于模具采购单的采购数量"),
     SAMPLE_ASSET_NOT_FOUND(12013,"资产卡片【{0}】不存在"),
     SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY(12014,"资产编码【{0}】处置数量不能大于账存数量"),
+    SAMPLE_B2C_DISAPPROVE_FORBIDDEN(12015,"B2C寄样单不允许反审核"),
+    SAMPLE_B2C_CANCEL_APPROVE_REQUIRED(12016,"B2C寄样单仅审核通过后允许取消"),
+    SAMPLE_B2C_CANCEL_STATUS_INVALID(12017,"B2C寄样单当前单据状态不允许取消"),
+    SAMPLE_B2C_CANCEL_ALREADY(12018,"B2C寄样单已取消，不允许再次取消"),
+    SAMPLE_ADDRESS_PARSE_ONLY_CN(12019,"只支持中国地区地址解析，请检查地址内容"),
+    SAMPLE_ADDRESS_PARSE_EMPTY_INPUT(12020,"待解析地址不能为空"),
     SAMPLE_B2B_APPLICATION_NOT_FOUND(10716,"B2B寄样申请单不存在"),
     SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND(10717,"B2B寄样申请单明细不存在"),
     SAMPLE_B2B_APPLICATION_NOT_APPROVED(10718,"B2B寄样申请单【{0}】未审核完成，暂不支持下推"),
@@ -1655,7 +1710,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_SELF_SHIP_BILL_STATUS_CHANGE_FORBIDDEN(13579,"已确认或已作废的自发货费用单不支持状态变更"),
     LOGISTICS_CHANNEL_ALREADY_USED(13580,"物流渠道【{0}】已被使用，不支持重复选择"),
     LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS(13581,"已存在渠道【{0}】的截单开船配置数据"),
-    LOGISTICS_COST_NAME_ALREADY_EXISTS(13582,"费用名称【{0}】已存在"),
+    LOGISTICS_COST_NAME_ALREADY_EXISTS(13582,"费用归属【{0}】费用名称【{1}】已存在"),
     LOGISTICS_WAREHOUSE_MAPPING_ALREADY_EXISTS(13583,"物流商仓库代码【{0}】已存在"),
     LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND(13584,"报关对账单不存在"),
     LOGISTICS_DECLARE_RECONCILIATION_DETAIL_NOT_FOUND(13585,"报关对账单明细不存在"),
@@ -1756,6 +1811,28 @@ public enum ApiError implements Serializable {
      */
     DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH(15500,"发货建议【{0}】未完成，不支持下推"),
     DELIVERY_SUGGESTION_INVALID_FORBIDDEN(15501,"发货建议【{0}】已作废，不支持下推"),
+
+
+    /**
+     * 质检申请 错误 信息 16000-16500
+      */
+    QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
+    QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
+    QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致"),
+    QC_APPLICATION_NOT_APPROVE_PUSH(16003,"质检申请单未审核不支持下推"),
+    QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW(16004,"期望质检日期不能早于当前日期"),
+    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY(16005,"申请质检数量不能大于未入库数量，SKU【{0}】未入库数量：【{1}】"),
+    QC_STANDARD_SKU_NOT_FOUND(11140,  "SKU【{0}】未查得质检标准"),
+    QC_STANDARD_NOT_FOUND(11141, "质检标准不存在"),
+    QC_STANDARD_SKU_EXISTS(11142, "该SKU已存在质检标准"),
+    QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”关键字或对应数值"),
+    QC_STANDARD_IMPORT_DETAIL_NOT_FOUND(11144, "未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）"),
+    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY(16006,"申请质检数量不能大于剩余送货数量，SKU【{0}】剩余送货数量：【{1}】"),
+    QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION(16007,"待发货来源质检申请单不允许操作"),
+    QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
+    QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
+    QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
+
     ;
     @Getter
     private final Integer code;

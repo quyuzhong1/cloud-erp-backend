@@ -80,6 +80,21 @@ public class KolB2bApplicationController extends BaseController {
     }
 
     /**
+     * 更新明细备注
+     */
+    @PostMapping("/updateDetailRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "B2B寄样申请明细备注更新:备注={remark}", keyIdName = "detailId")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "oms:kolB2bApplication:update",
+//            serviceClass = KolB2bApplicationService.class,
+//            keyIdName = "id")
+    public ApiResult<?> updateDetailRemark(@RequestBody @Validated KolB2bApplicationDTO.UpdateDetailRemarkDTO dto) {
+        kolB2bApplicationService.updateDetailRemark(dto.getId(), dto.getDetailId(), dto.getRemark());
+        return success();
+    }
+
+    /**
     * 获取状态统计
     * @return
     */

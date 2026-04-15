@@ -19,7 +19,10 @@ public enum ModuleOperateLogFieldTypeEnum {
     TYPE_CUSTOMER(8,"客户"),
     TYPE_CURRENCY(9,"币别"),
     TYPE_ORG(10,"组织"),
-    TYPE_ACCOUNT(11,"账户")
+    TYPE_ACCOUNT(11,"账户"),
+    TYPE_WAREHOUSE(12,"仓库"),
+    TYPE_SUPPLIER(13,"供应商")
+
     ;
 
     public Integer code;

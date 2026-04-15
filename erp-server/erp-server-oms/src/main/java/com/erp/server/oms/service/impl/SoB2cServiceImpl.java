@@ -144,6 +144,8 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -2364,7 +2366,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         addTaskDTO.setSourceCode(entity.getCode());
         addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
-        addTaskDTO.setTraceId(MDC.get("traceId"));
+        addTaskDTO.setTraceId(TraceContext.traceId());
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", entity.getId());
@@ -6988,6 +6990,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean updateBillStatus(String id, SoB2cBillStatusEnum soB2cBillStatusEnum) {
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getBillStatus, soB2cBillStatusEnum.getCode())
+                .setSql("version = version + 1")
                 .update(new SoB2cEntity());
     }
 
@@ -8781,12 +8784,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //不在备案列表的skuNo
         List<String> notRegistrationSkuNoList = new ArrayList<>();
-        /**
-         * 获取到对应的skuNo List  TODO 等接口
-         */
+
+
         String packageStatus = PackageStatusEnum.NOT.getCode();
         String transferStatus = TransferStatusEnum.NOT.getCode();
         List<String> skuNoList = productList.stream().map(SplitSkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuIdList = productList.stream().map(SplitSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(skuIdList);
+        skuNoList = skuNoList.stream().filter(v->{
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s->s.getSkuNo().equals(v)).findFirst().orElse(null);
+            if(Objects.isNull(productDTO)){
+                return true;
+            }
+            if ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty())){
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
         String declarePlatform = "";
         String declarePlatformName = "";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
@@ -11467,13 +11481,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse) {
+    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse,SoB2cEntity oldSoB2cEntity) {
         //检查发货限制
         String restrictionMsg = this.checkDeliveryRestriction(dto.getId(), RuleOrderHandleEnum.DeliveryRestrictionEnum.NO_OUTBOUND_DELIVERY.getCode());
         if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
             throw new ServiceException(restrictionMsg);
         }
         dto.setLogisticsChannelCode(baseDTO.getCode());
+        Boolean isThirdWarehouse = Objects.nonNull(overseasWarehouse);
         //生成发货单和出库单
         try {
             UserContext.setIsUserSystem(true);
@@ -11482,7 +11497,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } catch (Exception e) {
             log.error("生成发货单，出库单失败:{}", e.getMessage());
             //回退订单状态
-            soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, null).set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()).set(SoB2cEntity::getIsNotOutbound, false)
+            soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, oldSoB2cEntity.getSoOutstockDate()).set(SoB2cEntity::getBillStatus, oldSoB2cEntity.getBillStatus()).set(SoB2cEntity::getIsNotOutbound, oldSoB2cEntity.getIsNotOutbound())
                     .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
             throw new ServiceException(CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage()));
         } finally {
