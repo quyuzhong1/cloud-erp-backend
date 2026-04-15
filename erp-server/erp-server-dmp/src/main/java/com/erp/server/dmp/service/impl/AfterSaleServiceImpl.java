@@ -204,6 +204,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         String platformCode = addDTO.getPlatformCode();
         DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoService.lambdaQuery()
                 .eq(DmpSoInfoEntity::getPlatformCode, platformCode)
+                .orderByDesc(DmpSoInfoEntity::getCreateTime)
+                .last(" limit 1 ")
                 .one();
         // 直接根据店铺匹配，不需要平台正确
         if (Objects.nonNull(dmpSoInfoEntity)) {
