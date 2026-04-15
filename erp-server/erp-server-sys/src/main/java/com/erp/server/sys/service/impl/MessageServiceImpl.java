@@ -20,9 +20,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.MessageDTO;
+import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
+import com.erp.model.sys.entity.PdaVersionEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.NoticeTimeTypeEnum;
 import com.erp.model.sys.enums.ReleaseTypeEnum;
@@ -66,6 +68,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private com.erp.server.sys.service.PdaVersionService pdaVersionService;
 
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
@@ -269,7 +274,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
-    public BatchResultDTO deleteMessage(String id) {
+    public BatchResultDTO delete(String id) {
         MessageEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
 
         log.info("删除 开始删除数据，id：【{}】", id);
@@ -452,4 +457,53 @@ public int getSysVersionUnreadCount() {
             .intValue();
 }
 
+@Override
+public List<BatchResultDTO> batchDelete(List<String> ids, String releaseType) {
+    List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+    
+    if (ReleaseTypeEnum.PDA_SYSTEM.getCode().equals(releaseType)) {
+        // 执行 message 的逻辑
+        List<MessageEntity> list = this.lambdaQuery().in(MessageEntity::getId, ids).list();
+        Map<String, MessageEntity> idEntityMap = list.stream().collect(Collectors.toMap(MessageEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = this.delete(id);
+            } catch (Exception e) {
+                log.error("删除失败", e);
+                MessageEntity entity = idEntityMap.get(id);
+                if (entity == null) {
+                    deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+    } else if (ReleaseTypeEnum.PDA_UPGRADE.getCode().equals(releaseType)) {
+        // 执行 pda_version 的逻辑
+        List<PdaVersionEntity> list = pdaVersionService.lambdaQuery().in(PdaVersionEntity::getId, ids).list();
+        Map<String, PdaVersionEntity> idEntityMap = list.stream().collect(Collectors.toMap(PdaVersionEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = pdaVersionService.delete(id);
+            } catch (Exception e) {
+                log.error("删除失败", e);
+                PdaVersionEntity entity = idEntityMap.get(id);
+                if (entity == null) {
+                    deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+    }
+    
+    return resultDTOS;
 }
+
+} 

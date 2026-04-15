@@ -1,9 +1,7 @@
 package com.erp.server.sys.controller.sys;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -19,7 +17,6 @@ import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.server.sys.handler.SysMessageQueryHandler;
-import com.erp.server.sys.handler.SysVersionQueryHandler;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
 import lombok.extern.slf4j.Slf4j;
@@ -116,7 +113,7 @@ public class SysMessageController {
      * 删除
      * @author wtr
      * @date:  2026-04-10
-     * @param dto
+     * @param dtoList
      * @return
      */
     @PostMapping("/delete")
@@ -126,27 +123,27 @@ public class SysMessageController {
             serviceClass = MessageService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除")
-    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<MessageEntity> list = messageService.lambdaQuery().in(MessageEntity::getId, ids).list();
-        Map<String, MessageEntity> idEntityMap = list.stream().collect(Collectors.toMap(MessageEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = messageService.deleteMessage(id);
-            }catch (Exception e){
-                log.error("删除失败",e);
-                MessageEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
+    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated List<MessageDTO.DeleteDTO> dtoList) {
+        if (dtoList == null || dtoList.isEmpty()) {
+            return success(new ArrayList<>());
         }
+        
+        //按 releaseType 分组
+        Map<String, List<String>> releaseTypeIdsMap = dtoList.stream()
+                .collect(Collectors.groupingBy(
+                        MessageDTO.DeleteDTO::getReleaseType,
+                        Collectors.mapping(MessageDTO.DeleteDTO::getId, Collectors.toList())
+                ));
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (Map.Entry<String, List<String>> entry : releaseTypeIdsMap.entrySet()) {
+            String releaseType = entry.getKey();
+            List<String> ids = entry.getValue();
+
+            List<BatchResultDTO> batchResults = messageService.batchDelete(ids, releaseType);
+            resultDTOS.addAll(batchResults);
+        }
+        
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : error("",resultDTOS);
     }
 

@@ -5,6 +5,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
@@ -23,7 +24,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.sys.service.PdaVersionService;
 import com.common.core.controller.vo.ApiResult;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 
 /**
  * 系统通知-PDA升级通知
@@ -105,6 +104,33 @@ public class PdaVersionController extends BaseController {
     @GetMapping(value = "/skipVersion")
     public ApiResult skipVersion(@RequestParam("versionId") String versionId) {
         Boolean flag = pdaVersionService.skipVersion(versionId);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 详情
+     * @Author
+     * @Date
+     * @param
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<PdaVersionDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(pdaVersionService.view(id));
+    }
+
+    /**
+     * 更新 PDA 版本信息
+     * @Author 
+     * @Date 
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新 PDA 版本信息")
+    @PostMapping(value = "/update")
+    public ApiResult update(@RequestBody @Validated PdaVersionDTO.UpdateDTO dto) {
+        Boolean flag = pdaVersionService.update(dto);
         return flag == true ? success() : failure();
     }
 
