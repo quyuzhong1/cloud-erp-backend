@@ -17,6 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
+import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.server.sys.handler.SysMessageQueryHandler;
 import com.erp.server.sys.handler.SysVersionQueryHandler;
 import com.erp.server.sys.service.MessageService;
@@ -32,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -210,6 +212,11 @@ public class SysMessageController {
                     for (MessageUserReadEntity unReadUser : unReadUsers) {
                         message = messageService.getById(unReadUser.getMessageId());
                         if (message != null) {
+                            if (!Objects.equals(MessageTypeEnum.SYS.getCode(),message.getType())) {
+                                log.info("Message {} type is not sys, skipping", message.getId());
+                                continue;
+                            }
+                            
                             // 检查消息是否过期
                             LocalDateTime expireTime = message.getExpireTime();
                             if (expireTime != null && expireTime.isBefore(now)) {
