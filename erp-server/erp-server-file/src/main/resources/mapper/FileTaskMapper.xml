@@ -54,7 +54,7 @@
             ft.is_deleted = false
             and
             <foreach collection="fileUrlList" item="fileUrl" open="(" separator="OR" close=")">
-                ft.meta_info LIKE CONCAT('%', #{fileUrl}, '%')
+                ft.meta_info LIKE CONCAT('%', CAST(#{fileUrl, jdbcType=VARCHAR} AS text), '%')
             </foreach>
         </where>
         order by ft.meta_info::json ->>'fileUrl', ft.create_time desc

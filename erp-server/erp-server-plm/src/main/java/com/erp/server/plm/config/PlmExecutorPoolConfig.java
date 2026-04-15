@@ -1,5 +1,6 @@
 package com.erp.server.plm.config;
 
+import com.common.business.config.TraceableExecutorService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,6 +17,6 @@ public class PlmExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
 }

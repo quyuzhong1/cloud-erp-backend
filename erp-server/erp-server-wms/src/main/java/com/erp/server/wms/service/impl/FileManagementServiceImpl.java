@@ -292,6 +292,32 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
 
     @Override
     public FileManagementDTO.AttachDTO getCategoryGeneralStandardFile(String skuId) {
-        return fileManagementMapper.getCategoryGeneralStandardFileUrl(skuId);
+        // 获取 SKU 分类信息
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(Collections.singletonList(skuId));
+        if (CollUtil.isEmpty(skuVOS)) {
+            return null;
+        }
+        
+        SkuVO skuVO = skuVOS.get(0);
+        String categoryId = skuVO.getCategoryId();
+        if (CharSequenceUtil.isBlank(categoryId)) {
+            return null;
+        }
+        
+        // 获取分类信息，包括父级分类
+        List<BasicCategoryEntity> categoryEntityList = plmTaskFeign.listCategoryByIds(Collections.singletonList(categoryId));
+        if (CollUtil.isEmpty(categoryEntityList)) {
+            return null;
+        }
+        
+        BasicCategoryEntity categoryEntity = categoryEntityList.get(0);
+        String parentCategoryId = categoryEntity.getPid();
+        if (CharSequenceUtil.isBlank(parentCategoryId)) {
+            // 如果是一级分类，直接使用当前分类 ID
+            parentCategoryId = categoryId;
+        }
+        
+        // 根据一级分类 ID 查询文件
+        return fileManagementMapper.getCategoryGeneralStandardFileUrl(parentCategoryId);
     }
 }
