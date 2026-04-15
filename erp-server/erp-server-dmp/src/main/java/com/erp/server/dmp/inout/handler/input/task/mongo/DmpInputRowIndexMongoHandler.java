@@ -28,7 +28,7 @@ public class DmpInputRowIndexMongoHandler extends DmpInputBaseMongoHandler{
 	public static final String STR = "|";
 
     /**
-     * 唯一建配置必须添加indexNumber
+     * 唯一键配置必须添加indexNumber
      */
 	@Override
 	protected List<Map<String, Object>> getDataList(DmpInputTaskFileContentTypeEnum contentType , List<String> resultList) {
@@ -41,6 +41,7 @@ public class DmpInputRowIndexMongoHandler extends DmpInputBaseMongoHandler{
 			uniqueFieldSetIndexKeyBuilder.append(nextLevelId).append(STR);
 			for (String uniqueField : uniqueFieldSet) {
                 // 原始key移除生成的indexNumber和uniqueFieldSetIndexKey，避免重复添加到唯一键组合中
+                // 唯一键配置必须添加indexNumber
                 if (INDEX_NUMBER.equalsIgnoreCase(uniqueField)) {
                     continue;
                 }
@@ -56,7 +57,7 @@ public class DmpInputRowIndexMongoHandler extends DmpInputBaseMongoHandler{
 			respMap.put(UNIQUE_FIELD_SET_INDEX_KEY, uniqueFieldSetIndexKey);
 
 			String rowIndexUniqueMd5 = uniqueFieldSetIndexKeyBuilder.append(indexNumber).toString();
-			String upperCaseMd5 = DigestUtils.md5Hex(rowIndexUniqueMd5.getBytes(StandardCharsets.UTF_8)).toUpperCase();
+			String upperCaseMd5 = DigestUtils.md5Hex(rowIndexUniqueMd5.getBytes(StandardCharsets.UTF_8)).toLowerCase();
 			respMap.put(ROW_INDEX_UNIQUE_MD5, upperCaseMd5);
 			// 累计次数
 			uniqueFieldSetIndexMap.put(uniqueFieldSetIndexKey, indexNumber + 1);
