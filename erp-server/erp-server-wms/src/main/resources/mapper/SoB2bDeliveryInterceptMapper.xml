@@ -21,17 +21,19 @@
             sbdi.code,
             sbdi.source_type,
             sbdi.so_code,
-            sbdi.third_delivery_code,
+            COALESCE(NULLIF(sbdi.third_delivery_code, ''), btd.code) AS soDeliveryCode,
+            COALESCE(NULLIF(sbdi.third_delivery_code, ''), btd.code) AS thirdDeliveryCode,
             sbdi.so_outstock_code,
             sbdid.sku_id,
             sbdid.sku_no,
             sbdid.delivery_qty,
             sbdid.warehouse_id,
             sbdid.warehouse_name,
-            sbdi.logistics_channel_id,
-            sbdi.logistics_channel_name,
+            COALESCE(NULLIF(btd.logistics_channel_id, ''), sbdi.logistics_channel_id) AS logisticsChannelId,
+            COALESCE(NULLIF(btd.logistics_channel_name, ''), sbdi.logistics_channel_name) AS logisticsChannelName,
+            btd.delivery_method AS deliveryMethod,
             sbdi.bill_type,
-            sbdi.transport_no,
+            COALESCE(NULLIF(btd.track_no, ''), sbdi.transport_no) AS transportNo,
             sbdi.cancel_status,
             sbdi.intercept_status,
             sbdi.handle_status,
@@ -41,8 +43,9 @@
             sbdi.handle_user_name,
             sbdi.create_time,
             sbdi.handle_time,
-            btd.platform_order_code as platformOrderCode,
-            sbdi.third_warehouse_order_code
+            btd.status AS status,
+            COALESCE(NULLIF(btd.platform_order_code, ''), sbdi.third_warehouse_order_code) AS platformOrderCode,
+            COALESCE(NULLIF(sbdi.third_warehouse_order_code, ''), btd.platform_order_code) AS thirdWarehouseOrderCode
         FROM so_b2b_delivery_intercept_detail sbdid
         LEFT JOIN so_b2b_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
         LEFT JOIN b2b_third_delivery btd ON btd.id = sbdi.source_id AND btd.is_deleted = FALSE
