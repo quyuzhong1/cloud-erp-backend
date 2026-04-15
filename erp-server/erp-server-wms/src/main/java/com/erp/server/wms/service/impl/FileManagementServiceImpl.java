@@ -10,6 +10,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.FileTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -318,6 +319,6 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         }
         
         // 根据一级分类 ID 查询文件
-        return fileManagementMapper.getCategoryGeneralStandardFileUrl(parentCategoryId);
+        return fileManagementMapper.getCategoryGeneralStandardFileUrl(parentCategoryId, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode());
     }
 }

@@ -100,7 +100,7 @@
             file_management fm
             LEFT JOIN attachment A ON fm.file_id = A.ID AND A.is_deleted = FALSE
         WHERE
-            fm.file_type = 'categoryGeneralStandard'
+            fm.file_type = #{fileType}
             AND fm.first_category_id = #{categoryId}
             AND A.ID = ( SELECT a2.ID FROM attachment a2 WHERE a2.ID = fm.file_id ORDER BY a2.attach_version DESC LIMIT 1 );
     </select>
