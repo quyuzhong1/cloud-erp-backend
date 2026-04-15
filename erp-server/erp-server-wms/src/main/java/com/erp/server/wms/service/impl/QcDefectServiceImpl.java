@@ -72,7 +72,6 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
         List<QcDefectEntity> toUpdate = new ArrayList<>();
         List<String> toDeleteIds = new ArrayList<>();
         List<AttachDTO> addAttachDTOS = new ArrayList<>();
-        List<AttachDTO> updateAttachDTOS = new ArrayList<>();
 
         // 处理新增和更新
         for (QcDefectDTO.AddDTO addDTO : qcDefectList) {
@@ -123,9 +122,9 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
 
                     // 处理更新的附件
                     if (hasDefectImage) {
+                        List<AttachDTO> updateAttachDTOS = new ArrayList<>();
                         for (QcDefectDTO.BadImageView badImageView : addDTO.getBadImageViewList()) {
                             AttachDTO attachDTO = new AttachDTO();
-                            attachDTO.setBusinessId(existingEntity.getId());
                             attachDTO.setAttachUrl(badImageView.getAttachUrl());
                             attachDTO.setAttachName(badImageView.getAttachName());
                             updateAttachDTOS.add(attachDTO);
