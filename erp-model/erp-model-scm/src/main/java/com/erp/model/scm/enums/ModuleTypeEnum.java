@@ -207,7 +207,7 @@ public enum ModuleTypeEnum {
     PRODUCT_CHANGE("161", "产品变更单"),
     MESSAGE("162","系统通知"),
     SYS_VERSION("163","版本更新"),
-
+    PDA_VERSION("164","PDA系统升级"),
 
 
 

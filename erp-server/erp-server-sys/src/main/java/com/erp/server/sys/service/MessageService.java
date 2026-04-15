@@ -102,7 +102,7 @@ public interface MessageService extends SuperService<MessageEntity> {
      * @param id
      * @return
      */
-    BatchResultDTO deleteMessage(String id);
+    BatchResultDTO delete(String id);
 
     /**
      * 删除版本更新
@@ -164,6 +164,16 @@ public interface MessageService extends SuperService<MessageEntity> {
      * 获取版本更新未读数量
      */
     int getSysVersionUnreadCount();
+
+    /**
+     * 批量删除消息或版本
+     * @author wtr
+     * @date: 2026-04-15
+     * @param ids
+     * @param releaseType
+     * @return
+     */
+    List<BatchResultDTO> batchDelete(List<String> ids, String releaseType);
 
     /**
      *
