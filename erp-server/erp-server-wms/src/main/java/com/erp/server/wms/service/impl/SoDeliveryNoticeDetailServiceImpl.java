@@ -90,6 +90,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+    @Lazy
     @Resource
     private SoOutstockService soOutstockService;
 
