@@ -70,7 +70,7 @@ import static com.common.business.threadlocal.UserContext.getDefaultLoginUser;
 
 /**
  * <p>
- * 物流-第三方渠道关系表 服务实现类
+ * 轨迹查询策略 服务实现类
  * </p>
  *
  * @author zdy
@@ -210,7 +210,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
 
     @Override
     public Boolean export(LogisticsThirdChannelRefDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("物流-第三方渠道关系表导出", FileTaskEventEnum.EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("轨迹查询策略导出", FileTaskEventEnum.EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -461,7 +461,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("导入物流-第三方渠道关系表", IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF.getCode(), dto);
+        downloadTaskFeign.saveImportTask("导入轨迹查询策略", IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -502,7 +502,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         List<ImportLogisticsThirdChannelRefExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "样品借用单错误信息.xlsx";
+            String fileName = "轨迹查询策略错误信息.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, ImportLogisticsThirdChannelRefExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);

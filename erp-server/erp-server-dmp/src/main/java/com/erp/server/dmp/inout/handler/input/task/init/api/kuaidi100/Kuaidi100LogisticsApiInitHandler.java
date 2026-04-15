@@ -175,7 +175,7 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                     }
                 }
             }
-
+            log.error("快递100实时查询请求参数组装：{}", param);
             Kuaidi100QueryResponse response = kuaidi100Service.getTrack(customer, key, param);
             if (Objects.nonNull(response)) {
                 // 4. 封装结果返回给 DMP 流程
