@@ -298,6 +298,8 @@ public enum ApiError implements Serializable {
     FILE_URL_INVALID(2443, "文件url格式错误"),
     FILE_UNSUPPORTED_TYPE(2444, "不支持的文件类型【{0}】"),
     FILE_DOWNLOAD_FAILED(2445, "文件下载失败【{0}】"),
+    FILE_SHEET_NOT_EXIST(2446,"未找到配置的sheet页名称"),
+
     /**
      * 单据相关提示 从3000 - 3500
      */
