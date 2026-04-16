@@ -394,16 +394,19 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
         // 设置detail的其他属性
         detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
         detail.setPurchaseQty(new BigDecimal(importExcelDTO.getPurchaseQtyStr()));
-        detail.setIsUrgent(importExcelDTO.getIsUrgentName().equals("是") ? Boolean.TRUE : Boolean.FALSE);
+        detail.setIsUrgent("是".equals(Objects.toString(importExcelDTO.getIsUrgentName(), "").trim()) ? Boolean.TRUE : Boolean.FALSE);
+        detail.setIsGift("是".equals(Objects.toString(importExcelDTO.getIsGiftName(), "").trim()));
         detail.setRemark(importExcelDTO.getRemark());
 
         List<PurchasePriceDTO.PriceDTO> convertList = convertImportDTOToPriceDTO(excelDTO,detail);
-        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
-        if (ObjectUtils.isEmpty(priceDTOList)) {
-            errorMsgList.add("未找到采购价目表");
-            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(importExcelDTO);
-            return;
+        if (CollectionUtils.isNotEmpty(convertList)) {
+            List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+            if (ObjectUtils.isEmpty(priceDTOList)) {
+                errorMsgList.add("未找到采购价目表");
+                importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(importExcelDTO);
+                return;
+            }
         }
 
         // 将detail添加到对应的excelDTO的detailList中
@@ -441,6 +444,9 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
 
     public static List<PurchasePriceDTO.PriceDTO> convertImportDTOToPriceDTO(AssetPurchaseOrderDetailDTO.MoldImportDTO importDTO,
                                                                              AssetPurchaseOrderDetailDTO.MoldDetailImportDTO detail) {
+        if (Boolean.TRUE.equals(detail.getIsGift())) {
+            return Collections.emptyList();
+        }
         PurchasePriceDTO.PriceDTO priceDTO = PurchasePriceDTO.PriceDTO.builder()
                 .purchaseOrgId(importDTO.getPurchaseOrgId())
                 .skuId(detail.getAssetId())
@@ -467,10 +473,27 @@ public class AssetPurchaseOrderExcelListener extends AnalysisEventListener<Asset
             try {
                 assetPurchaseOrderService.handleImportSuccessList(filteredList);
             }catch (Exception e){
-                errorList.forEach(excelDTO -> excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                String errorMsg = buildImportErrorMsg(e);
+                Set<String> serialNumberSet = filteredList.stream()
+                        .map(AssetPurchaseOrderDetailDTO.MoldImportDTO::getSerialNumber)
+                        .collect(Collectors.toSet());
+                List<AssetPurchaseOrderImportExcelDTO> failedRows = allList.stream()
+                        .filter(excelDTO -> serialNumberSet.contains(excelDTO.getSerialNumber()))
+                        .filter(excelDTO -> StringUtils.isBlank(excelDTO.getErrorMsg()))
+                        .collect(Collectors.toList());
+                failedRows.forEach(excelDTO -> excelDTO.setErrorMsg(errorMsg));
+                errorList.addAll(failedRows);
             }
             updateTask(count);
         }
+    }
+
+    private String buildImportErrorMsg(Exception e) {
+        String errorMsg = Objects.isNull(e) ? "" : e.getMessage();
+        if (StringUtils.isBlank(errorMsg)) {
+            errorMsg = Objects.isNull(e) ? "导入失败" : e.getClass().getSimpleName();
+        }
+        return errorMsg.length() > 50 ? errorMsg.substring(0, 50) : errorMsg;
     }
 
     public List<AssetPurchaseOrderImportExcelDTO> getAllList(){

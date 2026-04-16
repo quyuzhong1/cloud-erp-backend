@@ -67,6 +67,18 @@ public class DmpTaskFeignController {
     public Boolean allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO dto){
         return platformApiTaskService.allAddOrUpdateTaskAndSchedule(dto);
     }
+
+    @PostMapping("/batchAddOrUpdateTasksAndSchedules")
+    public Boolean batchAddOrUpdateTasksAndSchedules(@RequestBody @Valid List<PlatformTaskDTO.DisabledDTO> disabledDTOS){
+        boolean success = true;
+        for (PlatformTaskDTO.DisabledDTO dto : disabledDTOS) {
+            if (!allAddOrUpdateTaskAndSchedule(dto)) {
+                success = false;
+            }
+        }
+        return success;
+    }
+
     /**
      * 获取飞书预警信息需要推送的(PushTask任务记录)
      * @return

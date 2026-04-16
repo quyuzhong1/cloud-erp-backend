@@ -108,6 +108,11 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField("execution_status")
     private String executionStatus;
     /**
+     * 质检合格量
+     */
+    @TableField("qc_good_qty")
+    private Integer qcGoodQty;
+    /**
     * 确认类型（auto 系统，manual 手动）
     */
     @TableField("confirm_type")
@@ -152,6 +157,8 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     */
     @TableField("type")
     private String type;
+
+    public static final String QC_GOOD_QTY = "qc_good_qty";
 
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";

@@ -493,12 +493,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public void updateLogisticsBySoId(String soId, String trackNo) {
+    public void updateLogisticsBySoId(String soId, String trackNo, Boolean isDelLabel) {
         if (CharSequenceUtil.isBlank(soId)){
             return;
         }
         SoB2cLogisticsEntity entity = this.getByMainId(soId);
-        if (Objects.nonNull(entity) && !Objects.equals(trackNo, entity.getTrackNo()) ){
+        if (Objects.nonNull(entity) && !Objects.equals(trackNo, entity.getTrackNo()) && isDelLabel){
             this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
             //清空面单
             soB2cLabelService.deleteByMainIds(Collections.singletonList(soId));

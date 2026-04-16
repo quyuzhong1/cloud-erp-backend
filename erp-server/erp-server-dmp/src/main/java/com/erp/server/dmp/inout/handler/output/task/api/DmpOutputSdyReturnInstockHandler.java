@@ -147,6 +147,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
             	}
             }
         }
+        this.dealWdtRootNodeNoInitial(map);
         return map;
     }
     

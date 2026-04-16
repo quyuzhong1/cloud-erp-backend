@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.ImportHistoryRecordMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.ImportHistoryRecordEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="reconciliation_month" property="reconciliationMonth" />
+       <result column="business_type" property="businessType" />
+       <result column="file_url" property="fileUrl" />
+       <result column="file_name" property="fileName" />
+       <result column="import_count" property="importCount" />
+       <result column="match_count" property="matchCount" />
+       <result column="status" property="status" />
+       <result column="type" property="type" />
+       <result column="operation_user_id" property="operationUserId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, reconciliation_month, business_type, file_url, file_name, import_count, match_count, status, type, operation_user_id
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.ImportHistoryRecordDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+            ,ihr.clean_file_url as errorUrl
+            ,ihr.clean_file_name
+        from import_history_record ihr
+        <where>
+            ${params.sqlMap.default}
+            and ihr.is_deleted = false
+            <if test="params.importType != null and params.importType == 'new'">
+                and concat( ihr.reconciliation_month,'-01') ::TIMESTAMP >= date_trunc('month', CURRENT_DATE) - INTERVAL '1 month'
+            </if>
+            <if test="params.importType != null and params.importType == 'history'">
+                and date_trunc('month', CURRENT_DATE) - INTERVAL '1 month' > concat( ihr.reconciliation_month,'-01') ::TIMESTAMP
+            </if>
+            <if test="params.businessType != null and params.businessType != ''">
+                and ihr.business_type = #{params.businessType}
+            </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ihr.id DESC
+    </select>
+
+
+</mapper>

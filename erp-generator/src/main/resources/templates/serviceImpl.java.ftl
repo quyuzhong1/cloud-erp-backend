@@ -232,7 +232,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>

@@ -1,34 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProductChangeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductChangeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="reason" property="reason" />
+       <result column="bill_date" property="billDate" />
+       <result column="product_name" property="productName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+    </resultMap>
 
-
-
-    <select id="paging" resultType="com.erp.model.plm.vo.ProductChangePagingVO">
-        SELECT
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
         id,
-        type,source_id,state,
+        create_user_id,
+        create_user_name,
         create_time,
-        approval_finish_time,
-        remark
-        FROM product_change
-        WHERE
-        ${params.sqlMap.default} AND
-            is_deleted = FALSE
-            <if test="searchList!=null and searchList.size>0">
-                AND source_id  IN
-               <foreach collection="searchList" item="sourceId" open="(" separator="," close=")">
-                   #{sourceId}
-               </foreach>
-            </if>
-        ORDER BY create_time DESC
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, approve_status, invalid_status, sku_id, sku_no, reason, bill_date, product_name, approve_time, approve_user_id, approve_user_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductChangeDTO$ListDTO">
+        select
+            pc.id,
+            pcd.id as detailId,
+            pc.code,
+            pc.approve_status as approveStatus,
+            pc.invalid_status as invalidStatus,
+            pc.sku_id as skuId,
+            pc.sku_no as skuNo,
+            pc.reason,
+            pc.bill_date as billDate,
+            pc.product_name as productName,
+            pc.approve_time as approveTime,
+            pc.approve_user_id as approveUserId,
+            pc.approve_user_name as approveUserName,
+            pc.create_time as createTime,
+            pc.create_user_name as createUserName,
+            pcd.field,
+            pcd.old_value as oldValue,
+            pcd.new_value as newValue,
+        pcd.remark as detailRemark
+        from product_change pc
+        inner join product_change_detail pcd on pc.id = pcd.main_id
+        where ${params.sqlMap.default}
+          and  pc.is_deleted = false
+          and pcd.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pc.create_time desc ,pc.id DESC
     </select>
 
-
-    <select id="getChangeSearchCondition" resultType="java.lang.String">
-        SELECT id FROM product_bom_info WHERE  serial_number ILIKE concat('%',#{searchKeyword}::text,'%') AND product_bom_info.is_deleted = FALSE
-            UNION ALL
-        SELECT id FROM product_detail WHERE
-         sku_no!='' AND product_detail.is_deleted = FALSE AND  (sku_no ILIKE concat('%',#{searchKeyword}::text,'%') OR  name ILIKE concat('%',#{searchKeyword}::text,'%'))
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from product_change where is_deleted = false group by approve_status
     </select>
+
+    <select id="listExport" resultType="com.erp.model.plm.dto.ProductChangeDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.plm.dto.ProductChangeDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  product_change pc
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
 </mapper>

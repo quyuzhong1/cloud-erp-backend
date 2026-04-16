@@ -989,6 +989,18 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String warnMsg;
 
         /**
+         * 是否分摊
+         */
+        @ExcelIgnore
+        private Boolean isAllocateRequired;
+
+        /**
+         * 不分摊原因
+         */
+        @ExcelIgnore
+        private String notAllocateRemark;
+
+        /**
          * 备注
          */
         @ExcelProperty(value = "备注")
@@ -1011,6 +1023,8 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelIgnore
         private LocalDateTime createTime;
+
+
     }
     /**
      * tab
@@ -1372,6 +1386,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 体积重
          */
         private BigDecimal volumeWeight;
+        /**
+         * 是否取消
+         */
+        private Boolean isCancelRequired;
     }
 
     /**
@@ -1654,7 +1672,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String sourceCode;
         /**
          * 业务单号
-         * FBA：取值FBA货件单号
+         * FBA/FBT/AWD/速卖通：取值货件单号
          * 第三方仓：海外仓入库单号
          */
         private String businessCode;
@@ -1719,5 +1737,23 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @NotBlank(message = "对账类型不能为空")
         private String supplierType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddLogDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 操作
+         */
+        private String operation;
+        /**
+         *  内容
+         */
+        private String content;
     }
 }

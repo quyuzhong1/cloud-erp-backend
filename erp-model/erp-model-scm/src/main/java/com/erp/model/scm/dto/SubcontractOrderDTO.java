@@ -585,6 +585,11 @@ public class SubcontractOrderDTO implements Serializable {
         private Integer repairQty;
 
         /**
+         * 返修金额
+         */
+        private BigDecimal repairPrice;
+
+        /**
          * 单价
          */
         private BigDecimal price;

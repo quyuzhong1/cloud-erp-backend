@@ -1,19 +1,8 @@
 package com.erp.server.dmp.service.impl;
 
-import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.dynamic.datasource.annotation.DS;
@@ -33,25 +22,31 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.ExpotParamDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.PagingParamDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.ReCreateDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.TotalDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.*;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.listener.PlatformInitStockExcelListener;
 import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
+import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -69,6 +64,8 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -228,7 +225,7 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_erp/ods_flow_excel_inventory_flow_recreate");
+		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_excel_inventory_flow_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpInventoryDiffFlowEntity::getCheckMonth, checkMonth)
 			.set(AdsErpInventoryDiffFlowEntity::getExecStatus, "doing")
@@ -282,4 +279,28 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
         }
         return Boolean.TRUE;
 	}
+
+    @Override
+    public PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto) {
+        PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourcePlatformDTO> pagingVO = dmpRestCloudService.inventorySourcePlatformPaging(dto);
+        return pagingVO;
+    }
+
+    @Override
+    public Boolean exportSourcePlatform(AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-每日库存", FileTaskEventEnum.EXPORT_ADS_ERP_INVENTORY_DETAIL_PLATFORM.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> sourceSelfPaging(PagingDTO<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO> dto) {
+        PagingVO<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> pagingVO = dmpRestCloudService.inventorySourceSelfPaging(dto);
+        return pagingVO;
+    }
+
+    @Override
+    public Boolean exportSourceSelf(AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-库存流水", FileTaskEventEnum.EXPORT_ADS_ERP_INVENTORY_DETAIL_SELF.getCode(), dto);
+        return Boolean.TRUE;
+    }
 }

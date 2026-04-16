@@ -69,4 +69,14 @@ public interface TmsFirstMileLogisticFeign {
      */
     @PostMapping("/feign/tmsFirstMileLogistic/listSmallBagCost")
     List<SmallBagCostAllocationDTO.SmallBagCostDTO> listSmallBagCost(@RequestBody SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO);
+
+    /**
+     * 添加日志
+     * @author will
+     * @date 2026/1/26 16:03
+     * @param addLogDTO
+     * @return void
+     */
+    @PostMapping("/feign/tmsFirstMileLogistic/addFirstMileLogisticLog")
+    void addFirstMileLogisticLog(@RequestBody TmsFirstMileLogisticDTO.AddLogDTO addLogDTO);
 }

@@ -3,6 +3,7 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.AsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
@@ -223,7 +224,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void initExchangeRate();
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
-    
+
     BatchResultDTO pushAllocation(String id , String reportDate);
 
     /**
@@ -244,4 +245,20 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return List<String>
      */
     List<String> listLogisticsBillCostId(LogisticsBillCostDTO.ListParamDTO dto);
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:18
+     * @param dto
+     * @return TotalCountDTO
+     */
+    LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
+
+    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+
+    void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
+
+    LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
+
+    void confirmImport(String key, String code, LocalDateTime dateTime);
 }

@@ -530,6 +530,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
 
     List<SoInfoEntity> listByCodes(List<String> list);
 
+    SoInfoEntity getByCode(String soCode);
+
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId);

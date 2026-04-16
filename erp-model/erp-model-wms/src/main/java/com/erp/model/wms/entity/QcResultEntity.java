@@ -128,6 +128,12 @@ public class QcResultEntity extends BaseEntity<QcResultEntity> {
     @TableField("qc_sample_result")
     private String qcSampleResult;
 
+    /**
+     * 批次合格量
+     */
+    @TableField("lot_qualified_qty")
+    private Integer lotQualifiedQty;
+
 
     public static final String MAIN_ID = "main_id";
 

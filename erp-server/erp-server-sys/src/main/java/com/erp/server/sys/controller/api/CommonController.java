@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,12 +48,8 @@ public class CommonController extends BaseController {
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
-        List<String> list = new ArrayList<>();
-        for (MultipartFile file : multipartFile) {
-            String filePath = fileFeign.uploadFile(file);
-            list.add(filePath);
-        }
-        return this.success(list);
+        List<String> filePathList = fileFeign.batchUploadFiles(multipartFile);
+        return this.success(filePathList);
     }
 
     /**
@@ -108,6 +105,7 @@ public class CommonController extends BaseController {
      * @date: 2024-09-05
      * @author: tanmujin
      */
+    @Deprecated
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
     @PostMapping(value = "/uploadBatch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResult<List<SysCommonDTO.AttachmentDTO>> uploadBatch(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
@@ -115,7 +113,7 @@ public class CommonController extends BaseController {
         for (MultipartFile file : multipartFile) {
             String filePath = fileFeign.uploadFile(file);
             String fileName = file.getOriginalFilename();
-            list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath));
+            list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath, BigDecimal.valueOf(file.getSize() / 1024 / 1024).setScale(2)));
         }
         return this.success(list);
     }

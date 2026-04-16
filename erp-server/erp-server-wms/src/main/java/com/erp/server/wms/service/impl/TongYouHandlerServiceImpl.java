@@ -158,7 +158,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         TongYouCreateOutboundReq TongYouCreateOutboundReq =  this.buildOutboundDto(createOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(TongYouCreateOutboundReq));
         TongYouBaseResp<TongYouOutboundResp> tongYouBaseResp = tongYouService.createOutboundBill(TongYouCreateOutboundReq);
@@ -166,7 +166,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(tongYouBaseResp.getError())){
             return failure(tongYouBaseResp.getContent());
         }
-        return success();
+        return success(ThirdWarehouseQueryOutboundResponse.builder().build());
     }
 
     @Override
@@ -221,7 +221,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         Map<String, Object> authJson = new HashMap<>();
         //密钥
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
@@ -234,7 +234,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(tongYouBaseResp.getError())){
             return failure(tongYouBaseResp.getContent());
         }
-        return success(tongYouBaseResp.getData());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(tongYouBaseResp.getData()).build());
     }
 
     @Override

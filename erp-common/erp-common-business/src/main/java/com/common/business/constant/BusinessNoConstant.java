@@ -262,4 +262,18 @@ public interface BusinessNoConstant {
     String CYCL="CYCL";
     //AWD出库
     String AWD="AWD";
+
+    //物流费用导入
+    String DZ="DZ";
+    //费用配置
+    String FYPZ="FYPZ";
+
+    String BG = "BG";
+
+    //抽样方案
+    String CYFA="CYFA";
+
+    //质检申请
+    String ZJSQ = "ZJSQ";
+    String WDGL = "WDGL";
 }

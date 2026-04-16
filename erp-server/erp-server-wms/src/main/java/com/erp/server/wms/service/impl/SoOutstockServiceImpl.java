@@ -714,6 +714,29 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 result.setPartitionName(partitionEntity.get(0).getName());
             }
         }
+        //设置仓管员信息，如果没有则取仓库负责人
+        if (CharSequenceUtil.isBlank(result.getWarehouseKeeperId())
+                || CharSequenceUtil.isBlank(result.getWarehouseKeeperName())) {
+            WarehouseEntity warehouse = warehouseService.getById(soOutstock.getWarehouseId());
+            if (Objects.nonNull(warehouse) && CharSequenceUtil.isNotBlank(warehouse.getChargeId())) {
+                if (CharSequenceUtil.isBlank(result.getWarehouseKeeperId())) {
+                    result.setWarehouseKeeperId(warehouse.getChargeId());
+                }
+                if (CharSequenceUtil.isBlank(result.getWarehouseKeeperName())) {
+                    List<FindUserDTO> warehouseKeeperUsers = sysUserFeign.getUserListByUserIds(
+                            Collections.singletonList(warehouse.getChargeId()));
+                    if (CollectionUtils.isNotEmpty(warehouseKeeperUsers)) {
+                        String warehouseKeeperName = warehouseKeeperUsers.stream()
+                                .filter(user -> warehouse.getChargeId().equals(user.getUserId()))
+                                .findFirst()
+                                .flatMap(user -> Optional.ofNullable(user.getUserName()))
+                                .orElse("");
+                        result.setWarehouseKeeperName(warehouseKeeperName);
+                    }
+                }
+            }
+        }
+
 
         return result;
     }
@@ -884,9 +907,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送数帝云
             this.syncToSdy(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送到订货通
-            if(customerFeign.isSyncDht(entity.getCustomerId())){
-                syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
-            }
+            syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1197,6 +1218,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDTO.setOutstockId(entity.getId());
             addDTO.setOutstockCode(entity.getCode());
             addDTO.setSourceCode(entity.getSoCode());
+            addDTO.setSalesDeptId(entity.getSalesDeptId());
             String soId = entity.getSoId();
             addDTO.setSourceId(soId);
             String orderType = entity.getOrderType();
@@ -1230,6 +1252,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else {
                 //表示是b2c
                 if (ObjectUtil.isNotEmpty(soId)) {
+
                     SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
                     if(Objects.nonNull(soB2cEntity)){
                         addDTO.setPlatformCode(soB2cEntity.getPlatformCode());
@@ -1427,9 +1450,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
             //推送到订货通
-            if(customerFeign.isSyncDht(entity.getCustomerId())){
-                syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-            }
+            syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }
@@ -1532,9 +1553,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //删除推送到订货通
             for (SoOutstockEntity entity : list) {
-                if(customerFeign.isSyncDht(entity.getCustomerId())){
-                    syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
-                }
+               syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
         }
         return result;
@@ -2624,9 +2643,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 Map<String, List<SoOutstockDetailEntity>> stringListMap = CollUtil.isEmpty(soOutstockDetailEntityList) ? new HashMap<>() : soOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
                 for (SoOutstockEntity entity : updateList) {
                     //推送到订货通
-                    if(customerFeign.isSyncDht(entity.getCustomerId())){
-                        syncDhtOutstockService.syncB2bSoOutstockDht(entity,stringListMap.get(entity.getId()), SyncOperateEnum.OPERATE_APPROVE.getCode());
-                    }
+                    syncDhtOutstockService.syncB2bSoOutstockDht(entity,stringListMap.get(entity.getId()), SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
             }
         }
@@ -3365,12 +3382,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             billDate = LocalDate.now();
         }
         dto.setBillDate(billDate);
+        boolean isTikTokPlatformOutstock = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(sourceType)
+                && PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform());
         // 出库日期
         soOutstock.setBillDate(billDate);
-        soOutstock.setPlanDeliveryDate(billDate);
-        // 实际发货实际
-        if (null != dto.getActualDeliveryDate()){
-            soOutstock.setActualDeliveryDate(dto.getActualDeliveryDate());
+        LocalDate planDeliveryDate = billDate;
+        LocalDateTime actualDeliveryDate = dto.getActualDeliveryDate();
+        LocalDate packDate = billDate;
+        if (isTikTokPlatformOutstock) {
+            if (Objects.nonNull(dto.getPlanDeliveryDate())) {
+                planDeliveryDate = dto.getPlanDeliveryDate();
+            }
+            if (Objects.nonNull(actualDeliveryDate)) {
+                packDate = actualDeliveryDate.toLocalDate();
+            } else if (Objects.nonNull(planDeliveryDate)) {
+                packDate = planDeliveryDate;
+            }
+        }
+        soOutstock.setPlanDeliveryDate(planDeliveryDate);
+        // 实际发货时间
+        if (null != actualDeliveryDate){
+            soOutstock.setActualDeliveryDate(actualDeliveryDate);
         } else {
             soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
         }
@@ -3389,7 +3421,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setBatchNo(transferInfoList.get(0).getBatchNo());
             }
         }
-        soOutstock.setPackDate(billDate);
+        soOutstock.setPackDate(packDate);
         //销售员
         if (CharSequenceUtil.isBlank(soOutstock.getSellerId()) && CharSequenceUtil.isNotBlank(soOutstock.getCustomerId())){
             CustomerInfoEntity customer = customerFeign.getCustomerById(soOutstock.getCustomerId());
@@ -3655,7 +3687,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
          * 那么就要去找店铺的仓库 然后匹配上仓库
          * [排除速卖通订单]
          */
-        if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
+        if (Objects.nonNull(soB2c)
+                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())
+                && !PlatformDictEnum.TIK_TOK.getCode().equals(soB2c.getDictPlatform())) {
             soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
         }
 
@@ -3665,6 +3699,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
         if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
             flag = soB2cFeign.updateAliExpressOrderWarehouse(currentEntity.getId(), currentEntity.getShopId());
+        }
+        if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
+            flag = soB2cFeign.updateTikTokOrderWarehouse(currentEntity.getId());
         }
 
         Boolean result = false;
@@ -3681,6 +3718,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //速卖通平台仓订单的销售出库在处理类生成
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
                 result = flag;
+            } else if (PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
+                result = flag && this.generateB2cSoOutstock(id);
             }else{
                 result = this.generateB2cSoOutstock(id);
             }
@@ -4387,9 +4426,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //删除推送到订货通
             for (SoOutstockEntity entity : list) {
-                if(customerFeign.isSyncDht(entity.getCustomerId())){
-                    syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
-                }
+                syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
         }else {
             throw new ServiceException(ApiError.BILL_DELETE_FAILED);
@@ -4478,7 +4515,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return;
         }
         List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+//        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
 
     }
 

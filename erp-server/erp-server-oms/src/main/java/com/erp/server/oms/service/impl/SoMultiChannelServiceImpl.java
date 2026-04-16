@@ -593,7 +593,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(SoMultiChannelEntity::getCreateStatus, createResultDTO.getCreateStatus())
                 .set(SoMultiChannelEntity::getSignOrderError, CharSequenceUtil.isNotBlank(createResultDTO.getMsg()) ? createResultDTO.getMsg() : "")
                 .eq(SoMultiChannelEntity::getId, createResultDTO.getId()).update();
-        if (!CreateStatusEnum.WAIT.getCode().equals(createResultDTO.getCreateStatus())) {
+        if (!CreateStatusEnum.SUCCESS.getCode().equals(createResultDTO.getCreateStatus())) {
             Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(soMultiChannelEntity.getDeliveryCode()), "亚马逊订单创建失败，取消同步"));
             if (!Boolean.TRUE.equals(b)){
                 throw new ServiceException("反审核取消同步失败");
@@ -650,6 +650,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
             try {
                 ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderResponseApiResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
+                log.warn("亚马逊发货拦截取消订单，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelFulfillmentOrderResponseApiResponse));
                 this.lambdaUpdate()
                         .set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
                         .set(SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)

@@ -1,14 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
-import java.util.Optional;
-
-import javax.annotation.Resource;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,21 +16,23 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.ExpotParamDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.PagingParamDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.ReCreateDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.TotalDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.*;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpOutstockDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
+import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
-
-import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.Optional;
 /**
  * <p>
  * 第三方仓出库单据差异表 服务实现类
@@ -54,6 +49,10 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private DmpRestCloudService dmpRestCloudService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -143,7 +142,7 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.reCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_flow_recreate");
+		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_flow_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpOutstockDiffFlowEntity::getCheckMonth, checkMonth)
 			.set(AdsErpOutstockDiffFlowEntity::getExecStatus, "doing")
@@ -159,4 +158,28 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
 		downloadTaskFeign.saveDownloadTask("平台单据差异", FileTaskEventEnum.EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW.getCode(), dto);
 		return true;
 	}
+
+    @Override
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> sourceSelfPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
+        PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> pagingVO = dmpRestCloudService.outstockSourceSelfPaging(dto);
+        return pagingVO;
+    }
+
+    @Override
+    public PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> sourcePlatformPaging(PagingDTO<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO> dto) {
+        PagingVO<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> pagingVO = dmpRestCloudService.outstockSourcePlatformPaging(dto);
+        return pagingVO;
+    }
+
+    @Override
+    public Boolean exportSourcePlatform(AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-平台出库单", FileTaskEventEnum.EXPORT_ADS_ERP_OUTSTOCK_DETAIL_PLATFORM.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportSourceSelf(AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("朔源查询-库存流水", FileTaskEventEnum.EXPORT_ADS_ERP_OUTSTOCK_DETAIL_SELF.getCode(), dto);
+        return Boolean.TRUE;
+    }
 }

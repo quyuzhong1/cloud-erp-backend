@@ -9,6 +9,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.enums.*;
@@ -16,6 +17,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.OperateLogService;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -130,7 +132,7 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
 				.set(DmpOutputTaskEntity::getErrorCount, errorCount)
 				.set(errorFlag , DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.ERROR.getCode())
 				.set(DmpOutputTaskEntity::getUpdateTime, LocalDateTime.now())
-				.set(DmpOutputTaskEntity::getErrorMessage,  errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e))
+				.set(DmpOutputTaskEntity::getErrorMessage,  errorBeforeStatus + "traceId=【" + TraceContext.traceId() + "】" + ExceptionUtil.stacktraceToString(e))
 				.update();
 	}
 

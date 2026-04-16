@@ -1,7 +1,6 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -59,6 +58,17 @@ public enum QcNoticeStatusEnum implements EnumMessage {
             }
         }
         return null;
+    }
+
+    public static String getNameByCode(String code) {
+
+        QcNoticeStatusEnum[] eumnList = QcNoticeStatusEnum.values();
+        for (QcNoticeStatusEnum item : eumnList) {
+            if (item.getCode().equals(code)) {
+                return item.getName();
+            }
+        }
+        return "";
     }
 
     public static List<String> getCodeList() {

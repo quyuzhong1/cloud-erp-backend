@@ -632,6 +632,9 @@ public class SoB2cDetailDTO implements Serializable {
          * 销售订单明细id
          */
         private List<String> detailIdList;
+
+        private Boolean isThirdWarehouse;
+
     }
 
     /**

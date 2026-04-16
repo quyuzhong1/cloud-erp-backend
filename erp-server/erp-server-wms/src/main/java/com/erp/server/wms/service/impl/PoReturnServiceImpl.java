@@ -474,12 +474,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 poReturnEntity.setSupplierName(supplierEntity.getName());
             }
         }
-        poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
         if (CharSequenceUtil.isNotBlank(dto.getSupplierContactId())) {
+            poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             if (ObjectUtil.isNotEmpty(supplierContactById)) {
                 poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
             }
+        }else {
+            poReturnEntity.setSupplierContactId("");
+            poReturnEntity.setSupplierContactName("");
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
         //退货组织名称
@@ -1444,7 +1447,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     private void syncDisApprovePoReturnToWdt(PoReturnEntity entity, SyncOperateEnum syncOperateEnum) {
-        if(! "other".equals(entity.getSourceType())){
+        ReturnOrderSourceEnum returnOrderSourceEnum  = ReturnOrderSourceEnum.checkLastReturnOrderSource(entity.getSourceType());
+        if (! returnOrderSourceEnum.equals(ReturnOrderSourceEnum.OTHER)){
             log.info("非库存退货单无需推送旺店通：{}", entity);
             return;
         }
@@ -3200,7 +3204,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (Objects.nonNull(supplierEntity)) {
                 pushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
                 pushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
-                pushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
+                pushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                 pushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
             }
 
@@ -3236,7 +3240,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (Objects.nonNull(supplierEntity)) {
                 childPushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnEntity.getSupplierId());
                 childPushDownSubcontractOrderDetailViewDTO.setSupplierName(poReturnEntity.getSupplierName());
-                childPushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate());
+                childPushDownSubcontractOrderDetailViewDTO.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                 childPushDownSubcontractOrderDetailViewDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
             }
 

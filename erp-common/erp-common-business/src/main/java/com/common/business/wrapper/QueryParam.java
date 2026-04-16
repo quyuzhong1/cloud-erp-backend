@@ -17,7 +17,7 @@ import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
 import lombok.Getter;
 
-@Getter
+@Data
 public class QueryParam {
     /**
      * 类型
@@ -38,6 +38,8 @@ public class QueryParam {
     
     public QueryParam() {
     }
+    
+    
 
     public QueryParam(QueryTypeEnum type, String name) {
         this.type = type;
@@ -161,4 +163,13 @@ public class QueryParam {
         }
         return wrapper;
     }
+
+
+
+	public QueryParam(QueryTypeEnum type, String name, Object value, List<Object> values) {
+		this.type = type;
+		this.name = name;
+		this.value = value;
+		this.values = values;
+	}
 }

@@ -254,7 +254,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
     }
 
     @Override
-    public PagingVO<OperateLogShowDTO.HistoryDTO> getProductChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
+    public PagingVO<OperateLogShowDTO.HistoryDTO> getBomChangeHistory(PagingDTO<OperateLogShowDTO.PagingParamDTO> dto) {
         Page<OperateLogShowDTO.HistoryDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         OperateLogShowDTO.PagingParamDTO params = dto.getParams();
         IPage<OperateLogShowDTO.HistoryDTO> pageData = baseMapper.getProductChangeHistory(query, params);
@@ -440,6 +440,84 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
                 .setContent(content)
                 .setOperation(operation);
         return this.save(entity);
+    }
+    
+    @Override
+    public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg) {
+
+        Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
+        //判断是否为空
+        if (CollectionUtils.isEmpty(operationLogMap)) {
+            return Boolean.TRUE;
+        }
+        List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getValue()).distinct().collect(Collectors.toList());
+        List<CfgOperateLogFieldEntity> fieldList = cfgOperateLogFieldService.listByClassPaths(classPaths);
+        if (CollectionUtils.isEmpty(fieldList)) {
+            return Boolean.TRUE;
+        }
+        List<OperateLogEntity> list = new LinkedList<>();
+        for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
+            //Pair<字段名称, 类路径>
+            Pair<String, String> keyPair = entry.getKey();
+            String field = keyPair.getKey();
+            String fieldClass = keyPair.getValue();
+            //Pair<旧值, 新值>
+            Pair<String, String> valuePair = entry.getValue();
+            CfgOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
+            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(fieldEntity)) {
+                continue;
+            }
+            String fieldName = fieldEntity.getFieldName();
+            Integer type = fieldEntity.getType();
+            if (ModuleOperateLogFieldTypeEnum.TYPE_YES_NO.getCode().equals(type)) {
+                valuePair = setBooleanValue(fieldEntity, valuePair);
+            }
+            //枚举
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ENUM.getCode().equals(type)) {
+                valuePair = setEnumValue(fieldEntity,valuePair);
+            }
+//            //字典
+//            if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
+//                valuePair = setDistValue(valuePair);
+//            }
+            //人员
+            if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
+                valuePair = setUserValue(valuePair);
+            }
+            //国家
+            if (ModuleOperateLogFieldTypeEnum.TYPE_COUNTRY.getCode().equals(type)) {
+                valuePair = setCountryValue(valuePair);
+            }
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
+
+            if (oldValue.equals(newValue)) {
+                continue;
+            }
+            String content;
+            String concat = msg.concat("编辑了[").concat(fieldName).concat("]");
+            if (StringUtils.isBlank(valuePair.getKey())) {
+                content = concat.concat("由空值变更为[").concat(newValue).concat("]");
+            } else {
+                content = concat.concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
+            }
+            OperateLogEntity entity = new OperateLogEntity();
+            entity.setModuleType(moduleType)
+                    .setBusinessId(businessId)
+                    .setPid(pid)
+                    .setOldValue(oldValue)
+                    .setNewValue(newValue)
+                    .setFieldName(fieldName)
+                    .setContent(content)
+                    .setOperation("编辑信息");
+            list.add(entity);
+        }
+        return this.saveBatch(list);
+    }
+
+    @Override
+    public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String msg) {
+        return this.addModuleOperateLogByObj(oldObj, newObj, moduleType, businessId, null, msg);
     }
 
 }

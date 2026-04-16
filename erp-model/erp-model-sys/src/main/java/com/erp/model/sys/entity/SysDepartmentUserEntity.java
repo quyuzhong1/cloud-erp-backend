@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * @Classname SysDepartmentUserEntity
@@ -28,10 +28,15 @@ public class SysDepartmentUserEntity {
     private Integer leadState;
 
     @TableField(fill= FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     @TableField(fill= FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
-
+    /**
+     * 用户删除状态 false:正常 true：已删除
+     */
+    @TableField(value = "is_deleted")
+    @TableLogic
+    private Boolean isDeleted;
 }

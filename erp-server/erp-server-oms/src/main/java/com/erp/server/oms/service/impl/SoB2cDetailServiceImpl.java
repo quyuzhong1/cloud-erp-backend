@@ -488,8 +488,35 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
+        boolean isTikTokPlatformWarehouseOrder = Boolean.TRUE.equals(isShipped)
+                && mainEntity.hasPlatformWarehouseOrder()
+                && PlatformDictEnum.TIK_TOK.getCode().equals(mainEntity.getDictPlatform());
+        String tikTokShopWarehouseId = "";
+        String tikTokShopWarehouseName = "";
+        String tikTokShopWarehouseOrgId = "";
+        String tikTokShopWarehouseOrgName = "";
+        if (isTikTokPlatformWarehouseOrder && StringUtils.isNotBlank(shopInfo.getWarehouseId())) {
+            tikTokShopWarehouseId = shopInfo.getWarehouseId();
+            tikTokShopWarehouseName = StringUtils.defaultString(shopInfo.getWarehouseName());
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(shopInfo.getWarehouseId()));
+            WarehouseDTO.UpdateDTO shopWarehouse = CollectionUtils.isEmpty(warehouseList) ? null : warehouseList.get(0);
+            if (ObjectUtils.isNotEmpty(shopWarehouse)) {
+                tikTokShopWarehouseName = StringUtils.defaultIfBlank(shopWarehouse.getName(), tikTokShopWarehouseName);
+                tikTokShopWarehouseOrgId = StringUtils.defaultString(shopWarehouse.getOrgId());
+                if (StringUtils.isNotBlank(shopWarehouse.getOrgId())) {
+                    List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(shopWarehouse.getOrgId()));
+                    BaseIdDTO.CodeDTO orgDTO = CollectionUtils.isEmpty(orgList) ? null : orgList.get(0);
+                    tikTokShopWarehouseOrgName = ObjectUtils.isNotEmpty(orgDTO) ? StringUtils.defaultString(orgDTO.getName()) : "";
+                }
+            }
+        }
         // 新增或更新列表
         List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
+        boolean finalIsTikTokPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder;
+        String finalTikTokShopWarehouseId = tikTokShopWarehouseId;
+        String finalTikTokShopWarehouseName = tikTokShopWarehouseName;
+        String finalTikTokShopWarehouseOrgId = tikTokShopWarehouseOrgId;
+        String finalTikTokShopWarehouseOrgName = tikTokShopWarehouseOrgName;
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
@@ -551,6 +578,17 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     saveOrUpdateEntity.setWarehouseName("");
                     saveOrUpdateEntity.setWarehouseOrgId("");
                     saveOrUpdateEntity.setWarehouseOrgName("");
+                }
+            } else if (finalIsTikTokPlatformWarehouseOrder) {
+                saveOrUpdateEntity.setWarehouseId("");
+                saveOrUpdateEntity.setWarehouseName("");
+                saveOrUpdateEntity.setWarehouseOrgId("");
+                saveOrUpdateEntity.setWarehouseOrgName("");
+                if (StringUtils.isNotBlank(finalTikTokShopWarehouseId)) {
+                    saveOrUpdateEntity.setWarehouseId(finalTikTokShopWarehouseId);
+                    saveOrUpdateEntity.setWarehouseName(finalTikTokShopWarehouseName);
+                    saveOrUpdateEntity.setWarehouseOrgId(finalTikTokShopWarehouseOrgId);
+                    saveOrUpdateEntity.setWarehouseOrgName(finalTikTokShopWarehouseOrgName);
                 }
             }
             return saveOrUpdateEntity;

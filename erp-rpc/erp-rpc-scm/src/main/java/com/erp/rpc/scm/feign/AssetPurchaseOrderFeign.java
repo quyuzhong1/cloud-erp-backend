@@ -54,4 +54,7 @@ public interface AssetPurchaseOrderFeign {
      */
     @PostMapping("/feign/assetPurchaseOrder/rewriteAssetPurchaseOrder")
     ApiResult<Boolean> rewriteAssetPurchaseOrder(@RequestBody AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO);
+
+    @PostMapping("/feign/assetPurchaseOrder/batchRewriteAssetPurchaseOrder")
+    ApiResult<Boolean> batchRewriteAssetPurchaseOrder(@RequestBody List<AssetPurchaseOrderDTO.rewritePurchaseOrderDTO> rewritePurchaseOrderDTOList);
 }

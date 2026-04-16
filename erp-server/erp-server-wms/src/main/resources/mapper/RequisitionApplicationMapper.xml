@@ -260,12 +260,16 @@
         rad.approve_qty AS planQty,
         rad.picking_qty AS deliveryQty,
         ra.type,
+        ra.delivery_type as deliveryType,
         rad.platform_sku as platformSku,
         rad.platform_sku_name as platformSkuName,
         ra.status as status,
         ra.source_id as deliveryPlanId,
         rad.source_detail_id as deliveryPlanDetailId,
-        rad.platform_fn_sku as fnSku,
+        case
+            when ra.type = 'fbt' then coalesce(nullif(rad.platform_fn_sku, ''), rad.platform_sku)
+            else rad.platform_fn_sku
+        end as fnSku,
         rad.platform_spu as platformSpuNo,
         ra.fba_shipment_code
         from requisition_application ra

@@ -334,14 +334,25 @@
         sd.delivery_sku_id as skuId,
         sd.delivery_sku_no as skuNo,
         sd.platform_sku_no,
+        sd.frozen_qty as frozenQty,
         sd.is_close,
         sd.box_qty AS salesQty,
+        sd.per_box_qty as perBoxQty,
         (select COALESCE(sum(sdnd.delivery_qty),0) from so_delivery_notice sdn
                 inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
                 where sdn.is_deleted = false and sdn.invalid_status = false and sdnd.source_detail_id = sd.id) as alreadyDeliveryQty,
+        COALESCE(sdnd.deliveryQty* sd.per_box_qty, 0) + COALESCE(btdd.deliveryQty, 0) as effectiveNoticeQty,
         sd.remark
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
+        left join (
+        select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
+        where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
+        ) sdnd on sd.id = sdnd.source_detail_id
+        left join (
+        select sum(btdd.delivery_qty) as deliveryQty ,btdd.so_detail_id as source_detail_id  from foreign_b2b_third_delivery btd left join foreign_b2b_third_delivery_detail btdd on btd.id = btdd.main_id and btdd.is_deleted = false
+        where btd.is_deleted = false and btd.status != 'cancelDelivery' group by btdd.so_detail_id
+        ) btdd on sd.id = btdd.source_detail_id
         WHERE sd.is_deleted = FALSE
         AND sd.is_close=FALSE
         <if test="ids!=null and ids.size>0">

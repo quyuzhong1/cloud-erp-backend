@@ -2404,6 +2404,29 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return plantAddrList;
     }
 
+    @Override
+    public List<Map<String, Object>> listSupplierDropDown() {
+        List<SupplierEntity> supplierList = super.list();
+        if (CollUtil.isEmpty(supplierList)) {
+            return Collections.emptyList();
+        }
+        for (SupplierEntity entity : supplierList) {
+            //审批状态不是审核通过的都置为不可用
+            if (!CharSequenceUtil.equals(entity.getApproveStatus().getCode(),ApproveStatusEnum.APPROVE.getStatus())){
+                entity.setDisabled(Boolean.TRUE);
+            }
+        }
+        return supplierList.stream()
+                .map(entity -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", entity.getId());
+                    map.put("name", entity.getName());
+                    map.put("disabled", entity.getDisabled());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * 资质信息处理
