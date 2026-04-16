@@ -380,8 +380,15 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public SysVersionDTO.LatestVersionDTO getLatestVersion() {
-        return this.baseMapper.getLatestVersion();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        String userId = userInfo.getUid();
+        SysVersionDTO.LatestVersionDTO latestVersion = this.baseMapper.getLatestVersion(userId);
+        if (latestVersion != null) {
+            messageUserReadService.readByMessageId(latestVersion.getId(), userId);
+        }
+        return latestVersion;
     }
 
     private void handleData(MessageEntity messageEntity) {
