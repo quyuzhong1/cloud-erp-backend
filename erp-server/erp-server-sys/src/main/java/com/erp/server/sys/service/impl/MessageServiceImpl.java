@@ -30,15 +30,19 @@ import com.erp.model.sys.enums.ReleaseTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
+import com.erp.server.sys.service.MessageDispatchTaskService;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
 import com.erp.server.sys.service.OperateLogService;
+import com.erp.server.sys.service.support.NoticeSupport;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -71,13 +75,16 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Resource
     private com.erp.server.sys.service.PdaVersionService pdaVersionService;
 
+    @Resource
+    private MessageDispatchTaskService messageDispatchTaskService;
+
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
         List<MessageDTO.NotReadMessageNum> notReadMessageNumList = baseMapper.listNotReadMessageNum(paramDTO);
         notReadMessageNumList.forEach(n -> {
         	MessageTypeEnum messageTypeEnum = MessageTypeEnum.getMessageTypeEnum(n.getType());
@@ -97,7 +104,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setType(type);
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.PC.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.PC.getCode(), "ALL"));
         if(pageNo == null) {
         	pageNo = 1;
         }
@@ -128,17 +135,17 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     
     private void newReadMessage(String type) {
     	LoginUser userInfo = UserContext.getDefaultLoginUser();
-    	
-    	String lastSql = " and message_id in (select id from message where application IN ( 'PDA' , 'ALL' ) ) ";
-    	if(StringUtils.isNotBlank(type)) {
-    		lastSql = " and message_id in (select id from message where application IN ( 'PDA' , 'ALL' ) and type = '"+ type +"' ) ";
-    	}
-    	
-    	messageUserReadService.lambdaUpdate().set(MessageUserReadEntity::getIsRead, true)
-	    	.eq(MessageUserReadEntity::getIsRead, false)
-	    	.eq(MessageUserReadEntity::getUserId, userInfo.getUid())
-	    	.last(lastSql).update();
-    	
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setType(type);
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
+        List<MessageEntity> unreadMessages = baseMapper.listByNotReadMessage(paramDTO);
+        if (CollectionUtils.isNotEmpty(unreadMessages)) {
+            messageUserReadService.markReadByMessageIds(unreadMessages.stream()
+                    .map(MessageEntity::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()), userInfo.getUid());
+        }
         redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
     }
 
@@ -174,15 +181,18 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public MessageDTO.IsMessageDTO isMessage() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         String uid = userInfo.getUid();
+        MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
+        MessageDTO.NoticeDTO latestNotice = baseMapper.getLatestUnreadNotice(uid);
+        isMessageDTO.setHasNewNotice(Objects.nonNull(latestNotice));
+        isMessageDTO.setLatestNotice(latestNotice);
+
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
 
         List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
 
         List<String> typeList = messageEntities.stream().map(req -> MessageTypeEnum.getName(req.getType())).distinct().collect(Collectors.toList());
-
-        MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
 
         if (CollectionUtils.isNotEmpty(messageEntities)) {
             Integer cacheObject = redisService.getCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(uid));
@@ -202,7 +212,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
 
         List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
         redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
@@ -210,6 +220,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(MessageDTO.AddDTO addDTO) {
         MessageEntity messageEntity = new MessageEntity();
         BeanMapperUtils.copy(addDTO, messageEntity);
@@ -228,9 +239,14 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】标题为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统通知" , messageEntity.getNoticeTitle());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.MESSAGE.getCode(), messageEntity.getId(), "新增操作");
-        
-        // 为所有用户创建未读记录
-        createMessageUserReadRecords(messageEntity.getId());
+
+        if (NoticeSupport.isRealtimeSystemNotice(messageEntity)) {
+            String taskId = messageDispatchTaskService.createTask(messageEntity);
+            LocalDateTime executeTime = NoticeSupport.resolveExecuteTime(messageEntity);
+            runAfterCommit(() -> messageDispatchTaskService.queueTask(taskId, executeTime));
+        } else {
+            createMessageUserReadRecords(messageEntity.getId());
+        }
         
         return new BaseResultDTO.AddDTO(messageEntity.getId(), "");
     }
@@ -259,6 +275,14 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         log.info("编辑 开始记录日志数据，id：【{}】", messageEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(),  "系统通知");
         operateLogService.addModuleOperateLogByObj(old, messageEntity, ModuleTypeEnum.MESSAGE.getCode(), messageEntity.getId(),"", msg);
+
+        if (NoticeSupport.isRealtimeSystemNotice(messageEntity)) {
+            String taskId = messageDispatchTaskService.refreshTask(messageEntity);
+            LocalDateTime executeTime = NoticeSupport.resolveExecuteTime(messageEntity);
+            runAfterCommit(() -> messageDispatchTaskService.queueTask(taskId, executeTime));
+        } else {
+            messageDispatchTaskService.removeByMessageId(messageEntity.getId());
+        }
         return Boolean.TRUE;
     }
 
@@ -282,6 +306,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         super.removeById(id);
 
         messageUserReadService.removeByMessageId(id);
+        messageDispatchTaskService.removeByMessageId(id);
 
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "", "系统公告");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.MESSAGE.getCode(), entity.getId(), "删除");
@@ -359,6 +384,11 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public boolean readHistoryMessage(MessageDTO.ReadHistoryMessageDTO dto) {
+        return readMessage(dto);
+    }
+
+    @Override
+    public boolean readMessage(MessageDTO.ReadHistoryMessageDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         messageUserReadService.readByMessageId(dto.getId(), userInfo.getUid());
         redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
@@ -438,81 +468,96 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
                 messageUserReadService.saveBatch(messageUserReadEntities);
             }
         } catch (Exception e) {
-        log.error("创建消息未读记录失败", e);
-    }
-}
-
-@Override
-public int getSysMessageUnreadCount() {
-    String userId = UserContext.getDefaultLoginUser().getUid();
-    // 统计系统通知未读数量，type 为 "sys"
-    return messageUserReadService.lambdaQuery()
-            .eq(MessageUserReadEntity::getUserId, userId)
-            .eq(MessageUserReadEntity::getIsRead, Boolean.FALSE)
-            .inSql(MessageUserReadEntity::getMessageId, "SELECT id FROM message WHERE is_deleted = FALSE AND type = 'sys'")
-            .count()
-            .intValue();
-}
-
-@Override
-public int getSysVersionUnreadCount() {
-    String userId = UserContext.getDefaultLoginUser().getUid();
-    // 统计版本更新未读数量，type 为 "version"
-    return messageUserReadService.lambdaQuery()
-            .eq(MessageUserReadEntity::getUserId, userId)
-            .eq(MessageUserReadEntity::getIsRead, Boolean.FALSE)
-            .inSql(MessageUserReadEntity::getMessageId, "SELECT id FROM message WHERE is_deleted = FALSE AND type = 'sysVersion'")
-            .count()
-            .intValue();
-}
-
-@Override
-public List<BatchResultDTO> batchDelete(List<String> ids, String releaseType) {
-    List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-    
-    if (ReleaseTypeEnum.PDA_SYSTEM.getCode().equals(releaseType)) {
-        // 执行 message 的逻辑
-        List<MessageEntity> list = this.lambdaQuery().in(MessageEntity::getId, ids).list();
-        Map<String, MessageEntity> idEntityMap = list.stream().collect(Collectors.toMap(MessageEntity::getId, w -> w));
-        for (String id : ids) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = this.delete(id);
-            } catch (Exception e) {
-                log.error("删除失败", e);
-                MessageEntity entity = idEntityMap.get(id);
-                if (entity == null) {
-                    deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-    } else if (ReleaseTypeEnum.PDA_UPGRADE.getCode().equals(releaseType)) {
-        // 执行 pda_version 的逻辑
-        List<PdaVersionEntity> list = pdaVersionService.lambdaQuery().in(PdaVersionEntity::getId, ids).list();
-        Map<String, PdaVersionEntity> idEntityMap = list.stream().collect(Collectors.toMap(PdaVersionEntity::getId, w -> w));
-        for (String id : ids) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = pdaVersionService.delete(id);
-            } catch (Exception e) {
-                log.error("删除失败", e);
-                PdaVersionEntity entity = idEntityMap.get(id);
-                if (entity == null) {
-                    deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
+            log.error("创建消息未读记录失败", e);
         }
     }
-    
-    return resultDTOS;
-}
 
-} 
+    private void runAfterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            runnable.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                runnable.run();
+            }
+        });
+    }
+
+    @Override
+    public int getSysMessageUnreadCount() {
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        paramDTO.setType(MessageTypeEnum.SYS.getCode());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.PC.getCode()));
+        List<MessageDTO.NotReadMessageNum> notReadMessageNumList = baseMapper.listNotReadMessageNum(paramDTO);
+        return notReadMessageNumList.stream()
+                .filter(item -> Objects.equals(MessageTypeEnum.SYS.getCode(), item.getType()))
+                .map(MessageDTO.NotReadMessageNum::getCount)
+                .findFirst()
+                .orElse(0);
+    }
+
+    @Override
+    public int getSysVersionUnreadCount() {
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        return messageUserReadService.lambdaQuery()
+                .eq(MessageUserReadEntity::getUserId, userId)
+                .eq(MessageUserReadEntity::getIsRead, Boolean.FALSE)
+                .inSql(MessageUserReadEntity::getMessageId,
+                        "SELECT id FROM message " +
+                                "WHERE is_deleted = FALSE " +
+                                "AND type = 'sysVersion' " +
+                                "AND (expire_time IS NULL OR expire_time >= NOW())")
+                .count()
+                .intValue();
+    }
+
+    @Override
+    public List<BatchResultDTO> batchDelete(List<String> ids, String releaseType) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+
+        if (ReleaseTypeEnum.PDA_SYSTEM.getCode().equals(releaseType)) {
+            List<MessageEntity> list = this.lambdaQuery().in(MessageEntity::getId, ids).list();
+            Map<String, MessageEntity> idEntityMap = list.stream().collect(Collectors.toMap(MessageEntity::getId, w -> w));
+            for (String id : ids) {
+                BatchResultDTO deleteResult;
+                try {
+                    deleteResult = this.delete(id);
+                } catch (Exception e) {
+                    log.error("删除失败", e);
+                    MessageEntity entity = idEntityMap.get(id);
+                    if (entity == null) {
+                        deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
+                        resultDTOS.add(deleteResult);
+                        continue;
+                    }
+                    deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+                }
+                resultDTOS.add(deleteResult);
+            }
+        } else if (ReleaseTypeEnum.PDA_UPGRADE.getCode().equals(releaseType)) {
+            List<PdaVersionEntity> list = pdaVersionService.lambdaQuery().in(PdaVersionEntity::getId, ids).list();
+            Map<String, PdaVersionEntity> idEntityMap = list.stream().collect(Collectors.toMap(PdaVersionEntity::getId, w -> w));
+            for (String id : ids) {
+                BatchResultDTO deleteResult;
+                try {
+                    deleteResult = pdaVersionService.delete(id);
+                } catch (Exception e) {
+                    log.error("删除失败", e);
+                    PdaVersionEntity entity = idEntityMap.get(id);
+                    if (entity == null) {
+                        deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
+                        resultDTOS.add(deleteResult);
+                        continue;
+                    }
+                    deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+                }
+                resultDTOS.add(deleteResult);
+            }
+        }
+
+        return resultDTOS;
+    }
+}
