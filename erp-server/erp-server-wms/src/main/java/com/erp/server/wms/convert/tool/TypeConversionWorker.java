@@ -38,7 +38,7 @@ public class TypeConversionWorker {
         if (CharSequenceUtil.isBlank(fileData)){
             return fileData;
         }
-        return fileData.replace("data:application/pdf;base64,","");
+        return fileData.replaceFirst("(?i)^data:[^;]+;base64,", "");
     }
 
     @Named("getPdfFileName")
