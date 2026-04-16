@@ -25,6 +25,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FileUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -48,6 +49,8 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -1054,6 +1057,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
 
         try {
+            prepareCreateFbaOutboundAttachment(service, req);
             return service.createFbaOutboundBill(req, req.getAuthId());
         } catch (Exception e) {
             log.warn("第{}次执行失败: {}", retryCount + 1, e.getMessage());
@@ -1072,6 +1076,56 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 return ApiResult.error(-1, e.getMessage());
             }
         }
+    }
+
+    private void prepareCreateFbaOutboundAttachment(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
+        if (StrUtil.isNotBlank(req.getFileId())) {
+            return;
+        }
+        if (!needUploadAttachment(req.getThirdWarehouseProvideCode())) {
+            return;
+        }
+        if (StrUtil.isBlank(req.getFileUrl()) && StrUtil.isBlank(req.getFileName()) && StrUtil.isBlank(req.getFileBase64())) {
+            return;
+        }
+        if (StrUtil.isBlank(req.getFileBase64())) {
+            throw new ServiceException("B2B三方仓附件内容为空，无法上传附件");
+        }
+
+        ThirdWarehouseUploadFileReq uploadFileReq = new ThirdWarehouseUploadFileReq();
+        uploadFileReq.setAuthId(req.getAuthId());
+        uploadFileReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+        uploadFileReq.setOrderCode(req.getReferenceNo());
+        uploadFileReq.setFileData(req.getFileBase64());
+        uploadFileReq.setFileUrl(req.getFileUrl());
+        uploadFileReq.setFileName(req.getFileName());
+        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+            uploadFileReq.setFileType(getAttachmentFileType(req));
+            uploadFileReq.setModule("order_attach");
+        }
+
+        ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
+        if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
+            throw new ServiceException("上传B2B三方仓附件失败:{}", uploadFileResult.getMsg());
+        }
+        req.setFileId(String.valueOf(uploadFileResult.getData().getAttachId()));
+        req.setFileType(getAttachmentFileType(req));
+    }
+
+    private boolean needUploadAttachment(String providerCode) {
+        return PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(providerCode);
+    }
+
+    private String getAttachmentFileType(ThirdWarehouseCreateFbaOutboundReq req) {
+        if (StrUtil.isNotBlank(req.getFileType())) {
+            return req.getFileType();
+        }
+        String fileType = FileUtil.getFileExtension(req.getFileName());
+        if (StrUtil.isNotBlank(fileType)) {
+            return fileType;
+        }
+        return FileUtil.getFileExtension(req.getFileUrl());
     }
 
     @Override
