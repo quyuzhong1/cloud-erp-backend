@@ -39,6 +39,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -73,6 +74,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     private SysUserFeign sysUserFeign;
 
     @Resource
+    @Lazy
     private com.erp.server.sys.service.PdaVersionService pdaVersionService;
 
     @Resource

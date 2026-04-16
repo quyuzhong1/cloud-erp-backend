@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBlockingQueue;
 import org.redisson.api.RDelayedQueue;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -27,7 +28,7 @@ public class MessageDispatchDelayQueueSupport {
     private RedissonClient redissonClient;
 
     @Resource
-    private MessageDispatchTaskService messageDispatchTaskService;
+    private ObjectProvider<MessageDispatchTaskService> messageDispatchTaskServiceProvider;
 
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
         @Override
@@ -45,6 +46,11 @@ public class MessageDispatchDelayQueueSupport {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     String taskId = blockingQueue.take();
+                    MessageDispatchTaskService messageDispatchTaskService = messageDispatchTaskServiceProvider.getIfAvailable();
+                    if (messageDispatchTaskService == null) {
+                        log.warn("MessageDispatchTaskService not available, skip delayed task consume, taskId={}", taskId);
+                        continue;
+                    }
                     messageDispatchTaskService.executeTaskAsync(taskId);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();

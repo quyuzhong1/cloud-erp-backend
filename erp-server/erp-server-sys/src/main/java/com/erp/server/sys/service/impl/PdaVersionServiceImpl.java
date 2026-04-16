@@ -28,6 +28,7 @@ import com.erp.server.sys.service.*;
 import com.erp.server.sys.service.support.NoticeSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -53,6 +54,7 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
     private SysUserInfoService sysUserInfoService;
 
     @Resource
+    @Lazy
     private MessageService messageService;
 
     @Resource
