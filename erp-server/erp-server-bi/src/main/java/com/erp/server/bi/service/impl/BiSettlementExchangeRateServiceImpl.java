@@ -225,8 +225,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新单据汇率
             updateSettlementExchangeRate(list);
-            //添加redis
-            list.stream().forEach(this::setRedisExchangeRate);
             //同步订货通
             createSyncDhtMsg(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
