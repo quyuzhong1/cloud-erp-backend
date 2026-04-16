@@ -54,6 +54,7 @@ public class FileManagementController extends BaseController {
     private FileManagementService fileManagementService;
     @Resource
     private WmsAttachmentService wmsAttachmentService;
+
     /**
      * 新增
      *
@@ -79,12 +80,12 @@ public class FileManagementController extends BaseController {
             WmsAttachmentEntity newAttachmentEntity = new WmsAttachmentEntity();
             BeanMapperUtils.copy(attachmentEntity, newAttachmentEntity);
             try {
-                if (CharSequenceUtil.isBlank(entity.getId())){
+                if (CharSequenceUtil.isBlank(entity.getId())) {
                     resultDTO = fileManagementService.addEntity(entity, newAttachmentEntity);
-                }else {
+                } else {
                     resultDTO = fileManagementService.updateEntity(entity, newAttachmentEntity);
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.error("文件管理新增失败，skuNo：{}，fileName：{}", entity.getSkuNo(), addDTO.getAttachName(), e);
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
@@ -111,11 +112,19 @@ public class FileManagementController extends BaseController {
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> update(@RequestBody @Validated FileManagementDTO.UpdateDTO addOrUpdateDTO) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        FileManagementEntity oldEntity = fileManagementService.getByIdOpt(addOrUpdateDTO.getId()).orElseThrow(() -> new ServiceException("未找到文件管理数据"));
+        WmsAttachmentEntity oldAttachment = wmsAttachmentService.getByIdOpt(oldEntity.getFileId()).orElseThrow(() -> new ServiceException("未找到文件管理附属文件数据"));
         FileManagementEntity fileManagementEntity = BeanMapperUtils.map(FileManagementEntity.class, addOrUpdateDTO);
         WmsAttachmentEntity attachmentEntity = WmsAttachmentConverter.INSTANCE.updateFileManagementToAttachment(addOrUpdateDTO);
         List<SkuVO> skuVOS = null;
-        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addOrUpdateDTO.getFileType())) {
+        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addOrUpdateDTO.getFileType()) && !CharSequenceUtil.equals(addOrUpdateDTO.getAttachUrl(), oldAttachment.getAttachUrl())) {
             skuVOS = fileManagementService.getSkuVOS(addOrUpdateDTO.getAttachUrl());
+        } else {
+            SkuVO skuVO = new SkuVO();
+            skuVO.setSkuId(oldEntity.getSkuId());
+            skuVO.setSkuNo(oldEntity.getSkuNo());
+            skuVO.setSkuName(oldEntity.getProductName());
+            skuVOS = Collections.singletonList(skuVO);
         }
         // 数据处理
         List<FileManagementEntity> entityList = fileManagementService.handleData(fileManagementEntity, skuVOS);
@@ -124,12 +133,12 @@ public class FileManagementController extends BaseController {
             WmsAttachmentEntity newAttachmentEntity = new WmsAttachmentEntity();
             BeanMapperUtils.copy(attachmentEntity, newAttachmentEntity);
             try {
-                if (CharSequenceUtil.isBlank(entity.getId())){
+                if (CharSequenceUtil.isBlank(entity.getId())) {
                     resultDTO = fileManagementService.addEntity(entity, newAttachmentEntity);
-                }else {
+                } else {
                     resultDTO = fileManagementService.updateEntity(entity, newAttachmentEntity);
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.error("文件管理修改失败，skuNo：{}，fileName：{}", entity.getSkuNo(), addOrUpdateDTO.getAttachName(), e);
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
@@ -187,6 +196,7 @@ public class FileManagementController extends BaseController {
     public ApiResult<List<FileManagementDTO.VersionDTO>> history(@RequestParam("id") String id) {
         return success(fileManagementService.history(id));
     }
+
     /**
      * 批量生成质检标准
      * ids 取值 id
@@ -194,23 +204,23 @@ public class FileManagementController extends BaseController {
     @PostMapping("/genQcStandard")
     public ApiResult<List<BatchResultDTO>> genQcStandard(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         List<FileManagementEntity> fileManagementEntityList = CollUtil.isEmpty(idsDTO.getIds()) ? null : fileManagementService.listByIds(idsDTO.getIds());
-        if (CollUtil.isEmpty(fileManagementEntityList)){
+        if (CollUtil.isEmpty(fileManagementEntityList)) {
             throw new ServiceException("未找到文件管理数据");
         }
         List<String> fileIds = fileManagementEntityList.stream().map(FileManagementEntity::getFileId).distinct().collect(Collectors.toList());
         List<WmsAttachmentEntity> attachmentEntityList = CollUtil.isEmpty(fileIds) ? null : wmsAttachmentService.listByIds(fileIds);
-        if (CollUtil.isEmpty(attachmentEntityList)){
+        if (CollUtil.isEmpty(attachmentEntityList)) {
             throw new ServiceException("未找到文件附件数据");
         }
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         for (FileManagementEntity entity : fileManagementEntityList) {
             //只有评审报告类型的文件允许生成质检标准
-            if (!WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(entity.getFileType())){
+            if (!WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(entity.getFileType())) {
                 batchResultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "文件类型不是评审报告"));
                 continue;
             }
             WmsAttachmentEntity attachmentEntity = attachmentEntityList.stream().filter(e -> e.getId().equals(entity.getFileId())).findFirst().orElse(null);
-            if (attachmentEntity == null){
+            if (attachmentEntity == null) {
                 batchResultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "未找到文件附件数据"));
                 continue;
             }
@@ -219,6 +229,7 @@ public class FileManagementController extends BaseController {
         }
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
+
     /**
      * 生成单个质检标准
      *
