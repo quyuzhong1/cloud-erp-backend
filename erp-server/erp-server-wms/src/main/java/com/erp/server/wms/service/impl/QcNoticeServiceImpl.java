@@ -385,9 +385,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //审核通过时需要校验库存，质检通知数量必须小于等于可用库存，否则审核失败，提示库存不足
         if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
             if (!Objects.equals(QcTypeEnum.STOCK_IN.getCode(),entity.getQcType())
-                    || !Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())
-                    || !Objects.equals(QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode(),entity.getQcType())
-                    ||!Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(),entity.getQcType())) {
+                    && !Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())
+                    && !Objects.equals(QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode(),entity.getQcType())
+                    && !Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(),entity.getQcType())) {
                 List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByMainIds(Collections.singletonList(dto.getId()));
                 List<String> skuIds = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
                 //质检仓库下的可用库存
