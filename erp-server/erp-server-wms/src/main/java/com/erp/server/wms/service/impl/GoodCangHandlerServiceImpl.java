@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
 
     @Resource
     private GoodCangService goodCangService;
@@ -172,7 +173,8 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
         }
-        if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
+        if(GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
+                && CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
             goodCangUploadFileReq.setFileName(uploadFileReq.getFileName());
         }
         GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(goodCangUploadFileReq);
