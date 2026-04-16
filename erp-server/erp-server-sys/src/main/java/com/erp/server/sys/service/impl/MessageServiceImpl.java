@@ -213,7 +213,6 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public BaseResultDTO.AddDTO add(MessageDTO.AddDTO addDTO) {
         MessageEntity messageEntity = new MessageEntity();
         BeanMapperUtils.copy(addDTO, messageEntity);
-        messageEntity.setApplication(MessageTypeEnum.SYS.getCode());
         //这两个字段要注意,当初设计的时候就是这样对应的
         messageEntity.setType(addDTO.getReleaseType());
         messageEntity.setApplication(addDTO.getType());
@@ -247,6 +246,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         messageEntity.setApplication(addOrUpdateDTO.getType());
         // 数据处理
         handleData(messageEntity);
+        if (Objects.equals(NoticeTimeTypeEnum.NOW.getCode(),messageEntity.getNoticeTimeType())) {
+            throw new ServiceException(ApiError.COMMON_NOW_TYPE_NOT_ALLOW_UPDATE);
+        }
         log.info("编辑 开始修改数据，id：【{}】", old.getId());
         boolean save = super.updateById(messageEntity);
         if(!save) {
@@ -392,10 +394,6 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     private void handleData(MessageEntity messageEntity) {
-        if (Objects.equals(NoticeTimeTypeEnum.NOW.getCode(),messageEntity.getNoticeTimeType())) {
-            throw new ServiceException(ApiError.COMMON_NOW_TYPE_NOT_ALLOW_UPDATE);
-        }
-
         if (Objects.nonNull(messageEntity.getNoticeTime())
                 && messageEntity.getNoticeTime().isBefore(LocalDateTime.now())) {
             throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
