@@ -23,12 +23,12 @@
         FROM message_dispatch_task
         WHERE is_deleted = FALSE
           AND (
-            (status = 'INIT' AND execute_time <= NOW())
+            (status = 'INIT' AND execute_time <![CDATA[ <= ]]> NOW())
             OR (
               status = 'FAILED'
               AND retry_count <![CDATA[ < ]]> #{maxRetryCount}
               AND next_retry_time IS NOT NULL
-              AND next_retry_time <= NOW()
+              AND next_retry_time <![CDATA[ <= ]]> NOW()
             )
           )
         ORDER BY execute_time ASC, create_time ASC
