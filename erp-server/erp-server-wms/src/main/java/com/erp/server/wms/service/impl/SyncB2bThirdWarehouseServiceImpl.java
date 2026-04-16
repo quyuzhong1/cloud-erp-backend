@@ -14,7 +14,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.FileUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -184,7 +183,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         String fileName = attachment.getAttachName();
         req.setFileName(fileName);
-        req.setFileType(FileUtil.getFileExtension(fileName));
         req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
 
         byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
