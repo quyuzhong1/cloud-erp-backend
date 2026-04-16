@@ -86,7 +86,7 @@
         sum(lot_qualified_qty) as totalLotQualifiedQty
         from qc_result qr
         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
-        where qr.is_deleted = FALSE and qi.qc_status = 'finishQc'
+        where qr.is_deleted = FALSE and qi.qc_status in ('finishQc','exemption') and qr.qc_result = 'conformity'
         and qr.purchase_order_detail_id in
         <foreach collection="podIdList" item="podId" open="(" separator="," close=")">
             #{podId}

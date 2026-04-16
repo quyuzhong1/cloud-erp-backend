@@ -1,5 +1,6 @@
 package com.erp.server.wms.config;
 
+import com.common.business.config.TraceableExecutorService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,7 +17,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     @Bean(name = "thirdWarehouseExecutorPool")
     public ExecutorService thirdWarehouseExecutorPool() {
@@ -27,7 +28,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     /**
      * 流水生成线程池
@@ -44,7 +45,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     /**
      * 流水生成线程池
@@ -61,7 +62,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     /**
      * 流水生成线程池
@@ -78,7 +79,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     /**
      * 流水生成线程池
@@ -95,7 +96,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     /**
      * 流水生成线程池
@@ -112,7 +113,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
 
     /**
@@ -129,7 +130,7 @@ public class WmsExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     
@@ -141,7 +142,7 @@ public class WmsExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "virtualTransactionIdToInventoryHisPool")
@@ -152,7 +153,7 @@ public class WmsExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "inventoryTransactionToInventoryHisPool")
@@ -163,7 +164,7 @@ public class WmsExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "virtualInventoryTransactionToInventoryHisPool")
@@ -174,7 +175,7 @@ public class WmsExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     
     @Bean(name = "wmsTaskExecutorPool")
@@ -186,7 +187,7 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
     @Bean(name = "printLabelPool")
     public ExecutorService printLabelPool() {
@@ -196,7 +197,7 @@ public class WmsExecutorPoolConfig {
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
         service.setRejectedExecutionHandler(handler);
-        return service;
+        return new TraceableExecutorService(service);
     }
     /**
      * 虚拟库存历史记录线程池
@@ -213,6 +214,6 @@ public class WmsExecutorPoolConfig {
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
 
-        return service;
+        return new TraceableExecutorService(service);
     }
 }

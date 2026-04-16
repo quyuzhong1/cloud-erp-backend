@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import com.common.core.exception.ServiceException;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 
 import com.common.core.enums.ApiError;
@@ -35,7 +36,7 @@ public class ApiResult<T>  implements Serializable {
     /**
      * 分布式链路id
      */
-    private String traceId = MDC.get("traceId");
+    private String traceId = TraceContext.traceId();
 
     /**
      * 请求或响应body

@@ -15,6 +15,7 @@
        <result column="code" property="code" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
        <result column="file_type" property="fileType" />
        <result column="first_category_id" property="firstCategoryId" />
        <result column="first_category_name" property="firstCategoryName" />
@@ -39,13 +40,12 @@
         SELECT
             fm.id,
             fm.code as code,
-            qssr.id as skuRefId,
-            qssr.sku_id as skuId,
-            qssr.sku_no as skuNo,
+            fm.sku_id as skuId,
+            fm.sku_no as skuNo,
             fm.file_type as fileType,
             fm.first_category_id as firstCategoryId,
             fm.first_category_name as firstCategoryName,
-            qssr.product_name as productName,
+            fm.product_name as productName,
             a.id as fileId,
             a.attach_name as attachName,
             a.attach_version as attachVersion,
@@ -57,7 +57,6 @@
             fm.update_time as updateTime
         FROM file_management fm
         LEFT JOIN attachment a on fm.file_id = a.id and a.is_deleted=false
-        left join qc_standard_sku_ref qssr on fm.id = qssr.main_id and qssr.is_deleted = FALSE
         where  ${params.sqlMap.default}
         AND fm.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -72,22 +71,23 @@
         fm.create_time desc
     </select>
     <select id="countBySkuAndFileType" resultType="com.erp.model.wms.dto.FileManagementDTO$CountDTO">
-        SELECT fm.id,fm.file_type,qssr.sku_id,qssr.sku_no
+        SELECT
+            fm.id,
+            fm.code,
+            fm.file_type,
+            fm.sku_id,
+            fm.sku_no
         FROM file_management fm
-        left join qc_standard_sku_ref qssr on fm.id = qssr.main_id and qssr.is_deleted = FALSE
         WHERE fm.is_deleted = FALSE
         AND fm.file_type = #{fileType}
         <if test="skuIds != null and skuIds.size > 0">
-            and qssr.sku_id in
+            and fm.sku_id in
             <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
-        <if test="skuIds == null or skuIds.size == 0">
-            and qssr.sku_id is null
-        </if>
-        <if test="id != null and id != ''">
-          AND fm.id != #{id}
+        <if test="firstCategoryId != null and firstCategoryId != ''">
+          AND fm.first_category_id = #{firstCategoryId}
         </if>
     </select>
 
@@ -100,7 +100,7 @@
             file_management fm
             LEFT JOIN attachment A ON fm.file_id = A.ID AND A.is_deleted = FALSE
         WHERE
-            fm.file_type = 'categoryGeneralStandard'
+            fm.file_type = #{fileType}
             AND fm.first_category_id = #{categoryId}
             AND A.ID = ( SELECT a2.ID FROM attachment a2 WHERE a2.ID = fm.file_id ORDER BY a2.attach_version DESC LIMIT 1 );
     </select>
