@@ -214,7 +214,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageEntity messageEntity = new MessageEntity();
         BeanMapperUtils.copy(addDTO, messageEntity);
         //这两个字段要注意,当初设计的时候就是这样对应的
-        messageEntity.setType(addDTO.getReleaseType());
+        messageEntity.setType(MessageTypeEnum.SYS.getCode());
         messageEntity.setApplication(addDTO.getType());
         // 数据处理
         handleData(messageEntity);
@@ -306,7 +306,8 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public BaseResultDTO.AddDTO addSysVersion(SysVersionDTO.AddDTO addDTO) {
         MessageEntity messageEntity = new MessageEntity();
         BeanMapperUtils.copy(addDTO, messageEntity);
-        messageEntity.setApplication(MessageTypeEnum.SYS_VERSION.getCode());
+        messageEntity.setType(MessageTypeEnum.SYS_VERSION.getCode());
+        messageEntity.setApplication(SysTypeEnum.PC.getCode());
         // 数据处理
         handleData(messageEntity);
 
