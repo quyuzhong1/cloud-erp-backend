@@ -1,5 +1,5 @@
 package com.erp.server.srm.mapper;
-import com.erp.model.srm.entity.AttachmentEntity;
+import com.erp.model.srm.entity.SrmAttachmentEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2024-01-20
  */
 @Mapper
-public interface AttachmentMapper extends BaseMapper<AttachmentEntity> {
+public interface AttachmentMapper extends BaseMapper<SrmAttachmentEntity> {
 
 }

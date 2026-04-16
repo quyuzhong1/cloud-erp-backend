@@ -23,6 +23,7 @@ import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.mapper.TmsCfgCostMapper;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
 import com.erp.server.tms.service.DictBasicService;
@@ -196,7 +197,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     private void checkData(TmsCfgCostEntity tmsCfgCostEntity) {
         TmsCfgCostEntity old = getByCostName(tmsCfgCostEntity);
         if (ObjUtil.isNotEmpty(old) && !CharSequenceUtil.equals(tmsCfgCostEntity.getId(),old.getId())) {
-            throw new ServiceException(ApiError.LOGISTICS_COST_NAME_ALREADY_EXISTS,tmsCfgCostEntity.getCostName());
+            throw new ServiceException(ApiError.LOGISTICS_COST_NAME_ALREADY_EXISTS, DictCostAttributionEnum.getName(tmsCfgCostEntity.getDictCostAttribution()),tmsCfgCostEntity.getCostName());
         }
     }
 
@@ -267,6 +268,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     private TmsCfgCostEntity getByCostName(TmsCfgCostEntity tmsCfgCostEntity) {
         return lambdaQuery()
                 .eq(TmsCfgCostEntity::getCostName,tmsCfgCostEntity.getCostName())
+                .eq(TmsCfgCostEntity::getDictCostAttribution,tmsCfgCostEntity.getDictCostAttribution())
                 .last(SqlConstants.LIMIT_1)
                 .one();
     }

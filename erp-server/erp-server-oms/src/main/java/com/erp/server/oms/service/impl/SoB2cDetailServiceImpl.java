@@ -20,7 +20,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -35,7 +34,6 @@ import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -111,8 +109,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Resource
     private ShopInfoService shopInfoService;
@@ -479,24 +475,32 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         boolean isTikTokPlatformWarehouseOrder = Boolean.TRUE.equals(isShipped)
                 && mainEntity.hasPlatformWarehouseOrder()
                 && PlatformDictEnum.TIK_TOK.getCode().equals(mainEntity.getDictPlatform());
-        Map<String, ThirdMappingDTO.ErpWarehouseDTO> tikTokErpWarehouseMap = new HashMap<>();
-        if (isTikTokPlatformWarehouseOrder) {
-            dto.getDetails().stream()
-                    .map(PlatformOrderDetailDTO::getWarehouseId)
-                    .filter(StringUtils::isNotBlank)
-                    .distinct()
-                    .forEach(warehouseId -> {
-                        ThirdMappingDTO.ErpWarehouseDTO warehouseDTO =
-                                dmpThirdMappingFeign.resolveErpWarehouseBySourceId(mainEntity.getDictPlatform(), warehouseId);
-                        if (ObjectUtils.isNotEmpty(warehouseDTO) && StringUtils.isNotBlank(warehouseDTO.getWarehouseId())) {
-                            tikTokErpWarehouseMap.put(warehouseId, warehouseDTO);
-                        }
-                    });
+        String tikTokShopWarehouseId = "";
+        String tikTokShopWarehouseName = "";
+        String tikTokShopWarehouseOrgId = "";
+        String tikTokShopWarehouseOrgName = "";
+        if (isTikTokPlatformWarehouseOrder && StringUtils.isNotBlank(shopInfo.getWarehouseId())) {
+            tikTokShopWarehouseId = shopInfo.getWarehouseId();
+            tikTokShopWarehouseName = StringUtils.defaultString(shopInfo.getWarehouseName());
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(shopInfo.getWarehouseId()));
+            WarehouseDTO.UpdateDTO shopWarehouse = CollectionUtils.isEmpty(warehouseList) ? null : warehouseList.get(0);
+            if (ObjectUtils.isNotEmpty(shopWarehouse)) {
+                tikTokShopWarehouseName = StringUtils.defaultIfBlank(shopWarehouse.getName(), tikTokShopWarehouseName);
+                tikTokShopWarehouseOrgId = StringUtils.defaultString(shopWarehouse.getOrgId());
+                if (StringUtils.isNotBlank(shopWarehouse.getOrgId())) {
+                    List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(shopWarehouse.getOrgId()));
+                    BaseIdDTO.CodeDTO orgDTO = CollectionUtils.isEmpty(orgList) ? null : orgList.get(0);
+                    tikTokShopWarehouseOrgName = ObjectUtils.isNotEmpty(orgDTO) ? StringUtils.defaultString(orgDTO.getName()) : "";
+                }
+            }
         }
         // 新增或更新列表
         List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
         boolean finalIsTikTokPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder;
-        Map<String, ThirdMappingDTO.ErpWarehouseDTO> finalTikTokErpWarehouseMap = tikTokErpWarehouseMap;
+        String finalTikTokShopWarehouseId = tikTokShopWarehouseId;
+        String finalTikTokShopWarehouseName = tikTokShopWarehouseName;
+        String finalTikTokShopWarehouseOrgId = tikTokShopWarehouseOrgId;
+        String finalTikTokShopWarehouseOrgName = tikTokShopWarehouseOrgName;
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
@@ -563,12 +567,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 saveOrUpdateEntity.setWarehouseName("");
                 saveOrUpdateEntity.setWarehouseOrgId("");
                 saveOrUpdateEntity.setWarehouseOrgName("");
-                ThirdMappingDTO.ErpWarehouseDTO erpWarehouseDTO = finalTikTokErpWarehouseMap.get(detailDTO.getWarehouseId());
-                if (ObjectUtils.isNotEmpty(erpWarehouseDTO) && StringUtils.isNotBlank(erpWarehouseDTO.getWarehouseId())) {
-                    saveOrUpdateEntity.setWarehouseId(erpWarehouseDTO.getWarehouseId());
-                    saveOrUpdateEntity.setWarehouseName(StringUtils.defaultString(erpWarehouseDTO.getWarehouseName()));
-                    saveOrUpdateEntity.setWarehouseOrgId(StringUtils.defaultString(erpWarehouseDTO.getWarehouseOrgId()));
-                    saveOrUpdateEntity.setWarehouseOrgName(StringUtils.defaultString(erpWarehouseDTO.getWarehouseOrgName()));
+                if (StringUtils.isNotBlank(finalTikTokShopWarehouseId)) {
+                    saveOrUpdateEntity.setWarehouseId(finalTikTokShopWarehouseId);
+                    saveOrUpdateEntity.setWarehouseName(finalTikTokShopWarehouseName);
+                    saveOrUpdateEntity.setWarehouseOrgId(finalTikTokShopWarehouseOrgId);
+                    saveOrUpdateEntity.setWarehouseOrgName(finalTikTokShopWarehouseOrgName);
                 }
             }
             return saveOrUpdateEntity;

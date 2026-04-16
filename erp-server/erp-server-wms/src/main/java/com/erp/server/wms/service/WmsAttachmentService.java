@@ -92,4 +92,8 @@ public interface WmsAttachmentService extends SuperService<WmsAttachmentEntity> 
     void addByWarehouseEquipment(WmsAttachmentDTO.AddDTO dto);
 
     void deleteByUrlList(List<String> urlList);
+
+    String saveByVersion(WmsAttachmentEntity entity);
+
+    List<WmsAttachmentEntity> getByBusinessId(String id, String fileType);
 }

@@ -312,6 +312,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
     }
 
     /**
@@ -712,6 +717,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 是否加急
          */
         private Boolean isUrgent;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
 
         /**
          * 备注

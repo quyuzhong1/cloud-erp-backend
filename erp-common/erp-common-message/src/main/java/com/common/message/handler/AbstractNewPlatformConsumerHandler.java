@@ -41,7 +41,6 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
     	String data = ext.toString();
 		JSONObject jsonObject = JSON.parseObject(data);
         String dmpOutputTaskRecordId = jsonObject.getString("dmpOutputTaskRecordId");
-        MDC.put("traceId", dmpOutputTaskRecordId);
         String bizName = this.getBizName();
         log.warn("{}接收到输出id={} ，数据：{}" , bizName , dmpOutputTaskRecordId , ext);
         String dmpOutputTaskRecordDataId = jsonObject.getString("dmpOutputTaskRecordDataId");

@@ -218,7 +218,7 @@
         li.platform_status as platformStatus,
         li.platform_parent_spu_no as platformParentSpuNo,
         sm.warehouse_id,
-        COALESCE(NULLIF(sm.warehouse_name, ''), op.name) as warehouse_name,
+        sm.warehouse_name,
         sm.update_user_name,
         sm.update_time,
         sm.effective_time,

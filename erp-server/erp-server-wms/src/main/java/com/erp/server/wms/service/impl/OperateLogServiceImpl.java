@@ -12,14 +12,17 @@ import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.OperateLogEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.OperateLogMapper;
 import com.erp.server.wms.service.CfgOperateLogFieldService;
@@ -105,6 +108,17 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
                 valuePair = setUserValue(valuePair);
             }
+            //仓库
+            if (ModuleOperateLogFieldTypeEnum.TYPE_WAREHOUSE.getCode().equals(type)) {
+                valuePair = setWarehouseValue(valuePair);
+            }
+
+            //供应商
+            if (ModuleOperateLogFieldTypeEnum.TYPE_SUPPLIER.getCode().equals(type)) {
+                valuePair = setSupplierValue(valuePair);
+            }
+
+
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
 
@@ -254,6 +268,41 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return new Pair<>(oldValue, newValue);
     }
+
+    /**
+     * 设置供应商值
+     */
+    private Pair<String, String> setSupplierValue(Pair<String, String> valuePair) {
+        String oldValue = "";
+        String newValue = "";
+        List<SupplierEntity> oldList = FeignQuery.getByIds(SupplierEntity.class,Arrays.asList(valuePair.getKey().split(",")));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            oldValue = oldList.stream().map(SupplierEntity::getName).distinct().collect(Collectors.joining(","));
+        }
+        List<SupplierEntity> newList = FeignQuery.getByIds(SupplierEntity.class,Arrays.asList(valuePair.getValue().split(",")));
+        if (CollectionUtils.isNotEmpty(newList)) {
+            newValue = newList.stream().map(SupplierEntity::getName).distinct().collect(Collectors.joining(","));
+        }
+        return new Pair<>(oldValue, newValue);
+    }
+
+    /**
+     * 设置仓库值
+     */
+    private Pair<String, String> setWarehouseValue(Pair<String, String> valuePair) {
+        String oldValue = "";
+        String newValue = "";
+        List<WarehouseEntity> oldList = FeignQuery.getByIds(WarehouseEntity.class,Arrays.asList(valuePair.getKey().split(",")));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            oldValue = oldList.stream().map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
+        }
+        List<WarehouseEntity> newList = FeignQuery.getByIds(WarehouseEntity.class,Arrays.asList(valuePair.getValue().split(",")));
+        if (CollectionUtils.isNotEmpty(newList)) {
+            newValue = newList.stream().map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
+        }
+        return new Pair<>(oldValue, newValue);
+    }
+
 
     /**
      * 设置枚举值

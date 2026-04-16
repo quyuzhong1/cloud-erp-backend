@@ -42,6 +42,15 @@ public interface KolB2bApplicationService extends SuperService<KolB2bApplication
     Boolean update(KolB2bApplicationDTO.UpdateDTO dto);
 
     /**
+     * 更新明细备注
+     * @param id 主表id
+     * @param detailId 明细id
+     * @param remark 明细备注
+     * @return 是否成功
+     */
+    Boolean updateDetailRemark(String id, String detailId, String remark);
+
+    /**
     * 分页列表查询
     * @author will
     * @date: 2025-12-01

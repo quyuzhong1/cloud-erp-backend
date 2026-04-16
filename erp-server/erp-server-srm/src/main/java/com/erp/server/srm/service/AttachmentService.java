@@ -1,5 +1,5 @@
 package com.erp.server.srm.service;
-import com.erp.model.srm.entity.AttachmentEntity;
+import com.erp.model.srm.entity.SrmAttachmentEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.srm.dto.AttachmentDTO;
 
@@ -13,7 +13,7 @@ import java.util.List;
  * @author will
  * @since 2024-01-20
  */
-public interface AttachmentService extends SuperService<AttachmentEntity> {
+public interface AttachmentService extends SuperService<SrmAttachmentEntity> {
 
     /**
      * @description: 批量添加
