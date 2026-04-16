@@ -635,8 +635,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     skus.add(s.trim());
             }
         } catch (Exception e) {
-            log.error("质检报告解析SKU失败", e);
-            throw new ServiceException("质检报告解析SKU失败：" + e.getMessage());
+            log.error("解析SKU失败", e);
+            throw new ServiceException("解析SKU失败：" + e.getMessage());
         }
         return skus;
     }
