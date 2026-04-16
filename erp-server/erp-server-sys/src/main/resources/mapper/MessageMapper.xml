@@ -185,9 +185,13 @@
             m.data_json,
             m.create_time as noticeTime
         FROM message m
+        LEFT JOIN message_user_read mur ON mur.message_id = m.id
         WHERE m.is_deleted = FALSE
         AND m.application = 'sysVersion'
         AND (m.expire_time IS NULL OR m.expire_time >= NOW())
+        AND mur.user_id = #{userId}
+        AND mur.is_read = FALSE
+        AND mur.is_deleted = FALSE
         ORDER BY m.create_time DESC
         LIMIT 1
     </select>

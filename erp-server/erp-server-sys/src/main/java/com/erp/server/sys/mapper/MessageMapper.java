@@ -52,5 +52,5 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
 
     IPage<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(Page query, @Param("params") SysVersionDTO.HistoryVersionPagingParamDTO params, @Param("userId") String userId);
 
-    SysVersionDTO.LatestVersionDTO getLatestVersion();
+    SysVersionDTO.LatestVersionDTO getLatestVersion(@Param("userId") String userId);
 }
