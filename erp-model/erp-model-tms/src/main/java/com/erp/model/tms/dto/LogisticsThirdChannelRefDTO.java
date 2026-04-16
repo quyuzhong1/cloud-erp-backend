@@ -442,5 +442,9 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          * 第三方渠道编码
          */
         private String thirdChannelCode;
+        /**
+         *
+         */
+        private String thirdSupplierCode;
     }
 }
