@@ -122,6 +122,10 @@ public class WmsPushMsgDTO implements Serializable {
          */
         private List<String> sourceIdList;
 
+        /**
+         * 来源Code
+         */
+        private List<String> sourceCodeList;
 
     }
 
