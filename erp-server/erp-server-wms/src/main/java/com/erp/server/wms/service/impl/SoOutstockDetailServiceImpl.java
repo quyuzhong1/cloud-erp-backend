@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RetailPriceUtil;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,8 +22,12 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.PriceAllocationSourceEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.PlmCfgSettingEntity;
+import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.SkuStdSettingEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -930,6 +936,22 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         Map<String,BigDecimal> costMap = new HashMap<>();
         // 子件数量Map, key: 父sku val: 总数量
         Map<String, BigDecimal> quantityMap = new HashMap<>();
+        SkuStdSettingEnum allocationSettingEnum = SkuStdSettingEnum.COST_AVG;
+        // 查询成本分摊配置
+        List<PlmCfgSettingEntity> cfgList = FeignQuery.create(PlmCfgSettingEntity.class).eq(PlmCfgSettingEntity::getKey, "sku_std_setting").list();
+        if (CollectionUtils.isNotEmpty(cfgList)) {
+            allocationSettingEnum = SkuStdSettingEnum.getByCode(cfgList.get(0).getRemark());
+        }
+
+        Map<String, BigDecimal> retailPricetotalMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(bomChildrenSkuDTOS) && SkuStdSettingEnum.RETAIL_STD.equals(allocationSettingEnum)){
+            List<String> childSkuIds = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+            // 查询标准成本信息
+            List<SkuStdRetailPriceEntity> soB2cStdRetailPriceList = FeignQuery.create(SkuStdRetailPriceEntity.class).in(SkuStdRetailPriceEntity::getSkuId,childSkuIds).list();
+            // key: skuId|currency  value: 含税标准零售价
+            retailPricetotalMap = soB2cStdRetailPriceList.stream().collect(Collectors.toMap(e -> CharSequenceUtil.format("{}|{}", e.getSkuId(), e.getCurrency()), SkuStdRetailPriceEntity::getStdRetailPriceVat, (d1, d2) -> d1));
+        }
+
         //已更新的BOM
         Set<String> addedKeys = new HashSet<>();
         for (SoOutstockDetailEntity detailEntity : detailList) {
@@ -947,6 +969,16 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
             addedKeys.add(key);
             SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+            // 检查和获取标准零售价
+            // Map<SkuId, 含税标准零售价>
+            Map<String, BigDecimal> acticityRetailPriceMap = RetailPriceUtil.checkAndGetRetailPrice(allocationSettingEnum.getCode(),
+                    retailPricetotalMap,
+                    detailEntity.getCurrency(),
+                    bomChildrenSkuDTOS.stream()
+                            .map(BomChildrenSkuDTO::getSkuId)
+                            .distinct()
+                            .collect(Collectors.toList())
+            );
 
             // 计算数量（用于成本分摊）
             BigDecimal quantity = new BigDecimal(bomChildrenSkuDTO.getQuantity());
@@ -954,10 +986,22 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             // 更新数量Map
             quantityMap.merge(bomChildrenSkuDTO.getParentSkuId(), quantity, BigDecimal::add);
 
-            if (Objects.isNull(skuVO) || Objects.isNull(skuVO.getActualTaxCost()) || skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO) == 0) {
+            // 分摊单价
+            BigDecimal allocationPrice =  skuVO.getActualTaxCost();
+            BigDecimal retailPrice = acticityRetailPriceMap.get(detailEntity.getSkuId());
+            if (null == retailPrice){
+                detailEntity.setPriceAllocationSource(CharSequenceUtil.isBlank(skuVO.getPriceAllocationSource()) ? "采购平均成本" : skuVO.getPriceAllocationSource());
+            } else {
+                detailEntity.setPriceAllocationSource(PriceAllocationSourceEnum.RETAIL_STD.getName());
+                allocationPrice = retailPrice;
+            }
+            // 当前明细分摊金额 = 单价 * BOM数量
+            detailEntity.setAllocationAmount(allocationPrice.multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity())));
+
+            if (Objects.isNull(skuVO) || Objects.isNull(allocationPrice) || allocationPrice.compareTo(BigDecimal.ZERO) == 0) {
                 continue;
             }
-            costMap.merge(bomChildrenSkuDTO.getParentSkuId(), skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity())), BigDecimal::add);
+            costMap.merge(bomChildrenSkuDTO.getParentSkuId(), allocationPrice.multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity())), BigDecimal::add);
 
         }
 
@@ -992,11 +1036,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         // 判断是否有成本价，如果没有则按数量比例分摊
                         if (totalCost != null && totalCost.compareTo(BigDecimal.ZERO) != 0) {
                             //有其他子件 将单价分摊
-                            SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
-                            if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
+                            if(Objects.isNull(detailEntity.getAllocationAmount()) || detailEntity.getAllocationAmount().compareTo(BigDecimal.ZERO)==0){
                                 price = BigDecimal.ZERO;
                             }else{
-                                BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                                BigDecimal currentCost = detailEntity.getAllocationAmount();
                                 price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
                             }
                         } else if (totalQuantity != null && totalQuantity.compareTo(BigDecimal.ZERO) != 0) {
@@ -1026,11 +1069,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                             // 判断是否有成本价，如果没有则按数量比例分摊
                             if (totalCost != null && totalCost.compareTo(BigDecimal.ZERO) != 0) {
                                 //有其他子件 将单价分摊
-                                SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
-                                if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
+                                if(Objects.isNull(detailEntity.getAllocationAmount()) || detailEntity.getAllocationAmount().compareTo(BigDecimal.ZERO)==0){
                                     price = BigDecimal.ZERO;
                                 }else{
-                                    BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                                    BigDecimal currentCost = detailEntity.getAllocationAmount();
                                     price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
                                 }
                             } else if (totalQuantity != null && totalQuantity.compareTo(BigDecimal.ZERO) != 0) {
