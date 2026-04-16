@@ -118,6 +118,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private VirtualWarehouseAllocationServiceImpl service;
 
     @Resource
+    private WmsPushMsgService wmsPushMsgService;
+
+    @Resource
     private InventoryService inventoryService;
     @Resource
     private TransferInfoService transferInfoService;
@@ -418,12 +421,25 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //生成自动借调直接调拨单
             List<String> transferIdList = generateAutoTransferInfo(allocationEntity, transferWarehouseList);
 
+            List<String> parentId = new ArrayList<>();
+            if(!CollectionUtils.isEmpty(transferIdList)){
+                //查询直接调拨单是否生成推送
+                WmsPushMsgDTO.SearchDTO searchDTO = new WmsPushMsgDTO.SearchDTO();
+                searchDTO.setSourceIdList(transferIdList);
+                searchDTO.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+                searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+                List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
+                if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
+                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
+                    parentId.addAll(sourceIds);
+                }
+            }
             //生成旺店通同步库存比对任务
             String taskId = syncWdtVirtualWarehousePushOrderService.saveWdtInventoryTask(allocationEntity, detailEntityList);
-            List<String> parentId = new ArrayList<>();
             if(StringUtils.isNotBlank(taskId)){
                 parentId.add(taskId);
             }
+
 
             //校验总库存
             submitCheckQty(detailEntityList,allocationEntity);
@@ -441,9 +457,21 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //调拨分货生成直接调拨单
             List<String> transferIdList = generateDirectTransferInfo(allocationEntity, detailEntityList, warehouseMap);
 
+            List<String> parentId = new ArrayList<>();
+            if(!CollectionUtils.isEmpty(transferIdList)){
+                //查询直接调拨单是否生成推送
+                WmsPushMsgDTO.SearchDTO searchDTO = new WmsPushMsgDTO.SearchDTO();
+                searchDTO.setSourceIdList(transferIdList);
+                searchDTO.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+                searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+                List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
+                if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
+                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
+                    parentId.addAll(sourceIds);
+                }
+            }
             //生成旺店通同步库存比对任务
             String taskId = syncWdtVirtualWarehousePushOrderService.saveWdtInventoryTask(allocationEntity, detailEntityList);
-            List<String> parentId = new ArrayList<>();
             if(StringUtils.isNotBlank(taskId)){
                 parentId.add(taskId);
             }
