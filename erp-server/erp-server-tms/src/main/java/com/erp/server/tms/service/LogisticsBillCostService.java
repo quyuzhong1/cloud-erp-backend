@@ -275,5 +275,13 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return List<AddDTO>
      */
     List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType);
-
+    /**
+     * 确认导入
+     * @author will
+     * @date 2026/4/16 11:24
+     * @param logisticsCostId
+     * @param code
+     * @param confirmDateTime
+     */
+    void confirmImport(String logisticsCostId, String code, LocalDateTime confirmDateTime);
 }

@@ -339,12 +339,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败");
         }
-        //导入确认
-        if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),processingType)) {
-            return logisticsBillCostList;
-        }
-        //批量修改对账状态为已确认
-        logisticsBillCostList.forEach(obj -> updateReconciliationStatus(obj.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getConfirmTime()));
         return logisticsBillCostList;
     }
 
@@ -409,6 +403,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //导入数据批量处理
         handleImportData(logisticsBillList,logisticsBillDetailList,logisticsBillCostList);
 
+        //导入确认
+        if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),processingType)) {
+            //批量修改对账状态为已确认
+            dtoList.forEach(obj -> obj.setImportConfirmDTO(new ImportHistoryRecordDTO.ImportConfirmDTO(obj.getId(),obj.getConfirmTime())));
+        } else {
+            logisticsBillCostList.forEach(obj -> obj.setConfirmTime(null));
+        }
+
         log.info("编辑 开始修改尾程费用(自发货)数据");
         boolean save = super.updateBatchById(logisticsBillCostList);
         if(!save) {
@@ -421,6 +423,25 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //批量修改对账状态为已确认
         logisticsBillCostList.forEach(obj -> updateReconciliationStatus(obj.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getConfirmTime()));
         return logisticsBillCostList;
+    }
+
+    @Override
+    public void confirmImport(String id, String reconciliationStatus, LocalDateTime confirmTime) {
+        LogisticsBillCostEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用"));
+
+        //状态变更
+        lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
+                .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
+                .set(LogisticsBillCostEntity::getConfirmTime, confirmTime)
+                .set(LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
+                .update();
+
+        // 状态变更日志
+        log.info("状态变更日志数据，id集合：【{}】", id);
+        String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
     }
 
     /**

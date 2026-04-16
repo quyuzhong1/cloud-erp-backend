@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -617,6 +618,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
          */
          private String payType = LogisticsBillCostPayTypeEnum.PAY.getCode();
+
+        /**
+         * 导入确认
+         */
+        private ImportHistoryRecordDTO.ImportConfirmDTO importConfirmDTO;
     }
     
     /**
@@ -854,6 +860,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重(物流商)
          */
         private BigDecimal thirdActualWeight;
+
+        /**
+         * 导入确认
+         */
+        private ImportHistoryRecordDTO.ImportConfirmDTO importConfirmDTO;
     }
 
     @Data
