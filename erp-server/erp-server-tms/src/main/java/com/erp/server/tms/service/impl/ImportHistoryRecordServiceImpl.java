@@ -38,6 +38,7 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.ImportHistoryRecordExcelDTO;
 import com.erp.model.tms.entity.*;
@@ -355,6 +356,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             throw new ServiceException(ApiError.LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR);
         }
 
+        // 币别字典映射（仅未禁用，支持按 id 或 name 匹配）
+        Map<String, String> currencyLookupMap = buildCurrencyLookupMap(sysUserFeign.currencyList());
+
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
         if(CollUtil.isNotEmpty(logisticsBillVos)) {
             List<String> logisticsBillCostIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getLogisticsBillCostId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
@@ -395,7 +399,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     //错误数据
                     List<String> costErrorMsgList = new ArrayList<>();
                     //费用项数据合并
-                    List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution,costErrorMsgList,currencyMap);
+                    List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, cfgCostList, cfgImportDetailList, headList,sourceType, costAttribution,costErrorMsgList,currencyMap,currencyLookupMap);
                     //如果有错直接跳过不处理
                     if (CollectionUtils.isNotEmpty(costErrorMsgList)) {
                         jsonObject.set(matchIndex.toString(),MATCH_FAIL);
@@ -452,7 +456,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
                 //错误数据
                 List<String> errorMsgList = new ArrayList<>();
-                List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution);
+                List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost( successJson,jsonObject,errorMsgList,cfgCostList,cfgImportDetailList,headList,costAttribution,currencyLookupMap);
                 //合并相同费用项的费用
                 List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail =  mergeTmsCostDetail(updateList);
 
@@ -482,6 +486,63 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return importConfirmList;
     }
 
+    /**
+     * 获取币别字典Map，id或name都可以
+     * @author will
+     * @date 2026/4/16 12:02
+     * @param dictCurrencyEntities
+     * @return java.util.Map<java.lang.String,java.lang.String>
+     */
+    private Map<String, String> buildCurrencyLookupMap(List<DictCurrencyEntity> dictCurrencyEntities) {
+        if (CollUtil.isEmpty(dictCurrencyEntities)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> lookupMap = new HashMap<>();
+        for (DictCurrencyEntity entity : dictCurrencyEntities) {
+            if (ObjectUtil.isNull(entity) || Boolean.TRUE.equals(entity.getDisabled())) {
+                continue;
+            }
+            String id = CharSequenceUtil.trim(entity.getId());
+            String name = CharSequenceUtil.trim(entity.getName());
+            String standardCurrency = CharSequenceUtil.isNotBlank(id) ? id : name;
+            if (CharSequenceUtil.isBlank(standardCurrency)) {
+                continue;
+            }
+            if (CharSequenceUtil.isNotBlank(id)) {
+                lookupMap.putIfAbsent(normalizeCurrencyKey(id), standardCurrency);
+            }
+            if (CharSequenceUtil.isNotBlank(name)) {
+                lookupMap.putIfAbsent(normalizeCurrencyKey(name), standardCurrency);
+            }
+        }
+        return lookupMap;
+    }
+
+    /**
+     * 币别取值
+     * @author will
+     * @date 2026/4/16 12:02
+     * @param currency
+     * @param currencyLookupMap
+     * @return java.lang.String
+     */
+    private String normalizeCurrencyByDict(String currency, Map<String, String> currencyLookupMap) {
+        if (CharSequenceUtil.isBlank(currency) || CollUtil.isEmpty(currencyLookupMap)) {
+            return null;
+        }
+        return currencyLookupMap.get(normalizeCurrencyKey(currency));
+    }
+
+    /**
+     * excel币别格式化
+     * @author will
+     * @date 2026/4/16 12:01
+     * @param value
+     * @return java.lang.String
+     */
+    private String normalizeCurrencyKey(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+    }
 
     /**
      * 合并相同费用项的费用
@@ -563,18 +624,18 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @return List<UpdateDTO>
      */
     private List<TmsCostDetailDTO.UpdateDTO> lineFormatCost (JSONObject successJson,JSONObject jsonObject,List<String> errorMsgList,List<TmsCfgCostEntity> cfgCostList,
-                                                             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String costAttribution) {
+                                                             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String costAttribution,Map<String, String> currencyLookupMap) {
         //查询币别
         String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
         String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
         //币别赋值
         if (ObjectUtil.isNotNull(currency)) {
-            CurrencyEnum currencyEnum = CurrencyEnum.getByNameOrCode(currency);
-            if (ObjectUtil.isEmpty(currencyEnum)){
+            String normalizeCurrency = normalizeCurrencyByDict(currency, currencyLookupMap);
+            if (CharSequenceUtil.isBlank(normalizeCurrency)) {
                 errorMsgList.add("币别不存在");
             } else {
-                currency = currencyEnum.getCurrencyCode();
+                currency = normalizeCurrency;
             }
         }
 
@@ -652,7 +713,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private List<TmsCostDetailDTO.UpdateDTO> rowFormatCost (JSONObject successJson,JSONObject jsonObject,List<TmsCfgCostEntity> cfgCostList,
                                                             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String sourceType,
-                                                            String costAttribution,List<String> errorMsgList,HashMap<String,String> currencyMap) {
+                                                            String costAttribution,List<String> errorMsgList,HashMap<String,String> currencyMap,Map<String, String> currencyLookupMap) {
         List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
         //查询币别
         String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
@@ -660,11 +721,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
         //币别赋值
         if (CharSequenceUtil.isNotBlank(currency)) {
-            CurrencyEnum currencyEnum = CurrencyEnum.getByNameOrCode(currency);
-            if (ObjectUtil.isEmpty(currencyEnum)){
+            String normalizeCurrency = normalizeCurrencyByDict(currency, currencyLookupMap);
+            if (CharSequenceUtil.isBlank(normalizeCurrency)) {
                 errorMsgList.add("币别不存在");
             } else {
-                currency = currencyEnum.getCurrencyCode();
+                currency = normalizeCurrency;
             }
         }
 
