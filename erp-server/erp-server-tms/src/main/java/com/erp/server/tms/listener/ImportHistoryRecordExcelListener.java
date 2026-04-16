@@ -1,5 +1,6 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +70,11 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     @Getter
     private List<JSONObject> successList = new ArrayList<>();
+
+    /**
+     * 确认状态更新数据
+     */
+    private List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmPairList = new ArrayList<>();
 
     private Map<Integer,String> headMap;
 
@@ -128,8 +135,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         try {
             List<JSONObject> errorList2 = new ArrayList<>();
             // 批量处理，由 Service 内部负责事务控制
-            importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
+            List<ImportHistoryRecordDTO.ImportConfirmDTO> importConfirmDTOS = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
             matchList.addAll(errorList2);
+            confirmPairList.addAll(importConfirmDTOS);
         } catch (Exception e) {
             log.error("批量导入处理异常批次，条数：{}", successList.size(), e);
             // 整个批次失败的处理逻辑
@@ -166,6 +174,8 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         }
         //添加匹配结果
         addMatchExcelResult();
+        //对所有确认数据进行批量确认
+        importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
     }
     /**
      * 添加匹配结果

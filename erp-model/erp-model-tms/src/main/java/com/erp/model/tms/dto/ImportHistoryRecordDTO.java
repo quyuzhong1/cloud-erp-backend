@@ -514,4 +514,19 @@ public class ImportHistoryRecordDTO implements Serializable {
 
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportConfirmDTO {
+        /**
+         * 物流费用id
+         */
+        private String logisticsCostId;
+        /**
+         * 确认时间
+         */
+        private LocalDateTime confirmDateTime;
+    }
 }
