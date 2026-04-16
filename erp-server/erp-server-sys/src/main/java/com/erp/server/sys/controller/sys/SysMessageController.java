@@ -180,7 +180,7 @@ public class SysMessageController {
         return success(messageService.getSysMessageUnreadCount());
     }
 
-    //@CrossOrigin
+    @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         SseEmitter emitter = new SseEmitter(1800000L); // 30分钟超时
@@ -255,6 +255,15 @@ public class SysMessageController {
                             isComplete.set(true);
                             return;
                         }
+                    }
+
+                    // 10秒检查一次
+                    try {
+                        Thread.sleep(10_000); // 10秒
+                    } catch (InterruptedException e) {
+                        log.debug("SSE stream thread interrupted");
+                        isComplete.set(true);
+                        return;
                     }
                 }
             } catch (Exception e) {
