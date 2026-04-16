@@ -64,7 +64,7 @@
             SELECT
             m.id AS id,
             '1' AS releaseType,
-            '系统通知' AS releaseTypeName,
+            '系统公告' AS releaseTypeName,
             m.application AS type,
             m.notice_title AS noticeTitle,
             m.upgrade_version AS pdaVersion,
