@@ -25,12 +25,13 @@ import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.server.sys.mapper.PdaVersionMapper;
 import com.erp.server.sys.service.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.erp.server.sys.service.support.NoticeSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotBlank;
@@ -62,6 +63,9 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private MessageDispatchTaskService messageDispatchTaskService;
 
     @Override
     public PagingVO<PdaVersionDTO.PagingDTO> paging(PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
@@ -95,28 +99,34 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
                 MessageEntity messageEntity = new MessageEntity();
                 messageEntity.setType(MessageTypeEnum.PDA.getCode());
                 messageEntity.setRemark(dto.getRemark());
-                LinkedHashMap<String, Object> map = new LinkedHashMap();
-                map.put("version", dto.getPdaVersion());
-                map.put("remark", dto.getRemark());
-                ObjectMapper objectMapper = new ObjectMapper();
-                String jsonString = objectMapper.writeValueAsString(map);
-                messageEntity.setDataJson(jsonString);
                 messageEntity.setDataJson(dto.getRemark());
+                messageEntity.setNoticeTitle(MessageTypeEnum.PDA.getName());
+                messageEntity.setNoticeTime(dto.getUpgradeTime());
                 messageEntity.setApplication(dto.getType());
-                messageService.save(messageEntity);
-                List<MessageUserReadEntity> readEntityList = new ArrayList<>();
-                for (FindUserDTO findUserDTO : allUserList) {
-                    MessageUserReadEntity readEntity = new MessageUserReadEntity();
-                    readEntity.setMessageId(messageEntity.getId());
-                    readEntity.setUserId(findUserDTO.getUserId());
-                    readEntity.setIsRead(Boolean.FALSE);
-                    readEntityList.add(readEntity);
+                boolean messageSaved = messageService.save(messageEntity);
+                if (!messageSaved) {
+                    throw new ServiceException("PDA升级通知消息保存失败");
                 }
-                messageUserReadService.saveBatch(readEntityList);
+                List<MessageUserReadEntity> readEntityList = new ArrayList<>();
+                if (CollectionUtils.isNotEmpty(allUserList)) {
+                    for (FindUserDTO findUserDTO : allUserList) {
+                        MessageUserReadEntity readEntity = new MessageUserReadEntity();
+                        readEntity.setMessageId(messageEntity.getId());
+                        readEntity.setUserId(findUserDTO.getUserId());
+                        readEntity.setIsRead(Boolean.FALSE);
+                        readEntityList.add(readEntity);
+                    }
+                }
+                if (CollectionUtils.isNotEmpty(readEntityList)) {
+                    messageUserReadService.saveBatch(readEntityList);
+                }
+                String taskId = messageDispatchTaskService.createUpgradePushTask(messageEntity);
+                LocalDateTime executeTime = NoticeSupport.resolveExecuteTime(messageEntity);
+                runAfterCommit(() -> messageDispatchTaskService.queueTask(taskId, executeTime));
             }
             return flag;
         }catch (Exception e){
-            throw new ServiceException("消息数据格式化失败",e);
+            throw new ServiceException("PDA升级通知发版失败",e);
         }
     }
 
@@ -179,5 +189,18 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
                 && entity.getUpgradeTime().isBefore(LocalDateTime.now())) {
             throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
         }
+    }
+
+    private void runAfterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            runnable.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                runnable.run();
+            }
+        });
     }
 }

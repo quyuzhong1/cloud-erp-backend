@@ -144,6 +144,11 @@ public interface MessageService extends SuperService<MessageEntity> {
     boolean readHistoryMessage(MessageDTO.ReadHistoryMessageDTO dto);
 
     /**
+     * PDA消息单条已读
+     */
+    boolean readMessage(MessageDTO.ReadHistoryMessageDTO dto);
+
+    /**
      * PC端版本更新历史消息查询
      * @param dto
      * @return

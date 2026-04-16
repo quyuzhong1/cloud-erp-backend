@@ -70,7 +70,7 @@
             m.upgrade_version AS pdaVersion,
             false AS force,
             '' AS url,
-            m.data_json AS remark,
+            COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS dataJson,
             m.create_user_id AS createUserId,
             m.create_user_name AS createUserName,
             m.create_time AS createTime,  -- 统一列别名
@@ -83,8 +83,14 @@
             WHERE
             m.is_deleted = FALSE
             AND m.type = 'sys'
+            AND m.application IN ('PDA', 'PC')
+            AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
+            AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
             <if test="params.searchKeyword !='' and params.searchKeyword != null ">
-                AND m.data_json ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+                AND (
+                    COALESCE(NULLIF(m.data_json, ''), m.remark, '') ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+                    OR m.notice_title ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+                )
             </if>
         ) AS combined_data
         ORDER BY combined_data.createTime DESC
