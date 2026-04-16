@@ -61,69 +61,40 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
-
-        String extendJson = dmpInputTaskEntity.getExtendJson();
-        List<String> erpSkuIds = new ArrayList<>();
-        //转JSON，查看是否有传仓库ID参数
-        if (CharSequenceUtil.isNotBlank(extendJson)) {
-            JSONObject extendJsonObject = JSON.parseObject(extendJson);
-            if (Objects.nonNull(extendJsonObject)) {
-                String skuIdList = extendJsonObject.getString("skuIdList");
-                if (CharSequenceUtil.isNotBlank(skuIdList)) {
-                    erpSkuIds = JSON.parseArray(skuIdList, String.class);
-                }
-            }
-        }
         int pageSize = 1000;
         // 重置数据
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
             Map<String, Object> mongoData = mongoDataMaps.get(0);
-            List<Map> wdtDetailList = JSONUtil.toList((String) dmpDataMaps.get(0).get("detailList"), Map.class);
+            List<Map> wdtDetails = JSONUtil.toList((String) dmpDataMaps.get(0).get("wdtDetails"), Map.class);
+            List<Map> erpDetails = JSONUtil.toList((String) dmpDataMaps.get(0).get("erpDetails"), Map.class);
             String erpWarehouseId = (String) mongoData.get("erpWarehouseId");
             String thirdWarehouseCode = (String) mongoData.get("thirdWarehouseCode");
             String batchNo = (String) mongoData.get("batchNo");
-
-            InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-            dto.setWarehouseIdList(Collections.singletonList(erpWarehouseId));
-            dto.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
-            if(CollUtil.isNotEmpty(erpSkuIds)) {
-                dto.setSkuIdList(erpSkuIds);
-            }
-            //查询库存
-            List<InventoryQtyDTO.InventoryDTO> inventoryDTOS = inventoryFeign.listWarehouseInventoryByParam(dto);
-            //根据时间查询变更记录
-            LocalDateTime startTime = LocalDateTime.parse((String) mongoData.get("startTime"));
-            LocalDateTime endTime = LocalDateTime.parse((String) mongoData.get("endTime"));
-            //根据时间查询变更记录
-            InventoryQtyDTO.InventoryChangeQueryDTO inventoryChangeQueryDTO = new InventoryQtyDTO.InventoryChangeQueryDTO();
-            inventoryChangeQueryDTO.setWarehouseId(erpWarehouseId);
-            inventoryChangeQueryDTO.setStartTime(startTime);
-            inventoryChangeQueryDTO.setEndTime(endTime);
-            if(CollUtil.isNotEmpty(erpSkuIds)) {
-                inventoryChangeQueryDTO.setSkuIds(erpSkuIds);
-            }
-            List<InventoryQtyDTO.InventoryChangeDTO> inventoryChangeDTOS = inventoryFeign.listInventoryChangeByParam(inventoryChangeQueryDTO);
-            //合并旺店通变更库存和erp变更库存成一个列表
-            List<String> skuNoList = inventoryChangeDTOS.stream().map(InventoryQtyDTO.InventoryChangeDTO::getSkuNo).distinct().collect(Collectors.toList());
-            List<String> specNoList = wdtDetailList.stream().map(e -> (String) e.get("specNo")).collect(Collectors.toList());
+            List<TreeMap<String, Object>> updateDmpDataMaps = new ArrayList<>();
+            //合并sku集合
+            List<String> skuNoList = erpDetails.stream().map(e -> (String) e.get("skuNo")).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<String> specNoList = wdtDetails.stream().map(e -> (String) e.get("specNo")).collect(Collectors.toList());
+            //erpskuNo和旺店通的商家编码一致，所以合并去重
             List<String> changeSkuNoList = Stream.concat(skuNoList.stream(), specNoList.stream()).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(erpSkuIds)) {
-                changeSkuNoList = skuNoList;
-            }
             //过滤费用、服务类SKU，不同步旺店通更新
             List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
             changeSkuNoList.removeAll(noInventorySku.stream().map(SkuVO::getSkuNo).collect(Collectors.toList()));
-            List<TreeMap<String, Object>> updateDmpDataMaps = new ArrayList<>();
             if (CollUtil.isEmpty(changeSkuNoList)) {
                 dmpInputDataDmpRelationMap.setValue(updateDmpDataMaps);
                 continue;
             }
-            List<StockSearch2Response.Detail> detailList = getWdtWarehouseDetail(thirdWarehouseCode, changeSkuNoList, pageSize, batchNo);
+            InventoryQtyDTO.InventoryParamDTO dto = new InventoryQtyDTO.InventoryParamDTO();
+            dto.setWarehouseIdList(Collections.singletonList(erpWarehouseId));
+            dto.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+            dto.setSkuNoList(changeSkuNoList);
+            //查询erp库存全量数据
+            List<InventoryQtyDTO.InventoryDTO> erpInventoryList = inventoryFeign.listWarehouseInventoryByParam(dto);
+            List<StockSearch2Response.Detail> wdtInventoryList = getWdtWarehouseDetail(thirdWarehouseCode, changeSkuNoList, pageSize, batchNo);
             for (String skuNo : changeSkuNoList) {
-                InventoryQtyDTO.InventoryDTO inventoryDTO = inventoryDTOS.stream().filter(e -> e.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-                StockSearch2Response.Detail detail = detailList.stream().filter(e -> e.getSpecNo().equals(skuNo)).findFirst().orElse(null);
+                InventoryQtyDTO.InventoryDTO inventoryDTO = erpInventoryList.stream().filter(e -> e.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+                StockSearch2Response.Detail detail = wdtInventoryList.stream().filter(e -> e.getSpecNo().equals(skuNo)).findFirst().orElse(null);
                 Boolean defect = Objects.nonNull(detail) ? detail.getDefect() : Boolean.FALSE;
                 if (defect) {
                     continue;//只更新正品类型的数据

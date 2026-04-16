@@ -39,6 +39,11 @@ public class PdaVersionDTO implements Serializable {
         private String releaseType;
 
         /**
+         * 通知类型名称
+         */
+        private String releaseTypeName;
+
+        /**
          * 下拉获取地址：sys/common/enumDropDown?type=SysType
          * 发版类型：ALL PC PDA
          */

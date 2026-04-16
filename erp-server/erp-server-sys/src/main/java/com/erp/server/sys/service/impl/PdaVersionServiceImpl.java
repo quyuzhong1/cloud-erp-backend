@@ -1,15 +1,21 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
@@ -27,9 +33,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * <p>
@@ -53,6 +59,9 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
 
     @Resource
     private PdaUserSkipVersionService pdaUserSkipVersionService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public PagingVO<PdaVersionDTO.PagingDTO> paging(PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
@@ -119,5 +128,56 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
         entity.setUserName(userInfo.getUserName());
         entity.setVersionId(versionId);
         return pdaUserSkipVersionService.save(entity);
+    }
+
+    @Override
+    public Boolean update(PdaVersionDTO.UpdateDTO dto) {
+        PdaVersionEntity old = super.getById(dto.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "PDA升级通知"));
+        PdaVersionEntity pdaVersionEntity = BeanMapperUtils.map(PdaVersionEntity.class, dto);
+        // 数据处理
+        handleData(pdaVersionEntity);
+        log.info("编辑 开始修改数据，id：【{}】", old.getId());
+        boolean save = super.updateById(pdaVersionEntity);
+        if(!save) {
+            throw new ServiceException("保存失败");
+        }
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录日志数据，id：【{}】", pdaVersionEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(),  "PDA升级通知");
+        operateLogService.addModuleOperateLogByObj(old, pdaVersionEntity, ModuleTypeEnum.PDA_VERSION.getCode(), pdaVersionEntity.getId(),"", msg);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        PdaVersionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
+
+        log.info("删除 开始删除数据，id：【{}】", id);
+        this.removeById(id);
+        messageUserReadService.removeByMessageId(id);
+
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "", "系统公告");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PDA_VERSION.getCode(), entity.getId(), "删除");
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public PdaVersionDTO.ViewDTO view(String id) {
+        PdaVersionEntity pdaVersionEntity = this.getById(id);
+        if (pdaVersionEntity == null) {
+            throw new ServiceException("未找到数据");
+        }
+        PdaVersionDTO.ViewDTO data = BeanMapperUtils.map(PdaVersionDTO.ViewDTO.class, pdaVersionEntity);
+        return data;
+    }
+
+    private void handleData(PdaVersionEntity entity) {
+        if (Objects.nonNull(entity.getUpgradeTime())
+                && entity.getUpgradeTime().isBefore(LocalDateTime.now())) {
+            throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
@@ -23,7 +24,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.sys.service.PdaVersionService;
 import com.common.core.controller.vo.ApiResult;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 
 /**
  * 系统通知-PDA升级通知
@@ -108,10 +107,37 @@ public class PdaVersionController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 详情
+     * @Author
+     * @Date
+     * @param
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<PdaVersionDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(pdaVersionService.view(id));
+    }
+
+    /**
+     * 更新 PDA 版本信息
+     * @Author 
+     * @Date 
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新 PDA 版本信息")
+    @PostMapping(value = "/update")
+    public ApiResult update(@RequestBody @Validated PdaVersionDTO.UpdateDTO dto) {
+        Boolean flag = pdaVersionService.update(dto);
+        return flag == true ? success() : failure();
+    }
+
     @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
-        SseEmitter emitter = new SseEmitter(60_000L);
+        SseEmitter emitter = new SseEmitter(1800_000L); // 30分钟超时
         AtomicBoolean isComplete = new AtomicBoolean(false);
 
         // 注册完成回调
@@ -163,27 +189,37 @@ public class PdaVersionController extends BaseController {
                         }
                     }
 
-                    if (message == null) {
-                        emitter.complete();
-                        isComplete.set(true);
-                        return;
+                    if (message != null) {
+                        try {
+                            // 构建返回的 JSON 对象
+                            String eventData = String.format("{\"noticeTitle\":\"%s\",\"content\":\"%s\"}",
+                                    message.getNoticeTitle(),
+                                    message.getDataJson().replace("\"", "\\\""));
+                            emitter.send(SseEmitter.event().data(eventData));
+
+                            if (firstUnReadUser != null) {
+                                messageUserReadService.lambdaUpdate()
+                                        .eq(MessageUserReadEntity::getUserId, uid)
+                                        .eq(MessageUserReadEntity::getMessageId, firstUnReadUser.getMessageId())
+                                        .set(MessageUserReadEntity::getIsRead, Boolean.TRUE)
+                                        .update();
+                            }
+                        } catch (IOException e) {
+                            log.debug("Client disconnected, stopping SSE stream.");
+                            isComplete.set(true);
+                            return;
+                        }
                     }
 
+                    // 半分钟检查一次
                     try {
-                        // 构建返回的 JSON 对象
-                        String eventData = String.format("{\"noticeTitle\":\"%s\",\"content\":\"%s\"}",
-                                message.getNoticeTitle(),
-                                message.getDataJson().replace("\"", "\\\""));
-                        emitter.send(SseEmitter.event().data(eventData));
-
-                        if (firstUnReadUser != null) {
-                            messageUserReadService.lambdaUpdate()
-                                    .eq(MessageUserReadEntity::getUserId, uid)
-                                    .eq(MessageUserReadEntity::getMessageId, firstUnReadUser.getMessageId())
-                                    .set(MessageUserReadEntity::getIsRead, Boolean.TRUE)
-                                    .update();
-                        }
-                        emitter.complete();
+                        // 发送心跳消息，保持连接活跃
+                        emitter.send(SseEmitter.event().comment("heartbeat"));
+                        Thread.sleep(30_000); // 30秒
+                    } catch (InterruptedException e) {
+                        log.debug("SSE stream thread interrupted");
+                        isComplete.set(true);
+                        return;
                     } catch (IOException e) {
                         log.debug("Client disconnected, stopping SSE stream.");
                         isComplete.set(true);

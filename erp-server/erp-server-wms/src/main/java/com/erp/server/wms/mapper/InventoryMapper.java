@@ -243,7 +243,7 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @param params
      * @return
      */
-    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@Param("params") InventoryQtyDTO.SkuInventoryStatusParamDTO params);
+    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@Param("params") InventoryQtyDTO.InventoryParamDTO params);
 
     /**
      * 根据仓库id、时间范围获取库存变更列表

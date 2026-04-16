@@ -153,7 +153,7 @@ public interface InventoryFeign {
      * @return
      */
     @PostMapping("feign/inventory/listWarehouseInventoryByParam")
-    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@RequestBody InventoryQtyDTO.SkuInventoryStatusParamDTO dto);
+    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@RequestBody InventoryQtyDTO.InventoryParamDTO dto);
 
     /**
      * 根据仓库id、时间范围获取库存变更列表

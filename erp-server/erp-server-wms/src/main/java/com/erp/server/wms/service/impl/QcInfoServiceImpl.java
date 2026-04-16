@@ -1133,6 +1133,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcInfo.setQcBadQty(0);
         qcInfo.setQcGoodQty(0);
         qcInfo.setQcQty(0);
+        qcInfo.setLotQualifiedQty(qcInfo.getTotalQty());
+        qcInfo.setQcResult(QcResultEnum.CONFORMITY.getCode());
         Boolean isExist = CharSequenceUtil.isNotBlank(purchaseOrderId);
         String skuId = dto.getQcProduct().getSkuId();
         List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();

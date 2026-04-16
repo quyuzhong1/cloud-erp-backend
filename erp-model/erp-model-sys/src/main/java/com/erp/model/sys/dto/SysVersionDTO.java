@@ -145,7 +145,7 @@ public class SysVersionDTO {
         /**
          * 消息id
          */
-        private String messageId;
+        private String id;
     }
 
     @Data

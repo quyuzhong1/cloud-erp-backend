@@ -135,7 +135,7 @@ public class WangDianInventoryCompareServiceImpl implements WangDianInventoryCom
             return ApiResult.success();
         }
         //查询ERP库存
-        InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        InventoryQtyDTO.InventoryParamDTO dto = new InventoryQtyDTO.InventoryParamDTO();
         dto.setWarehouseIdList(erpWarehouseIds);
         dto.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
         dto.setSkuIdList(skuIds);

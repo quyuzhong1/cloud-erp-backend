@@ -4,6 +4,9 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -379,6 +382,20 @@ public class MessageDTO implements Serializable {
         /**
          * 消息id
          */
-        private String messageId;
+        private String id;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO{
+
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        @NotBlank(message = "通知类型不能为空")
+        private String releaseType;
     }
 }

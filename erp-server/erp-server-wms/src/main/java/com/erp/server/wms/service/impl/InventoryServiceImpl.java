@@ -1257,7 +1257,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(InventoryQtyDTO.SkuInventoryStatusParamDTO dto) {
+    public List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(InventoryQtyDTO.InventoryParamDTO dto) {
         if (CollUtil.isEmpty(dto.getWarehouseIdList())){
             return Collections.emptyList();
         }

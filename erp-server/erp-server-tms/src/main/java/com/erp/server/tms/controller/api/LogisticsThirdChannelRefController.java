@@ -161,7 +161,7 @@ public class LogisticsThirdChannelRefController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/export")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "物流-第三方渠道关系表导出")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "轨迹查询策略导出")
     public ApiResult<?> export(@RequestBody @Validated LogisticsThirdChannelRefDTO.PagingParamDTO dto) {
         return success(logisticsThirdChannelRefService.export(dto));
     }
@@ -171,7 +171,7 @@ public class LogisticsThirdChannelRefController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载第三方渠道关系导入模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "轨迹查询策略导入模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         logisticsThirdChannelRefService.downloadTemplate(response);
@@ -185,7 +185,7 @@ public class LogisticsThirdChannelRefController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importExcel")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "物流-第三方渠道关系表导入")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "轨迹查询策略导入")
     public ApiResult<?> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean result = logisticsThirdChannelRefService.importFile(dto);
         return result ? success("导入成功") : failure("导入失败");

@@ -474,8 +474,10 @@
         qb.source_code AS sourceCode
         FROM qc_info qb
         LEFT JOIN qc_product qp ON qp.main_id=qb.id AND qp.is_deleted=FALSE
+        LEFT JOIN qc_result qr ON qr.main_id=qb.id AND qr.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         and qb.invalid_status=FALSE
+        and qr.qc_type != ''
         <if test="params.userId != null and params.userId != ''">
             and (qc_user_id = #{params.userId} or qc_user_id = '')
         </if>
@@ -486,11 +488,7 @@
             </foreach>
         </if>
         <if test="params.searchKey != null and params.searchKey != ''">
-            and (qb.code like concat('%',#{params.searchKey},'%')
-                     or qb.source_code like concat('%',#{params.searchKey},'%')
-                     or qp.sku_no like concat('%',#{params.searchKey},'%')
-                     or qp.ean like concat('%',#{params.searchKey},'%')
-                )
+            and CONCAT(qb.code, ' ',qb.source_code, ' ',qp.sku_no, ' ',qp.ean) LIKE CONCAT('%', #{params.searchKey}::text, '%')
         </if>
         ORDER BY
         qb.create_time DESC

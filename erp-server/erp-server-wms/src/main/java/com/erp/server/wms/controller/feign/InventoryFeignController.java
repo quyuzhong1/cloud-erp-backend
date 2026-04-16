@@ -95,7 +95,7 @@ public class InventoryFeignController extends BaseController {
      * @return
      */
     @PostMapping("/listWarehouseInventoryByParam")
-    public List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@RequestBody InventoryQtyDTO.SkuInventoryStatusParamDTO dto) {
+    public List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@RequestBody InventoryQtyDTO.InventoryParamDTO dto) {
         List<InventoryQtyDTO.InventoryDTO> resultList = inventoryService.listWarehouseInventoryByParam(dto);
         return resultList;
     }

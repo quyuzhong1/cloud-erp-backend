@@ -66,7 +66,9 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         // 获取请求URL
         String uri = request.getPath().value();
-        if(uri.contains("/webVersion/sse") || uri.contains("/sysMessage/stream")) {
+        if(uri.contains("/webVersion/sse")
+                || uri.contains("/sysMessage/stream")
+                ||uri.contains("/pdaVersion/stream")) {
             return handleSseRequest(exchange, chain);
         }else if(uri.contains("/webVersion/update")) {
             return handleUpdateRequest(exchange, chain);

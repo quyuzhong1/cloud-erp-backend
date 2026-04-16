@@ -5,12 +5,10 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.FileTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -28,10 +26,11 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.FileManagementConverter;
 import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.mapper.FileManagementMapper;
-import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.wms.service.FileManagementService;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.QcStandardService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,31 +65,8 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
     @Resource
     private FileManagementMapper fileManagementMapper;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<BatchResultDTO> add(FileManagementDTO.AddDTO addDTO) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        List<SkuVO> skuVOS = null;
-        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addDTO.getFileType())) {
-            skuVOS = getSkuVOS(addDTO.getAttachUrl());
-        }
-        FileManagementEntity fileManagementEntity = FileManagementConverter.INSTANCE.addDTOToEntity(addDTO);
-        WmsAttachmentEntity attachmentEntity = WmsAttachmentConverter.INSTANCE.addFileManagementToAttachment(addDTO);
-        // 数据处理 应对多个sku情况，目前只有评审报告会有多个sku
-        List<FileManagementEntity> entityList = handleData(fileManagementEntity, skuVOS);
-        entityList.forEach(entity -> {
-            if (CharSequenceUtil.isBlank(entity.getId())){
-                resultDTOS.add(addEntity(entity, attachmentEntity));
-            }else {
-                resultDTOS.add(updateEntity(entity, attachmentEntity));
-            }
-        });
-        return resultDTOS;
-    }
-
-    @NotNull
-    private List<SkuVO> getSkuVOS(String attachUrl) {
+    public List<SkuVO> getSkuVOS(String attachUrl) {
         List<SkuVO> skuVOS;
         List<String> skuNoList = qcStandardService.listSkuNoByUrl(attachUrl);
         if (CollUtil.isEmpty(skuNoList)) {
@@ -115,8 +91,9 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         return skuVOS;
     }
 
-    @NotNull
-    private BatchResultDTO addEntity(FileManagementEntity fileManagementEntity, WmsAttachmentEntity attachmentEntity) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO addEntity(FileManagementEntity fileManagementEntity, WmsAttachmentEntity attachmentEntity) {
         log.info("开始新增文件管理");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WDGL);
@@ -136,8 +113,10 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         this.lambdaUpdate().set(FileManagementEntity::getFileId, fileId).eq(FileManagementEntity::getId, fileManagementEntity.getId()).update();
         return BatchResultDTO.success(fileManagementEntity.getId(), code, "新增单据");
     }
-    @NotNull
-    private BatchResultDTO updateEntity(FileManagementEntity fileManagementEntity, WmsAttachmentEntity attachmentEntity) {
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateEntity(FileManagementEntity fileManagementEntity, WmsAttachmentEntity attachmentEntity) {
         FileManagementEntity old = super.getById(fileManagementEntity.getId());
         attachmentEntity.setBusinessId(old.getId());
         String fileId = wmsAttachmentService.saveByVersion(attachmentEntity);
@@ -154,32 +133,6 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         operateLogService.addModuleOperateLogByObj(old, fileManagementEntity, ModuleTypeEnum.FILE_MANAGEMENT.getCode(), fileManagementEntity.getId(), msg);
         return BatchResultDTO.success(fileManagementEntity.getId(), fileManagementEntity.getCode(), "更新单据");
     }
-    /**
-     * 修改
-     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public List<BatchResultDTO> update(FileManagementDTO.UpdateDTO addOrUpdateDTO) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        FileManagementEntity fileManagementEntity = BeanMapperUtils.map(FileManagementEntity.class, addOrUpdateDTO);
-        WmsAttachmentEntity attachmentEntity = WmsAttachmentConverter.INSTANCE.updateFileManagementToAttachment(addOrUpdateDTO);
-        List<SkuVO> skuVOS = null;
-        if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(addOrUpdateDTO.getFileType())) {
-            skuVOS = getSkuVOS(addOrUpdateDTO.getAttachUrl());
-        }
-        // 数据处理
-        List<FileManagementEntity> entityList = handleData(fileManagementEntity, skuVOS);
-        entityList.forEach(entity -> {
-            if (CharSequenceUtil.isBlank(entity.getId())){
-                resultDTOS.add(addEntity(entity, attachmentEntity));
-            }else {
-                resultDTOS.add(updateEntity(entity, attachmentEntity));
-            }
-        });
-        return resultDTOS;
-    }
-
 
     @Override
     public PagingVO<FileManagementDTO.ListDTO> paging(PagingDTO<FileManagementDTO.PagingParamDTO> pagingParamDTO) {
@@ -197,21 +150,24 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
     /**
      * 新增修改处理数据
      */
-    private List<FileManagementEntity> handleData(FileManagementEntity entity, List<SkuVO> skuVOList) {
+    @Override
+    public List<FileManagementEntity> handleData(FileManagementEntity entity, List<SkuVO> skuVOList) {
         String fileType = entity.getFileType();
         List<FileManagementEntity> entityList = new ArrayList<>();
         if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(fileType)) {
             List<String> skuIds = skuVOList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
             List<FileManagementDTO.CountDTO> countDTOS = baseMapper.countBySkuAndFileType(skuIds, fileType, null);
-            skuVOList.forEach(skuVO -> {
-                entity.setSkuId(skuVO.getSkuId());
-                entity.setSkuNo(skuVO.getSkuNo());
-                entity.setProductName(skuVO.getSkuName());
+            for (SkuVO skuVO : skuVOList) {
+                FileManagementEntity newEntity = new FileManagementEntity();
+                BeanMapperUtils.copy(entity, newEntity);
+                newEntity.setSkuId(skuVO.getSkuId());
+                newEntity.setSkuNo(skuVO.getSkuNo());
+                newEntity.setProductName(skuVO.getSkuName());
                 FileManagementDTO.CountDTO countDTO1 = countDTOS.stream().filter(countDTO -> Objects.equals(countDTO.getSkuId(), skuVO.getSkuId())).findFirst().orElse(null);
-                entity.setId(countDTO1 != null ? countDTO1.getId() : null);
-                entity.setCode(countDTO1 != null ? countDTO1.getCode() : null);
-                entityList.add(entity);
-            });
+                newEntity.setId(countDTO1 != null ? countDTO1.getId() : null);
+                newEntity.setCode(countDTO1 != null ? countDTO1.getCode() : null);
+                entityList.add(newEntity);
+            }
         } else if (WmsFileTypeEnum.MANUFACTURING_REPORT.getCode().equals(fileType)) {
             // 量产报告
             if (CharSequenceUtil.isBlank(entity.getSkuId())) {
@@ -298,26 +254,26 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         if (CollUtil.isEmpty(skuVOS)) {
             return null;
         }
-        
+
         SkuVO skuVO = skuVOS.get(0);
         String categoryId = skuVO.getCategoryId();
         if (CharSequenceUtil.isBlank(categoryId)) {
             return null;
         }
-        
+
         // 获取分类信息，包括父级分类
         List<BasicCategoryEntity> categoryEntityList = plmTaskFeign.listCategoryByIds(Collections.singletonList(categoryId));
         if (CollUtil.isEmpty(categoryEntityList)) {
             return null;
         }
-        
+
         BasicCategoryEntity categoryEntity = categoryEntityList.get(0);
         String parentCategoryId = categoryEntity.getPid();
         if (CharSequenceUtil.isBlank(parentCategoryId)) {
             // 如果是一级分类，直接使用当前分类 ID
             parentCategoryId = categoryId;
         }
-        
+
         // 根据一级分类 ID 查询文件
         return fileManagementMapper.getCategoryGeneralStandardFileUrl(parentCategoryId, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode());
     }
