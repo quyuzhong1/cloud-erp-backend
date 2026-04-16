@@ -1553,6 +1553,12 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            and sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
           <if test="params.inventoryStatusList != null and params.inventoryStatusList.size > 0">
                 and dict_inventory_status in
                 <foreach collection="params.inventoryStatusList" item="item" open="(" close=")" separator=",">

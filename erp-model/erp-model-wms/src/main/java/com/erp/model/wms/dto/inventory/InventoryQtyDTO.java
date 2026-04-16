@@ -172,9 +172,9 @@ public class InventoryQtyDTO implements Serializable {
     @NoArgsConstructor
     public static class SkuInventoryStatusParamDTO {
 
-        @NotNull
-        @Size(min = 1, message = "sku不能为空")
         private List<String> skuIdList;
+
+        private List<String> skuNoList;
 
         /**
          * 仓库id
@@ -196,6 +196,38 @@ public class InventoryQtyDTO implements Serializable {
 
 
     }
+    /**
+     * sku 查询库存的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InventoryParamDTO {
+
+        private List<String> skuIdList;
+
+        private List<String> skuNoList;
+
+        /**
+         * 仓库id
+         */
+        @NotNull
+        @Size(min = 1, message = "仓库不能为空")
+        private List<String> warehouseIdList;
+
+        /**
+         * 仓库仓位id
+         */
+        private List<String> warehouseLocationIdList;
+
+        /**
+         * 库存状态, 请查看枚举类 InventoryStatusEnum
+         */
+        @NotEmpty(message = "库存状态不能为空")
+        private List<String> inventoryStatusList;
+
+
+    }
+
 
     /**
      * sku 查询库存的参数
