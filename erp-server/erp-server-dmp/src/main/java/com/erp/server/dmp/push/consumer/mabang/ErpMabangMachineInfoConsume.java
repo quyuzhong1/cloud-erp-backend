@@ -8,9 +8,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
@@ -32,7 +30,6 @@ import com.erp.server.dmp.service.DmpWarehouseMappingService;
 import com.erp.server.dmp.utils.MabangUtil;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -142,7 +139,7 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
             List<DmpBomEntity> bomList = dmpBomService.findBom(machineDetailEntity.getSkuNo(),  PlatformEnum.MABANG.getDesc(), "machining");
             if(CollUtil.isEmpty(bomList)) {
                 log.warn("ERP加工单单号【{}】,SKU【{}】未匹配到马帮加工品SKU", machineInfoEntity.getCode(), machineDetailEntity.getSkuNo());
-                RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, machineDetailEntity.getSkuNo());
+                RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisCacheConstants.MABANG_FINANCIAL_SKU_LIST_KEY, machineDetailEntity.getSkuNo());
                 String makeSkuNo = ObjectUtil.isNotEmpty(mabangSkuInfo) ? mabangSkuInfo.getStockSku() : machineDetailEntity.getSkuNo();
                 bomList = dmpBomService.findBom(makeSkuNo,  PlatformEnum.MABANG.getDesc(), "machining");
                 if(CollUtil.isNotEmpty(bomList)) {

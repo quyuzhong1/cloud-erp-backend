@@ -102,17 +102,6 @@ public class QcResultDTO {
         @Size(max = 250, message = "最大250个字符")
         private String badDescription;
 
-
-        /**
-         * 不良图片地址集合
-         */
-        private List<String> badImageUrlList;
-
-        /**
-         * 不良图片名称地址集合
-         */
-        private List<String> badImageNameList;
-
         /**
          * 质检附件地址集合
          */

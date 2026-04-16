@@ -1,6 +1,7 @@
 package com.sdk.wx.miniapp.api.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wx.miniapp.api.WxMiniAppService;
@@ -36,7 +37,7 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
   public  String getAccessToken() {
     String accessToken = "";
     // Redis缓存实现
-    String key = "wechat:access_token";
+    String key = RedisCacheConstants.WECHAT_ACCESS_TOKEN_KEY;
     if (redisUtil.hasKey(key)) {
       accessToken = String.valueOf(redisUtil.get(key));
     } else {

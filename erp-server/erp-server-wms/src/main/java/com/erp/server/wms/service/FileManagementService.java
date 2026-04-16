@@ -1,10 +1,12 @@
 package com.erp.server.wms.service;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.model.wms.entity.FileManagementEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FileManagementDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 
 import java.util.List;
 
@@ -17,25 +19,6 @@ import java.util.List;
  * @since 2026-03-20
  */
 public interface FileManagementService extends SuperService<FileManagementEntity> {
-
-    /**
-    * 新增
-    * @author zdy
-    * @date: 2026-03-20
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(FileManagementDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author zdy
-    * @date: 2026-03-20
-    * @param dto
-    * @return
-    */
-    Boolean update(FileManagementDTO.UpdateDTO dto);
-
 
     /**
     * 分页列表查询
@@ -67,4 +50,23 @@ public interface FileManagementService extends SuperService<FileManagementEntity
     QcStandardDTO.AddDTO genSingleQcStandard(String id);
 
     FileManagementDTO.AttachDTO getCategoryGeneralStandardFile(String skuId);
+
+    /**
+     * 根据附件地址查询sku信息
+     * @param attachUrl
+     * @return
+     */
+    List<SkuVO> getSkuVOS(String attachUrl);
+
+    /**
+     * 处理数据
+     * @param fileManagementEntity
+     * @param skuVOS
+     * @return
+     */
+    List<FileManagementEntity> handleData(FileManagementEntity fileManagementEntity, List<SkuVO> skuVOS);
+
+    BatchResultDTO addEntity(FileManagementEntity entity, WmsAttachmentEntity attachmentEntity);
+
+    BatchResultDTO updateEntity(FileManagementEntity entity, WmsAttachmentEntity attachmentEntity);
 }
