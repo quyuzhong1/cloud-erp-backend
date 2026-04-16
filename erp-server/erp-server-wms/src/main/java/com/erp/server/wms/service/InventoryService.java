@@ -387,7 +387,7 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param dto
      * @return
      */
-    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(InventoryQtyDTO.SkuInventoryStatusParamDTO dto);
+    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(InventoryQtyDTO.InventoryParamDTO dto);
 
     /**
      * 根据仓库id、时间范围获取库存变更列表

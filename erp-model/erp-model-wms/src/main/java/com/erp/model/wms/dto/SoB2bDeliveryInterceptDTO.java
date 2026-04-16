@@ -478,6 +478,11 @@ public class SoB2bDeliveryInterceptDTO implements Serializable {
         private String handleResultName;
 
         /**
+         * 处理备注
+         */
+        private String handleRemark;
+
+        /**
          * 备注
          */
         private String remark;

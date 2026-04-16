@@ -137,7 +137,7 @@ public class PdaVersionController extends BaseController {
     @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
-        SseEmitter emitter = new SseEmitter(60_000L);
+        SseEmitter emitter = new SseEmitter(1800_000L); // 30分钟超时
         AtomicBoolean isComplete = new AtomicBoolean(false);
 
         // 注册完成回调
@@ -189,27 +189,37 @@ public class PdaVersionController extends BaseController {
                         }
                     }
 
-                    if (message == null) {
-                        emitter.complete();
-                        isComplete.set(true);
-                        return;
+                    if (message != null) {
+                        try {
+                            // 构建返回的 JSON 对象
+                            String eventData = String.format("{\"noticeTitle\":\"%s\",\"content\":\"%s\"}",
+                                    message.getNoticeTitle(),
+                                    message.getDataJson().replace("\"", "\\\""));
+                            emitter.send(SseEmitter.event().data(eventData));
+
+                            if (firstUnReadUser != null) {
+                                messageUserReadService.lambdaUpdate()
+                                        .eq(MessageUserReadEntity::getUserId, uid)
+                                        .eq(MessageUserReadEntity::getMessageId, firstUnReadUser.getMessageId())
+                                        .set(MessageUserReadEntity::getIsRead, Boolean.TRUE)
+                                        .update();
+                            }
+                        } catch (IOException e) {
+                            log.debug("Client disconnected, stopping SSE stream.");
+                            isComplete.set(true);
+                            return;
+                        }
                     }
 
+                    // 半分钟检查一次
                     try {
-                        // 构建返回的 JSON 对象
-                        String eventData = String.format("{\"noticeTitle\":\"%s\",\"content\":\"%s\"}",
-                                message.getNoticeTitle(),
-                                message.getDataJson().replace("\"", "\\\""));
-                        emitter.send(SseEmitter.event().data(eventData));
-
-                        if (firstUnReadUser != null) {
-                            messageUserReadService.lambdaUpdate()
-                                    .eq(MessageUserReadEntity::getUserId, uid)
-                                    .eq(MessageUserReadEntity::getMessageId, firstUnReadUser.getMessageId())
-                                    .set(MessageUserReadEntity::getIsRead, Boolean.TRUE)
-                                    .update();
-                        }
-                        emitter.complete();
+                        // 发送心跳消息，保持连接活跃
+                        emitter.send(SseEmitter.event().comment("heartbeat"));
+                        Thread.sleep(30_000); // 30秒
+                    } catch (InterruptedException e) {
+                        log.debug("SSE stream thread interrupted");
+                        isComplete.set(true);
+                        return;
                     } catch (IOException e) {
                         log.debug("Client disconnected, stopping SSE stream.");
                         isComplete.set(true);

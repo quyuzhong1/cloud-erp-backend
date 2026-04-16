@@ -164,22 +164,35 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
-        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null);
-        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? attachmentList.get(0).getAttachName() : null);
         List<LogisticsChannelEntity> list = logisticsFeign.getChannelByCode(req.getChannelCode());
         if(CollUtil.isNotEmpty(list)){
             LogisticsChannelEntity logisticsChannelEntity = list.get(0);
             req.setIsInsurance(logisticsChannelEntity.getIsApiInsurance());
             req.setIsSignature(logisticsChannelEntity.getIsApiSign());
         }
-        if (CollUtil.isNotEmpty(attachmentList)) {
-            String url = FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl();
-            byte[] bytes = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
-            String fileBase64 = Base64.getEncoder().encodeToString(bytes);
-            req.setFileUrl(url);
-            req.setFileBase64(fileBase64);
-        }
+        fillAttachmentInfo(req, attachmentList);
         return BeanUtil.beanToMap(req);
+    }
+
+    private void fillAttachmentInfo(ThirdWarehouseCreateFbaOutboundReq req, List<WmsAttachmentDTO.UpdateDTO> attachmentList) {
+        if (CollUtil.isEmpty(attachmentList)) {
+            return;
+        }
+        WmsAttachmentDTO.UpdateDTO attachment = attachmentList.get(0);
+        if (Objects.isNull(attachment) || StrUtil.isBlank(attachment.getAttachUrl())) {
+            return;
+        }
+        String fileName = attachment.getAttachName();
+        req.setFileName(fileName);
+        req.setFileType(FileUtil.getFileExtension(fileName));
+        req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
+
+        byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        if (Objects.isNull(bytes) || bytes.length == 0) {
+            log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
+            return;
+        }
+        req.setFileBase64(Base64.getEncoder().encodeToString(bytes));
     }
     /**
      * @param operate
