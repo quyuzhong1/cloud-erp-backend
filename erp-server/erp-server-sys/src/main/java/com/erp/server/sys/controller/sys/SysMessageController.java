@@ -180,7 +180,7 @@ public class SysMessageController {
         return success(messageService.getSysMessageUnreadCount());
     }
 
-    @CrossOrigin(origins = {"https://erptest.ulanzi.cn"})
+    //@CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         SseEmitter emitter = new SseEmitter(1800000L); // 30分钟超时
@@ -255,21 +255,6 @@ public class SysMessageController {
                             isComplete.set(true);
                             return;
                         }
-                    }
-
-                    // 半分钟检查一次
-                    try {
-                        // 发送心跳消息，保持连接活跃
-                        emitter.send(SseEmitter.event().comment("heartbeat"));
-                        Thread.sleep(30_000); // 30秒
-                    } catch (InterruptedException e) {
-                        log.debug("SSE stream thread interrupted");
-                        isComplete.set(true);
-                        return;
-                    } catch (IOException e) {
-                        log.debug("Client disconnected, stopping SSE stream.");
-                        isComplete.set(true);
-                        return;
                     }
                 }
             } catch (Exception e) {
