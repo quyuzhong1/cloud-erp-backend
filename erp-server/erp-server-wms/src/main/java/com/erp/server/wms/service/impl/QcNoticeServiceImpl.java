@@ -429,7 +429,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(buildMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -440,6 +440,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+    public Map<String, Object> buildMap(QcNoticeEntity entity){
+        Map<String, Object> map = BeanUtil.beanToMap(entity);
+        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (!qcNoticeDetails.isEmpty()) {
+            map.put("qcUserId",qcNoticeDetails.get(0).getQcUserId());
+        }
+        return map;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
