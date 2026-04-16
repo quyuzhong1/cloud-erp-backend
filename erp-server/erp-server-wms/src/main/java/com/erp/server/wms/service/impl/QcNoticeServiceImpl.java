@@ -8,15 +8,11 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.AttachDTO;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -570,7 +566,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
