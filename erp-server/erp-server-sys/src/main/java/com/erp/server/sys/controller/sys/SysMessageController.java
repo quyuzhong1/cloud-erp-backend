@@ -180,7 +180,7 @@ public class SysMessageController {
         return success(messageService.getSysMessageUnreadCount());
     }
 
-    @CrossOrigin
+    @CrossOrigin(origins = {"https://erptest.ulanzi.cn"})
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         SseEmitter emitter = new SseEmitter(1800000L); // 30分钟超时
