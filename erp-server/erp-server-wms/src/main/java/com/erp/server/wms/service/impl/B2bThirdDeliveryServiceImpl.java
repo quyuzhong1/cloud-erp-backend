@@ -164,6 +164,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
+    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -1100,8 +1101,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         uploadFileReq.setFileUrl(req.getFileUrl());
         uploadFileReq.setFileName(req.getFileName());
         if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
-            uploadFileReq.setFileType(getAttachmentFileType(req));
+            uploadFileReq.setFileType(getAttachmentExtension(req));
             uploadFileReq.setModule("order_attach");
+        } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+            uploadFileReq.setFileType(GOOD_CANG_ORDER_ATTACHMENT);
         }
 
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
@@ -1109,7 +1112,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             throw new ServiceException("上传B2B三方仓附件失败:{}", uploadFileResult.getMsg());
         }
         req.setFileId(String.valueOf(uploadFileResult.getData().getAttachId()));
-        req.setFileType(getAttachmentFileType(req));
+        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+            req.setFileType(getAttachmentExtension(req));
+        }
     }
 
     private boolean needUploadAttachment(String providerCode) {
@@ -1117,10 +1122,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 || PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(providerCode);
     }
 
-    private String getAttachmentFileType(ThirdWarehouseCreateFbaOutboundReq req) {
-        if (StrUtil.isNotBlank(req.getFileType())) {
-            return req.getFileType();
-        }
+    private String getAttachmentExtension(ThirdWarehouseCreateFbaOutboundReq req) {
         String fileType = FileUtil.getFileExtension(req.getFileName());
         if (StrUtil.isNotBlank(fileType)) {
             return fileType;
