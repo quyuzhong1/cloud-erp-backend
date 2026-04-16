@@ -55,7 +55,11 @@ public class PlmAttachmentEntity extends BaseEntity<PlmAttachmentEntity> {
      */
     @TableField("attach_size")
     private BigDecimal attachSize;
-
+    /**
+     * 文件版本
+     */
+    @TableField("attach_version")
+    private Integer attachVersion;
 
     public static final String BUSINESS_ID = "business_id";
 

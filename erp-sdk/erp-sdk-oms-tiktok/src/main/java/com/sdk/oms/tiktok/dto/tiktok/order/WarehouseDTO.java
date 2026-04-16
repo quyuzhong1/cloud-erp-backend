@@ -1,7 +1,6 @@
 package com.sdk.oms.tiktok.dto.tiktok.order;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -35,7 +34,7 @@ public class WarehouseDTO {
             private String effectStatus;
             @JSONField(name = "entity_id")
             private String entityId;
-            @JsonProperty("fid")
+            @JSONField(name = "id")
             private String id;
             @JSONField(name = "is_default")
             private Boolean isDefault;

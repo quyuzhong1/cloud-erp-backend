@@ -200,7 +200,12 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(StringUtils.isBlank(vo.getPackageId())){
                 throw new ServiceException("包裹id不能为空");
             }
+            // 打印 getPackageDocument 请求耗时
+            long start1 = System.currentTimeMillis();
             PackageDocumentDTO packageDocumentDTO = tikTokSdkClientService.getPackageDocument(tikTokShopInfoDTO,vo.getPackageId(),"SHIPPING_LABEL");
+            long end1 = System.currentTimeMillis();
+            log.warn("Tiktok获取面单 耗时: {} ms, packageId: {}", (end1 - start1), vo.getPackageId());
+
             if(packageDocumentDTO.getCode()!=0){
                 return failure("获取标签失败,"+ packageDocumentDTO.getMessage());
             }
@@ -214,14 +219,23 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
                 for (int attempt = 0; attempt <= maxRetries; attempt++) { // 包含初始请求+3次重试
                     try {
+                        // 打印 convertPdfUrlToBase64 耗时
+                        long start2 = System.currentTimeMillis();
                         String base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(),false);
+                        long end2 = System.currentTimeMillis();
+                        log.warn("tiktok获取面单转换BASE64 耗时: {} ms, attempt: {}, packageId: {}", (end2 - start2),attempt, vo.getPackageId());
+                        long start3 = System.currentTimeMillis();
                         FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
                                 .base64(base64)
                                 .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
                                 .build();
                         url = fileFeign.uploadFileByBase64(uploadBase64);
+                        long end3 = System.currentTimeMillis();
+                        log.warn("tiktok获取面单上传fastdfs 耗时: {} ms, attempt: {}, packageId: {}", (end3 - start3),attempt, vo.getPackageId());
+
                         break; // 成功则跳出循环
                     } catch (Exception e) {
+                        log.error("TikTok获取物流面单失败, attempt: {}, packageId: {}", attempt, vo.getPackageId(), e);
                         lastException = e;
                         if (attempt < maxRetries) { // 非最后一次尝试时等待
                             try {

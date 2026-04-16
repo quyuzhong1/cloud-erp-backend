@@ -1,5 +1,6 @@
 package com.erp.server.wms.config;
 
+import com.common.business.config.TraceableThreadPoolTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -43,7 +44,7 @@ public class SpringAsyncConfig {
 	}
 
 	private ThreadPoolTaskExecutor createExecutor() {
-		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
 		// 设置核心线程数
 		executor.setCorePoolSize(this.corePoolSize);
 		// 设置最大线程数

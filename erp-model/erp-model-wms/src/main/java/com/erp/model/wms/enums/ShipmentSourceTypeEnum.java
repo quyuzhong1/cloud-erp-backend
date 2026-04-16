@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 public enum ShipmentSourceTypeEnum implements EnumMessage {
     FBA("fba", "FBA"),
+    FBT("fbt", "FBT"),
     AWD("awd", "AWD"),
     ;
 

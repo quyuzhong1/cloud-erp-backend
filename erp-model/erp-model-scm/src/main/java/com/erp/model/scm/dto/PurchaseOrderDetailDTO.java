@@ -1,5 +1,7 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +10,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -182,6 +185,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 主表id
          */
         private String id;
+
+        /**
+         * 质检合格量
+         */
+        private Integer qcGoodQty;
     }
 
     @Data
@@ -527,6 +535,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 新品首批名称
          */
         private String firstMassProductName;
+        /**
+         * 采购供应商id
+         */
+        private String poSupplierId;
+        /**
+         * 采购供应商名称
+         */
+        private String poSupplierName;
     }
 
     /**
@@ -734,5 +750,208 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * SKU编码
          */
         private String skuNo;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListPushProductParamDTO extends SortDTO {
+
+
+        /**
+         * 页面高级查询
+         * tabFlag,(waitSubmit待提交,toBeApprove待审批,toBeConfirm待确认,confirm已确认,reject已拒绝,delivery送货中,finish已完成,closed已关闭,approveReject不通过)
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 采购订单id
+         */
+        @NotBlank(message = "采购订单id不能为空")
+        private String poId;
+    }
+
+    /**
+     * 列表下推产品DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListPushProductDTO {
+        /**
+         * 采购订单id
+         */
+        private String poId;
+        /**
+         * 采购订单明细id
+         */
+        private String podId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * ean
+         */
+        private String ean;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 剩余送货数量
+         */
+        private String qty;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListPushQcApplicationParamDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单明细id
+         */
+        private List<String> podIdList;
+
+
+        /**
+         * sku编号集合
+         */
+        private List<String>  skuNoList;
+
+        /**
+         * 远程搜索sku
+         */
+        private String remoteSearchSku;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListPushQcApplicationDTO {
+        /**
+         * 采购订单id
+         */
+        private String poId;
+        /**
+         * 采购订单明细id
+         */
+        private String podId;
+        /**
+         * 采购订单号
+         */
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 采购数量
+         */
+        private Integer poQty;
+        /**
+         * 待入库数量/剩余送货量
+         */
+        private Integer qty;
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuQuickPasteParamDTO {
+        /**
+         * 采购订单id
+         */
+        @NotBlank(message = "采购订单id不能为空")
+        private String poId;
+        /**
+         * sku编码列表
+         */
+        @NotEmpty(message = "sku编码列表不能为空")
+        private List<String> skuNoList;
+
+
+        /**
+         * 远程搜索sku
+         */
+        private String remoteSearchSku;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuQuickPasteDTO {
+        /**
+         * 采购订单id
+         */
+        private String poId;
+        /**
+         * 采购订单明细id
+         */
+        private String podId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * ean编码
+         */
+        private String ean;
+        /**
+         *  产品名称
+         */
+        private String productName;
+        /**
+         * 剩余送货数量
+         */
+        private Integer qty;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
     }
 }

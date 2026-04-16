@@ -88,9 +88,19 @@ public class YuntingSocialMediaDTO extends UniqueDto {
     private String likes;
 
     /**
+     * 收藏数
+     */
+    private String collects;
+
+    /**
      * 评论数
      */
     private String comments;
+
+    /**
+     * 投币数
+     */
+    private String coins;
 
     /**
      * URL

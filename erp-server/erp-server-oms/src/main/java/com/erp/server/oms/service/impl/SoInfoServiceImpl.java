@@ -2520,6 +2520,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> customerIds = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         List<SoInfoDTO.GenerateDeliveryView> resultList = new ArrayList<>();
+        List<String> sodIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getDetailId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
@@ -2531,6 +2533,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(view.getDeliveryQty()>0){
                 resultList.add(view);
             }
+
+            //发货通知数量
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
+                Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
+                view.setEffectiveNoticeQty(effectiveNoticeQty);
+            }
+
         }
         if(CollectionUtils.isEmpty(resultList)){
             throw new ServiceException("没有待发货明细");
@@ -3747,6 +3758,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
+    public SoInfoEntity getByCode(String soCode) {
+        return  this.lambdaQuery().eq(SoInfoEntity::getCode, soCode).one();
+    }
+
+    @Override
     public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         this.updateApproveStatus(Collections.singletonList(updateApprovalStatusDTO.getSoInfoEntity()),  updateApprovalStatusDTO.getBillApproveStatusEnum(), updateApprovalStatusDTO.getSoInfoEntity().getApproveUserName());
     }
@@ -4259,6 +4275,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 e.setWarehousePlatformSku(p.getPlatformSkuNo());
             });
         });
+        OverseasProviderEntity overseasProvider = overseasProviderFeign.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
+        if (Objects.nonNull(overseasProvider)) {
+            viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+            if (Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),overseasProvider.getCode())) {
+                viewDTO.setWarehouseOperationTypeDTOList(new ArrayList<>());
+            }
+        }
+
         viewDTO.setRemark("Customer PO: " + soInfoEntity.getCustomerOrderNo());
         return viewDTO;
     }

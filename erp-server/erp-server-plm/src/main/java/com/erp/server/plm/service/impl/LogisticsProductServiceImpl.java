@@ -1100,12 +1100,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             item.setChargeName(chargeName);
             //是否是组合SKU
             Boolean isCombination = Boolean.FALSE;
-            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
-                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId())&& bomType.equals(e.getType())).count();
-                if (count > 0) {
-                    isCombination = Boolean.TRUE;
-                }
+            if(Objects.equals(item.getCombinationDeclareType(),CombinationDeclareTypeEnums.COMBINE.getCode())){
+                isCombination = Boolean.TRUE;
             }
+//            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+//                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId())&& bomType.equals(e.getType())).count();
+//                if (count > 0) {
+//                    isCombination = Boolean.TRUE;
+//                }
+//            }
             item.setIsCombination(isCombination);
             item.setLogisticsApproveStatusName(ApproveStatusEnum.getName(item.getLogisticsApproveStatus()));
 

@@ -35,7 +35,6 @@ import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.enums.ThirdMappingSystemEnum;
-import com.erp.model.dmp.enums.ThirdMappingTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -201,76 +200,42 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         afterSaleEntity.setUsername(addDTO.getThridUserName());
         afterSaleEntity.setPhoneNumber(addDTO.getPhoneNumber());
 
-        //平台映射
-        ThirdMappingEntity ThirdMapping = thirdMappingService.lambdaQuery()
-                .eq(ThirdMappingEntity::getThirdSysType, ThirdMappingSystemEnum.ERP.getCode())
-                .eq(ThirdMappingEntity::getThirdCode, addDTO.getDictPlatform())
+        String platformCode = addDTO.getPlatformCode();
+        DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoService.lambdaQuery()
+                .eq(DmpSoInfoEntity::getPlatformCode, platformCode)
                 .one();
-
-        if (Objects.nonNull(ThirdMapping)) {
-            List<ThirdMappingEntity> list = thirdMappingService.lambdaQuery()
-                    .eq(ThirdMappingEntity::getSysId, ThirdMapping.getSysId())
-                    .ne(ThirdMappingEntity::getType,ThirdMappingSystemEnum.ERP.getCode())
-                    .list();
-
-            if (!list.isEmpty()) {
-                List<String> thirdCodeList = list.stream()
-                        .map(item -> item.getThirdCode())
-                        .collect(Collectors.toList());
-
-                DmpSoInfoEntity dmpSoInfo = dmpSoInfoService.lambdaQuery()
-                        .eq(DmpSoInfoEntity::getPlatformCode, addDTO.getPlatformCode())
-                        .in(DmpSoInfoEntity::getSourcePlatform,thirdCodeList)
-                        .one();
-
-                if (Objects.nonNull(dmpSoInfo)) {
-                    if (StringUtils.isNotBlank(dmpSoInfo.getShopId())) {
-                        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(dmpSoInfo.getShopId());
-                        if (Objects.nonNull(shopInfo)) {
-                            afterSaleEntity.setShopId(shopInfo.getId());
-                            if (StringUtils.isNotBlank(afterSaleEntity.getShopId())) {
-                                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), afterSaleEntity.getShopId());
-                                if (!csAgentDTOList.isEmpty()) {
-                                    String ids = csAgentDTOList.stream()
-                                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
-                                            .collect(Collectors.joining(","));
-                                    String names = csAgentDTOList.stream()
-                                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
-                                            .collect(Collectors.joining(","));
-                                    afterSaleEntity.setCsAgentId(ids);
-                                    afterSaleEntity.setCsAgentName(names);
-                                }
-
-                            }
-                        } else {
-                            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
-                            if (!csAgentDTOList.isEmpty()) {
-                                String ids = csAgentDTOList.stream()
-                                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
-                                        .collect(Collectors.joining(","));
-                                String names = csAgentDTOList.stream()
-                                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
-                                        .collect(Collectors.joining(","));
-                                afterSaleEntity.setCsAgentId(ids);
-                                afterSaleEntity.setCsAgentName(names);
-                            }
-                        }
-                    }
-                } else {
-                    List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(),null);
-                    if (!csAgentDTOList.isEmpty()) {
-                        String ids = csAgentDTOList.stream()
-                                .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
-                                .collect(Collectors.joining(","));
-                        String names = csAgentDTOList.stream()
-                                .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
-                                .collect(Collectors.joining(","));
-                        afterSaleEntity.setCsAgentId(ids);
-                        afterSaleEntity.setCsAgentName(names);
-                    }
+        // 直接根据店铺匹配，不需要平台正确
+        if (Objects.nonNull(dmpSoInfoEntity)) {
+            List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), dmpSoInfoEntity.getShopId());
+            if (!csAgentDTOList.isEmpty()) {
+                String ids = csAgentDTOList.stream()
+                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                        .collect(Collectors.joining(","));
+                String names = csAgentDTOList.stream()
+                        .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                        .collect(Collectors.joining(","));
+                afterSaleEntity.setCsAgentId(ids);
+                afterSaleEntity.setCsAgentName(names);
+            }
+        } else {
+            ThirdMappingEntity thirdMapping = thirdMappingService.lambdaQuery()
+                    .eq(ThirdMappingEntity::getThirdSysType, ThirdMappingSystemEnum.ERP.getCode())
+                    .eq(ThirdMappingEntity::getThirdCode, addDTO.getDictPlatform())
+                    .one();
+            if (Objects.nonNull(thirdMapping)) {
+                // 如果店铺ID为空，则按平台匹配
+                List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(thirdMapping.getThirdCode(), null);
+                if (!csAgentDTOList.isEmpty()) {
+                    String ids = csAgentDTOList.stream()
+                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getId)
+                            .collect(Collectors.joining(","));
+                    String names = csAgentDTOList.stream()
+                            .map(CfgAfterPlatformShopDTO.CsAgentDTO::getName)
+                            .collect(Collectors.joining(","));
+                    afterSaleEntity.setCsAgentId(ids);
+                    afterSaleEntity.setCsAgentName(names);
                 }
             }
-
         }
 
         // 生成单号
@@ -321,7 +286,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             List<String> attachUrlList = addDTO.getAttachUrlList();
             List<String> attachNameList = addDTO.getAttachNameList();
             for (int i = 0; i < attachUrlList.size(); i++) {
-                AttachmentEntity entity = new AttachmentEntity();
+                DmpAttachmentEntity entity = new DmpAttachmentEntity();
                 entity.setAttachName(attachNameList.get(i));
                 entity.setAttachUrl(attachUrlList.get(i));
                 entity.setType("after_sale");
@@ -332,7 +297,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //保存小程序附件
         if (CollUtil.isNotEmpty(addDTO.getAttachmentList())) {
             for (String attachment : addDTO.getAttachmentList()) {
-                AttachmentEntity entity = new AttachmentEntity();
+                DmpAttachmentEntity entity = new DmpAttachmentEntity();
                 entity.setAttachName(attachment);
                 entity.setAttachUrl(attachment);
                 entity.setType("after_sale");
@@ -497,13 +462,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
 
             // 删除明细数据
-            attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
+            attachmentService.lambdaUpdate().eq(DmpAttachmentEntity::getType, "after_sale").eq(DmpAttachmentEntity::getBusinessId, updateDTO.getId()).remove();
             //保存web附件
             if (CollUtil.isNotEmpty(updateDTO.getAttachNameList()) && CollUtil.isNotEmpty(updateDTO.getAttachUrlList())) {
                 List<String> attachUrlList = updateDTO.getAttachUrlList();
                 List<String> attachNameList = updateDTO.getAttachNameList();
                 for (int i = 0; i < attachUrlList.size(); i++) {
-                    AttachmentEntity entity = new AttachmentEntity();
+                    DmpAttachmentEntity entity = new DmpAttachmentEntity();
                     entity.setAttachName(attachNameList.get(i));
                     entity.setAttachUrl(attachUrlList.get(i));
                     entity.setType("after_sale");
@@ -514,7 +479,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             //保存小程序附件
             if (CollUtil.isNotEmpty(updateDTO.getAttachmentList())) {
                 for (String attachment : updateDTO.getAttachmentList()) {
-                    AttachmentEntity entity = new AttachmentEntity();
+                    DmpAttachmentEntity entity = new DmpAttachmentEntity();
                     entity.setAttachName(attachment);
                     entity.setAttachUrl(attachment);
                     entity.setType("after_sale");

@@ -61,7 +61,7 @@
 				AND j.is_deleted = FALSE
 		WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
-		and t.id not in (select distinct parent_sku_id from product_bom_sku where is_deleted = false)
+		and t.id not in (select distinct bs.parent_sku_id FROM product_bom_sku bs inner JOIN product_bom_info b ON bs.bom_id = b.id AND b.is_deleted = FALSE and b.type ='combination' where bs.is_deleted = false )
         <if test="params.ids != null and params.ids.size > 0">
             and g.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">

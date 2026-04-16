@@ -31,29 +31,28 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
 
 	@Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
-    
+
     @Resource
     private RedisTemplate<String,Object> redisTemplate;
-	
+
     @Override
     public void onMessage(Object ext) {
     	//json数据
     	String data = ext.toString();
 		JSONObject jsonObject = JSON.parseObject(data);
         String dmpOutputTaskRecordId = jsonObject.getString("dmpOutputTaskRecordId");
-        MDC.put("traceId", dmpOutputTaskRecordId);
         String bizName = this.getBizName();
         log.warn("{}接收到输出id={} ，数据：{}" , bizName , dmpOutputTaskRecordId , ext);
         String dmpOutputTaskRecordDataId = jsonObject.getString("dmpOutputTaskRecordDataId");
         DmpOutputTaskRecordDTO.UpdateDTO updateDTO = new DmpOutputTaskRecordDTO.UpdateDTO();
         updateDTO.setId(dmpOutputTaskRecordId);
         updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.FINISH.getCode());
-        
+
         if(StringUtils.isBlank(dmpOutputTaskRecordId)) {
         	log.error("{}接收到异常数据 ，数据：{}" , bizName , ext);
         	return;
         }
-        
+
         int count = 1;
         // 检查和等待
         checkAndWait(dmpOutputTaskRecordDataId, count);
@@ -66,7 +65,7 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
             updateDTO.setResponseData(bizName + "消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
             updateDTO.setMessage(bizName + "【" + e.getMessage() + "】");
         }
-        
+
         count = 1;
         while(count <= 3) {
         	ApiResult<Boolean> result = null;
@@ -105,7 +104,7 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
      * @return
      */
     public abstract String getBizName();
-    
+
     /**
      * 处理平台数据
      */

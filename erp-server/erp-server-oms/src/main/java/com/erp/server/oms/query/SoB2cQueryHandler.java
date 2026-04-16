@@ -197,13 +197,13 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     }
                     isFirst = false;
                     if (valueStr.equals("platformWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment' or sb2c.label_json ~ 'fulfilled_by_shopee' or sb2c.label_json ::JSONB @> '{\"isPlatformWarehouseOrder\": true}'::jsonb)");
+                        sb.append(getPlatformWarehouseDeliverySql());
                     }
                     if (valueStr.equals("transitWarehouseDelivery")) {
                         sb.append(" (sb2c.label_json ~ 'drop_off' or sb2c.label_json ~ 'cross_docking' or sb2c.label_json ~ 'dropoff' or sb2c.label_json ~ 'pickup')");
                     }
                     if (valueStr.equals("selfDelivery")) {
-                        sb.append(" (sb2c.label_json !~ ('AFN|cainiaoInternationalWarehouse|WFSFulfilled|3PLFulfilled|fulfillment|fulfilled_by_shopee') and (NOT (sb2c.label_json ::JSONB @> '{\"isPlatformWarehouseOrder\": true}'::jsonb)))");
+                        sb.append(getNotPlatformWarehouseDeliverySql());
                     }
                 }
             }
@@ -215,13 +215,13 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     }
                     isFirst = false;
                     if (valueStr.equals("platformWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json !~ ('AFN|cainiaoInternationalWarehouse|WFSFulfilled|3PLFulfilled|fulfillment|fulfilled_by_shopee'))");
+                        sb.append(getNotPlatformWarehouseDeliverySql());
                     }
                     if (valueStr.equals("transitWarehouseDelivery")) {
                         sb.append(" (sb2c.label_json !~ ('drop_off|cross_docking|dropoff|pickup'))");
                     }
                     if (valueStr.equals("selfDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment' or sb2c.label_json ~ 'fulfilled_by_shopee')");
+                        sb.append(getPlatformWarehouseDeliverySql());
                     }
                 }
             }
@@ -264,6 +264,22 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             }
         }
          return null;
+    }
+
+    private String getPlatformWarehouseDeliverySql() {
+        return " ( " +
+                " (sb2c.dict_platform = 'TikTok' and (sb2c.label_json::JSONB @> '{\"isPlatformWarehouseOrder\": true}'::jsonb or sb2c.label_json::JSONB @> '{\"fulfillmentType\":\"FULFILLMENT_BY_TIKTOK\"}'::jsonb)) " +
+                " or " +
+                " ((sb2c.dict_platform is null or sb2c.dict_platform <> 'TikTok') and (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment' or sb2c.label_json ~ 'fulfilled_by_shopee' or sb2c.label_json::JSONB @> '{\"isPlatformWarehouseOrder\": true}'::jsonb)) " +
+                " ) ";
+    }
+
+    private String getNotPlatformWarehouseDeliverySql() {
+        return " ( " +
+                " (sb2c.dict_platform = 'TikTok' and not (sb2c.label_json::JSONB @> '{\"isPlatformWarehouseOrder\": true}'::jsonb or sb2c.label_json::JSONB @> '{\"fulfillmentType\":\"FULFILLMENT_BY_TIKTOK\"}'::jsonb)) " +
+                " or " +
+                " ((sb2c.dict_platform is null or sb2c.dict_platform <> 'TikTok') and sb2c.label_json !~ ('AFN|cainiaoInternationalWarehouse|WFSFulfilled|3PLFulfilled|fulfillment|fulfilled_by_shopee') and not (sb2c.label_json::JSONB @> '{\"isPlatformWarehouseOrder\": true}'::jsonb)) " +
+                " ) ";
     }
 
 

@@ -4,31 +4,31 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.QcNoticeDetailMapper;
-import com.erp.server.wms.service.QcNoticeDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.QcNoticeDetailService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -45,6 +45,8 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
     private OperateLogService operateLogService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -116,8 +118,14 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
         Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t, (o1, o2) -> o1));
 
+        //质检通知人员
+        List<String> qcUserIdList = qcNoticeDetailList.stream().map(QcNoticeDetailEntity::getQcUserId).distinct().collect(Collectors.toList());
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(qcUserIdList);
+        Map<String, String> userMap = CollUtil.isEmpty(userList) ? new HashMap<>() : userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+
         qcNoticeDetailList.stream().forEach(e -> {
             e.setMainId(mainId);
+            e.setQcUserName(userMap.get(e.getQcUserId()));
 
             ProductDetailEntity productDetailEntity = skuMap.get(e.getSkuId());
             if (Objects.nonNull(productDetailEntity)) {

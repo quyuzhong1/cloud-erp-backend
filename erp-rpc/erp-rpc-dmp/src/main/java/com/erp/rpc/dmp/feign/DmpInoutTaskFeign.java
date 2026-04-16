@@ -27,6 +27,12 @@ public interface DmpInoutTaskFeign {
     ApiResult<Boolean> updateOutputTaskRecord(@RequestBody DmpOutputTaskRecordDTO.UpdateDTO updateDTO);
 
     /**
+     * 重新同步（批量同步）输出记录
+     */
+    @PostMapping("feign/inout/batchSyncOutputTaskRecord")
+    ApiResult<Boolean> batchSyncOutputTaskRecord(@RequestBody BaseIdsDTO.IdsDTO dto);
+
+    /**
      * 查询同步数据
      */
     @PostMapping("feign/inout/getErrorData")

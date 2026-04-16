@@ -14,21 +14,22 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
-import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
-import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -55,6 +54,11 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private WmsAttachmentService wmsAttachmentService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private SoInfoFeign soInfoFeign;
+    @Resource
+    private FileFeign fileFeign;
+
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
         //生成任务
@@ -112,14 +116,55 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
+
+        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(entity.getDeliveryWarehouseId());
+        if (Objects.nonNull(overseasProviderWarehouse)) {
+            req.setMappingWarehouseCode(overseasProviderWarehouse.getPlatformWarehouseCode());
+        }
+
         List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO.convert(
                 entity.getWarehouseOperationType(),
                 entity.getOperationDesc()
         );
+        if (!req.getItems().isEmpty()) {
+            List<String> soDetailIds = detailEntityList.stream().map(B2bThirdDeliveryDetailEntity::getSoDetailId).collect(Collectors.toList());
+            List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByIds(soDetailIds);
+
+            if (!soDetails.isEmpty()) {
+                // 创建 soDetailId 到 platformSkuNo 的映射
+                Map<String, String> soDetailSkuMap = soDetails.stream()
+                        .collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getPlatformSkuNo));
+
+                // 创建 detailId 到 soDetailId 的映射
+                Map<String, String> detailSoDetailMap = detailEntityList.stream()
+                        .collect(Collectors.toMap(B2bThirdDeliveryDetailEntity::getId, B2bThirdDeliveryDetailEntity::getSoDetailId));
+
+                for (ThirdWarehouseCreateFbaOutboundReq.Item item : req.getItems()) {
+                    String detailId = item.getId();
+
+                    // 找到对应的 soDetailId
+                    String soDetailId = detailSoDetailMap.get(detailId);
+                    if (soDetailId != null) {
+                        // 从映射中获取 platformSkuNo
+                        String platformSkuNo = soDetailSkuMap.get(soDetailId);
+                        if (platformSkuNo != null) {
+                            item.setSkuNo(platformSkuNo);
+                        }
+                    }
+                    item.setPlatformSkuNo(item.getWarehousePlatformSku());
+                }
+            }
+        }
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
-        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null);
+        if (CollUtil.isNotEmpty(attachmentList)) {
+            String url = FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl();
+            byte[] bytes = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
+            String fileBase64 = Base64.getEncoder().encodeToString(bytes);
+            req.setFileUrl(url);
+            req.setFileBase64(fileBase64);
+        }
         return BeanUtil.beanToMap(req);
     }
     /**
@@ -184,6 +229,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setSourceId(entity.getId());
         req.setSourceCode(entity.getCode());
         req.setSoCode(entity.getSoCode());
+        req.setRemark(entity.getRemark());
         return BeanUtil.beanToMap(req);
     }
 }

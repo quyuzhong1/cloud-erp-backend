@@ -15,7 +15,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
-import com.erp.model.sys.entity.SysRoleUserEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
@@ -281,6 +280,14 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public List<SysDepartmentUserNumberDTO> listDeptByUserIdWithDisabledFilter(String userId) {
         return baseMapper.getDeptByUserIdWithDisabledFilter(userId);
+    }
+
+    @Override
+    public void deleteByUserIds(List<String> uids) {
+        if (CollectionUtils.isEmpty(uids)) {
+            return;
+        }
+        lambdaUpdate().in(SysDepartmentUserEntity::getUserId, uids).remove();
     }
 
     private void deleteUidDepartmentRef(String uid) {

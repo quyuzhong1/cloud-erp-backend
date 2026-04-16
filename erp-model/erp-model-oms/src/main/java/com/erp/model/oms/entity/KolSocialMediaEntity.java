@@ -71,6 +71,11 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     @TableField("title")
     private String title;
     /**
+    * 正文内容
+    */
+    @TableField("content")
+    private String content;
+    /**
     * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
     */
     @TableField("insert_timestamp")
@@ -106,10 +111,20 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     @TableField("like_count")
     private Long likeCount;
     /**
+    * 收藏量
+    */
+    @TableField("collect_count")
+    private Long collectCount;
+    /**
     * 转发量
     */
     @TableField("repost_count")
     private Long repostCount;
+    /**
+    * 投币量
+    */
+    @TableField("coin_count")
+    private Long coinCount;
     /**
     * 唯一键，用于去重覆盖（对应第三方unique）。云听系统可能因模型优化等原因重跑数据，同一条数据的字段可能更新。此类变更不会影响unique值，但会更新insertTimestamp入库时间，因此，请始终以最新拉取的数据为准，按unique主键进行幂等性写入，覆盖本地旧数据
     */
@@ -140,6 +155,8 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
 
     public static final String TITLE = "title";
 
+    public static final String CONTENT = "content";
+
     public static final String INSERT_TIMESTAMP = "insert_timestamp";
 
     public static final String INSERT_TIME = "insert_time";
@@ -154,7 +171,11 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
 
     public static final String LIKE_COUNT = "like_count";
 
+    public static final String COLLECT_COUNT = "collect_count";
+
     public static final String REPOST_COUNT = "repost_count";
+
+    public static final String COIN_COUNT = "coin_count";
 
     public static final String UNIQUE_KEY = "unique_key";
 

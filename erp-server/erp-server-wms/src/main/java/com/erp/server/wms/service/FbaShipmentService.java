@@ -293,6 +293,20 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     List<BatchResultDTO> changeReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList);
 
     /**
+     * FBT货件上传标签回显
+     * @param ids 货件id
+     * @return 回显数据
+     */
+    List<FbaShipmentDTO.UploadLabelViewDTO> uploadLabelView(List<String> ids);
+
+    /**
+     * FBT货件上传标签
+     * @param dtoList 上传数据
+     * @return 是否成功
+     */
+    Boolean uploadLabel(List<FbaShipmentDTO.UploadLabelDTO> dtoList);
+
+    /**
      * 打印标签
      * @param dto
      * @return

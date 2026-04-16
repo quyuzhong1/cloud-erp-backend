@@ -224,7 +224,7 @@
         sm.effective_time,
         sm.expire_time,
         sm.dict_platform,
-        sm.platform_name,
+        COALESCE(NULLIF(sm.platform_name, ''), dbp.name, sm.dict_platform) as platform_name,
         sm.has_mapping_all,
         op.short_name,
         li.auth_id as authId
@@ -232,6 +232,7 @@
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
+        LEFT JOIN dict_basic dbp on dbp.type = 'dictPlatform' and dbp.value = sm.dict_platform and dbp.is_deleted = false
         WHERE
         ${params.sqlMap.default}
           and  sm.is_deleted=FALSE
@@ -264,10 +265,10 @@
         li.platform_status as platformStatus,
         li.platform_parent_spu_no as platformParentSpuNo,
         sm.warehouse_id,
-        sm.warehouse_name,
+        COALESCE(NULLIF(sm.warehouse_name, ''), op.name) as warehouse_name,
         sm.create_user_name,
         sm.create_time,
-        sm.platform_name,
+        COALESCE(NULLIF(sm.platform_name, ''), dbp.name, sm.dict_platform) as platform_name,
         sm.has_mapping_all,
         op.short_name,
         sm.effective_time,
@@ -276,6 +277,7 @@
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
+        LEFT JOIN dict_basic dbp on dbp.type = 'dictPlatform' and dbp.value = sm.dict_platform and dbp.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         AND sm.is_deleted=FALSE
@@ -314,6 +316,7 @@
     <select id="listByPlatformSkuNoAndPlatform" resultType="com.erp.model.oms.dto.SkuMappingDTO$MappingSkuViewDTO">
         SELECT li.id AS listingId,
         sm.id,
+        sm.warehouse_id as warehouseId,
         li.auth_id as authId,
         sm.product_sku_id,
         sm.product_sku_no,

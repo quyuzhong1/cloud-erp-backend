@@ -100,7 +100,7 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     @TableField("handle_status")
     private String handleStatus;
     /**
-     * 来源类型：erp=系统生成, lingxing=领星 amazon=亚马逊报告
+     * 来源类型：erp=系统生成, lingxing=领星, fbt=FBT, amazon=亚马逊报告
      */
     @TableField("source_platform")
     private String sourcePlatform;

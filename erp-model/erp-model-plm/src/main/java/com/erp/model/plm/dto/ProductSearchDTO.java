@@ -223,6 +223,7 @@ public class ProductSearchDTO extends PermissionsDTO {
 
         /**
          * 状态集合
+         * 任务状态 0待审核，1审核中，2审核通过，3审核不通过,4，待提交
          */
         private List<Integer> statusList;
 

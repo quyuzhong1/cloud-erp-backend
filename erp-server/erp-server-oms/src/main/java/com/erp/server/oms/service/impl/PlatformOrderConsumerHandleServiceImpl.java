@@ -141,8 +141,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
-        //如果已发货且仓库为空且是平台仓订单
-        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
+        //如果已发货且仓库为空且是平台仓订单，则统一回退店铺绑定仓
+        if (isShipped
+                && isWarehouseEmpty
+                && hasPlatformWarehouse
+                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
             String warehouseId = resultDTO.getShopWarehouseId();
             if(StringUtils.isNotBlank(warehouseId)){
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
