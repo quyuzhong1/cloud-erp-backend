@@ -2,16 +2,13 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.FileTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -29,10 +26,11 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.FileManagementConverter;
 import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.mapper.FileManagementMapper;
-import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.wms.service.FileManagementService;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.QcStandardService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -115,6 +113,7 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         this.lambdaUpdate().set(FileManagementEntity::getFileId, fileId).eq(FileManagementEntity::getId, fileManagementEntity.getId()).update();
         return BatchResultDTO.success(fileManagementEntity.getId(), code, "新增单据");
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateEntity(FileManagementEntity fileManagementEntity, WmsAttachmentEntity attachmentEntity) {
@@ -158,7 +157,7 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         if (WmsFileTypeEnum.REVIEW_REPORT.getCode().equals(fileType)) {
             List<String> skuIds = skuVOList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
             List<FileManagementDTO.CountDTO> countDTOS = baseMapper.countBySkuAndFileType(skuIds, fileType, null);
-            for (SkuVO skuVO:skuVOList){
+            for (SkuVO skuVO : skuVOList) {
                 FileManagementEntity newEntity = new FileManagementEntity();
                 BeanMapperUtils.copy(entity, newEntity);
                 newEntity.setSkuId(skuVO.getSkuId());
@@ -255,26 +254,26 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
         if (CollUtil.isEmpty(skuVOS)) {
             return null;
         }
-        
+
         SkuVO skuVO = skuVOS.get(0);
         String categoryId = skuVO.getCategoryId();
         if (CharSequenceUtil.isBlank(categoryId)) {
             return null;
         }
-        
+
         // 获取分类信息，包括父级分类
         List<BasicCategoryEntity> categoryEntityList = plmTaskFeign.listCategoryByIds(Collections.singletonList(categoryId));
         if (CollUtil.isEmpty(categoryEntityList)) {
             return null;
         }
-        
+
         BasicCategoryEntity categoryEntity = categoryEntityList.get(0);
         String parentCategoryId = categoryEntity.getPid();
         if (CharSequenceUtil.isBlank(parentCategoryId)) {
             // 如果是一级分类，直接使用当前分类 ID
             parentCategoryId = categoryId;
         }
-        
+
         // 根据一级分类 ID 查询文件
         return fileManagementMapper.getCategoryGeneralStandardFileUrl(parentCategoryId, WmsFileTypeEnum.CATEGORY_GENERAL_STANDARD.getCode());
     }
