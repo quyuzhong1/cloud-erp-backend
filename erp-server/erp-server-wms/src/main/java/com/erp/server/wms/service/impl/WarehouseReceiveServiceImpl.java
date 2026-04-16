@@ -12,9 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -632,7 +630,21 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return;
         }
         addDTO.setDetailList(addDetailDTOs);
-        qcNoticeService.add(addDTO);
+
+        try {
+            UserContext.setIsUserSystem(true);
+            BaseResultDTO.AddDTO add = qcNoticeService.add(addDTO);
+            String id = add.getId();
+            //提交
+            qcNoticeService.submit(id);
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            approveOneDTO.setId(id);
+            //审核
+            qcNoticeService.approve(approveOneDTO);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
     /**
