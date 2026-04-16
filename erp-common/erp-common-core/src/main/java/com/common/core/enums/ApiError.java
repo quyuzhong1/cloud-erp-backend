@@ -207,6 +207,7 @@ public enum ApiError implements Serializable {
 
     COMMON_NO_SKU(98128,"SKU不存在"),
     COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
+    COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */

@@ -392,6 +392,10 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     private void handleData(MessageEntity messageEntity) {
+        if (Objects.equals(NoticeTimeTypeEnum.NOW.getCode(),messageEntity.getNoticeTimeType())) {
+            throw new ServiceException(ApiError.COMMON_NOW_TYPE_NOT_ALLOW_UPDATE);
+        }
+
         if (Objects.nonNull(messageEntity.getNoticeTime())
                 && messageEntity.getNoticeTime().isBefore(LocalDateTime.now())) {
             throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);

@@ -11,6 +11,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -32,9 +33,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * <p>
@@ -131,9 +132,22 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
 
     @Override
     public Boolean update(PdaVersionDTO.UpdateDTO dto) {
-        PdaVersionEntity entity = new PdaVersionEntity();
-        BeanMapper.copy(dto, entity);
-        return this.saveOrUpdate(entity);
+        PdaVersionEntity old = super.getById(dto.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "PDA升级通知"));
+        PdaVersionEntity pdaVersionEntity = BeanMapperUtils.map(PdaVersionEntity.class, dto);
+        // 数据处理
+        handleData(pdaVersionEntity);
+        log.info("编辑 开始修改数据，id：【{}】", old.getId());
+        boolean save = super.updateById(pdaVersionEntity);
+        if(!save) {
+            throw new ServiceException("保存失败");
+        }
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录日志数据，id：【{}】", pdaVersionEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(),  "PDA升级通知");
+        operateLogService.addModuleOperateLogByObj(old, pdaVersionEntity, ModuleTypeEnum.PDA_VERSION.getCode(), pdaVersionEntity.getId(),"", msg);
+        return Boolean.TRUE;
     }
 
     @Override
@@ -158,5 +172,12 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
         }
         PdaVersionDTO.ViewDTO data = BeanMapperUtils.map(PdaVersionDTO.ViewDTO.class, pdaVersionEntity);
         return data;
+    }
+
+    private void handleData(PdaVersionEntity entity) {
+        if (Objects.nonNull(entity.getUpgradeTime())
+                && entity.getUpgradeTime().isBefore(LocalDateTime.now())) {
+            throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
+        }
     }
 }
