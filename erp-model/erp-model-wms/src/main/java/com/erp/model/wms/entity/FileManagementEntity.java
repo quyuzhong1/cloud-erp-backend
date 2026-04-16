@@ -34,12 +34,12 @@ public class FileManagementEntity extends BaseEntity<FileManagementEntity> {
     /**
     * skuid
     */
-    @TableField(exist = false)
+    @TableField("sku_id")
     private String skuId;
     /**
     * sku编码
     */
-    @TableField(exist = false)
+    @TableField("sku_no")
     private String skuNo;
     /**
     * 文件类型
@@ -59,7 +59,7 @@ public class FileManagementEntity extends BaseEntity<FileManagementEntity> {
     /**
     * 产品名称
     */
-    @TableField(exist = false)
+    @TableField("product_name")
     private String productName;
     /**
     * 备注

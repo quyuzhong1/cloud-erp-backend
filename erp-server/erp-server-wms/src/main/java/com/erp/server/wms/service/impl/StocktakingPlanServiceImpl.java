@@ -27,7 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
@@ -49,7 +49,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -793,7 +792,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             boolean hasConflict = false;
             for (InventoryEntity item : inventoryList) {
                 String existKey = CharSequenceUtil.format(
-                        RedisKeyConstant.INVENTORY_LOCK,
+                        RedisCacheConstants.INVENTORY_LOCK,
                         "*",
                         item.getOrgId(),
                         item.getWarehouseId(),
@@ -827,7 +826,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             String planCode = entity.getCode();
             inventoryList.forEach(item -> {
                 String redisKey = CharSequenceUtil.format(
-                        RedisKeyConstant.INVENTORY_LOCK,
+                        RedisCacheConstants.INVENTORY_LOCK,
                         planCode,
                         item.getOrgId(),
                         item.getWarehouseId(),
