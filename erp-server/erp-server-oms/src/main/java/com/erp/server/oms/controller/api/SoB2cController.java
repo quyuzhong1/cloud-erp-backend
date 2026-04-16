@@ -159,7 +159,6 @@ public class SoB2cController extends BaseController {
         dto.getParams().setIsFullyManaged(Boolean.FALSE);
         return success(soB2cService.paging(dto));
     }
-
     /**
      * 新增
      *

@@ -1,17 +1,13 @@
 package com.erp.server.wms.convert;
 
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FileManagementDTO;
 import com.erp.model.wms.entity.FileManagementEntity;
-import com.erp.model.wms.entity.QcStandardSkuRefEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * 文件管理实体映射工具
@@ -39,17 +35,17 @@ public interface FileManagementConverter {
     @Mapping(target = "remark", source = "fileManagementEntity.remark")
     FileManagementDTO.ViewDTO fileManagementToViewDTO(FileManagementEntity fileManagementEntity, WmsAttachmentEntity attachmentEntity);
 
+    @Mapping(target = "version", ignore = true)
     @Mapping(target = "updateUserName", ignore = true)
     @Mapping(target = "updateUserId", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
-    @Mapping(target = "productName", source = "skuName")
-    @Mapping(target = "mainId", ignore = true)
-    @Mapping(target = "isUserSystem", ignore = true)
+    @Mapping(target = "skuNo", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "fileId", ignore = true)
     @Mapping(target = "createUserName", ignore = true)
     @Mapping(target = "createUserId", ignore = true)
     @Mapping(target = "createTime", ignore = true)
-    QcStandardSkuRefEntity skuVOToSkuRefEntity(SkuVO skuVO);
-    List<QcStandardSkuRefEntity> skuVOToSkuRefEntity(List<SkuVO> skuVOS);
+    @Mapping(target = "code", ignore = true)
+    FileManagementEntity addDTOToEntity(FileManagementDTO.AddDTO addDTO);
 }
