@@ -124,7 +124,8 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
         }else {
             updateInventoryStatus(batchNo,warehouseNo,skuNoList, DmpInputTaskStatusEnum.ERROR.getCode(),apiResult.getMsg());
         }
-        return apiResult;
+        //库存比对失败不需要重试
+        return ApiResult.success();
     }
 
     private void updateInventoryStatus(String batchNo, String warehouseNo, List<String> skuNoList, String status, String msg) {

@@ -262,7 +262,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 
-    void confirmImport(String key, String code, LocalDateTime dateTime);
     /**
      * @description: 批量导入新增
      * @author Will
@@ -281,4 +280,13 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList, String processingType);
 
+    /**
+     * 确认导入
+     * @author will
+     * @date 2026/4/16 11:24
+     * @param logisticsCostId
+     * @param code
+     * @param confirmDateTime
+     */
+    void confirmImport(String logisticsCostId, String code, LocalDateTime confirmDateTime);
 }

@@ -17,6 +17,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RetailPriceUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -54,8 +55,6 @@ import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -174,7 +173,14 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             resetSkuVO(soB2cEntity, detailEntity, skuVOList, childSkuList);
             // 检查和获取标准零售价
             // Map<SkuId, 含税标准零售价>
-            Map<String, BigDecimal> acticityRetailPriceMap = checkAndGetRetailPrice(allocationSettingEnum, retailPricetotalMap, detailEntity, bomChildrenList);
+            Map<String, BigDecimal> acticityRetailPriceMap = RetailPriceUtil.checkAndGetRetailPrice(allocationSettingEnum.getCode(),
+                    retailPricetotalMap,
+                    detailEntity.getCurrency(),
+                    bomChildrenList.stream()
+                            .map(BomChildrenSkuDTO::getSkuId)
+                            .distinct()
+                            .collect(Collectors.toList())
+            );
 
             // 总分摊金额
             BigDecimal totalAllocationPrice = BigDecimal.ZERO;
@@ -412,7 +418,14 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 BigDecimal remainAmount = detailEntity.getAmount();
                 BigDecimal remainAdvicePrice = detailEntity.getAdvicePrice();
                 // Map<SkuId, 含税标准零售价>
-                Map<String, BigDecimal> acticityRetailPriceMap = checkAndGetRetailPrice(allocationSettingEnum, retailPricetotalMap, detailEntity, bomChildrenList);
+                Map<String, BigDecimal> acticityRetailPriceMap = RetailPriceUtil.checkAndGetRetailPrice(allocationSettingEnum.getCode(),
+                        retailPricetotalMap,
+                        detailEntity.getCurrency(),
+                        bomChildrenList.stream()
+                                .map(BomChildrenSkuDTO::getSkuId)
+                                .distinct()
+                                .collect(Collectors.toList())
+                );
                 List<SoB2cDetailEntity> addDetailList = new ArrayList<>();
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOList) {
                     SoB2cDetailEntity addDetailEntity = B2cOrderConverter.INSTANCE.cloneSoB2cDetail(detailEntity);
@@ -1369,36 +1382,4 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         return groupSplitSaveDTO;
     }
 
-    private Map<String, BigDecimal> checkAndGetRetailPrice(SkuStdSettingEnum allocationSettingEnum, Map<String, BigDecimal> retailPricetotalMap, SoB2cDetailEntity detailEntity, List<BomChildrenSkuDTO> bomChildrenList) {
-        // 未开启配置
-        if (!SkuStdSettingEnum.RETAIL_STD.equals(allocationSettingEnum)){
-            return new HashMap<>();
-        }
-        List<String> childSkuIds = bomChildrenList.stream()
-                .map(BomChildrenSkuDTO::getSkuId)
-                .distinct()
-                .collect(Collectors.toList());
-        // 订单币种零售价优先
-        Map<String,BigDecimal> orderCurrencyRetailPriceTotalMap = filter(childSkuIds, detailEntity.getCurrency(), retailPricetotalMap);
-        if (orderCurrencyRetailPriceTotalMap != null) return orderCurrencyRetailPriceTotalMap;
-        Map<String, BigDecimal> cnyRetailPriceTotalMap = filter(childSkuIds, "CNY", retailPricetotalMap);
-        if (cnyRetailPriceTotalMap != null) return cnyRetailPriceTotalMap;
-        return new HashMap<>();
-    }
-
-    @Nullable
-    private static Map<String, BigDecimal> filter(List<String> childSkuIds, String CNY, Map<String, BigDecimal> retailPricetotalMap) {
-        List<String> cnyCurrencySkuKeyList = childSkuIds.stream().map(e -> CharSequenceUtil.format("{}|{}", e, CNY)).collect(Collectors.toList());
-        if (cnyCurrencySkuKeyList.stream().allMatch(retailPricetotalMap::containsKey)) {
-            if (cnyCurrencySkuKeyList.stream().allMatch(retailPricetotalMap::containsKey)) {
-                // 过滤retailPricetotalMap，得到存在orderCurrencySkuKeyList的key和value的Map
-                return retailPricetotalMap
-                        .entrySet()
-                        .stream()
-                        .filter(entry -> cnyCurrencySkuKeyList.contains(entry.getKey()))
-                        .collect(Collectors.toMap(e-> e.getKey().split("\\|")[0], Map.Entry::getValue, (v1, v2) -> v1));
-            }
-        }
-        return null;
-    }
 }

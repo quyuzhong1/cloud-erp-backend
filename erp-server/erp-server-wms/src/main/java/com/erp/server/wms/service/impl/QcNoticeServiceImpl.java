@@ -3,28 +3,16 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.ApproveDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.AttachDTO;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -385,9 +373,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //审核通过时需要校验库存，质检通知数量必须小于等于可用库存，否则审核失败，提示库存不足
         if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
             if (!Objects.equals(QcTypeEnum.STOCK_IN.getCode(),entity.getQcType())
-                    || !Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())
-                    || !Objects.equals(QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode(),entity.getQcType())
-                    ||!Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(),entity.getQcType())) {
+                    && !Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())
+                    && !Objects.equals(QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode(),entity.getQcType())
+                    && !Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(),entity.getQcType())) {
                 List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByMainIds(Collections.singletonList(dto.getId()));
                 List<String> skuIds = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
                 //质检仓库下的可用库存
@@ -464,6 +452,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         dto.setVariablesMap(BeanUtil.beanToMap(viewDTO));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         map.put("detailList", viewDTO.getDetailList());
+        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (qcNoticeDetails.isEmpty()) {
+            map.put("qcUserId",qcNoticeDetails.get(0).getQcUserId());
+        }
         return map;
     }
 
@@ -554,17 +546,17 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
-
+        
         log.info("作废 开始修改质检通知单状态数据，id：【{}】", id);
         lambdaUpdate().eq(QcNoticeEntity::getId, id)
             .set(QcNoticeEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
             .set(QcNoticeEntity::getInvalidRemark, remark)
             .update();
-
+        
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getId(), "作废操作");
-
+        
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
@@ -593,7 +585,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.QC_NOTICE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -2098,7 +2089,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //单据状态
         data.setApproveStatusName(data.getApproveStatus().getName());
-
+        
         //质检状态
         data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
 

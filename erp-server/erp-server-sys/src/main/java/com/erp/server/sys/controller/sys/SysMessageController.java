@@ -257,11 +257,17 @@ public class SysMessageController {
                         }
                     }
 
-                    // 10秒检查一次
+                    // 半分钟检查一次
                     try {
-                        Thread.sleep(10_000); // 10秒
+                        // 发送心跳消息，保持连接活跃
+                        emitter.send(SseEmitter.event().comment("heartbeat"));
+                        Thread.sleep(30_000); // 30秒
                     } catch (InterruptedException e) {
                         log.debug("SSE stream thread interrupted");
+                        isComplete.set(true);
+                        return;
+                    } catch (IOException e) {
+                        log.debug("Client disconnected, stopping SSE stream.");
                         isComplete.set(true);
                         return;
                     }
