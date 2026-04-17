@@ -129,6 +129,7 @@ public class PdaVersionController extends BaseController {
         log.info("Receive PDA notice SSE register request, uid={}, nodeId={}", uid, noticeStreamEmitterManager.getNodeId());
         SseEmitter emitter = noticeStreamEmitterManager.registerPda(uid);
         sendCompensationNotice(uid, "PDA", emitter);
+        sendCompensationUpgradeNotice(uid, "PDA", emitter);
         return emitter;
     }
 
@@ -147,5 +148,22 @@ public class PdaVersionController extends BaseController {
         messageService.readMessage(readDTO);
         log.info("Compensation notice marked as read after SSE send, application={}, userId={}, noticeId={}",
                 application, userId, latestNotice.getId());
+    }
+
+    private void sendCompensationUpgradeNotice(String userId, String application, SseEmitter emitter) {
+        MessageDTO.NoticeDTO latestUpgradeNotice = messageService.getLatestUnreadUpgradeNotice(userId, application);
+        if (latestUpgradeNotice == null) {
+            log.info("No unread upgrade compensation notice found after SSE register, application={}, userId={}", application, userId);
+            return;
+        }
+        boolean success = noticeStreamEmitterManager.sendCompensationNotice(emitter, application, userId, latestUpgradeNotice);
+        if (!success) {
+            return;
+        }
+        MessageDTO.ReadHistoryMessageDTO readDTO = new MessageDTO.ReadHistoryMessageDTO();
+        readDTO.setId(latestUpgradeNotice.getId());
+        messageService.readMessage(readDTO);
+        log.info("Compensation upgrade notice marked as read after SSE send, application={}, userId={}, noticeId={}",
+                application, userId, latestUpgradeNotice.getId());
     }
 }

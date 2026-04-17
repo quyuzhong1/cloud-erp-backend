@@ -218,6 +218,14 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
+    public MessageDTO.NoticeDTO getLatestUnreadUpgradeNotice(String userId, String application) {
+        if (StringUtils.isBlank(userId) || StringUtils.isBlank(application)) {
+            return null;
+        }
+        return baseMapper.getLatestUnreadUpgradeNoticeByApplication(userId, application);
+    }
+
+    @Override
     public Boolean closeMessageNotice() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
@@ -526,7 +534,8 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
                 .inSql(MessageUserReadEntity::getMessageId,
                         "SELECT id FROM message " +
                                 "WHERE is_deleted = FALSE " +
-                                "AND type = 'sysVersion' " +
+                                "AND (type = 'sysVersion' OR application = 'sysVersion') " +
+                                "AND (notice_time IS NULL OR notice_time <= NOW()) " +
                                 "AND (expire_time IS NULL OR expire_time >= NOW())")
                 .count()
                 .intValue();
