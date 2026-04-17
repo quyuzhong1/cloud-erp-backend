@@ -83,6 +83,21 @@ public class MessageDTO implements Serializable {
     @NoArgsConstructor
     public static class IsMessageDTO {
         public String remark;
+        private Boolean hasNewNotice;
+        private NoticeDTO latestNotice;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class NoticeDTO implements Serializable {
+        private String id;
+        private String releaseType;
+        private String messageType;
+        private String application;
+        private String noticeTitle;
+        private String content;
+        private LocalDateTime noticeTime;
+        private LocalDateTime expireTime;
     }
 
     /**

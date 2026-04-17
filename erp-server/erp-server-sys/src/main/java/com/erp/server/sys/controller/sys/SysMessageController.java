@@ -13,27 +13,18 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
-import com.erp.model.sys.entity.MessageEntity;
-import com.erp.model.sys.entity.MessageUserReadEntity;
-import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.server.sys.handler.SysMessageQueryHandler;
 import com.erp.server.sys.service.MessageService;
-import com.erp.server.sys.service.MessageUserReadService;
+import com.erp.server.sys.service.support.NoticeStreamEmitterManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import javax.annotation.Resource;
-import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import static com.common.core.controller.vo.ApiResult.error;
 import static com.common.core.controller.vo.ApiResult.success;
@@ -55,9 +46,7 @@ public class SysMessageController {
     private MessageService messageService;
 
     @Resource
-    private MessageUserReadService messageUserReadService;
-
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private NoticeStreamEmitterManager noticeStreamEmitterManager;
 
     /**
      * 新增
@@ -183,105 +172,9 @@ public class SysMessageController {
     @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
-        SseEmitter emitter = new SseEmitter(1800000L); // 30分钟超时
-        AtomicBoolean isComplete = new AtomicBoolean(false);
-
-        // 注册完成回调
-        emitter.onCompletion(() -> isComplete.set(true));
-        emitter.onTimeout(() -> {
-            isComplete.set(true);
-            log.info("SSE stream timeout");
-        });
-
-        executor.execute(() -> {
-            try {
-                while (!isComplete.get()) {  // 检查是否已完成
-                    String uid = UserContext.getDefaultLoginUser().getUid();
-                    List<MessageUserReadEntity> unReadUsers = messageUserReadService.lambdaQuery()
-                            .eq(MessageUserReadEntity::getUserId, uid)
-                            .eq(MessageUserReadEntity::getIsRead, Boolean.FALSE)
-                            .orderByDesc(MessageUserReadEntity::getCreateTime)
-                            .list();
-
-                    MessageEntity message = null;
-                    MessageUserReadEntity firstUnReadUser = null;
-                    LocalDateTime now = LocalDateTime.now();
-                    for (MessageUserReadEntity unReadUser : unReadUsers) {
-                        message = messageService.getById(unReadUser.getMessageId());
-                        if (message != null) {
-                            if (!Objects.equals(MessageTypeEnum.SYS.getCode(),message.getType())) {
-                                log.info("Message {} type is not sys, skipping", message.getId());
-                                continue;
-                            }
-                            
-                            // 检查消息是否过期
-                            LocalDateTime expireTime = message.getExpireTime();
-                            if (expireTime != null && expireTime.isBefore(now)) {
-                                // 消息已过期，跳过
-                                log.info("Message {} has expired, skipping", message.getId());
-                                continue;
-                            }
-                            
-                            // 检查定时通知时间
-                            LocalDateTime noticeTime = message.getNoticeTime();
-                            if (noticeTime != null && noticeTime.isAfter(now)) {
-                                // 还没到通知时间，跳过
-                                log.info("Message {} notice time not reached, skipping", message.getId());
-                                continue;
-                            }
-                            
-                            firstUnReadUser = unReadUser;
-                            break;
-                        }
-                    }
-
-                    if (message != null) {
-                        try {
-                            // 构建返回的 JSON 对象
-                            String eventData = String.format("{\"noticeTitle\":\"%s\",\"content\":\"%s\"}", 
-                                    message.getNoticeTitle(), 
-                                    message.getDataJson().replace("\"", "\\\""));
-                            emitter.send(SseEmitter.event().data(eventData));
-
-                            if (firstUnReadUser != null) {
-                                messageUserReadService.lambdaUpdate()
-                                        .eq(MessageUserReadEntity::getUserId, uid)
-                                        .eq(MessageUserReadEntity::getMessageId, firstUnReadUser.getMessageId())
-                                        .set(MessageUserReadEntity::getIsRead, Boolean.TRUE)
-                                        .update();
-                            }
-                        } catch (IOException e) {
-                            log.debug("Client disconnected, stopping SSE stream.");
-                            isComplete.set(true);
-                            return;
-                        }
-                    }
-
-                    // 半分钟检查一次
-                    try {
-                        // 发送心跳消息，保持连接活跃
-                        emitter.send(SseEmitter.event().comment("heartbeat"));
-                        Thread.sleep(30_000); // 30秒
-                    } catch (InterruptedException e) {
-                        log.debug("SSE stream thread interrupted");
-                        isComplete.set(true);
-                        return;
-                    } catch (IOException e) {
-                        log.debug("Client disconnected, stopping SSE stream.");
-                        isComplete.set(true);
-                        return;
-                    }
-                }
-            } catch (Exception e) {
-                log.error("SSE stream error", e);
-                if (!isComplete.get()) {
-                    emitter.completeWithError(e);
-                    isComplete.set(true);
-                }
-            }
-        });
-
-        return emitter;
+        String uid = UserContext.getDefaultLoginUser().getUid();
+        log.info("Register PC notice SSE stream, uid={}", uid);
+        return noticeStreamEmitterManager.registerPc(uid);
     }
 
 }

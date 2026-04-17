@@ -49,7 +49,7 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
         BiSettlementExchangeRateEntity newExchangeRate = handleDmpExchangeRate(dto);
 
         //根据汇率类型-月份-源币种-目标币种查询已存在的汇率数据
-        BiSettlementExchangeRateDTO.ExchangeParamDTO  exchangeParamDTO = new  BiSettlementExchangeRateDTO.ExchangeParamDTO(newExchangeRate.getType(),newExchangeRate.getSettlementDateBegin(),newExchangeRate.getSettlementDateEnd(),newExchangeRate.getTargetCurrencyCode(),newExchangeRate.getSourceCurrencyCode());
+        BiSettlementExchangeRateDTO.ExchangeParamDTO exchangeParamDTO = new BiSettlementExchangeRateDTO.ExchangeParamDTO(newExchangeRate.getType(), newExchangeRate.getSettlementDateBegin(), newExchangeRate.getSettlementDateEnd(), newExchangeRate.getTargetCurrencyCode(), newExchangeRate.getSourceCurrencyCode());
         ValidatorUtil.validateEntity(exchangeParamDTO);
         BiSettlementExchangeRateEntity oldExchangeRate = biSettlementExchangeRateService.getByExchangeParamUnique(exchangeParamDTO);
 

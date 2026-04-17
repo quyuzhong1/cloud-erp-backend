@@ -94,6 +94,7 @@ public class WmsPushMsgServiceImpl extends SuperServiceImpl<WmsPushMsgMapper, Wm
     public List<WmsPushMsgEntity> searchByDTO(WmsPushMsgDTO.SearchDTO searchDTO) {
         return lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(searchDTO.getSourceIdList()), WmsPushMsgEntity::getSourceId, searchDTO.getSourceIdList())
+                .in(CollectionUtils.isNotEmpty(searchDTO.getSourceCodeList()), WmsPushMsgEntity::getSourceCode, searchDTO.getSourceCodeList())
                 .eq(CharSequenceUtil.isNotBlank(searchDTO.getSyncOperate()), WmsPushMsgEntity::getSyncOperate, searchDTO.getSyncOperate())
                 .eq(CharSequenceUtil.isNotBlank(searchDTO.getTargetPlatform()), WmsPushMsgEntity::getTargetPlatform, searchDTO.getTargetPlatform())
                 .list();

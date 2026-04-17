@@ -79,8 +79,8 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
         // 快递100 手动查询需要 com (公司编码)，此处根据单号反查配置
         List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> refList = logisticsThirdChannelRefService.listByTrackNos(trackNos);
         Map<String, String> trackNoToComMap = refList.stream()
-                .filter(ref -> LogisticsPlatformEnum.KUAIDI100.getCode().equals(ref.getPlatformType()) && CharSequenceUtil.isNotBlank(ref.getThirdChannelCode()))
-                .collect(Collectors.toMap(LogisticsThirdChannelRefDTO.ListByTrackNosDTO::getTrackNo, LogisticsThirdChannelRefDTO.ListByTrackNosDTO::getThirdChannelCode, (o1, o2) -> o1));
+                .filter(ref -> LogisticsPlatformEnum.KUAIDI100.getCode().equals(ref.getPlatformType()) && CharSequenceUtil.isNotBlank(ref.getThirdSupplierCode()))
+                .collect(Collectors.toMap(LogisticsThirdChannelRefDTO.ListByTrackNosDTO::getTrackNo, LogisticsThirdChannelRefDTO.ListByTrackNosDTO::getThirdSupplierCode, (o1, o2) -> o1));
 
         List<LogisticsTrackEntity> allTracks = new ArrayList<>();
         for (String trackNo : trackNos) {

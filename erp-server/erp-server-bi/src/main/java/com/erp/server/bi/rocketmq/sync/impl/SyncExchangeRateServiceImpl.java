@@ -49,11 +49,6 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeExchangeRate(DmpExchangeRateDTO dto) {
 
-        //根据汇率类型-月份-源币种-目标币种查询已存在的汇率数据
-        BiSettlementExchangeRateDTO.ExchangeParamDTO  exchangeParamDTO = new  BiSettlementExchangeRateDTO.ExchangeParamDTO(dto.getType(),dto.getSettlementDateBegin(),dto.getSettlementDateEnd(),dto.getTargetCurrencyCode(),dto.getSourceCurrencyCode());
-        ValidatorUtil.validateEntity(exchangeParamDTO);
-        BiSettlementExchangeRateEntity oldExchangeRate = biSettlementExchangeRateService.getByExchangeParamUnique(exchangeParamDTO);
-
         //数据格式化
         BiSettlementExchangeRateEntity newExchangeRate = handleDmpExchangeRate(dto);
 

@@ -128,6 +128,11 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                 detailIds.add(record.getId());
                 continue;
             }
+            String thirdSupplierCode = record.getThirdSupplierCode();
+            if(StrUtil.isBlank(thirdSupplierCode)){
+                detailIds.add(record.getId());
+                continue;
+            }
             //根据配置过滤是否符合配置
             if (CollUtil.isNotEmpty(prefixList)){
                 //判断是否符合配置
@@ -139,7 +144,7 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
 
             // 构建查询参数
             Kuaidi100QueryParam param = Kuaidi100QueryParam.builder()
-                    .com(record.getChannelName().toLowerCase()) // 快递100要求小写
+                    .com(thirdSupplierCode.toLowerCase()) // 快递100要求小写
                     .num(trackNo)
                     .build();
 
@@ -147,23 +152,24 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                 String pushType = record.getPushType();
 
                 List<LogisticsThirdChannelRefDetailEntity> detailEntities = refDetailEntities.get(record.getThirdRefId());
+                if(CollUtil.isEmpty(detailEntities)){
+                    continue;
+                }
 
                 if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(pushType) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
                     record.setTelNumber(detailEntities.get(0).getMobile());
-                    param.setPhone(detailEntities.get(0).getMobile());
-
                 }else if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(pushType)){
                     //销售出库单把客户id传递到了物流单店铺id上
                     LogisticsThirdChannelRefDetailEntity logisticsThirdChannelRefDetailEntity = detailEntities.stream().filter(e -> e.getCustomerId().equals(record.getShopId()) || e.getShopId().equals(record.getShopId())).findFirst().orElse(null);
                     if (Objects.nonNull(logisticsThirdChannelRefDetailEntity)){
                         record.setTelNumber(logisticsThirdChannelRefDetailEntity.getMobile());
-                        param.setPhone(logisticsThirdChannelRefDetailEntity.getMobile());
+
                     }
                 }else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(pushType)){
                     LogisticsThirdChannelRefDetailEntity logisticsThirdChannelRefDetailEntity = detailEntities.stream().filter(e -> e.getDictPlatform().equals(record.getSalesPlatform())).findFirst().orElse(null);
                     if (Objects.nonNull(logisticsThirdChannelRefDetailEntity)) {
                         record.setTelNumber(logisticsThirdChannelRefDetailEntity.getMobile());
-                        param.setPhone(logisticsThirdChannelRefDetailEntity.getMobile());
+
                     }
                 }else if (LogisticsThirdChannelRefPushTypeEnum.ORDER_RECEIVER.getCode().equals(pushType)){
 
@@ -171,8 +177,13 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                     LogisticsThirdChannelRefDetailEntity logisticsThirdChannelRefDetailEntity = detailEntities.stream().filter(e -> e.getDictPlatform().equals(record.getSalesPlatform())).findFirst().orElse(null);
                     if (Objects.nonNull(logisticsThirdChannelRefDetailEntity)) {
                         record.setTelNumber(logisticsThirdChannelRefDetailEntity.getMobile());
-                        param.setPhone(logisticsThirdChannelRefDetailEntity.getMobile());
+
                     }
+                }
+
+                if(StringUtils.isNotBlank(record.getTelNumber())){
+                    //只取后四位
+                    param.setPhone(StrUtil.subSuf(record.getTelNumber(),record.getTelNumber().length()-4));
                 }
             }
             log.error("快递100实时查询请求参数组装：{}", param);

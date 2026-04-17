@@ -423,15 +423,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
             List<String> parentId = new ArrayList<>();
             if(!CollectionUtils.isEmpty(transferIdList)){
+                List<TransferInfoEntity> transferInfoEntities = transferInfoService.listByIds(transferIdList);
+                List<String> sourceCodes = transferInfoEntities.stream().map(TransferInfoEntity::getCode).collect(Collectors.toList());
                 //查询直接调拨单是否生成推送
                 WmsPushMsgDTO.SearchDTO searchDTO = new WmsPushMsgDTO.SearchDTO();
-                searchDTO.setSourceIdList(transferIdList);
+                searchDTO.setSourceCodeList(sourceCodes);
                 searchDTO.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
                 searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
                 List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
                 if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
-                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
-                    parentId.addAll(sourceIds);
+                    parentId.addAll(transferIdList);
                 }
             }
             //生成旺店通同步库存比对任务
@@ -459,15 +460,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
             List<String> parentId = new ArrayList<>();
             if(!CollectionUtils.isEmpty(transferIdList)){
+                List<TransferInfoEntity> transferInfoEntities = transferInfoService.listByIds(transferIdList);
+                List<String> sourceCodes = transferInfoEntities.stream().map(TransferInfoEntity::getCode).collect(Collectors.toList());
                 //查询直接调拨单是否生成推送
                 WmsPushMsgDTO.SearchDTO searchDTO = new WmsPushMsgDTO.SearchDTO();
-                searchDTO.setSourceIdList(transferIdList);
+                searchDTO.setSourceCodeList(sourceCodes);
                 searchDTO.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
                 searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
                 List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
                 if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
-                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
-                    parentId.addAll(sourceIds);
+                    parentId.addAll(transferIdList);
                 }
             }
             //生成旺店通同步库存比对任务

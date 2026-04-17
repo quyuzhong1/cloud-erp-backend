@@ -202,10 +202,15 @@ public class LogisticsTrackDTO implements Serializable {
          * 第三方配置关系id
          */
         private String thirdRefId;
-//        /**
-//         * 查询通知配置主键id
-//         */
-//        private String cfgId;
+        /**
+         *
+         */
+        private String platformType;
+        /**
+         * 注册状态
+         */
+        private Integer registerStatus;
+
     }
 
     @Data
