@@ -209,6 +209,9 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
         HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
         responseHeaders.setCacheControl(CacheControl.noCache());
         responseHeaders.setContentType(MediaType.TEXT_EVENT_STREAM);
+        responseHeaders.setPragma("no-cache");
+        responseHeaders.set("X-Accel-Buffering", "no");
+        responseHeaders.set(HttpHeaders.CONNECTION, "keep-alive");
         return chain.filter(exchange);
     }
 }

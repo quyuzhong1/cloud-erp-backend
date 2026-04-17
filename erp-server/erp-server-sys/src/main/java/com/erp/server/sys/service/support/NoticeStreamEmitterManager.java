@@ -367,6 +367,8 @@ public class NoticeStreamEmitterManager {
         SseEmitter.SseEventBuilder event = SseEmitter.event().data(noticeDTO, MediaType.APPLICATION_JSON);
         if (StringUtils.equals(SysTypeEnum.PDA.getCode(), normalizeApplication(application))) {
             event.name("pdaNotice");
+        } else {
+            event.name("message");
         }
         return event;
     }
