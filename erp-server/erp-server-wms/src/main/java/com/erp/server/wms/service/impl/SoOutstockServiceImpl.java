@@ -19,6 +19,7 @@ import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import com.alibaba.excel.write.style.column.AbstractColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -4870,6 +4871,73 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
+    }
+
+    @Override
+    public List<BatchResultDTO> updateOutstockDate(List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTO) {
+        if (CollectionUtils.isEmpty(updateOutstockDateDTO)) {
+            return new ArrayList<>();
+        }
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+
+        // 1. 获取所有ID并查询实体
+        List<String> ids = updateOutstockDateDTO.stream()
+                .map(SoOutstockDTO.UpdateOutstockDateDTO::getId)
+                .collect(Collectors.toList());
+
+        List<SoOutstockEntity> entityList = this.listByIds(ids);
+        Map<String, SoOutstockEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(SoOutstockEntity::getId, v -> v));
+
+        // 2. 分离可更新和不可更新的记录
+        List<SoOutstockDTO.UpdateOutstockDateDTO> validUpdates = new ArrayList<>();
+
+        updateOutstockDateDTO.forEach(dto -> {
+            SoOutstockEntity entity = entityMap.get(dto.getId());
+            if (entity == null) {
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), null, "出库单不存在"));
+            } else if (!ApproveStatusEnum.WAIT_SUBMIT.getCode()
+                    .equalsIgnoreCase(entity.getApproveStatus().getCode())) {
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
+                        "只有待提交状态的出库单才允许修改出库日期"));
+            } else {
+                validUpdates.add(dto);
+            }
+        });
+
+        // 3. 按 outDate 分组，相同日期批量更新
+        Map<LocalDate, List<String>> dateGroupMap = validUpdates.stream()
+                .collect(Collectors.groupingBy(
+                        SoOutstockDTO.UpdateOutstockDateDTO::getOutDate,
+                        Collectors.mapping(SoOutstockDTO.UpdateOutstockDateDTO::getId,
+                                Collectors.toList())
+                ));
+
+        // 4. 批量更新（每个日期执行一次SQL）
+        dateGroupMap.forEach((outDate, idList) -> {
+            LambdaUpdateWrapper<SoOutstockEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.in(SoOutstockEntity::getId, idList)
+                    .set(SoOutstockEntity::getBillDate, outDate)
+                    .setSql("version = version + 1")
+                    .set(SoOutstockEntity::getUpdateTime, LocalDateTime.now());
+
+            boolean success = this.update(updateWrapper);
+
+            if (success) {
+                idList.forEach(id -> {
+                    SoOutstockEntity entity = entityMap.get(id);
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode()));
+                });
+            } else {
+                idList.forEach(id -> {
+                    SoOutstockEntity entity = entityMap.get(id);
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "更新失败"));
+                });
+            }
+        });
+
+        return resultDTOS;
     }
 
 }

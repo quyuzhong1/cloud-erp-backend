@@ -2104,4 +2104,17 @@ public class SoOutstockDTO implements Serializable {
          */
         private Integer actualQty;
     }
+
+
+    /**
+     * kol寄样费用查询出库DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateOutstockDateDTO {
+
+        private String id;
+
+        private LocalDate outDate;
+    }
 }

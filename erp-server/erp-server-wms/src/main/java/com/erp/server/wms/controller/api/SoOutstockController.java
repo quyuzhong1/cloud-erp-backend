@@ -563,4 +563,14 @@ public class SoOutstockController extends BaseController {
         return success();
     }
 
+    /**
+     * 更新出库日期
+     */
+    @PostMapping("/updateOutstockDate")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新出库日期")
+    public ApiResult<List<BatchResultDTO>> updateOutstockDate(@RequestBody @Valid List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTOList) {
+        List<BatchResultDTO> batchResultDTOList = soOutstockService.updateOutstockDate(updateOutstockDateDTOList);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
 }

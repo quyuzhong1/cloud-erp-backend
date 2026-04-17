@@ -630,4 +630,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void updateRemarkById(String outstockId, String remark);
 
     void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto);
+
+    List<BatchResultDTO> updateOutstockDate(List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTO);
 }
