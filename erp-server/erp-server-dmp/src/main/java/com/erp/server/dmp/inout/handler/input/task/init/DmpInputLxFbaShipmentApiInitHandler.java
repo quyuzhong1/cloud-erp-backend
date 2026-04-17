@@ -112,9 +112,12 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         LocalDate dateAfter30Days = today.plusDays(30);
         String endDate = dateAfter30Days.format(formatter);
 
-        // 所有明细
+        String shipmentId = findMongoData.get(0).getOrDefault("shipmentId", "").toString();
+        if (StringUtils.isBlank(shipmentId)) {
+            ServiceException.runError("未找到mongo中shipmentId信息:taskId=" + dmpInputTaskEntity.getId());
+        }
         // 请求参数
-        FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate, endDate);
+        FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, shipmentId);
         Result<List<Object>> resultData = requestData(fbaShipmentReqDTO, false);
         if (null == resultData) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));

@@ -45,6 +45,11 @@ public class FbaShipmentReqDTO {
      */
     private Integer length;
 
+    /**
+     * 货件单号，多个以英文逗号隔开，仅支持精确搜索
+     */
+    private String shipment_id;
+
     public FbaShipmentReqDTO(String sid, String start_date, String end_date) {
         this.sid = sid;
         this.start_date = start_date;
@@ -58,6 +63,13 @@ public class FbaShipmentReqDTO {
         this.start_date = start_date;
         this.end_date = end_date;
         this.offset = offset;
+        this.length = 1000;
+    }
+
+    public FbaShipmentReqDTO(String sid, String shipment_id) {
+        this.sid = sid;
+        this.shipment_id = shipment_id;
+        this.offset = 0;
         this.length = 1000;
     }
 }
