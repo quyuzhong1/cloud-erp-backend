@@ -77,7 +77,7 @@
             m.update_user_id AS updateUserId,
             m.update_user_name AS updateUserName,
             m.update_time AS updateTime,
-            m.notice_time AS upgradeTime
+            m.create_time AS upgradeTime
             FROM
             message m
             WHERE
