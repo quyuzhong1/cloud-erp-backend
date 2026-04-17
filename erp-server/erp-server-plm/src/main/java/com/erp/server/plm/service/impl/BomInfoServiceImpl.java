@@ -375,26 +375,29 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if(!Objects.equals(entity.getState(), BomStateEnum.AUDIT_ING.getState())) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
-//        List<BomSkuEntity> bomSkuEntityList = bomSkuService.lambdaQuery().eq(BomSkuEntity::getBomId, dto.getId()).list();
-//        if (CollectionUtils.isNotEmpty(bomSkuEntityList)){
-//            Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
-//                    .in(SkuStdRetailPriceEntity::getSkuId, bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toSet()))
-//                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
-//                    .gt(SkuStdRetailPriceEntity::getStdRetailPriceVat, BigDecimal.ZERO)
-//                    .list()
-//                    .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
-//            Set<String> notHaveRetailSet = new HashSet<>();
-//            for(BomSkuEntity bomSkuEntity : bomSkuEntityList) {
-//                if(!skuIdVatMap.containsKey(bomSkuEntity.getSkuId())) {
-//                    notHaveRetailSet.add(bomSkuEntity.getSkuNo());
-//                }
-//            }
-//
-//            if(CollUtil.isNotEmpty(notHaveRetailSet)) {
-//                String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-//                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
-//            }
-//        }
+        List<BomSkuEntity> bomSkuEntityList = bomSkuService.lambdaQuery().eq(BomSkuEntity::getBomId, dto.getId()).list();
+        if (CollectionUtils.isNotEmpty(bomSkuEntityList)){
+            Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
+                    .in(SkuStdRetailPriceEntity::getSkuId, bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toSet()))
+                    .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
+                    .list()
+                    .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
+            Set<String> notHaveRetailSet = new HashSet<>();
+            for(BomSkuEntity bomSkuEntity : bomSkuEntityList) {
+                if(!skuIdVatMap.containsKey(bomSkuEntity.getSkuId())) {
+                    notHaveRetailSet.add(bomSkuEntity.getSkuNo());
+                }
+            }
+
+            if(CollUtil.isNotEmpty(notHaveRetailSet)) {
+                String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
+                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+            }
+            if(skuIdVatMap.values().stream().allMatch(s -> BigDecimal.ZERO.compareTo(s) == 0)) {
+            	String allSku = skuIdVatMap.keySet().stream().collect(Collectors.joining("}{", "{", "}"));
+                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING_ZERO, allSku);
+            }
+        }
 
         // 调用流程审核
         approveProcess(entity, dto);
@@ -567,7 +570,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
                     .in(SkuStdRetailPriceEntity::getSkuId, skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toSet()))
                     .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
-                    .gt(SkuStdRetailPriceEntity::getStdRetailPriceVat, BigDecimal.ZERO)
                     .list()
                     .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
         }
@@ -793,7 +795,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
                         .in(SkuStdRetailPriceEntity::getSkuId, bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toSet()))
                         .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
-                        .gt(SkuStdRetailPriceEntity::getStdRetailPriceVat, BigDecimal.ZERO)
                         .list()
                         .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
                 Set<String> notHaveRetailSet = new HashSet<>();
@@ -805,7 +806,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 if(CollUtil.isNotEmpty(notHaveRetailSet)) {
                     String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
 //                    return BatchResultDTO.fail(bomId, bom.getSerialNumber(), MessageFormat.format(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getMsg(),allSku));
-                    throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+//                    throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
                 }
             }
         }
@@ -1248,7 +1249,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             Map<String, BigDecimal> skuIdVatMap = skuStdRetailPriceService.lambdaQuery()
                     .in(SkuStdRetailPriceEntity::getSkuId, childList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toSet()))
                     .eq(SkuStdRetailPriceEntity::getCurrency, "CNY")
-                    .gt(SkuStdRetailPriceEntity::getStdRetailPriceVat, BigDecimal.ZERO)
                     .list()
                     .stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuId, SkuStdRetailPriceEntity::getStdRetailPriceVat));
             Set<String> notHaveRetailSet = new HashSet<>();
@@ -1260,7 +1260,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
             if(CollUtil.isNotEmpty(notHaveRetailSet)) {
                 String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+//                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
             }
         }
 
