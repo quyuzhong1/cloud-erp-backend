@@ -86,6 +86,7 @@ import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.SoOutstockDTO.ExportDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -4915,6 +4916,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 ));
 
         // 4. 批量更新（每个日期执行一次SQL）
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         dateGroupMap.forEach((outDate, idList) -> {
             LambdaUpdateWrapper<SoOutstockEntity> updateWrapper = new LambdaUpdateWrapper<>();
             updateWrapper.in(SoOutstockEntity::getId, idList)
@@ -4927,6 +4929,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (success) {
                 idList.forEach(id -> {
                     SoOutstockEntity entity = entityMap.get(id);
+                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(
+                            String.format("修改出库日期为%s", outDate),
+                            ModuleTypeEnum.SO_OUT_STOCK.getCode(),
+                            id,
+                            "修改出库日期"
+                    ));
                     resultDTOS.add(BatchResultDTO.success(id, entity.getCode()));
                 });
             } else {
@@ -4936,6 +4944,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 });
             }
         });
+        operateLogService.batchAddModuleOperateLog(operateLogList);
 
         return resultDTOS;
     }
