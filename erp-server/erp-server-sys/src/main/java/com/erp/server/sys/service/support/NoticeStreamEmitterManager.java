@@ -72,7 +72,7 @@ public class NoticeStreamEmitterManager {
         emitter.onError(e -> remove(normalizedApplication, userId, emitterId));
 
         try {
-            emitter.send(SseEmitter.event().comment("connected"));
+            emitter.send(buildMetaEvent("connected", normalizedApplication, userId));
             log.info("Register notice emitter success, application={}, userId={}, emitterId={}, nodeId={}, userEmitterCount={}, appConnectionCount={}",
                     normalizedApplication, userId, emitterId, getNodeId(), userEmitters.size(), currentCount);
         } catch (IOException e) {
@@ -227,7 +227,7 @@ public class NoticeStreamEmitterManager {
                 }
                 for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
                     try {
-                        entry.getValue().send(SseEmitter.event().comment("heartbeat"));
+                        entry.getValue().send(buildMetaEvent("heartbeat", application, userId));
                     } catch (Exception e) {
                         log.debug("Heartbeat failed, userId={}, emitterId={}, application={}",
                                 userId, entry.getKey(), application, e);
@@ -369,6 +369,18 @@ public class NoticeStreamEmitterManager {
             event.name("pdaNotice");
         }
         return event;
+    }
+
+    private SseEmitter.SseEventBuilder buildMetaEvent(String eventName, String application, String userId) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("event", eventName);
+        payload.put("application", normalizeApplication(application));
+        payload.put("userId", userId);
+        payload.put("nodeId", getNodeId());
+        payload.put("time", System.currentTimeMillis());
+        return SseEmitter.event()
+                .name(eventName)
+                .data(payload, MediaType.APPLICATION_JSON);
     }
 
     private String normalizeApplication(String application) {

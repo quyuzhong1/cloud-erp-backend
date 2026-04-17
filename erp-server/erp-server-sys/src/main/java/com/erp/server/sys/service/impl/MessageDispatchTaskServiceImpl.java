@@ -136,8 +136,13 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
         if (taskId == null) {
             return;
         }
-        messageDispatchDelayQueueSupport.offer(taskId,
-                executeTime == null ? LocalDateTime.now() : executeTime);
+        LocalDateTime finalExecuteTime = executeTime == null ? LocalDateTime.now() : executeTime;
+        try {
+            messageDispatchDelayQueueSupport.offer(taskId, finalExecuteTime);
+            log.info("Queue message dispatch task success, taskId={}, executeTime={}", taskId, finalExecuteTime);
+        } catch (Exception e) {
+            log.error("Queue message dispatch task failed, taskId={}, executeTime={}", taskId, finalExecuteTime, e);
+        }
     }
 
     private void processTask(String taskId) {
