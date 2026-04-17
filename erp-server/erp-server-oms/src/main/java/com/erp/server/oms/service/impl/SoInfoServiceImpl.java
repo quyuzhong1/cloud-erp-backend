@@ -55,6 +55,7 @@ import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -79,6 +80,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.SaleDemandFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -158,6 +160,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private LogisticsProductFeign logisticsProductFeign;
 
     @Resource
     private InventoryFeign inventoryFeign;
@@ -795,6 +800,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (ObjectUtils.isNotEmpty(skuVO)) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                 viewDTO.setUnitName(skuVO.getUnitName());
+                if ("费用".equalsIgnoreCase(skuVO.getPropertyName()) || "服务".equalsIgnoreCase(skuVO.getPropertyName())){
+                    viewDTO.setFilterCalculate(true);
+                }
             }
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new ListingInfoWithSkuMappingDTO());
             viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
