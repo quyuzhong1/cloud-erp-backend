@@ -4875,6 +4875,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> updateOutstockDate(List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTO) {
         if (CollectionUtils.isEmpty(updateOutstockDateDTO)) {
             return new ArrayList<>();
@@ -4893,7 +4894,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         // 2. 分离可更新和不可更新的记录
         List<SoOutstockDTO.UpdateOutstockDateDTO> validUpdates = new ArrayList<>();
-
+        List<SoOutstockEntity> updateList = new ArrayList<>();
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         updateOutstockDateDTO.forEach(dto -> {
             SoOutstockEntity entity = entityMap.get(dto.getId());
             if (entity == null) {
@@ -4903,48 +4905,21 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
                         "只有待提交状态的出库单才允许修改出库日期"));
             } else {
+                entity.setBillDate(dto.getOutDate());
+                updateList.add(entity);
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(
+                        String.format("修改出库日期为%s", dto.getOutDate()),
+                        ModuleTypeEnum.SO_OUT_STOCK.getCode(),
+                        entity.getId(),
+                        "修改出库日期"
+                ));
                 validUpdates.add(dto);
             }
         });
-
-        // 3. 按 outDate 分组，相同日期批量更新
-        Map<LocalDate, List<String>> dateGroupMap = validUpdates.stream()
-                .collect(Collectors.groupingBy(
-                        SoOutstockDTO.UpdateOutstockDateDTO::getOutDate,
-                        Collectors.mapping(SoOutstockDTO.UpdateOutstockDateDTO::getId,
-                                Collectors.toList())
-                ));
-
-        // 4. 批量更新（每个日期执行一次SQL）
-        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
-        dateGroupMap.forEach((outDate, idList) -> {
-            LambdaUpdateWrapper<SoOutstockEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.in(SoOutstockEntity::getId, idList)
-                    .set(SoOutstockEntity::getBillDate, outDate)
-                    .setSql("version = version + 1")
-                    .set(SoOutstockEntity::getUpdateTime, LocalDateTime.now());
-
-            boolean success = this.update(updateWrapper);
-
-            if (success) {
-                idList.forEach(id -> {
-                    SoOutstockEntity entity = entityMap.get(id);
-                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(
-                            String.format("修改出库日期为%s", outDate),
-                            ModuleTypeEnum.SO_OUT_STOCK.getCode(),
-                            id,
-                            "修改出库日期"
-                    ));
-                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode()));
-                });
-            } else {
-                idList.forEach(id -> {
-                    SoOutstockEntity entity = entityMap.get(id);
-                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "更新失败"));
-                });
-            }
-        });
-        operateLogService.batchAddModuleOperateLog(operateLogList);
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+            operateLogService.batchAddModuleOperateLog(operateLogList);
+        }
 
         return resultDTOS;
     }
