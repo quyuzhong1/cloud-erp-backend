@@ -3,6 +3,7 @@ package com.common.business.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 public enum SystemCodeEnum implements EnumMessage {
 	DMP("dmp","中台系统"),
@@ -35,5 +36,17 @@ public enum SystemCodeEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (SystemCodeEnum statusEnum : SystemCodeEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
     }
 }

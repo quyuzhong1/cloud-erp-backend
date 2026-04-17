@@ -1,5 +1,7 @@
 package com.erp.server.tms.query;
 
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +28,7 @@ public class TmsAsyncTaskRecordQueryHandler extends AbstractQueryHandler {
         if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
-        return "";
+        super.buildSplicingSQLDTO("tatr.status", QueryConditionEnum.EQ,value, QueryDataTypeEnum.STRING);;
+        return super.getSplicingSQL();
     }
 }
