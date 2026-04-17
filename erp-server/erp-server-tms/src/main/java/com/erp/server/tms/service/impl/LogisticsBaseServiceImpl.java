@@ -478,8 +478,30 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
      * 批量更新物流轨迹信息（增强版：支持多平台自动识别、注册与分片同步）
      * <p>
      * 核心流程：按平台枚举逐一处理 → 查询待注册/已注册单据 → 尝试注册 → 将注册成功单据并入已注册池 → 分片同步轨迹
+     * <p>
      * 注意：每轮平台的待同步任务池（readyToSync）必须在循环内独立构建，严禁提升至循环外共享，
      * 否则会将其他平台的单据以错误的 platformType 调用接口，导致数据错乱。
+     * <p>
+     * ===================== 性能优化指南（dtos 数量较大时必读）=====================
+     * <p>
+     * 【优化点 1】渠道配置提前批量缓存（当前：N次 DB/Feign 查询 → 优化后：1次）
+     *   当前实现在每轮平台枚举内调用 listByPlatform()，导致有多少个平台枚举就发起多少次查询。
+     *   渠道配置属于低频变更的配置类数据，应在循环外一次性加载所有平台配置，
+     *   按 platformCode 分组为 Map&lt;String, List&lt;PagingVO&gt;&gt;，循环内直接 Map.get() 取用。
+     *   参考：logisticsThirdChannelRefService.listAll() + Collectors.groupingBy(PagingVO::getPlatform)
+     * <p>
+     * 【优化点 2】轨迹分片同步改为并行执行（当前：最坏 dtos.size() 次串行 HTTP → 优化后：并发执行）
+     *   当 batchSize=1（如快递100等平台）时，500条数据对应 500次串行 HTTP 请求，
+     *   按每次 800ms 估算总耗时约 400秒，在定时任务场景下极易触发超时或任务积压。
+     *   建议引入专用线程池（如 trackSyncExecutor），使用 CompletableFuture.supplyAsync()
+     *   并行提交所有分片任务，并统一设置超时（如 30s）防止单次 HTTP 无限阻塞。
+     *   注意：并行化后需确认下游接口的 QPS 限制，避免并发过高触发限流。
+     * <p>
+     * 【优化点 3】dtos 按平台预分组，减少 IN 查询数据量（当前：每平台查全量 trackNos）
+     *   当前实现将所有 trackNos 传入每个平台的 listWaitingRegisterByConfig() 查询，
+     *   若 DTO 本身已携带平台标识字段（如 trackQueryType），可提前按平台分组，
+     *   每轮查询只传入当前平台相关的 trackNos，大幅缩小 IN 子句的参数规模。
+     * =========================================================================
      *
      * @param dtos          待更新的轨迹数据列表
      * @param transportType 运输类型（小包/海运），对应 {@link com.common.business.enums.LogisticsTransportTypeEnum}
