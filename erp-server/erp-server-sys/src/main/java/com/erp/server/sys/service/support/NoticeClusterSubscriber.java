@@ -37,13 +37,18 @@ public class NoticeClusterSubscriber {
             RTopic topic = redissonClient.getTopic(noticeStreamEmitterManager.getNodeTopic(application));
             Integer listenerId = topic.addListener(String.class, (channel, body) -> handle(application, body));
             listenerIdMap.put(application, listenerId);
+            log.info("Subscribe notice cluster topic success, application={}, nodeTopic={}, listenerId={}",
+                    application, noticeStreamEmitterManager.getNodeTopic(application), listenerId);
         }
     }
 
     @PreDestroy
     public void unsubscribe() {
-        listenerIdMap.forEach((application, listenerId) ->
-                redissonClient.getTopic(noticeStreamEmitterManager.getNodeTopic(application)).removeListener(listenerId));
+        listenerIdMap.forEach((application, listenerId) -> {
+            redissonClient.getTopic(noticeStreamEmitterManager.getNodeTopic(application)).removeListener(listenerId);
+            log.info("Unsubscribe notice cluster topic success, application={}, nodeTopic={}, listenerId={}",
+                    application, noticeStreamEmitterManager.getNodeTopic(application), listenerId);
+        });
         listenerIdMap.clear();
     }
 
@@ -55,11 +60,21 @@ public class NoticeClusterSubscriber {
         if (dispatchDTO == null || dispatchDTO.getNotice() == null) {
             return;
         }
-        Set<String> successUserIds = noticeStreamEmitterManager.pushLocalNotice(application, dispatchDTO.getNotice());
+        int requestUserCount = CollectionUtils.isEmpty(dispatchDTO.getTargetUserIds()) ? 0 : dispatchDTO.getTargetUserIds().size();
+        log.info("Receive notice cluster message, messageId={}, scene={}, application={}, targetUsers={}, markReadOnSuccess={}",
+                dispatchDTO.getMessageId(), dispatchDTO.getScene(), application, requestUserCount, dispatchDTO.getMarkReadOnSuccess());
+        Set<String> successUserIds = CollectionUtils.isEmpty(dispatchDTO.getTargetUserIds())
+                ? noticeStreamEmitterManager.pushLocalNotice(application, dispatchDTO.getNotice())
+                : noticeStreamEmitterManager.pushNoticeToUsers(application, dispatchDTO.getTargetUserIds(), dispatchDTO.getNotice());
         if (Boolean.TRUE.equals(dispatchDTO.getMarkReadOnSuccess()) && CollectionUtils.isNotEmpty(successUserIds)) {
             messageUserReadService.markReadByUserIds(dispatchDTO.getMessageId(), successUserIds);
+            log.info("Mark notice read on SSE success, messageId={}, application={}, users={}",
+                    dispatchDTO.getMessageId(), application, successUserIds.size());
         }
-        log.debug("Handle notice cluster message success, messageId={}, application={}, pushUsers={}",
-                dispatchDTO.getMessageId(), application, successUserIds == null ? 0 : successUserIds.size());
+        log.info("Handle notice cluster message success, messageId={}, application={}, requestUsers={}, successUsers={}",
+                dispatchDTO.getMessageId(),
+                application,
+                requestUserCount,
+                successUserIds == null ? 0 : successUserIds.size());
     }
 }

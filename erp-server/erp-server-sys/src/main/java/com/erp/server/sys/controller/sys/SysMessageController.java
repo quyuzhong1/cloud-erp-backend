@@ -173,8 +173,27 @@ public class SysMessageController {
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         String uid = UserContext.getDefaultLoginUser().getUid();
-        log.info("Register PC notice SSE stream, uid={}", uid);
-        return noticeStreamEmitterManager.registerPc(uid);
+        log.info("Receive PC notice SSE register request, uid={}, nodeId={}", uid, noticeStreamEmitterManager.getNodeId());
+        SseEmitter emitter = noticeStreamEmitterManager.registerPc(uid);
+        sendCompensationNotice(uid, "PC", emitter);
+        return emitter;
+    }
+
+    private void sendCompensationNotice(String userId, String application, SseEmitter emitter) {
+        MessageDTO.NoticeDTO latestNotice = messageService.getLatestUnreadNotice(userId, application);
+        if (latestNotice == null) {
+            log.info("No unread compensation notice found after SSE register, application={}, userId={}", application, userId);
+            return;
+        }
+        boolean success = noticeStreamEmitterManager.sendCompensationNotice(emitter, application, userId, latestNotice);
+        if (!success) {
+            return;
+        }
+        MessageDTO.ReadHistoryMessageDTO readDTO = new MessageDTO.ReadHistoryMessageDTO();
+        readDTO.setId(latestNotice.getId());
+        messageService.readMessage(readDTO);
+        log.info("Compensation notice marked as read after SSE send, application={}, userId={}, noticeId={}",
+                application, userId, latestNotice.getId());
     }
 
 }

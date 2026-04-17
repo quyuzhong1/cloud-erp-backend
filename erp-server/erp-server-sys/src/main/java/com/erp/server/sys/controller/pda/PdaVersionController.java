@@ -7,8 +7,10 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
+import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.support.NoticeStreamEmitterManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class PdaVersionController extends BaseController {
 
     @Autowired
     private PdaVersionService pdaVersionService;
+
+    @Resource
+    private MessageService messageService;
 
     @Resource
     private NoticeStreamEmitterManager noticeStreamEmitterManager;
@@ -122,7 +127,26 @@ public class PdaVersionController extends BaseController {
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         String uid = UserContext.getDefaultLoginUser().getUid();
-        log.info("Register PDA notice SSE stream, uid={}", uid);
-        return noticeStreamEmitterManager.registerPda(uid);
+        log.info("Receive PDA notice SSE register request, uid={}, nodeId={}", uid, noticeStreamEmitterManager.getNodeId());
+        SseEmitter emitter = noticeStreamEmitterManager.registerPda(uid);
+        sendCompensationNotice(uid, "PDA", emitter);
+        return emitter;
+    }
+
+    private void sendCompensationNotice(String userId, String application, SseEmitter emitter) {
+        MessageDTO.NoticeDTO latestNotice = messageService.getLatestUnreadNotice(userId, application);
+        if (latestNotice == null) {
+            log.info("No unread compensation notice found after SSE register, application={}, userId={}", application, userId);
+            return;
+        }
+        boolean success = noticeStreamEmitterManager.sendCompensationNotice(emitter, application, userId, latestNotice);
+        if (!success) {
+            return;
+        }
+        MessageDTO.ReadHistoryMessageDTO readDTO = new MessageDTO.ReadHistoryMessageDTO();
+        readDTO.setId(latestNotice.getId());
+        messageService.readMessage(readDTO);
+        log.info("Compensation notice marked as read after SSE send, application={}, userId={}, noticeId={}",
+                application, userId, latestNotice.getId());
     }
 }
