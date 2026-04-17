@@ -57,7 +57,6 @@ public class SysMessageController {
      */
     @PostMapping("/release")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增")
-    @CrossOrigin
     public ApiResult<BaseResultDTO.AddDTO> release(@RequestBody @Validated MessageDTO.AddDTO dto) {
         return success(messageService.add(dto));
     }
@@ -76,7 +75,6 @@ public class SysMessageController {
             menuCode = "sys:sysMessage:update",
             serviceClass = MessageService.class,
             keyIdName = "id")
-    @CrossOrigin
     public ApiResult<?> update(@RequestBody @Validated MessageDTO.UpdateDTO dto) {
         messageService.update(dto);
         return success();
@@ -171,7 +169,6 @@ public class SysMessageController {
         return success(messageService.getSysMessageUnreadCount());
     }
 
-    @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         String uid = UserContext.getDefaultLoginUser().getUid();

@@ -123,7 +123,6 @@ public class PdaVersionController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    @CrossOrigin
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         String uid = UserContext.getDefaultLoginUser().getUid();
