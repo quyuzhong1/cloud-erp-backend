@@ -66,8 +66,10 @@ public class FbaShipmentReqDTO {
         this.length = 1000;
     }
 
-    public FbaShipmentReqDTO(String sid, String shipment_id) {
+    public FbaShipmentReqDTO(String sid,String start_date, String end_date, String shipment_id) {
         this.sid = sid;
+        this.start_date = start_date;
+        this.end_date = end_date;
         this.shipment_id = shipment_id;
         this.offset = 0;
         this.length = 1000;
