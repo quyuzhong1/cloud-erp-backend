@@ -771,6 +771,10 @@ public class SubcontractOrderDTO implements Serializable {
     public static class GeneratePoAddDTO extends GeneratePoDTO{
 
         /**
+         * 类型
+         */
+        private String type;
+        /**
          * skuId
          */
         private String skuId;

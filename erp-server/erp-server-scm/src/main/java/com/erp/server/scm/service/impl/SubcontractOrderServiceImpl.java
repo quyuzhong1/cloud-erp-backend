@@ -7,6 +7,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -35,6 +36,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
@@ -50,10 +52,12 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractBOMService;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
@@ -158,6 +162,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private KingdeePaymentConditionService kingdeePaymentConditionService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Resource
     private PurchaseOrderMapper purchaseOrderMapper;
     @Resource
@@ -462,9 +468,25 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
-        //返修委外订单不允许反审
+        //返修委外订单需要检查金蝶状态
         if(Objects.equals(entity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
-            throw new ServiceException(ApiError.PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE);
+            // 查询金蝶委外订单状态
+            if (ObjectUtils.isNotEmpty(entity.getSyncKingdeeId())) {
+                KingdeeDTO kingdeeDTO = new KingdeeDTO();
+                kingdeeDTO.setKingdeePushModuleCode(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+                kingdeeDTO.setNumber(entity.getCode());
+                kingdeeDTO.setId(entity.getSyncKingdeeId());
+                // 查询金蝶单据状态
+                JSONObject viewJson = dmpTaskFeign.getByKingdeeId(kingdeeDTO);
+
+                if (viewJson != null && viewJson.containsKey("Status")) {
+                    String docStatus = viewJson.getStr("Status");
+                    //计划和计划确认才可以反审核
+                    if (!Objects.equals(docStatus,1) && !Objects.equals(docStatus,2)) {
+                        throw new ServiceException(ApiError.DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE);
+                    }
+                }
+            }
         }
 
         //委外变更单
@@ -925,10 +947,15 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             addDTO.setPurchaseDate(LocalDate.now());
             //委外类型
             if (generatePoAddDTO.getIsParent()) {
-
-                addDTO.setType(PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode());
+                // 委外返修类型的委外订单，成品使用"返修采购订单"类型
+                if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), generatePoAddDTO.getType())) {
+                    addDTO.setType(PurchaseOrderTypeEnum.ENUM_REPAIR.getCode());
+                } else {
+                    addDTO.setType(PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode());
+                }
                 addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_PARENT.getCode());
             } else {
+                // 子件使用"标准采购订单"类型（不变）
                 addDTO.setType(PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode());
                 addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_CHILD.getCode());
             }
@@ -1040,6 +1067,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
             //是否是父级sku
             generatePoDTO.setIsParent(StringUtils.isBlank(detailEntity.getParentId()) ? Boolean.TRUE :Boolean.FALSE );
+            //委外订单类型
+            generatePoDTO.setType(mainEntity.getType());
             //采购员
             generatePoDTO.setPurchaseUserId(mainEntity.getPurchaserId());
             //采购部门
