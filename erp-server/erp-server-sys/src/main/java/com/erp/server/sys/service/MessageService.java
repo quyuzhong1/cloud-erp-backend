@@ -61,6 +61,11 @@ public interface MessageService extends SuperService<MessageEntity> {
     MessageDTO.IsMessageDTO isMessage();
 
     /**
+     * 获取指定用户在指定应用端的最新未读系统通知
+     */
+    MessageDTO.NoticeDTO getLatestUnreadNotice(String userId, String application);
+
+    /**
      * 关闭消息通知
      * @Author Luo_WG
      * @Date 2023/8/22 12:18

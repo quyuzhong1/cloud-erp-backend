@@ -174,12 +174,16 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
             markSuccess(task.getId());
             return;
         }
+        log.info("Start process system notice dispatch task, taskId={}, messageId={}, scene={}, application={}, executeTime={}",
+                task.getId(), task.getMessageId(), task.getScene(), messageEntity.getApplication(), task.getExecuteTime());
         NoticeDispatchDTO dispatchDTO = new NoticeDispatchDTO();
         dispatchDTO.setMessageId(task.getMessageId());
         dispatchDTO.setScene(task.getScene());
         dispatchDTO.setMarkReadOnSuccess(Boolean.TRUE);
         dispatchDTO.setNotice(NoticeSupport.buildSystemNotice(messageEntity));
         noticeClusterPublisher.publish(dispatchDTO);
+        log.info("Finish process system notice dispatch task, taskId={}, messageId={}, scene={}, application={}",
+                task.getId(), task.getMessageId(), task.getScene(), messageEntity.getApplication());
         markSuccess(task.getId());
     }
 
@@ -187,12 +191,16 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
         if (!NoticeSupport.isPdaUpgradeNotice(messageEntity)) {
             return;
         }
+        log.info("Start process upgrade notice dispatch, messageId={}, application={}",
+                messageEntity.getId(), messageEntity.getApplication());
         NoticeDispatchDTO dispatchDTO = new NoticeDispatchDTO();
         dispatchDTO.setMessageId(messageEntity.getId());
         dispatchDTO.setScene(MessageDispatchTaskSceneEnum.PDA_UPGRADE_PUSH.getCode());
         dispatchDTO.setMarkReadOnSuccess(Boolean.FALSE);
         dispatchDTO.setNotice(NoticeSupport.buildUpgradeNotice(messageEntity));
         noticeClusterPublisher.publish(dispatchDTO);
+        log.info("Finish process upgrade notice dispatch, messageId={}, application={}",
+                messageEntity.getId(), messageEntity.getApplication());
     }
 
     private boolean canExecute(MessageDispatchTaskEntity task) {

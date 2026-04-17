@@ -210,6 +210,14 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
+    public MessageDTO.NoticeDTO getLatestUnreadNotice(String userId, String application) {
+        if (StringUtils.isBlank(userId) || StringUtils.isBlank(application)) {
+            return null;
+        }
+        return baseMapper.getLatestUnreadNoticeByApplication(userId, application);
+    }
+
+    @Override
     public Boolean closeMessageNotice() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
