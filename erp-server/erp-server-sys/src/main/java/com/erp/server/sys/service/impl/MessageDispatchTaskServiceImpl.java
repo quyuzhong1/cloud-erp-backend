@@ -43,7 +43,7 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
 
     @Override
     public String createTask(MessageEntity messageEntity) {
-        return saveTask(messageEntity, MessageDispatchTaskSceneEnum.PDA_NOTICE);
+        return saveTask(messageEntity, MessageDispatchTaskSceneEnum.SYS_NOTICE);
     }
 
     @Override
@@ -70,7 +70,9 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
     public String refreshTask(MessageEntity messageEntity) {
         MessageDispatchTaskEntity taskEntity = this.lambdaQuery()
                 .eq(MessageDispatchTaskEntity::getMessageId, messageEntity.getId())
-                .eq(MessageDispatchTaskEntity::getScene, MessageDispatchTaskSceneEnum.PDA_NOTICE.getCode())
+                .and(wrapper -> wrapper.eq(MessageDispatchTaskEntity::getScene, MessageDispatchTaskSceneEnum.SYS_NOTICE.getCode())
+                        .or()
+                        .eq(MessageDispatchTaskEntity::getScene, MessageDispatchTaskSceneEnum.LEGACY_PDA_NOTICE_CODE))
                 .orderByDesc(MessageDispatchTaskEntity::getCreateTime)
                 .last("LIMIT 1")
                 .one();
@@ -162,7 +164,7 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
             markSuccess(taskId);
             return;
         }
-        if (MessageDispatchTaskSceneEnum.PDA_NOTICE == sceneEnum) {
+        if (MessageDispatchTaskSceneEnum.SYS_NOTICE == sceneEnum) {
             processSystemNoticeTask(task, messageEntity);
             return;
         }
