@@ -195,13 +195,21 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
 
     private void runAfterCommit(Runnable runnable) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            runnable.run();
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                log.error("Execute after-commit action failed immediately", e);
+            }
             return;
         }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                runnable.run();
+                try {
+                    runnable.run();
+                } catch (Exception e) {
+                    log.error("Execute after-commit action failed", e);
+                }
             }
         });
     }
