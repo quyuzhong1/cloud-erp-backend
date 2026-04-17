@@ -181,19 +181,29 @@
             COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS content,
             m.notice_time AS noticeTime,
             m.expire_time AS expireTime
-        FROM message m
+        FROM (
+            SELECT
+                id,
+                type,
+                application,
+                notice_title,
+                data_json,
+                remark,
+                notice_time,
+                expire_time,
+                create_time
+            FROM message
+            WHERE is_deleted = FALSE
+              AND type = 'sys'
+              AND application = #{application}
+            ORDER BY COALESCE(notice_time, create_time) DESC, create_time DESC
+            LIMIT 1
+        ) m
         LEFT JOIN message_user_read mur
             ON m.id = mur.message_id
            AND mur.is_deleted = FALSE
            AND mur.user_id = #{userId}
-        WHERE m.is_deleted = FALSE
-          AND COALESCE(mur.is_read, FALSE) = FALSE
-          AND m.type = 'sys'
-          AND m.application = #{application}
-          AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
-          AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
-        ORDER BY COALESCE(m.notice_time, m.create_time) DESC, m.create_time DESC
-        LIMIT 1
+        WHERE COALESCE(mur.is_read, FALSE) = FALSE
     </select>
 
     <select id="getLatestUnreadUpgradeNoticeByApplication" resultType="com.erp.model.sys.dto.MessageDTO$NoticeDTO">
@@ -206,19 +216,29 @@
             COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS content,
             m.notice_time AS noticeTime,
             m.expire_time AS expireTime
-        FROM message m
+        FROM (
+            SELECT
+                id,
+                type,
+                application,
+                notice_title,
+                data_json,
+                remark,
+                notice_time,
+                expire_time,
+                create_time
+            FROM message
+            WHERE is_deleted = FALSE
+              AND type = 'pda'
+              AND application = #{application}
+            ORDER BY COALESCE(notice_time, create_time) DESC, create_time DESC
+            LIMIT 1
+        ) m
         LEFT JOIN message_user_read mur
             ON m.id = mur.message_id
            AND mur.is_deleted = FALSE
            AND mur.user_id = #{userId}
-        WHERE m.is_deleted = FALSE
-          AND COALESCE(mur.is_read, FALSE) = FALSE
-          AND m.type = 'pda'
-          AND m.application = #{application}
-          AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
-          AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
-        ORDER BY COALESCE(m.notice_time, m.create_time) DESC, m.create_time DESC
-        LIMIT 1
+        WHERE COALESCE(mur.is_read, FALSE) = FALSE
     </select>
 
     <select id="pagingSysVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$ListDTO">
@@ -292,16 +312,22 @@
             m.upgrade_version as upgradeVersion,
             m.data_json,
             COALESCE(m.notice_time, m.create_time) as noticeTime
-        FROM message m
+        FROM (
+            SELECT
+                id,
+                upgrade_version,
+                data_json,
+                notice_time,
+                create_time
+            FROM message
+            WHERE is_deleted = FALSE
+              AND (type = 'sysVersion' OR application = 'sysVersion')
+            ORDER BY COALESCE(notice_time, create_time) DESC, create_time DESC
+            LIMIT 1
+        ) m
         LEFT JOIN message_user_read mur ON mur.message_id = m.id
-        WHERE m.is_deleted = FALSE
-        AND (m.type = 'sysVersion' OR m.application = 'sysVersion')
-        AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
-        AND (m.expire_time IS NULL OR m.expire_time >= NOW())
-        AND mur.user_id = #{userId}
+        WHERE mur.user_id = #{userId}
         AND mur.is_read = FALSE
         AND mur.is_deleted = FALSE
-        ORDER BY COALESCE(m.notice_time, m.create_time) DESC, m.create_time DESC
-        LIMIT 1
     </select>
 </mapper>
