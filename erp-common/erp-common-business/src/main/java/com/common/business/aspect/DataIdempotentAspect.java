@@ -3,6 +3,7 @@ package com.common.business.aspect;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ReflectUtil;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
@@ -80,7 +81,7 @@ public class DataIdempotentAspect {
         log.debug("幂等切面获取参数：" + sb.toString());
         List<RLock> rLocks = new ArrayList<>();
         if (StringUtils.isNotEmpty(sb)) {
-            String submitKey = "DataIdempotent:" + sb + "_" + businessType;
+            String submitKey = RedisCacheConstants.DATA_IDEM_REDISKEY + sb + "_" + businessType;
             try {
                 log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, leaseTime);
                 RLock clientLock = redissonClient.getLock(submitKey);

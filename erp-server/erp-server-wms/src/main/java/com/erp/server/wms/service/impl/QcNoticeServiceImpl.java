@@ -40,13 +40,16 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.QcNoticeDetailExcelListener;
@@ -159,6 +162,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
+
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -370,7 +376,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //审核通过时需要校验库存，质检通知数量必须小于等于可用库存，否则审核失败，提示库存不足
         if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
-            if (!Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())) {
+            if (!Objects.equals(QcTypeEnum.STOCK_IN.getCode(),entity.getQcType())
+                    && !Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())
+                    && !Objects.equals(QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode(),entity.getQcType())
+                    && !Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(),entity.getQcType())) {
                 List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByMainIds(Collections.singletonList(dto.getId()));
                 List<String> skuIds = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
                 //质检仓库下的可用库存
@@ -426,7 +435,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = buildVariablesMap(entity);
+        approveDTO.setVariablesMap(map);
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -437,6 +447,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+    private Map<String, Object> buildVariablesMap(QcNoticeEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        QcNoticeDTO.ViewDTO viewDTO = this.view((entity.getId()));
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.QC_NOTICE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(viewDTO));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        map.put("detailList", viewDTO.getDetailList());
+        List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (qcNoticeDetails.isEmpty()) {
+            map.put("qcUserId",qcNoticeDetails.get(0).getQcUserId());
+        }
+        return map;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -926,12 +950,17 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
             }
 
-
             qcResultView.setQcType(qcInfoView.getQcType());
             qcResultView.setQcTypeName(QcTypeEnum.getByCode(qcInfoView.getQcType()));
-            qcResultView.setQcQty(samplingPlan.getSampleQty());
+
             qcResultView.setTotalQty(qcInfoView.getQcNoticeQty());
-            qcResultView.setQcSamplingRate(MathUtil.divide(new BigDecimal(samplingPlan.getSampleQty()), new BigDecimal(qcInfoView.getQcNoticeQty())));
+            if (Objects.nonNull(samplingPlan)) {
+                qcResultView.setQcQty(samplingPlan.getSampleQty());
+                qcResultView.setQcSamplingRate(MathUtil.divide(new BigDecimal(samplingPlan.getSampleQty()), new BigDecimal(qcInfoView.getQcNoticeQty())));
+            } else {
+                qcResultView.setQcQty(0);
+                qcResultView.setQcSamplingRate(BigDecimal.ZERO);
+            }
             qcInfoView.setQcResultView(qcResultView);
 
             //品类通用标准
@@ -1242,7 +1271,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(defectBatchUpdateList)) qcDefectService.updateBatchById(defectBatchUpdateList);
         if (CollUtil.isNotEmpty(attachmentIdBatchRemoveList)) wmsAttachmentService.batchRemoveAttachment(attachmentIdBatchRemoveList);
         for (Map.Entry<String, List<AttachDTO>> entry : attachmentBatchSaveMap.entrySet()) {
-            wmsAttachmentService.batchSave(entry.getValue(), WmsConstant.BAD, entry.getKey());
+            wmsAttachmentService.batchSave(entry.getValue(), WmsConstant.QC_DEFECT, entry.getKey());
         }
         if (CollUtil.isNotEmpty(detailMap.values())) qcNoticeDetailService.updateBatchById(detailMap.values());
         if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);
@@ -1570,7 +1599,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(defectBatchUpdateList)) qcDefectService.updateBatchById(defectBatchUpdateList);
         if (CollUtil.isNotEmpty(attachmentIdBatchRemoveList)) wmsAttachmentService.batchRemoveAttachment(attachmentIdBatchRemoveList);
         for (Map.Entry<String, List<AttachDTO>> entry : attachmentBatchSaveMap.entrySet()) {
-            wmsAttachmentService.batchSave(entry.getValue(), WmsConstant.BAD, entry.getKey());
+            wmsAttachmentService.batchSave(entry.getValue(), WmsConstant.QC_DEFECT, entry.getKey());
         }
         if (CollUtil.isNotEmpty(detailMap.values())) qcNoticeDetailService.updateBatchById(detailMap.values());
         if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);

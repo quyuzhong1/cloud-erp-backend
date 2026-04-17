@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -19,9 +20,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -31,7 +30,11 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -44,6 +47,7 @@ import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -52,12 +56,14 @@ import com.erp.server.wms.listener.VirtualWarehouseAllocationExcelListener;
 import com.erp.server.wms.listener.VirtualWarehouseAllocationTransferExcelListener;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.FastArrayList;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -112,6 +118,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private VirtualWarehouseAllocationServiceImpl service;
 
     @Resource
+    private WmsPushMsgService wmsPushMsgService;
+
+    @Resource
     private InventoryService inventoryService;
     @Resource
     private TransferInfoService transferInfoService;
@@ -119,6 +128,18 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private CfgRulePickingService cfgRulePickingService;
     @Resource
     private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
+
+    @Resource
+    private CfgSettingVirtualService cfgSettingVirtualService;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -399,11 +420,31 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //生成自动借调直接调拨单
             List<String> transferIdList = generateAutoTransferInfo(allocationEntity, transferWarehouseList);
 
+            List<String> parentId = new ArrayList<>();
+            if(!CollectionUtils.isEmpty(transferIdList)){
+                //查询直接调拨单是否生成推送
+                WmsPushMsgDTO.SearchDTO searchDTO = new WmsPushMsgDTO.SearchDTO();
+                searchDTO.setSourceIdList(transferIdList);
+                searchDTO.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+                searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+                List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
+                if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
+                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
+                    parentId.addAll(sourceIds);
+                }
+            }
+            //生成旺店通同步库存比对任务
+            String taskId = syncWdtVirtualWarehousePushOrderService.saveWdtInventoryTask(allocationEntity, detailEntityList);
+            if(StringUtils.isNotBlank(taskId)){
+                parentId.add(taskId);
+            }
+
+
             //校验总库存
             submitCheckQty(detailEntityList,allocationEntity);
 
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,transferIdList);
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,parentId);
 
         } else if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(allocationEntity.getType())) {
             //调拨分货
@@ -415,8 +456,27 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //调拨分货生成直接调拨单
             List<String> transferIdList = generateDirectTransferInfo(allocationEntity, detailEntityList, warehouseMap);
 
+            List<String> parentId = new ArrayList<>();
+            if(!CollectionUtils.isEmpty(transferIdList)){
+                //查询直接调拨单是否生成推送
+                WmsPushMsgDTO.SearchDTO searchDTO = new WmsPushMsgDTO.SearchDTO();
+                searchDTO.setSourceIdList(transferIdList);
+                searchDTO.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+                searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+                List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
+                if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
+                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
+                    parentId.addAll(sourceIds);
+                }
+            }
+            //生成旺店通同步库存比对任务
+            String taskId = syncWdtVirtualWarehousePushOrderService.saveWdtInventoryTask(allocationEntity, detailEntityList);
+            if(StringUtils.isNotBlank(taskId)){
+                parentId.add(taskId);
+            }
+
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, transferIdList);
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, parentId);
         } else {
             //取消分货
             submitCheckQty(detailEntityList,allocationEntity);
@@ -813,7 +873,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, pickPair);
 
         List<String> resultList = new ArrayList<>();
-        Map<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> map = transferWarehouseList.stream().collect(groupingBy(obj -> obj.getFromOrgId() + splitStr + obj.getToOrgId()));
+        Map<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> map = transferWarehouseList.stream().collect(groupingBy(obj -> obj.getFromWarehouseId() + splitStr + obj.getToWarehouseId()));
         for (Map.Entry<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>> entry : map.entrySet()) {
             List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> value = entry.getValue();
             TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
@@ -821,7 +881,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //判断组织类型
             boolean orgEquals = CharSequenceUtil.equals(value.get(0).getFromOrgId(), value.get(0).getToOrgId());
             addDTO.setType(orgEquals ? TransferTypeEnum.IN_ORG.getCode() : TransferTypeEnum.CROSS_ORG.getCode());
-            addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+            CfgSettingVirtualDTO.MatchVirtualTransferRuleDTO matchVirtualTransferRuleDTO = new  CfgSettingVirtualDTO.MatchVirtualTransferRuleDTO();
+            matchVirtualTransferRuleDTO.setInWarehouseCode(value.get(0).getToWarehouseId());
+            matchVirtualTransferRuleDTO.setOutWarehouseCode(value.get(0).getFromWarehouseId());
+            CfgSettingVirtualDTO.MatchVirtualTransferResultDTO matchTransferRule = cfgSettingVirtualService.matchTransferRule(matchVirtualTransferRuleDTO);
+            String transferDirection = TransferDirectionEnum.ORDINARY.getCode();
+            if(matchTransferRule.getIsMatch() && StringUtils.isNotBlank(matchTransferRule.getTransferDirection())){
+                transferDirection = matchTransferRule.getTransferDirection();
+            }
+            addDTO.setTransferDirection(transferDirection);
             addDTO.setInOrgId(value.get(0).getToOrgId());
             addDTO.setOutOrgId(value.get(0).getFromOrgId());
             addDTO.setSourceType(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());

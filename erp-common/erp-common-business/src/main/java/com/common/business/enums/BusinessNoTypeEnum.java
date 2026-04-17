@@ -1,6 +1,7 @@
 package com.common.business.enums;
 
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.RedisCacheConstants;
 import lombok.AllArgsConstructor;
 
 /**
@@ -183,7 +184,7 @@ public enum BusinessNoTypeEnum {
     private String prefix;
 
     // redis单号key
-    public static final String REDIS_GEN_KEY = "gen_doc_no";
+    public static final String REDIS_GEN_KEY = RedisCacheConstants.REDIS_GEN_KEY;
 
     // 补0位数
     public static final Integer FILL_0_DIGIT = 5;

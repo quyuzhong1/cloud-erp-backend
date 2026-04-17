@@ -7,6 +7,8 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.threadlocal.UserContext;
@@ -64,6 +66,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_CER
 public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificateMapper, ProductCertificateEntity>
     implements ProductCertificateService {
 
+    private static final String PRODUCT_CERTIFICATE_LOCK_BIZ = "plm:pc";
+
     @Resource
     private ProductCertificateMapper productCertificateMapper;
 
@@ -103,9 +107,15 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void add(ProductCertificateDTO.AddDTO dto) {
         List<ProductCertificateEntity> resultList = handleAdd(dto);
+        List<String> lockKeys = buildCertificateLockKeys(resultList);
+        ApplicationContextUtils.getBean(ProductCertificateServiceImpl.class).addWithLock(lockKeys, resultList);
+    }
+
+    @DistributeLocker(businessType = PRODUCT_CERTIFICATE_LOCK_BIZ, keyName = "lockKeys", waiteTime = 60)
+    @Transactional(rollbackFor = Exception.class)
+    public void addWithLock(List<String> lockKeys, List<ProductCertificateEntity> resultList) {
         // 新增场景必须保证每条证书都有有效文件，避免主表落库但无附件
         checkAddFile(resultList);
 
@@ -158,7 +168,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void productAddOrUpdate(List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList) {
         //结果集
         List<ProductCertificateEntity> resultList = new ArrayList<>();
@@ -180,6 +189,17 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setProductId(productDetailEntity.getProductId());
             resultList.add(entity);
         }
+        List<String> lockKeys = buildCertificateLockKeys(resultList);
+        ApplicationContextUtils.getBean(ProductCertificateServiceImpl.class)
+                .productAddOrUpdateWithLock(lockKeys, resultList, productCertificateList, productDetailEntityList);
+    }
+
+    @DistributeLocker(businessType = PRODUCT_CERTIFICATE_LOCK_BIZ, keyName = "lockKeys", waiteTime = 60)
+    @Transactional(rollbackFor = Exception.class)
+    public void productAddOrUpdateWithLock(List<String> lockKeys,
+                                           List<ProductCertificateEntity> resultList,
+                                           List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList,
+                                           List<ProductDetailEntity> productDetailEntityList) {
         // 与证书管理上传保持一致：新增/编辑时都校验证书项目唯一性（编辑排除自身）
         checkProductCertificateForProductAddOrUpdate(resultList, productDetailEntityList);
         //新增数据
@@ -374,8 +394,10 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         List<ProductCertificateExcelDTO> errorList = excelListenerUtil.getErrorList();
 
         List<ProductCertificateExcelDTO> successList = excelListenerUtil.getSuccessList();
+        List<String> skuNoList = successList.stream().map(ProductCertificateExcelDTO::getSkuNo).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listBySkuNoList(skuNoList);
         //处理验证成功数据
-        handleImportSuccessList(successList,errorList);
+        handleImportSuccessList(successList, errorList, skuList);
 
         if (errorList.size() > 0) {
             StringBuilder sb = new StringBuilder();
@@ -401,18 +423,20 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * @date: 2024/2/20 10:29
      * @param successList
      * @param errorList
+     * @param skuList
      */
-    private void handleImportSuccessList (List<ProductCertificateExcelDTO> successList,List<ProductCertificateExcelDTO> errorList) {
+    private void handleImportSuccessList (List<ProductCertificateExcelDTO> successList,
+                                          List<ProductCertificateExcelDTO> errorList,
+                                          List<ProductDetailEntity> skuList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        List<String> skuNoList = successList.stream().map(ProductCertificateExcelDTO::getSkuNo).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listBySkuNoList(skuNoList);
-        
-        //认证项目
-        List<String> dictProductList = successList.stream().map(obj -> ProductCertificateProjectEnum.getCode(obj.getDictProjectName())).distinct().collect(Collectors.toList());
-        List<String> skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-        List<ProductCertificateEntity> productCertificateList = listBySkuListAndDictProductList(skuIdList, dictProductList);
+        Map<String, ProductDetailEntity> skuNoMap = skuList.stream()
+                .filter(obj -> !isBlank(obj.getSkuNo()))
+                .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, Function.identity(), (left, right) -> left));
+        Map<String, String> skuIdSkuNoMap = skuList.stream()
+                .filter(obj -> !isBlank(obj.getId()))
+                .collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getSkuNo, (left, right) -> left));
 
         //产品认证
         List<BasicDictEntity> productAttestationList = basicDictService.listByType(BasicDictTypeEnum.PRODUCT_ATTESTATION.getCode());
@@ -420,6 +444,10 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         List<BasicDictEntity> transportAttestationList = basicDictService.listByType(BasicDictTypeEnum.TRANSPORT_ATTESTATION.getCode());
         //其他认证
         List<BasicDictEntity> otherAttestationList = basicDictService.listByType(BasicDictTypeEnum.OTHER_ATTESTATION.getCode());
+        //配置信息
+        Map<SettingEnum, String> cfgSettingList = dmpTaskFeign.getCfgSettingList(SettingEnum.URL_CHANGE);
+        // 批量拉取一次当前已存在的有效证书键，避免循环里重复查整批附件
+        Set<String> validCertificateKeySet = loadValidCertificateKeySet(skuList, successList);
 
         //新增的数据
         List<ProductCertificateExcelDTO> resultList = new ArrayList<>();
@@ -452,7 +480,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 }
             }
             //产品信息
-            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+            ProductDetailEntity productDetailEntity = skuNoMap.get(excelDTO.getSkuNo());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
                 errorMsgList.add("系统中未找到SKU");
             }
@@ -465,9 +493,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                     errorMsgList.add(format(ApiError.PRODUCT_CERTIFICATE_EXISTS.getMsg(),excelDTO.getSkuNo(), excelDTO.getDictProjectName()));
                 }
             }
-            //配置信息
-            Map<SettingEnum, String> cfgSettingList = dmpTaskFeign.getCfgSettingList(SettingEnum.URL_CHANGE);
-
             String pathUrl = excelDTO.getPathUrl();
             MultipartFile multipartFile = null;
             try {
@@ -502,7 +527,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             entity.setRemark(excelDTO.getRemark());
             //数据验证
             try {
-                checkProductCertificateParam(Arrays.asList(entity),skuList,productCertificateList);
+                checkImportCertificateExists(entity, skuIdSkuNoMap, validCertificateKeySet);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
@@ -513,18 +538,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 continue;
             }
             try {
-                //新增数据
-                this.saveOrUpdate(entity);
-                //上传附件
-                uploadFile(Arrays.asList(entity));
-                //操作日志
-                operateLogService.addSysLogByBatchSave(Collections.singletonList(
-                        new OperateLogEntity().setContent("新增了一个【产品证书】")
-                                .setBusinessId(entity.getSkuId())
-                                .setClassPath(String.valueOf(ProductCertificateEntity.class))
-                                .setPid(entity.getId())
-                                .setOperation("新增操作")
-                ));
+                ApplicationContextUtils.getBean(ProductCertificateServiceImpl.class)
+                        .saveImportCertificateWithLock(buildCertificateLockKey(entity.getSkuId(), entity.getDictProject()),
+                                entity,
+                                skuIdSkuNoMap);
+                if (!ProductCertificateProjectEnum.OTHER_CERTIFICATE.getCode().equals(entity.getDictProject())) {
+                    validCertificateKeySet.add(buildCertificateLockKey(entity.getSkuId(), entity.getDictProject()));
+                }
                 resultList.add(excelDTO);
             } catch (Exception e) {
                 if (!isBlank(entity.getId())) {
@@ -535,6 +555,98 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 errorList.add(excelDTO);
             }
         }
+    }
+
+    @DistributeLocker(businessType = PRODUCT_CERTIFICATE_LOCK_BIZ, keyName = "lockKey", waiteTime = 60)
+    @Transactional(rollbackFor = Exception.class)
+    public void saveImportCertificateWithLock(String lockKey,
+                                              ProductCertificateEntity entity,
+                                              Map<String, String> skuIdSkuNoMap) {
+        checkImportCertificateExists(entity, skuIdSkuNoMap, null);
+        //新增数据
+        this.saveOrUpdate(entity);
+        //上传附件
+        uploadFile(Collections.singletonList(entity));
+        //操作日志
+        operateLogService.addSysLogByBatchSave(Collections.singletonList(
+                new OperateLogEntity().setContent("新增了一个【产品证书】")
+                        .setBusinessId(entity.getSkuId())
+                        .setClassPath(String.valueOf(ProductCertificateEntity.class))
+                        .setPid(entity.getId())
+                        .setOperation("新增操作")
+        ));
+    }
+
+    private List<String> buildCertificateLockKeys(List<ProductCertificateEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return Collections.emptyList();
+        }
+        return resultList.stream()
+                .map(entity -> buildCertificateLockKey(entity.getSkuId(), entity.getDictProject()))
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    private String buildCertificateLockKey(String skuId, String dictProject) {
+        if (isBlank(skuId) || isBlank(dictProject)) {
+            return null;
+        }
+        return skuId.concat(":").concat(dictProject);
+    }
+
+    private Set<String> loadValidCertificateKeySet(List<ProductDetailEntity> skuList,
+                                                   List<ProductCertificateExcelDTO> successList) {
+        Set<String> validCertificateKeySet = new HashSet<>();
+        if (CollectionUtils.isEmpty(skuList) || CollectionUtils.isEmpty(successList)) {
+            return validCertificateKeySet;
+        }
+        List<String> skuIdList = skuList.stream()
+                .map(ProductDetailEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> dictProjectList = successList.stream()
+                .map(ProductCertificateExcelDTO::getDictProjectName)
+                .map(ProductCertificateProjectEnum::getCode)
+                .filter(StringUtils::isNotBlank)
+                .filter(dictProject -> !ProductCertificateProjectEnum.OTHER_CERTIFICATE.getCode().equals(dictProject))
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIdList) || CollectionUtils.isEmpty(dictProjectList)) {
+            return validCertificateKeySet;
+        }
+        List<ProductCertificateEntity> productCertificateList = productCertificateMapper
+                .listValidCertificateKeys(skuIdList, dictProjectList);
+        if (CollectionUtils.isEmpty(productCertificateList)) {
+            return validCertificateKeySet;
+        }
+        productCertificateList.stream()
+                .map(obj -> buildCertificateLockKey(obj.getSkuId(), obj.getDictProject()))
+                .filter(StringUtils::isNotBlank)
+                .forEach(validCertificateKeySet::add);
+        return validCertificateKeySet;
+    }
+
+    private void checkImportCertificateExists(ProductCertificateEntity entity,
+                                              Map<String, String> skuIdSkuNoMap,
+                                              Set<String> validCertificateKeySet) {
+        if (ObjectUtils.isEmpty(entity)
+                || ProductCertificateProjectEnum.OTHER_CERTIFICATE.getCode().equals(entity.getDictProject())) {
+            return;
+        }
+        String certificateKey = buildCertificateLockKey(entity.getSkuId(), entity.getDictProject());
+        boolean exists = CollectionUtils.isNotEmpty(validCertificateKeySet)
+                ? validCertificateKeySet.contains(certificateKey)
+                : productCertificateMapper.existsValidCertificate(entity.getSkuId(), entity.getDictProject(), entity.getId());
+        if (!exists) {
+            return;
+        }
+        String skuNo = ObjectUtils.isEmpty(skuIdSkuNoMap) ? "" : skuIdSkuNoMap.getOrDefault(entity.getSkuId(), "");
+        throw new ServiceException(ApiError.PRODUCT_CERTIFICATE_EXISTS,
+                skuNo,
+                ProductCertificateProjectEnum.getName(entity.getDictProject()));
     }
 
     /**

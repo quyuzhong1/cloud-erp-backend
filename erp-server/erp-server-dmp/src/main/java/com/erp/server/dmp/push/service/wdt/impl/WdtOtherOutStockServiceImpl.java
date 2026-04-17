@@ -31,8 +31,9 @@ import java.util.stream.Collectors;
 
 /**
  * 旺店通其他出库单消费
- * @date 2024-05-24
+ *
  * @author tanmujin
+ * @date 2024-05-24
  */
 @Component
 @Slf4j
@@ -52,7 +53,8 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
         }
 
         StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
-        Map<String, Object> requestMap = JSON.parseObject(JSON.toJSONString(stockoutRequest), new TypeReference<Map<String, Object>>() {});
+        Map<String, Object> requestMap = JSON.parseObject(JSON.toJSONString(stockoutRequest), new TypeReference<Map<String, Object>>() {
+        });
         Map<String, Object> request = commonService.makeApiFieldMap(requestMap, platformEntity.getId(), ApiModuleTypeEnum.WDT_OTHER_OUT_STOCK.getCode());
         CreateOtherStockoutResponse response = null;
         try {
@@ -60,21 +62,21 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
         } catch (WdtErpException e) {
             e.printStackTrace();
             StringBuilder message = new StringBuilder(e.getMessage());
-            if(e.getMessage().contains("货位不存在")){
+            if (e.getMessage().contains("货位不存在")) {
                 String positionNo = e.getMessage().replace("货位不存在", "").trim();
                 List<CreateOtherStockoutRequest.GoodsList> goodsList = stockoutRequest.getGoodsList();
                 List<String> skuList = goodsList.stream().filter(item -> item.getPositionNo().equals(positionNo)).map(CreateOtherStockoutRequest.GoodsList::getSpecNo).distinct().collect(Collectors.toList());
                 message.append("，受影响SKU：").append(String.join(",", skuList));
             }
-            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他出库单异常: %s", message));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单异常: {}", message);
         }
-        if(response.getStatus() != 0){
+        if (response.getStatus() != 0) {
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockoutRequest, response);
-            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他出库单失败: %s, %s, %s", stockoutRequest.getOuterNo(), response.getStatus(), response.getMessage()));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单失败: {}, {}, {}", stockoutRequest.getOuterNo(), response.getStatus(), response.getMessage());
         }
-        if(null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()){
+        if (null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()) {
             log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockoutRequest, response);
-            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他出库单审核失败: %s, %s", response.getData().getStatus(), response.getData().getMessage()));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单审核失败: {}, {}", response.getData().getStatus(), response.getData().getMessage());
         }
     }
 
@@ -111,16 +113,16 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
             response = stockExternalOutApi.createOrder(request.get("order"), request.get("order_details"), request.get("is_check"));
         } catch (WdtErpException e) {
             log.error("推送旺店通其他出库单失败:{}", e.getMessage(), e);
-            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他出库单失败: %s", e.getMessage()));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单失败:{}", e.getMessage());
         }
-        if(response.getStatus() != 0){
+        if (response.getStatus() != 0) {
             log.error("推送旺店通其他出库单失败:{}", response.getMessage());
-            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他出库单失败: %s", response.getMessage()));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单失败:{}", response.getMessage());
         }
         Map<String, Object> data = response.getData();
-        if(ObjectUtils.isNotEmpty(data) && !data.get("status").equals("0")) {
+        if (ObjectUtils.isNotEmpty(data) && !data.get("status").equals("0")) {
             log.error("推送旺店通其他出库单异常:{}", data.get("message"));
-            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他入库单异常: %s", data.get("message")));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单异常:{}", data.get("message"));
         }
     }
 

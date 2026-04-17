@@ -296,6 +296,8 @@ public enum ApiError implements Serializable {
     FILE_URL_INVALID(2443, "文件url格式错误"),
     FILE_UNSUPPORTED_TYPE(2444, "不支持的文件类型【{0}】"),
     FILE_DOWNLOAD_FAILED(2445, "文件下载失败【{0}】"),
+    FILE_SHEET_NOT_EXIST(2446,"未找到配置的sheet页名称"),
+
     /**
      * 单据相关提示 从3000 - 3500
      */
@@ -1823,7 +1825,7 @@ public enum ApiError implements Serializable {
     QC_STANDARD_SKU_NOT_FOUND(11140,  "SKU【{0}】未查得质检标准"),
     QC_STANDARD_NOT_FOUND(11141, "质检标准不存在"),
     QC_STANDARD_SKU_EXISTS(11142, "该SKU已存在质检标准"),
-    QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”关键字或对应数值"),
+    QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”对应值"),
     QC_STANDARD_IMPORT_DETAIL_NOT_FOUND(11144, "未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）"),
     QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY(16006,"申请质检数量不能大于剩余送货数量，SKU【{0}】剩余送货数量：【{1}】"),
     QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION(16007,"待发货来源质检申请单不允许操作"),
