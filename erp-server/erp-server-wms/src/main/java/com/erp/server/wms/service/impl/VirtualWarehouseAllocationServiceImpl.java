@@ -431,8 +431,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
                 List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
                 if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
-                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
-                    parentId.addAll(sourceIds);
+                    parentId.addAll(transferIdList);
                 }
             }
             //生成旺店通同步库存比对任务
@@ -469,8 +468,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 searchDTO.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
                 List<WmsPushMsgEntity> wmsPushMsgEntityList = wmsPushMsgService.searchByDTO(searchDTO);
                 if(!CollectionUtils.isEmpty(wmsPushMsgEntityList)){
-                    List<String> sourceIds = wmsPushMsgEntityList.stream().map(WmsPushMsgEntity::getSourceId).collect(Collectors.toList());
-                    parentId.addAll(sourceIds);
+                    parentId.addAll(transferIdList);
                 }
             }
             //生成旺店通同步库存比对任务
