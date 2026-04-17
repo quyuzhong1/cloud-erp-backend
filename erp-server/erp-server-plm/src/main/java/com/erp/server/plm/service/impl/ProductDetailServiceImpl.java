@@ -3481,9 +3481,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (costEntity.getTargetTaxCost() == null) {
                 throw new ServiceException(ApiError.PRODUCT_TARGET_COST_REQUIRED);
             }
-            if (costEntity.getRetailPrice() == null) {
-                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_REQUIRED);
-            }
+//            if (costEntity.getRetailPrice() == null) {
+//                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_REQUIRED);
+//            }
             if (costEntity.getMassCost() == null) {
                 throw new ServiceException(ApiError.PRODUCT_MASS_PRODUCTION_COST_REQUIRED);
             }

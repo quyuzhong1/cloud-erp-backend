@@ -4,6 +4,10 @@ MAINTAINER sdc-erp
 # 设置工作目录
 WORKDIR /app
 
+# 安装必要工具：curl jq（轻量且无交互）
+RUN apt-get update && apt-get install -y curl jq netcat-traditional && rm -rf /var/lib/apt/lists/*
+
+
 # 将构建的JAR文件复制到容器中的工作目录
 COPY target/*jar /app/app.jar
 
