@@ -507,7 +507,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
     	        warnMsgInfo.setTitle(skuStdSettingEnum.getName());
     	        warnMsgInfo.setTableName(tableName);
-    	        warnMsgInfo.setKeyInfo("旺店通销售出库单分摊金额时，如下SKU未维护" + skuStdSettingEnum.getName() + ":" + suiteSkuSet.stream().collect(Collectors.joining("、")));
+    	        warnMsgInfo.setKeyInfo("旺店通销售出库单分摊金额时，如下SKU未维护" + skuStdSettingEnum.getName() + ":" + suiteSkuSet.stream().collect(Collectors.joining("、" , "{" , "}")));
     	        warnMsgInfo.setTableId("无");
     	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
     	        mqProducerService.sendWarnMsg(warnMsgInfo);
@@ -546,7 +546,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 							wdtSoOutStockDetailDTO.setAmount(amount);
     					}else {
     						wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(totalAllAmountLocalCurrency.subtract(currTotalAllAmountLocalCurrency));
-    						wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(totalAmount.subtract(currTotalAmount));
+    						wdtSoOutStockDetailDTO.setAmount(totalAmount.subtract(currTotalAmount));
     					}
     					wdtSoOutStockDetailDTO.setPrice(wdtSoOutStockDetailDTO.getAmount().divide(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty()), 4, RoundingMode.HALF_UP));
     				}
