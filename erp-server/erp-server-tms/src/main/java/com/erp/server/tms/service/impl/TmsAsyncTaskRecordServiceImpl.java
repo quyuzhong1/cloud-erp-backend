@@ -14,7 +14,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SystemCodeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -27,6 +27,7 @@ import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordBusinessTypeEnum;
 import com.erp.model.tms.enums.TmsAsyncTaskRecordExecTypeEnum;
 import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.model.tms.enums.CfgSettingEnum;
@@ -134,23 +135,23 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if(Objects.nonNull(cfgSettingEntity) && Objects.nonNull(cfgSettingEntity.getDataJson())){
             CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
             //头程对账单
-            if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
             }
             //报关对账
-            if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
+            if(Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
             }
             //头程分摊
-            if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
             }
             //小包分摊
-            if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
             }
             //中转分摊
-            if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
             }
         }
@@ -269,8 +270,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             return;
         }
         for (TmsAsyncTaskRecordDTO.ListDTO data : list) {
-            data.setSysModuleName("TMS系统");
-            data.setBusinessTypeName(SourceTypeEnum.getName(data.getBusinessType()));
+            data.setSysModuleName(SystemCodeEnum.getName(data.getSysModule()));
+
+            data.setBusinessTypeName(TmsAsyncTaskRecordBusinessTypeEnum.getName(data.getBusinessType()));
             data.setStatusName(TmsAsyncTaskRecordStatusEnum.getName(data.getStatus()));
             data.setExecTypeName(TmsAsyncTaskRecordExecTypeEnum.getName(data.getExecType()));
         }
@@ -338,23 +340,23 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
             String businessType = entity.getBusinessType();
             //头程对账单
-            if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
             }
             //报关对账
-            if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
             }
             //头程分摊
-            if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
             }
             //小包分摊
-            if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
             }
             //中转分摊
-            if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
             }
         }
@@ -435,23 +437,23 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
             String businessType = entity.getBusinessType();
             //头程对账单
-            if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
             }
             //报关对账
-            if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
             }
             //头程分摊
-            if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
             }
             //小包分摊
-            if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
             }
             //中转分摊
-            if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
+            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
                 execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
             }
         }
@@ -655,7 +657,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                     .withSecond(0)
                     .withNano(0);
 
-            String businessType = SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode();
+            String businessType = TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode();
 
             Boolean isExist = isExist(businessType, startTimeStr);
             if (!isExist) {
@@ -700,7 +702,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                     .withSecond(0)
                     .withNano(0);
 
-            String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
+            String businessType = TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
 
             Boolean isExist = isExist(businessType, startTimeStr);
             if (!isExist) {
@@ -754,7 +756,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             log.error("[生成头程对账单] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getDeclareReconciliationType());
             return;
         }
-        String businessType = SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();
+        String businessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();
         //根据生成日期作为任务的开始时间
         Boolean isExist = isExist(businessType, startTimeStr);
         if (!isExist) {
@@ -804,7 +806,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             log.error("[生成头程对账单] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getFirstMileReconciliationType());
             return;
         }
-        String businessType = SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode();
+        String businessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode();
 
         //根据生成日期作为任务的开始时间
         Boolean isExist = isExist(businessType, startTimeStr);
@@ -824,7 +826,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         LocalDate reportPeriodMonth = null;
         //自然月生成
         if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getFirstMileAllocationType())) {
-            String businessType = SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode();
+            String businessType = TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode();
             //生成日期1-31
             Integer firstMileAllocationDate = dto.getFirstMileAllocationDate();
             //根据生成日期作为任务的开始时间

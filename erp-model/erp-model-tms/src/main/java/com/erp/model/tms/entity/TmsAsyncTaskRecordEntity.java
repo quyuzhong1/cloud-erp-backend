@@ -37,7 +37,7 @@ public class TmsAsyncTaskRecordEntity extends BaseEntity<TmsAsyncTaskRecordEntit
     @TableField("sys_module")
     private String sysModule;
     /**
-    * 单据名称
+    * 单据名称  TmsAsyncTaskRecordBusinessTypeEnum
     */
     @TableField("business_type")
     private String businessType;
@@ -62,7 +62,7 @@ public class TmsAsyncTaskRecordEntity extends BaseEntity<TmsAsyncTaskRecordEntit
     @TableField("retry_times")
     private Integer retryTimes;
     /**
-    * 状态：pending=待执行,ing=进行中,finish=已完成,  failed=失败  枚举：AsyncTaskRecordStatusEnum
+    * 状态：pending=待执行,ing=进行中,finish=已完成,  failed=失败  枚举：TmsAsyncTaskRecordStatusEnum
     */
     @TableField("status")
     private String status;
