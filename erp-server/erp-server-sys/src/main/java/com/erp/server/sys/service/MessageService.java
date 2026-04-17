@@ -66,6 +66,11 @@ public interface MessageService extends SuperService<MessageEntity> {
     MessageDTO.NoticeDTO getLatestUnreadNotice(String userId, String application);
 
     /**
+     * 获取指定用户在指定应用端的最新未读升级通知
+     */
+    MessageDTO.NoticeDTO getLatestUnreadUpgradeNotice(String userId, String application);
+
+    /**
      * 关闭消息通知
      * @Author Luo_WG
      * @Date 2023/8/22 12:18

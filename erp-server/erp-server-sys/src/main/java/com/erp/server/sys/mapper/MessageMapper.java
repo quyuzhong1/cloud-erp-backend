@@ -50,6 +50,8 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
 
     MessageDTO.NoticeDTO getLatestUnreadNoticeByApplication(@Param("userId") String userId, @Param("application") String application);
 
+    MessageDTO.NoticeDTO getLatestUnreadUpgradeNoticeByApplication(@Param("userId") String userId, @Param("application") String application);
+
     IPage<SysVersionDTO.ListDTO> pagingSysVersion(Page query, @Param("params") SysVersionDTO.PagingParamDTO params);
 
     IPage<MessageDTO.ListHistoryMessageDTO> pagingHistoryMessage(Page query, @Param("params") MessageDTO.HistoryMessagePagingParamDTO params, @Param("userId") String userId);
