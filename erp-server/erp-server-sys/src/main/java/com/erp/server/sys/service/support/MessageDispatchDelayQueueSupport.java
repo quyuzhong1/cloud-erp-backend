@@ -4,6 +4,7 @@ import com.erp.server.sys.service.MessageDispatchTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBlockingQueue;
 import org.redisson.api.RDelayedQueue;
+import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 public class MessageDispatchDelayQueueSupport {
 
     private static final String QUEUE_NAME = "sys:message:dispatch:delay:queue";
+    private static final String QUEUED_TASK_MAP_KEY = "sys:message:dispatch:delay:queued";
+    private static final long QUEUED_MARKER_EXTRA_SECONDS = 7200L;
 
     @Resource
     private RedissonClient redissonClient;
@@ -46,6 +49,7 @@ public class MessageDispatchDelayQueueSupport {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     String taskId = blockingQueue.take();
+                    clearQueuedMarker(taskId);
                     MessageDispatchTaskService messageDispatchTaskService = messageDispatchTaskServiceProvider.getIfAvailable();
                     if (messageDispatchTaskService == null) {
                         log.warn("MessageDispatchTaskService not available, skip delayed task consume, taskId={}", taskId);
@@ -71,9 +75,56 @@ public class MessageDispatchDelayQueueSupport {
         if (taskId == null || executeTime == null) {
             return;
         }
-        long delayMs = Math.max(Duration.between(LocalDateTime.now(), executeTime).toMillis(), 0L);
         RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(QUEUE_NAME);
         RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingQueue);
+        removeQueuedTask(taskId, blockingQueue, delayedQueue);
+        long delayMs = Math.max(Duration.between(LocalDateTime.now(), executeTime).toMillis(), 0L);
         delayedQueue.offer(taskId, delayMs, TimeUnit.MILLISECONDS);
+        markQueued(taskId, executeTime);
+    }
+
+    public void removeQueuedTask(String taskId) {
+        if (taskId == null) {
+            return;
+        }
+        RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(QUEUE_NAME);
+        RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingQueue);
+        removeQueuedTask(taskId, blockingQueue, delayedQueue);
+    }
+
+    public boolean isQueuedForExecuteTime(String taskId, LocalDateTime executeTime) {
+        if (taskId == null || executeTime == null) {
+            return false;
+        }
+        Long queuedEpoch = getQueuedTaskMap().get(taskId);
+        return queuedEpoch != null && queuedEpoch.equals(executeTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli());
+    }
+
+    private void removeQueuedTask(String taskId, RBlockingQueue<String> blockingQueue, RDelayedQueue<String> delayedQueue) {
+        boolean removed = false;
+        while (delayedQueue.remove(taskId)) {
+            removed = true;
+        }
+        while (blockingQueue.remove(taskId)) {
+            removed = true;
+        }
+        if (removed) {
+            log.info("Remove queued delayed message dispatch task, taskId={}", taskId);
+        }
+        clearQueuedMarker(taskId);
+    }
+
+    private void markQueued(String taskId, LocalDateTime executeTime) {
+        long executeEpochMs = executeTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long ttlSeconds = Math.max(Duration.between(LocalDateTime.now(), executeTime).getSeconds(), 0L) + QUEUED_MARKER_EXTRA_SECONDS;
+        getQueuedTaskMap().fastPut(taskId, executeEpochMs, ttlSeconds, TimeUnit.SECONDS);
+    }
+
+    private void clearQueuedMarker(String taskId) {
+        getQueuedTaskMap().remove(taskId);
+    }
+
+    private RMapCache<String, Long> getQueuedTaskMap() {
+        return redissonClient.getMapCache(QUEUED_TASK_MAP_KEY);
     }
 }

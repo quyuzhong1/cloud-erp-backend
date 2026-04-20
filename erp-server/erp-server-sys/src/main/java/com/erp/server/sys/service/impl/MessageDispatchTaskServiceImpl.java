@@ -31,6 +31,7 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
 
     private static final int MAX_RETRY_COUNT = 3;
     private static final int[] RETRY_MINUTES = {1, 5, 15};
+    private static final long DELAY_QUEUE_PREHEAT_WINDOW_MINUTES = 60L;
 
     @Resource
     private MessageMapper messageMapper;
@@ -109,6 +110,18 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
     }
 
     @Override
+    public List<String> listPreheatTaskIds(LocalDateTime executeBefore, Integer limit) {
+        if (executeBefore == null) {
+            return new ArrayList<>();
+        }
+        List<MessageDispatchTaskEntity> tasks = baseMapper.listPreheatTasks(executeBefore, limit);
+        if (CollectionUtils.isEmpty(tasks)) {
+            return new ArrayList<>();
+        }
+        return tasks.stream().map(MessageDispatchTaskEntity::getId).collect(Collectors.toList());
+    }
+
+    @Override
     @Async("thirdNoticePushExecutor")
     public void executeTaskAsync(String taskId) {
         MessageDispatchTaskEntity task = this.getById(taskId);
@@ -138,8 +151,28 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
         if (taskId == null) {
             return;
         }
-        LocalDateTime finalExecuteTime = executeTime == null ? LocalDateTime.now() : executeTime;
+        LocalDateTime finalExecuteTime = executeTime;
+        if (finalExecuteTime == null) {
+            MessageDispatchTaskEntity taskEntity = this.getById(taskId);
+            if (taskEntity != null) {
+                finalExecuteTime = taskEntity.getExecuteTime();
+            }
+        }
+        if (finalExecuteTime == null) {
+            finalExecuteTime = LocalDateTime.now();
+        }
+        if (!shouldEnterDelayQueue(finalExecuteTime)) {
+            messageDispatchDelayQueueSupport.removeQueuedTask(taskId);
+            log.info("Skip queue distant message dispatch task, taskId={}, executeTime={}, windowMinutes={}",
+                    taskId, finalExecuteTime, DELAY_QUEUE_PREHEAT_WINDOW_MINUTES);
+            return;
+        }
         try {
+            if (messageDispatchDelayQueueSupport.isQueuedForExecuteTime(taskId, finalExecuteTime)) {
+                log.info("Skip queue message dispatch task because same executeTime already queued, taskId={}, executeTime={}",
+                        taskId, finalExecuteTime);
+                return;
+            }
             messageDispatchDelayQueueSupport.offer(taskId, finalExecuteTime);
             log.info("Queue message dispatch task success, taskId={}, executeTime={}", taskId, finalExecuteTime);
         } catch (Exception e) {
@@ -222,6 +255,10 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
             return false;
         }
         return task.getNextRetryTime() == null || !task.getNextRetryTime().isAfter(LocalDateTime.now());
+    }
+
+    private boolean shouldEnterDelayQueue(LocalDateTime executeTime) {
+        return !executeTime.isAfter(LocalDateTime.now().plusMinutes(DELAY_QUEUE_PREHEAT_WINDOW_MINUTES));
     }
 
     private void markSuccess(String taskId) {
