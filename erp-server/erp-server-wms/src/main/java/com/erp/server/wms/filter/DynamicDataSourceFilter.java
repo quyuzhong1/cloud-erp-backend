@@ -22,10 +22,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,6 +46,7 @@ public class DynamicDataSourceFilter implements Filter {
 			log.error("获取动态数据源配置错误" , e);
 		}
     	if(dorisQuerySettingDTO == null) {
+    		validateArchive(null);
     		chain.doFilter(request, response);
     	}else {
     		ServletRequest requestWrapper = null;
@@ -52,6 +56,7 @@ public class DynamicDataSourceFilter implements Filter {
             //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
             // 在chain.doFiler方法中传递新的request对象
             if(requestWrapper == null) {
+            	validateArchive(null);
                 chain.doFilter(request, response);
             } else {
             	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
@@ -61,11 +66,13 @@ public class DynamicDataSourceFilter implements Filter {
     				log.error("获取动态数据源类型错误" , e);
     			}
                 if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
+                	validateArchive(dynamicDataSourceType);
                 	chain.doFilter(requestWrapper, response);
                 }else {
                 	try {
                 		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
         	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
+        	            validateArchive(dynamicDataSourceType);
         	            chain.doFilter(requestWrapper, response);
                     } finally {
                         DynamicDataSourceContextHolder.poll();
@@ -73,6 +80,15 @@ public class DynamicDataSourceFilter implements Filter {
                     }
                 }
             }
+    	}
+    }
+    
+    private void validateArchive(DynamicDataSourceTypeEnum dynamicDataSourceType) {
+    	if(!BusinessCommonConstants.isArchive()) {
+    		return;
+    	}
+    	if(DynamicDataSourceTypeEnum.ARCHIVE_DORIS != dynamicDataSourceType) {
+    		throw new ServiceException(ApiError.AUTH_ARCHIVE_DENIED);
     	}
     }
     

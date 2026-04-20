@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.core.constant.EnumMessage;
 
@@ -38,7 +39,15 @@ public class DorisQuerySettingDTO {
 	 */
 	private Map<String, List<String>> cfgField;
 	
+	/**
+	 *归档环境 数据源名称
+	 */
+	private String archiveDataSourceName;
+	
 	public DynamicDataSourceTypeEnum getDynamicDataSourceType(String requestBody) {
+		if(BusinessCommonConstants.isArchive()) {
+			return EnumMessage.getByCode(DynamicDataSourceTypeEnum.class , archiveDataSourceName);
+		}
 		if(StringUtils.isBlank(dataSourceName) || DynamicDataSourceTypeEnum.POSTGRES.getCode().equals(dataSourceName)) {
 			return DynamicDataSourceTypeEnum.POSTGRES;
 		}
