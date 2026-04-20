@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.support;
 
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.server.sys.service.MessageDispatchTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBlockingQueue;
@@ -23,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class MessageDispatchDelayQueueSupport {
 
-    private static final String QUEUE_NAME = "sys:message:dispatch:delay:queue";
-    private static final String QUEUED_TASK_MAP_KEY = "sys:message:dispatch:delay:queued";
     private static final long QUEUED_MARKER_EXTRA_SECONDS = 7200L;
 
     @Resource
@@ -45,7 +44,7 @@ public class MessageDispatchDelayQueueSupport {
     @PostConstruct
     public void startConsumer() {
         consumerExecutor.submit(() -> {
-            RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(QUEUE_NAME);
+            RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(RedisCacheConstants.SYS_MESSAGE_DISPATCH_DELAY_QUEUE);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     String taskId = blockingQueue.take();
@@ -75,7 +74,7 @@ public class MessageDispatchDelayQueueSupport {
         if (taskId == null || executeTime == null) {
             return;
         }
-        RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(QUEUE_NAME);
+        RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(RedisCacheConstants.SYS_MESSAGE_DISPATCH_DELAY_QUEUE);
         RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingQueue);
         removeQueuedTask(taskId, blockingQueue, delayedQueue);
         long delayMs = Math.max(Duration.between(LocalDateTime.now(), executeTime).toMillis(), 0L);
@@ -87,7 +86,7 @@ public class MessageDispatchDelayQueueSupport {
         if (taskId == null) {
             return;
         }
-        RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(QUEUE_NAME);
+        RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(RedisCacheConstants.SYS_MESSAGE_DISPATCH_DELAY_QUEUE);
         RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingQueue);
         removeQueuedTask(taskId, blockingQueue, delayedQueue);
     }
@@ -125,6 +124,6 @@ public class MessageDispatchDelayQueueSupport {
     }
 
     private RMapCache<String, Long> getQueuedTaskMap() {
-        return redissonClient.getMapCache(QUEUED_TASK_MAP_KEY);
+        return redissonClient.getMapCache(RedisCacheConstants.SYS_MESSAGE_DISPATCH_DELAY_QUEUED);
     }
 }

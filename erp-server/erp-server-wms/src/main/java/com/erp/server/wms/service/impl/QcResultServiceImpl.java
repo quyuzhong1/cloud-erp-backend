@@ -49,6 +49,7 @@ import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcResultService;
 import com.erp.server.wms.service.WmsAttachmentService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -278,7 +279,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             List<QcResultEntity> qcResultEntities = this.lambdaQuery()
                     .in(QcResultEntity::getMainId, ids)
                     .list();
-            
+
             for (QcResultEntity entity : qcResultEntities) {
                 entity.setQcBadQty(0);
                 entity.setQcGoodQty(0);
@@ -289,7 +290,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                 entity.setQcResult(QcResultEnum.CONFORMITY.getCode());
                 entity.setLotQualifiedQty(entity.getTotalQty());
             }
-            
+
             if (CollectionUtils.isNotEmpty(qcResultEntities)) {
                 this.updateBatchById(qcResultEntities);
             }
