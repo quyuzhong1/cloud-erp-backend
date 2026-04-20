@@ -2,6 +2,7 @@ package com.sdk.wms.goodcang.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
@@ -206,8 +207,9 @@ public class GoodCangService {
             log.error("谷仓创建B2B订单返回数据为空,返回值:{}", response);
             throw new ServiceException(GOOG_CANG_RESPONSE + ":" +response);
         }
-        if(Objects.nonNull(respDto.getOrderCode())){
-            respDto.setData(respDto.getOrderCode());
+        JSONObject data = JSON.parseObject(respDto.getData());
+        if(Objects.nonNull(data)){
+            respDto.setData(data.getString("order_code"));
         }
         return respDto;
     }
