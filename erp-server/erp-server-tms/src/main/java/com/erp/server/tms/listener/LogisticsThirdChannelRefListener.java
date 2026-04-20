@@ -141,11 +141,12 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
 
     private void validatePlatform(ImportLogisticsThirdChannelRefExcelDTO excelDTO, List<String> errorMsgList) {
         String mainDictPlatformName = excelDTO.getMainDictPlatformName();
-        PlatformDictEnum platformDict = PlatformDictEnum.getByName(mainDictPlatformName);
-        if (Objects.isNull(platformDict)) {
+        String platformDict = dictMap.getOrDefault(mainDictPlatformName,"");
+
+        if (StringUtils.isBlank(platformDict)) {
             errorMsgList.add("平台不存在");
         } else {
-            excelDTO.setMainDictPlatform(platformDict.getCode());
+            excelDTO.setMainDictPlatform(platformDict);
         }
     }
 
@@ -215,7 +216,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
         }
 
         // 推送类型解析
-        String pushType = LogisticsThirdChannelRefPushTypeEnum.getCodeByName(excelDTO.getPushTypeName());
+        String pushType = LogisticsThirdChannelRefPushTypeEnum.getName(excelDTO.getPushTypeName());
         if (CharSequenceUtil.isNotBlank(excelDTO.getPushTypeName())) {
             errorMsgList.add("推送类型不存在");
         }
