@@ -210,7 +210,7 @@ public enum AntuEnums {
         INITIAL_RECEIVING("D","已发货", ThirdDeliveryStatusEnum.SHIPPED),
         IN_TRANSIT("H","暂存", null),
         RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
-        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
+        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", null),
         ABANDONMENT("X","废弃", ThirdDeliveryStatusEnum.CANCEL_DELIVERY)
         ;
         private final String code;

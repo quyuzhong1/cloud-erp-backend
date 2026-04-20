@@ -1100,7 +1100,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         uploadFileReq.setFileData(req.getFileBase64());
         uploadFileReq.setFileUrl(req.getFileUrl());
         uploadFileReq.setFileName(req.getFileName());
-        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
+         || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
             uploadFileReq.setFileType(getAttachmentExtension(req));
             uploadFileReq.setModule("order_attach");
         } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
