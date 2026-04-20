@@ -47,7 +47,6 @@ public class DynamicDataSourceFilter implements Filter {
 			log.error("获取动态数据源配置错误" , e);
 		}
     	if(dorisQuerySettingDTO == null) {
-    		validateArchive(null , requestURI);
     		chain.doFilter(request, response);
     	}else {
     		ServletRequest requestWrapper = null;
@@ -57,7 +56,6 @@ public class DynamicDataSourceFilter implements Filter {
             //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
             // 在chain.doFiler方法中传递新的request对象
             if(requestWrapper == null) {
-            	validateArchive(null , requestURI);
                 chain.doFilter(request, response);
             } else {
             	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
@@ -67,13 +65,11 @@ public class DynamicDataSourceFilter implements Filter {
     				log.error("获取动态数据源类型错误" , e);
     			}
                 if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
-                	validateArchive(dynamicDataSourceType , requestURI);
                 	chain.doFilter(requestWrapper, response);
                 }else {
                 	try {
                 		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
         	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
-        	            validateArchive(dynamicDataSourceType , requestURI);
         	            chain.doFilter(requestWrapper, response);
                     } finally {
                         DynamicDataSourceContextHolder.poll();
