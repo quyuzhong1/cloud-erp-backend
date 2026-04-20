@@ -869,6 +869,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractOrderDTO.GeneratePoDTO> addList = list.getList();
         List<SubcontractOrderDTO.GeneratePoAddDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoAddDTO.class, addList);
 
+        // 校验不同退货方式的采购退货单不允许合并下推委外订单
+        validateReturnMode(addList);
+
         //处理生成数据
         fillGeneratePoDTO(resultList);
         //查询产品信息
@@ -917,6 +920,44 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
         //恢复系统标识
         UserContext.setIsUserSystem(originalValue);
+    }
+
+    /**
+     * @description: 校验不同退货方式的采购退货单不允许合并下推委外订单
+     * @author Will
+     * @date: 2026/4/20
+     * @param list
+     */
+    private void validateReturnMode(List<SubcontractOrderDTO.GeneratePoDTO> list) {
+        // 收集所有采购退货单ID
+        List<String> allPoReturnIds = new ArrayList<>();
+        for (SubcontractOrderDTO.GeneratePoDTO dto : list) {
+            if (StringUtils.isNotBlank(dto.getSourceId())) {
+                for (String id : dto.getSourceId().split(",")) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allPoReturnIds.add(id.trim());
+                    }
+                }
+            }
+        }
+        
+        // 查询采购退货单
+        if (CollUtil.isNotEmpty(allPoReturnIds)) {
+            List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(allPoReturnIds);
+            if (CollUtil.isNotEmpty(poReturnEntityList)) {
+                // 收集所有退货方式
+                List<String> returnModes = poReturnEntityList.stream()
+                        .map(PoReturnEntity::getReturnMode)
+                        .filter(StrUtil::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                
+                // 检查是否存在不同的退货方式
+                if (returnModes.size() > 1) {
+                    throw new ServiceException(ApiError.PO_RETURN_NOT_ALLOW_PUSH_DOWN);
+                }
+            }
+        }
     }
 
     /**
