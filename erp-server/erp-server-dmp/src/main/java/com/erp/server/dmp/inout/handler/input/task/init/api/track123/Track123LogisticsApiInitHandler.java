@@ -95,7 +95,6 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                 .trackEnable(true)
                 .trackTime(trackTime)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
-                .deliveryTime(deliveryLimitTime)//2026-03-01之后
                 .build();
         ResponseData trackData = getTrackData(query, cfgAppClient);
         if (ObjectUtil.isEmpty(trackData)) {

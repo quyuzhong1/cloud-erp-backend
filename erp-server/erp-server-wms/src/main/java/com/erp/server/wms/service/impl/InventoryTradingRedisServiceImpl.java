@@ -10,7 +10,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -229,7 +229,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
     private void checkStocktaking(List<InventoryTransactionDTO> transactionList) {
         StringBuilder errList = new StringBuilder();
         for(InventoryTransactionDTO transactionDTO:transactionList) {
-            String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK,
+            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK,
                     "*"
                     , transactionDTO.getOrgId()
                     , transactionDTO.getWarehouseId()

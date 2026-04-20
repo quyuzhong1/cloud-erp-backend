@@ -396,7 +396,7 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
-     * 下推质检单详情
+     * 完成质检（简易）详情
      * @author jack
      * @date:  2025-04-21
      * @param dto
@@ -413,7 +413,22 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
-     * 完成质检
+     * 完成质检（详细）详情
+     * @param qcNoticeParamDTO
+     * @return
+     */
+    @PostMapping("/generateQcInfoFullView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:generateQcInfoFullView",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<QcNoticeDTO.QcInfoFullView>> generateQcInfoFullView(@RequestBody @Validated QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
+        return success(qcNoticeService.generateQcInfoFullView(qcNoticeParamDTO));
+    }
+
+    /**
+     * 完成质检(简易)
      * @author jack
      * @date:  2025-04-21
      * @param dto
@@ -427,6 +442,23 @@ public class QcNoticeController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> generateQcInfoFinish(@RequestBody @Valid ValidList<QcNoticeDTO.QcInfoView> dto) {
         qcNoticeService.generateQcInfo(dto.getList());
+        return success();
+    }
+
+
+    /**
+     * 完成质检(详细)
+     * @param dto
+     * @return
+     */
+    @PostMapping("/generateFullQcInfoFinish")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:generateQcInfoView",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> generateFullQcInfoFinish(@RequestBody @Valid ValidList<QcNoticeDTO.QcInfoFullView> dto) {
+        qcNoticeService.generateFullQcInfo(dto.getList());
         return success();
     }
 
@@ -509,8 +541,14 @@ public class QcNoticeController extends BaseController {
         return success(qcNoticeService.importFile(excelFile, response));
     }
 
-
-
-
+    /**
+     * 质检标准打印
+     * @param paramDTO
+     * @return
+     */
+    @PostMapping("/printQcStandard")
+    public ApiResult<List<QcNoticeDTO.PrintQcStandardDTO>> printQcStandard(@RequestBody @Valid QcNoticeDTO.PrintQcStandardParamDTO paramDTO) {
+        return success(qcNoticeService.printQcStandard(paramDTO));
+    }
 
 }

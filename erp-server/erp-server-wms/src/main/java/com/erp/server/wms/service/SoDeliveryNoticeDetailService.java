@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
@@ -24,7 +25,7 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @param id id:主表id
      * @return java.lang.Boolean
      **/
-    Boolean add(SoDeliveryNoticeDTO.Add dto, String id);
+    Boolean add(SoDeliveryNoticeDTO.Add dto, String id, SoInfoEntity soInfoEntity);
 
     /**
      * 修改

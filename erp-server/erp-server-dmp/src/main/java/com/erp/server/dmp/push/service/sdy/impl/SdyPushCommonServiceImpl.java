@@ -6,6 +6,7 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,7 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
         HashMap<String, Object> orderParams = new HashMap<>(2);
         orderParams.put("count", shudiyunB2cOrderDTO.size());
         orderParams.put("list", shudiyunB2cOrderDTO);
-        orderParams.put("trace_id", MDC.get("traceId"));
+        orderParams.put("trace_id", TraceContext.traceId());
         requestData = JSONUtil.toJsonStr(orderParams);
 
         boolean is429 = true;

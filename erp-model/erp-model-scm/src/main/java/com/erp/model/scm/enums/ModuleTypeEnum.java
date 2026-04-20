@@ -200,11 +200,16 @@ public enum ModuleTypeEnum {
     KOL_PARTNER_INFO("157", "企业达人库"),
     KOL_B2C_APPLICATION("158", "B2C寄样申请单"),
     KOL_KOL_SAMPLE_COST("159", "寄样费用单"),
+    QC_STANDARD("167", "质检标准"),
     CFG_LOGISTICS_COST_IMPORT("160", "费用配置"),
 
     PRODUCT_BU("160", "产品BU线"),
 
     PRODUCT_CHANGE("161", "产品变更单"),
+    QC_SAMPLING_PLAN("162", "抽样方案单"),
+
+    QC_APPLICATION("163", "质检申请单"),
+    FILE_MANAGEMENT("164", "文件管理"),
     MESSAGE("162","系统通知"),
     SYS_VERSION("163","版本更新"),
     PDA_VERSION("164","PDA系统升级"),
@@ -233,6 +238,7 @@ public enum ModuleTypeEnum {
     B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
     DMP_ADS_ERP_DIFF_OUTSTOCK_SYNC("158", "出库同步差异"),
     DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("159", "退货同步差异"),
+    SKU_STD_RETAIL_PRICE("160", "sku标准零售价"),
 
     // doris
     ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),

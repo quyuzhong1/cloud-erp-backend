@@ -200,6 +200,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField("execution_status")
     private String executionStatus;
 
+    /**
+     * 质检合格量
+     */
+    @TableField("qc_good_qty")
+    private Integer qcGoodQty;
+
 
 
     //----------------------------------------------------------------------辅助字段 -------------------------------------------------------------------

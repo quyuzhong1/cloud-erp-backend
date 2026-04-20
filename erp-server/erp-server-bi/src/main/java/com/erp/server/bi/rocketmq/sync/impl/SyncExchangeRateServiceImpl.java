@@ -11,6 +11,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
@@ -43,13 +44,18 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
     private SysUserFeign sysUserFeign;
 
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeExchangeRate(DmpExchangeRateDTO dto) {
-
-        BiSettlementExchangeRateEntity oldExchangeRate = biSettlementExchangeRateService.getByKingdeeId(dto.getSourceId());
         //数据格式化
-        BiSettlementExchangeRateEntity newExchangeRate = handleDmpExchangeRate(dto,oldExchangeRate);
+        BiSettlementExchangeRateEntity newExchangeRate = handleDmpExchangeRate(dto);
+
+        //根据汇率类型-月份-源币种-目标币种查询已存在的汇率数据
+        BiSettlementExchangeRateDTO.ExchangeParamDTO  exchangeParamDTO = new  BiSettlementExchangeRateDTO.ExchangeParamDTO(newExchangeRate.getType(),newExchangeRate.getSettlementDateBegin(),newExchangeRate.getSettlementDateEnd(),newExchangeRate.getTargetCurrencyCode(),newExchangeRate.getSourceCurrencyCode());
+        ValidatorUtil.validateEntity(exchangeParamDTO);
+        BiSettlementExchangeRateEntity oldExchangeRate = biSettlementExchangeRateService.getByExchangeParamUnique(exchangeParamDTO);
+
         if (ObjectUtils.isEmpty(oldExchangeRate)) {
             //非已审核数据无需新增
             if (!ApproveStatusEnum.APPROVE.getStatus().equals(newExchangeRate.getApproveStatus())) {
@@ -60,12 +66,13 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
             //提交并审核
             submitAndApprove(id);
         } else {
+            //id赋值
+            newExchangeRate.setId(oldExchangeRate.getId());
             /**
              * 判断现有状态
              * 1、现有状态为已审核或审核中时需要反审核后更新数据
              * 2、如果拉取数据非已审核数据则修改数据后无需提交审核
              */
-
             if (ApproveStatusEnum.APPROVE.getStatus().equals(oldExchangeRate.getApproveStatus())) {
                 biSettlementExchangeRateService.disApprove(Arrays.asList(oldExchangeRate.getId()));
             }
@@ -81,20 +88,15 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
     }
 
     /**
+     * @param dto
+     * @return BiSettlementExchangeRateEntity
      * @description: 处理数据
      * @author Will
      * @date: 2023/8/14 18:53
-     * @param dto
-     * @param oldExchangeRate
-     * @return BiSettlementExchangeRateEntity
      */
-    private BiSettlementExchangeRateEntity handleDmpExchangeRate (DmpExchangeRateDTO dto,BiSettlementExchangeRateEntity oldExchangeRate) {
+    private BiSettlementExchangeRateEntity handleDmpExchangeRate(DmpExchangeRateDTO dto) {
         BiSettlementExchangeRateEntity newExchangeRate = new BiSettlementExchangeRateEntity();
-        BeanMapperUtils.copy(dto,newExchangeRate);
-        //主表id赋值
-        if (ObjectUtils.isNotEmpty(oldExchangeRate)) {
-            newExchangeRate.setId(oldExchangeRate.getId());
-        }
+        BeanMapperUtils.copy(dto, newExchangeRate);
         //审核状态
         if (KingdeeDocStatusEnum.APPROVED.getCode().equals(dto.getApproveStatus())) {
             newExchangeRate.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
@@ -111,13 +113,13 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
         //原币别
         String sourceCurrency = viewList.stream().filter(obj -> obj.getKingdeeCode().equals(dto.getSourceCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         if (StringUtils.isBlank(sourceCurrency)) {
-            throw new ServiceException(ApiError.COMMON_CURRENCY_NOT_EXIST,dto.getSourceCurrencyCode());
+            throw new ServiceException(ApiError.COMMON_CURRENCY_NOT_EXIST, dto.getSourceCurrencyCode());
         }
         newExchangeRate.setSourceCurrencyCode(sourceCurrency);
         //目标币别
         String targetCurrency = viewList.stream().filter(obj -> obj.getKingdeeCode().equals(dto.getTargetCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         if (StringUtils.isBlank(targetCurrency)) {
-            throw new ServiceException(ApiError.COMMON_CURRENCY_NOT_EXIST,dto.getTargetCurrencyCode());
+            throw new ServiceException(ApiError.COMMON_CURRENCY_NOT_EXIST, dto.getTargetCurrencyCode());
         }
         newExchangeRate.setTargetCurrencyCode(targetCurrency);
         newExchangeRate.setKingdeeId(dto.getSourceId());

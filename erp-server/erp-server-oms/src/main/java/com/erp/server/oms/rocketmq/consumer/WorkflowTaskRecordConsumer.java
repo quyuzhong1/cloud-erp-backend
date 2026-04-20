@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
@@ -55,7 +56,6 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             return;
         }
 
-        MDC.put("traceId", mqDTO.getTraceId());
 
         List<WorkflowTaskRecordEntity> list = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, mqDTO.getSourceId()).eq(WorkflowTaskRecordEntity::getSourceType, mqDTO.getSourceTypeEnum().getCode()).orderByAsc(WorkflowTaskRecordEntity::getIndex).list();
         if(CollUtil.isEmpty(list)){
@@ -113,7 +113,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
     }
 
     private Boolean remoteInvoke(Map<Integer, WorkflowTaskRecordEntity> map,WorkflowTaskRecordEntity entity,Integer i,Integer plus) {
-        String traceId = MDC.get("traceId");
+        String traceId = TraceContext.traceId();
 
         WorkflowTaskRecordEntity nextEntity = null;
         if( i != map.size() - 1){

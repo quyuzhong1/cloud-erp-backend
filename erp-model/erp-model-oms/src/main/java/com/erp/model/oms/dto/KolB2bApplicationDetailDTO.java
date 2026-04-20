@@ -55,6 +55,12 @@ public class KolB2bApplicationDetailDTO implements Serializable {
         * sku编码
         */
         private String skuNo;
+
+        /**
+         * spu编码
+         */
+        private String spuNo;
+
         /**
          * 产品名称
          */
@@ -122,6 +128,11 @@ public class KolB2bApplicationDetailDTO implements Serializable {
         @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
+
+        /**
+         * spu编码
+         */
+        private String spuNo;
 
         /**
         * 申请数量

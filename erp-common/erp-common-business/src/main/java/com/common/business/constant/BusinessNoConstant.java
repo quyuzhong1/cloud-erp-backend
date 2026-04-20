@@ -270,4 +270,10 @@ public interface BusinessNoConstant {
 
     String BG = "BG";
 
+    //抽样方案
+    String CYFA="CYFA";
+
+    //质检申请
+    String ZJSQ = "ZJSQ";
+    String WDGL = "WDGL";
 }

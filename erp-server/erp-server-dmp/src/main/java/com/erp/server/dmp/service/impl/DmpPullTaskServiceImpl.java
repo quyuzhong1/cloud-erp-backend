@@ -339,7 +339,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 //            return;
 //        }
 //        //查询redis,预警8小时发送一次
-//        String existKey = StrUtil.format(RedisKeyConstant.DMP_PULL_TASK_WARN, entity.getId());
+//        String existKey = StrUtil.format(RedisCacheConstants.DMP_PULL_TASK_WARN, entity.getId());
 //        boolean isHas = redisUtil.hasKey(existKey);
 //        if (isHas) {
 //            return;

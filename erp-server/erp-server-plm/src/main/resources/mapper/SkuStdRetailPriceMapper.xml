@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.SkuStdRetailPriceMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.SkuStdRetailPriceEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="currency" property="currency" />
+       <result column="std_retail_price_vat" property="stdRetailPriceVat" />
+       <result column="vat_rate" property="vatRate" />
+       <result column="std_retail_price" property="stdRetailPrice" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        sku_id, sku_no, currency, std_retail_price_vat, vat_rate, std_retail_price
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.SkuStdRetailPriceDTO$ListDTO">
+		SELECT
+		CASE WHEN G.ID IS NULL THEN
+					T.ID ELSE G.ID 
+					END ID,
+				T.ID as skuId,
+				T.sku_no as skuNo,
+				T.NAME as name,
+				T.status,
+				h.sale_state as saleState,
+				G.currency,
+				G.std_retail_price_vat as stdRetailPriceVat,
+				G.vat_rate as vatRate,
+				G.std_retail_price as stdRetailPrice,
+				j.last_outstock_date as lastOutstockDate,
+				G.update_user_name as updateUserName,
+				G.update_time as updateTime
+			FROM
+				product_detail T
+			    LEFT JOIN sku_std_retail_price G ON T.ID = G.sku_id
+				AND G.is_deleted =
+				FALSE LEFT JOIN product_sale h ON T.ID = h.sku_id 
+				AND h.is_deleted =
+				FALSE LEFT JOIN sku_biz_statistics j ON T.ID = j.sku_id 
+				AND j.is_deleted = FALSE
+		WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+		and t.id not in (select distinct bs.parent_sku_id FROM product_bom_sku bs inner JOIN product_bom_info b ON bs.bom_id = b.id AND b.is_deleted = FALSE and b.type ='combination' where bs.is_deleted = false )
+        <if test="params.ids != null and params.ids.size > 0">
+            and g.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc    
+	</select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sku_std_retail_price where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.plm.dto.SkuStdRetailPriceDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.plm.dto.SkuStdRetailPriceDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  sku_std_retail_price
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

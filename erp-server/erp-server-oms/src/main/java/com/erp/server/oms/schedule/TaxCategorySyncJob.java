@@ -10,6 +10,7 @@ import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.model.oms.entity.TaxCategoryEntity;
 import com.erp.server.oms.service.CfgInvoiceSettingService;
 import com.erp.server.oms.service.TaxCategoryService;
+import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -268,5 +269,28 @@ public class TaxCategorySyncJob {
         }
 
         return new int[]{successCount, updateCount, skipCount, errorCount};
+    }
+
+
+    /**
+     * 初始化税种列表
+     */
+    @XxlJob("initTaxCategoryListJob")
+    public ReturnT<String> initTaxCategoryListJob() {
+        XxlJobHelper.log("=====初始化税种列表任务开始=====");
+        long startTime = System.currentTimeMillis();
+        try {
+            Map<String, Object> result = taxCategoryService.initTaxCategoryList();
+            long duration = System.currentTimeMillis() - startTime;
+            String resultJson = JSONUtil.toJsonStr(result);
+            log.info("初始化税种列表任务执行完成，耗时：{}ms，结果：{}", duration, resultJson);
+            XxlJobHelper.log("初始化税种列表任务执行完成，耗时：{}ms，结果：{}", duration, resultJson);
+            return ReturnT.SUCCESS;
+        } catch (Exception e) {
+            long duration = System.currentTimeMillis() - startTime;
+            log.error("初始化税种列表任务执行失败，耗时：{}ms", duration, e);
+            XxlJobHelper.log("初始化税种列表任务执行失败，耗时：{}ms，错误：{}", duration, e.getMessage());
+            return ReturnT.FAIL;
+        }
     }
 }
