@@ -39,14 +39,15 @@ public class DynamicDataSourceFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
     	DorisQuerySettingDTO dorisQuerySettingDTO = null;
+    	String requestURI = "";
     	try {
-			String requestURI = ((HttpServletRequest) request).getRequestURI();
+			requestURI = ((HttpServletRequest) request).getRequestURI();
 			dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(requestURI));
 		} catch (Throwable e) {
 			log.error("获取动态数据源配置错误" , e);
 		}
     	if(dorisQuerySettingDTO == null) {
-    		validateArchive(null);
+    		validateArchive(null , requestURI);
     		chain.doFilter(request, response);
     	}else {
     		ServletRequest requestWrapper = null;
@@ -56,7 +57,7 @@ public class DynamicDataSourceFilter implements Filter {
             //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
             // 在chain.doFiler方法中传递新的request对象
             if(requestWrapper == null) {
-            	validateArchive(null);
+            	validateArchive(null , requestURI);
                 chain.doFilter(request, response);
             } else {
             	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
@@ -66,13 +67,13 @@ public class DynamicDataSourceFilter implements Filter {
     				log.error("获取动态数据源类型错误" , e);
     			}
                 if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
-                	validateArchive(dynamicDataSourceType);
+                	validateArchive(dynamicDataSourceType , requestURI);
                 	chain.doFilter(requestWrapper, response);
                 }else {
                 	try {
                 		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
         	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
-        	            validateArchive(dynamicDataSourceType);
+        	            validateArchive(dynamicDataSourceType , requestURI);
         	            chain.doFilter(requestWrapper, response);
                     } finally {
                         DynamicDataSourceContextHolder.poll();
@@ -83,8 +84,11 @@ public class DynamicDataSourceFilter implements Filter {
     	}
     }
     
-    private void validateArchive(DynamicDataSourceTypeEnum dynamicDataSourceType) {
+    private void validateArchive(DynamicDataSourceTypeEnum dynamicDataSourceType , String requestURI) {
     	if(!BusinessCommonConstants.isArchive()) {
+    		return;
+    	}
+    	if(requestURI.contains("/feign/")) {
     		return;
     	}
     	if(DynamicDataSourceTypeEnum.ARCHIVE_DORIS != dynamicDataSourceType) {
