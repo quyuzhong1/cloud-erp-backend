@@ -21,6 +21,10 @@ import java.util.List;
 public class Kuaidi100QueryResponse implements Serializable {
 
     /**
+     *
+     */
+    private String returnCode;
+    /**
      * 响应消息（如 "ok"）
      */
     private String message;
