@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import cn.hutool.core.lang.Pair;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -11,6 +12,7 @@ import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -78,7 +80,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param headMap
      * @return void
      */
-    void handleImportSuccessList(ImportHistoryRecordDTO.ImportSyncDTO dto,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
+    List<Pair<String, LocalDateTime>> handleImportSuccessList(ImportHistoryRecordDTO.ImportSyncDTO dto, CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
     /**
      * 重新生成
      * @author will
@@ -95,4 +97,11 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @return null
      */
     BatchResultDTO importFile(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO);
+    /**
+     * 更新对账状态
+     * @author will
+     * @date 2026/4/14 15:09
+     * @param confirmPairList
+     */
+    void confirmImportData(ImportHistoryRecordDTO.ImportSyncDTO importDTO,List<Pair<String, LocalDateTime>> confirmPairList);
 }

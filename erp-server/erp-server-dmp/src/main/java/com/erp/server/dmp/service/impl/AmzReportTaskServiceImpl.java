@@ -35,7 +35,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -899,7 +899,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     @Override
     public void sendReportWarnMsg(AmzReportTaskEntity entity, String errorMsg) {
         //查询redis,预警8小时发送一次
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, entity.getId());
+        String existKey = StrUtil.format(RedisCacheConstants.DMP_PUSH_TASK_WARN, entity.getId());
         boolean isHas = redisUtil.hasKey(existKey);
         if (isHas) {
             return;

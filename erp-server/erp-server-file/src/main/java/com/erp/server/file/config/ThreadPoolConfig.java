@@ -1,5 +1,6 @@
 package com.erp.server.file.config;
 
+import com.common.business.config.TraceableThreadPoolTaskExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -17,7 +18,7 @@ public class ThreadPoolConfig {
 
     @Bean("fileExecutor")
     public ThreadPoolTaskExecutor  threadPoolExecutor() {
-        ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(8);
         // 设置最大线程数
@@ -35,7 +36,7 @@ public class ThreadPoolConfig {
     }
     @Bean("fastDFSExecutor")
     public ThreadPoolTaskExecutor  fastDFSExecutor() {
-        ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor  executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(8);
         // 设置最大线程数

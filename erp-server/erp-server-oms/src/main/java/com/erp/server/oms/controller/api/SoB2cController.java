@@ -23,7 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -159,7 +159,6 @@ public class SoB2cController extends BaseController {
         dto.getParams().setIsFullyManaged(Boolean.FALSE);
         return success(soB2cService.paging(dto));
     }
-
     /**
      * 新增
      *
@@ -725,7 +724,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:43
      */
     @PostMapping("/saveSoB2cDistribution")
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
     @LogAction(value = LogActionEnum.INSERT, desc = "订单配货保存（前端手动配货）")
     public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -839,7 +838,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/submitDelivery")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交发货")
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated SoB2cDTO.SubmitDeliveryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getIds().size()>100){

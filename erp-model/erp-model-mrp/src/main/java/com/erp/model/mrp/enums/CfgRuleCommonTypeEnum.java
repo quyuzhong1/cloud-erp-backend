@@ -1,6 +1,7 @@
 package com.erp.model.mrp.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
@@ -55,10 +56,10 @@ public enum CfgRuleCommonTypeEnum implements EnumMessage {
 
 
     public static String getBaseInventoryRedisKey() {
-        return String.join(":", "MRP", INVENTORY.getCode());
+        return String.join(":", RedisCacheConstants.MRP_KEY, INVENTORY.getCode());
     }
 
     public static String getBaseSuggestRedisKey() {
-        return String.join(":", "MRP", SUGGEST.getCode());
+        return String.join(":", RedisCacheConstants.MRP_KEY, SUGGEST.getCode());
     }
 }

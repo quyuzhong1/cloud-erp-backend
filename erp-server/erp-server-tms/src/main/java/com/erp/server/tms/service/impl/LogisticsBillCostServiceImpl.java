@@ -2055,6 +2055,25 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
+    public void confirmImport(String id, String reconciliationStatus, LocalDateTime confirmTime) {
+        LogisticsBillCostEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
+
+        //状态变更
+        lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
+                .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
+                .set(LogisticsBillCostEntity::getConfirmTime, confirmTime)
+                .set(LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
+                .update();
+
+        // 状态变更日志
+        log.info("状态变更日志数据，id集合：【{}】", id);
+        String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
+    }
+
+    @Override
     public List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
 //        String type = dto.getType();
 //        String reportDate = dto.getReportDate();
@@ -2527,62 +2546,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto) {
-        List<LogisticsBillCostDTO.ListDTO> list = baseMapper.listTotalCount(dto);
-        if (CollUtil.isEmpty(list)) {
-            return new LogisticsBillCostDTO.TotalCountDTO();
+        //查询费用项信息
+        LogisticsBillCostDTO.TotalCountDTO totalCountDTO = baseMapper.listTotalCostValueCount(dto);
+        if (ObjectUtil.isEmpty(totalCountDTO)){
+            totalCountDTO = new LogisticsBillCostDTO.TotalCountDTO();
         }
-
-        List<String> mainIdList = list.stream().map(LogisticsBillCostDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        Map<String, List<CostViewDTO>> costListMap = tmsCostDetailService.listCostByMainIdList(mainIdList).stream()
-                .collect(Collectors.groupingBy(l -> l.getMainId() + "_" + l.getDictCostCategory() + "_" + l.getType()));
-
-        for (LogisticsBillCostDTO.ListDTO listDTO : list) {
-            //预计运费
-            List<CostViewDTO> shippingCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.SHIPPING_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
-            if (CollUtil.isNotEmpty(shippingCostList)) {
-                BigDecimal actualShippingCost = shippingCostList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                listDTO.setActualShippingCost(MathUtil.multiplyWithFour(actualShippingCost, shippingCostList.get(0).getExchangeRate()));
-            }
-            //实际关税费用(总)
-            List<CostViewDTO> declareCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DECLARE_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
-            if (CollUtil.isNotEmpty(declareCostList)) {
-                BigDecimal actualDeclareCost = declareCostList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                listDTO.setActualDeclareCost(MathUtil.multiplyWithFour(actualDeclareCost, declareCostList.get(0).getExchangeRate()));
-            }
-            //实际可抵扣税金[总]
-            List<CostViewDTO> deductibleTaxList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
-            if (CollUtil.isNotEmpty(deductibleTaxList)) {
-                BigDecimal actualDeductibleTax = deductibleTaxList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                listDTO.setActualDeductibleTax(MathUtil.multiplyWithFour(actualDeductibleTax, deductibleTaxList.get(0).getExchangeRate()));
-            }
-
-            //实际其他费用(总)
-            List<CostViewDTO> otherCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.OTHER_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
-            if (CollUtil.isNotEmpty(otherCostList)) {
-                BigDecimal actualOtherCost = otherCostList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                listDTO.setActualOtherCost(MathUtil.multiplyWithFour(actualOtherCost, otherCostList.get(0).getExchangeRate()));
-            }
-        }
-        LogisticsBillCostDTO.TotalCountDTO resultDTO = new LogisticsBillCostDTO.TotalCountDTO();
-        //实际计费重
-        BigDecimal totalBillingWeightLogistics = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeightLogistics).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        resultDTO.setTotalBillingWeightLogistics(totalBillingWeightLogistics);
-        //实际运费(总)
-        BigDecimal totalActualShippingCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualShippingCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        resultDTO.setTotalActualShippingCost(totalActualShippingCost);
-        resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        //实际关税费用(总)
-        BigDecimal totalActualDeclareCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeclareCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        resultDTO.setTotalActualDeclareCost(totalActualDeclareCost);
-        resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        //实际可抵扣税金[总]
-        BigDecimal totalActualDeductibleTax = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeductibleTax).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        resultDTO.setTotalActualDeductibleTax(totalActualDeductibleTax);
-        resultDTO.setActualDeductibleTaxCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        //实际其他费用(总)
-        BigDecimal totalActualOtherCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualOtherCost).filter(ObjectUtil::isNotNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        resultDTO.setTotalActualOtherCost(totalActualOtherCost);
-        resultDTO.setActualOtherCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        return resultDTO;
+        //查询计费重合计
+        BigDecimal totalBillingWeightLogistics = this.baseMapper.listTotalBillingWeightLogisticsCount(dto);
+        totalCountDTO.setTotalBillingWeightLogistics(totalBillingWeightLogistics);
+        return totalCountDTO;
     }
 }
