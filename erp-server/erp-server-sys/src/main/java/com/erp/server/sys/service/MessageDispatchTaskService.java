@@ -19,6 +19,8 @@ public interface MessageDispatchTaskService extends SuperService<MessageDispatch
 
     List<String> listDueTaskIds(Integer limit);
 
+    List<String> listPreheatTaskIds(LocalDateTime executeBefore, Integer limit);
+
     void executeTaskAsync(String taskId);
 
     void queueTask(String taskId, LocalDateTime executeTime);

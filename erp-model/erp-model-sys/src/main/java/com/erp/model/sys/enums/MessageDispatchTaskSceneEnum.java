@@ -6,8 +6,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 
 public enum MessageDispatchTaskSceneEnum {
-    PDA_NOTICE("PDA_NOTICE", "PDA系统公告分发"),
+    SYS_NOTICE("SYS_NOTICE", "系统公告分发"),
     PDA_UPGRADE_PUSH("PDA_UPGRADE_PUSH", "PDA升级通知实时推送");
+
+    public static final String LEGACY_PDA_NOTICE_CODE = "PDA_NOTICE";
 
     @EnumValue
     @JsonValue
@@ -28,7 +30,14 @@ public enum MessageDispatchTaskSceneEnum {
         return name;
     }
 
+    public static boolean isSystemNoticeScene(String code) {
+        return Objects.equals(SYS_NOTICE.code, code) || Objects.equals(LEGACY_PDA_NOTICE_CODE, code);
+    }
+
     public static MessageDispatchTaskSceneEnum getByCode(String code) {
+        if (isSystemNoticeScene(code)) {
+            return SYS_NOTICE;
+        }
         for (MessageDispatchTaskSceneEnum item : values()) {
             if (Objects.equals(item.code, code)) {
                 return item;
