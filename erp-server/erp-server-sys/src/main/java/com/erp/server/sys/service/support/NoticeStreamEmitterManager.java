@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.support;
 
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.enums.SysTypeEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -34,10 +35,6 @@ public class NoticeStreamEmitterManager {
 
     private static final long SSE_TIMEOUT = 1800_000L;
     private static final long ONLINE_TTL_SECONDS = 120L;
-    private static final String ONLINE_NODE_MAP_KEY_PREFIX = "sys:notice:sse:online:nodes:";
-    private static final String ONLINE_USER_NODE_MAP_KEY_PREFIX = "sys:notice:sse:online:user:nodes:";
-    private static final String USER_ROUTE_LOCK_KEY_PREFIX = "sys:notice:sse:online:user:lock:";
-    private static final String NODE_TOPIC_PREFIX = "sys:notice:";
 
     private final Map<String, Map<String, Map<String, SseEmitter>>> emitterMap = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> localConnectionCountMap = new ConcurrentHashMap<>();
@@ -162,7 +159,7 @@ public class NoticeStreamEmitterManager {
     }
 
     public String buildNodeTopic(String application, String nodeId) {
-        return NODE_TOPIC_PREFIX + normalizeApplication(application) + ":node:" + nodeId;
+        return RedisCacheConstants.buildSysNoticeSseNodeTopic(normalizeApplication(application), nodeId);
     }
 
     public Set<String> getOnlineUserIds(String application) {
@@ -285,11 +282,11 @@ public class NoticeStreamEmitterManager {
     }
 
     private RMapCache<String, Integer> getOnlineNodeMap(String application) {
-        return redissonClient.getMapCache(ONLINE_NODE_MAP_KEY_PREFIX + normalizeApplication(application));
+        return redissonClient.getMapCache(RedisCacheConstants.buildSysNoticeSseOnlineNodeKey(normalizeApplication(application)));
     }
 
     private RMap<String, String> getOnlineUserNodeMap(String application) {
-        return redissonClient.getMap(ONLINE_USER_NODE_MAP_KEY_PREFIX + normalizeApplication(application));
+        return redissonClient.getMap(RedisCacheConstants.buildSysNoticeSseUserNodeKey(normalizeApplication(application)));
     }
 
     private void registerUserNodeRoute(String application, String userId) {
@@ -306,7 +303,7 @@ public class NoticeStreamEmitterManager {
         }
         String normalizedApplication = normalizeApplication(application);
         String nodeId = getNodeId();
-        RLock lock = redissonClient.getLock(USER_ROUTE_LOCK_KEY_PREFIX + normalizedApplication + ":" + userId);
+        RLock lock = redissonClient.getLock(RedisCacheConstants.buildSysNoticeSseUserLockKey(normalizedApplication, userId));
         lock.lock(5, TimeUnit.SECONDS);
         try {
             Set<String> userNodeIds = getUserNodeIds(normalizedApplication, userId);
