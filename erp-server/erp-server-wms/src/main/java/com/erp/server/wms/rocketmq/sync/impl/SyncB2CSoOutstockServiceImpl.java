@@ -473,6 +473,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             wdtSoOutStockDetailDTO.setPlanQty(wdtSoOutStockDetailDTO.getSuiteQty());
             wdtSoOutStockDetailDTO.setActualQty(wdtSoOutStockDetailDTO.getSuiteQty());
             wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add));
+            wdtSoOutStockDetailDTO.setTaxAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
             wdtSoOutStockDetailDTO.setAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
             List<PositionDetailsList> positionDetailsList = soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getPositionDetailsList).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
             wdtSoOutStockDetailDTO.setPositionDetailsList(positionDetailsList);
