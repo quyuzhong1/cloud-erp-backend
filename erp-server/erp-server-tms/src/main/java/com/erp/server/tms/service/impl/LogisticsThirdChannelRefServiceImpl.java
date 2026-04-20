@@ -486,7 +486,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.list();
         Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap = basicQueryLogisticsProviderService.list().stream().collect(Collectors.toMap(e -> e.getLogisticsNameCn() +":"+e.getTrackPlatformType(), Function.identity(), (o1, o2) -> o1));
         Map<String, String> shopMap = FeignQuery.list(ShopInfoEntity.class).stream().collect(Collectors.toMap(ShopInfoEntity::getName, ShopInfoEntity::getId, (o1, o2) -> o1));
-        Map<String, String> dictMap = dictBasicService.getByKey("channelSalesPlatform").stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
+        Map<String, String> dictMap = dictBasicService.getByKey("salesPlatform").stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
         LogisticsThirdChannelRefListener excelListenerUtil = new LogisticsThirdChannelRefListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),logisticsSupplierEntities,logisticsChannelEntities,shopMap,dictMap,queryLogisticsProviderMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
