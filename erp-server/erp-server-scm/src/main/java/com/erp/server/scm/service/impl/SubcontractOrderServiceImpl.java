@@ -1026,17 +1026,37 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      * @param resultList
      */
     private void fillGeneratePoDTO (List<SubcontractOrderDTO.GeneratePoAddDTO> resultList) {
-        //委外订单主表信息
-        List<String> sourceIds = resultList.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceId).collect(Collectors.toList());
-        List<SubcontractOrderEntity> mainList = this.listByIds(sourceIds);
+        // 收集所有sourceId（支持逗号分隔的多个ID）
+        List<String> allSourceIds = new ArrayList<>();
+        for (SubcontractOrderDTO.GeneratePoDTO dto : resultList) {
+            if (StringUtils.isNotBlank(dto.getSourceId())) {
+                String[] ids = dto.getSourceId().split(",");
+                for (String id : ids) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allSourceIds.add(id.trim());
+                    }
+                }
+            }
+        }
+        List<SubcontractOrderEntity> mainList = this.listByIds(allSourceIds);
         if (CollectionUtils.isEmpty(mainList)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
 
-        //委外订单明细信息
-        List<String> sourceDetailIds = resultList.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceDetailId).collect(Collectors.toList());
-        log.info("查询委外订单明细，detailIds = 【{}】",sourceDetailIds);
-        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
+        // 收集所有sourceDetailId（支持逗号分隔的多个ID）
+        List<String> allSourceDetailIds = new ArrayList<>();
+        for (SubcontractOrderDTO.GeneratePoDTO dto : resultList) {
+            if (StringUtils.isNotBlank(dto.getSourceDetailId())) {
+                String[] ids = dto.getSourceDetailId().split(",");
+                for (String id : ids) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allSourceDetailIds.add(id.trim());
+                    }
+                }
+            }
+        }
+        log.info("查询委外订单明细，detailIds = 【{}】",allSourceDetailIds);
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(allSourceDetailIds);
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
         }
@@ -1049,13 +1069,32 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         for (SubcontractOrderDTO.GeneratePoAddDTO generatePoDTO :  resultList) {
-            //主表
-            SubcontractOrderEntity mainEntity = mainList.stream().filter(obj -> obj.getId().equals(generatePoDTO.getSourceId())).findFirst().orElse(null);
+            // 解析sourceId列表（支持逗号分隔）
+            List<String> sourceIdList = new ArrayList<>();
+            if (StringUtils.isNotBlank(generatePoDTO.getSourceId())) {
+                for (String id : generatePoDTO.getSourceId().split(",")) {
+                    if (StringUtils.isNotBlank(id)) {
+                        sourceIdList.add(id.trim());
+                    }
+                }
+            }
+            //主表 - 取第一个匹配的委外订单
+            SubcontractOrderEntity mainEntity = mainList.stream().filter(obj -> sourceIdList.contains(obj.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(mainEntity)) {
                 throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
             }
-            //明细
-            SubcontractOrderDetailEntity detailEntity = detailList.stream().filter(obj -> obj.getId().equals(generatePoDTO.getSourceDetailId())).findFirst().orElse(null);
+            
+            // 解析sourceDetailId列表（支持逗号分隔）
+            List<String> sourceDetailIdList = new ArrayList<>();
+            if (StringUtils.isNotBlank(generatePoDTO.getSourceDetailId())) {
+                for (String id : generatePoDTO.getSourceDetailId().split(",")) {
+                    if (StringUtils.isNotBlank(id)) {
+                        sourceDetailIdList.add(id.trim());
+                    }
+                }
+            }
+            //明细 - 取第一个匹配的委外订单明细
+            SubcontractOrderDetailEntity detailEntity = detailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
             }
@@ -1750,8 +1789,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     public List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPrice(List<SubcontractOrderDTO.ListPriceParamDTO> dto) {
         List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPriceDTOS = new ArrayList<>();
-        List<String> sourceIdList = dto.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
-        List<PoReturnEntity> poReturnList = wmsTaskFeign.listPoReturnByIdList(sourceIdList);
+        // 收集所有sourceId（支持逗号分隔的多个ID）
+        List<String> allSourceIds = new ArrayList<>();
+        for (SubcontractOrderDTO.ListPriceParamDTO paramDTO : dto) {
+            if (StringUtils.isNotBlank(paramDTO.getSourceId())) {
+                String[] ids = paramDTO.getSourceId().split(",");
+                for (String id : ids) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allSourceIds.add(id.trim());
+                    }
+                }
+            }
+        }
+        List<PoReturnEntity> poReturnList = wmsTaskFeign.listPoReturnByIdList(allSourceIds);
         List<String> poReturnDetailIdList = poReturnList.stream().map(item -> item.getId()).collect(Collectors.toList());
         List<PoReturnDetailEntity> poReturnDetailList = wmsTaskFeign.listPoReturnByMainIdList(poReturnDetailIdList);
 

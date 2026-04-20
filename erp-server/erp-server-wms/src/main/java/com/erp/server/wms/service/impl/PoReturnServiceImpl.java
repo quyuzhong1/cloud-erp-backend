@@ -3204,8 +3204,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //默认返修委外订单
         pushDownSubcontractOrderViewDTO.setType(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode());
         pushDownSubcontractOrderViewDTO.setBillDate(LocalDate.now());
-        pushDownSubcontractOrderViewDTO.setSourceId(firstPoReturnEntity.getId());
-        pushDownSubcontractOrderViewDTO.setSourceCode(firstPoReturnEntity.getCode());
+        // 收集所有来源ID和编码，用逗号分隔
+        String allSourceIds = poReturnEntities.stream().map(PoReturnEntity::getId).collect(Collectors.joining(","));
+        String allSourceCodes = poReturnEntities.stream().map(PoReturnEntity::getCode).collect(Collectors.joining(","));
+        pushDownSubcontractOrderViewDTO.setSourceId(allSourceIds);
+        pushDownSubcontractOrderViewDTO.setSourceCode(allSourceCodes);
         pushDownSubcontractOrderViewDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
 
         List<String> skuIdList = poReturnDetailList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
