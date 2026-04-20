@@ -128,8 +128,8 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
                 detailIds.add(record.getId());
                 continue;
             }
-            String thirdSupplierCode = record.getThirdSupplierCode();
-            if(StrUtil.isBlank(thirdSupplierCode)){
+            String companyCode = record.getThirdChannelName();
+            if(StrUtil.isBlank(companyCode)){
                 detailIds.add(record.getId());
                 continue;
             }
@@ -141,12 +141,6 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
                     continue;
                 }
             }
-
-            // 构建查询参数
-            Kuaidi100QueryParam param = Kuaidi100QueryParam.builder()
-                    .com(thirdSupplierCode.toLowerCase()) // 快递100要求小写
-                    .num(trackNo)
-                    .build();
 
             if(record.getIsPushMobile()){
                 String pushType = record.getPushType();
@@ -180,12 +174,9 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
 
                     }
                 }
-
-                if(StringUtils.isNotBlank(record.getTelNumber())){
-                    //只取后四位
-                    param.setPhone(StrUtil.subSuf(record.getTelNumber(),record.getTelNumber().length()-4));
-                }
             }
+            //构建查询参数
+            Kuaidi100QueryParam param = kuaidi100Service.buildKuaidi100QueryParam(companyCode, trackNo, record.getIsPushMobile(), record.getTelNumber());
             log.error("快递100实时查询请求参数组装：{}", param);
             Kuaidi100QueryResponse response = kuaidi100Service.getTrack(customer, key, param);
             if (Objects.nonNull(response)) {
@@ -205,26 +196,26 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
             }
         }
 
-        // 5. 更新
-        LogisticsTrackDTO.Kuaidi100Detail dto = new LogisticsTrackDTO.Kuaidi100Detail();
-        if (CollUtil.isNotEmpty(detailIds)){
-            dto.setDetailIds(detailIds);
-        }
-
-        // 6. 更新注册手机号和关联关系
-        List<LogisticsTrackDTO.UpdateTrackDTO> refList = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getThirdRefId()) && !detailIds.contains(e.getId())).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(refList)){
-            dto.setRefList(refList);
-        }
-        // 7. 更新物流轨迹成功
-        if (CollUtil.isNotEmpty(sucessList)){
-            dto.setSucessList(sucessList);
-        }
-        // 8. 更是物流单查询失败和原因
-        if (CollUtil.isNotEmpty(errorList)){
-            dto.setErrorList(errorList);
-        }
-        logisticsFeign.updateTrack(dto);
+//        // 5. 更新
+//        LogisticsTrackDTO.Kuaidi100Detail dto = new LogisticsTrackDTO.Kuaidi100Detail();
+//        if (CollUtil.isNotEmpty(detailIds)){
+//            dto.setDetailIds(detailIds);
+//        }
+//
+//        // 6. 更新注册手机号和关联关系
+//        List<LogisticsTrackDTO.UpdateTrackDTO> refList = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getThirdRefId()) && !detailIds.contains(e.getId())).collect(Collectors.toList());
+//        if (CollUtil.isNotEmpty(refList)){
+//            dto.setRefList(refList);
+//        }
+//        // 7. 更新物流轨迹成功
+//        if (CollUtil.isNotEmpty(sucessList)){
+//            dto.setSucessList(sucessList);
+//        }
+//        // 8. 更是物流单查询失败和原因
+//        if (CollUtil.isNotEmpty(errorList)){
+//            dto.setErrorList(errorList);
+//        }
+//        logisticsFeign.updateTrack(dto);
 
         return dmpInputTaskInitDTOList;
     }

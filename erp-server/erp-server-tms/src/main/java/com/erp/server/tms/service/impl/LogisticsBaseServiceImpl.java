@@ -439,7 +439,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
-                    .courierCode(record.getThirdSupplierCode())
+                    .courierCode(record.getChannelName())
                     .build());
         }
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)){

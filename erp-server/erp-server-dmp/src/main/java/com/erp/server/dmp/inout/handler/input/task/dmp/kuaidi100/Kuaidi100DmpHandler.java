@@ -3,10 +3,13 @@ package com.erp.server.dmp.inout.handler.input.task.dmp.kuaidi100;
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
+import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
 import io.seata.common.util.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 /**
@@ -19,6 +22,9 @@ import java.util.*;
 @Scope("prototype")
 public class Kuaidi100DmpHandler extends DmpInputDbConvertDmpHandler {
 
+    @Resource
+    private Kuaidi100Service kuaidi100Service;
+
     @Override
     protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {
         Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
@@ -28,7 +34,7 @@ public class Kuaidi100DmpHandler extends DmpInputDbConvertDmpHandler {
 
             // 快递100返回的 nu 为单号，state 为总状态，data 为轨迹明细
             String trackNo = String.valueOf(dmpInputMongoBaseEntity.get("nu"));
-            String overallStatus = convertTrackStatus(String.valueOf(dmpInputMongoBaseEntity.get("state")));
+            String overallStatus = kuaidi100Service.convertTrackStatus(String.valueOf(dmpInputMongoBaseEntity.get("state")));
 
             Object dataObj = dmpInputMongoBaseEntity.get("data");
             if (ObjectUtil.isNotEmpty(dataObj) && dataObj instanceof List) {
@@ -67,36 +73,5 @@ public class Kuaidi100DmpHandler extends DmpInputDbConvertDmpHandler {
         return dmpInputDataDmpRelationMaps;
     }
 
-    /**
-     * 快递100 状态码转换
-     * 0:在途, 1:揽收, 2:疑难, 3:签收, 4:退签, 5:派件, 6:退回, 10:待清关, 11:清关中, 12:已清关, 13:清关异常, 14:收件人拒签
-     */
-    private String convertTrackStatus(String state) {
-        if (StringUtils.isBlank(state)) {
-            return LogisticTrackStatusEnum.NOT_FIND.getCode();
-        }
-        switch (state) {
-            case "0":
-            case "10":
-            case "11":
-            case "12":
-                return LogisticTrackStatusEnum.TRACK_ING.getCode();
-            case "1":
-                return LogisticTrackStatusEnum.WAIT_COLLECT.getCode();
-            case "2":
-            case "13":
-                return LogisticTrackStatusEnum.MAYBE_EXCEPTION.getCode();
-            case "3":
-                return LogisticTrackStatusEnum.SIGN.getCode();
-            case "4":
-            case "6":
-                return LogisticTrackStatusEnum.RETURNED.getCode();
-            case "5":
-                return LogisticTrackStatusEnum.DELIVERY_ING.getCode();
-            case "14":
-                return LogisticTrackStatusEnum.DELIVERY_FAIL.getCode();
-            default:
-                return LogisticTrackStatusEnum.NOT_FIND.getCode();
-        }
-    }
+
 }
