@@ -916,7 +916,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 自动生成B2B报关单
      *
      * 根据销售出库单信息，在满足条件时自动调用TMS服务生成B2B报关单
-     * 条件包括：非中国地区、报关状态为待报关、订单类型为B2B
+     * 条件包括：非中国地区、报关状态为待确认、订单类型为B2B
      *
      * @param entity 销售出库单实体对象，包含出库单详细信息
      * @throws ServiceException 当自动生成报关单失败时抛出异常
@@ -4491,7 +4491,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 throw new ServiceException(CharSequenceUtil.format("销售出库单{} 生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
             }
         }else {
-            throw new ServiceException("仅限B2B类型的且报关状态为待报关的出库单可生成报关单");
+            throw new ServiceException("仅限B2B类型的且报关状态为待确认的出库单可生成报关单");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }

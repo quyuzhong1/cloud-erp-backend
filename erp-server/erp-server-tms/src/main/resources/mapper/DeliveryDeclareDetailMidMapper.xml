@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.DeliveryDeclareDetailMidMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="remark" property="remark" />
+       <result column="declare_status" property="declareStatus" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="business_id" property="businessId" />
+       <result column="business_code" property="businessCode" />
+       <result column="business_type" property="businessType" />
+       <result column="contract_no" property="contractNo" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="declare_id" property="declareId" />
+       <result column="declare_code" property="declareCode" />
+       <result column="declare_detail_id" property="declareDetailId" />
+       <result column="box_no" property="boxNo" />
+       <result column="hs_code" property="hsCode" />
+       <result column="product_name_cn" property="productNameCn" />
+       <result column="declare_element" property="declareElement" />
+       <result column="unit" property="unit" />
+       <result column="unit_price" property="unitPrice" />
+       <result column="qty" property="qty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        remark, declare_status, source_id, source_code, source_type, source_detail_id, business_id, business_code, business_type, contract_no, sku_id, sku_no, currency, currency_symbol, declare_id, declare_code, declare_detail_id, box_no, hs_code, product_name_cn, declare_element, unit, unit_price, qty
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from delivery_declare_detail_mid where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  delivery_declare_detail_mid
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>
