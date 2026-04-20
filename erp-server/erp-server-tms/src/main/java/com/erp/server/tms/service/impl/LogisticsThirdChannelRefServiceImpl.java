@@ -348,7 +348,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         }
 
         if(Objects.equals(logisticsThirdChannelRefEntity.getLogisticsSupplierId() ,"all")){
-            logisticsThirdChannelRefEntity.setLogisticsSupplierName("所有");
+            logisticsThirdChannelRefEntity.setLogisticsSupplierName("全部");
         }else {
             LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(logisticsThirdChannelRefEntity.getLogisticsSupplierId());
             if (Objects.nonNull(supplierEntity)) {
@@ -360,7 +360,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
 
         if(Objects.equals(logisticsThirdChannelRefEntity.getLogisticsChannelId() ,"all")){
             logisticsThirdChannelRefEntity.setLogisticsChannelCode("all");
-            logisticsThirdChannelRefEntity.setLogisticsChannelName("所有");
+            logisticsThirdChannelRefEntity.setLogisticsChannelName("全部");
         }else {
             LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsThirdChannelRefEntity.getLogisticsChannelId());
             if (Objects.nonNull(logisticsChannelEntity) && Objects.equals(logisticsChannelEntity.getMainId(), logisticsThirdChannelRefEntity.getLogisticsSupplierId())) {
