@@ -646,6 +646,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //产品信息
             ProductVO.ProductPackVO productPackVO = productPactMap.get(qcNoticeDetail.getSkuId());
             BeanMapper.copy(productPackVO, qcProduct);
+            qcProduct.setBoxQty(productPackVO.getBoxQty().intValue());
             addDto.setQcProduct(qcProduct);
             //质检信息
             BeanMapper.copy(qcNoticeDetail, qcInfo);
