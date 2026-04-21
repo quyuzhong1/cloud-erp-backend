@@ -7,6 +7,7 @@
         pro.id,
         pro.code,
         pro.purchase_order_code AS purchaseOrderCode,
+        pro.supplier_id AS supplierId,
         pro.supplier_name AS supplierName,
         pro.approve_status AS approveStatus,
         pro.invalid_status AS invalidStatus,
