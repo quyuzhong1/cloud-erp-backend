@@ -630,15 +630,21 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return;
         }
         addDTO.setDetailList(addDetailDTOs);
-        BaseResultDTO.AddDTO add = qcNoticeService.add(addDTO);
-        String id = add.getId();
-        //提交
-        qcNoticeService.submit(id);
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-        approveOneDTO.setId(id);
-        //审核
-        qcNoticeService.approve(approveOneDTO);
+
+        try {
+            UserContext.setIsUserSystem(true);
+            BaseResultDTO.AddDTO add = qcNoticeService.add(addDTO);
+            String id = add.getId();
+            //提交
+            qcNoticeService.submit(id);
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            approveOneDTO.setId(id);
+            //审核
+            qcNoticeService.approve(approveOneDTO);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
     /**
