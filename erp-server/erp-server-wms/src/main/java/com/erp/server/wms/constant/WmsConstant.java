@@ -82,4 +82,10 @@ public interface WmsConstant {
      * 发货通知单箱唛
      */
     String SO_DELIVERY_NOTICE_BOX_MARK="soDeliveryNoticeBoxMark";
+
+
+    /**
+     * 质检单-缺陷信息
+     */
+    String QC_DEFECT = "qcDefect";
 }

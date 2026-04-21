@@ -28,6 +28,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.constant.SearchType;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.*;
@@ -55,8 +56,11 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
@@ -788,7 +792,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }else {
             //销售出库单单据日期需要回写到B2C销售订单中
             if(null != entity.getBillDate()){
-                Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format("so_b2c_not_outbound:{}", entity.getSoId()));
+                Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY+":{}", entity.getSoId()));
                 Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
                 if (!isNotOutbound){
                     soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
@@ -995,7 +999,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
-        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format("so_b2c_not_outbound:{}", entity.getSoId()));
+        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY+":{}", entity.getSoId()));
         Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
             if(Objects.nonNull(soB2cEntity) && (soB2cEntity.getIsNotOutbound() || isNotOutbound)){
@@ -3196,7 +3200,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return soOutstockService.handleCreateB2cSoOutstock(dto);
             }
         } catch (Exception e) {
-            Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format("so_b2c_not_outbound:{}", dto.getSoId()));
+            Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY+":{}", dto.getSoId()));
             Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
             if (isNotOutbound){
                 throw new ServiceException(e.getMessage());
@@ -4221,6 +4225,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private void syncToWdt(SoOutstockEntity entity,SyncOperateEnum operateEnum) {
         if(CharSequenceUtil.isBlank(entity.getWarehouseId())){
             return;
+        }
+        ThirdWarehouseDTO.QueryMapParamDTO queryMapParamDTO = ThirdWarehouseDTO.QueryMapParamDTO.builder()
+                .sysType(PlatformDictEnum.WDT.getCode())
+                .category(ThirdSysTypeEnum.WAREHOUSE.getCode())
+                .inventorySyncMode(InventorySyncModeEnum.INVENTORY.getCode())
+                .build();
+        List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOS = dmpThirdMappingFeign.listQueryMapping(queryMapParamDTO);
+        if (CollUtil.isNotEmpty(queryMapDTOS) && queryMapDTOS.stream().anyMatch(e -> e.getSysId().equals(entity.getWarehouseId()))) {
+            log.warn("销售出库单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getWarehouseId());
+            return;//存在库存同步的配置则不再推送旺店通
         }
         List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         HashSet<String> warehouseIdSet = new HashSet<>();

@@ -18,7 +18,7 @@ public enum DmpOutputTaskRecordStatusEnum implements EnumMessage {
 	MQERROR("mqerror", "mq推送失败"),
     // 消费失败
 	COSUMERERROR("cosumererror", "系统重试中"),
-	FINISH("finish", "推送成功"),
+    FINISH("finish", "推送成功"),
     // 推送失败
 	ERROR("error", "待人工处理"),
     ;

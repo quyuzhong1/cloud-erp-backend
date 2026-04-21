@@ -43,7 +43,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
@@ -472,7 +472,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
     public BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht) {
         if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);

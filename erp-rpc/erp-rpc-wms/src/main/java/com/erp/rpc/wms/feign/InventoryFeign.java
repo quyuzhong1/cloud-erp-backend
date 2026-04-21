@@ -18,7 +18,7 @@ import java.util.List;
  * @CreateTime: 2023-05-05  15:25
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-wms", contextId = "inventory" ,configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-wms", contextId = "inventory", configuration = {FeignErrorDecoder.class})
 public interface InventoryFeign {
 
     /**
@@ -27,9 +27,9 @@ public interface InventoryFeign {
      */
 
 
-
     /**
      * 根据采购订单生成入库预报单
+     *
      * @param dto
      */
     @PostMapping(value = "/feign/instockForcast/generateByPurchaseOrder")
@@ -37,13 +37,15 @@ public interface InventoryFeign {
 
     /**
      * 采购订单反审核，入库预报处理
+     *
      * @param purchaseOrderId
      */
     @PostMapping(value = "/feign/instockForcast/purchaseOrderUnApprove")
-    void purchaseOrderUnApprove(@RequestParam(value = "purchaseOrderId")String purchaseOrderId);
+    void purchaseOrderUnApprove(@RequestParam(value = "purchaseOrderId") String purchaseOrderId);
 
     /**
      * 采购订单反审核, 入库预报处理（批量）
+     *
      * @param purchaseOrderIds
      */
     @PostMapping(value = "/feign/instockForcast/purchaseOrderUnApproveBatch")
@@ -51,6 +53,7 @@ public interface InventoryFeign {
 
     /**
      * 采购订单结束交货
+     *
      * @param dto
      */
     @PostMapping(value = "/feign/instockForcast/finishDelivery")
@@ -58,6 +61,7 @@ public interface InventoryFeign {
 
     /**
      * 采购订单变更单审核通过
+     *
      * @param dto
      */
     @PostMapping(value = "/feign/instockForcast/poChange")
@@ -66,10 +70,11 @@ public interface InventoryFeign {
 
     /**
      * 获取sku 库存状态数量（调用方传输状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
-     * @author yl
-     * @date 2023-05-16 17:17
+     *
      * @param paramDTO
      * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
+     * @author yl
+     * @date 2023-05-16 17:17
      */
     @PostMapping("feign/inventory/listSkuInventory")
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO);
@@ -77,33 +82,38 @@ public interface InventoryFeign {
 
     /**
      * 获取sku 库存状态数量（调用方传输状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
-     * @author yl
-     * @date 2023-05-16 17:17
+     *
      * @param paramDTO
      * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
+     * @author yl
+     * @date 2023-05-16 17:17
      */
     @PostMapping("feign/inventory/listSkuInventoryByParam")
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryByParam(@RequestBody InventoryQtyDTO.SkuInventoryParamDTO paramDTO);
 
     /**
      * 根据sku获取库存列表
+     *
      * @param dto
      * @return
      */
     @PostMapping("feign/inventory/listInventoryBySkuIds")
     List<InventoryEntity> listInventoryBySkuIds(@RequestBody InventoryQtyDTO.InventoryBySkuDTO dto);
-   /**
-    *获取sku 库存状态数量（调用方传输状态、多状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
-    * @author Will
-    * @date: 2023/8/21 16:09
-    * @param paramDTO
-    * @return List<SkuInventoryStatusTotalDTO>
-    */
+
+    /**
+     * 获取sku 库存状态数量（调用方传输状态、多状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
+     *
+     * @param paramDTO
+     * @return List<SkuInventoryStatusTotalDTO>
+     * @author Will
+     * @date: 2023/8/21 16:09
+     */
     @PostMapping("feign/inventory/listSkuInventoryStatusByParam")
     List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> listSkuInventoryStatusByParam(@RequestBody InventoryQtyDTO.SkuInventoryStatusParamDTO paramDTO);
 
     /**
      * 采购订单结束交货（批量）
+     *
      * @param dataList
      */
     @PostMapping(value = "/feign/instockForcast/finishDeliveryBatch")
@@ -112,6 +122,7 @@ public interface InventoryFeign {
 
     /**
      * 根据采购订单生成入库预报单（批量）
+     *
      * @param dataList
      */
     @PostMapping(value = "/feign/instockForcast/generateByPurchaseOrderBatch")
@@ -119,6 +130,7 @@ public interface InventoryFeign {
 
     /**
      * 采购订单变更单审核通过（批量）
+     *
      * @param dataList
      */
     @PostMapping(value = "/feign/instockForcast/poChangeBatch")
@@ -127,9 +139,28 @@ public interface InventoryFeign {
 
     /**
      * 根据sku获取库存列表
+     *
      * @param skuNoList
      * @return
      */
     @PostMapping("feign/inventory/listInventoryBySkuNos")
     List<InventoryEntity> listInventoryBySkuNos(@RequestBody List<String> skuNoList);
+
+    /**
+     * 根据仓库id、状态列表获取库存列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/inventory/listWarehouseInventoryByParam")
+    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(@RequestBody InventoryQtyDTO.InventoryParamDTO dto);
+
+    /**
+     * 根据仓库id、时间范围获取库存变更列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/inventory/listInventoryChangeByParam")
+    List<InventoryQtyDTO.InventoryChangeDTO> listInventoryChangeByParam(@RequestBody InventoryQtyDTO.InventoryChangeQueryDTO dto);
 }

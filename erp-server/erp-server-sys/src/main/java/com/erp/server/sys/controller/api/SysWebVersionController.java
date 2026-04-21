@@ -27,8 +27,6 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/webVersion")
 public class SysWebVersionController extends BaseController implements CommandLineRunner {
-
-	private final static String WEB_VERSION_REDISKEY = "web:version:package";
 	
 	private final static String WEB_VERSION_TYPE = "webVersionPackage";
 	
@@ -67,9 +65,9 @@ public class SysWebVersionController extends BaseController implements CommandLi
     
     private boolean dealUpdate(Boolean isDeteleToken) {
     	try {
-			redisUtil.del(WEB_VERSION_REDISKEY);
+			redisUtil.del(RedisCacheConstants.WEB_VERSION_REDISKEY);
 			dictBasicService.lambdaUpdate().eq(DictBasicEntity::getType, WEB_VERSION_TYPE).setSql(" value = value::int + 1 ").update();
-			redisUtil.del(WEB_VERSION_REDISKEY);
+			redisUtil.del(RedisCacheConstants.WEB_VERSION_REDISKEY);
 			if(isDeteleToken != null && isDeteleToken) {
 				Collection<String> keys = redisUtil.keys(RedisCacheConstants.LOGIN_TOKEN_KEY + "*");
 				if(CollUtil.isNotEmpty(keys)) {
@@ -94,7 +92,7 @@ public class SysWebVersionController extends BaseController implements CommandLi
     	}
     	if(StringUtils.isBlank(webVersion)) {
     		Integer version = 1;
-        	Object object = redisUtil.get(WEB_VERSION_REDISKEY);
+        	Object object = redisUtil.get(RedisCacheConstants.WEB_VERSION_REDISKEY);
         	if(object != null) {
         		version = Integer.valueOf(object.toString());
         	}else {
@@ -118,7 +116,7 @@ public class SysWebVersionController extends BaseController implements CommandLi
         			dictBasicEntity.setValue(version.toString());
         			dictBasicService.save(dictBasicEntity);
         		}
-        		redisUtil.set(WEB_VERSION_REDISKEY, version.toString() , 120L + randomNumber);
+        		redisUtil.set(RedisCacheConstants.WEB_VERSION_REDISKEY, version.toString() , 120L + randomNumber);
         	}
         	webVersion = version.toString();
     	}

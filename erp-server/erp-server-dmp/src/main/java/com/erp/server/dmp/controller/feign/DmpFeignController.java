@@ -271,7 +271,6 @@ public class DmpFeignController extends BaseController {
         dmpPullTaskService.sendWarnMsg(syncTaskId);
         return Boolean.TRUE;
     }
-
     /**
      * 查询sku成本
      * @author Will
