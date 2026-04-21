@@ -210,6 +210,7 @@ public class GoodCangService {
         JSONObject data = JSON.parseObject(respDto.getData());
         if(Objects.nonNull(data)){
             respDto.setData(data.getString("order_code"));
+            respDto.setRequestId(data.getString("request_id"));
         }
         return respDto;
     }
@@ -319,6 +320,20 @@ public class GoodCangService {
         GoodCangResponse<GoodCangUploadOrderLabelResp> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangUploadOrderLabelResp>>() {}.getType());
         if(Objects.isNull(respDto)){
             return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+        }
+        return respDto;
+    }
+
+
+    public GoodCangResponse<GoodCangTaskResp> taskStatusList(List<String> requestIdList){
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("request_id_list",requestIdList);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CREATE_B2B_BILL,paramsMap);
+        //处理返回值
+        GoodCangResponse<GoodCangTaskResp> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangTaskResp>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓查询任务返回数据为空,返回值:{}", response);
+            throw new ServiceException(GOOG_CANG_RESPONSE + ":" +response);
         }
         return respDto;
     }
