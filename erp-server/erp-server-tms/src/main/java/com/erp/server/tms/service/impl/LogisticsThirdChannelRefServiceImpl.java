@@ -385,6 +385,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             if(Objects.isNull(basicQueryLogisticsProviderEntity)){
                 throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND, thirdSupplierName);
             }else {
+                logisticsThirdChannelRefEntity.setThirdChannelCode(basicQueryLogisticsProviderEntity.getCompanyCode());
                 logisticsThirdChannelRefEntity.setThirdChannelName(basicQueryLogisticsProviderEntity.getCompanyCode());
                 logisticsThirdChannelRefEntity.setThirdSupplierCode(basicQueryLogisticsProviderEntity.getLogisticsNameEn());
 
@@ -395,6 +396,11 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
                 // 校验推送手机号配置规则
                 validatePushMobileConfig(isRegisterPhone, isPushMobile, pushType);
             }
+        }else {
+            logisticsThirdChannelRefEntity.setThirdChannelCode("");
+            logisticsThirdChannelRefEntity.setThirdChannelName("");
+            logisticsThirdChannelRefEntity.setThirdSupplierCode("");
+            logisticsThirdChannelRefEntity.setThirdSupplierName("");
         }
 
         // 验证数据 & 数据赋值
