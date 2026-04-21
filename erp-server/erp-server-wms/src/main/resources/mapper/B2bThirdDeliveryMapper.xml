@@ -82,7 +82,7 @@
             btd.receiver_name as receiverName,
             btd.warehouse_org_id,
             btd.warehouse_org_name,
-            btd.platform_order_code,
+            btd.platform_order_code as platformOrderCode,
             btd.status as status,
             btd.delivery_warehouse_id,
             btd.delivery_warehouse_name as deliveryWarehouseName,

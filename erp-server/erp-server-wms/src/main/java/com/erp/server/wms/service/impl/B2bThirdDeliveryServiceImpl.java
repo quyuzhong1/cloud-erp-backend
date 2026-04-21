@@ -358,7 +358,34 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private void fillList(List<B2bThirdDeliveryDTO.PagingViewDTO> records) {
+        List<String> soIds = records.stream()
+                .map(B2bThirdDeliveryDTO.PagingViewDTO::getSoId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> salesPlatformOrderCodeMap = new HashMap<>();
+        Map<String, String> customerPOMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(soIds)) {
+            List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIds);
+            if (CollectionUtils.isNotEmpty(soInfoList)) {
+                salesPlatformOrderCodeMap = soInfoList.stream()
+                        .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                        .collect(Collectors.toMap(SoInfoEntity::getId, item -> CharSequenceUtil.blankToDefault(item.getPlatformOrderCode(), CharSequenceUtil.EMPTY), (v1, v2) -> v1));
+            }
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
+            if (CollectionUtils.isNotEmpty(soDetailList)) {
+                customerPOMap = soDetailList.stream()
+                        .filter(item -> CharSequenceUtil.isNotBlank(item.getMainId()) && CharSequenceUtil.isNotBlank(item.getCustomerPO()))
+                        .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
+                                Collectors.collectingAndThen(Collectors.mapping(SoDetailEntity::getCustomerPO, Collectors.toCollection(LinkedHashSet::new)),
+                                        item -> String.join(",", item))));
+            }
+        }
+        Map<String, String> finalSalesPlatformOrderCodeMap = salesPlatformOrderCodeMap;
+        Map<String, String> finalCustomerPOMap = customerPOMap;
         records.forEach(e -> {
+            e.setSalesPlatformOrderCode(finalSalesPlatformOrderCodeMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+            e.setCustomerPO(finalCustomerPOMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
             String warehouseOperationType = e.getWarehouseOperationType();
             if (CharSequenceUtil.isBlank(warehouseOperationType)) {

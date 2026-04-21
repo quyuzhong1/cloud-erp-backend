@@ -19,6 +19,7 @@ import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import com.alibaba.excel.write.style.column.AbstractColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -89,6 +90,7 @@ import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.SoOutstockDTO.ExportDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -156,6 +158,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK_DYNAMIC;
 
 /**
  * <p>
@@ -1707,6 +1710,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return new PagingVO<>(page);
     }
 
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+        PagingVO<SoOutstockDTO.PagingViewDTO> paging = this.exportSoOutStock(dto);
+        List<SoOutstockDTO.ExportField> fieldList = dto.getParams().getFieldList();
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+        if (CollUtil.isNotEmpty(paging.getList()) && CollUtil.isNotEmpty(fieldList)) {
+            List<String> fieldCodeList = fieldList.stream().map(SoOutstockDTO.ExportField::getField).distinct().collect(Collectors.toList());
+            LinkedHashMap<String, String> fieldMap = fieldList.stream().collect(Collectors.toMap(SoOutstockDTO.ExportField::getField,
+                    SoOutstockDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+            dynamicExcelDTO.setHeaders(fieldMap);
+            for (SoOutstockDTO.PagingViewDTO pagingViewDTO : paging.getList()) {
+                LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>) BeanUtil.beanToMap(pagingViewDTO);
+                LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
+                for (String fieldCode : fieldCodeList) {
+                    exportMap.put(fieldCode, excelMap.get(fieldCode));
+                }
+                data.add(exportMap);
+            }
+        }
+        dynamicExcelDTO.setData(data);
+        dynamicExcelDTO.setSheetName("销售订单出库列表");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), paging.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
+    }
+
     /**
      * 作废
      *
@@ -2037,7 +2065,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public Boolean exportExcel(SoOutstockDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
+        if (CollUtil.isEmpty(dto.getFieldList())) {
+            downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
+        } else {
+            downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK_DYNAMIC.getCode(), dto);
+        }
         return Boolean.TRUE;
     }
 
@@ -4977,6 +5009,56 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> updateOutstockDate(List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTO) {
+        if (CollectionUtils.isEmpty(updateOutstockDateDTO)) {
+            return new ArrayList<>();
+        }
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+
+        // 1. 获取所有ID并查询实体
+        List<String> ids = updateOutstockDateDTO.stream()
+                .map(SoOutstockDTO.UpdateOutstockDateDTO::getId)
+                .collect(Collectors.toList());
+
+        List<SoOutstockEntity> entityList = this.listByIds(ids);
+        Map<String, SoOutstockEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(SoOutstockEntity::getId, v -> v));
+
+        // 2. 分离可更新和不可更新的记录
+        List<SoOutstockDTO.UpdateOutstockDateDTO> validUpdates = new ArrayList<>();
+        List<SoOutstockEntity> updateList = new ArrayList<>();
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
+        updateOutstockDateDTO.forEach(dto -> {
+            SoOutstockEntity entity = entityMap.get(dto.getId());
+            if (entity == null) {
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), null, "出库单不存在"));
+            } else if (!ApproveStatusEnum.WAIT_SUBMIT.getCode()
+                    .equalsIgnoreCase(entity.getApproveStatus().getCode())) {
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
+                        "只有待提交状态的出库单才允许修改出库日期"));
+            } else {
+                entity.setBillDate(dto.getOutDate());
+                updateList.add(entity);
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(
+                        String.format("修改出库日期为%s", dto.getOutDate()),
+                        ModuleTypeEnum.SO_OUT_STOCK.getCode(),
+                        entity.getId(),
+                        "修改出库日期"
+                ));
+                validUpdates.add(dto);
+            }
+        });
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+            operateLogService.batchAddModuleOperateLog(operateLogList);
+        }
+
+        return resultDTOS;
     }
 
 }

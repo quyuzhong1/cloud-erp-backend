@@ -364,6 +364,11 @@ public class SoOutstockDTO implements Serializable {
         private BigDecimal allAmountLocalCurrency;
 
         /**
+         * 价税合计
+         */
+        private BigDecimal taxAmount;
+
+        /**
          * 币种
          */
         private String currency;
@@ -1308,6 +1313,26 @@ public class SoOutstockDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 自定义导出字段
+         */
+        private List<ExportField> fieldList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段编码
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String fieldName;
     }
 
     @Data
@@ -2128,5 +2153,18 @@ public class SoOutstockDTO implements Serializable {
          * 实发数量
          */
         private Integer actualQty;
+    }
+
+
+    /**
+     * kol寄样费用查询出库DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateOutstockDateDTO {
+
+        private String id;
+
+        private LocalDate outDate;
     }
 }

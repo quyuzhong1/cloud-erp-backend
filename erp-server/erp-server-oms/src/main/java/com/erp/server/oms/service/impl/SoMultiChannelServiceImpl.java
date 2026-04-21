@@ -67,6 +67,9 @@ import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CancelFulfillmentOrderResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentOrderStatus;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFulfillmentOrderResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFulfillmentOrderResult;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.SoMultiChannelConverter;
@@ -642,56 +645,94 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         //重新查询订单信息
         entity = this.getById(entity.getId());
         if (Objects.isNull(entity)){
-            addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, deliveryCode);
+            handleDeliveryInterceptSuccess(null, logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, deliveryCode, false, isValidate);
             return BatchResultDTO.success("", "", "发货拦截作废成功");
         }
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "订单状态已作废，不能发货拦截");
         }
-        if (CreateStatusEnum.SUCCESS.getCode().equals(entity.getCreateStatus()) && isCancel) {
-            AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getDeliveryShopId());
-            FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
-            try {
-                ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderResponseApiResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
-                log.warn("亚马逊发货拦截取消订单，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelFulfillmentOrderResponseApiResponse));
-                this.lambdaUpdate()
-                        .set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
-                        .set(SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
-                        .set(SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
-                        .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
-                        .eq(SoMultiChannelEntity::getId, entity.getId()).update();
-                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
-                entity.setInvalidStatus(Boolean.TRUE);
-                operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelFulfillmentOrderResponseApiResponse.getData())), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
-            } catch (ApiException | LWAException e) {
-                log.error("亚马逊发货拦截异常：", e);
-                return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
+        if (needAmazonCancelConfirm(entity, isCancel)) {
+            createWaitHandleDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity);
+            if (cancelAndConfirmAmazonOrder(entity)) {
+                handleDeliveryInterceptSuccess(entity, logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode(), true, isValidate);
+                return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
             }
+            return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "已发起发货拦截，当前状态拦截中");
         }
-        if (CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())){
-            throw new ServiceException("创建中不允许拦截");
-        }
-        if (!CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())) {
-            Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getDeliveryCode()), "反审核取消同步"));
-            if (!Boolean.TRUE.equals(b)){
-                throw new ServiceException("反审核取消同步失败");
-            }
-        }
-        if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
-            this.cancelProcess(new ApproveDTO.CancelProcessDTO(entity.getId()));
-        }
-        //作废数据
-        if (!entity.getInvalidStatus() && isValidate) {
-            this.lambdaUpdate()
-                    .set(SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
-                    .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
-                    .eq(SoMultiChannelEntity::getId, entity.getId()).update();
-        }
-        addDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode());
+        handleDeliveryInterceptSuccess(entity, logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode(), Boolean.TRUE.equals(isCancel) && CreateStatusEnum.CANCEL.getCode().equals(entity.getCreateStatus()), isValidate);
         return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
     }
 
-    private void addDeliveryIntercept(String logisticsChannelId, String logisticsChannelName, String trackNo, String remark, SoB2cEntity soB2cEntity, String deliveryCode) {
+    private boolean needAmazonCancelConfirm(SoMultiChannelEntity entity, Boolean isCancel) {
+        return Boolean.TRUE.equals(isCancel) && (CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())
+                || CreateStatusEnum.SUCCESS.getCode().equals(entity.getCreateStatus()));
+    }
+
+    private boolean cancelAndConfirmAmazonOrder(SoMultiChannelEntity entity) {
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getDeliveryShopId());
+        FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        try {
+            ApiResponse<CancelFulfillmentOrderResponse> cancelResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
+            log.warn("亚马逊发货拦截取消订单，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelResponse));
+        } catch (ApiException | LWAException e) {
+            log.warn("亚马逊发货拦截取消订单异常，订单号：{}", entity.getDeliveryCode(), e);
+        }
+        try {
+            ApiResponse<GetFulfillmentOrderResponse> fulfillmentOrderResponse = api.getFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
+            log.warn("亚马逊发货拦截查询订单状态，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(fulfillmentOrderResponse));
+            return isAmazonDeliveryInterceptSuccess(fulfillmentOrderResponse);
+        } catch (ApiException | LWAException e) {
+            log.warn("亚马逊发货拦截查询订单状态异常，订单号：{}", entity.getDeliveryCode(), e);
+            return false;
+        }
+    }
+
+    private boolean isAmazonDeliveryInterceptSuccess(ApiResponse<GetFulfillmentOrderResponse> fulfillmentOrderResponse) {
+        if (Objects.isNull(fulfillmentOrderResponse) || fulfillmentOrderResponse.getStatusCode() != 200) {
+            return false;
+        }
+        GetFulfillmentOrderResponse response = fulfillmentOrderResponse.getData();
+        GetFulfillmentOrderResult payload = Objects.isNull(response) ? null : response.getPayload();
+        if (Objects.isNull(payload) || Objects.isNull(payload.getFulfillmentOrder())) {
+            return false;
+        }
+        return FulfillmentOrderStatus.CANCELLED.equals(payload.getFulfillmentOrder().getFulfillmentOrderStatus());
+    }
+
+    private void createWaitHandleDeliveryIntercept(String logisticsChannelId, String logisticsChannelName, String trackNo, String remark, SoB2cEntity soB2cEntity) {
+        SoB2cDeliveryInterceptEntity interceptEntity = getLatestApiDeliveryIntercept(soB2cEntity.getId());
+        if (Objects.nonNull(interceptEntity)) {
+            return;
+        }
+        SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(soB2cEntity);
+        addDTO.setBillType(OrderTypeEnum.B2C.getCode());
+        addDTO.setRemark(remark);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
+        addDTO.setDetailList(detailList);
+        addDTO.setLogisticsChannelId(logisticsChannelId);
+        addDTO.setLogisticsChannelName(logisticsChannelName);
+        addDTO.setTransportNo(trackNo);
+        addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
+        addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
+        soB2cDeliveryInterceptFeign.add(addDTO);
+    }
+
+    private SoB2cDeliveryInterceptEntity getLatestApiDeliveryIntercept(String soId) {
+        List<SoB2cDeliveryInterceptEntity> interceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(soId));
+        if (CollUtil.isEmpty(interceptEntities)) {
+            return null;
+        }
+        return interceptEntities.stream()
+                .filter(item -> SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(item.getSourceType()))
+                .filter(item -> !SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode().equals(item.getHandleStatus()))
+                .sorted(Comparator.comparing(SoB2cDeliveryInterceptEntity::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void handleDeliveryInterceptSuccess(SoMultiChannelEntity entity, String logisticsChannelId, String logisticsChannelName, String trackNo, String remark, SoB2cEntity soB2cEntity, String deliveryCode, boolean updateCreateStatusCancel, Boolean isValidate) {
+        updateMultiChannelInvalidStatus(entity, deliveryCode, updateCreateStatusCancel, isValidate);
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = null;
         if (CharSequenceUtil.isNotBlank(deliveryCode)){
             thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(deliveryCode, soB2cEntity.getId());
@@ -714,9 +755,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
                     .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
         }
-        //检查拦截单是否存在，不存在就新增
-        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(soB2cEntity.getId()));
-        if (Objects.nonNull(soB2cEntity) && CollUtil.isEmpty(soB2cDeliveryInterceptEntities)) {
+        SoB2cDeliveryInterceptEntity interceptEntity = getLatestApiDeliveryIntercept(soB2cEntity.getId());
+        if (Objects.nonNull(interceptEntity)) {
+            soB2cDeliveryInterceptFeign.apiHandleSuccess(interceptEntity.getId(), remark);
+        } else if (Objects.nonNull(soB2cEntity)) {
             SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(soB2cEntity);
             addDTO.setBillType(OrderTypeEnum.B2C.getCode());
             addDTO.setRemark(remark);
@@ -733,6 +775,28 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             addDTO.setHandleTime(LocalDateTime.now());
             soB2cDeliveryInterceptFeign.add(addDTO);
         }
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{}", deliveryCode), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soB2cEntity.getId(), "多渠道订单发货拦截");
+    }
+
+    private void updateMultiChannelInvalidStatus(SoMultiChannelEntity entity, String deliveryCode, boolean updateCreateStatusCancel, Boolean isValidate) {
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        if (!CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())) {
+            Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(deliveryCode), "反审核取消同步"));
+            if (!Boolean.TRUE.equals(b)){
+                throw new ServiceException("反审核取消同步失败");
+            }
+        }
+        if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
+            this.cancelProcess(entity.getId());
+        }
+        this.lambdaUpdate()
+                .set(updateCreateStatusCancel, SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
+                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
+                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
+                .eq(SoMultiChannelEntity::getId, entity.getId()).update();
     }
 
     @Override

@@ -628,6 +628,32 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO apiHandleSuccess(String id, String remark) {
+        SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException("拦截单为空"));
+        if (!SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
+            throw new ServiceException("发货拦截单来源类型错误");
+        }
+        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
+            if (HandleResultEnum.SUCCESS.getCode().equals(entity.getHandleResult())) {
+                return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "已处理不可重复操作");
+        }
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+        entity.setHandleUserId(userInfo.getUid());
+        entity.setHandleUserName(userInfo.getUserName());
+        entity.setHandleRemark(remark);
+        entity.setHandleTime(LocalDateTime.now());
+        entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
+        entity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+        this.updateById(entity);
+        operateLogService.addModuleOperateLog("API拦截成功，备注：" + (CharSequenceUtil.isBlank(remark) ? "" : remark), ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "拦截成功");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO handleSuccess(SoB2cDeliveryEntity entity, String interceptId, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList, String remark) {
         SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = this.getById(interceptId);
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());

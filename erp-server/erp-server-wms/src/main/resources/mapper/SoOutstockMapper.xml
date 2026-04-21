@@ -59,6 +59,7 @@
         sod.currency,
         sod.currency_symbol as currencySymbol,
         sod.all_amount_local_currency as allAmountLocalCurrency,
+        sod.tax_amount as taxAmount,
         sod.exchange_rate as exchangeRate,
         sod.so_detail_id as soDetailId,
         sod.source_detail_id AS sourceDetailId,

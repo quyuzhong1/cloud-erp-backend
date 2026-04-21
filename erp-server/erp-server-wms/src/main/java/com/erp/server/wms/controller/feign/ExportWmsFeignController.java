@@ -721,6 +721,19 @@ public class ExportWmsFeignController {
         return pagingVO;
     }
 
+    @PostMapping("/soOutStockDynamic")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
+            menuCode = "wms:so:outstock:paging",
+            tableAlias = "so"
+    )
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+        return soOutstockService.exportDynamicSoOutStock(dto);
+    }
+
     @PostMapping("/soReturnInStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,warehouse_keeper_id",

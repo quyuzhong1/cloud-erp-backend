@@ -153,7 +153,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-    
+
     @Resource
     private MQProducerService mqProducerService;
 
@@ -473,7 +473,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     		if(CollUtil.isEmpty(list)) {
     			return detailList;
     		}
-    		
+
     		String skuStdSetting = list.get(0).getRemark();
     		SkuStdSettingEnum skuStdSettingEnum = SkuStdSettingEnum.getByCode(skuStdSetting);
     		if(skuStdSettingEnum == null) {
@@ -481,7 +481,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     		}
     		Map<String, List<WdtSoOutStockDetailDTO>> suiteMap = detailList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSuiteNo()) && Objects.nonNull(e.getSuiteQty())).collect(Collectors.groupingBy(e -> e.getSuiteNo() + "-" + e.getSuiteQty()));
     		List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS = new ArrayList<>();
-    		
+
     		Set<String> suiteSkuSet = new HashSet<>();
     		for(List<WdtSoOutStockDetailDTO> v : suiteMap.values()) {
     			suiteSkuSet.addAll(v.stream().map(WdtSoOutStockDetailDTO::getSkuNo).collect(Collectors.toSet()));
@@ -499,7 +499,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     		}else {
     			return detailList;
     		}
-    		
+
     		suiteSkuSet.removeAll(skuPriceMap.keySet());
     		if(CollUtil.isNotEmpty(suiteSkuSet)) {
     			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
@@ -513,7 +513,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     	        mqProducerService.sendWarnMsg(warnMsgInfo);
     			return detailList;
     		}
-    		
+
     		for(Map.Entry<String, List<WdtSoOutStockDetailDTO>> suiteInfo : suiteMap.entrySet()) {
     			List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOList = suiteInfo.getValue();
     			BigDecimal totalStd = BigDecimal.ZERO;
@@ -537,16 +537,18 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         							.divide(totalStd , 4 , RoundingMode.DOWN);
     						currTotalAllAmountLocalCurrency = currTotalAllAmountLocalCurrency.add(allAmountLocalCurrency);
 							wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(allAmountLocalCurrency);
-							
+
         					BigDecimal amount = totalAmount
         							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
         							.divide(totalStd , 4 , RoundingMode.DOWN);
         					currTotalAmount = currTotalAmount.add(amount);
 							wdtSoOutStockDetailDTO.setAmount(amount);
+							wdtSoOutStockDetailDTO.setTaxAmount(amount);
     					}else {
     						wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(totalAllAmountLocalCurrency.subtract(currTotalAllAmountLocalCurrency));
     						wdtSoOutStockDetailDTO.setAmount(totalAmount.subtract(currTotalAmount));
+    						wdtSoOutStockDetailDTO.setTaxAmount(totalAmount.subtract(currTotalAmount));
     					}
     					wdtSoOutStockDetailDTO.setPrice(wdtSoOutStockDetailDTO.getAmount().divide(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty()), 4, RoundingMode.HALF_UP));
     				}
@@ -566,6 +568,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 wdtSoOutStockDetailDTO.setPlanQty(wdtSoOutStockDetailDTO.getSuiteQty());
                 wdtSoOutStockDetailDTO.setActualQty(wdtSoOutStockDetailDTO.getSuiteQty());
                 wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add));
+                wdtSoOutStockDetailDTO.setTaxAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
                 wdtSoOutStockDetailDTO.setAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
                 List<PositionDetailsList> positionDetailsList = soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getPositionDetailsList).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
                 wdtSoOutStockDetailDTO.setPositionDetailsList(positionDetailsList);
@@ -578,7 +581,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutStockDetailDTOS.addAll(detailList.stream().filter(e -> CharSequenceUtil.isBlank(e.getSuiteNo()) || Objects.isNull(e.getSuiteQty())).collect(Collectors.toList()));
             return soOutStockDetailDTOS;
         }
-        
+
     }
 
 

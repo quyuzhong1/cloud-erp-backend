@@ -106,6 +106,8 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
 
     List<SoB2cDeliveryInterceptEntity> listByStatus(String code);
 
+    BatchResultDTO apiHandleSuccess(String id, String remark);
+
     BatchResultDTO handleSuccess(SoB2cDeliveryEntity dto, String id, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList, String remark);
 
     List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptSuccessView(List<String> ids);
