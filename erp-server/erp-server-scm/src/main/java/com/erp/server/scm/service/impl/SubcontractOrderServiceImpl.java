@@ -39,6 +39,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -469,27 +470,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
-        //返修委外订单需要检查金蝶状态
-        if(Objects.equals(entity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
-            // 查询金蝶委外订单状态
-            if (ObjectUtils.isNotEmpty(entity.getSyncKingdeeId())) {
-                KingdeeDTO kingdeeDTO = new KingdeeDTO();
-                kingdeeDTO.setKingdeePushModuleCode(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
-                kingdeeDTO.setNumber(entity.getCode());
-                kingdeeDTO.setId(entity.getSyncKingdeeId());
-                // 查询金蝶单据状态
-                JSONObject viewJson = dmpTaskFeign.getByKingdeeId(kingdeeDTO);
-
-                if (viewJson != null && viewJson.containsKey("Status")) {
-                    String docStatus = viewJson.getStr("Status");
-                    //计划和计划确认才可以反审核
-                    if (!Objects.equals(docStatus,1) && !Objects.equals(docStatus,2)) {
-                        throw new ServiceException(ApiError.DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE);
-                    }
-                }
-            }
-        }
-
         //委外变更单
         List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(id));
         //采购订单
@@ -514,8 +494,30 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         // 更新审核信息
         updateApproveStatus(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-        //发送金蝶
-        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        //返修委外订单需要检查金蝶状态
+        if(Objects.equals(entity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+            // 查询金蝶委外订单状态
+            if (ObjectUtils.isNotEmpty(entity.getSyncKingdeeId())) {
+                KingdeeDTO kingdeeDTO = new KingdeeDTO();
+                kingdeeDTO.setKingdeePushModuleCode(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+                kingdeeDTO.setNumber(entity.getCode());
+                kingdeeDTO.setId(entity.getSyncKingdeeId());
+                // 查询金蝶单据状态
+                JSONObject viewJson = dmpTaskFeign.getByKingdeeId(kingdeeDTO);
+
+                if (viewJson != null && viewJson.containsKey("DocumentStatus")) {
+                    String docStatus = viewJson.getStr("DocumentStatus");
+                    if (!Objects.equals(docStatus, KingdeeDocStatusEnum.CREATED.getCode())
+                            && !Objects.equals(docStatus,KingdeeDocStatusEnum.REAPPROVE.getCode())) {
+                        throw new ServiceException(ApiError.DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE);
+                    }
+                }
+            }
+        } else {
+            //发送金蝶
+            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        }
+
         // 操作日志
         String msg = format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外订单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), entity.getId(), "反审核操作");
