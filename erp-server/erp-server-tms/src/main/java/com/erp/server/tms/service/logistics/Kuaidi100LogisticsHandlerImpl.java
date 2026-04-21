@@ -207,7 +207,7 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
                     entity.setTrackNo(trackNo);
                     LocalDateTime trackTime = LocalDateTime.parse(data.getTime(), dateTimeFormatter);
                     entity.setTrackTime(trackTime);
-                    entity.setStatus(kuaidi100Service.convertTrackStatus(response.getStatus()));//转换类型
+                    entity.setStatus(kuaidi100Service.convertTrackStatus(response.getState()));//转换类型
                     entity.setContent(data.getContext());
                     entity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
                     allTracks.add(entity);
