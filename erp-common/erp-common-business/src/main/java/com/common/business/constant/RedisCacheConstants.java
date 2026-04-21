@@ -7,50 +7,46 @@ package com.common.business.constant;
  * @Created by yl
  */
 public interface RedisCacheConstants {
-
-
-    String LOGIN_TOKEN_KEY = "login_tokens:";
-
     /**
      * 缓存有效期，默认7 天
      */
-    public long EXPIRATION = 7;
+    long EXPIRATION = 7;
+
+    /**
+     * 邮箱验证码 有效期间5分钟
+     */
+    long EMAIL_CODE_EXPIRATION = 5;
+
+    /**
+     * 登录错误限制次数
+     */
+    int MAX_LOGIN_ATTEMPTS = 5;
+
+    /**
+     * 登录错误限制间隔分钟
+     */
+    int LOCK_DURATION_MINUTES = 60;
+
+    /**
+     * 邮箱验证码 有效期间600秒
+     */
+    Integer THIRD_PARTY_AUTH_EXPIRATION = 600;
+
+
+    String LOGIN_TOKEN_KEY = "auth:login:token:";
 
     /**
      *  邮箱验证码
      */
 
-    String CODE_OF_EMAIL = "email_code_";
+    String CODE_OF_EMAIL = "auth:login:email:code";
 
-    /**
-     * 邮箱验证码 有效期间5分钟
-     */
-    public long EMAIL_CODE_EXPIRATION = 5;
 
-    /**
-     * 登录错误限制次数
-     */
-    public final int MAX_LOGIN_ATTEMPTS = 5;
-
-    /**
-     * 登录错误限制间隔分钟
-     */
-    public final int LOCK_DURATION_MINUTES = 60;
-
-    /**
-     * 权限功能的redis 的key
-     */
-    String PERMISSIONS_CODE_KEY = "permissions_code:";
-
-    /**
-     * wms dic 的 key
-     */
-    String WMS_DICT_KEY = "wms_dict";
 
     /**
      * pda用户叉掉消息通知的 key
      */
-    String CLOSE_MESSAGE_NOTICE_KEY = "close_message_notice:";
+    String CLOSE_MESSAGE_NOTICE_KEY = "pda:message:closeNotice:";
 
     /**
      * 平台token
@@ -60,194 +56,149 @@ public interface RedisCacheConstants {
     /**
      * 登录错误Key : 系统:用户账号
      */
-    String LOGIN_ERROR_KEY = "login_error:{}:{}";
-
-    /**
-     * 亚马逊报告文档URL:{文档类型}:MarketplaceId
-     */
-    String REDIS_AMAZON_REPORT_DOCUMENT_URL = "amazon-report-document-{}-{}";
+    String LOGIN_ERROR_KEY = "auth:login:error:{}:{}";
 
 
 
     // 授权相关
-    /**
-     * 邮箱验证码 有效期间600秒
-     */
-     Integer THIRD_PARTY_AUTH_EXPIRATION = 600;
 
     /**
      * 亚马逊授权:{state}
      * 内容店铺ID
      */
-    String AUTH_AMAZON_STATE = "third-party-auth:amazon_state:{}";
+    String AUTH_AMAZON_STATE = "third:amazon:auth:state:{}";
 
     /**
      * shopify授权:{shop}
      * 内容店铺ID
      */
-    String AUTH_SHOPIFY_SHOP = "third_party_auth:shopify_shop:{}";
+    String AUTH_SHOPIFY_SHOP = "third:shopify:auth:state:{}";
 
     /**
      * 速卖通授权:{stare}
      * 内容店铺ID
      */
-    String AUTH_ALIEXPRESS_STATE = "third-party-auth:aliexpress_state:{}";
+    String AUTH_ALIEXPRESS_STATE = "third:aliexpress:auth:state:{}";
 
     /**
      * 虾皮授权:{id}
      * 内容店铺ID
      */
-    String AUTH_SHOPEE_ID = "third-party-auth:id:{}";
+    String AUTH_SHOPEE_ID = "third:shopee:auth:id:{}";
 
     /**
      * 亚马逊RDT token:店铺ID:订单ID
      */
-    String AMAZON_RDT_TOKEN = "amazon-rdt-token:{}:{}";
-
-
-    /**
-     * 平台请求中:平台类型:sellerId:业务类型/接口类型
-     * :请求的端点区域?
-     */
-    String PLATFORM_REQUEST = "platform_request:{}:{}:{}";
-
-
-    /**
-     * 平台请求中前缀:groupId
-     */
-    String PLATFORM_REQUEST_PREFIX = "platform_request:{}";
+    String AMAZON_RDT_TOKEN = "third:amazon:rdt:token:{}:{}";
 
     /**
      * 亚马逊报告同类型处理中:shopId:recordType
      */
-    String AMZ_REPORT_HANDLE_PREFIX = "amz_report_handle:{}:{}";
+    String AMZ_REPORT_HANDLE_PREFIX = "third:amazon:report:handle:{}:{}";
 
     /**
      * 亚马逊创建报告缓存响应信息:amz_report_result:taskId:status
      */
-    String AMZ_REPORT_RESULT_PREFIX = "amz_report_result:{}:{}";
+    String AMZ_REPORT_RESULT_PREFIX = "third:amazon:report:result:{}:{}";
 
 
     /**
      * 亚马逊报告缓存结果:amz_report_info:taskId:status
      */
-    String AMZ_REPORT_INFO_PREFIX = "amz_report_info:{}:{}";
+    String AMZ_REPORT_INFO_PREFIX = "third:amazon:report:info:{}:{}";
 
     /**
      * 平台请求频率:平台类型:sellerId:业务类型/接口类型
      */
-    String PLATFORM_RATE_LIMIT = "platform_rate_limit:{}:{}:{}";
+    String PLATFORM_RATE_LIMIT = "third:platform:rate:limit:{}:{}:{}";
 
-    /**
-     * 平台请求频率:平台类型:sellerId:业务类型/接口类型:端点
-     */
-    String PLATFORM_RATE_LIMIT_ENDPOINTS = "platform_rate_limit:{}:{}:{}:{}";
 
     /**
      * 平台请求频率:{(平台类型:sellerId::端点)=groupId}:{业务类型/接口类型}
      */
-    String PLATFORM_RATE_LIMIT_GROUP_ID_PREFIX = "platform_rate_limit:{}:{}";
+    String PLATFORM_RATE_LIMIT_GROUP_ID_PREFIX = "third:platform:rate:limit:{}:{}";
 
 
     /**
      * 平台请求频率前缀:groupId
      */
-    String PLATFORM_RATE_LIMIT_PREFIX = "platform_rate_limit:{}";
+    String PLATFORM_RATE_LIMIT_PREFIX = "third:platform:rate:limit:{}";
 
     /**
      * 美客多授权:{id}
      * 内容店铺ID
      */
-    String AUTH_MERCADO_STATE = "third-party-auth:mercado_state:{}";
+    String AUTH_MERCADO_STATE = "third:mercado:auth:state:{}";
 
     /**
      * TikTok授权:{id}
      * 内容店铺ID
      */
-    String AUTH_TIKTOK_STATE = "third-party-auth:tiktok_state:{}";
+    String AUTH_TIKTOK_STATE = "third:tiktok:auth:state:{}";
 
-    String AUTH_PDD_STATE = "third-party-auth:pdd_state:{}";
+    String AUTH_PDD_STATE = "third:pdd:auth:state:{}";
     /**
      * 平台token刷新重试次数记录
      * platform-refresh-token:平台名称:店铺ID
      */
-    String REDIS_REFRESH_PLATFORM_TOKEN = "platform-refresh-token:{}:{}";
+    String REDIS_REFRESH_PLATFORM_TOKEN = "third:platform:refreshToken:{}:{}";
 
 
     /**
      * 平台请求频率:groupId:操作类型
      */
-    String PLATFORM_RATE_LIMIT_PREFIX_LAST = "platform_rate_limit:{}:{}";
+    String PLATFORM_RATE_LIMIT_PREFIX_LAST = "third:platform:rate:limit:{}:{}";
 
 
     /**
      * 亚马逊接口请求缓存响应信息:amz_sp_api_result:businessTypeName:请求的唯一key
      */
-    String AMZ_SP_API_RESULT_PREFIX = "amz_sp_api_result:{}:{}";
+    String AMZ_SP_API_RESULT_PREFIX = "third:amazon:sp:apiResult:{}:{}";
 
 
     /**
      * 国家对应时区配置:cfg_timezone_prefix:国家代号
      */
-    String CFG_TIMEZONE_PREFIX = "cfg_timezone:{}";
-
-    /**
-     * 国家对应时区配置
-     */
-    String CFG_TIMEZONE = "cfg_timezone";
+    String CFG_TIMEZONE_PREFIX = "dmp:config:timezone:{}";
 
     /**
      * 物流报关单合同号
      */
-    String TMS_DECLARE_CODE = "tms_declare_code:{}_{}";
+    String TMS_DECLARE_CODE = "tms:declare:code:{}_{}";
 
     /**
      * 亚马逊订单任务开始时间前置:taskId
      */
-    String AMAZON_ORDER_TASK_TIME_PREFIX = "amazon_order_start_time:{}";
+    String AMAZON_ORDER_TASK_TIME_PREFIX = "third:amazon:task:startTime:{}";
 
-    String SNOWFLAKE_KEY = "snowflake_key:{}";
+    /**
+     * 雪花算法key
+     */
+    String SNOWFLAKE_KEY = "snowflake:key:{}";
 
 
     /**
      * 组包标记发货key:{平台}:{店铺ID}
      */
-    String MERGE_PACKAGE_SIGN_DELIVERY_KEY = "merge_package_sign_delivery_key:{}:{}";
+    String MERGE_PACKAGE_SIGN_DELIVERY_KEY = "wms:mergePackage:signDelivery:{}:{}";
 
 
     /**
      * 组包生成销售出库单扣库存key:{扣库存key}
      */
-    String MERGE_PACKAGE_INVENTORY_KEY = "merge_package_inventory_key:{}";
+    String MERGE_PACKAGE_INVENTORY_KEY = "wms:mergePackage:inventory:{}";
 
 
     /**
      * 组包消费重试次数:{soId}
      */
-    String MERGE_PACKAGE_RETRY_COUNT_KEY = "merge_package_retry_count_key:{}";
+    String MERGE_PACKAGE_RETRY_COUNT_KEY = "wms:mergePackage:retryCount:{}";
 
-
-
-    /**
-     * 中台拉取track123物流标记
-     */
-    String DMP_TRACK123_TRACK_LOGISTICS_NO = "dmp_track123:logistics:track_no";
     /**
      * 中台拉取track123海运标记
      */
-    String DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO = "dmp_track123:ocean_logistics:track_no";
+    String DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO = "dmp:track123:ocean:trackNo";
 
-    /**
-     * DMP物流跟踪记录分页查询缓存LastId
-     */
-    String DMP_LOGISTICS_TRACK = "dmp_logistics_track:last_page";
-    
-    /**
-     * 中台单据查询tab缓存
-     */
-    String DMP_OUTPUT_RECORD_ALL_COUNT = "dmp:output:record:all:count";
-    String DMP_OUTPUT_RECORD_ALL_TIME = "dmp:output:record:all:time";
-    
     /**
      * 中台历史输出记录总数
      */
@@ -257,9 +208,106 @@ public interface RedisCacheConstants {
     /**
      * 飞书接口请求缓存响应信息:fei_shu_api_result:businessTypeName:请求的唯一key
      */
-    String FEI_SHU_RESULT_PREFIX = "fei_shu_api_result:{}:{}";
+    String FEI_SHU_RESULT_PREFIX = "third:feishu:apiResult:{}:{}";
 
 
     String TMS_LOGISTIC_LABEL = "tms:logistic:label:{}:{}";
 
+    String SKU_LISTING_TIME = "plm:sku:listingTime";
+    String MABANG_STOCK_SKU_LIST_KEY = "third:mabang:stock:sku";
+
+    String MABANG_FINANCIAL_SKU_LIST_KEY = "third:mabang:financial:sku";
+    String LIST_SKU_INFO = "plm:sku:info";
+
+    /**
+    *ff飞书催办消息key前缀:third:feishu:msg:业务类型:业务ID:催办
+     */
+    String FEISHU_REDIS_KEY_PREFIX="third:feishu:msg:";
+
+    /**
+     * 库存锁定无法操作
+     * 计划单号 + 组织 + 仓库 + 库位 + sku + 状态
+     */
+    String INVENTORY_LOCK="lock:wms:inventory:{}_{}_{}_{}_{}_{}";
+
+    /**
+     * 库存锁定无法操作
+     * 计划单号
+     */
+    String INVENTORY_LOCK_CODE="lock:wms:inventory:{}_*";
+
+    /**
+     * SKU含税成本
+     * skuNo
+     */
+    String DMP_SKU_COST_CODE = "dmp:sku:cost:{}_*";
+
+    String WMS_PACKING_INSPECTION = "wms:packing:inspection:{}";
+
+    /**
+     * 拉取任务预警redis的key
+     */
+    String DMP_PUSH_TASK_WARN = "dmp:push:task:warn:{}";
+
+    /**
+     * 推送任务预警redis的key
+     */
+    String DMP_PULL_TASK_WARN = "dmp:pull:task:warn:{}";
+
+    /**
+     * 库存锁定无法操作
+     * 计划单号
+     */
+    String SKU_OCCUPY_CODE="plm:sku:occupy:{}_{}";
+
+    /**
+     * 结算汇率缓存,目标币别+原币别
+     */
+    String SETTLEMENT_EXCHANGE_RATE = "dmp:settlement:exchangeRate:{}_{}";
+
+
+    /**
+     * 生成销售出库单key
+     */
+    String SO_STOCK_KEY = "wms:order:stock:add";
+
+    /**
+     * 更新产品上架时间
+     */
+    String PRODUCT_LISTING_TIME = "plm:product:listingTime:";
+
+    /**
+     * 重试任务key
+     */
+    String SOB2C_RETRY_JOB = "oms:b2c:retry:job:{}";
+
+    /**
+     * 虚拟仓报表数据缓存
+     */
+    String REPORT_VIRTUAL_ORDER_DATA = "wms:virtual:order:data";
+    //sso Redis键值对存储对称密钥
+    String SSO_SIGN_SESSION = "auth:sso:signSession:";
+
+    String REDIS_GEN_KEY = "snowflake:order:code";
+
+    String MRP_DATA_ARCHIVING_KEY = "mrp:data:archiving";
+    String MRP_KEY = "mrp";
+
+    String LOCK_KEY_PREFIX = "wms:fbt:sync:";
+
+    String DATA_COMPARE_TASK_KEY = "wms:data:compare:task:";
+
+    String WEB_VERSION_REDISKEY = "web:version:package";
+    String IDEM_REDISKEY = "idem:";
+    String DATA_IDEM_REDISKEY = "idem:data:";
+
+    String TABLE_BUSINESS_KEY = "sys:table:business:key";
+
+    String WECHAT_ACCESS_TOKEN_KEY = "third:wechat:access:token";
+
+    String ADD_GYY_REFUND_ORDER_KEY = "dmp:gyy:refund:add";
+    String ADD_GYY_RETURN_ORDER_KEY = "dmp:gyy:return:add";
+
+    String WDT_ERROR_CODE_KEY = "dmp:wdt:error:code:";
+    String SO_B2C_NOT_OUTBOUND_KEY = "oms:b2c:notbound";
 }

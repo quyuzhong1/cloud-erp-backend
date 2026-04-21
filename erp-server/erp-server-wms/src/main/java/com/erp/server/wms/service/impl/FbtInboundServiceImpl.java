@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -89,7 +90,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
 
     @Override
     public void syncInboundOrder(String inboundOrderId, String sellerOpenId) {
-        String lockKey = LOCK_KEY_PREFIX + inboundOrderId;
+        String lockKey = RedisCacheConstants.LOCK_KEY_PREFIX + inboundOrderId;
         Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, System.currentTimeMillis(), 5, TimeUnit.MINUTES);
         if (!Boolean.TRUE.equals(locked)) {
             log.info("FBT同步跳过，锁已存在, inboundOrderId={}, sellerOpenId={}", inboundOrderId, sellerOpenId);
@@ -117,7 +118,7 @@ public class FbtInboundServiceImpl implements FbtInboundService {
             return;
         }
         String inboundOrderId = inboundOrder.getInboundOrderId();
-        String lockKey = LOCK_KEY_PREFIX + inboundOrderId;
+        String lockKey = RedisCacheConstants.LOCK_KEY_PREFIX + inboundOrderId;
         Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, System.currentTimeMillis(), 5, TimeUnit.MINUTES);
         if (!Boolean.TRUE.equals(locked)) {
             log.info("FBT DMP同步跳过，锁已存在, inboundOrderId={}", inboundOrderId);

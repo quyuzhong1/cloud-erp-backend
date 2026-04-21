@@ -26,7 +26,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -1380,7 +1380,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             LocalDate localDate = LocalDate.now();
             for (String currency : currencys) {
                 //查询redis中存储的成本信息
-                String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE, CurrencyEnum.CNY.getCurrencyCode(),currency);
+                String existKey = StrUtil.format(RedisCacheConstants.SETTLEMENT_EXCHANGE_RATE, CurrencyEnum.CNY.getCurrencyCode(),currency);
                 List<BiSettlementExchangeRateEntity> rateList = (List<BiSettlementExchangeRateEntity>) redisUtil.get(existKey);
                 if(CollectionUtils.isEmpty(rateList)){
                     //从dmp获取对应的币种汇率

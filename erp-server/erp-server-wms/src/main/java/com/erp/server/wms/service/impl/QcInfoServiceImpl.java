@@ -1137,6 +1137,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcInfo.setQcBadQty(0);
         qcInfo.setQcGoodQty(0);
         qcInfo.setQcQty(0);
+        qcInfo.setLotQualifiedQty(qcInfo.getTotalQty());
+        qcInfo.setQcResult(QcResultEnum.CONFORMITY.getCode());
         Boolean isExist = CharSequenceUtil.isNotBlank(purchaseOrderId);
         String skuId = dto.getQcProduct().getSkuId();
         List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();
@@ -2822,7 +2824,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 }
 
                 // 不良附件
-                String qcBadKey = item.getQcResultId() + "_" + WmsConstant.BAD;
+                String qcBadKey = item.getQcResultId() + "_" + WmsConstant.QC_DEFECT;
                 if (badAttachmentMap.containsKey(qcBadKey)) {
                     List<WmsAttachmentDTO.UpdateDTO> attachList = badAttachmentMap.get(qcBadKey);
                     qcDailyReportDTO.setBadAttachments(attachList);

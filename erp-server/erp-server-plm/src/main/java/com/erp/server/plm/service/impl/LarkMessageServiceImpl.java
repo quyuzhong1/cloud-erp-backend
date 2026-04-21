@@ -10,7 +10,7 @@ import com.common.business.service.impl.RedisService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.plm.dto.LarkPressMessageDTO;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
@@ -74,6 +74,9 @@ public class LarkMessageServiceImpl implements LarkMessageService {
     @Resource
     private PilotApplicationService pilotApplicationService;
 
+    private final String feishuRedisKeyPrefix = RedisCacheConstants.FEISHU_REDIS_KEY_PREFIX;
+    private final String redisBaseKey = "_PRESS";
+
     @Override
     public Boolean press(LarkPressMessageDTO dto) {
         // 查询业务相关内容
@@ -82,8 +85,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         String textContent = null;
         NoticeEnum noticeFlag = null;
         String processId = null;
-        String redisBaseKey = RedisKeyConstant.PRESS;
-        String redisKey = dto.getBusinessType() + "_" + dto.getBusinessId() + redisBaseKey;
+        String redisKey = feishuRedisKeyPrefix + dto.getBusinessType() + "_" + dto.getBusinessId() + redisBaseKey;
         //是否存在
         String redisValue = redisService.getCacheObject(redisKey);
         if (StringUtils.isNotBlank(redisValue)) {
@@ -207,14 +209,13 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         if(CollectionUtils.isEmpty(list)) {
             return result;
         }
-        String redisBaseKey = RedisKeyConstant.PRESS;
         String msg = "试产量产";
         for (LarkPressMessageDTO dto : list) {
             String titleContent = null;
             String textContent = null;
             NoticeEnum noticeFlag = null;
             String processId = null;
-            String redisKey = dto.getBusinessType() + "_" + dto.getBusinessId() + redisBaseKey;
+            String redisKey = feishuRedisKeyPrefix +dto.getBusinessType() + "_" + dto.getBusinessId() + redisBaseKey;
             // 查询业务相关内容
             LarkPressBusinessTypeEnum businessType = LarkPressBusinessTypeEnum.getByCode(dto.getBusinessType());
             List<LarkPressMessageDTO.SendUserInfo> pressUserList = new ArrayList<>();
@@ -347,7 +348,6 @@ public class LarkMessageServiceImpl implements LarkMessageService {
     public Boolean batchPress(LarkPressMessageDTO.BatchLarkPressMessageDTO dto) {
         List<String> businessIdList = dto.getBusinessIdList();
         String businessType = dto.getBusinessType();
-        String redisBaseKey = RedisKeyConstant.PRESS;
         List<String> alreadyPress = new ArrayList<>();
         List<LarkPressMessageDTO> pilotList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(businessIdList)) {
@@ -358,7 +358,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     pressMessage.setBusinessType(businessType);
                     pilotList.add(pressMessage);
                 }else {
-                    String redisKey = dto.getBusinessType() + "_" + businessId + redisBaseKey;
+                    String redisKey = feishuRedisKeyPrefix + dto.getBusinessType() + "_" + businessId + redisBaseKey;
                     //是否存在
                     String redisValue = redisService.getCacheObject(redisKey);
                     if (StringUtils.isNotBlank(redisValue)) {
