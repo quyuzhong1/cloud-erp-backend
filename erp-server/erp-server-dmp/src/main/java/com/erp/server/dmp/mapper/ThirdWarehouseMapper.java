@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -29,4 +31,11 @@ public interface ThirdWarehouseMapper extends BaseMapper<ThirdWarehouseEntity> {
      * @return
      */
     ThirdWarehouseEntity getByWarehouseId(@Param("thirdId") String thirdId, @Param("category")String category);
+
+    /**
+     * 查询映射列表
+     * @param params
+     * @return
+     */
+    List<ThirdWarehouseDTO.QueryMapDTO> listQueryMapping(@Param("params") ThirdWarehouseDTO.QueryMapParamDTO params);
 }

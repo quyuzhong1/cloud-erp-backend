@@ -3,9 +3,10 @@ package com.sdk.wangdian.sdk.api.wms.stockin.dto;
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class CreateOtherStockinRequest
     private String remark;
     private String reason;
 	private String dmpSyncTaskId;
+	private String orderType;
 
 	/**
 	 * 来源单据Id

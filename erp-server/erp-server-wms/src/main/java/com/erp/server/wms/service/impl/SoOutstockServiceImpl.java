@@ -55,8 +55,11 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
@@ -4190,6 +4193,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private void syncToWdt(SoOutstockEntity entity,SyncOperateEnum operateEnum) {
         if(CharSequenceUtil.isBlank(entity.getWarehouseId())){
             return;
+        }
+        ThirdWarehouseDTO.QueryMapParamDTO queryMapParamDTO = ThirdWarehouseDTO.QueryMapParamDTO.builder()
+                .sysType(PlatformDictEnum.WDT.getCode())
+                .category(ThirdSysTypeEnum.WAREHOUSE.getCode())
+                .inventorySyncMode(InventorySyncModeEnum.INVENTORY.getCode())
+                .build();
+        List<ThirdWarehouseDTO.QueryMapDTO> queryMapDTOS = dmpThirdMappingFeign.listQueryMapping(queryMapParamDTO);
+        if (CollUtil.isNotEmpty(queryMapDTOS) && queryMapDTOS.stream().anyMatch(e -> e.getSysId().equals(entity.getWarehouseId()))) {
+            log.warn("销售出库单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getWarehouseId());
+            return;//存在库存同步的配置则不再推送旺店通
         }
         List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         HashSet<String> warehouseIdSet = new HashSet<>();
