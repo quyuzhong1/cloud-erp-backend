@@ -358,4 +358,5 @@ public interface RedisCacheConstants {
     static String buildSysNoticeSseNodeTopic(String application, String nodeId) {
         return StrUtil.format(SYS_NOTICE_SSE_NODE_TOPIC, application, nodeId);
     }
+    String SO_B2C_DELIVERY_WITH_NOT_OUTBOUND_KEY = "oms:b2c:deliveryWithNotOutbound:";
 }
