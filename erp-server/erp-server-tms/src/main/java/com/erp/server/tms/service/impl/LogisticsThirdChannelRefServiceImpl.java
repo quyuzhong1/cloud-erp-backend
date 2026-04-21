@@ -19,6 +19,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -486,7 +487,9 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.list();
         Map<String, BasicQueryLogisticsProviderEntity> queryLogisticsProviderMap = basicQueryLogisticsProviderService.list().stream().collect(Collectors.toMap(e -> e.getLogisticsNameCn() +":"+e.getTrackPlatformType(), Function.identity(), (o1, o2) -> o1));
         Map<String, String> shopMap = FeignQuery.list(ShopInfoEntity.class).stream().collect(Collectors.toMap(ShopInfoEntity::getName, ShopInfoEntity::getId, (o1, o2) -> o1));
-        Map<String, String> dictMap = dictBasicService.getByKey("salesPlatform").stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
+//        Map<String, String> dictMap =  dictBasicService.getByKey("salePlatform").stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
+        List<DictBasicEntity> list = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "salesPlatform").list();
+        Map<String, String> dictMap= list.stream().collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
         LogisticsThirdChannelRefListener excelListenerUtil = new LogisticsThirdChannelRefListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),logisticsSupplierEntities,logisticsChannelEntities,shopMap,dictMap,queryLogisticsProviderMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
