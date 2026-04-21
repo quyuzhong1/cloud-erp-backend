@@ -345,7 +345,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 return failure("查询任务被中断");
             }
 
-            GoodCangResponse<GoodCangTaskResp> taskResp = goodCangService.taskStatusList(
+            GoodCangResponse<List<GoodCangTaskResp>> taskResp = goodCangService.taskStatusList(
                     Collections.singletonList(requestId)
             );
             log.warn(getPlatForm().getName() + "查询B2B订单结果(第{}次):{}", attempt, JSONUtil.toJsonStr(taskResp));
@@ -357,11 +357,11 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 return failure(taskResp.getMessage());
             }
 
-            GoodCangTaskResp goodCangTaskResp = taskResp.getData();
-            if (Objects.isNull(goodCangTaskResp)) {
+            List<GoodCangTaskResp> goodCangTaskResps = taskResp.getData();
+            if (CollUtil.isEmpty(goodCangTaskResps)) {
                 return failure("查询订单结果为空");
             }
-
+            GoodCangTaskResp goodCangTaskResp = goodCangTaskResps.get(0);
             Integer status = goodCangTaskResp.getStatus();
 
             // status: 1=成功，直接返回

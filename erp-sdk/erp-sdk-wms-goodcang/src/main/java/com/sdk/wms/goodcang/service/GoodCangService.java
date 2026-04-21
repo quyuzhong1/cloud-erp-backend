@@ -325,12 +325,12 @@ public class GoodCangService {
     }
 
 
-    public GoodCangResponse<GoodCangTaskResp> taskStatusList(List<String> requestIdList){
+    public GoodCangResponse<List<GoodCangTaskResp>> taskStatusList(List<String> requestIdList){
         Map<String,Object> paramsMap = new HashMap<>();
         paramsMap.put("request_id_list",requestIdList);
-        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CREATE_B2B_BILL,paramsMap,false);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.TASK_STATUS_LIST,paramsMap,false);
         //处理返回值
-        GoodCangResponse<GoodCangTaskResp> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangTaskResp>>() {}.getType());
+        GoodCangResponse<List<GoodCangTaskResp>> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangTaskResp>>>() {}.getType());
         if(Objects.isNull(respDto)){
             log.error("谷仓查询任务返回数据为空,返回值:{}", response);
             throw new ServiceException(GOOG_CANG_RESPONSE + ":" +response);

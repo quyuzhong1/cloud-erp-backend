@@ -30,18 +30,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 //生产 url : https://oms.goodcang.net  appToken : a39ab99c1437c991ec07fad4e1f78f8f appKey f7e4102f9b0b983e58bed3140dc22f1a
-//测试 url : https://uat-oms.eminxing.com appToken:  7013991264f611e98ea200e01b680258 appKey 6ff50abf64f611e98ea200e01b680258
+//测试 url : https://uat-oms.eminxing.com appToken:  7013991264f611e98ea200e01b680258 appKey 1e40adc162c6e98bcf3b00624bed0d99
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={GoodCangService.class, GoodCangUtils.class})
-@TestPropertySource(properties = {"warehouse.goodcang.url=https://oms.goodcang.net"})
+@TestPropertySource(properties = {"warehouse.goodcang.url=https://uat-oms.eminxing.com"})
 public class GoodCangServiceTest {
     @Resource
     private GoodCangService goodCangService;
 
     public GoodCangServiceTest(){
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appToken","a39ab99c1437c991ec07fad4e1f78f8f");
-        authMap.put("appKey","f7e4102f9b0b983e58bed3140dc22f1a");
+        authMap.put("appToken","7013991264f611e98ea200e01b680258");
+        authMap.put("appKey","1e40adc162c6e98bcf3b00624bed0d99");
         ThirdWarehouseContext.setAuthMap(authMap);
     }
 
@@ -296,7 +296,7 @@ public class GoodCangServiceTest {
     }
     @Test
     public void taskStatusList() {
-        GoodCangResponse<GoodCangTaskResp> response = goodCangService.taskStatusList(Arrays.asList("U6C051A7B5"));
+        GoodCangResponse<List<GoodCangTaskResp>> response = goodCangService.taskStatusList(Arrays.asList("U89E0F7474"));
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
