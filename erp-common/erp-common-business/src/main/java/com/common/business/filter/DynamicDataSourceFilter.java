@@ -44,7 +44,7 @@ public class DynamicDataSourceFilter implements Filter {
                          FilterChain chain) throws IOException, ServletException {
     	String requestURI = "";
     	requestURI = ((HttpServletRequest) request).getRequestURI();
-    	if(BusinessCommonConstants.isArchive() && !requestURI.contains("/feign") && !ARCHIVE_BLACK_URL.contains(requestURI)) {
+    	if(BusinessCommonConstants.isArchive() && !requestURI.contains("/feign") && ARCHIVE_BLACK_URL.stream().noneMatch(requestURI::contains)) {
     		try {
         		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
 	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
