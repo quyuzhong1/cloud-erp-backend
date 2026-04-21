@@ -27,8 +27,6 @@ import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,57 +36,56 @@ public class DynamicDataSourceFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-    	DorisQuerySettingDTO dorisQuerySettingDTO = null;
-    	String requestURI = "";
-    	try {
-			requestURI = ((HttpServletRequest) request).getRequestURI();
-			dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(requestURI));
-		} catch (Throwable e) {
-			log.error("获取动态数据源配置错误" , e);
-		}
-    	if(dorisQuerySettingDTO == null) {
-    		chain.doFilter(request, response);
-    	}else {
-    		ServletRequest requestWrapper = null;
-            if(request instanceof HttpServletRequest) {
-                requestWrapper = new RequestReaderHttpServletRequestWrapper((HttpServletRequest) request);
+    	if(BusinessCommonConstants.isArchive()) {
+    		try {
+        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ADS_DORIS);
+	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ADS_DORIS.getCode());
+	            chain.doFilter(request, response);
+            } finally {
+                DynamicDataSourceContextHolder.poll();
+                DynamicDataSourceThreadLocal.remove();
             }
-            //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
-            // 在chain.doFiler方法中传递新的request对象
-            if(requestWrapper == null) {
-                chain.doFilter(request, response);
-            } else {
-            	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
-                try {
-    				dynamicDataSourceType = getDynamicDataSourceType(dorisQuerySettingDTO , requestWrapper);
-    			} catch (Throwable e) {
-    				log.error("获取动态数据源类型错误" , e);
-    			}
-                if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
-                	chain.doFilter(requestWrapper, response);
-                }else {
-                	try {
-                		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
-        	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
-        	            chain.doFilter(requestWrapper, response);
-                    } finally {
-                        DynamicDataSourceContextHolder.poll();
-                        DynamicDataSourceThreadLocal.remove();
+    	}else {
+    		DorisQuerySettingDTO dorisQuerySettingDTO = null;
+        	String requestURI = "";
+        	try {
+    			requestURI = ((HttpServletRequest) request).getRequestURI();
+    			dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(requestURI));
+    		} catch (Throwable e) {
+    			log.error("获取动态数据源配置错误" , e);
+    		}
+        	if(dorisQuerySettingDTO == null) {
+        		chain.doFilter(request, response);
+        	}else {
+        		ServletRequest requestWrapper = null;
+                if(request instanceof HttpServletRequest) {
+                    requestWrapper = new RequestReaderHttpServletRequestWrapper((HttpServletRequest) request);
+                }
+                //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
+                // 在chain.doFiler方法中传递新的request对象
+                if(requestWrapper == null) {
+                    chain.doFilter(request, response);
+                } else {
+                	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
+                    try {
+        				dynamicDataSourceType = getDynamicDataSourceType(dorisQuerySettingDTO , requestWrapper);
+        			} catch (Throwable e) {
+        				log.error("获取动态数据源类型错误" , e);
+        			}
+                    if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
+                    	chain.doFilter(requestWrapper, response);
+                    }else {
+                    	try {
+                    		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
+            	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
+            	            chain.doFilter(requestWrapper, response);
+                        } finally {
+                            DynamicDataSourceContextHolder.poll();
+                            DynamicDataSourceThreadLocal.remove();
+                        }
                     }
                 }
-            }
-    	}
-    }
-    
-    private void validateArchive(DynamicDataSourceTypeEnum dynamicDataSourceType , String requestURI) {
-    	if(!BusinessCommonConstants.isArchive()) {
-    		return;
-    	}
-    	if(requestURI.contains("/feign/")) {
-    		return;
-    	}
-    	if(DynamicDataSourceTypeEnum.ARCHIVE_DORIS != dynamicDataSourceType) {
-    		throw new ServiceException(ApiError.AUTH_ARCHIVE_DENIED);
+        	}
     	}
     }
     
