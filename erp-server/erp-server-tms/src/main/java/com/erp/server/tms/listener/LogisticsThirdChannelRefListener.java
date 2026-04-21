@@ -189,21 +189,21 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
 
     private BasicQueryLogisticsProviderEntity findLogisticsProvider(ImportLogisticsThirdChannelRefExcelDTO excelDTO,
             List<String> errorMsgList) {
-        String thirdSupplierName = excelDTO.getThirdSupplierName();
-        if (CharSequenceUtil.isBlank(thirdSupplierName)) {
-            errorMsgList.add("查询物流商（中文）不能为空");
-            return null;
-        }
         if (CharSequenceUtil.isNotBlank(excelDTO.getPlatformType())) {
-            BasicQueryLogisticsProviderEntity provider = queryLogisticsProviderMap
-                    .get(thirdSupplierName + ":" + excelDTO.getPlatformType());
-            if (Objects.isNull(provider)) {
-                errorMsgList.add("查询物流商不存在");
-            }else {
+
+            String thirdSupplierName = excelDTO.getThirdSupplierName();
+            if (CharSequenceUtil.isBlank(thirdSupplierName)) {
                 // 快递100平台必须填写查询物流商(中文)
                 if(TrackPlatformTypeEnum.KUAIDI100.getCode().equals(excelDTO.getPlatformType())){
                     errorMsgList.add(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED.getMsg());
                 }
+                return null;
+            }
+
+            BasicQueryLogisticsProviderEntity provider = queryLogisticsProviderMap
+                    .get(thirdSupplierName + ":" + excelDTO.getPlatformType());
+            if (Objects.isNull(provider)) {
+                errorMsgList.add("查询物流商不存在");
             }
             return provider;
         }
