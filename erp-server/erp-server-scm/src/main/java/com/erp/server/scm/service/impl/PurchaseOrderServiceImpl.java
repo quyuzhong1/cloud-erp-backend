@@ -1587,9 +1587,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //退货补货数量
             Integer replenishQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
-                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-                            && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType())
-                            && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
+                    && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                    && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType())
+                    && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
                     .map(PoReturnDetailEntity::getReplenishQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
 
@@ -1618,9 +1618,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (ObjectUtils.isNotEmpty(obj.getIsEndReceive()) && obj.getIsEndReceive()) {
                 //等于或晚于结束交货的退货补货的数量
                 deliveryQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
-                                && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-                                && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())
-                                && (req.getApproveTime().isAfter(obj.getEndReceiveTime()) || req.getApproveTime().isEqual(obj.getEndReceiveTime())))
+                        && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                        && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())
+                        && (req.getApproveTime().isAfter(obj.getEndReceiveTime()) || req.getApproveTime().isEqual(obj.getEndReceiveTime())))
                         .map(PoReturnDetailEntity::getReplenishQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
             } else {
@@ -1632,21 +1632,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setDeliveryQty(deliveryQty);
             //退货数量
             Integer returnQtyt = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
-                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
                     .map(PoReturnDetailEntity::getReturnQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
             //退货补货数量
             Integer qcReturnQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
-                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-                            && ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
+                    && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                    && ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
                     .map(PoReturnDetailEntity::getReturnQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
             obj.setQcReturnQty(qcReturnQty);
             //库存补货数量
             Integer stockReturnQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
-                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-                            && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
+                    && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                    && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
                     .map(PoReturnDetailEntity::getReturnQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
             obj.setStockReturnQty(stockReturnQty);
@@ -1692,35 +1692,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (CollectionUtils.isNotEmpty(subcontractOrderList) && SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(obj.getSourceType())) {
                 String subCode = subcontractOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().flatMap(e -> Optional.ofNullable(e.getCode())).orElse("");
                 obj.setSourceCode(subCode);
-                // 查询委外订单的上游采购退货单，获取退货方式
-                SubcontractOrderEntity subcontractOrderEntity = subcontractOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().orElse(null);
-                if (Objects.nonNull(subcontractOrderEntity) && SourceTypeEnum.PO_RETURN.getCode().equals(subcontractOrderEntity.getSourceType())) {
-                    // 解析委外订单的sourceId（支持逗号分隔的多个ID）
-                    List<String> poReturnIds = new ArrayList<>();
-                    if (StringUtils.isNotBlank(subcontractOrderEntity.getSourceId())) {
-                        for (String id : subcontractOrderEntity.getSourceId().split(",")) {
-                            if (StringUtils.isNotBlank(id)) {
-                                poReturnIds.add(id.trim());
-                            }
-                        }
-                    }
-                    if (CollUtil.isNotEmpty(poReturnIds)) {
-                        List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(poReturnIds);
-                        if (CollUtil.isNotEmpty(poReturnEntityList)) {
-                            // 收集所有退货方式的名称
-                            List<String> returnModeNames = poReturnEntityList.stream()
-                                    .map(PoReturnEntity::getReturnMode)
-                                    .filter(StrUtil::isNotBlank)
-                                    .map(ReturnModeEnum::getName)
-                                    .filter(StrUtil::isNotBlank)
-                                    .distinct()
-                                    .collect(Collectors.toList());
-                            if (CollUtil.isNotEmpty(returnModeNames)) {
-                                obj.setReturnTypeName(String.join(",", returnModeNames));
-                            }
-                        }
-                    }
-                }
             }
             //采购退货
             if (CollectionUtils.isNotEmpty(purchaseReturnOrderList) && SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType())) {
@@ -1733,7 +1704,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
+                obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
             //确认类型
             obj.setConfirmTypeName(ConfirmTypeEnum.getNameByCode(obj.getConfirmType()));
