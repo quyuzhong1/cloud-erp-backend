@@ -570,8 +570,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             if (CollUtil.isEmpty(readyToSync)) {
                 continue;
             }
-            // Track123 支持批量查询（100条/批），快递100 等仅支持单次查询（1条/批）
-            int batchSize = 100;
+            // Track123 支持批量查询（100条/批），快递100 等仅支持单次查询（1条/批,请求频率30次/秒）
+            int batchSize = LogisticsPlatformEnum.TRACK123.getCode().equals(typeEnums.getCode()) ? 100 : 30;
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> chunks = Lists.partition(readyToSync, batchSize);
             for (List<LogisticsTrackDTO.UpdateTrackDTO> chunk : chunks) {
                 resultList.addAll(processTrackData(typeEnums.getCode(), chunk, transportType));

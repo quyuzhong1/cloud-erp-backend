@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler {
 
-    private static final int DEFAULT_PAGE_SIZE = 100;
+    private static final int DEFAULT_PAGE_SIZE = 30;
     private static final String PAGE_SIZE_PARAM = "pageSize";
 
     @Resource
@@ -238,14 +238,14 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
     }
 
     private int getPageSizeValue(DmpInputApiInitRequest dmpInputApiInitRequest) {
-        String requestParam = dmpInputApiInitRequest.getRequestParam();
-        if (StringUtils.isNotBlank(requestParam)) {
-            JSONObject jsonObject = JSON.parseObject(requestParam);
-            Integer intValue = jsonObject.getInteger(PAGE_SIZE_PARAM);
-            if (null != intValue) {
-                return intValue;
-            }
-        }
+//        String requestParam = dmpInputApiInitRequest.getRequestParam();
+//        if (StringUtils.isNotBlank(requestParam)) {
+//            JSONObject jsonObject = JSON.parseObject(requestParam);
+//            Integer intValue = jsonObject.getInteger(PAGE_SIZE_PARAM);
+//            if (null != intValue) {
+//                return intValue;
+//            }
+//        }
         return DEFAULT_PAGE_SIZE;
     }
 }
