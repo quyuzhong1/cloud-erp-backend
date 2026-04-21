@@ -789,7 +789,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             }
         }
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
-            this.cancelProcess(entity.getId());
+            this.cancelProcess(new ApproveDTO.CancelProcessDTO(entity.getId()));
         }
         this.lambdaUpdate()
                 .set(updateCreateStatusCancel, SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
