@@ -294,7 +294,12 @@ public class GoodCangServiceTest {
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
-
+    @Test
+    public void taskStatusList() {
+        GoodCangResponse<GoodCangTaskResp> response = goodCangService.taskStatusList(Arrays.asList("U6C051A7B5"));
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
     @Test
     public void getInventoryLog() {
         Map<String, Object> hashMap = new HashMap<>();

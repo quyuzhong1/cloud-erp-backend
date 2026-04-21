@@ -294,7 +294,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         antuCreateOutboundReq.setPhone(createOutboundReq.getTelNumber());
         antuCreateOutboundReq.setIsSignature(createOutboundReq.getIsSignature()?1:0);
         antuCreateOutboundReq.setIsInsurance(createOutboundReq.getIsInsurance()?1:0);
-        antuCreateOutboundReq.setRemark(createOutboundReq.getRemark());
+        antuCreateOutboundReq.setOrderDesc(createOutboundReq.getRemark());
         antuCreateOutboundReq.setVerify(1);
         List<AntuCreateOutboundReq.Item> items = new ArrayList<>();
         createOutboundReq.getItems().forEach(item->{
