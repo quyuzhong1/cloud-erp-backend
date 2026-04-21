@@ -14,6 +14,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -190,7 +191,50 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
             return;
         }
+        bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
         req.setFileBase64(Base64.getEncoder().encodeToString(bytes));
+    }
+
+    private byte[] cleanAttachmentBytes(byte[] bytes, String fileName, String fileUrl, String sourceId) {
+        String extension = StrUtil.blankToDefault(FileUtil.getFileExtension(fileName), FileUtil.getFileExtension(fileUrl));
+        if ("pdf".equalsIgnoreCase(extension)) {
+            return trimLeadingBytes(bytes, new byte[]{'%', 'P', 'D', 'F', '-'}, fileName, sourceId);
+        }
+        if ("xlsx".equalsIgnoreCase(extension) || "docx".equalsIgnoreCase(extension)) {
+            return trimLeadingBytes(bytes, new byte[]{'P', 'K'}, fileName, sourceId);
+        }
+        return bytes;
+    }
+
+    private byte[] trimLeadingBytes(byte[] bytes, byte[] magic, String fileName, String sourceId) {
+        int index = indexOf(bytes, magic);
+        if (index <= 0) {
+            if (index < 0) {
+                log.warn("B2B三方发货单附件文件头未匹配, sourceId={}, fileName={}", sourceId, fileName);
+            }
+            return bytes;
+        }
+        log.warn("B2B三方发货单附件存在前置脏字节，已裁剪, sourceId={}, fileName={}, offset={}", sourceId, fileName, index);
+        return Arrays.copyOfRange(bytes, index, bytes.length);
+    }
+
+    private int indexOf(byte[] bytes, byte[] magic) {
+        if (Objects.isNull(bytes) || Objects.isNull(magic) || bytes.length < magic.length) {
+            return -1;
+        }
+        for (int i = 0; i <= bytes.length - magic.length; i++) {
+            boolean matched = true;
+            for (int j = 0; j < magic.length; j++) {
+                if (bytes[i + j] != magic[j]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched) {
+                return i;
+            }
+        }
+        return -1;
     }
     /**
      * @param operate
