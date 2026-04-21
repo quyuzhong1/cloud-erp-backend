@@ -217,7 +217,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
 
         // 推送类型解析
         String pushType = LogisticsThirdChannelRefPushTypeEnum.getCodeByName(excelDTO.getPushTypeName());
-        if (CharSequenceUtil.isNotBlank(pushType)) {
+        if (CharSequenceUtil.isBlank(pushType)) {
             errorMsgList.add("推送类型不存在");
         }
         excelDTO.setPushType(pushType);
