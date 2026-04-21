@@ -240,12 +240,6 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 ? record.getTrackNo() : record.getTransportNo();
     }
 
-
-    private String getTrackNo(LogisticsTrackDTO.UpdateTrackDTO record) {
-        return TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo())
-                ? record.getTrackNo() : record.getTransportNo();
-    }
-
     /**
      * 注册物流单号（伪注册实现）
      * 由于快递100无需在官方平台执行“注册”动作，此处直接返回所有单号注册成功。
