@@ -2427,6 +2427,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public SupplierDTO.SupplierBaseInfoDTO getBaseInfo(String id) {
+        SupplierEntity supplier = this.getById(id);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
+        }
+        SupplierDTO.SupplierBaseInfoDTO result = BeanUtil.toBean(supplier, SupplierDTO.SupplierBaseInfoDTO.class);
+        return result;
+    }
+
 
     /**
      * 资质信息处理

@@ -575,5 +575,15 @@ public class SupplierController extends BaseController {
     public ApiResult<String> getTelNumber(@RequestParam("contractId") String contactId) {
         return success(supplierContactService.getTelNumber(contactId));
     }
-
+    /**
+     * 供应商基础信息
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getBaseInfo")
+    public ApiResult<SupplierDTO.SupplierBaseInfoDTO> getBaseInfo(@RequestBody @Validated BaseIdDTO dto) {
+        SupplierDTO.SupplierBaseInfoDTO view = supplierService.getBaseInfo(dto.getId());
+        return success(view);
+    }
 }

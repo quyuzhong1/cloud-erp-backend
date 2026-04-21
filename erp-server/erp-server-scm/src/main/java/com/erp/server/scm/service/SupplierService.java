@@ -375,4 +375,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return List<Map<String, Object>>
      */
     List<Map<String, Object>> listSupplierDropDown();
+
+    SupplierDTO.SupplierBaseInfoDTO getBaseInfo(String id);
 }
