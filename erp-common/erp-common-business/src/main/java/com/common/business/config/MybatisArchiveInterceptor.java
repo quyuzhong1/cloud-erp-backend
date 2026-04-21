@@ -55,9 +55,9 @@ public class MybatisArchiveInterceptor implements Interceptor{
 	
 	private String getNewSql(String oldSql) {
 		String upperCase = oldSql.toUpperCase();
+		String dsKey = DynamicDataSourceContextHolder.peek();
 		if(upperCase.startsWith("INSERT") || upperCase.startsWith("UPDATE") || upperCase.startsWith("DELETE")) {
 			String tableStartStr = upperCase.replace(" ", "").replace("INSERTINTO", "").replace("UPDATE", "").replace("DELETE", "");
-			String dsKey = DynamicDataSourceContextHolder.peek();
 			List<String> whiteTableList = POSTGRES_WHITE_TABLE_LIST;
 			if(DynamicDataSourceTypeEnum.isDorisByStr(dsKey)) {
 				whiteTableList = DORIS_WHITE_TABLE_LIST;
@@ -78,8 +78,10 @@ public class MybatisArchiveInterceptor implements Interceptor{
 				newSql = newSql.replace("erp_" + code + ".", "erp_" + code + "_archive.");
 			}
 		}
-		newSql = newSql.replace("\"index\"", "`index`");
-		newSql = newSql.replace("\"key\"", "`key`");
+		if(DynamicDataSourceTypeEnum.isDorisByStr(dsKey)) {
+			newSql = newSql.replace("\"index\"", "`index`");
+			newSql = newSql.replace("\"key\"", "`key`");
+		}
 		log.debug("归档替换后sql语句{}" , newSql);
 		return newSql;
 	}
