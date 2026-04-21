@@ -350,9 +350,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                                         item -> String.join(",", item))));
             }
         }
+        Map<String, String> finalSalesPlatformOrderCodeMap = salesPlatformOrderCodeMap;
+        Map<String, String> finalCustomerPOMap = customerPOMap;
         records.forEach(e -> {
-            e.setSalesPlatformOrderCode(salesPlatformOrderCodeMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
-            e.setCustomerPO(customerPOMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+            e.setSalesPlatformOrderCode(finalSalesPlatformOrderCodeMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+            e.setCustomerPO(finalCustomerPOMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
             String warehouseOperationType = e.getWarehouseOperationType();
             if (CharSequenceUtil.isNotBlank(warehouseOperationType)) {
