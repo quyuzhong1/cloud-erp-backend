@@ -36,7 +36,9 @@ public class DynamicDataSourceFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-    	if(!BusinessCommonConstants.isArchive()) {
+    	if(BusinessCommonConstants.isArchive()) {
+    		chain.doFilter(request, response);
+    	}else {
     		DorisQuerySettingDTO dorisQuerySettingDTO = null;
         	String requestURI = "";
         	try {
