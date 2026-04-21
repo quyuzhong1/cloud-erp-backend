@@ -18,7 +18,6 @@ import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
-import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.utils.DmpFeishuUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -39,28 +38,25 @@ public class MybatisArchiveInterceptor implements Interceptor{
 	
     public Object intercept(Invocation invocation) throws Throwable {
     	if(BusinessCommonConstants.isArchive()) {
-    		try {
-        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
-	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
-	            StatementHandler statementHandler = (StatementHandler) invocation.getTarget();
-	            BoundSql boundSql = statementHandler.getBoundSql();
-	            Field field = boundSql.getClass().getDeclaredField("sql");
-	            field.setAccessible(true);
-	            field.set(boundSql, getNewSql(boundSql.getSql()));
-	            return invocation.proceed();
-            } finally {
-                DynamicDataSourceContextHolder.poll();
-                DynamicDataSourceThreadLocal.remove();
-            }
-    	}else {
-    		return invocation.proceed();
+    		StatementHandler statementHandler = (StatementHandler) invocation.getTarget();
+            BoundSql boundSql = statementHandler.getBoundSql();
+            Field field = boundSql.getClass().getDeclaredField("sql");
+            field.setAccessible(true);
+            field.set(boundSql, getNewSql(boundSql.getSql()));
     	}
+    	return invocation.proceed();
     }
 
 	
 	private String getNewSql(String oldSql) {
 		String upperCase = oldSql.toUpperCase();
 		if(upperCase.startsWith("INSERT") || upperCase.startsWith("UPDATE") || upperCase.startsWith("DELETE")) {
+			String dsKey = DynamicDataSourceContextHolder.peek();
+			if(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode().equals(dsKey)) {
+				String errorInfo = TraceContext.traceId() + "归档系统归档数据源只允许查询数据，当前sql为：" + oldSql;
+				log.error(errorInfo);
+				throw new ServiceException(errorInfo);
+			}
 			String tableStartStr = upperCase.replace(" ", "").replace("INSERTINTO", "").replace("UPDATE", "").replace("DELETE", "");
 			if(WHITE_TABLE_LIST.stream().noneMatch(w -> tableStartStr.startsWith(w.toUpperCase()))) {
 				String errorInfo = TraceContext.traceId() + "归档系统执行增删改sql为：" + oldSql;

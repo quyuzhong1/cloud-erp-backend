@@ -36,13 +36,20 @@ public class DynamicDataSourceFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-    	if(BusinessCommonConstants.isArchive()) {
-    		chain.doFilter(request, response);
+    	String requestURI = "";
+    	requestURI = ((HttpServletRequest) request).getRequestURI();
+    	if(BusinessCommonConstants.isArchive() && !requestURI.contains("/feign")) {
+    		try {
+        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
+	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
+	            chain.doFilter(request, response);
+            } finally {
+                DynamicDataSourceContextHolder.poll();
+                DynamicDataSourceThreadLocal.remove();
+            }
     	}else {
     		DorisQuerySettingDTO dorisQuerySettingDTO = null;
-        	String requestURI = "";
         	try {
-    			requestURI = ((HttpServletRequest) request).getRequestURI();
     			dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(requestURI));
     		} catch (Throwable e) {
     			log.error("获取动态数据源配置错误" , e);
