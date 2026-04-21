@@ -57,6 +57,7 @@
         <module>erp-sdk-oms-pdd</module>
         <module>erp-sdk-oms-yunting-cem</module>
         <module>erp-sdk-wms-zhongbao</module>
+        <module>erp-sdk-wms-jitu</module>
     </modules>
 
     <dependencies>
