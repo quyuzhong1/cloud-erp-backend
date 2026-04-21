@@ -55,4 +55,6 @@ public interface AdsErpDiffOutstockSyncMapper extends BaseMapper<AdsErpDiffOutst
     AdsErpDiffOutstockSyncDTO.TotalDTO total(@Param("params") AdsErpDiffOutstockSyncDTO.PagingParamDTO params);
     
     void updateDws(@Param("params") List<AdsErpDiffOutstockSyncEntity> params);
+
+    void updateSuggestType(@Param("params") AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO updateSuggestTypeParamsDTO);
 }

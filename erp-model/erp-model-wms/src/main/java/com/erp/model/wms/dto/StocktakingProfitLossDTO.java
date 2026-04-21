@@ -196,7 +196,7 @@ public class StocktakingProfitLossDTO implements Serializable {
         /**
          * 明细id
          */
-        private String detailId;
+        //private String detailId;
 
         private String mainId;
         /**
@@ -260,67 +260,71 @@ public class StocktakingProfitLossDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime approveTime;
 
+        /**
+         * 盘点时间
+         */
+        private LocalDateTime stocktakingDate;
 
         /**
          * skuid
          */
-        private String skuId;
+        //private String skuId;
 
         /**
          * skuNo
          */
-        private String skuNo;
+        //private String skuNo;
 
         /**
          * skuName
          */
-        private String productName;
+        //private String productName;
 
         /**
          * 单位
          */
-        private String unit;
+        //private String unit;
 
         /**
          * 仓库id
          */
-        private String warehouseId;
+        //private String warehouseId;
 
         /**
          * 仓库名称
          */
-        private String warehouseName;
+        //private String warehouseName;
 
         /**
          * 库位
          */
-        private String warehouseLocation;
+        //private String warehouseLocation;
 
         /**
          * 库位名称
          */
-        private String warehouseLocationName;
+        //private String warehouseLocationName;
 
         /**
          * 盘点数量
          */
-        private Integer qty;
+        //private Integer qty;
 
         /**
          * 可用数量
          */
-        private Integer usableQty;
+        //private Integer usableQty;
 
         /**
          * 冻结数量
          */
-        private Integer frozenQty;
+        //private Integer frozenQty;
 
 
         /**
          * 差异数量
          */
-        private Integer diffQty;
+        //private Integer diffQty;
 
 
 

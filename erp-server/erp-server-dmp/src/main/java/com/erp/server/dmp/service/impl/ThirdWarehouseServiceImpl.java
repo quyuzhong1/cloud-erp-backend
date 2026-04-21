@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -132,7 +133,10 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
 
     @Override
     public PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdWarehouseDTO.SelectDTO> dto) {
-        if (PlatformDictEnum.WDT.getCode().equals(dto.getParams().getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(dto.getParams().getSysType())|| PlatformDictEnum.DHT.getCode().equals(dto.getParams().getSysType())) {
+        if (PlatformDictEnum.WDT.getCode().equals(dto.getParams().getSysType())
+                || PlatformDictEnum.TE_MU.getCode().equals(dto.getParams().getSysType())
+                || PlatformDictEnum.DHT.getCode().equals(dto.getParams().getSysType())
+                || PlatformDictEnum.TIK_TOK.getCode().equals(dto.getParams().getSysType())) {
             Page query = new Page(dto.getCurrPage(), dto.getPageSize());
             IPage<ThirdWarehouseDTO.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
             if (CollUtil.isEmpty(pageData.getRecords())) {
@@ -164,6 +168,11 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     @Override
     public ThirdWarehouseEntity getByWarehouseId(String thirdId, String category) {
         return baseMapper.getByWarehouseId(thirdId,category);
+    }
+
+    @Override
+    public List<ThirdWarehouseDTO.QueryMapDTO> listQueryMapping(ThirdWarehouseDTO.QueryMapParamDTO dto) {
+        return baseMapper.listQueryMapping(dto);
     }
 
 

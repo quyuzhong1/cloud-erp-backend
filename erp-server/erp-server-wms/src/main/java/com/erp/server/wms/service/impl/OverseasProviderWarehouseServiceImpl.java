@@ -436,6 +436,14 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         return new BaseResultDTO.AddDTO(overseasProviderWarehouseEntity.getId(),overseasProviderWarehouseEntity.getPlatformWarehouseCode());
     }
 
+    @Override
+    public List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCode(String platform) {
+        String mainId = overseasProviderService.getByPlatformCode(platform).getId();
+        return lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
+                .list();
+    }
+
     private List<String> getShopIdBySite(String site) {
         if (CharSequenceUtil.isBlank(site)){
             return Collections.emptyList();

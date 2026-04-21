@@ -205,6 +205,12 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
+        //订单日期：优先取订单发货时间（TikTok orders.ts_time 映射），没有则回落到平台创建时间
+        if (ObjectUtil.isNotEmpty(dmpSoInfoEntity.getDeliveryTime())) {
+            orderDTO.setBillDate(dmpSoInfoEntity.getDeliveryTime().toLocalDate());
+        } else if (ObjectUtil.isNotEmpty(dmpSoInfoEntity.getPlatformCreateTime())) {
+            orderDTO.setBillDate(dmpSoInfoEntity.getPlatformCreateTime().toLocalDate());
+        }
 
         //优惠金额
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
@@ -269,11 +275,12 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         //平台产品id
         detailDTO.setPlatformSpuNo(soDetailEntity.getPlatformSpuNo());
 
-        // 库存sku编号
-        detailDTO.setWarehouseName("");
+        // TikTok FBT订单需要把平台仓库编码/名称透传到OMS，
+        // 后续再按FBT授权仓库配置映射到ERP仓库。
+        detailDTO.setWarehouseName(soDetailEntity.getWarehouseName());
+        detailDTO.setWarehouseId(soDetailEntity.getWarehouseId());
         // 仓库名称
         // 库存是否扣除
-        detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(soDetailEntityList.size());
 

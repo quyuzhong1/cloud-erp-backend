@@ -21,6 +21,7 @@ public enum OperationTypeEnum {
     APPROVE_PASS("approve_pass", "单据审核通过操作"),
     APPROVE_REJECT("approve_reject", "单据审核不通过操作"),
     DISAPPROVE("disapprove", "反审核"),
+    CANCEL("cancel", "取消操作"),
     CANCEL_PROCESS("cancel_process", "撤回流程操作"),
     DISABLED("disabled", "启用停用操作"),
 

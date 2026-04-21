@@ -83,11 +83,19 @@
         qnd.qc_status AS qcDetailStatus,
         qnd.qc_date AS qcDate,
         qnd.putaway_status AS putawayStatus,
-        qnd.putaway_date AS putawayDate
+        qnd.putaway_date AS putawayDate,
+        qn.source_id as sourceId,
+        qn.source_code as sourceCode,
+        qn.source_type as sourceType,
+        qn.purchase_order_id as purchaseOrderId,
+        qn.purchase_order_code as purchaseOrderCode,
+        qnd.supplier_id as supplierId,
+        qn.plan_qc_date as planQcDate
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
         LEFT JOIN qc_info AS qi on qi.source_detail_id = qnd.id  and qi.is_deleted = FALSE
+        LEFT JOIN qc_application qa on qa.id = qn.source_id and qa.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND qn.is_deleted = FALSE
@@ -160,7 +168,9 @@
         qnd.putaway_qty AS putawayQty,
         qnd.bad_desc AS badDesc,
         qnd.qc_problem_dict AS qcProblemDict,
-        qnd.qc_date AS qcDate
+        qnd.qc_date AS qcDate,
+        qnd.qc_user_id as qcUserId,
+        qnd.qc_user_name as qcUserName
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
@@ -173,6 +183,42 @@
             <foreach collection="ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
+        ORDER BY
+        qn.code
+    </select>
+
+    <select id="listQcInfoViewByCode" resultType="com.erp.model.wms.dto.QcNoticeDTO$QcInfoFullView">
+        SELECT
+        qn.ID AS id,
+        qn.code AS code,
+        qn.qc_type AS qcType,
+        qn.qc_status AS qcStatus,
+        qn.qc_warehouse_id AS qcWarehouseId,
+        qnd.id AS detailId,
+        qnd.sku_id AS skuId,
+        qnd.sku_no AS skuNo,
+        qnd.product_name AS productName,
+        qnd.qc_notice_qty AS qcNoticeQty,
+        qnd.qc_qty AS qcQty,
+        qnd.qc_diff_qty AS qcDiffQty,
+        qnd.qc_good_qty AS qcGoodQty,
+        qnd.qc_bad_qty AS qcBadQty,
+        qnd.putaway_qty AS putawayQty,
+        qnd.bad_desc AS badDesc,
+        qnd.qc_problem_dict AS qcProblemDict,
+        qnd.qc_date AS qcDate,
+        qi.id AS qcBillId,
+				qi.code AS qcBillCode
+        FROM
+        qc_notice AS qn
+        LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+        LEFT JOIN qc_info AS qi ON qi.source_detail_id = qnd.id
+        WHERE
+        qn.is_deleted = FALSE
+        AND qn.approve_status = 'approve'
+        AND qnd.is_deleted = FALSE
+        AND qnd.qc_status = 'wait'
+        AND qn.code = #{code}
         ORDER BY
         qn.code
     </select>

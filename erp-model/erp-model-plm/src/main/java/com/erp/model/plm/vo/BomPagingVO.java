@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -119,5 +120,8 @@ public class BomPagingVO implements Serializable {
      */
     private Boolean isChangeIng;
 
-
+    /**
+     * 标准零售价(含税)
+     */
+    private BigDecimal stdRetailPriceVat;
 }

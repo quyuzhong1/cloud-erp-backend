@@ -47,6 +47,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -489,7 +490,11 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .build();
         try {
             AddOrderToSupplyResponse response = wildberriesSDKService.addOrderToSupply(authEntity.getToken(), request);
-            if (Objects.nonNull(response) && !"204".equals(response.getCode())) {
+            if(Objects.isNull(response)){
+                mqResponseDTO.setErrorMsg("添加订单到大包失败: 响应为空");
+                return mqResponseDTO;
+            }
+            if (!"204".equals(response.getCode())) {
                 mqResponseDTO.setErrorMsg(response.getCode());
                 return mqResponseDTO;
             }
@@ -634,7 +639,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 return mqResponseDTO;
             }
             OrderLabelResponse.Sticker sticker = stickers.get(0);
-            String trackNo = sticker.getBarcode();
+            String trackNo = sticker.getPartA() + sticker.getPartB();
             Long orderId = sticker.getOrderId();
             String file = sticker.getFile();
             //更新跟踪号
@@ -1056,7 +1061,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         addTaskDTO.setSourceCode(dto.getSoCode());
         addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE);//subType
-        addTaskDTO.setTraceId(MDC.get("traceId"));
+        addTaskDTO.setTraceId(TraceContext.traceId());
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", dto.getSoId());

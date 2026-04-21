@@ -104,4 +104,15 @@ public class TmsFirstMileLogisticFeignController {
     List<SmallBagCostAllocationDTO.SmallBagCostDTO> listSmallBagCost(@RequestBody SmallBagCostAllocationDTO.SmallBagCostParamDTO paramDTO){
         return smallBagCostAllocationService.listSmallBagCost(paramDTO);
     }
+    /**
+     * 添加日志
+     * @author will 
+     * @date 2026/1/26 16:18
+     * @param addLogDTO 
+     * @return void
+     */
+    @PostMapping("/addFirstMileLogisticLog")
+    public void addFirstMileLogisticLog(@RequestBody TmsFirstMileLogisticDTO.AddLogDTO addLogDTO){
+        tmsFirstMileLogisticService.addFirstMileLogisticLog(addLogDTO);
+    }
 }

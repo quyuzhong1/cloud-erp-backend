@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  *
  * @author Lambda
  * @since 2023-11-02
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -27,13 +27,13 @@ import java.time.LocalDateTime;
 public class LogisticsSupplierEntity extends BaseEntity<LogisticsSupplierEntity> {
 
     /**
-    * 供应商id
-    */
+     * 供应商id
+     */
     @TableField("supplier_id")
     private String supplierId;
     /**
-    * 名称
-    */
+     * 名称
+     */
     @TableField("supplier_name")
     private String supplierName;
     /**
@@ -42,27 +42,35 @@ public class LogisticsSupplierEntity extends BaseEntity<LogisticsSupplierEntity>
     @TableField("short_name")
     private String shortName;
     /**
-    * 类型
-    */
+     * 类型
+     */
     @TableField("type")
     private LogisticsSupplierTypeEnum type;
     /**
-    * 是否禁用 true 禁用
-    */
+     * 是否禁用 true 禁用
+     */
     @TableField("disabled")
     private Boolean disabled;
     /**
-    * 授权状态
-    */
+     * 授权状态
+     */
     @TableField("auth_status")
     private String authStatus;
     /**
-    * 授权时间
-    */
+     * 授权时间
+     */
     @TableField("auth_time")
     private LocalDateTime authTime;
-
-
+    /**
+     * 核算组织id
+     */
+    @TableField("org_id")
+    private String orgId;
+    /**
+     * 核算组织名称
+     */
+    @TableField("org_name")
+    private String orgName;
 
 
     public static final String SUPPLIER_ID = "supplier_id";

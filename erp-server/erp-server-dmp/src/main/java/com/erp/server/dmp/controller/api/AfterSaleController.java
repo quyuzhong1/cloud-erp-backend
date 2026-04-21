@@ -2,10 +2,8 @@ package com.erp.server.dmp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -21,7 +19,6 @@ import com.erp.server.dmp.service.AfterSaleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -418,4 +415,13 @@ public class AfterSaleController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据单据idList获取售后人员
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listCsAgent")
+    public ApiResult<Map<String, String>> listCsAgent(@RequestBody AfterSaleDTO.ListCsAgentDTO dto ) {
+        return success(afterSaleService.listCsAgent(dto));
+    }
 }

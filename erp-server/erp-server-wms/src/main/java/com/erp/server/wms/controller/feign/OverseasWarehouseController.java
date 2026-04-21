@@ -100,4 +100,10 @@ public class OverseasWarehouseController extends BaseController {
     public BaseResultDTO.AddDTO addThirdWarehouse(@RequestBody ThirdWarehouseDTO.AddDTO addDTO){
         return overseasProviderWarehouseService.addThirdWarehouse(addDTO);
     }
+
+
+    @PostMapping("/getOverseasWarehouseListByPlatformCode")
+    public List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCode(@RequestParam(value = "platform")String platform){
+        return overseasProviderWarehouseService.getOverseasWarehouseListByPlatformCode(platform);
+    }
 }

@@ -77,4 +77,52 @@
             and (qr.qc_sample_result is null or qr.qc_sample_result = '')
         </where>
     </select>
+
+    <!-- 根据来源单id查询合格数量汇总 -->
+    <select id="getTotalLotQualifiedQtyByPodId"
+            resultType="com.erp.model.wms.dto.QcResultDTO$TotalLotQualifiedQtyDTO">
+        select
+        qr.purchase_order_detail_id,
+        sum(lot_qualified_qty) as totalLotQualifiedQty
+        from qc_result qr
+        inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
+        where qr.is_deleted = FALSE and qi.qc_status in ('finishQc','exemption') and qr.qc_result = 'conformity'
+        and qr.purchase_order_detail_id in
+        <foreach collection="podIdList" item="podId" open="(" separator="," close=")">
+            #{podId}
+        </foreach>
+        group by qr.purchase_order_detail_id
+    </select>
+
+    <!-- 根据来源单id查询合格数量汇总 -->
+    <select id="getLotQualifiedQtyByMainIdList" resultType="com.erp.model.wms.dto.QcResultDTO$LotQualifiedQtyDTO">
+        select
+            qi.id as qcId,
+            qi.source_type as sourceType,
+            qi.source_detail_id,
+            qr.lot_qualified_qty as totalLotQualifiedQty
+        from qc_result qr
+        inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
+        inner join po_receive_detail prd on prd.id = qi.source_detail_id and prd.is_deleted = FALSE
+        where qr.is_deleted = FALSE  and qi.source_type = 'poReceive' and qr.qc_result = 'conformity'
+        and qi.id in
+        <foreach collection="qcIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        union all
+        select
+            qi.id as qcId,
+            qi.source_type as sourceType,
+            qi.source_detail_id,
+            qr.lot_qualified_qty as totalLotQualifiedQty
+        from qc_result qr
+         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
+         inner join qc_notice qn on qn.id = qi.source_id and qn.is_deleted = FALSE
+        where qr.is_deleted = FALSE  and qi.source_type = 'qcNotice' and qn.source_type = 'poReceive' and qr.qc_result = 'conformity'
+        and qi.id in
+        <foreach collection="qcIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

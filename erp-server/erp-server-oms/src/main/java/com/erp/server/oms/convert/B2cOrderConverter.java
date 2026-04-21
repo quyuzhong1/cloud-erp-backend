@@ -34,24 +34,7 @@ public interface B2cOrderConverter {
     B2cOrderConverter INSTANCE = Mappers.getMapper(B2cOrderConverter.class);
 
 
-    @Mappings({
-            @Mapping(target = "customerId", source = "customerId"),
-            @Mapping(target = "name", source = "name"),
-            @Mapping(target = "email", source = "email"),
-            @Mapping(target = "receiverName", source = "receiverName"),
-            @Mapping(target = "receiverTelNumber", source = "receiverTelNumber"),
-            @Mapping(target = "fullAddress", source = "fullAddress"),
-            @Mapping(target = "postCode", source = "postCode"),
-            @Mapping(target = "country", source = "country"),
-            @Mapping(target = "countryName", source = "countryName"),
-            @Mapping(target = "provinceName", source = "provinceName"),
-            @Mapping(target = "cityName", source = "cityName"),
-            @Mapping(target = "districtName", source = "districtName"),
-            @Mapping(target = "firstAddress", source = "firstAddress"),
-            @Mapping(target = "secondAddress", source = "secondAddress"),
-            @Mapping(target = "receiverTaxNo", source = "receiverTaxNo")
 
-    })
     LogisticsBillDTO.ReceiverDTO convertReceiver(SoB2cReceiverEntity receiverEntity);
 
     @Mappings({
@@ -86,13 +69,12 @@ public interface B2cOrderConverter {
             @Mapping(target = "countryName", source = "countryName"),
             @Mapping(target = "province", source = "provinceName"),
             @Mapping(target = "city", source = "cityName"),
-            @Mapping(target = "zipcode", source = "postCode"),
+            @Mapping(target = "zipCode", source = "postCode"),
             @Mapping(target = "address1", source = "firstAddress"),
             @Mapping(target = "address2", source = "secondAddress"),
-            @Mapping(target = "email", source = "email"),
             @Mapping(target = "district", source = "districtName"),
             @Mapping(target = "taxNumber", source = "receiverTaxNo"),
-
+            @Mapping(target = "address3", ignore = true)
     })
     ThirdWarehouseCreateOutboundReq.ReceiverInfo convertThirdWarehouseReceiver(SoB2cReceiverEntity receiverEntity);
 
@@ -462,4 +444,27 @@ public interface B2cOrderConverter {
             @Mapping(target = "taxNumber", ignore = true)
     })
     SoMultiChannelDTO.ReceiverInfo convertSoMultiChannelReceiver(SoMultiChannelEntity entity);
+
+    List<SoB2cDetailDTO.ListDTO> toDetailDTOList(List<SoB2cDetailEntity> detailList);
+    @Mapping(target = "virtualWarehouseName", ignore = true)
+    @Mapping(target = "virtualUsableQty", ignore = true)
+    @Mapping(target = "useableQty", ignore = true)
+    @Mapping(target = "toDeclarePrice", ignore = true)
+    @Mapping(target = "toCurrencySymbol", ignore = true)
+    @Mapping(target = "toCurrency", ignore = true)
+    @Mapping(target = "sourceCurrency", ignore = true)
+    @Mapping(target = "sourceAmount", ignore = true)
+    @Mapping(target = "returnQty", ignore = true)
+    @Mapping(target = "receiveQty", ignore = true)
+    @Mapping(target = "propertyDTOList", ignore = true)
+    @Mapping(target = "isSelfAdd", ignore = true)
+    @Mapping(target = "isCombination", ignore = true)
+    @Mapping(target = "instockQty", ignore = true)
+    @Mapping(target = "freezeQty", ignore = true)
+    @Mapping(target = "detailLabelDTO", ignore = true)
+    @Mapping(target = "deliveryQty", ignore = true)
+    @Mapping(target = "declareLabelName", ignore = true)
+    @Mapping(target = "declareLabel", ignore = true)
+    @Mapping(target = "childScarceList", ignore = true)
+    SoB2cDetailDTO.ListDTO toDetailDTO(SoB2cDetailEntity detail);
 }

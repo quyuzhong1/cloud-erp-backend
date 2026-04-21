@@ -3,6 +3,7 @@ import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
+import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolPartnerInfoDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
@@ -95,4 +96,6 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
     void handleImportSuccessList(List<KolPartnerInfoImportExcelDTO> successList, List<String> errorNoList, List<KolPartnerInfoImportExcelDTO> errorList2, String importType);
 
     List<KolPartnerInfoDTO.PartnerAddressDTO> partnerAddressList(KolPartnerInfoDTO.AddressSelectDTO dto);
+
+    AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto);
 }

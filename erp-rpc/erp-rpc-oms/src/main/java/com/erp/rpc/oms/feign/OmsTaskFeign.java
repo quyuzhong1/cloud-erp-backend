@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -35,4 +36,16 @@ public interface OmsTaskFeign {
      */
     @PostMapping("/feign/omsSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
+     * KOL B2C cancel success callback after DMP push success.
+     */
+    @PostMapping("/feign/omsSyncTask/handleKolB2cCancelPushSuccess")
+    void handleKolB2cCancelPushSuccess(@RequestBody KolB2cApplicationCancelCallbackDTO dto);
+
+    /**
+     * KOL B2C cancel fail callback after DMP push fail.
+     */
+    @PostMapping("/feign/omsSyncTask/handleKolB2cCancelPushFail")
+    void handleKolB2cCancelPushFail(@RequestBody KolB2cApplicationCancelCallbackDTO dto);
 }

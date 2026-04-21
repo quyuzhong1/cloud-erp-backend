@@ -59,6 +59,19 @@ public interface ProductCertificateMapper extends BaseMapper<ProductCertificateE
      * @return List<ListDTO>
      */
     Page<ProductCertificateDTO.ListDTO> exportExcel(@Param("page") Page<ProductCertificateDTO.ListDTO> page, @Param("params") ProductCertificateDTO.ExportParamDTO params);
+
+    /**
+     * 查询指定SKU和证书项目下，是否存在已绑定附件的有效证书
+     */
+    boolean existsValidCertificate(@Param("skuId") String skuId,
+                                   @Param("dictProject") String dictProject,
+                                   @Param("excludeId") String excludeId);
+
+    /**
+     * 批量查询已绑定附件的有效证书键
+     */
+    List<ProductCertificateEntity> listValidCertificateKeys(@Param("skuIdList") List<String> skuIdList,
+                                                            @Param("dictProjectList") List<String> dictProjectList);
 }
 
 

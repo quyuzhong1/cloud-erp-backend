@@ -34,9 +34,19 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      */
     private String thirdWarehouseCode;
     /**
+     * 取B2B三方发货单的发货仓库映射的众包仓库代码
+     */
+    private String mappingWarehouseCode;
+    /**
      * 收货国家，取发货通知的客户的收货国家二字码
      */
     private String receiverCountryCode;
+
+    /**
+     * 客户名称
+     */
+    private String customerName;
+
     /**
      * 派送方式，取发货通知下推时选择的派送方式
      * EXPRESS:渠道订单
@@ -65,6 +75,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      * 文件URL地址(仅支持jpg、png、gif、zip、pdf的文件)
      */
     private String fileUrl;
+
+    /**
+     * 文件base64
+     */
+    private String fileBase64;
 
     /**
      * 是否为FBA地址 1：是 0：否
@@ -158,6 +173,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
         private String warehousePlatformSku;
 
         /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+
+        /**
          * 单箱数量
          */
         private Integer perBoxQty;
@@ -190,6 +210,10 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          * PASTE_LABEL：贴板标
          * PASTE_PACKAGE：贴箱唛
          * OTHER：其他
+         */
+        /**
+         * zhongbao：
+         * ThirdWarehouseOperationDescriptionEnum
          */
         private String warehouseOperationType;
         /**

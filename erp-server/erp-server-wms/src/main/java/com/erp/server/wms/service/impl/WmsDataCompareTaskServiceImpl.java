@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import javax.annotation.Resource;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.constant.RedisCacheConstants;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -634,7 +635,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 	
 	@Override
 	public void dealParseTask(String id) {
-		String redisKey = "datacompare:task:" + id;
+		String redisKey = RedisCacheConstants.DATA_COMPARE_TASK_KEY + id;
 		try {
 			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.MINUTES)) {
 				this.parseExcelData(id);

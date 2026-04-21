@@ -31,10 +31,8 @@ import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.NoticeItemRoleEnum;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
-import com.erp.model.wms.dto.QcResultDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.QcResultEntity;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -43,10 +41,7 @@ import com.erp.rpc.sys.feign.MessageUserReadFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.QcResultService;
-import com.erp.server.wms.service.WmsAttachmentService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -80,10 +75,8 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Resource
     private DictBasicService dictBasicService;
 
-
     @Resource
     private SysUserFeign sysUserFeign;
-
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -133,10 +126,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         qcResultEntity.setMainId(billId);
         qcResultEntity.setId(id);
         qcResultEntity.setIsInside(isInside);
-        //
-        List<String> imageNameList = qcInfo.getBadImageNameList();
-        List<String> imageUrlList = qcInfo.getBadImageUrlList();
-        wmsAttachmentService.batchSave(imageUrlList, imageNameList, WmsConstant.BAD, id);
         //质检附件
         List<String> qcAttachmentNameList = qcInfo.getQcAttachmentNameList();
         //质检附件url
@@ -202,11 +191,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         if (qcInfo != null) {
             BeanMapper.copy(qcInfo, qcInfoView);
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(qcInfo.getId()));
-            List<String> imageUrlList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> nameList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-            qcInfoView.setBadImageNameList(nameList);
-            qcInfoView.setBadImageUrlList(imageUrlList);
-
 
             List<String> qcAttachmentUrlList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> qcAttachmentNameList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
@@ -283,15 +267,25 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Override
     public void updateQcQty(List<String> ids) {
         if (CollectionUtils.isNotEmpty(ids)) {
-            LambdaUpdateWrapper<QcResultEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.set(QcResultEntity::getQcBadQty, 0);
-            updateWrapper.set(QcResultEntity::getQcGoodQty, 0);
-            updateWrapper.set(QcResultEntity::getQcQty, 0);
-            updateWrapper.set(QcResultEntity::getQcBadRate, 0);
-            updateWrapper.set(QcResultEntity::getQcGoodRate, 0);
-            updateWrapper.set(QcResultEntity::getQcSampleRate, 0);
-            updateWrapper.in(QcResultEntity::getMainId, ids);
-            this.update(updateWrapper);
+
+            List<QcResultEntity> qcResultEntities = this.lambdaQuery()
+                    .in(QcResultEntity::getMainId, ids)
+                    .list();
+            
+            for (QcResultEntity entity : qcResultEntities) {
+                entity.setQcBadQty(0);
+                entity.setQcGoodQty(0);
+                entity.setQcQty(0);
+                entity.setQcBadRate(BigDecimal.ZERO);
+                entity.setQcGoodRate(BigDecimal.ZERO);
+                entity.setQcSampleRate(BigDecimal.ZERO);
+                entity.setQcResult(QcResultEnum.CONFORMITY.getCode());
+                entity.setLotQualifiedQty(entity.getTotalQty());
+            }
+            
+            if (CollectionUtils.isNotEmpty(qcResultEntities)) {
+                this.updateBatchById(qcResultEntities);
+            }
         }
 
     }
@@ -475,6 +469,16 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             resulst.put("productCharge",String.join(",", productCharge));
         }
         return resulst;
+    }
+
+    @Override
+    public List<QcResultDTO.TotalLotQualifiedQtyDTO> getTotalLotQualifiedQtyByPodId(List<String> podIdList) {
+        return baseMapper.getTotalLotQualifiedQtyByPodId(podIdList);
+    }
+
+    @Override
+    public  List<QcResultDTO.LotQualifiedQtyDTO> getLotQualifiedQtyByMainIdList(List<String> qcIdList) {
+      return   baseMapper.getLotQualifiedQtyByMainIdList(qcIdList);
     }
 
     @Override

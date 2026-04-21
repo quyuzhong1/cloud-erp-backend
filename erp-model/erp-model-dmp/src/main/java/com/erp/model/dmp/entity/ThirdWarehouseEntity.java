@@ -1,13 +1,13 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -135,6 +135,14 @@ public class ThirdWarehouseEntity extends BaseEntity<ThirdWarehouseEntity> {
      */
     @TableField("warehouse_list")
     private String warehouseList;
+
+    /**
+     * 库存同步模式
+     * InventorySyncModeEnum
+     * inventory 库存同步 ，order 单据同步
+     */
+    @TableField("inventory_sync_mode")
+    private String inventorySyncMode;
 
     public static final String DISABLED = "disabled";
 

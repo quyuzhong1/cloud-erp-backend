@@ -318,6 +318,16 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         BeanMapper.copy(oldEntity, productLogistics);
 
         BeanMapper.copy(declareInfo, productLogistics);
+        // 如果 productPropertyId 有值但 productProperty 为空，需要根据 productPropertyId 重新生成 productProperty
+        if (StringUtils.isNotBlank(productLogistics.getProductPropertyId())) {
+            List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+            List<String> propertyIdList = Arrays.stream(productLogistics.getProductPropertyId().split(",")).collect(Collectors.toList());
+            String propertyNames = propertytList.stream()
+                    .filter(obj -> propertyIdList.contains(obj.getId()))
+                    .map(BasicDictEntity::getName)
+                    .collect(Collectors.joining(","));
+            productLogistics.setProductProperty(propertyNames);
+        }
         handleProductLogistics(productLogistics);
 
         //海关编码
@@ -1090,12 +1100,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             item.setChargeName(chargeName);
             //是否是组合SKU
             Boolean isCombination = Boolean.FALSE;
-            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
-                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId())&& bomType.equals(e.getType())).count();
-                if (count > 0) {
-                    isCombination = Boolean.TRUE;
-                }
+            if(Objects.equals(item.getCombinationDeclareType(),CombinationDeclareTypeEnums.COMBINE.getCode())){
+                isCombination = Boolean.TRUE;
             }
+//            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+//                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId())&& bomType.equals(e.getType())).count();
+//                if (count > 0) {
+//                    isCombination = Boolean.TRUE;
+//                }
+//            }
             item.setIsCombination(isCombination);
             item.setLogisticsApproveStatusName(ApproveStatusEnum.getName(item.getLogisticsApproveStatus()));
 

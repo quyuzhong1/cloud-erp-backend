@@ -31,7 +31,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "库存产品名称", index = 1)
-    @FieldValid(fieldName = "库存产品名称", isNotBlank = true, maxLength = 200)
+    @FieldValid(fieldName = "库存产品名称", isNotBlank = true, maxLength = 255)
     private String warehouseProductName;
     /**
      * 三方仓商品条码

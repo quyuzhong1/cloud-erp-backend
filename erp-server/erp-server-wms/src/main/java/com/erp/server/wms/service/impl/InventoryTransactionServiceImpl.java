@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.redisson.RedissonMultiLock;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -335,10 +336,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			transactionId = RootContext.getXID().replace(":", "_");
 			transactionType = "global";
 		}else {
-			transactionId = MDC.get("traceId");
-			if(StringUtils.isBlank(transactionId)) {
+			transactionId = TraceContext.traceId();
+			if(StringUtils.isBlank(transactionId) || "N/A".equals(transactionId) || "Ignored_Trace".equals(transactionId)) {
 				transactionId = transactionFlowEntityList.get(0).getId();
-				MDC.put("traceId", transactionId);
 			}
 			transactionType = "local";
 		}
@@ -743,7 +743,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		if(inGlobalTransaction) {
 			transactionId = RootContext.getXID().replace(":", "_");
 		}else {
-			transactionId = MDC.get("traceId");
+			transactionId = TraceContext.traceId();
 		}
 		
 		Integer redisQty = 0;

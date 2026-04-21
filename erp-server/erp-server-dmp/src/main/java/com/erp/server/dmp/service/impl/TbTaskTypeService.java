@@ -5,9 +5,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.constant.TaskConstant;
-import com.common.business.dto.CreateJobDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.entity.BaseEntity;
@@ -15,16 +13,16 @@ import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -32,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -180,9 +177,11 @@ public class TbTaskTypeService {
      */
     public void addNewDmpTask(OverseasProviderEntity overseasProviderEntity) {
         //根据授权的系统编码查询新中台系统表
-        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(overseasProviderEntity.getCode());
+        String systemCode = resolveThirdWarehouseSystemCode(overseasProviderEntity.getCode());
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(systemCode);
         if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
-            log.error("三方仓授权编码【" + overseasProviderEntity.getCode() + "】 在新中台系统表中不存在！");
+            log.error("三方仓授权编码【{}】映射系统编码【{}】在新中台系统表中不存在！",
+                    overseasProviderEntity.getCode(), systemCode);
             return;
         }
 
@@ -190,10 +189,7 @@ public class TbTaskTypeService {
         String systemId = dmpBasicSystemEntity.getId();
 
         //根据系统id查询所有主任务
-        List<DmpCfgInputEntity> cfgInputEntityList = dmpCfgInputService.lambdaQuery()
-                .eq(DmpCfgInputEntity::getSystemId, systemId)
-                .eq(DmpCfgInputEntity::getDisabled, false)
-                .list();
+        List<DmpCfgInputEntity> cfgInputEntityList = listThirdWarehouseCfgInputs(systemId, overseasProviderEntity.getCode());
         List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(cfgInputIds)) {
             return;
@@ -210,6 +206,53 @@ public class TbTaskTypeService {
             }
         }
 
+        // 添加中台任务
+        addDmpOutputDetail(overseasProviderEntity, cfgInputIds);
+
+        // 添加restCloud任务
+        addRestCloudOutputDetail(overseasProviderEntity, systemId);
+
+    }
+
+    private void addRestCloudOutputDetail(OverseasProviderEntity overseasProviderEntity, String systemId) {
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery()
+                .eq(DmpCfgOutputEntity::getExecSystem, DmpCfgInputExecSystemEnum.REST_CLOUD.getCode())
+                .in(DmpCfgOutputEntity::getSystemId, systemId)
+                .list();
+        if (CollUtil.isEmpty(outputEntityList)) {
+            return;
+        }
+        List<String> outputIds = outputEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        List<DmpCfgOutputDetailEntity> cfgOutputDetailEntities = dmpCfgOutputDetailService.lambdaQuery()
+                .in(DmpCfgOutputDetailEntity::getMainId, outputIds)
+                .list();
+
+        //添加输出任务详情
+        for (DmpCfgOutputEntity dmpCfgOutputEntity : outputEntityList) {
+            DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity = cfgOutputDetailEntities.stream().filter(req -> req.getNextLevelId().equals(overseasProviderEntity.getId())).findFirst().orElse(null);
+            if (null == dmpCfgOutputDetailEntity) {
+                DmpCfgOutputDetailDTO.AddDTO addDTO = new DmpCfgOutputDetailDTO.AddDTO();
+                addDTO.setMainId(dmpCfgOutputEntity.getId());
+                addDTO.setLastTime(LocalDateTime.now());
+                addDTO.setNextTime(LocalDateTime.now().plusSeconds(600));
+                addDTO.setIntervalTime(600);
+                addDTO.setOverrideTime(10);
+                addDTO.setMaxRetryCount(3);
+                addDTO.setExecTimeout(1200);
+                addDTO.setMaxIntervalTime(-1);
+                addDTO.setDealyTime(10);
+                addDTO.setNextLevelId(overseasProviderEntity.getId());
+                dmpCfgOutputDetailService.add(addDTO);
+            } else {
+                dmpCfgOutputDetailEntity.setDisabled(false);
+                dmpCfgOutputDetailService.updateById(dmpCfgOutputDetailEntity);
+            }
+        }
+
+    }
+
+    private void addDmpOutputDetail(OverseasProviderEntity overseasProviderEntity, List<String> cfgInputIds) {
         List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, cfgInputIds).list();
         List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollUtil.isEmpty(convertIds)) {
@@ -234,8 +277,8 @@ public class TbTaskTypeService {
                 dmpCfgOutputDetailService.add(addDTO);
             }
         }
-
     }
+
     /**
      * 添加新中台任务
      * @Author Luo_WG
@@ -402,9 +445,11 @@ public class TbTaskTypeService {
 
     public void removeThirdWarehouseTask(OverseasProviderEntity overseasProviderEntity) {
         //根据授权的系统编码查询新中台系统表
-        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(overseasProviderEntity.getCode());
+        String systemCode = resolveThirdWarehouseSystemCode(overseasProviderEntity.getCode());
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(systemCode);
         if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
-            log.error("三方仓授权编码【" + overseasProviderEntity.getCode() + "】 在新中台系统表中不存在！");
+            log.error("三方仓授权编码【{}】映射系统编码【{}】在新中台系统表中不存在！",
+                    overseasProviderEntity.getCode(), systemCode);
             return;
         }
 
@@ -412,10 +457,7 @@ public class TbTaskTypeService {
         String systemId = dmpBasicSystemEntity.getId();
 
         //根据系统id查询所有主任务
-        List<DmpCfgInputEntity> cfgInputEntityList = dmpCfgInputService.lambdaQuery()
-                .eq(DmpCfgInputEntity::getSystemId, systemId)
-                .eq(DmpCfgInputEntity::getDisabled, false)
-                .list();
+        List<DmpCfgInputEntity> cfgInputEntityList = listThirdWarehouseCfgInputs(systemId, overseasProviderEntity.getCode());
         List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(cfgInputIds)) {
             return;
@@ -429,6 +471,37 @@ public class TbTaskTypeService {
             dmpCfgInputDetailService.removeByIds(list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         }
 
+        // 中台
+        removeDmpThirdWarehouseTask(overseasProviderEntity, cfgInputIds);
+
+        // restCloud
+        removeRestCloudThirdWarehouseTask(overseasProviderEntity, systemId);
+    }
+
+    private void removeRestCloudThirdWarehouseTask(OverseasProviderEntity overseasProviderEntity, String systemId) {
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery()
+                .eq(DmpCfgOutputEntity::getExecSystem, DmpCfgInputExecSystemEnum.REST_CLOUD.getCode())
+                .in(DmpCfgOutputEntity::getSystemId, systemId)
+                .list();
+        if (CollUtil.isEmpty(outputEntityList)) {
+            return;
+        }
+        List<String> outputIds = outputEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        List<DmpCfgOutputDetailEntity> cfgOutputDetailEntities = dmpCfgOutputDetailService.lambdaQuery()
+                .in(DmpCfgOutputDetailEntity::getMainId, outputIds)
+                .in(DmpCfgOutputDetailEntity::getNextLevelId, overseasProviderEntity.getId())
+                .list();
+
+        if (CollUtil.isNotEmpty(cfgOutputDetailEntities)){
+            cfgOutputDetailEntities.forEach(e -> {e.setDisabled(true);});
+            dmpCfgOutputDetailService.updateBatchById(cfgOutputDetailEntities);
+        }
+
+
+    }
+
+    private void removeDmpThirdWarehouseTask(OverseasProviderEntity overseasProviderEntity, List<String> cfgInputIds) {
         List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, cfgInputIds).list();
         List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollUtil.isEmpty(convertIds)) {
@@ -449,5 +522,26 @@ public class TbTaskTypeService {
         if(CollectionUtils.isNotEmpty(cfgOutputDetailEntities)){
             dmpCfgOutputDetailService.removeByIds(cfgOutputDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         }
+    }
+
+    private String resolveThirdWarehouseSystemCode(String providerCode) {
+        if (OmsPlatformEnum.FBT.getCode().equals(providerCode)) {
+            return DmpBasicSystemCodeEnum.TIKTOK.getCode();
+        }
+        return providerCode;
+    }
+
+    private List<DmpCfgInputEntity> listThirdWarehouseCfgInputs(String systemId, String providerCode) {
+        if (OmsPlatformEnum.FBT.getCode().equals(providerCode)) {
+            return dmpCfgInputService.lambdaQuery()
+                    .eq(DmpCfgInputEntity::getSystemId, systemId)
+                    .eq(DmpCfgInputEntity::getDisabled, false)
+                    .likeRight(DmpCfgInputEntity::getCode, "fbt")
+                    .list();
+        }
+        return dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, systemId)
+                .eq(DmpCfgInputEntity::getDisabled, false)
+                .list();
     }
 }

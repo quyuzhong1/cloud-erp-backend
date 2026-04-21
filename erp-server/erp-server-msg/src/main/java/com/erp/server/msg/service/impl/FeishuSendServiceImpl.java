@@ -401,11 +401,15 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             // 由于采用关键字（系统预警）
             String activeProfile = SpringUtil.getActiveProfile();
             warnMsgContentDTO.setTitle(activeProfile + "-" + warnMsgTypeEnum.getName() + "：" + warnMsgInfo.getTitle());
+            String atUser = "";
+            if (CollUtil.isNotEmpty(warnMsgInfo.getUserIdList())){
+                atUser = warnMsgInfo.getUserIdList().stream().map(id -> CharSequenceUtil.format("<at id={}></at>\n", id)).collect(Collectors.joining());
+            }
             // 组装预警内容
-            String msgContent = CharSequenceUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}\n发生时间：{}",
+            String msgContent = CharSequenceUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}\n发生时间：{}\n {}",
                     warnMsgInfo.getErpServerModuleEnum().getCode(), StrUtils.null2EmptyWithTrim(warnMsgInfo.getBizName()),
                     StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableName()), StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableId()),
-                    StrUtils.null2EmptyWithTrim(warnMsgInfo.getKeyInfo()), LocalDateTimeUtil.format(warnMsgInfo.getHappenTime(), "yyyy-MM-dd HH:mm:ss"));
+                    StrUtils.null2EmptyWithTrim(warnMsgInfo.getKeyInfo()), LocalDateTimeUtil.format(warnMsgInfo.getHappenTime(), "yyyy-MM-dd HH:mm:ss"),atUser);
             warnMsgContentDTO.setContent(msgContent);
             warnMsgContentDTO.setNoticeMsgCardButtonDTO(warnMsgInfo.getNoticeMsgCardButtonDTO());
             //飞书机器人连接

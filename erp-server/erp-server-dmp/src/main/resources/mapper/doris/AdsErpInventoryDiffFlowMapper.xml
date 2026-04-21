@@ -105,7 +105,7 @@
 	           ${item.field} ${item.sort}
 	       </foreach>
 	    </if>
-	    t.check_month_query desc
+	    t.check_month_query, t.id desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -157,6 +157,11 @@
         <foreach collection="checkMonthList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+    </select>
+    
+    <select id="listDimCheckWareHouse" resultType="com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO">
+        select platform_name sourceSystemName,platform_account accountCode,platform_warehouse_code platformWarehouseCode,platform_warehouse_name platformWarehouseName 
+        from dmp_dwd.dim_check_warehouse 
     </select>
     
     <insert id="batchInsertInit" parameterType="java.util.List">

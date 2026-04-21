@@ -65,6 +65,11 @@ public class RocketMqNewTopic {
     public static final String DMP_TRACK123_TO_TMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_track123_to_tms_topic";
 
     /**
+     * 新中台Kuaidi100
+     */
+    public static final String DMP_KUAIDI100_TO_TMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_kuaidi100_to_tms_topic";
+
+    /**
      * 新中台平台仓库
      */
     public static final String DMP_PLATFORM_WAREHOUSE_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_warehouse_to_wms_topic";
@@ -110,6 +115,11 @@ public class RocketMqNewTopic {
      * 新中台旺店通虚拟仓库
      */
     public static final String DMP_WDT_VIRTUALWAREHOUSE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_virtualwarehouse_to_dmp_topic";
+
+    /**
+     * 新中台 TikTok 销售仓库
+     */
+    public static final String DMP_TIKTOK_WAREHOUSE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_tiktok_warehouse_to_dmp_topic";
     
     /**
      * 新中台旺店通店铺
@@ -169,9 +179,15 @@ public class RocketMqNewTopic {
     public static final String DMP_LX_FBA_SHIPMENT_RECEIVE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_fba_shipment_receive_to_dmp_topic";
 
     /**
+     * 新中台FBT签收
+     */
+    public static final String DMP_FBT_FBA_SHIPMENT_RECEIVE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fbt_fba_shipment_receive_to_dmp_topic";
+
+    /**
      * 新中台平台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_topic";
+    public static final String DMP_FBT_SHIPMENT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fbt_shipment_to_wms_topic";
     public static final String DMP_AWD_SHIPMENT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_shipment_to_wms_topic";
     /**
      * 新中台平台订单

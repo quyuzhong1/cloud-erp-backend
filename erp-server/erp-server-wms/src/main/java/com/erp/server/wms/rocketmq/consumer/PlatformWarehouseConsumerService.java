@@ -3,6 +3,7 @@ package com.erp.server.wms.rocketmq.consumer;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.druid.sql.visitor.functions.Char;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
@@ -110,7 +111,11 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
         OverseasProviderWarehouseEntity dbEntity = overseasProviderWarehouseService.getByPlatform(dto.getProviderErpId(),dto.getWarehouseCode());
         OverseasProviderWarehouseEntity mqEntity = OverseasWarehouseConverter.INSTANCE.warehouseDb(dto);
         //设置国家名称
-        setCountryName(mqEntity);
+        if (OmsPlatformEnum.ZHONG_BAO.getCode().equals(dto.getProvider()) && CharSequenceUtil.isBlank(dto.getCountryCode())){
+            mqEntity.setCountryName(CharSequenceUtil.EMPTY);
+        }else {
+            setCountryName(mqEntity);
+        }
         if(Objects.isNull(dbEntity)){
             //不存在，插入,默认禁用
             mqEntity.setDisabled(Boolean.TRUE);

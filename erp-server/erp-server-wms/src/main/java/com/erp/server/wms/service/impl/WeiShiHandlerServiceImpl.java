@@ -144,6 +144,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(resp.getData());
     }
 
+
     @Override
     protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq) {
         return null;
@@ -165,7 +166,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         WeiShiBaseResp<WeiShiCreateOutboundResp> resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,ThirdWarehouseContext.getAuthMap());
@@ -176,7 +177,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
-        return success(resp.getData().getOrderNo());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(resp.getData().getOrderNo()).trackNo(resp.getData().getTrackingNumber()).build());
     }
 
     @Override
@@ -235,7 +236,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         WeiShiGetOutboundRequest weiShiGetOutboundRequest = new WeiShiGetOutboundRequest();
         weiShiGetOutboundRequest.setReferNo(queryOutboundReq.getErpOrderCode());
         log.warn(getPlatForm().getName()+"查询出库单请求:{}", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
@@ -248,7 +249,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             log.warn("纬狮获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMsg());
             throw new ServiceException("纬狮获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMsg());
         }
-        return success(resp.getData().getOrderNo());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(resp.getData().getOrderNo()).build());
     }
 
     @Override

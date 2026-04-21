@@ -74,6 +74,8 @@
         ls.type AS type,
         ls.disabled ,
         ls.auth_status AS authStatus ,
+        ls.org_id,
+        ls.org_name,
         ls.auth_time AS authTime
         FROM logistics_supplier ls
         LEFT JOIN logistics_warehouse lw on ls.id = lw.main_id and lw.is_deleted = FALSE
@@ -190,6 +192,8 @@
             ls.supplier_id,
             ls.supplier_name,
             ls.short_name,
+            ls.org_id,
+            ls.org_name,
             ls.type
         from logistics_supplier ls
         where id = #{id}

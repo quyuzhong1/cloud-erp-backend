@@ -876,6 +876,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String logisticsChannelName;
         /**
+         * 纸张大小
+         */
+        private String paperSize;
+        /**
          * 订单编号
          */
         private String soCode;

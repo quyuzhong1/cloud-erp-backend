@@ -13,7 +13,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -237,7 +237,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private void checkStocktaking(List<InventoryTransactionDTO> transactionList) {
         StringBuilder errList = new StringBuilder();
         for(InventoryTransactionDTO transactionDTO:transactionList) {
-            String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK,
+            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK,
                     "*"
                     , transactionDTO.getOrgId()
                     , transactionDTO.getWarehouseId()
@@ -296,9 +296,11 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                                 )
                         .findFirst()
                         .orElse(null);
-                if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()))){
-                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘点任务单【{}】不允许操作【{}】之前单据\n"
+                // 业务规则：根据盘点任务创建日期判断，当业务单据日期 <= 盘点任务创建日期时，禁止操作
+                // 判断逻辑：!billDate.isAfter(盘点日期) 等价于 billDate <= 盘点日期
+                if (null != lastDTO && !billDate.isAfter(lastDTO.getBillDate())){
+                    // 已有盘盈盘亏单【{}】不允许操作【{}】及之前单据
+                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘点任务单【{}】不允许操作【{}】及之前单据\n"
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getWarehouseLocationName()

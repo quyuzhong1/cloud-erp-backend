@@ -36,7 +36,7 @@ public interface SysDepartmentUserMapper  extends BaseMapper<SysDepartmentUserEn
      * @param userId 用户id
      * @return 部门信息
      */
-    SysDepartmentUserNumberDTO getDeptByUserIdWithDisabledFilter(@Param("userId") String userId);
+    List<SysDepartmentUserNumberDTO> getDeptByUserIdWithDisabledFilter(@Param("userId") String userId);
 
     /**
      * 根据用户id获取上级用户

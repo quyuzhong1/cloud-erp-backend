@@ -16,7 +16,7 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	PURCHASEORDER("purchaseOrder", "采购订单"),
 	PURCHASEAPPLICATION("purchaseApplication", "采购申请单"),
 	PURCHASECHANGE("purchaseChange", "采购变更单"),
-	PRODUCTCHANGE("productChange", "变更管理"),
+	BOMCHANGE("bomChange", "变更管理"),
 	PRODUCTBOMINFO("productBomInfo", "BOM管理"),
 	SALESDEMAND("salesDemand", "备货申请单"),
 	POINSTOCK("poInstock", "入库单"),
@@ -66,6 +66,8 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	ASSET_STOCKTAKING_PLAN("assetStocktakingPlan", "盘点方案"),
 	ASSET_LOCATION("assetLocation", "资产位置"),
 	KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请"),
+	AFTER_SALE("afterSale","寄修申请"),
+	QC_NOTICE("qcNotice","质检通知"),
     ;
     /**
      * 类型

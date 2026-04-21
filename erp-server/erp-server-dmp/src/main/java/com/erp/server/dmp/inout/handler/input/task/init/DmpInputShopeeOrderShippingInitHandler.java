@@ -10,6 +10,7 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -18,6 +19,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
+import com.erp.server.dmp.service.DmpInputTaskService;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,9 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 	@Resource
     private ShopeeLogisticsService shopeeLogisticsService;
 
+	@Resource
+	private DmpInputTaskService dmpInputTaskService;
+
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -58,9 +63,23 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
-		
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, dmpInputTaskEntity.getParentTaskId()).list();
+		List<String> childIds = list.stream().map(DmpInputTaskEntity::getId).collect(Collectors.toList());
 		List<String> orderSnList = findMongoData.stream().map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
-		
+		List<ParamData> detailParamDataList = new ArrayList<>();
+		detailParamDataList.add(new ParamData("order_sn", "order_sn", PannoEnum.IN, orderSnList));
+		detailParamDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.IN, childIds));
+		List<Map<String, Object>> detailMongoData = mongoService.findMongoData(detailParamDataList, "Shopee_orderDetail_data");
+		if(CollUtil.isEmpty(detailMongoData)) {
+			log.warn("没有订单详情数据，订单SN列表：{}", orderSnList);
+			return new ArrayList<>();
+		}
+		//过滤出订单状态是READY_TO_SHIP的订单
+		List<String> readyToShipOrderSnList = detailMongoData.stream().filter(f -> "READY_TO_SHIP".equals(f.get("order_status"))).map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
+		if(CollUtil.isEmpty(readyToShipOrderSnList)) {
+			log.warn("没有READY_TO_SHIP状态的订单，订单SN列表：{}", orderSnList);
+			return new ArrayList<>();
+		}
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
 			.eq(CfgAppClientEntity::getBusinessType, appClientEnum.getBusinessType())
@@ -89,7 +108,7 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 		// 结果resultList
 		List<JSONObject> resultList = new LinkedList<>();
 
-		for (String orderSn : orderSnList) {
+		for (String orderSn : readyToShipOrderSnList) {
 			JSONObject data = null;
 			long sleepTime = 1000;
 			int count = 0;

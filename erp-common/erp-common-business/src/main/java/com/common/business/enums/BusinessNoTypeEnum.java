@@ -1,6 +1,7 @@
 package com.common.business.enums;
 
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.RedisCacheConstants;
 import lombok.AllArgsConstructor;
 
 /**
@@ -161,9 +162,14 @@ public enum BusinessNoTypeEnum {
 
     CODE_DR(120 ,"DR","企业达人库",BusinessNoConstant.DR),
     CODE_KOLC(121 ,"KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
+    CODE_DZ(122 ,"DZ","物流费用导入",BusinessNoConstant.DZ),
+    CODE_FYPZ(123 ,"FYPZ","费用配置",BusinessNoConstant.FYPZ),
 
+    CODE_BG(122 ,"BG","产品信息变更单",BusinessNoConstant.BG),
+    CODE_ZJSQ(124 ,"ZJSQ","质检申请",BusinessNoConstant.ZJSQ),
 
-
+    CODE_CYFA(123 ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
+    CODE_WDGL(124 ,"WDGL","文件管理",BusinessNoConstant.WDGL),
 
     ;
 
@@ -178,7 +184,7 @@ public enum BusinessNoTypeEnum {
     private String prefix;
 
     // redis单号key
-    public static final String REDIS_GEN_KEY = "gen_doc_no";
+    public static final String REDIS_GEN_KEY = RedisCacheConstants.REDIS_GEN_KEY;
 
     // 补0位数
     public static final Integer FILL_0_DIGIT = 5;

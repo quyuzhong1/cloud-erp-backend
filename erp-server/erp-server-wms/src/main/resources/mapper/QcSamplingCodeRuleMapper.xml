@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.QcSamplingCodeRuleMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.QcSamplingCodeRuleEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="min_lot_qty" property="minLotQty" />
+       <result column="max_lot_qty" property="maxLotQty" />
+       <result column="code_s1" property="codeS1" />
+       <result column="code_s2" property="codeS2" />
+       <result column="code_s3" property="codeS3" />
+       <result column="code_s4" property="codeS4" />
+       <result column="code_i" property="codeI" />
+       <result column="code_ii" property="codeIi" />
+       <result column="code_iii" property="codeIii" />
+       <result column="sample_qty_code" property="sampleQtyCode" />
+       <result column="sample_qty" property="sampleQty" />
+       <result column="disabled" property="disabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        min_lot_qty, max_lot_qty, code_s1, code_s2, code_s3, code_s4, code_i, code_ii, code_iii, sample_qty_code, sample_qty, disabled
+    </sql>
+
+    <select id="selectByLotQty" resultType="com.erp.model.wms.entity.QcSamplingCodeRuleEntity">
+        SELECT
+            *
+        FROM
+            qc_sampling_code_rule
+                 WHERE disabled = false AND is_deleted =false AND  min_lot_qty <![CDATA[ <= ]]> #{lotQty} AND max_lot_qty >= #{lotQty} LIMIT 1
+    </select>
+    <select id="getRuleBySampleCode" resultType="com.erp.model.wms.entity.QcSamplingCodeRuleEntity">
+        SELECT
+            *
+        FROM
+            qc_sampling_code_rule
+                 WHERE disabled = false AND is_deleted =false AND sample_qty_code = #{sampleCode} LIMIT 1
+    </select>
+
+</mapper>

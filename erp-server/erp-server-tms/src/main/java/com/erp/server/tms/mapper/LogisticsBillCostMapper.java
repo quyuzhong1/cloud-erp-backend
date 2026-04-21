@@ -3,6 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.AsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -96,4 +97,22 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return List<String>
      */
     List<String> listLogisticsBillCostId(@Param("params") LogisticsBillCostDTO.ListParamDTO params);
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:20
+     * @param params
+     * @return ListDTO
+     */
+    LogisticsBillCostDTO.TotalCountDTO listTotalCostValueCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
+
+    List<String> listByCanPushAllocation(@Param("params") AsyncTaskRecordDTO.TaskDTO params);
+    /**
+     * 查询计费重合计
+     * @author will
+     * @date 2026/4/15 10:53
+     * @param params
+     * @return java.math.BigDecimal
+     */
+    BigDecimal listTotalBillingWeightLogisticsCount(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
 }

@@ -223,6 +223,11 @@ public class AdsErpDiffOutstockSyncEntity extends BaseEntity<AdsErpDiffOutstockS
     @TableField("qty")
     private Integer qty;
     /**
+     * ERP_SKU数量
+     */
+    @TableField("sku_qty")
+    private String skuQty;
+    /**
     * ERP仓库名称
     */
     @TableField("erp_warehouse_name")

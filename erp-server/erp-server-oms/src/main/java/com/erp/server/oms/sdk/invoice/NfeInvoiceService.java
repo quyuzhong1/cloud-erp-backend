@@ -175,6 +175,7 @@ public class NfeInvoiceService {
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail);
+            nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
             invoiceAddress = nfeClienteDTO.getRua();
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
@@ -370,6 +371,9 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark("响应数据为空");
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             return Boolean.FALSE;
         }
@@ -431,6 +435,9 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(statusEnum.getCode());
             invoiceInfoEntity.setQueryId(responseData.getUuid());
             invoiceInfoEntity.setRemark(CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : "处理中");
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             return Boolean.TRUE;
         } else {
@@ -455,6 +462,9 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(statusEnum.getCode());
             invoiceInfoEntity.setQueryId(responseData.getUuid());
             invoiceInfoEntity.setRemark(CharSequenceUtil.format("status:{}, motivo:{}", status, motivo));
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             
             if (isErrorStatus) {
@@ -512,7 +522,7 @@ public class NfeInvoiceService {
         clienteDTO.setUf(nfeClienteDTO.getUf());
         clienteDTO.setCep(nfeClienteDTO.getCep());
         clienteDTO.setTelefone(nfeClienteDTO.getMobile());
-        clienteDTO.setEmail(nfeClienteDTO.getEmail());
+        clienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return clienteDTO;
     }
     
@@ -856,6 +866,7 @@ public class NfeInvoiceService {
         }
         nfeClienteDTO.setUf(dictCityList.get(0).getCode());
         nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
+        nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
     }
 
@@ -943,6 +954,7 @@ public class NfeInvoiceService {
         }
         nfeClienteDTO.setUf(dictCityList.get(0).getCode());
         nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
+        nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
     }
 
