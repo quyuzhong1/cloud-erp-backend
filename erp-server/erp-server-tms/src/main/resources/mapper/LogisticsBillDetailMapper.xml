@@ -239,5 +239,6 @@
               and lb.sales_platform = #{query.salesPlatform}
           </if>
             AND lb.delivery_time &gt;= best_match.cfgTime
+        ORDER BY lbd.update_time,lbd.version
     </select>
 </mapper>
