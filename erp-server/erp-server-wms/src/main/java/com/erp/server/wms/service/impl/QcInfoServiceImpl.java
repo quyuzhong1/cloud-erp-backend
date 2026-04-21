@@ -1188,6 +1188,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
+            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(bill.getId());
+            //回写质检通知单
+            reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
             //质检产品 暂存
             qcProductService.add(id, dto.getQcProduct(), skuId);
             //质检信息 暂存
@@ -1208,8 +1211,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //生成入库单
                 autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
-            //回写质检通知单
-            reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(bill.getId()),Boolean.TRUE);
