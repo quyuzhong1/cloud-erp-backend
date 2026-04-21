@@ -19,13 +19,24 @@ public class BusinessCommonConstants {
 
     // Spring 环境
     private static String SPRING_PROFILES_ACTIVE;
+    
+    // 命名空间
+    private static String SPRING_NACOS_NAMESPACE;
 
     // 开发环境
     public static final String DEV = "dev";
+    
+    // 归档环境
+    public static final String ARCHIVE = "archive";
 
     @Value("${spring.profiles.active:dev}")
     private void setSpringProfilesActive(String springProfilesActive) {
         BusinessCommonConstants.SPRING_PROFILES_ACTIVE = springProfilesActive;
+    }
+    
+    @Value("${spring.cloud.nacos.discovery.namespace:dev}")
+    private void setSpringNacosNamespace(String springNacosNamespace) {
+    	BusinessCommonConstants.SPRING_NACOS_NAMESPACE = springNacosNamespace;
     }
 
     /**
@@ -44,4 +55,10 @@ public class BusinessCommonConstants {
         return profiles[0];
     }
 
+    /**
+     * 效验是否归档环境
+     */
+    public static boolean isArchive() {
+        return SPRING_NACOS_NAMESPACE.toLowerCase().contains(ARCHIVE);
+    }
 }

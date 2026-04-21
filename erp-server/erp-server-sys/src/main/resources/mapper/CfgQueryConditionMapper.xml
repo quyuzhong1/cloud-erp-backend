@@ -107,7 +107,7 @@
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
         where  qc.is_deleted = false
           and qc.code = #{code}
-        order by qc.index , qc.update_time DESC, cqc.index
+        order by qc."index" , qc.update_time DESC, cqc."index"
     </select>
 
     <select id="paging" resultMap="PagingMap">

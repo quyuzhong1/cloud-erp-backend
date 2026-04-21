@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -14,6 +15,9 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.rmi.MarshalException;
@@ -482,9 +486,17 @@ public class SoOutstockDTO implements Serializable {
         private List<LocalDate> billDateList;
         
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
     }
 
     /**

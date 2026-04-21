@@ -50,6 +50,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Lazy
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
 

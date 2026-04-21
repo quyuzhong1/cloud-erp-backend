@@ -114,4 +114,9 @@ public class SysMenuEntity implements Serializable {
     @TableField(value = "is_deleted")
     @TableLogic
     private Boolean isDeleted;
+	
+	/**
+	 * 是否在归档系统可见，默认false不可见
+	 */
+	private Boolean isArchiveDisplay;
 }
