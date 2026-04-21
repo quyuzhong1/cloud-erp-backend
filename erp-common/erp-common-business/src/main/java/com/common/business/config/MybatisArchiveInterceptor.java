@@ -15,6 +15,7 @@ import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.springframework.stereotype.Component;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.common.business.utils.DmpFeishuUtils;
@@ -37,6 +38,9 @@ public class MybatisArchiveInterceptor implements Interceptor{
 	
     public Object intercept(Invocation invocation) throws Throwable {
     	String dataSourceName = DynamicDataSourceContextHolder.peek();
+    	if(BusinessCommonConstants.isArchive() && !DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode().equals(dataSourceName)) {
+    		throw new ServiceException("归档系统必须使用归档数据源");
+    	}
     	if(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode().equals(dataSourceName)) {
     		StatementHandler statementHandler = (StatementHandler) invocation.getTarget();
             BoundSql boundSql = statementHandler.getBoundSql();
