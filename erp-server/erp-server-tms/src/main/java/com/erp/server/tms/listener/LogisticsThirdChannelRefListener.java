@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
 import com.erp.model.tms.entity.BasicQueryLogisticsProviderEntity;
@@ -122,7 +124,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
         // 5. 查询物流商实体查找
         BasicQueryLogisticsProviderEntity provider = findLogisticsProvider(excelDTO, errorMsgList);
 
-        // 6. 推送设置与手机号校验 (修复 NPE 和逻辑顺序)
+        // 6. 推送设置与手机号校验
         validatePushAndPhoneSettings(excelDTO, provider, errorMsgList);
 
         // 7. 处理校验结果
@@ -197,6 +199,11 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                     .get(thirdSupplierName + ":" + excelDTO.getPlatformType());
             if (Objects.isNull(provider)) {
                 errorMsgList.add("查询物流商不存在");
+            }else {
+                // 快递100平台必须填写查询物流商(中文)
+                if(TrackPlatformTypeEnum.KUAIDI100.getCode().equals(excelDTO.getPlatformType())){
+                    errorMsgList.add(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED.getMsg());
+                }
             }
             return provider;
         }
@@ -217,9 +224,9 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
 
         // 推送类型解析
         String pushType = LogisticsThirdChannelRefPushTypeEnum.getCodeByName(excelDTO.getPushTypeName());
-        if (CharSequenceUtil.isBlank(pushType)) {
-            errorMsgList.add("推送类型不存在");
-        }
+//        if (CharSequenceUtil.isBlank(pushType)) {
+//            errorMsgList.add("推送类型不存在");
+//        }
         excelDTO.setPushType(pushType);
 
         if (Boolean.TRUE.equals(excelDTO.getIsPushMobile())) {

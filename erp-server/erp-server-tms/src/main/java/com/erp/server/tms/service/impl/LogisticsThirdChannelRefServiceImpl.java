@@ -348,6 +348,14 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
                     logisticsThirdChannelRefEntity.getLogisticsSupplierName(), logisticsThirdChannelRefEntity.getLogisticsChannelName());
         }
 
+        String platformType = logisticsThirdChannelRefEntity.getPlatformType();
+        String thirdSupplierName = logisticsThirdChannelRefEntity.getThirdSupplierName();
+        
+        // 快递100平台必须填写查询物流商(中文)
+        if(TrackPlatformTypeEnum.KUAIDI100.getCode().equals(platformType) && StringUtils.isBlank(thirdSupplierName)){
+            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED);
+        }
+
         if(Objects.equals(logisticsThirdChannelRefEntity.getLogisticsSupplierId() ,"all")){
             logisticsThirdChannelRefEntity.setLogisticsSupplierName("全部");
         }else {
@@ -372,7 +380,6 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             }
         }
 
-        String thirdSupplierName = logisticsThirdChannelRefEntity.getThirdSupplierName();
         BasicQueryLogisticsProviderEntity basicQueryLogisticsProviderEntity = basicQueryLogisticsProviderService.lambdaQuery().eq(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, thirdSupplierName).last(" limit 1 ").one();
         if(Objects.isNull(basicQueryLogisticsProviderEntity)){
             throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND, thirdSupplierName);
