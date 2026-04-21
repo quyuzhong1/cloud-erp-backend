@@ -1070,8 +1070,10 @@ public enum ApiError implements Serializable {
     PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行下推"),
     PO_RETURN_DETAIL_NOT_EXISTS(9666,"未找到采购退货单明细"),
     PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
-    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
     PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE(9668,"返修委外订单不允许反审核"),
+    PO_RETURN_ONLY_SAME_SUPPLIER(9669,"只能选择同一供应商的采购退货订单进行下推"),
+    PO_RETURN_ONLY_APPROVED_CONFIRMED(9670,"只能选择审核通过且已确认的采购退货订单进行下推"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
     PO_QC_DEFECT_INFO_INCOMPLETE(9666,"缺陷信息必须同时填写或同时不填写"),
     PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9667,"采购收货单待质检数量不允许小于0"),
     PO_QC_DEFECT_LEVEL_DUPLICATE(9668,"缺陷等级不能重复"),
@@ -1079,6 +1081,7 @@ public enum ApiError implements Serializable {
     PO_QC_NOTICE_DETAIL_NOT_FOUND(9669,"没有找到质检通知单明细"),
     PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9670,"良品/不良品数量不允许小于0或空"),
     PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
+    PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1570,10 +1573,13 @@ public enum ApiError implements Serializable {
     SAMPLE_DETAIL_NOT_BELONG_TO_APPLY(10741,"部分明细不存在或不属于该样品领用单"),
     SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
     SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
+    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
     SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND(10744,"资产验收单明细不存在"),
     SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND(10745,"资产采购订单不存在"),
     SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND(10746,"资产采购订单明细不存在"),
-    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
+
+
+
     SAMPLE_USER_ID_CHINESE_NOT_FOUND(10745,"领用人【{0}】不存在，请传入正确的用户ID或用户名称"),
     SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
     SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
