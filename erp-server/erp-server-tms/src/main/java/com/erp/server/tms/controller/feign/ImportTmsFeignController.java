@@ -29,6 +29,8 @@ public class ImportTmsFeignController {
     private CfgLogisticsCostImportService cfgLogisticsCostImportService;
     @Resource
     private ImportHistoryRecordService importHistoryRecordService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
 
     @PostMapping("/logisticsBillCost")
@@ -93,6 +95,20 @@ public class ImportTmsFeignController {
             log.error("导入费用配置失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(importSyncDTO.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importLogisticsThirdChannelRef")
+    public void importLogisticsThirdChannelRef(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            logisticsThirdChannelRefService.importLogisticsThirdChannelRef(dto);
+        } catch (Exception e) {
+            log.error("导入物流-第三方渠道关系表失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
             importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
             downloadTaskFeign.updateTask(importResultDTO);
