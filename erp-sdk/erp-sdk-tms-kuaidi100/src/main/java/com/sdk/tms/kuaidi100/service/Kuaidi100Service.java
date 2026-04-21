@@ -72,9 +72,13 @@ public class Kuaidi100Service {
                 .resultv2("1")
                 .build();
         if(isPushMobile && StringUtils.isNotBlank(mobile)){
+            //判断mobile如果小于4位数字则报错
+            if(mobile.length()>=4){
                 //只取后四位
-//                param.setPhone(StrUtil.subSuf(mobile,mobile.length()-4));
+                param.setPhone(StrUtil.subSuf(mobile,mobile.length()-4));
+            }else {
                 param.setPhone(mobile);
+            }
         }
         return param;
     }
