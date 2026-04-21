@@ -98,6 +98,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_APPLICATION;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_APPLICATION_ALL;
 
 /**
  * <p>
@@ -640,6 +641,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Override
     public Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("采购申请单数据", EXPORT_SCM_PURCHASE_APPLICATION.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportAllExcel(PurchaseApplicationDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("采购申请单数据（全）", EXPORT_SCM_PURCHASE_APPLICATION_ALL.getCode(), dto);
         return Boolean.TRUE;
     }
 

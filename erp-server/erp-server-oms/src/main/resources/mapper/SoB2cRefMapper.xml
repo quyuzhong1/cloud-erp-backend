@@ -57,5 +57,23 @@
             SELECT source_id from so_b2c_ref where target_id = #{soId} and is_deleted =false
         ) and type = 'split' and is_deleted =false
     </select>
+    <select id="listDeepestTargetIdsBySourceId" resultType="java.lang.String">
+
+        WITH RECURSIVE ref_tree AS (
+        SELECT source_id, target_id, 1 AS depth
+        FROM so_b2c_ref
+        WHERE source_id = #{sourceId} AND is_deleted = false
+        UNION ALL
+        SELECT r.source_id, r.target_id, rt.depth + 1
+        FROM so_b2c_ref r
+        INNER JOIN ref_tree rt ON r.source_id = rt.target_id
+        WHERE r.is_deleted = false
+        )
+        SELECT DISTINCT target_id
+        FROM ref_tree
+        WHERE target_id NOT IN (
+        SELECT source_id FROM so_b2c_ref WHERE is_deleted = false
+        )
+    </select>
 
 </mapper>

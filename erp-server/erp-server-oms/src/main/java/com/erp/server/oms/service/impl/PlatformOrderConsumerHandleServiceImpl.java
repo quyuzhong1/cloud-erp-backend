@@ -121,6 +121,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
+    @Resource
+    private SoB2cRefService soB2cRefService;
+
     @Override
     public void handleAll(PlatformOrderDTO dto) {
         String oldBillStatus = dto.getBillStatus();
@@ -214,10 +217,24 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 非平台
         if (!mainEntity.hasPlatformWarehouseOrder()
                 && resultDTO.isUpdateCancel()
-                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
-                && !mainEntity.getIsIntercept()
         ){
-            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+            if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
+                    && !mainEntity.getIsIntercept()){
+                soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+            }
+            //如果是拆单，子单也需要拦截
+            if(mainEntity.getInvalidStatus() && SoB2cInvalidTypeEnum.ENUM_SPLIT.getCode().equals(mainEntity.getInvalidType())){
+                List<String> targetSoIds = soB2cRefService.listDeepestTargetIdsBySourceId(mainEntity.getId());
+                if(CollectionUtils.isNotEmpty(targetSoIds)){
+                    List<SoB2cEntity> targetEntityList = soB2cService.listByIds(targetSoIds);
+                    for (SoB2cEntity soB2cEntity : targetEntityList) {
+                        if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus())
+                                && !soB2cEntity.getIsIntercept()){
+                            soB2cService.deliveryIntercept(soB2cEntity.getId(), "平台取消");
+                        }
+                    }
+                }
+            }
         }
 
 
