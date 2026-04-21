@@ -1705,16 +1705,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     if (CollUtil.isNotEmpty(poReturnIds)) {
                         List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(poReturnIds);
                         if (CollUtil.isNotEmpty(poReturnEntityList)) {
-                            // 收集所有退货方式的名称
-                            List<String> returnModeNames = poReturnEntityList.stream()
-                                    .map(PoReturnEntity::getReturnMode)
-                                    .filter(StrUtil::isNotBlank)
-                                    .map(ReturnModeEnum::getName)
-                                    .filter(StrUtil::isNotBlank)
-                                    .distinct()
-                                    .collect(Collectors.toList());
-                            if (CollUtil.isNotEmpty(returnModeNames)) {
-                                obj.setReturnTypeName(String.join(",", returnModeNames));
+                            PoReturnEntity firstPoReturn = poReturnEntityList.stream()
+                                    .filter(e -> StrUtil.isNotBlank(e.getReturnMode()))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (Objects.nonNull(firstPoReturn)) {
+                                obj.setReturnTypeName(ReturnModeEnum.getName(firstPoReturn.getReturnMode()));
                             }
                         }
                     }
