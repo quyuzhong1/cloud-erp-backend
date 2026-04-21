@@ -90,7 +90,7 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                 .registerStatus(1) // 已注册
                 .trackEnable(true)
                 .trackTime(trackStartTime)
-                .updateTime(updateTimeLimit) // 过滤频率
+                .trackEndTime(updateTimeLimit) // 过滤频率
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
 

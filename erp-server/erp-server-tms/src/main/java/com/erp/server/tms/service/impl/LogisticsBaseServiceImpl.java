@@ -439,7 +439,6 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
-                    .courierCode(record.getChannelName())
                     .build());
         }
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
@@ -572,7 +571,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 continue;
             }
             // Track123 支持批量查询（100条/批），快递100 等仅支持单次查询（1条/批）
-            int batchSize = LogisticsPlatformEnum.TRACK123.getCode().equals(typeEnums.getCode()) ? 100 : 1;
+            int batchSize = 100;
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> chunks = Lists.partition(readyToSync, batchSize);
             for (List<LogisticsTrackDTO.UpdateTrackDTO> chunk : chunks) {
                 resultList.addAll(processTrackData(typeEnums.getCode(), chunk, transportType));

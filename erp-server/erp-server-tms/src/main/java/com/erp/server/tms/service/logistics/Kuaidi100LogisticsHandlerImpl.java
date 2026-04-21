@@ -107,7 +107,7 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .trackEnable(true)
                 .trackTime(trackStartTime)
                 .trackNoList(trackNos)
-                .updateTime(updateTimeLimit) // 过滤频率
+                .trackEndTime(updateTimeLimit) // 过滤频率
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
 
@@ -215,7 +215,6 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(null,
                         null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.KUAIDI100.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(response));
-                return success(allTracks);
             }else {
                 LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
                 logisticsTrackEntity.setTrackNo(trackNo);
@@ -228,13 +227,10 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(null,
                         null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.KUAIDI100.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(response));
-                return failure(logisticsTrackEntity.getContent());
             }
         }
         return success(allTracks);
     }
-
-
 
 
     private String getTrackNo(LogisticsTrackDTO.UpdateTrackDTO record) {
