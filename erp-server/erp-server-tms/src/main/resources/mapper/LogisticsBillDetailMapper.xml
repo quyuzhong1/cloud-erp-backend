@@ -206,6 +206,9 @@
         <if test="query.trackTime != null">
             and lbd.track_time > #{query.trackTime}
         </if>
+        <if test="query.trackEndTime != null">
+            and lbd.track_time  &lt; #{query.trackEndTime}
+        </if>
           <if test="query.registerStatus != null">
             and lbd.register_status = #{query.registerStatus}
           </if>

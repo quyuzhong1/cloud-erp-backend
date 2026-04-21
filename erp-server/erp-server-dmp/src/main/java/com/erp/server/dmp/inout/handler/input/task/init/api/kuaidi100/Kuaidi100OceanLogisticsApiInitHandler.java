@@ -90,7 +90,7 @@ public class Kuaidi100OceanLogisticsApiInitHandler implements DmpInputApiInitHan
                 .registerStatus(1) // 已注册
                 .trackEnable(true)
                 .trackTime(trackStartTime)
-                .updateTime(updateTimeLimit) // 过滤频率
+                .trackEndTime(updateTimeLimit) // 过滤频率
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .build();
 
