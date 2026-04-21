@@ -518,6 +518,11 @@ public class PurchaseReturnOrderDTO {
         private String subcontractType;
 
         /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
          * 供应商名称
          */
         private String supplierName;
