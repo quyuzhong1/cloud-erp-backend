@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DynamicDataSourceFilter implements Filter {
 	
 	private static final List<String> ARCHIVE_BLACK_URL = Arrays.asList(
-			"/workOption/approveView"
+			"/workOption/"
 			);
 	
     @Override
