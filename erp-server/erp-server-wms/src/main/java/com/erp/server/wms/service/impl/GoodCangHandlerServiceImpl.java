@@ -354,7 +354,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 return failure("查询订单结果响应为空");
             }
             if (!isSuccess(taskResp.getAsk(), "")) {
-                return failure(taskResp.getAsk());
+                return failure(taskResp.getMessage());
             }
 
             GoodCangTaskResp goodCangTaskResp = taskResp.getData();
