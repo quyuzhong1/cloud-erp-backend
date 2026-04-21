@@ -1578,15 +1578,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         Boolean result = this.updateBatchById(qcList);
         if (result) {
+            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
+            //回写质检通知单
+            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
+
             //批量去更新 质检数量
             qcResultService.updateQcQty(ids);
 
             //自动完成入库单
             this.autoBatchStockInBill(ids);
-
-            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
-            //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(entity.getId()),Boolean.TRUE);
