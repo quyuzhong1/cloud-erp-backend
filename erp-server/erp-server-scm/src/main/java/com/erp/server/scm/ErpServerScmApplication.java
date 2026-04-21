@@ -15,7 +15,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication(scanBasePackages = {"com.erp","com.common"})
 @EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
-@ServletComponentScan
+@ServletComponentScan(basePackages ={"com.erp","com.common"})
 public class ErpServerScmApplication {
 
     public static void main(String[] args) {

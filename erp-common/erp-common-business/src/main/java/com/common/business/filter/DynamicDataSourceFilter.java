@@ -38,8 +38,8 @@ public class DynamicDataSourceFilter implements Filter {
                          FilterChain chain) throws IOException, ServletException {
     	if(BusinessCommonConstants.isArchive()) {
     		try {
-        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ADS_DORIS);
-	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ADS_DORIS.getCode());
+        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
+	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
 	            chain.doFilter(request, response);
             } finally {
                 DynamicDataSourceContextHolder.poll();
