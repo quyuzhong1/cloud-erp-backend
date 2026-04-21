@@ -11344,7 +11344,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ));
                 return;
             }
-            //前置数据处理
+            //查询最新数据
+            soB2cEntity = this.getById(soB2cEntity.getId());
             SoB2cEntity oldSoB2cEntity = SerializationUtils.clone(soB2cEntity);
             beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity, soB2cReceiverEntity, updateDTO, detailEntityList);
             try {
