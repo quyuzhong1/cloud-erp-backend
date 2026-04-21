@@ -18,6 +18,7 @@ import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.utils.DmpFeishuUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -37,18 +38,23 @@ public class MybatisArchiveInterceptor implements Interceptor{
 			);
 	
     public Object intercept(Invocation invocation) throws Throwable {
-    	String dataSourceName = DynamicDataSourceContextHolder.peek();
-    	if(BusinessCommonConstants.isArchive() && !DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode().equals(dataSourceName)) {
-    		throw new ServiceException("归档系统必须使用归档数据源");
+    	if(BusinessCommonConstants.isArchive()) {
+    		try {
+        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
+	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
+	            StatementHandler statementHandler = (StatementHandler) invocation.getTarget();
+	            BoundSql boundSql = statementHandler.getBoundSql();
+	            Field field = boundSql.getClass().getDeclaredField("sql");
+	            field.setAccessible(true);
+	            field.set(boundSql, getNewSql(boundSql.getSql()));
+	            return invocation.proceed();
+            } finally {
+                DynamicDataSourceContextHolder.poll();
+                DynamicDataSourceThreadLocal.remove();
+            }
+    	}else {
+    		return invocation.proceed();
     	}
-    	if(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode().equals(dataSourceName)) {
-    		StatementHandler statementHandler = (StatementHandler) invocation.getTarget();
-            BoundSql boundSql = statementHandler.getBoundSql();
-            Field field = boundSql.getClass().getDeclaredField("sql");
-            field.setAccessible(true);
-            field.set(boundSql, getNewSql(boundSql.getSql()));
-    	}
-        return invocation.proceed();
     }
 
 	
