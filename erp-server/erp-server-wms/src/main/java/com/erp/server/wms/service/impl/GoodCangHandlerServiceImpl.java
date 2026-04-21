@@ -298,10 +298,75 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         GoodCangCreateB2bReq cangCreateOutboundReq = this.buildB2bOrderReq(createOutboundReq);
-        log.warn(getPlatForm().getName()+"创建B2B订单请求:{}", JSONUtil.toJsonStr(cangCreateOutboundReq));
+        log.warn(getPlatForm().getName() + "创建B2B订单请求:{}", JSONUtil.toJsonStr(cangCreateOutboundReq));
+
         GoodCangResponse<String> response = goodCangService.createB2bBill(cangCreateOutboundReq);
-        log.warn(getPlatForm().getName()+"创建B2B订单结果:{}", JSONUtil.toJsonStr(response));
-        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
+        log.warn(getPlatForm().getName() + "创建B2B订单结果:{}", JSONUtil.toJsonStr(response));
+
+        if (!isSuccess(response.getAsk(), "")) {
+            return failure(response.getMessage());
+        }
+
+        String requestId = response.getRequestId();
+
+        // 最多重试3次查询任务状态
+        return queryTaskWithRetry(requestId, response.getData());
+    }
+
+    /**
+     * 查询任务状态，支持重试机制
+     * status: 0=处理中，1=成功，2=失败
+     */
+    private ApiResult<String> queryTaskWithRetry(String requestId, String originalData) {
+        int maxRetries = 3;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            // 休眠等待异步处理（首次也等待，因为接口是异步的）
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                log.error("线程休眠异常", e);
+                Thread.currentThread().interrupt();
+                return failure("查询任务被中断");
+            }
+
+            GoodCangResponse<GoodCangTaskResp> taskResp = goodCangService.taskStatusList(
+                    Collections.singletonList(requestId)
+            );
+            log.warn(getPlatForm().getName() + "查询B2B订单结果(第{}次):{}", attempt, JSONUtil.toJsonStr(taskResp));
+
+            if (!isSuccess(taskResp.getAsk(), "")) {
+                return failure(taskResp.getAsk());
+            }
+
+            GoodCangTaskResp goodCangTaskResp = taskResp.getData();
+            if (Objects.isNull(goodCangTaskResp)) {
+                return failure("查询订单结果为空");
+            }
+
+            Integer status = goodCangTaskResp.getStatus();
+
+            // status: 1=成功，直接返回
+            if (status.equals(1)) {
+                return success(originalData);
+            }
+
+            // status: 2=失败，直接返回错误
+            if (status.equals(2)) {
+                return failure(goodCangTaskResp.getErrorMessage());
+            }
+
+            // status: 0=处理中，继续重试（如果是最后一次，返回处理中状态）
+            if (attempt == maxRetries) {
+                log.warn("任务处理超时，requestId: {}", requestId);
+                return failure("任务处理超时，请稍后查询");
+            }
+
+            log.warn("任务处理中，第{}次查询未就绪，继续等待...", attempt);
+        }
+
+        // 理论上不会执行到这里
+        return failure("查询任务异常");
     }
 
     private GoodCangCreateB2bReq buildB2bOrderReq(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
