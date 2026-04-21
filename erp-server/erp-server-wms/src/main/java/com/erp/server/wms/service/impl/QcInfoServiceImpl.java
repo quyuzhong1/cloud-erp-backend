@@ -682,7 +682,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.nonNull(qcNoticeDetail)) {
             LambdaUpdateChainWrapper<QcNoticeDetailEntity> updateWrapper = qcNoticeDetailService.lambdaUpdate()
                     .set(QcNoticeDetailEntity::getQcQty, totalQty)
-                    .set(QcNoticeDetailEntity::getQcDiffQty, qcNoticeDetail.getQcNoticeQty() - qcQty)
+                    .set(QcNoticeDetailEntity::getQcDiffQty, qcNoticeDetail.getQcNoticeQty() - totalQty)
                     .set(QcNoticeDetailEntity::getQcGoodQty, goodQty)
                     .set(QcNoticeDetailEntity::getQcBadQty, badQty)
                     .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.FINISH.getCode())
@@ -1185,6 +1185,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
+            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(bill.getId());
+            //回写质检通知单
+            reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
             //质检产品 暂存
             qcProductService.add(id, dto.getQcProduct(), skuId);
             //质检信息 暂存
@@ -1205,8 +1208,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //生成入库单
                 autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
-            //回写质检通知单
-            reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcInfo.getTotalQty(),qcInfo.getQcQty(),qcInfo.getQcGoodQty(),qcInfo.getQcBadQty());
 
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(bill.getId()),Boolean.TRUE);
@@ -1575,15 +1576,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         Boolean result = this.updateBatchById(qcList);
         if (result) {
+            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
+            //回写质检通知单
+            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
+
             //批量去更新 质检数量
             qcResultService.updateQcQty(ids);
 
             //自动完成入库单
             this.autoBatchStockInBill(ids);
-
-            QcResultDTO.ViewDTO qcResult = qcResultService.getByMainId(entity.getId());
-            //回写质检通知单
-            reWriteQcNotice(entity.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
 
             //批量去更新 质检数量
             warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(entity.getId()),Boolean.TRUE);
