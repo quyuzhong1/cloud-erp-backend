@@ -895,31 +895,31 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(poIds)) {
             return;
         }
-        //打系统标识
-        Boolean originalValue = UserContext.getIsUserSystem();
-        UserContext.setIsUserSystem(Boolean.TRUE);
-        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
-        for (String poId : poIds) {
-            PurchaseOrderEntity entity = entityMap.get(poId);
-            if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.PO_NOT_FOUND);
-            }
-            //提交
-            BatchResultDTO submit = purchaseOrderService.submit(entity, Boolean.FALSE);
-            if (!submit.getSuccess()) {
-                throw new ServiceException(ApiError.PO_SUBMIT_FAILED);
-            }
-            //审核
-            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-            approveOneDTO.setId(poId);
-            approveOneDTO.setType(ApproveType.PASS);
-            BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
-            if (!approve.getSuccess()) {
-                throw new ServiceException(ApiError.PO_APPROVE_FAILED);
-            }
-        }
-        //恢复系统标识
-        UserContext.setIsUserSystem(originalValue);
+//        //打系统标识
+//        Boolean originalValue = UserContext.getIsUserSystem();
+//        UserContext.setIsUserSystem(Boolean.TRUE);
+//        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
+//        for (String poId : poIds) {
+//            PurchaseOrderEntity entity = entityMap.get(poId);
+//            if (ObjectUtil.isEmpty(entity)) {
+//                throw new ServiceException(ApiError.PO_NOT_FOUND);
+//            }
+//            //提交
+//            BatchResultDTO submit = purchaseOrderService.submit(entity, Boolean.FALSE);
+//            if (!submit.getSuccess()) {
+//                throw new ServiceException(ApiError.PO_SUBMIT_FAILED);
+//            }
+//            //审核
+//            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+//            approveOneDTO.setId(poId);
+//            approveOneDTO.setType(ApproveType.PASS);
+//            BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
+//            if (!approve.getSuccess()) {
+//                throw new ServiceException(ApiError.PO_APPROVE_FAILED);
+//            }
+//        }
+//        //恢复系统标识
+//        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
