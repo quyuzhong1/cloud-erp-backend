@@ -1639,10 +1639,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         operateLogService.batchAddModuleOperateLog("质检单【%s】取消操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "取消质检");
         boolean result = this.updateBatchById(qcList);
         if (result){
-
-            //更新收货单的待质检量
-            List<String> qcIdList = qcList.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
-            warehouseReceiveDetailService.updateWaitQcQty(qcIdList,Boolean.FALSE);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
