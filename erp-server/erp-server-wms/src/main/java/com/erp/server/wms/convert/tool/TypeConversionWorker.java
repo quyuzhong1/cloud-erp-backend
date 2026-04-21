@@ -38,6 +38,14 @@ public class TypeConversionWorker {
         if (CharSequenceUtil.isBlank(fileData)){
             return fileData;
         }
+        return fileData.replaceFirst("(?i)^data:application/pdf;base64,", "");
+    }
+
+    @Named("replaceBase64DataUrlPrefix")
+    public String replaceBase64DataUrlPrefix(String fileData){
+        if (CharSequenceUtil.isBlank(fileData)){
+            return fileData;
+        }
         return fileData.replaceFirst("(?i)^data:[^;]+;base64,", "");
     }
 

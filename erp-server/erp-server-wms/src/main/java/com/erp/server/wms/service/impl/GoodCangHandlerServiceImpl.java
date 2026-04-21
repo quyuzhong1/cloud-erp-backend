@@ -169,15 +169,23 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq){
-        GoodCangUploadFileReq goodCangUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
+        GoodCangUploadFileReq goodCangUploadFileReq = GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
+                ? ThirdWarehouseConverter.INSTANCE.reqToGoodCangB2bAttachmentUploadFileReq(uploadFileReq)
+                : ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
         if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
         }
         if(GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
                 && CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
             goodCangUploadFileReq.setFileName(uploadFileReq.getFileName());
+            goodCangUploadFileReq.setFile(cleanB2bAttachmentBase64(goodCangUploadFileReq.getFile(), uploadFileReq.getFileName()));
         }
+        log.warn(getPlatForm().getName() + "上传文件请求: useFor={}, fileName={}", goodCangUploadFileReq.getUseFor(), goodCangUploadFileReq.getFileName());
         GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(goodCangUploadFileReq);
+        log.warn(getPlatForm().getName() + "上传文件结果:{}", JSONUtil.toJsonStr(response));
+        if (Objects.isNull(response)) {
+            return failure("谷仓上传文件响应为空");
+        }
         GoodCangUploadFileResp goodCangUploadFileResp = response.getData();
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);
         return isSuccess(response.getAsk(), response.getMessage()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
@@ -231,11 +239,18 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<ThirdWarehouseQueryFbaOutboundResponse> responses = new ArrayList<>();
         for (String code : req.getErpOrderCodeList()) {
             GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode(code);
+            if (Objects.isNull(response)) {
+                return failure("谷仓查询订单响应为空");
+            }
             if(!isSuccess(response.getAsk(), response.getMessage())){
                 return failure(response.getMessage());
             }
             ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
             GoodCangOrderDTO goodCangOrderDTO = response.getData();
+            if (Objects.isNull(goodCangOrderDTO)) {
+                log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", code, JSONUtil.toJsonStr(response));
+                return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单"));
+            }
             res.setCode(code);
             res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
             res.setTrackNo(goodCangOrderDTO.getTrackingNo());
@@ -335,6 +350,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             );
             log.warn(getPlatForm().getName() + "查询B2B订单结果(第{}次):{}", attempt, JSONUtil.toJsonStr(taskResp));
 
+            if (Objects.isNull(taskResp)) {
+                return failure("查询订单结果响应为空");
+            }
             if (!isSuccess(taskResp.getAsk(), "")) {
                 return failure(taskResp.getAsk());
             }
@@ -347,12 +365,12 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             Integer status = goodCangTaskResp.getStatus();
 
             // status: 1=成功，直接返回
-            if (status.equals(1)) {
+            if (Objects.equals(status, 1)) {
                 return success(originalData);
             }
 
             // status: 2=失败，直接返回错误
-            if (status.equals(2)) {
+            if (Objects.equals(status, 2)) {
                 return failure(goodCangTaskResp.getErrorMessage());
             }
 
@@ -367,6 +385,58 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         // 理论上不会执行到这里
         return failure("查询任务异常");
+    }
+
+    private String cleanB2bAttachmentBase64(String fileData, String fileName) {
+        if (CharSequenceUtil.isBlank(fileData) || CharSequenceUtil.isBlank(fileName)) {
+            return fileData;
+        }
+        String extension = StringUtils.substringAfterLast(fileName, ".");
+        byte[] magic = getAttachmentMagic(extension);
+        if (Objects.isNull(magic)) {
+            return fileData;
+        }
+        try {
+            byte[] bytes = Base64.getDecoder().decode(fileData);
+            int index = indexOf(bytes, magic);
+            if (index <= 0) {
+                return fileData;
+            }
+            log.warn(getPlatForm().getName() + "B2B附件存在前置脏字节，上传前已裁剪, fileName={}, offset={}", fileName, index);
+            return Base64.getEncoder().encodeToString(Arrays.copyOfRange(bytes, index, bytes.length));
+        } catch (IllegalArgumentException e) {
+            log.warn(getPlatForm().getName() + "B2B附件base64解析失败，保持原始内容上传, fileName={}", fileName, e);
+            return fileData;
+        }
+    }
+
+    private byte[] getAttachmentMagic(String extension) {
+        if ("pdf".equalsIgnoreCase(extension)) {
+            return new byte[]{'%', 'P', 'D', 'F', '-'};
+        }
+        if ("xlsx".equalsIgnoreCase(extension) || "docx".equalsIgnoreCase(extension)) {
+            return new byte[]{'P', 'K'};
+        }
+        return null;
+    }
+
+    private int indexOf(byte[] bytes, byte[] magic) {
+        if (Objects.isNull(bytes) || Objects.isNull(magic) || bytes.length < magic.length) {
+            return -1;
+        }
+        for (int i = 0; i <= bytes.length - magic.length; i++) {
+            boolean matched = true;
+            for (int j = 0; j < magic.length; j++) {
+                if (bytes[i + j] != magic[j]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private GoodCangCreateB2bReq buildB2bOrderReq(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {

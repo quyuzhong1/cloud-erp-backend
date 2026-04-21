@@ -117,7 +117,9 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
-        AntuUploadFileReq antuUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
+        AntuUploadFileReq antuUploadFileReq = "order_attach".equalsIgnoreCase(uploadFileReq.getModule())
+                ? ThirdWarehouseConverter.INSTANCE.reqToAntuB2bAttachmentUploadFileReq(uploadFileReq)
+                : ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
         if (CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             antuUploadFileReq.setFileType(uploadFileReq.getFileType());
         }

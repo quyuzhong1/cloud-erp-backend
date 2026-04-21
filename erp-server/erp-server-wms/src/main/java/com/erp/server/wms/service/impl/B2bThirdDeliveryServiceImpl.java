@@ -470,8 +470,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     @DistributeLocker(keyName = "id")
     public BatchResultDTO updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo, LocalDateTime deliveryTime) {
         B2bThirdDeliveryEntity old = this.getById(id);
@@ -926,8 +925,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void createFbaOutbound(ThirdWarehouseCreateFbaOutboundReq req) {
         String sourceId = req.getSourceId();
         B2bThirdDeliveryEntity entity = this.getById(sourceId);
