@@ -58,7 +58,7 @@
                 and system = #{userType}
             </if>
             <if test="isArchiveDisplay != null and isArchiveDisplay == true">
-            	AND sm.is_archive_display = true
+            	AND is_archive_display = true
        		</if>
     </select>
 
