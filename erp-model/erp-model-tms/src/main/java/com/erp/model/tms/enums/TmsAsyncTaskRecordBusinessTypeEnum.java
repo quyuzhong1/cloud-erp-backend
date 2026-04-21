@@ -22,6 +22,8 @@ public enum TmsAsyncTaskRecordBusinessTypeEnum implements EnumMessage {
     TRANSFER_DECLARE_COST_ALLOCATION("transferDeclareCostAllocation", "中转费用分摊"),
     TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单"),
     TMS_B2C_DECLARE_RECONCILIATION("tmsB2cDeclareReconciliation", "B2c报关对账单"),
+    LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用"),
+    LAST_MILE_LOGISTICS_BILL_COST("lastMileLogisticsBillCost", "尾程物流费用"),
     ;
     /**
      * 类型
