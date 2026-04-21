@@ -381,7 +381,11 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         }
 
         if(StringUtils.isNotBlank(thirdSupplierName)){
-            BasicQueryLogisticsProviderEntity basicQueryLogisticsProviderEntity = basicQueryLogisticsProviderService.lambdaQuery().eq(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, thirdSupplierName).last(" limit 1 ").one();
+            BasicQueryLogisticsProviderEntity basicQueryLogisticsProviderEntity = basicQueryLogisticsProviderService.lambdaQuery()
+                    .eq(BasicQueryLogisticsProviderEntity::getTrackPlatformType, platformType)
+                    .eq(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, thirdSupplierName)
+                    .last(" limit 1 ")
+                    .one();
             if(Objects.isNull(basicQueryLogisticsProviderEntity)){
                 throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND, thirdSupplierName);
             }else {
