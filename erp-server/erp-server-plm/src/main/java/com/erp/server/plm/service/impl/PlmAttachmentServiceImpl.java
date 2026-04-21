@@ -1,7 +1,9 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -26,6 +28,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -88,6 +91,83 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         }
         return this.lambdaQuery().in(PlmAttachmentEntity::getBusinessId, businessIdList).orderByDesc(PlmAttachmentEntity::getId).list();
 
+    }
+
+    @Override
+    public List<PlmAttachmentEntity> listByBusinessIdAndType(String businessId,String type) {
+        return this.lambdaQuery().eq(PlmAttachmentEntity::getBusinessId, businessId)
+                .eq(StringUtils.isNotBlank(type), PlmAttachmentEntity::getType, type)
+                .orderByDesc(PlmAttachmentEntity::getId).list();
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void edit(AttachmentDTO.EditDTO editDTO) {
+        String businessId = editDTO.getBusinessId();
+        String type = editDTO.getType();
+        List<AttachmentDTO.AttachDTO> attachDTOList = editDTO.getAttachDTOS();
+
+        // 查询现有
+        List<PlmAttachmentEntity> existingList = listByBusinessIdAndType(businessId, type);
+
+        // 如果新列表为空，清空所有
+        if (CollUtil.isEmpty(attachDTOList)) {
+            if (CollUtil.isNotEmpty(existingList)) {
+                removeByIds(existingList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList()));
+            }
+            return;
+        }
+
+        // 过滤有效的新数据（URL 非空）
+        List<AttachmentDTO.AttachDTO> validNewList = attachDTOList.stream()
+                .filter(dto -> StrUtil.isNotBlank(dto.getAttachUrl()))
+                .collect(Collectors.toList());
+
+        // 如果过滤后为空，同样清空
+        if (CollUtil.isEmpty(validNewList)) {
+            if (CollUtil.isNotEmpty(existingList)) {
+                removeByIds(existingList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList()));
+            }
+            return;
+        }
+
+        Set<String> newUrls = validNewList.stream().map(AttachmentDTO.AttachDTO::getAttachUrl).collect(Collectors.toSet());
+        Map<String, PlmAttachmentEntity> existingMap = existingList.stream()
+                .collect(Collectors.toMap(PlmAttachmentEntity::getAttachUrl, e -> e, (e1, e2) -> e1));
+
+        // 删除：现有中不在新列表的
+        List<String> deleteIds = existingList.stream()
+                .filter(e -> !newUrls.contains(e.getAttachUrl()))
+                .map(PlmAttachmentEntity::getId)
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(deleteIds)) {
+            removeByIds(deleteIds);
+        }
+
+        // 新增或更新
+        List<PlmAttachmentEntity> saveList = new ArrayList<>();
+        for (AttachmentDTO.AttachDTO dto : validNewList) {
+            PlmAttachmentEntity entity = existingMap.get(dto.getAttachUrl());
+            boolean isNew = (entity == null);
+
+            if (isNew) {
+                entity = new PlmAttachmentEntity();
+                entity.setBusinessId(businessId);
+                entity.setType(type);
+                entity.setAttachUrl(dto.getAttachUrl());
+                entity.setAttachVersion(1);
+            }
+
+            // 更新名称（如果有变化）
+            if (!StrUtil.equals(entity.getAttachName(), dto.getAttachName())) {
+                entity.setAttachName(dto.getAttachName());
+            }
+
+            saveList.add(entity);
+        }
+
+        saveOrUpdateBatch(saveList);
     }
 
     @Override

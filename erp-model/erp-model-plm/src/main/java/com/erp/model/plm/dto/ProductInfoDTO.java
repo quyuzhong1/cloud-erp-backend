@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -91,6 +92,7 @@ public class ProductInfoDTO {
     /**
      * 研发团队id
      */
+    @NotBlank(message = "研发团队不能为空")
     private String rdtTeamId;
 
     /**
@@ -198,6 +200,22 @@ public class ProductInfoDTO {
     private Integer isCustomized;
 
     /**
+     * 客户定制附件
+     */
+    private List<AttachmentDTO.AttachDTO> customizedAttachmentList;
+
+    /**
+     * 产品说明书
+     */
+    private List<AttachmentDTO.AttachDTO> instructionAttachmentList;
+
+    /**
+     * 产品质保期
+     */
+    @NotBlank(message = "产品质保期不能为空")
+    private String warrantyPeriod;
+
+    /**
      * 创建人id
      */
     private String createUserId;
@@ -272,6 +290,5 @@ public class ProductInfoDTO {
         @NotNull(message = "日期不能为空")
         private LocalDate localDate;
     }
-
 
 }

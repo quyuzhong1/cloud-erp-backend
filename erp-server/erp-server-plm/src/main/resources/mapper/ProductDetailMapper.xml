@@ -398,7 +398,8 @@
                pi.is_customized,
                pi.sales_channel,
                pd.status,
-               pi.application_category_id
+               pi.application_category_id,
+               pi.warranty_period
         FROM product_info pi
                  LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
                  LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
@@ -486,7 +487,8 @@
                pi.type,
                pi.iterate_ref_sku_id,
                pi.iterate_ref_sku_no,
-               pi.application_category_id
+               pi.application_category_id,
+               pi.warranty_period
         FROM product_info pi
         WHERE pi.is_deleted = FALSE
           AND pi.id = #{productId}

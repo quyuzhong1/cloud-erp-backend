@@ -59,6 +59,19 @@ public class AttachmentDTO implements Serializable {
     }
 
     /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class EditDTO {
+
+        private String businessId;
+
+        private String type;
+
+        private List<AttachDTO> attachDTOS;
+    }
+    /**
     * 新增
     */
     @Data
@@ -116,6 +129,22 @@ public class AttachmentDTO implements Serializable {
 
     }
 
+    /**
+     * 附件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AttachDTO {
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 附件URL
+         */
+        private String attachUrl;
+    }
 
     /**
      * 列表数据
