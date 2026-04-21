@@ -29,4 +29,5 @@ public class GoodCangConstants {
     public static final String GET_INVENTORY_LOG = "/public_open/inventory/get_inventory_log";
 
     public static final String METHOD_GET_CREATE_B2B_BILL = "/public_open/order/create_other_order";
+    public static final String TASK_STATUS_LIST = "/public_open/base_data/task_status_list";
 }

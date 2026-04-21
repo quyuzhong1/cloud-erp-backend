@@ -296,7 +296,7 @@ public class GoodCangServiceTest {
     }
     @Test
     public void taskStatusList() {
-        GoodCangResponse<GoodCangTaskResp> response = goodCangService.taskStatusList(Arrays.asList("U6C051A7B5"));
+        GoodCangResponse<GoodCangTaskResp> response = goodCangService.taskStatusList(Arrays.asList("U89E0F7474"));
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
