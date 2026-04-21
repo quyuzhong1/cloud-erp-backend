@@ -380,19 +380,21 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             }
         }
 
-        BasicQueryLogisticsProviderEntity basicQueryLogisticsProviderEntity = basicQueryLogisticsProviderService.lambdaQuery().eq(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, thirdSupplierName).last(" limit 1 ").one();
-        if(Objects.isNull(basicQueryLogisticsProviderEntity)){
-            throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND, thirdSupplierName);
-        }else {
-            logisticsThirdChannelRefEntity.setThirdChannelName(basicQueryLogisticsProviderEntity.getCompanyCode());
-            logisticsThirdChannelRefEntity.setThirdSupplierCode(basicQueryLogisticsProviderEntity.getLogisticsNameEn());
+        if(StringUtils.isNotBlank(thirdSupplierName)){
+            BasicQueryLogisticsProviderEntity basicQueryLogisticsProviderEntity = basicQueryLogisticsProviderService.lambdaQuery().eq(BasicQueryLogisticsProviderEntity::getLogisticsNameCn, thirdSupplierName).last(" limit 1 ").one();
+            if(Objects.isNull(basicQueryLogisticsProviderEntity)){
+                throw new ServiceException(ApiError.LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND, thirdSupplierName);
+            }else {
+                logisticsThirdChannelRefEntity.setThirdChannelName(basicQueryLogisticsProviderEntity.getCompanyCode());
+                logisticsThirdChannelRefEntity.setThirdSupplierCode(basicQueryLogisticsProviderEntity.getLogisticsNameEn());
 
-            Boolean isRegisterPhone = basicQueryLogisticsProviderEntity.getIsRegisterPhone();
-            Boolean isPushMobile = logisticsThirdChannelRefEntity.getIsPushMobile();
-            String pushType = logisticsThirdChannelRefEntity.getPushType();
+                Boolean isRegisterPhone = basicQueryLogisticsProviderEntity.getIsRegisterPhone();
+                Boolean isPushMobile = logisticsThirdChannelRefEntity.getIsPushMobile();
+                String pushType = logisticsThirdChannelRefEntity.getPushType();
 
-            // 校验推送手机号配置规则
-            validatePushMobileConfig(isRegisterPhone, isPushMobile, pushType);
+                // 校验推送手机号配置规则
+                validatePushMobileConfig(isRegisterPhone, isPushMobile, pushType);
+            }
         }
 
         // 验证数据 & 数据赋值
