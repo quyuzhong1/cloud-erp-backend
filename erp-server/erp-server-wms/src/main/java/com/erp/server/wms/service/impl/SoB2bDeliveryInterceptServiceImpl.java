@@ -28,8 +28,8 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.CancelStatusEnum;
 import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.InterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2bDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2bDeliveryInterceptSourceTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2bDeliveryInterceptMapper;
@@ -92,12 +92,15 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
         SoB2bDeliveryInterceptDTO.PagingParamDTO params = new SoB2bDeliveryInterceptDTO.PagingParamDTO();
         params.setPermissionSql(dto.getPermissionSql());
         List<SoB2bDeliveryInterceptDTO.TabListDTO> list = baseMapper.tabList(params);
-        list.forEach(item -> item.setTabFlagName(SoB2cDeliveryInterceptStatusEnum.getName(item.getTabFlag())));
-        List<String> statusList = SoB2cDeliveryInterceptStatusEnum.getStatusList();
+        list.forEach(item -> {
+            item.setTabFlag(normalizeHandleStatus(item.getTabFlag()));
+            item.setTabFlagName(SoB2bDeliveryInterceptStatusEnum.getName(item.getTabFlag()));
+        });
+        List<String> statusList = SoB2bDeliveryInterceptStatusEnum.getStatusList();
         List<String> existStatusList = list.stream().map(SoB2bDeliveryInterceptDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.forEach(status -> {
             if (!existStatusList.contains(status)) {
-                list.add(new SoB2bDeliveryInterceptDTO.TabListDTO(status, SoB2cDeliveryInterceptStatusEnum.getName(status), 0));
+                list.add(new SoB2bDeliveryInterceptDTO.TabListDTO(status, SoB2bDeliveryInterceptStatusEnum.getName(status), 0));
             }
         });
         list.add(new SoB2bDeliveryInterceptDTO.TabListDTO("all", "全部", list.stream().mapToInt(SoB2bDeliveryInterceptDTO.TabListDTO::getCount).sum()));
@@ -120,7 +123,8 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
     public SoB2bDeliveryInterceptDTO.ViewDTO view(String id) {
         SoB2bDeliveryInterceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B发货拦截单"));
         SoB2bDeliveryInterceptDTO.ViewDTO data = BeanMapperUtils.map(SoB2bDeliveryInterceptDTO.ViewDTO.class, entity);
-        data.setHandleStatusName(SoB2cDeliveryInterceptStatusEnum.getName(data.getHandleStatus()));
+        data.setHandleStatus(normalizeHandleStatus(data.getHandleStatus()));
+        data.setHandleStatusName(SoB2bDeliveryInterceptStatusEnum.getName(data.getHandleStatus()));
         data.setHandleResultName(HandleResultEnum.getName(data.getHandleResult()));
         data.setSourceTypeName(SoB2bDeliveryInterceptSourceTypeEnum.getName(data.getSourceType()));
         List<SoB2bDeliveryInterceptDetailEntity> detailList = soB2bDeliveryInterceptDetailService.listByMainIds(Collections.singletonList(id));
@@ -146,13 +150,13 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
         if (Objects.isNull(entity)) {
             return;
         }
-        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())
+        if (SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())
                 && Objects.equals(entity.getHandleResult(), handleResult)
                 && Objects.equals(entity.getTransportNo(), transportNo)
                 && Objects.equals(entity.getSoOutstockCode(), soOutstockCode)) {
             return;
         }
-        entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
+        entity.setHandleStatus(SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus());
         entity.setHandleResult(handleResult);
         entity.setHandleRemark(handleRemark);
         entity.setHandleTime(LocalDateTime.now());
@@ -182,7 +186,8 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
         for (SoB2bDeliveryInterceptDTO.ListDTO record : records) {
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
             record.setHandleResultName(HandleResultEnum.getName(record.getHandleResult()));
-            record.setHandleStatusName(SoB2cDeliveryInterceptStatusEnum.getName(record.getHandleStatus()));
+            record.setHandleStatus(normalizeHandleStatus(record.getHandleStatus()));
+            record.setHandleStatusName(SoB2bDeliveryInterceptStatusEnum.getName(record.getHandleStatus()));
             record.setInterceptStatusName(InterceptStatusEnum.getName(record.getInterceptStatus()));
             record.setBillTypeName(OrderTypeEnum.getName(record.getBillType()));
             record.setSourceTypeName(SoB2bDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
@@ -215,5 +220,12 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
                 entity.setSoOutstockCode(soOutstockEntity.getCode());
             }
         }
+    }
+
+    private String normalizeHandleStatus(String handleStatus) {
+        if (CharSequenceUtil.isBlank(handleStatus)) {
+            return SoB2bDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus();
+        }
+        return handleStatus;
     }
 }

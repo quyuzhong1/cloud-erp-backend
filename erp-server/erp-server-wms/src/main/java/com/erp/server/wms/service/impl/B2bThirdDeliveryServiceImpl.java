@@ -59,8 +59,8 @@ import com.erp.model.wms.enums.B2BDeliveryPushTypeEnum;
 import com.erp.model.wms.enums.CancelStatusEnum;
 import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.InterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2bDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2bDeliveryInterceptSourceTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
 import com.erp.model.wms.entity.*;
@@ -597,7 +597,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private BatchResultDTO buildDeliveryInterceptResult(String id, String code) {
         SoB2bDeliveryInterceptEntity interceptEntity = soB2bDeliveryInterceptService.getLatestBySourceId(id);
         if (Objects.nonNull(interceptEntity)
-                && SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(interceptEntity.getHandleStatus())) {
+                && SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(interceptEntity.getHandleStatus())) {
             String msg = CharSequenceUtil.blankToDefault(interceptEntity.getHandleRemark(),
                     HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult()) ? "拦截成功" : "拦截失败");
             if (HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult())) {
@@ -1441,9 +1441,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         addDTO.setTransportNo(entity.getTrackNo());
         addDTO.setRemark(remark);
         if (Boolean.TRUE.equals(isApiType)) {
-            addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus());
+            addDTO.setHandleStatus(SoB2bDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus());
         } else {
-            addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
+            addDTO.setHandleStatus(SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus());
             addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
             addDTO.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());

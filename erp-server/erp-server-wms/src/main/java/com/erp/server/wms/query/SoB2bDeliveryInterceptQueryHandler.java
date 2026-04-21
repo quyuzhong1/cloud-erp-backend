@@ -1,7 +1,7 @@
 package com.erp.server.wms.query;
 
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2bDeliveryInterceptStatusEnum;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,12 +19,10 @@ public class SoB2bDeliveryInterceptQueryHandler extends AbstractQueryHandler {
     }
 
     private String getTabSql(Object value) {
-        if (SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode().equals(value)) {
-            return "sbdi.handle_status = 'waitHandle'";
-        } else if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode().equals(value)) {
-            return "sbdi.handle_status = 'handle'";
-        } else if (SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode().equals(value)) {
-            return "sbdi.handle_status = 'cancel'";
+        if (SoB2bDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode().equals(value)) {
+            return "coalesce(nullif(sbdi.handle_status, ''), 'waitHandle') = 'waitHandle'";
+        } else if (SoB2bDeliveryInterceptStatusEnum.HANDLE.getCode().equals(value)) {
+            return "coalesce(nullif(sbdi.handle_status, ''), 'waitHandle') = 'handle'";
         }
         return super.getSplicingSQL();
     }

@@ -4,7 +4,7 @@
 
     <select id="tabList" resultType="com.erp.model.wms.dto.SoB2bDeliveryInterceptDTO$TabListDTO">
         SELECT
-            sbdi.handle_status AS tabFlag,
+            COALESCE(NULLIF(sbdi.handle_status, ''), 'waitHandle') AS tabFlag,
             count(distinct sbdid.id) AS count
         FROM so_b2b_delivery_intercept_detail sbdid
         LEFT JOIN so_b2b_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
@@ -12,7 +12,7 @@
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY sbdi.handle_status
+        GROUP BY COALESCE(NULLIF(sbdi.handle_status, ''), 'waitHandle')
     </select>
 
     <select id="paging" resultType="com.erp.model.wms.dto.SoB2bDeliveryInterceptDTO$ListDTO">
@@ -36,7 +36,7 @@
             COALESCE(NULLIF(btd.track_no, ''), sbdi.transport_no) AS transportNo,
             sbdi.cancel_status,
             sbdi.intercept_status,
-            sbdi.handle_status,
+            COALESCE(NULLIF(sbdi.handle_status, ''), 'waitHandle') AS handleStatus,
             sbdi.handle_result,
             sbdi.handle_remark AS handleRemark,
             sbdi.remark,

@@ -3,7 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2bDeliveryInterceptStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -304,7 +304,7 @@ public class SoB2bDeliveryInterceptDTO implements Serializable {
         /**
          * tab标识
          */
-        @StateEnumValue(clazz = SoB2cDeliveryInterceptStatusEnum.class, message = "tab类型有误")
+        @StateEnumValue(clazz = SoB2bDeliveryInterceptStatusEnum.class, message = "tab类型有误")
         @NotBlank(message = "tab不能为空")
         private String tabFlag;
 
