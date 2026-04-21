@@ -388,6 +388,11 @@ public class SoB2bDeliveryInterceptDTO implements Serializable {
         private String productName;
 
         /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
          * 发货数量
          */
         private Integer deliveryQty;

@@ -17,6 +17,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -31,6 +33,8 @@ import com.erp.model.wms.enums.InterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2bDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2bDeliveryInterceptSourceTypeEnum;
 import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2bDeliveryInterceptMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -69,6 +73,10 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
     private SoOutstockService soOutstockService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SoInfoFeign soInfoFeign;
+    @Resource
+    private CustomerFeign customerFeign;
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -77,7 +85,7 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
         SoB2bDeliveryInterceptEntity entity = new SoB2bDeliveryInterceptEntity();
         BeanMapperUtils.copy(addDTO, entity);
         handleData(entity);
-        entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BFLJ));
+        entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHLJB));
         if (!super.save(entity)) {
             throw new ServiceException("b2b发货拦截单保存失败");
         }
@@ -182,7 +190,20 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
 
     private void fillList(List<SoB2bDeliveryInterceptDTO.ListDTO> records) {
         List<String> skuIdList = records.stream().map(SoB2bDeliveryInterceptDTO.ListDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> soCodeList = records.stream().map(SoB2bDeliveryInterceptDTO.ListDTO::getSoCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.getByIdList(skuIdList);
+        List<SoInfoEntity> soInfoEntityList = CollUtil.isEmpty(soCodeList) ? Collections.emptyList() : soInfoFeign.listByCodes(soCodeList);
+        List<String> customerIdList = soInfoEntityList.stream().map(SoInfoEntity::getCustomerId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntityList = CollUtil.isEmpty(customerIdList) ? Collections.emptyList() : customerFeign.listByCodes(customerIdList);
+        java.util.Map<String, ProductDetailEntity> productDetailMap = detailEntityList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(ProductDetailEntity::getId, item -> item, (item1, item2) -> item1));
+        java.util.Map<String, String> customerNameMap = customerInfoEntityList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, item -> CharSequenceUtil.blankToDefault(item.getName(), ""), (item1, item2) -> item1));
+        java.util.Map<String, String> soCustomerNameMap = soInfoEntityList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getCode()))
+                .collect(Collectors.toMap(SoInfoEntity::getCode, item -> customerNameMap.getOrDefault(item.getCustomerId(), ""), (item1, item2) -> item1));
         for (SoB2bDeliveryInterceptDTO.ListDTO record : records) {
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
             record.setHandleResultName(HandleResultEnum.getName(record.getHandleResult()));
@@ -193,7 +214,10 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
             record.setSourceTypeName(SoB2bDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
             record.setDeliveryMethodName(DeliveryModeEnum.getName(record.getDeliveryMethod()));
             record.setStatusName(ThirdDeliveryStatusEnum.getName(record.getStatus()));
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(item -> item.getId().equals(record.getSkuId())).findFirst().orElse(null);
+            if (CharSequenceUtil.isBlank(record.getCustomerName())) {
+                record.setCustomerName(soCustomerNameMap.getOrDefault(record.getSoCode(), ""));
+            }
+            ProductDetailEntity productDetailEntity = productDetailMap.get(record.getSkuId());
             if (Objects.nonNull(productDetailEntity)) {
                 record.setProductName(productDetailEntity.getName());
             }

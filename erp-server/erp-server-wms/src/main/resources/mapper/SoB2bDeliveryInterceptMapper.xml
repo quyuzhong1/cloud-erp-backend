@@ -45,8 +45,9 @@
             sbdi.create_time,
             sbdi.handle_time,
             btd.status AS status,
-            COALESCE(NULLIF(btd.platform_order_code, ''), sbdi.third_warehouse_order_code) AS platformOrderCode,
-            COALESCE(NULLIF(sbdi.third_warehouse_order_code, ''), btd.platform_order_code) AS thirdWarehouseOrderCode
+            btd.customer_name AS customerName,
+            btd.platform_order_code AS platformOrderCode,
+            sbdi.third_warehouse_order_code AS thirdWarehouseOrderCode
         FROM so_b2b_delivery_intercept_detail sbdid
         LEFT JOIN so_b2b_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
         LEFT JOIN b2b_third_delivery btd ON btd.id = sbdi.source_id AND btd.is_deleted = FALSE
