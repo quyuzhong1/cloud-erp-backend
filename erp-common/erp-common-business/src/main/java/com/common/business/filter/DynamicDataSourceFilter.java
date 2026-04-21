@@ -1,4 +1,4 @@
-package com.erp.server.wms.filter;
+package com.common.business.filter;
  
  
 import java.io.BufferedReader;

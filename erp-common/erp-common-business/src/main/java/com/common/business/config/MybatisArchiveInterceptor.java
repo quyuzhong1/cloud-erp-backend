@@ -1,4 +1,4 @@
-package com.erp.server.dmp.config;
+package com.common.business.config;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
