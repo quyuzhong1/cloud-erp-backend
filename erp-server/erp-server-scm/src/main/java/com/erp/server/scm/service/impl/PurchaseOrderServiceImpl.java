@@ -1693,6 +1693,34 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 String subCode = subcontractOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().flatMap(e -> Optional.ofNullable(e.getCode())).orElse("");
                 obj.setSourceCode(subCode);
             }
+
+            // 查询委外订单的上游采购退货单，获取退货方式
+            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().orElse(null);
+            if (Objects.nonNull(subcontractOrderEntity) && SourceTypeEnum.PO_RETURN.getCode().equals(subcontractOrderEntity.getSourceType())) {
+                // 解析委外订单的sourceId
+                List<String> poReturnIds = new ArrayList<>();
+                if (StringUtils.isNotBlank(subcontractOrderEntity.getSourceId())) {
+                    for (String id : subcontractOrderEntity.getSourceId().split(",")) {
+                        if (StringUtils.isNotBlank(id)) {
+                            poReturnIds.add(id.trim());
+                        }
+                    }
+                }
+                if (CollUtil.isNotEmpty(poReturnIds)) {
+                    List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(poReturnIds);
+                    if (CollUtil.isNotEmpty(poReturnEntityList)) {
+                        PoReturnEntity firstPoReturn = poReturnEntityList.stream()
+                                .filter(e -> StrUtil.isNotBlank(e.getReturnMode()))
+                                .findFirst()
+                                .orElse(null);
+                        if (Objects.nonNull(firstPoReturn)) {
+                            obj.setReturnType(firstPoReturn.getReturnMode());
+                            obj.setReturnTypeName(ReturnModeEnum.getName(firstPoReturn.getReturnMode()));
+                        }
+                    }
+                }
+            }
+
             //采购退货
             if (CollectionUtils.isNotEmpty(purchaseReturnOrderList) && SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType())) {
                 PoReturnEntity poReturnEntity = purchaseReturnOrderList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), obj.getSourceId())).findFirst().orElse(null);
