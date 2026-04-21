@@ -10,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -87,6 +88,16 @@ public class WmsPushMsgServiceImpl extends SuperServiceImpl<WmsPushMsgMapper, Wm
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsPushMsgEntity, null, wmsPushMsgEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<WmsPushMsgEntity> searchByDTO(WmsPushMsgDTO.SearchDTO searchDTO) {
+        return lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(searchDTO.getSourceIdList()), WmsPushMsgEntity::getSourceId, searchDTO.getSourceIdList())
+                .in(CollectionUtils.isNotEmpty(searchDTO.getSourceCodeList()), WmsPushMsgEntity::getSourceCode, searchDTO.getSourceCodeList())
+                .eq(CharSequenceUtil.isNotBlank(searchDTO.getSyncOperate()), WmsPushMsgEntity::getSyncOperate, searchDTO.getSyncOperate())
+                .eq(CharSequenceUtil.isNotBlank(searchDTO.getTargetPlatform()), WmsPushMsgEntity::getTargetPlatform, searchDTO.getTargetPlatform())
+                .list();
     }
 
 

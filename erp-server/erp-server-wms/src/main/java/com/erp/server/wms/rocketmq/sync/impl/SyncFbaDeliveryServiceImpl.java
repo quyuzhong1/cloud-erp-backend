@@ -10,7 +10,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
@@ -80,7 +80,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
     public void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType,  String syncTaskId) {
         // 加工品处理（如果时JG-开头的需要去掉）
         entity.getItemList().stream().forEach(item->{
-            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, item.getSkuNo());
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisCacheConstants.MABANG_STOCK_SKU_LIST_KEY, item.getSkuNo());
             if(Objects.isNull(mabangSkuInfo)) {
                 log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】在马帮SKU列表中不存在", entity.getDeliveryNo(), item.getSkuNo());
                 throw new ServiceException(ApiError.PRODUCT_SKU_MABANG_FIN_CODE_NOT_FOUND, item.getSkuNo());

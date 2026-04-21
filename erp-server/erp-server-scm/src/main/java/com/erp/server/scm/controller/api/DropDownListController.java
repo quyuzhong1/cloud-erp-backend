@@ -18,10 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,12 +71,13 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/supplier/list")
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listSupplierDropDown() {
-        List<Map<String, Object>> mapList = supplierService.listApproveSupplier();
+        List<Map<String, Object>> mapList = supplierService.listSupplierDropDown();
         if (CollectionUtils.isEmpty(mapList)) {
             return success(new ArrayList<>());
         }
         List<BaseDropDownDTO.DisabledDTO> result = mapList.stream()
                 .map(x -> new BaseDropDownDTO.DisabledDTO(x.get("id").toString(), x.get("name").toString(),(Boolean)x.get("disabled")))
+                .sorted(Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled))
                 .collect(Collectors.toList());
         return success(result);
     }

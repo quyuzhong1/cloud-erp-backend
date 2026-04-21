@@ -542,4 +542,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response);
 
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
+
+    /**
+     * 累加质检合格量
+     * @param dtoList
+     * @return
+     */
+    Boolean addQcGoodQty(List<PurchaseOrderDTO.QcQtyDTO> dtoList);
 }

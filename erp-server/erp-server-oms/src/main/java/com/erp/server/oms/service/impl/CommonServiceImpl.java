@@ -16,6 +16,7 @@ import com.erp.server.oms.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
@@ -56,6 +57,7 @@ public class CommonServiceImpl implements CommonService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public <T extends BaseEntity> void updateDetail(String businessId, String moduleType, SuperService service, List<T> detailList, List<T> oldDetailList, String keyFieldName) {
         // 处理需要删除的数据
         if (CollUtil.isNotEmpty(oldDetailList)) {
@@ -126,7 +128,7 @@ public class CommonServiceImpl implements CommonService {
                         .orElse(null);
                 if (Objects.nonNull(oldDetail)) {
                     // 可以在这里添加日志记录的逻辑
-                    operateLogService.addModuleOperateLogByObj(oldDetail, entity, moduleType, oldDetail.getId(), "编辑信息");
+                    operateLogService.addModuleOperateLogByObj(oldDetail, entity, moduleType, businessId, "编辑信息");
                 }
             }
         }

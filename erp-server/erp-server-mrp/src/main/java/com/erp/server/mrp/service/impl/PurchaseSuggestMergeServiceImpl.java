@@ -35,7 +35,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.PurchaseSuggestMergeImportExcelDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
@@ -134,7 +134,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = RedisKeyConstant.PURCHASE_SUGGEST_MERGE,keyName = "addOrUpdateDTO.platformType,addOrUpdateDTO.platform,addOrUpdateDTO.skuId",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.PURCHASE_SUGGEST_MERGE,keyName = "addOrUpdateDTO.platformType,addOrUpdateDTO.platform,addOrUpdateDTO.skuId",waiteTime = 60)
     public BaseResultDTO.AddDTO addOrUpdate(PurchaseSuggestMergeDTO.AddOrUpdateDTO addOrUpdateDTO) {
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity = PurchaseSuggestConverter.INSTANCE.copyToMergeEntity(addOrUpdateDTO);
         //计划修正值默认给建议发货量

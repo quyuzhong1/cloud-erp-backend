@@ -21,7 +21,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -587,7 +587,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.FIRST_MILE_WEIGHT_ALLOCATION_KEY,keyName = "logisticsBillId",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.FIRST_MILE_WEIGHT_ALLOCATION_KEY,keyName = "logisticsBillId",waiteTime = 60)
     public BatchResultDTO add(String logisticsBillId) throws InterruptedException {
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);

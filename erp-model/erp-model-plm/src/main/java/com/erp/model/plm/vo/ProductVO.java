@@ -107,6 +107,10 @@ public class ProductVO implements Serializable {
          */
         private String productName;
 
+        /**
+         * ean码
+         */
+        private String ean;
 
         /**
          * 单箱数量

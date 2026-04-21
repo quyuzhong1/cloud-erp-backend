@@ -1,12 +1,15 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.ValidList;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.server.oms.service.SoB2cReceiverService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -101,5 +104,18 @@ public class SoB2cReceiverController extends BaseController {
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 买家信息查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < SoB2cDTO.ListDTO>>
+     * @author zdy
+     * @date: 2023-08-18
+     */
+    @PostMapping("/listReceiver")
+    public ApiResult<LogisticsBillDTO.ReceiverDTO> listReceiverByMainId(@RequestBody @Validated BaseIdDTO dto) {
+        return success(soB2cReceiverService.listReceiverByMainId(dto.getId()));
     }
 }

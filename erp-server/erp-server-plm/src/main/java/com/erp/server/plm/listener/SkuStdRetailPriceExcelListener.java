@@ -2,13 +2,10 @@ package com.erp.server.plm.listener;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.excel.context.AnalysisContext;
@@ -107,10 +104,17 @@ public class SkuStdRetailPriceExcelListener extends AnalysisEventListener<SkuStd
         	addDto.setCurrency(currency);
         	BigDecimal stdRetailPriceVat = new BigDecimal(excelDTO.getStdRetailPriceVat());
 			addDto.setStdRetailPriceVat(stdRetailPriceVat);
-			BigDecimal vatRate = new BigDecimal(excelDTO.getVatRate());
-			addDto.setVatRate(vatRate);
+            if(Objects.isNull(excelDTO.getVatRate()) || StringUtils.isBlank(excelDTO.getVatRate())){
+                excelDTO.setVatRate("0");
+            }
+            BigDecimal vatRate = new BigDecimal(excelDTO.getVatRate());
+            addDto.setVatRate(vatRate);
+
 			addDto.setStdRetailPrice(stdRetailPriceVat.divide(BigDecimal.ONE.add(vatRate) , 4 , RoundingMode.HALF_UP));
 			serviceBean.batchAdd(Arrays.asList(addDto), false, false);
+
+
+
         }
     }
 

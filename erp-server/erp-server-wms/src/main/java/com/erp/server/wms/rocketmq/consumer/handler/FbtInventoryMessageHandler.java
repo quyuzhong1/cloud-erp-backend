@@ -27,6 +27,7 @@ public class FbtInventoryMessageHandler implements PlatformInventoryMessageHandl
     private static final String KEY_SHOP_ID_UNDERLINE = "shop_id";
     private static final String KEY_AUTH_ID = "authId";
     private static final String KEY_AUTH_ID_UNDERLINE = "auth_id";
+    private static final String KEY_PROVIDER_ERP_ID = "providerErpId";
     private static final String KEY_RECORD_ID = "recordId";
     private static final String KEY_RECORD_ID_UNDERLINE = "record_id";
     private static final String KEY_INBOUND_ORDER_ID = "inboundOrderId";
@@ -90,7 +91,7 @@ public class FbtInventoryMessageHandler implements PlatformInventoryMessageHandl
             return ApiResult.success();
         }
         if (isFbtSnapshotMessage(message)) {
-            String authId = firstNotBlank(message, KEY_AUTH_ID, KEY_AUTH_ID_UNDERLINE);
+            String authId = firstNotBlank(message, KEY_AUTH_ID, KEY_AUTH_ID_UNDERLINE, KEY_PROVIDER_ERP_ID);
             fbtInboundService.upsertInventorySnapshotFromDmp(convertToSnapshot(message), authId);
             return ApiResult.success();
         }

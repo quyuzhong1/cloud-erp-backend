@@ -1,6 +1,7 @@
 package com.erp.model.bi.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -180,5 +181,37 @@ public class BiSettlementExchangeRateDTO {
        */
       @NotBlank(message = "币别")
       private String currency;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExchangeParamDTO {
+        /**
+         * 汇率类型
+         */
+        @NotBlank(message = "汇率类型不能为空")
+        private String type;
+        /**
+         * 结算开始日期
+         */
+        @NotNull(message = "结算开始日期不能为空")
+        private LocalDate settlementDateBegin;
+        /**
+         * 结算结束日期
+         */
+        @NotNull(message = "结算结束日期不能为空")
+        private LocalDate settlementDateEnd;
+
+        /**
+         * 目标币别编码
+         */
+        @NotBlank(message = "目标币别编码不能为空")
+        private String targetCurrencyCode;
+        /**
+         * 源币别编码
+         */
+        @NotBlank(message = "源币别编码不能为空")
+        private String sourceCurrencyCode;
     }
 }

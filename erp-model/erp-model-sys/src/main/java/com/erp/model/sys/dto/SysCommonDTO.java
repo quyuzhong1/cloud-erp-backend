@@ -1,10 +1,12 @@
 package com.erp.model.sys.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * 
@@ -15,6 +17,7 @@ import java.io.Serializable;
 public class SysCommonDTO implements Serializable {
 
     @Data
+    @Builder
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AttachmentDTO{
@@ -26,5 +29,9 @@ public class SysCommonDTO implements Serializable {
          * 文件url
          */
         private String attachUrl;
+        /**
+         * 文件大小 MB
+         */
+        private BigDecimal attachSize;
     }
 }
