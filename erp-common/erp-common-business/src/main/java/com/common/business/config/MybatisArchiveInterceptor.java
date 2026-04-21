@@ -78,6 +78,8 @@ public class MybatisArchiveInterceptor implements Interceptor{
 				newSql = newSql.replace("erp_" + code + ".", "erp_" + code + "_archive.");
 			}
 		}
+		newSql = newSql.replace("\"index\"", "`index`");
+		newSql = newSql.replace("\"key\"", "`key`");
 		log.debug("归档替换后sql语句{}" , newSql);
 		return newSql;
 	}
