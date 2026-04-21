@@ -29,11 +29,16 @@ import lombok.extern.slf4j.Slf4j;
 @Intercepts({@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})})
 public class MybatisArchiveInterceptor implements Interceptor{
 	
-	private static final List<String> WHITE_TABLE_LIST = Arrays.asList(
+	private static final List<String> POSTGRES_WHITE_TABLE_LIST = Arrays.asList(
 			"file_task",
 			"operate_log",
 			"sys_event_tracking",
-			"sys_log_record"
+			"sys_log_record",
+			"sys_user_info"
+			);
+	
+	private static final List<String> DORIS_WHITE_TABLE_LIST = Arrays.asList(
+			"sys_event_tracking"
 			);
 	
     public Object intercept(Invocation invocation) throws Throwable {
@@ -51,15 +56,14 @@ public class MybatisArchiveInterceptor implements Interceptor{
 	private String getNewSql(String oldSql) {
 		String upperCase = oldSql.toUpperCase();
 		if(upperCase.startsWith("INSERT") || upperCase.startsWith("UPDATE") || upperCase.startsWith("DELETE")) {
-			String dsKey = DynamicDataSourceContextHolder.peek();
-			if(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode().equals(dsKey)) {
-				String errorInfo = TraceContext.traceId() + "归档系统归档数据源只允许查询数据，当前sql为：" + oldSql;
-				log.error(errorInfo);
-				throw new ServiceException(errorInfo);
-			}
 			String tableStartStr = upperCase.replace(" ", "").replace("INSERTINTO", "").replace("UPDATE", "").replace("DELETE", "");
-			if(WHITE_TABLE_LIST.stream().noneMatch(w -> tableStartStr.startsWith(w.toUpperCase()))) {
-				String errorInfo = TraceContext.traceId() + "归档系统执行增删改sql为：" + oldSql;
+			String dsKey = DynamicDataSourceContextHolder.peek();
+			List<String> whiteTableList = POSTGRES_WHITE_TABLE_LIST;
+			if(DynamicDataSourceTypeEnum.isDorisByStr(dsKey)) {
+				whiteTableList = DORIS_WHITE_TABLE_LIST;
+			}
+			if(whiteTableList.stream().noneMatch(w -> tableStartStr.startsWith(w.toUpperCase()))) {
+				String errorInfo = TraceContext.traceId() + "归档系统，"+ dsKey +"数据源执行增删改sql为：" + oldSql;
 				log.error(errorInfo);
 				DmpFeishuUtils.sendFeiShuMsg(errorInfo);
 				throw new ServiceException(ApiError.AUTH_ARCHIVE_DENIED);
