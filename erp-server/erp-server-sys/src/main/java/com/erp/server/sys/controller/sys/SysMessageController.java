@@ -169,6 +169,11 @@ public class SysMessageController {
         return success(messageService.getSysMessageUnreadCount());
     }
 
+    @GetMapping("/streamStats")
+    public ApiResult<MessageDTO.StreamStatsDTO> getStreamStats() {
+        return success(noticeStreamEmitterManager.getStreamStats());
+    }
+
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         String uid = UserContext.getDefaultLoginUser().getUid();

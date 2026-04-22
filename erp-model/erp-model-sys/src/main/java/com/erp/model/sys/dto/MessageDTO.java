@@ -9,8 +9,10 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -98,6 +100,27 @@ public class MessageDTO implements Serializable {
         private String content;
         private LocalDateTime noticeTime;
         private LocalDateTime expireTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StreamStatsDTO implements Serializable {
+        private String nodeId;
+        private LocalDateTime snapshotTime;
+        private StreamAppStatsDTO pc;
+        private StreamAppStatsDTO pda;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StreamAppStatsDTO implements Serializable {
+        private String application;
+        private Integer localUserCount;
+        private Integer localConnectionCount;
+        private Long replaceCount;
+        private Integer redisOnlineNodeCount;
+        private Set<String> redisOnlineNodeIds = new LinkedHashSet<>();
+        private Integer redisRegisteredUserCount;
     }
 
     /**
