@@ -223,8 +223,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
 
-    boolean addTaskDetailByLogisticsBillCost(TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO);
-
     void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     BatchResultDTO pushAllocation(String id , String reportDate);
@@ -261,5 +259,25 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
+
+    /**
+     * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
+     *
+     * @param dto 查询条件（含 lastId 游标、batchSize 批大小）
+     * @return 当前批次费用ID列表
+     * @author jack
+     * @date 2026-04-22
+     */
+    List<String> pageByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * 统计可下推分摊的费用总条数
+     *
+     * @param dto 查询条件
+     * @return 总条数
+     * @author jack
+     * @date 2026-04-22
+     */
+    int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
 }

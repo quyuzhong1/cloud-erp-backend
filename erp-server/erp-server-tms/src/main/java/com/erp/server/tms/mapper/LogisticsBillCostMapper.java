@@ -107,4 +107,25 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
     List<LogisticsBillCostDTO.ListDTO> listTotalCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
 
     List<String> listByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 游标分页查询可下推分摊的费用ID（keyset pagination）
+     * 直接 JOIN logistics_bill 过滤无需分摊的单据，每次仅加载一批
+     *
+     * @param params 查询条件（含 lastId 游标位置、batchSize 批大小）
+     * @return 当前批次的费用ID列表，按 id 升序
+     * @author jack
+     * @date 2026-04-22
+     */
+    List<String> pageByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 统计可下推分摊的费用总条数，用于设置任务的 detailCount
+     *
+     * @param params 查询条件
+     * @return 总条数
+     * @author jack
+     * @date 2026-04-22
+     */
+    Integer countByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
 }
