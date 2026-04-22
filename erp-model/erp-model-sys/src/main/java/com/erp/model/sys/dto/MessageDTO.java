@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +108,9 @@ public class MessageDTO implements Serializable {
     public static class StreamStatsDTO implements Serializable {
         private String nodeId;
         private LocalDateTime snapshotTime;
+        private Boolean detailEnabled;
+        private Integer userLimit;
+        private Integer connectionLimitPerUser;
         private StreamAppStatsDTO pc;
         private StreamAppStatsDTO pda;
     }
@@ -118,9 +122,34 @@ public class MessageDTO implements Serializable {
         private Integer localUserCount;
         private Integer localConnectionCount;
         private Long replaceCount;
+        private Integer maxUserConnections;
+        private Long forceCloseAfterMillis;
         private Integer redisOnlineNodeCount;
         private Set<String> redisOnlineNodeIds = new LinkedHashSet<>();
         private Integer redisRegisteredUserCount;
+        private Boolean localUserTruncated;
+        private Integer localConnectionDetailCount;
+        private Set<String> redisRegisteredUserIdsSample = new LinkedHashSet<>();
+        private Boolean redisRegisteredUserSampleTruncated;
+        private List<StreamUserStatsDTO> localUsers = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StreamUserStatsDTO implements Serializable {
+        private String userId;
+        private Integer localConnectionCount;
+        private Boolean connectionTruncated;
+        private Set<String> redisOnlineNodeIds = new LinkedHashSet<>();
+        private List<StreamConnectionStatsDTO> localConnections = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StreamConnectionStatsDTO implements Serializable {
+        private String emitterId;
+        private LocalDateTime connectedAt;
+        private Long connectedDurationMillis;
     }
 
     /**
