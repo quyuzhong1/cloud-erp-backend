@@ -67,6 +67,10 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     implements ProductCertificateService {
 
     private static final String PRODUCT_CERTIFICATE_LOCK_BIZ = "plm:pc";
+    private static final Set<String> OVERWRITE_CERTIFICATE_TYPE_SET = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            ProductCertificateTypeEnum.PRODUCT_ATTESTATION.getCode(),
+            ProductCertificateTypeEnum.TRANSPORT_ATTESTATION.getCode()
+    )));
 
     @Resource
     private ProductCertificateMapper productCertificateMapper;
@@ -118,6 +122,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     public void addWithLock(List<String> lockKeys, List<ProductCertificateEntity> resultList) {
         // 新增场景必须保证每条证书都有有效文件，避免主表落库但无附件
         checkAddFile(resultList);
+
+        // 产品认证/运输认证重复上传时，复用已存在证书主键并通过新附件覆盖展示结果
+        bindOverwriteCertificateId(resultList);
 
         //数据验证
         checkProductCertificate(resultList);
@@ -976,6 +983,10 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
         List<String> dictProductList = resultList.stream().map(ProductCertificateEntity::getDictProject).distinct().collect(Collectors.toList());
         List<ProductCertificateEntity> productCertificateList = listBySkuListAndDictProductList(skuIdList, dictProductList);
+        Set<String> currentIdSet = resultList.stream().map(ProductCertificateEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
+        if (CollectionUtils.isNotEmpty(productCertificateList) && CollectionUtils.isNotEmpty(currentIdSet)) {
+            productCertificateList = productCertificateList.stream().filter(obj -> !currentIdSet.contains(obj.getId())).collect(Collectors.toList());
+        }
 
         checkProductCertificateParam(resultList,productDetailEntityList,productCertificateList);
     }
@@ -995,8 +1006,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         Map<String, List<ProductCertificateEntity>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getDictProject())));
         for (Map.Entry<String, List<ProductCertificateEntity>> entry : map.entrySet()) {
             List<ProductCertificateEntity> value = entry.getValue();
-            //其他认证无需校验
-            if (ProductCertificateProjectEnum.OTHER_CERTIFICATE.getCode().equals(value.get(0).getDictProject())) {
+            // 其他认证允许同证书项目继续新增，不拦截重复
+            if (isAppendCertificateType(value.get(0))) {
                 continue;
             }
             //验证保存时数据是否重复
@@ -1012,6 +1023,57 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
         }
 
+    }
+
+    private void bindOverwriteCertificateId(List<ProductCertificateEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        List<ProductCertificateEntity> overwriteList = resultList.stream()
+                .filter(this::isOverwriteCertificateType)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(overwriteList)) {
+            return;
+        }
+        List<String> skuIdList = overwriteList.stream()
+                .map(ProductCertificateEntity::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> dictProjectList = overwriteList.stream()
+                .map(ProductCertificateEntity::getDictProject)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<ProductCertificateEntity> existedCertificateList = listBySkuListAndDictProductList(skuIdList, dictProjectList);
+        if (CollectionUtils.isEmpty(existedCertificateList)) {
+            return;
+        }
+        Map<String, ProductCertificateEntity> existedCertificateMap = existedCertificateList.stream()
+                .collect(Collectors.toMap(this::buildCertificateUniqueKey, Function.identity(), (oldValue, newValue) -> newValue));
+        overwriteList.forEach(entity -> {
+            ProductCertificateEntity existedCertificate = existedCertificateMap.get(buildCertificateUniqueKey(entity));
+            if (ObjectUtils.isEmpty(existedCertificate)) {
+                return;
+            }
+            entity.setId(existedCertificate.getId());
+        });
+    }
+
+    private String buildCertificateUniqueKey(ProductCertificateEntity entity) {
+        if (ObjectUtils.isEmpty(entity) || isBlank(entity.getSkuId()) || isBlank(entity.getDictProject())) {
+            return "";
+        }
+        return entity.getSkuId().concat(":").concat(entity.getDictProject());
+    }
+
+    private boolean isOverwriteCertificateType(ProductCertificateEntity entity) {
+        return !ObjectUtils.isEmpty(entity) && OVERWRITE_CERTIFICATE_TYPE_SET.contains(entity.getType());
+    }
+
+    private boolean isAppendCertificateType(ProductCertificateEntity entity) {
+        return !ObjectUtils.isEmpty(entity)
+                && CharSequenceUtil.equals(entity.getType(), ProductCertificateTypeEnum.OTHER_ATTESTATION.getCode());
     }
 
     /**
