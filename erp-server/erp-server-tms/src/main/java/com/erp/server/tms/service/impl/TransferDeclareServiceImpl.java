@@ -497,11 +497,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
             return resultDTOList;
         }
+        String timeNumber = getTimeNumber();
         //计算入库预报客户单号
-        String referenceCode = getReferenceCode();
+        String referenceCode = getReferenceCode(timeNumber);
+        //合同协议号
+        String concatNo = getConcatNo(timeNumber);
         TransferLogisticsCreateInboundReq request = TransferLogisticsCreateInboundReq.builder()
                 .referenceCode(referenceCode)
-                .isDelivery(true)
+                .concatNo(concatNo)
+                .isDelivery(false)
                 .packQty(qtyDTO.getQty())
                 .grossWeight(receiveItemList.stream().map(TransferLogisticsCreateInboundReq.ReceiveItem::getGrossWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO))
                 .receivingStatus("2")
@@ -553,6 +557,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
         return resultDTOList;
     }
+    //规则：VJ+字段客户参考号后面的数字202604170002
+    //例如：VJ202604170002
+    private String getConcatNo(String timeNumber) {
+        return "VJ"+timeNumber;
+    }
 
     /**
      * @description: 新增报关对账明细数据
@@ -577,18 +586,29 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         tmsB2cDeclareReconciliationDetailService.add(addDetailList);
     }
 
-    private String getReferenceCode() {
+    private String getReferenceCode(String timeNumber) {
+        StringBuilder stringBuffer = new StringBuilder();
+        CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
+        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("name"))){
+            String name = declareSetting.getDataJson().get("name").toString();
+            stringBuffer.append(name).append("+");
+        }else{
+            throw new ServiceException("报关主体配置信息为空");
+        }
+        stringBuffer.append(timeNumber);
+        return stringBuffer.toString();
+    }
+
+    /**
+     * 获取时间戳
+     * @return
+     */
+    private String getTimeNumber(){
         StringBuilder stringBuffer = new StringBuilder();
         LocalDateTime localDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String format = localDateTime.format(formatter);
-        CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
-        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("name"))){
-            String name = declareSetting.getDataJson().get("name").toString();
-            stringBuffer.append(name).append("+").append(format);
-        }else{
-            throw new ServiceException("报关主体配置信息为空");
-        }
+        stringBuffer.append(format);
         Integer count = this.lambdaQuery().likeRight(TransferDeclareEntity::getInstockRefCode,stringBuffer.toString()).count();
         if (Objects.isNull(count)){
             stringBuffer.append(StringUtils.leftPad("1",4, "0"));
