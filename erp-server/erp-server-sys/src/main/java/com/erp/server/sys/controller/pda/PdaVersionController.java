@@ -13,6 +13,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
+import com.erp.server.sys.handler.PdaVersionQueryHandler;
 import com.erp.server.sys.handler.SysVersionQueryHandler;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.support.NoticeStreamEmitterManager;
@@ -61,7 +62,7 @@ public class PdaVersionController extends BaseController {
             menuCode = "sys:pdaVersion:paging",
             tableAlias = "pv"
     )
-    @WebAdvanceQuery(handler = SysVersionQueryHandler.class)
+    @WebAdvanceQuery(handler = PdaVersionQueryHandler.class)
     public ApiResult<PagingVO<PdaVersionDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
         PagingVO<PdaVersionDTO.PagingDTO> pagingVO = pdaVersionService.paging(dto);
         return success(pagingVO);
