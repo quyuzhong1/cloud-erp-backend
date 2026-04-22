@@ -177,6 +177,14 @@ public class SysMessageController {
         return success(noticeStreamEmitterManager.getStreamStats(detail, userLimit, connectionLimitPerUser));
     }
 
+    @GetMapping("/streamMonitor")
+    public ApiResult<MessageDTO.StreamMonitorDTO> getStreamMonitor(
+            @RequestParam(value = "detail", required = false, defaultValue = "false") Boolean detail,
+            @RequestParam(value = "userLimit", required = false, defaultValue = "50") Integer userLimit,
+            @RequestParam(value = "connectionLimitPerUser", required = false, defaultValue = "10") Integer connectionLimitPerUser) {
+        return success(noticeStreamEmitterManager.getStreamMonitor(detail, userLimit, connectionLimitPerUser));
+    }
+
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         String uid = UserContext.getDefaultLoginUser().getUid();

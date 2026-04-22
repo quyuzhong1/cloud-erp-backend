@@ -152,6 +152,55 @@ public class MessageDTO implements Serializable {
         private Long connectedDurationMillis;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class StreamMonitorDTO implements Serializable {
+        private String nodeId;
+        private LocalDateTime snapshotTime;
+        private Boolean heartbeatRunning;
+        private Long heartbeatSkipCount;
+        private String riskLevel;
+        private Integer issueCount;
+        private List<String> suggestions = new ArrayList<>();
+        private List<StreamMonitorIssueDTO> issues = new ArrayList<>();
+        private StreamHeartbeatStatsDTO lastHeartbeat;
+        private StreamStatsDTO stats;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StreamHeartbeatStatsDTO implements Serializable {
+        private LocalDateTime startedAt;
+        private LocalDateTime finishedAt;
+        private Long durationMillis;
+        private Boolean completed;
+        private Integer applicationCount;
+        private Integer totalUserCount;
+        private Integer totalConnectionCount;
+        private Integer pcConnectionCount;
+        private Integer pdaConnectionCount;
+        private String maxUserId;
+        private Integer maxUserConnectionCount;
+        private Integer batchSize;
+        private Integer targetCount;
+        private Integer heartbeatSuccessCount;
+        private Integer heartbeatFailureCount;
+        private Integer forceCloseCount;
+        private Long skippedCount;
+        private Long heapUsedMb;
+        private Long heapTotalMb;
+        private Long heapMaxMb;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StreamMonitorIssueDTO implements Serializable {
+        private String level;
+        private String code;
+        private String message;
+        private String suggestion;
+    }
+
     /**
      * 条件查询
      */
