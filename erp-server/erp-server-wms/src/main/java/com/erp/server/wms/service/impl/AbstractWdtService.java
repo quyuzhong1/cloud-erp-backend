@@ -294,8 +294,14 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setOuterNo(outerCode);
         request.setWarehouseNo(thirdWarehouseCode);
         request.setIsCheck(Boolean.TRUE);
-        List<CreateOtherStockoutRequest.GoodsList> coodsList = (List<CreateOtherStockoutRequest.GoodsList>) combinationList;
-        request.setGoodsList(coodsList);
+        if (combinationList.get(0) instanceof CreateOtherStockoutRequest.GoodsList){
+            List<CreateOtherStockoutRequest.GoodsList> coodsList = (List<CreateOtherStockoutRequest.GoodsList>) combinationList;
+            request.setGoodsList(coodsList);
+        }else if (combinationList.get(0) instanceof CommonCreateBillGoodsReq){
+            List<CommonCreateBillGoodsReq> coodsList = (List<CommonCreateBillGoodsReq>) combinationList;
+            List<CreateOtherStockoutRequest.GoodsList> goodsLists = BeanMapper.copyList(coodsList, CreateOtherStockoutRequest.GoodsList.class);
+            request.setGoodsList(goodsLists);
+        }
         request.setSourceId(outerCode);
         request.setOperateCode(operateEnum.getCode());
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
@@ -334,7 +340,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
         wmsPushMsgEntity.setThirdCode(outerCode);
-        wmsPushMsgEntity.setParentId(coodsList.get(0).getParentId());
+        wmsPushMsgEntity.setParentId(request.getGoodsList().get(0).getParentId());
         if (SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
             List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
             String positionNos = goodsList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));
@@ -354,8 +360,14 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setOuterNo(outerCode);
         request.setWarehouseNo(thirdWarehouseCode);
         request.setIsCheck(Boolean.TRUE);
-        List<CreateOtherStockinRequest.GoodsList> coodsList = (List<CreateOtherStockinRequest.GoodsList>) combinationList;
-        request.setGoodsList(coodsList);
+        if (combinationList.get(0) instanceof CreateOtherStockinRequest.GoodsList){
+            List<CreateOtherStockinRequest.GoodsList> coodsList = (List<CreateOtherStockinRequest.GoodsList>) combinationList;
+            request.setGoodsList(coodsList);
+        }else if (combinationList.get(0) instanceof CommonCreateBillGoodsReq){
+            List<CommonCreateBillGoodsReq> coodsList = (List<CommonCreateBillGoodsReq>) combinationList;
+            List<CreateOtherStockinRequest.GoodsList> goodsLists = BeanMapper.copyList(coodsList, CreateOtherStockinRequest.GoodsList.class);
+            request.setGoodsList(goodsLists);
+        }
         request.setSourceId(outerCode);
         request.setOperateCode(operateEnum.getCode());
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
@@ -393,7 +405,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
         wmsPushMsgEntity.setThirdCode(outerCode);
-        wmsPushMsgEntity.setParentId(coodsList.get(0).getParentId());
+        wmsPushMsgEntity.setParentId(request.getGoodsList().get(0).getParentId());
         if(SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
             List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
             String positionNos = goodsList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));
