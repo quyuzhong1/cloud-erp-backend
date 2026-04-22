@@ -273,7 +273,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
             } else  {
                 SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
-                if (ObjectUtil.isNotEmpty(soOutstockEntity) && Arrays.asList(SourceTypeEnum.SO_B2C_DELIVERY.getCode(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()).contains(soOutstockEntity.getSourceType())) {
+                if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
                     logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
                     logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
                 }

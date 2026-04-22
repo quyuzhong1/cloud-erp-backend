@@ -22,4 +22,7 @@ public interface ImportTmsFeign {
 
     @PostMapping("/feign/import/preprocessingImportExcel")
     void preprocessingImportExcel(@RequestBody ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO);
+
+    @PostMapping("/feign/import/importLogisticsThirdChannelRef")
+    void importLogisticsThirdChannelRef(@RequestBody ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO);
 }
