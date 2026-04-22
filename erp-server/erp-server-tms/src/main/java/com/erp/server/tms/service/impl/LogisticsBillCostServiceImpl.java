@@ -2104,7 +2104,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(dto.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())){
             businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode(); //自发货
         }else if(dto.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())){
-            businessType = SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode();//尾程
+            businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();//尾程
         }
         //新建一个任务
         dto.setBusinessType(businessType);
@@ -2191,12 +2191,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
             
             if (CollUtil.isEmpty(batchIds)) {
-                log.info("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}", 
+                log.error("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
                          taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
                 break;
             }
             
-            log.info("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
+            log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
             
             // 3.3 为本批次创建任务明细并执行
             TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate());
@@ -2213,7 +2213,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .update();
                 
-                log.info("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}", 
+                log.error("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
                          batchNumber, result.getSuccessCount(), result.getFailedCount(), 
                          totalSuccess, totalFailed);
             } catch (Exception e) {
@@ -2236,7 +2236,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         // 4. 最终更新任务状态
         try {
             asyncTaskRecordService.updateTaskFinally(taskId);
-            log.info("任务最终状态更新完成，taskId: {}", taskId);
+            log.error("任务最终状态更新完成，taskId: {}", taskId);
         } catch (Exception e) {
             log.error("更新任务最终状态失败，taskId: {}", taskId, e);
         }
@@ -2313,7 +2313,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         // 4. 批量保存任务明细
         try {
             asyncTaskDetailRecordService.saveBatch(details);
-            log.debug("本批次任务明细保存成功，数量: {}", details.size());
+            log.error("本批次任务明细保存成功，数量: {}", details.size());
         } catch (Exception e) {
             log.error("保存任务明细失败，批次大小: {}", details.size(), e);
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, details.size());
@@ -2397,9 +2397,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
             });
         }
-        
-        // 等待本批次完成（设置合理超时：每条约10秒，最少5分钟）
-        int timeoutSeconds = Math.max(300, batchDetails.size() * 10);
+
+        // 等待本批次完成(1小时)
+        int timeoutSeconds = 15 * 60;
         try {
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {

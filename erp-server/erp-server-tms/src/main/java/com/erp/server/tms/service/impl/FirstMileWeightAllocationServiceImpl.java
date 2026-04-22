@@ -27,6 +27,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.excel.FirstMileWeightChangeExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -911,6 +912,17 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     private void handleImportSuccessList(List<FirstMileWeightChangeExcelDTO> dataList, List<FirstMileWeightChangeExcelDTO> errorList) {
+    }
+
+    @Override
+    public List<String> pageFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params) {
+        return baseMapper.pageFirstMileDeliveryIds(params);
+    }
+
+    @Override
+    public int countFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params) {
+        Integer count = baseMapper.countFirstMileDeliveryIds(params);
+        return count == null ? 0 : count;
     }
 
 
