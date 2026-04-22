@@ -78,8 +78,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         }
         //小包分摊
         if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
-            //创建任务明细等相关内容
-            if (logisticsBillCostService.addTaskDetailByLogisticsBillCost(dto)) return;
             //下推小包费用分摊
             logisticsBillCostService.pushSmallBagCostAllocation(dto);
         }

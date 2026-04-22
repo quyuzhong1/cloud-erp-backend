@@ -55,9 +55,6 @@
             pda_version pv
             WHERE
             pv.is_deleted = FALSE
-            <if test="params.searchKeyword !='' and params.searchKeyword != null ">
-                AND pv.remark ILIKE concat('%', #{params.searchKeyword}::text ,'%')
-            </if>
 
             UNION ALL
 
@@ -86,14 +83,9 @@
             AND m.application IN ('PDA', 'PC')
             AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
             AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
-            <if test="params.searchKeyword !='' and params.searchKeyword != null ">
-                AND (
-                    COALESCE(NULLIF(m.data_json, ''), m.remark, '') ILIKE concat('%', #{params.searchKeyword}::text ,'%')
-                    OR m.notice_title ILIKE concat('%', #{params.searchKeyword}::text ,'%')
-                )
-            </if>
         ) AS d
-        WHERE 1 = 1
+        WHERE
+        ${params.sqlMap.default}
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
