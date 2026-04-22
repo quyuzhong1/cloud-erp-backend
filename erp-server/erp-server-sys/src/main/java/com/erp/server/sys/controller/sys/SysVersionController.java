@@ -68,7 +68,7 @@ public class SysVersionController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "sys:sysVersion:paging",
-            tableAlias = "an"
+            tableAlias = "sv"
     )
     @WebAdvanceQuery(handler = SysVersionQueryHandler.class)
     public ApiResult<PagingVO<SysVersionDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SysVersionDTO.PagingParamDTO> dto) {

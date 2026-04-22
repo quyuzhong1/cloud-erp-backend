@@ -169,6 +169,14 @@ public class SysMessageController {
         return success(messageService.getSysMessageUnreadCount());
     }
 
+    @GetMapping("/streamStats")
+    public ApiResult<MessageDTO.StreamStatsDTO> getStreamStats(
+            @RequestParam(value = "detail", required = false, defaultValue = "true") Boolean detail,
+            @RequestParam(value = "userLimit", required = false, defaultValue = "100") Integer userLimit,
+            @RequestParam(value = "connectionLimitPerUser", required = false, defaultValue = "20") Integer connectionLimitPerUser) {
+        return success(noticeStreamEmitterManager.getStreamStats(detail, userLimit, connectionLimitPerUser));
+    }
+
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamEvents() {
         String uid = UserContext.getDefaultLoginUser().getUid();
