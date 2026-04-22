@@ -92,12 +92,12 @@
                     OR m.notice_title ILIKE concat('%', #{params.searchKeyword}::text ,'%')
                 )
             </if>
-        ) AS combined_data d
+        ) AS d
         WHERE 1 = 1
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        ORDER BY combined_data.createTime DESC
+        ORDER BY d.createTime DESC
 
     </select>
 
