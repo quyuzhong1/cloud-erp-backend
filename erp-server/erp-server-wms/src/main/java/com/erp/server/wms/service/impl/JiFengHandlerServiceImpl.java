@@ -344,6 +344,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         jiFengCreateB2BOutboundRequest.setLogisticType(Integer.valueOf(createOutboundReq.getChannelCode()));
         jiFengCreateB2BOutboundRequest.setRemark(createOutboundReq.getRemark());
         jiFengCreateB2BOutboundRequest.setOutboundType(2);
+        jiFengCreateB2BOutboundRequest.setDispatchType(1);
         jiFengCreateB2BOutboundRequest.setAddressVo(JiFengCreateB2BOutboundRequest.AddressVoDTO.builder()
                         .buyerName(createOutboundReq.getReceiverName())
                         .buyerPhone(createOutboundReq.getTelNumber())
