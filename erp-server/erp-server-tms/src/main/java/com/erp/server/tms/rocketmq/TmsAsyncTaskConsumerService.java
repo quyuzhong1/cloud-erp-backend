@@ -70,9 +70,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         }
         //头程分摊
         if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
-            //创建任务明细等相关内容
-            if (firstMileCostAllocationService.addTaskDetailByFirstMileCost(dto)) return;
-
             //下推费用分摊
             firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
         }

@@ -350,5 +350,38 @@
         wa.source_code DESC,wa.box_no
     </select>
 
+    <!-- 游标分页查询可下推分摊的发货单ID -->
+    <select id="pageFirstMileDeliveryIds" resultType="java.lang.String">
+        SELECT DISTINCT fwa.source_id
+        FROM first_mile_weight_allocation fwa
+        WHERE fwa.is_deleted = FALSE
+          AND fwa.cost_allocation_status IN ('part', 'not')
+          <if test="params.lastId != null and params.lastId != ''">
+              AND fwa.source_id &gt; #{params.lastId}
+          </if>
+          <if test="params.ids != null and params.ids.size() > 0">
+              AND fwa.id IN
+              <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
+        ORDER BY fwa.source_id ASC
+        LIMIT #{params.batchSize}
+    </select>
+
+    <!-- 统计可下推分摊的总条数 -->
+    <select id="countFirstMileDeliveryIds" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT fwa.source_id)
+        FROM first_mile_weight_allocation fwa
+        WHERE fwa.is_deleted = FALSE
+        AND fwa.cost_allocation_status IN ('part', 'not')
+          <if test="params.ids != null and params.ids.size() > 0">
+              AND fwa.id IN
+              <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
+    </select>
+
 
 </mapper>

@@ -165,7 +165,5 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto);
 
-    boolean addTaskDetailByFirstMileCost(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
-
     void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 }
