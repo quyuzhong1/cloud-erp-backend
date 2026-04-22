@@ -20,4 +20,14 @@ public class SysExecutorPoolConfig {
         service.setRejectedExecutionHandler(handler);
         return service;
     }
+
+    @Bean("noticeHeartbeatExecutor")
+    public Executor noticeHeartbeatExecutor() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(4, 8,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(200));
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
 }
