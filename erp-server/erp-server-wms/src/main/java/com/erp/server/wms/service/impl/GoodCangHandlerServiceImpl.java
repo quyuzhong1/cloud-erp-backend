@@ -237,25 +237,32 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
         List<ThirdWarehouseQueryFbaOutboundResponse> responses = new ArrayList<>();
-        for (String code : req.getErpOrderCodeList()) {
-            GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode(code);
-            if (Objects.isNull(response)) {
-                return failure("谷仓查询订单响应为空");
-            }
-            if(!isSuccess(response.getAsk(), response.getMessage())){
-                return failure(response.getMessage());
-            }
+        GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
+                .orderCodeArr(req.getPlatformOrderCodeList())
+                .page(1)
+                .pageSize(20)
+                .build();
+
+        GoodCangResponse<List<GoodCangOutboundResp>> response = goodCangService.getOutboundBatch(goodCangGetOutBoundReq);
+        if (Objects.isNull(response)) {
+            return failure("谷仓查询订单响应为空");
+        }
+        if(!isSuccess(response.getAsk(), response.getMessage())){
+            return failure(response.getMessage());
+        }
+        List<GoodCangOutboundResp> data = response.getData();
+        if(CollUtil.isEmpty(data)){
+            log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", req.getPlatformOrderCodeList(), JSONUtil.toJsonStr(response));
+            return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单"));
+        }
+        for (GoodCangOutboundResp goodCangOrderDTO : data) {
+            String code = goodCangOrderDTO.getOrderCode();
             ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
-            GoodCangOrderDTO goodCangOrderDTO = response.getData();
-            if (Objects.isNull(goodCangOrderDTO)) {
-                log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", code, JSONUtil.toJsonStr(response));
-                return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单"));
-            }
             res.setCode(code);
             res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
-            res.setTrackNo(goodCangOrderDTO.getTrackingNo());
-            res.setDeliveryTimeStr(goodCangOrderDTO.getShipperTime());
-            res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getShipStatus()));
+            res.setTrackNo(goodCangOrderDTO.getTrackNo());
+            res.setDeliveryTimeStr(String.valueOf(goodCangOrderDTO.getOutBoundTime()));
+            res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
             responses.add(res);
         }
         return success(responses);
