@@ -22,8 +22,8 @@ import java.util.List;
 public interface PurchasePriceFeign {
 
     @PostMapping ("/feign/purchasePrice/listByCodes")
-    List<PurchasePriceEntity> listByCodes(List<String> list);
+    List<PurchasePriceEntity> listByCodes(@RequestBody List<String> list);
 
     @PostMapping( "/feign/purchasePrice/updateApproveStatus")
-    void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+    void updateApproveStatus(@RequestBody PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }
