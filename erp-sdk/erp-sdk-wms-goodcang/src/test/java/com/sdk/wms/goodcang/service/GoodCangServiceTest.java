@@ -89,9 +89,9 @@ public class GoodCangServiceTest {
     @Test
     public void getOutboundTest() {
         GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-                .modifyDateFrom(LocalDateTime.of(2018,11,20, 0, 0, 0))
-                .modifyDateTo(LocalDateTime.of(2018,12,20, 0, 0, 0))
-//                .orderCode("G1149-240515-0008")
+//                .modifyDateFrom(LocalDateTime.of(2018,11,20, 0, 0, 0))
+//                .modifyDateTo(LocalDateTime.of(2018,12,20, 0, 0, 0))
+                .orderCodeArr(Arrays.asList("G1149-260422-0035"))
                 .page(1)
                 .pageSize(20)
                 .build();
@@ -209,6 +209,14 @@ public class GoodCangServiceTest {
         System.out.println(response);
         System.out.println(response.getData());
     }
+
+    @Test
+    public void getOrderByRefCodeTest() {
+        GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode("SFFH260422000009");
+        System.out.println(response);
+        System.out.println(response.getData());
+    }
+
     @Test
     public void cancelOutboundBillTest() {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill("G1149-231116-005",null);
