@@ -351,6 +351,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .recipientCountry(createOutboundReq.getReceiverCountryCode())
                         .recipientProvince(createOutboundReq.getProvince())
                         .recipientCity(createOutboundReq.getCity())
+                        .recipientArea(createOutboundReq.getCity())
                         .recipientAddress(createOutboundReq.getAddress1())
                         .zipCode(createOutboundReq.getPostCode())
                 .build());
