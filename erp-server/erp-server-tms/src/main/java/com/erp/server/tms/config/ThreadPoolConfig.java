@@ -88,4 +88,25 @@ public class ThreadPoolConfig {
         // 2. 用 TraceableExecutorService 包装（自动传递 TraceId）
         return new TraceableExecutorService(executor);
     }
+
+
+    @Bean(name = "tmsLogisticsOrderPool")
+    public ExecutorService tmsLogisticsOrderPool() {
+        // 1. 先创建原始的 ThreadPoolExecutor
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                10,
+                20,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(200),
+                r -> {
+                    Thread t = new Thread(r);
+                    t.setName("tms-label-" + t.getId());
+                    return t;
+                },
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+        // 2. 用 TraceableExecutorService 包装（自动传递 TraceId）
+        return new TraceableExecutorService(executor);
+    }
 }

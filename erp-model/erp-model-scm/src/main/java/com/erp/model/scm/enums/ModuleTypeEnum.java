@@ -211,6 +211,7 @@ public enum ModuleTypeEnum {
     QC_APPLICATION("163", "质检申请单"),
     FILE_MANAGEMENT("164", "文件管理"),
 
+    LOGISTICS_ORDER("165", "物流下单"),
 
 
 

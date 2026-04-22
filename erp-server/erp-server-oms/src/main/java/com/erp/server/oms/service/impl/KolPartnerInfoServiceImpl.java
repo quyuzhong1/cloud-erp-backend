@@ -885,4 +885,19 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         return addressParseService.parse(dto);
     }
 
+    @Override
+    public List<AddressParseDTO.BatchParseResultDTO> batchAddressParse(List<AddressParseDTO.BatchParseRequestDTO> dtoList) {
+        List<AddressParseDTO.BatchParseResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        dtoList.forEach(dto -> {
+            AddressParseDTO.ParseRequestDTO requestDTO = new AddressParseDTO.ParseRequestDTO();
+            requestDTO.setFullAddress(dto.getFullAddress());
+            AddressParseDTO.ParseResultDTO resultDTO = addressParseService.parse(requestDTO);
+            AddressParseDTO.BatchParseResultDTO batchParseResultDTO = new AddressParseDTO.BatchParseResultDTO();
+            BeanMapperUtils.copy(resultDTO, batchParseResultDTO);
+            batchParseResultDTO.setId(dto.getId());
+            resultDTOS.add(batchParseResultDTO);
+        });
+        return resultDTOS;
+    }
+
 }

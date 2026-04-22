@@ -179,4 +179,27 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     BatchResultDTO invalidByCode(String code);
 
     Map<String, String> listCsAgent(AfterSaleDTO.ListCsAgentDTO dto);
+
+    /**
+     * 物流下单
+     *
+     * @param dto AfterSaleDTO.LogisticsOrderDTO
+     */
+    void logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto);
+
+    /**
+     * 取消物流下单
+     *
+     * @param dto AfterSaleDTO.IdsDTO
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> batchCancel(AfterSaleDTO.IdsDTO dto);
+
+    /**
+     * 上传物流面单
+     *
+     * @param dto AfterSaleDTO.UploadFileDTO
+     * @return String
+     */
+    String uploadLogisticLabel(AfterSaleDTO.UploadFileDTO dto);
 }

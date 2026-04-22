@@ -1758,6 +1758,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
     LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND(13628,"导入未匹配到表头字段，请检查费用配置"),
     LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED(13629,"【{0}】不能作为识别单号字段"),
+    LOGISTICS_ORDER_NOT_CANCEL(13630,"物流单据不是已取消或者下单失败状态，不能编辑"),
+    LOGISTICS_ORDER_CANNOT_EDIT(13631,"该单据不能再当前页面编辑"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

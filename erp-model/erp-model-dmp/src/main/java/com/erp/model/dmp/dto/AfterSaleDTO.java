@@ -6,8 +6,10 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.dmp.entity.AfterSaleDetailEntity;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -278,6 +280,36 @@ public class AfterSaleDTO implements Serializable {
          * 手机号码
          */
         private String phoneNumber;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 国家,dict_country.id
+         */
+        private String country;
+
+        /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 详细地址
+         */
+        private String detailedAddress;
     }
 
     /**
@@ -867,6 +899,105 @@ public class AfterSaleDTO implements Serializable {
          */
         private List<String> afterSaleIds;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsOrderDTO {
+
+        /**
+         * 物流平台
+         */
+        @Size(max = 30, message = "物流平台最大长度不能超过30位")
+        private String logisticsPlatform;
+
+        /**
+         * 物流渠道id
+         */
+        @Size(max = 19, message = "物流渠道id最大长度不能超过19位")
+        private String logisticsChannelId;
+
+        /**
+         * 下单信息
+         */
+        private List<OrderInfoDTO> orderInfoDTOList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class OrderInfoDTO {
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 省/州
+         */
+        @NotBlank(message = "省/州不能为空")
+        @Size(max = 100, message = "省/州最大长度不能超过100位")
+        private String province;
+
+        /**
+         * 城市
+         */
+        @NotBlank(message = "城市不能为空")
+        @Size(max = 100, message = "城市最大长度不能超过100位")
+        private String city;
+
+        /**
+         * 详细地址
+         */
+        @NotBlank(message = "详细地址不能为空")
+        @Size(max = 200, message = "详细地址最大长度不能超过200位")
+        private String detailedAddress;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsOrderResultDTO {
+
+        /**
+         * 寄修申请id
+         */
+        private String afterSaleId;
+
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 错误信息
+         */
+        private String errorMsg;
+
+        /**
+         * 工单号
+         */
+        private String code;
+
+        /**
+         * 状态
+         */
+        private Boolean status;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UploadFileDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private MultipartFile file;
     }
 
 }

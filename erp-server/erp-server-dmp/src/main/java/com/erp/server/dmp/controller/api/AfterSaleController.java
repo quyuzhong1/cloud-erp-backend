@@ -21,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -423,5 +424,40 @@ public class AfterSaleController extends BaseController {
     @PostMapping("/listCsAgent")
     public ApiResult<Map<String, String>> listCsAgent(@RequestBody AfterSaleDTO.ListCsAgentDTO dto ) {
         return success(afterSaleService.listCsAgent(dto));
+    }
+
+    /**
+     * 物流下单
+     *
+     * @param dto AfterSaleDTO.LogisticsOrderDTO
+     * @return Object
+     */
+    @PostMapping("/logisticsOrder")
+    public ApiResult<Object> logisticsOrder(@RequestBody AfterSaleDTO.LogisticsOrderDTO dto) {
+        afterSaleService.logisticsOrder(dto);
+        return success();
+    }
+
+    /**
+     * 取消物流下单
+     *
+     * @param dto AfterSaleDTO.LogisticsOrderDTO
+     * @return Object
+     */
+    @PostMapping("/batchCancel")
+    public ApiResult<List<BatchResultDTO>> batchCancel(@RequestBody AfterSaleDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = afterSaleService.batchCancel(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 上传物流面单
+     *
+     * @param dto LogisticsOrderDTO.UploadFileDTO
+     * @return String
+     */
+    @PostMapping("/uploadLogisticLabel")
+    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated AfterSaleDTO.UploadFileDTO dto) throws IOException {
+        return success(afterSaleService.uploadLogisticLabel(dto));
     }
 }

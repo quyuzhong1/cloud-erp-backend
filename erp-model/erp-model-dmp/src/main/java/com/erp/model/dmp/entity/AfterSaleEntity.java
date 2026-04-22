@@ -174,6 +174,12 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     @TableField("rma_remark")
     private String rmaRemark;
 
+    /**
+     * 单号类型,API:API获取, MANUAL:手动获取
+     */
+    @TableField("type")
+    private String type;
+
 
     public static final String CODE = "code";
 
@@ -216,6 +222,8 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     public static final String INVALID_TIME = "invalid_time";
 
     public static final String REMARK = "remark";
+
+    public static final String TYPE = "type";
 
     @Override
     public Serializable pkVal() {
