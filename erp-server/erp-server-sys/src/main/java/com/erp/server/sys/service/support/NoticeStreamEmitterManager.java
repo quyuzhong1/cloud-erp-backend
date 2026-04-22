@@ -18,7 +18,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,6 +45,10 @@ public class NoticeStreamEmitterManager {
 
     private static final long SSE_TIMEOUT = 1800_000L;
     private static final long ONLINE_TTL_SECONDS = 120L;
+    private static final int DEFAULT_STREAM_STATS_USER_LIMIT = 100;
+    private static final int MAX_STREAM_STATS_USER_LIMIT = 500;
+    private static final int DEFAULT_STREAM_STATS_CONNECTION_LIMIT = 20;
+    private static final int MAX_STREAM_STATS_CONNECTION_LIMIT = 100;
 
     /**
      * application -> userId -> userEmitterGroup
@@ -297,11 +303,22 @@ public class NoticeStreamEmitterManager {
     }
 
     public MessageDTO.StreamStatsDTO getStreamStats() {
+        return getStreamStats(true, DEFAULT_STREAM_STATS_USER_LIMIT, DEFAULT_STREAM_STATS_CONNECTION_LIMIT);
+    }
+
+    public MessageDTO.StreamStatsDTO getStreamStats(Boolean detail, Integer userLimit, Integer connectionLimitPerUser) {
+        boolean detailEnabled = Boolean.TRUE.equals(detail);
+        int safeUserLimit = sanitizeLimit(userLimit, DEFAULT_STREAM_STATS_USER_LIMIT, MAX_STREAM_STATS_USER_LIMIT);
+        int safeConnectionLimit = sanitizeLimit(connectionLimitPerUser, DEFAULT_STREAM_STATS_CONNECTION_LIMIT, MAX_STREAM_STATS_CONNECTION_LIMIT);
+        LocalDateTime snapshotTime = LocalDateTime.now();
         MessageDTO.StreamStatsDTO statsDTO = new MessageDTO.StreamStatsDTO();
         statsDTO.setNodeId(getNodeId());
-        statsDTO.setSnapshotTime(LocalDateTime.now());
-        statsDTO.setPc(buildAppStats(SysTypeEnum.PC.getCode()));
-        statsDTO.setPda(buildAppStats(SysTypeEnum.PDA.getCode()));
+        statsDTO.setSnapshotTime(snapshotTime);
+        statsDTO.setDetailEnabled(detailEnabled);
+        statsDTO.setUserLimit(safeUserLimit);
+        statsDTO.setConnectionLimitPerUser(safeConnectionLimit);
+        statsDTO.setPc(buildAppStats(SysTypeEnum.PC.getCode(), detailEnabled, safeUserLimit, safeConnectionLimit, snapshotTime));
+        statsDTO.setPda(buildAppStats(SysTypeEnum.PDA.getCode(), detailEnabled, safeUserLimit, safeConnectionLimit, snapshotTime));
         return statsDTO;
     }
 
@@ -460,18 +477,106 @@ public class NoticeStreamEmitterManager {
         return counter == null ? 0L : counter.get();
     }
 
-    private MessageDTO.StreamAppStatsDTO buildAppStats(String application) {
+    private MessageDTO.StreamAppStatsDTO buildAppStats(String application,
+                                                       boolean detailEnabled,
+                                                       int userLimit,
+                                                       int connectionLimitPerUser,
+                                                       LocalDateTime snapshotTime) {
         String normalizedApplication = normalizeApplication(application);
+        Map<String, UserEmitterGroup> applicationEmitterMap = getApplicationEmitterMap(normalizedApplication);
+        List<MessageDTO.StreamUserStatsDTO> localUsers = buildLocalUserStats(normalizedApplication, applicationEmitterMap, detailEnabled, userLimit, connectionLimitPerUser, snapshotTime);
+        Set<String> redisRegisteredUserIds = listRegisteredUserIds(normalizedApplication);
         MessageDTO.StreamAppStatsDTO appStatsDTO = new MessageDTO.StreamAppStatsDTO();
         appStatsDTO.setApplication(normalizedApplication);
-        appStatsDTO.setLocalUserCount(getApplicationEmitterMap(normalizedApplication).size());
+        appStatsDTO.setLocalUserCount((int) applicationEmitterMap.entrySet().stream()
+                .filter(entry -> entry.getValue() != null && !entry.getValue().getEmitterMap().isEmpty())
+                .count());
         appStatsDTO.setLocalConnectionCount(getCurrentConnectionCount(normalizedApplication));
         appStatsDTO.setReplaceCount(getReplaceCount(normalizedApplication));
+        appStatsDTO.setMaxUserConnections(maxUserConnections);
+        appStatsDTO.setForceCloseAfterMillis(forceCloseAfterMillis);
         Set<String> onlineNodeIds = listOnlineNodeIds(normalizedApplication);
         appStatsDTO.setRedisOnlineNodeIds(new LinkedHashSet<>(onlineNodeIds));
         appStatsDTO.setRedisOnlineNodeCount(onlineNodeIds.size());
-        appStatsDTO.setRedisRegisteredUserCount(listRegisteredUserIds(normalizedApplication).size());
+        appStatsDTO.setRedisRegisteredUserCount(redisRegisteredUserIds.size());
+        appStatsDTO.setLocalUsers(localUsers);
+        appStatsDTO.setLocalUserTruncated(detailEnabled && appStatsDTO.getLocalUserCount() > userLimit);
+        appStatsDTO.setLocalConnectionDetailCount(localUsers.stream()
+                .map(MessageDTO.StreamUserStatsDTO::getLocalConnections)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(List::size)
+                .sum());
+        appStatsDTO.setRedisRegisteredUserIdsSample(redisRegisteredUserIds.stream()
+                .limit(userLimit)
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
+        appStatsDTO.setRedisRegisteredUserSampleTruncated(redisRegisteredUserIds.size() > userLimit);
         return appStatsDTO;
+    }
+
+    private List<MessageDTO.StreamUserStatsDTO> buildLocalUserStats(String application,
+                                                                    Map<String, UserEmitterGroup> applicationEmitterMap,
+                                                                    boolean detailEnabled,
+                                                                    int userLimit,
+                                                                    int connectionLimitPerUser,
+                                                                    LocalDateTime snapshotTime) {
+        if (!detailEnabled || applicationEmitterMap == null || applicationEmitterMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<MessageDTO.StreamUserStatsDTO> userStats = new ArrayList<>();
+        for (Map.Entry<String, UserEmitterGroup> entry : new ArrayList<>(applicationEmitterMap.entrySet())) {
+            MessageDTO.StreamUserStatsDTO userStatsDTO = buildUserStats(application, entry.getKey(), entry.getValue(), connectionLimitPerUser, snapshotTime);
+            if (userStatsDTO != null) {
+                userStats.add(userStatsDTO);
+            }
+        }
+        userStats.sort(Comparator.comparing(MessageDTO.StreamUserStatsDTO::getLocalConnectionCount, Comparator.reverseOrder())
+                .thenComparing(MessageDTO.StreamUserStatsDTO::getUserId, Comparator.nullsLast(String::compareTo)));
+        if (userStats.size() <= userLimit) {
+            return userStats;
+        }
+        return new ArrayList<>(userStats.subList(0, userLimit));
+    }
+
+    private MessageDTO.StreamUserStatsDTO buildUserStats(String application,
+                                                         String userId,
+                                                         UserEmitterGroup userEmitterGroup,
+                                                         int connectionLimitPerUser,
+                                                         LocalDateTime snapshotTime) {
+        List<EmitterHolder> emitterHolders = copyEmitterHolders(userEmitterGroup);
+        if (emitterHolders.isEmpty()) {
+            return null;
+        }
+        emitterHolders.sort(Comparator.comparingLong(EmitterHolder::getConnectedAt));
+        MessageDTO.StreamUserStatsDTO userStatsDTO = new MessageDTO.StreamUserStatsDTO();
+        userStatsDTO.setUserId(userId);
+        userStatsDTO.setLocalConnectionCount(emitterHolders.size());
+        userStatsDTO.setConnectionTruncated(emitterHolders.size() > connectionLimitPerUser);
+        userStatsDTO.setRedisOnlineNodeIds(listOnlineNodeIdsByUser(application, userId));
+        userStatsDTO.setLocalConnections(emitterHolders.stream()
+                .limit(connectionLimitPerUser)
+                .map(emitterHolder -> buildConnectionStats(emitterHolder, snapshotTime))
+                .collect(Collectors.toList()));
+        return userStatsDTO;
+    }
+
+    private MessageDTO.StreamConnectionStatsDTO buildConnectionStats(EmitterHolder emitterHolder, LocalDateTime snapshotTime) {
+        MessageDTO.StreamConnectionStatsDTO connectionStatsDTO = new MessageDTO.StreamConnectionStatsDTO();
+        connectionStatsDTO.setEmitterId(emitterHolder.getEmitterId());
+        connectionStatsDTO.setConnectedAt(toLocalDateTime(emitterHolder.getConnectedAt()));
+        connectionStatsDTO.setConnectedDurationMillis(Math.max(0L,
+                snapshotTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() - emitterHolder.getConnectedAt()));
+        return connectionStatsDTO;
+    }
+
+    private LocalDateTime toLocalDateTime(long epochMillis) {
+        return Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    private int sanitizeLimit(Integer requestedLimit, int defaultLimit, int maxLimit) {
+        if (requestedLimit == null || requestedLimit <= 0) {
+            return defaultLimit;
+        }
+        return Math.min(requestedLimit, maxLimit);
     }
 
     private SseEmitter.SseEventBuilder buildNoticeEvent(String application, MessageDTO.NoticeDTO noticeDTO) {
