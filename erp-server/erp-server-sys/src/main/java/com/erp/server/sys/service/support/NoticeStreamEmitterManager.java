@@ -1003,7 +1003,7 @@ public class NoticeStreamEmitterManager {
                 usedMemoryMb,
                 totalMemoryMb,
                 maxMemoryMb));
-        log.info("Notice heartbeat summary, nodeId={}, emitterMapAppCount={}, totalUsers={}, totalConnections={}, pcConnections={}, pdaConnections={}, maxUserId={}, maxUserConnectionCount={}, batchSize={}, targetCount={}, heartbeatSuccessCount={}, heartbeatFailureCount={}, forceCloseCount={}, durationMs={}, completed={}, skippedCount={}, heapUsedMb={}, heapTotalMb={}, heapMaxMb={}",
+        log.warn("Notice heartbeat summary, nodeId={}, emitterMapAppCount={}, totalUsers={}, totalConnections={}, pcConnections={}, pdaConnections={}, maxUserId={}, maxUserConnectionCount={}, batchSize={}, targetCount={}, heartbeatSuccessCount={}, heartbeatFailureCount={}, forceCloseCount={}, durationMs={}, completed={}, skippedCount={}, heapUsedMb={}, heapTotalMb={}, heapMaxMb={}",
                 getNodeId(),
                 summary.getApplicationCount(),
                 summary.getTotalUserCount(),
