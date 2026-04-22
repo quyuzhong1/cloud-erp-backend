@@ -468,6 +468,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 一级供应商名称
             if (StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
                 item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+                item.setCertificateJson(supplierMap.get(item.getMainSupplier()).getCertificateJson());
+                item.setCertificateNames(supplierMap.get(item.getMainSupplier()).getCertificateNames());
             }
 
             //模具档案
@@ -2831,6 +2833,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
             List<String> productIds = list.stream().map(ProductDetailExcelExportDTO::getProductId).distinct().collect(Collectors.toList());
             List<ProductRefBuEntity> productRefBuEntities = productRefBuService.listByProductIds(productIds);
+
+            List<String> mainSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getMainSupplier).distinct().collect(Collectors.toList());
+            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
             for(ProductDetailExcelExportDTO l : list) {
                 ProductRefBuEntity productRefBuEntity = productRefBuEntities.stream()
                         .filter(prb -> prb.getProductId().equals(l.getProductId()))
@@ -2867,6 +2873,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if(StringUtils.isNotBlank(l.getInsuranceProperty())){
                     l.setInsuranceProperty(String.join(",", productLogisticsService.getInsurancePropertyList(l.getInsuranceProperty(), insurancePropertyMap)));
                 }
+
+                // 一级供应商名称
+                if (StrUtils.isNotEmpty(l.getMainSupplier()) && supplierMap.containsKey(l.getMainSupplier())) {
+                    l.setFirstCertificateNames(supplierMap.get(l.getMainSupplier()).getCertificateNames());
+                }
+
             }
 
             Map<String, String> chargeIdNameMaps = new HashMap<>();

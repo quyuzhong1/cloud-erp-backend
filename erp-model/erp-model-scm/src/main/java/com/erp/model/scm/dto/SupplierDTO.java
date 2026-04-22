@@ -1318,6 +1318,18 @@ public class SupplierDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+
+        /**
+         * 体系认证集合，字典certificate类型
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 体系认证名称
+         */
+        private String certificateNames;
+
+
     }
 
     @Data
