@@ -84,7 +84,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     public BatchResultDTO add(String typeCode, String userPostId) {
         KingdeeUserRefPostEntity userPost = kingdeeUserRefPostService.getById(userPostId);
         if (Objects.isNull(userPost) || StringUtils.isBlank(userPost.getCode())) {
-            throw new ServiceException("用户岗位不存在");
+            throw new ServiceException("此用户岗位数据未同步到金蝶，请核查后添加");
         }
         KingdeeOperatorRefPostEntity kingdeeOperator = this.getByTypeAndUserPost(typeCode, userPostId);
         if (Objects.nonNull(kingdeeOperator)) {
