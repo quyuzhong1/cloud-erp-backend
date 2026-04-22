@@ -32,7 +32,7 @@ public class CfgDeclareRuleEntity extends BaseEntity<CfgDeclareRuleEntity> {
     @TableField("rule_type")
     private String ruleType;
     /**
-    * 发货人: byCompany=按结算公司
+    * 发货人: byCompany=按结算公司 CfgDeclareRuleSenderTypeEnum
     */
     @TableField("sender_type")
     private String senderType;
@@ -47,7 +47,7 @@ public class CfgDeclareRuleEntity extends BaseEntity<CfgDeclareRuleEntity> {
     @TableField("sender_name")
     private String senderName;
     /**
-    * 收货人: byCompany=按结算公司, byCustomer=按客户
+    * 收货人: byCompany=按结算公司, byCustomer=按客户 CfgDeclareRuleReceiverTypeEnum
     */
     @TableField("receiver_type")
     private String receiverType;

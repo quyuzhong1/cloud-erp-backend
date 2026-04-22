@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -206,6 +207,11 @@ public class CfgDeclareRuleDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+         * 规则明细列表
+         */
+        private List<CfgDeclareRuleConditionDTO.ListDTO> detailList;
+
 
     }
 
@@ -216,6 +222,11 @@ public class CfgDeclareRuleDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 规则明细列表
+         */
+        @NotEmpty(message = "规则明细列表不能为空")
+        private List<CfgDeclareRuleConditionDTO.@Valid AddDTO> detailList;
 
     }
 
@@ -231,6 +242,12 @@ public class CfgDeclareRuleDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 规则明细列表
+         */
+        @NotEmpty(message = "规则明细列表不能为空")
+        private List<CfgDeclareRuleConditionDTO.@Valid UpdateDTO> detailList;
 
     }
 
@@ -256,14 +273,11 @@ public class CfgDeclareRuleDTO implements Serializable {
         * 发货人
         */
         @NotBlank(message = "发货人不能为空")
-        @Size(max = 19,message = "发货人最大长度不能超过19位")
         private String senderId;
 
         /**
         * 发货人
         */
-        @NotBlank(message = "发货人不能为空")
-        @Size(max = 100,message = "发货人最大长度不能超过100位")
         private String senderName;
 
         /**
@@ -277,20 +291,16 @@ public class CfgDeclareRuleDTO implements Serializable {
         * 收货人
         */
         @NotBlank(message = "收货人不能为空")
-        @Size(max = 19,message = "收货人最大长度不能超过19位")
         private String receiverId;
 
         /**
         * 收货人
         */
-        @NotBlank(message = "收货人不能为空")
-        @Size(max = 100,message = "收货人最大长度不能超过100位")
         private String receiverName;
 
         /**
         * 是否禁用: true=禁用, false=启用
         */
-        @NotNull(message = "是否禁用: true=禁用, false=启用不能为空")
         private Boolean disabled;
 
 

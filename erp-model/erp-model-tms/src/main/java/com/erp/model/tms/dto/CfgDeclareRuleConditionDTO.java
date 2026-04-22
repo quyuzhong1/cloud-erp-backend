@@ -251,8 +251,6 @@ public class CfgDeclareRuleConditionDTO implements Serializable {
         /**
         * 规则主表id
         */
-        @NotBlank(message = "规则主表id不能为空")
-        @Size(max = 19,message = "规则主表id最大长度不能超过19位")
         private String ruleId;
 
         /**
@@ -305,7 +303,6 @@ public class CfgDeclareRuleConditionDTO implements Serializable {
         /**
         * 顺序
         */
-        @NotNull(message = "顺序不能为空")
         private Integer index;
 
 

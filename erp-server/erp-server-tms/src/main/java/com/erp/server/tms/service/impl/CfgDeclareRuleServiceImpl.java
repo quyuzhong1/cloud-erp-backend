@@ -21,7 +21,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.CfgDeclareRuleDTO;
-import javax.annotation.Resource;
+import com.erp.server.tms.service.CfgDeclareRuleConditionService;
+import com.erp.server.tms.service.CommonService;
+import com.erp.model.tms.entity.CfgDeclareRuleConditionEntity;
+import com.erp.model.tms.dto.CfgDeclareRuleConditionDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -38,6 +42,8 @@ import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -53,6 +59,10 @@ import javax.servlet.http.HttpServletResponse;
 public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMapper, CfgDeclareRuleEntity> implements CfgDeclareRuleService {
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private CfgDeclareRuleConditionService cfgDeclareRuleConditionService;
+    @Resource
+    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -70,11 +80,23 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
             throw new ServiceException("报关规则主单保存失败");
         }
 
+        // 处理明细
+        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
+            List<CfgDeclareRuleConditionEntity> conditions = addDTO.getDetailList().stream().map(d -> {
+                CfgDeclareRuleConditionEntity entity = BeanMapperUtils.map(CfgDeclareRuleConditionEntity.class, d);
+                entity.setRuleId(cfgDeclareRuleEntity.getId());
+                return entity;
+            }).collect(Collectors.toList());
+            // 自动设置 index
+            for (int i = 0; i < conditions.size(); i++) {
+                conditions.get(i).setIndex(i);
+            }
+            cfgDeclareRuleConditionService.saveBatch(conditions);
+        }
+
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "报关规则主单" , cfgDeclareRuleEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgDeclareRuleEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增报关规则，ID为【{}】", UserContext.getDefaultLoginUser().getUserName(), cfgDeclareRuleEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), cfgDeclareRuleEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(cfgDeclareRuleEntity.getId(), cfgDeclareRuleEntity.getId());
     }
@@ -97,13 +119,28 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         if(!save) {
             throw new ServiceException("报关规则主单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 处理明细差分更新
+        List<CfgDeclareRuleConditionEntity> oldDetails = cfgDeclareRuleConditionService.lambdaQuery()
+                .eq(CfgDeclareRuleConditionEntity::getRuleId, cfgDeclareRuleEntity.getId())
+                .list();
+        List<CfgDeclareRuleConditionEntity> newDetails = Optional.ofNullable(addOrUpdateDTO.getDetailList())
+                .orElse(Collections.emptyList()).stream().map(d -> {
+                    CfgDeclareRuleConditionEntity entity = BeanMapperUtils.map(CfgDeclareRuleConditionEntity.class, d);
+                    entity.setRuleId(cfgDeclareRuleEntity.getId());
+                    return entity;
+                }).collect(Collectors.toList());
+        // 自动计算并设置 index
+        for (int i = 0; i < newDetails.size(); i++) {
+            newDetails.get(i).setIndex(i);
+        }
+        commonService.updateDetail(cfgDeclareRuleEntity.getId(), ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), 
+                cfgDeclareRuleConditionService, newDetails, oldDetails,Collections.singletonList("id"));
 
         // 记录主单操作日志
-            log.info("编辑 开始记录报关规则主单日志数据，id：【{}】", cfgDeclareRuleEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgDeclareRuleEntity.getId(), "报关规则主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgDeclareRuleEntity, null, cfgDeclareRuleEntity.getId(), msg);
+        log.info("编辑 开始记录报关规则主单日志数据，id：【{}】", cfgDeclareRuleEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑报关规则，ID为【{}】", UserContext.getDefaultLoginUser().getUserName(), cfgDeclareRuleEntity.getId());
+        operateLogService.addModuleOperateLogByObj(old, cfgDeclareRuleEntity, ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), cfgDeclareRuleEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -166,17 +203,35 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     * 新增修改处理数据
     */
     private void handleData(CfgDeclareRuleEntity cfgDeclareRuleEntity) {
-    // TODO 验证数据 & 数据赋值
+        if (ObjectUtil.isAllNotEmpty(cfgDeclareRuleEntity.getRuleType(), cfgDeclareRuleEntity.getSenderId(), cfgDeclareRuleEntity.getReceiverId())) {
+            CfgDeclareRuleEntity exist = this.lambdaQuery()
+                    .eq(CfgDeclareRuleEntity::getRuleType, cfgDeclareRuleEntity.getRuleType())
+                    .eq(CfgDeclareRuleEntity::getSenderId, cfgDeclareRuleEntity.getSenderId())
+                    .eq(CfgDeclareRuleEntity::getReceiverId, cfgDeclareRuleEntity.getReceiverId())
+                    .ne(ObjectUtil.isNotEmpty(cfgDeclareRuleEntity.getId()), CfgDeclareRuleEntity::getId, cfgDeclareRuleEntity.getId())
+                    .last("LIMIT 1")
+                    .one();
+            if (exist != null) {
+                throw new ServiceException(ApiError.BILL_ALREADY_EXIST, "相同规则类型、发货人及收货人的报关规则");
+            }
+        }
     }
 
     @Override
     public CfgDeclareRuleDTO.ViewDTO view(String id) {
-    CfgDeclareRuleEntity cfgDeclareRuleEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到报关规则主单数据"));
-    CfgDeclareRuleDTO.ViewDTO data = BeanMapperUtils.map(CfgDeclareRuleDTO.ViewDTO.class, cfgDeclareRuleEntity);
-    // 数据填充处理
-    fillOne(data);
-    // TODO 查询明细数据（如果有的话）
-    return data;
+        CfgDeclareRuleEntity cfgDeclareRuleEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到报关规则数据"));
+        CfgDeclareRuleDTO.ViewDTO data = BeanMapperUtils.map(CfgDeclareRuleDTO.ViewDTO.class, cfgDeclareRuleEntity);
+        // 数据填充处理
+        fillOne(data);
+        // 查询明细数据
+        List<CfgDeclareRuleConditionEntity> conditions = cfgDeclareRuleConditionService.lambdaQuery()
+                .eq(CfgDeclareRuleConditionEntity::getRuleId, id)
+                .orderByAsc(CfgDeclareRuleConditionEntity::getIndex)
+                .list();
+        if (CollUtil.isNotEmpty(conditions)) {
+            data.setDetailList(BeanMapperUtils.copyList(CfgDeclareRuleConditionDTO.ListDTO.class,conditions));
+        }
+        return data;
     }
 
     private void fillOne(CfgDeclareRuleDTO.ViewDTO data) {
