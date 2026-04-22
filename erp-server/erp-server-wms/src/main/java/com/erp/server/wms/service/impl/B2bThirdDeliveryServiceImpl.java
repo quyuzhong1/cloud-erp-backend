@@ -617,7 +617,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 return BatchResultDTO.success(id, code, "同步发起发货拦截成功，等待三方仓处理");
             }
         }
-        return BatchResultDTO.fail(id, code, "发货拦截失败");
+        return BatchResultDTO.success(id, code, "操作成功，等待拦截结果");
     }
 
     @Override

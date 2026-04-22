@@ -232,7 +232,7 @@ public class CustomerFeignController extends BaseController {
     }
 
     @PostMapping("/updateApproveStatus")
-    public void updateApproveStatus(CustomerInfoEntity entity) {
+    public void updateApproveStatus(@RequestBody CustomerInfoEntity entity) {
         customerInfoService.updateApproveStatus(entity);
     }
 
