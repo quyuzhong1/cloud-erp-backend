@@ -19,8 +19,8 @@ public interface PilotApplicationFeign{
     void updateDetailByPilotApplicationDetailIds(@RequestBody Map<String,String> map);
 
     @PostMapping ("/feign/pilotApplication/listByCodes")
-    List<PilotApplicationEntity> listByCodes(List<String> list);
+    List<PilotApplicationEntity> listByCodes(@RequestBody List<String> list);
 
     @PostMapping ("/feign/pilotApplication/updateApproveStatus")
-    void updateApproveStatus(PilotApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+    void updateApproveStatus(@RequestBody PilotApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }
