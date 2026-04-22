@@ -352,7 +352,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .recipientProvince(createOutboundReq.getProvince())
                         .recipientCity(createOutboundReq.getCity())
                         .recipientAddress(createOutboundReq.getAddress1())
-
+                        .zipCode(createOutboundReq.getPostCode())
                 .build());
         List<JiFengCreateB2BOutboundRequest.SkuInfoListDTO> skuListDTOS = new ArrayList<>();
         createOutboundReq.getItems().forEach(item -> {
