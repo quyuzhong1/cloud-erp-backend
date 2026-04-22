@@ -418,6 +418,13 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
         return resultList;
     }
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listWithAll(Boolean filterDisabled) {
+        List<BaseDropDownDTO.DisabledDTO> resultList = new ArrayList<>();
+        resultList.add(new  BaseDropDownDTO.DisabledDTO("all", "全部", false));
+        resultList.addAll(listAllShort(filterDisabled));
+        return resultList;
+    }
 
     @Override
     public Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto) {

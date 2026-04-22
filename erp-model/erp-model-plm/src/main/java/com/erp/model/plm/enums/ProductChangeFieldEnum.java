@@ -58,7 +58,7 @@ public enum ProductChangeFieldEnum implements EnumMessage {
     BOX_QUANTITY("单箱数量", "product_pack", "boxQty", BigDecimal.class),
 
     // product_purchase 分类
-    EAN_CODE("EAN码", "product_purchase", "ean", Integer.class),
+    EAN_CODE("EAN码", "product_purchase", "ean", String.class),
     TRIAL_PRODUCTION_QUANTITY("试产数量", "product_purchase", "trialProductionQty", Long.class),
     FIRST_BATCH_MASS_PRODUCTION_QUANTITY("首批量产数量", "product_purchase", "firstMassQty", Long.class),
     PLANNED_FIRST_BATCH_ORDER_QUANTITY("计划首批下单量", "product_purchase", "planOrderQty", Long.class),

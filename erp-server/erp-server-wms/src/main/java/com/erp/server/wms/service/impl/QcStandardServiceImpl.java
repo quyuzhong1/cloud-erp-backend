@@ -597,6 +597,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "导入文件URL");
         }
 
+        DataFormatter dataFormatter = new DataFormatter();
         List<String> skus = new ArrayList<>();
         try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
             Workbook workbook = WorkbookFactory.create(inputStream);
@@ -616,8 +617,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            valCell.setCellType(CellType.STRING);
-                            skuStr = valCell.getStringCellValue().trim();
+                            skuStr = dataFormatter.formatCellValue(valCell).trim();
                             break;
                     }
                 }
@@ -635,8 +635,8 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     skus.add(s.trim());
             }
         } catch (Exception e) {
-            log.error("质检报告解析SKU失败", e);
-            throw new ServiceException("质检报告解析SKU失败：" + e.getMessage());
+            log.error("解析SKU失败", e);
+            throw new ServiceException("解析SKU失败：" + e.getMessage());
         }
         return skus;
     }
@@ -652,6 +652,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if(CollUtil.isEmpty(skuNos)){
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "SKU");
         }
+        DataFormatter dataFormatter = new DataFormatter();
         //skuNos 转出一个String
         String skuNosStr = skuNos.stream().collect(Collectors.joining(","));
         try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
@@ -682,8 +683,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            valCell.setCellType(CellType.STRING);
-                            skuStr = valCell.getStringCellValue().trim();
+                            skuStr = dataFormatter.formatCellValue(valCell).trim();
                             break;
                     }
                 }
@@ -815,7 +815,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
         if(StringUtils.isBlank(skuNo)){
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "SKU");
         }
-
+        DataFormatter dataFormatter = new DataFormatter();
         try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl)) {
             Workbook workbook = WorkbookFactory.create(inputStream);
             Sheet sheet = workbook.getSheetAt(0);
@@ -844,8 +844,7 @@ public class QcStandardServiceImpl extends ServiceImpl<QcStandardMapper, QcStand
                     if (val.contains("产品SKU") || (val.equalsIgnoreCase("SKU") && val.length() == 3)) {
                         Cell valCell = row.getCell(j + 1);
                         if (valCell != null)
-                            valCell.setCellType(CellType.STRING);
-                            skuStr = valCell.getStringCellValue().trim();
+                            skuStr = dataFormatter.formatCellValue(valCell).trim();
                             break;
                     }
                 }
