@@ -333,7 +333,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * status: 0=处理中，1=成功，2=失败
      */
     private ApiResult<String> queryTaskWithRetry(String requestId, String originalData) {
-        int maxRetries = 3;
+        int maxRetries = 20;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             // 休眠等待异步处理（首次也等待，因为接口是异步的）
