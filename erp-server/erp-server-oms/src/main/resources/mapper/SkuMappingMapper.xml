@@ -71,6 +71,7 @@
         li.create_user_name as createUserName,
         li.platform_status as platformStatus,
         li.platform_parent_spu_no as platformParentSpuNo,
+        it.invoice_product_name as invoiceProductName,
         sm.update_user_name,
         sm.effective_time,
         sm.expire_time,
@@ -80,6 +81,7 @@
         LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
+        left join invoice_tax it on li.id = it.listing_id and it.is_deleted = false
         WHERE
         ${params.sqlMap.default}
          and   sm.is_deleted=FALSE AND sm.is_expire = FALSE
