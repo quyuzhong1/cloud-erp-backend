@@ -15,21 +15,21 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
+import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
+import com.erp.model.wms.enums.WarehouseOperationTypeValueEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
-import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
-import com.sdk.wms.zhongbao.utils.AuthUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,26 +89,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq) {
-        ProductRequest productRequest = ProductRequest.builder().commonParam(CommonRequest.builder()
-                .pageParam(PageRequest.builder().pageSize(100).pageNum(0).build()).build()).status(3).build();
-        List<ProductResponse.Product> respList = new ArrayList<>();
-        int pageNum = 1;
-        while (true) {
-         productRequest.getCommonParam().setPageParam(PageRequest.builder().pageSize(100).pageNum(pageNum).build());
-            BaseResponse<ProductResponse> response = zhongbaoService.productList(productRequest);
-            if (!response.getSuccess()) {
-                log.error(getPlatForm() +"查询产品信息异常" + response);
-                return failure(response.getMessage());
-            }
-            respList.addAll(response.getData().getList());
-            if (Integer.parseInt(response.getData().getTotalCount()) <= pageNum * 100) {
-                break;
-            }
-            pageNum++;
-        }
-        List<ThirdWarehouseSkuResp> thirdWarehouseSkuRespList = ThirdWarehouseConverter.INSTANCE.convertZhongbaoSku(respList);
-        return success(thirdWarehouseSkuRespList);
+    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq)  {
+        return null;
     }
 
     /***
