@@ -1,6 +1,9 @@
 package com.erp.server.sys.controller.pda;
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -10,6 +13,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
+import com.erp.server.sys.handler.SysVersionQueryHandler;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.support.NoticeStreamEmitterManager;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +56,12 @@ public class PdaVersionController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.sys.dto.PdaVersionDTO.PagingDTO>>
      **/
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "sys:pdaVersion:paging",
+            tableAlias = "pv"
+    )
+    @WebAdvanceQuery(handler = SysVersionQueryHandler.class)
     public ApiResult<PagingVO<PdaVersionDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
         PagingVO<PdaVersionDTO.PagingDTO> pagingVO = pdaVersionService.paging(dto);
         return success(pagingVO);
