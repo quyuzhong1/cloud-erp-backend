@@ -23,6 +23,8 @@ public class WebhookHandlerFactory {
                 return new InboundHandler();
             case "returnInstock":
                 return new ReturnInstockHandler();
+            case "qimenCallback":
+                return new QimenCallbackHandler();
             default:
                 throw new IllegalArgumentException("Unknown platform");
         }
