@@ -1147,9 +1147,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<String> shopIdList = list.stream().map(item -> item.getShopId()).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIdList);
         // 获取商家寄出快递单号
-        List<String> outboundTrackNoList = list.stream().map(AfterSaleDTO.ListDTO::getOutboundTrackNo).collect(Collectors.toList());
+        List<String> outboundTrackNoList = list.stream().map(AfterSaleDTO.ListDTO::getOutboundTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<LogisticsOrderDTO.ListDTO> dtoList = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
         Map<String, LogisticsOrderDTO.ListDTO> listDTOMap = dtoList.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getTrackNo, item -> item));
+        List<String> idList = list.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, idList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
+        Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));
         // 属性赋值
         for (AfterSaleDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -1182,6 +1185,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 data.setProvince(listDTOMap.get(data.getOutboundTrackNo()).getProvince());
                 data.setCity(listDTOMap.get(data.getOutboundTrackNo()).getCity());
                 data.setDetailedAddress(listDTOMap.get(data.getOutboundTrackNo()).getDetailedAddress());
+                data.setAttachment(attachmentMap.get(data.getId()));
             }
         }
     }
@@ -1687,18 +1691,48 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Override
     public List<BatchResultDTO> batchCancel(AfterSaleDTO.IdsDTO dto) {
-        List<AfterSaleEntity> list = lambdaQuery().in(AfterSaleEntity::getId, dto.getIds())
-                .eq(AfterSaleEntity::getType, OutboundTrackNoTypeEnum.API.getCode())
-                .list();
+        List<AfterSaleEntity> list = super.listByIds(dto.getIds());
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<String> codeList = list.stream().map(AfterSaleEntity::getCode).collect(Collectors.toList());
-        List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchCancel(codeList);
+        List<String> afterSaleIdList = list.stream().map(AfterSaleEntity::getId).collect(Collectors.toList());
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(afterSaleIdList);
+        Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().filter(w -> w.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())).collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
+        List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, afterSaleIdList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
+        Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));
+        // 筛选出单据类型是手工的MANUAL
+        List<AfterSaleEntity> manualList = list.stream().filter(item -> OutboundTrackNoTypeEnum.MANUAL.getCode().equals(item.getType())).collect(Collectors.toList());
         List<BatchResultDTO> resultList = new ArrayList<>();
+        for (AfterSaleEntity afterSaleEntity : manualList) {
+            BatchResultDTO cancelResult;
+            // 取消成功清空商家寄出快递单号和面单信息
+            AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
+            if (afterSaleProgressEntity != null) {
+                afterSaleProgressService.removeById(afterSaleProgressEntity.getId());
+            }
+            DmpAttachmentEntity dmpAttachmentEntity = attachmentMap.get(afterSaleEntity.getId());
+            if (dmpAttachmentEntity != null) {
+                attachmentService.removeById(dmpAttachmentEntity.getId());
+            }
+            cancelResult = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "");
+            resultList.add(cancelResult);
+        }
+        // 筛选出单据类型是API的
+        List<AfterSaleEntity> apiList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
+        List<String> codeList = apiList.stream().map(AfterSaleEntity::getCode).collect(Collectors.toList());
+        List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchCancel(codeList);
         for (AfterSaleDTO.LogisticsOrderResultDTO resultDTO : resultDTOList) {
             BatchResultDTO cancelResult;
             if (resultDTO.getStatus()) {
+                // 取消成功清空商家寄出快递单号和面单信息
+                AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(resultDTO.getAfterSaleId());
+                if (afterSaleProgressEntity != null) {
+                    afterSaleProgressService.removeById(afterSaleProgressEntity.getId());
+                }
+                DmpAttachmentEntity dmpAttachmentEntity = attachmentMap.get(resultDTO.getAfterSaleId());
+                if (dmpAttachmentEntity != null) {
+                    attachmentService.removeById(dmpAttachmentEntity.getId());
+                }
                 cancelResult = BatchResultDTO.success(resultDTO.getAfterSaleId(), resultDTO.getCode(), resultDTO.getErrorMsg());
             } else {
                 cancelResult = BatchResultDTO.fail(resultDTO.getAfterSaleId(), resultDTO.getCode(), resultDTO.getErrorMsg());
@@ -1726,7 +1760,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         DmpAttachmentEntity dmpAttachmentEntity = new DmpAttachmentEntity();
         dmpAttachmentEntity.setAttachName(multipartFile.getOriginalFilename());
         dmpAttachmentEntity.setAttachUrl(url);
-        dmpAttachmentEntity.setType("after_sale");
+        dmpAttachmentEntity.setType("after_sale_label");
         dmpAttachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(dmpAttachmentEntity);
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());

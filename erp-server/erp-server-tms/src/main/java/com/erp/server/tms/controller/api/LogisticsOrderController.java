@@ -143,8 +143,10 @@ public class LogisticsOrderController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "物流下单表导出Excel数据")
-    public void exportList(@RequestBody @Validated LogisticsOrderDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = LogisticsOrderQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated LogisticsOrderDTO.ExportDTO dto, HttpServletResponse response) {
         logisticsOrderService.exportList(dto, response);
+        return success();
     }
 
     @LogAction(value = LogActionEnum.DELETE, desc = "删除:ids={ids}")
@@ -203,6 +205,12 @@ public class LogisticsOrderController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 打印物流面单
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return
+     */
     @PostMapping("/printLogisticsWaybill")
     @LogAction(value = LogActionEnum.GET_LOGISTICS_LABEL, desc = "打印物流面单")
     public ApiResult<List<BatchResultDTO>> printLogisticsWaybill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

@@ -89,6 +89,9 @@ public class ExportTmsFeignController {
     @Resource
     private CfgLogisticsCostImportService cfgLogisticsCostImportService;
 
+    @Resource
+    private LogisticsOrderService logisticsOrderService;
+
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
@@ -422,5 +425,11 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
     public PagingVO<CfgLogisticsCostImportDTO.ListDTO> exportTmsCfgLogisticsCost(@RequestBody PagingDTO<CfgLogisticsCostImportDTO.PagingParamDTO> dto) {
         return cfgLogisticsCostImportService.paging(dto);
+    }
+
+    @PostMapping("/exportTmsLogisticsOrder")
+    @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
+    public PagingVO<LogisticsOrderDTO.ListDTO> exportTmsLogisticsOrder(@RequestBody PagingDTO<LogisticsOrderDTO.PagingParamDTO> dto) {
+        return logisticsOrderService.paging(dto);
     }
 }

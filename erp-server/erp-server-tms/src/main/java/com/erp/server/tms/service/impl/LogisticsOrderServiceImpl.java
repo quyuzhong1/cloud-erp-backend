@@ -21,7 +21,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CountrySiteEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
@@ -34,6 +33,7 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.dmp.feign.AfterSaleFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.mapper.LogisticsOrderMapper;
 import com.erp.server.tms.service.*;
@@ -62,6 +62,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_ORDER;
 
 /**
  * <p>
@@ -111,6 +113,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
 
     @Resource
     private AttachmentService attachmentService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -220,6 +225,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsOrderDTO.UpdateDTO updateDTO) {
+
         LogisticsOrderEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流下单表"));
         // 物流单据状态等于下单中或者下单成功，不允许编辑
@@ -359,23 +365,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
 
     @Override
     public void exportList(LogisticsOrderDTO.ExportDTO param, HttpServletResponse response) {
-        List<LogisticsOrderDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/logisticsOrder.xlsx";
-        String name = "物流下单表导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
+        downloadTaskFeign.saveDownloadTask("物流下单导出", EXPORT_TMS_LOGISTICS_ORDER.getCode(), param);
     }
 
     @Override
@@ -410,6 +400,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         }
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public List<AfterSaleDTO.LogisticsOrderResultDTO> addBatch(List<LogisticsOrderEntity> entityList) {
         // 筛选出所有来源单号
@@ -572,6 +564,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         return resultDTOList;
     }
 
+    @DistributeLocker(keyName = "id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
@@ -584,6 +577,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
     }
 
+    @DistributeLocker(keyName = "id")
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancel(String id) {
         LogisticsOrderEntity entity = this.getById(id);
@@ -627,8 +622,15 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             resultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), e.getMessage());
         }
         if (success) {
+            // 取消成功清空物流跟踪号
             entity.setStatus(LogisticsStatusEnum.CANCEL.getCode());
+            entity.setTrackNo("");
             this.updateById(entity);
+            // 取消成功删除面单信息
+            TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda().eq(TmsAttachmentEntity::getBusinessId, entity.getId()));
+            if (tmsAttachmentEntity != null) {
+                attachmentService.removeById(tmsAttachmentEntity.getId());
+            }
             logisticsOperateService.pushOperateLog(entity.getCode(), entity.getTrackNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(),
                     LogisticsPlatformEnum.SF_EXPRESS.getCode(), RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(orderUpdateRequest),
                     JSONUtil.toJsonStr(baseResult), false);
@@ -646,7 +648,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (CollectionUtils.isEmpty(trackNoList)) {
             return Collections.emptyList();
         }
-        List<LogisticsOrderEntity> entityList = this.list(new QueryWrapper<LogisticsOrderEntity>().lambda().in(LogisticsOrderEntity::getTrackNo, trackNoList));
+        List<LogisticsOrderEntity> entityList = this.list(new QueryWrapper<LogisticsOrderEntity>().lambda()
+                .in(LogisticsOrderEntity::getTrackNo, trackNoList)
+                .eq(LogisticsOrderEntity::getStatus, LogisticsStatusEnum.SUCCESS.getCode()));
         if (CollectionUtils.isEmpty(entityList)) {
             return Collections.emptyList();
         }
@@ -658,10 +662,13 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             LogisticsOrderDTO.ListDTO dto = new LogisticsOrderDTO.ListDTO();
             BeanUtils.copyProperties(entity, dto);
             dto.setLogisticsChannelName(channelMap.get(entity.getLogisticsChannelId()));
+            list.add(dto);
         }
         return list;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchCancel(List<String> codeList) {
         List<LogisticsOrderEntity> list = lambdaQuery().in(LogisticsOrderEntity::getSourceCode, codeList).list();
@@ -724,6 +731,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             }
             if (success) {
                 entity.setStatus(LogisticsStatusEnum.CANCEL.getCode());
+                entity.setTrackNo("");
                 logisticsOperateService.pushOperateLog(entity.getCode(), entity.getTrackNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(),
                         LogisticsPlatformEnum.SF_EXPRESS.getCode(), RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(orderUpdateRequest),
                         JSONUtil.toJsonStr(baseResult), false);
@@ -761,7 +769,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         TmsAttachmentEntity attachmentEntity = new TmsAttachmentEntity();
         attachmentEntity.setAttachName(multipartFile.getOriginalFilename());
         attachmentEntity.setAttachUrl(url);
-        attachmentEntity.setType("after_sale");
+        attachmentEntity.setType("after_sale_label");
         attachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(attachmentEntity);
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());

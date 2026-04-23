@@ -5,6 +5,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.dmp.entity.AfterSaleDetailEntity;
+import com.erp.model.dmp.entity.DmpAttachmentEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -310,6 +311,11 @@ public class AfterSaleDTO implements Serializable {
          * 详细地址
          */
         private String detailedAddress;
+
+        /**
+         * 物流面单信息
+         */
+        private DmpAttachmentEntity attachment;
     }
 
     /**
