@@ -110,7 +110,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
-//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+//        JituOverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
 //        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
 //        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }

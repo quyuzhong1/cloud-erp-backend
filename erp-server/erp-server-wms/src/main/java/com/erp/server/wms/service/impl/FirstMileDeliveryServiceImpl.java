@@ -2202,7 +2202,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         viewDTO.setDictPlatform(dictPlatform);
         OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(dictPlatform);
         viewDTO.setDictPlatformName(null == platformEnum ? "" : platformEnum.getName());
-
+        //入库类型特殊处理
+        if(OmsPlatformEnum.JI_TU.getCode().equals(dictPlatform)) {
+            viewDTO.setInstockType(OverseasInstockTypeEnum.SELF_HEADWAY.getCode());
+            viewDTO.setInstockTypeName(OverseasInstockTypeEnum.SELF_HEADWAY.getName());
+        }
         //明细信息
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(id));
         List<String> skuIdList = firstMileDeliveryDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());

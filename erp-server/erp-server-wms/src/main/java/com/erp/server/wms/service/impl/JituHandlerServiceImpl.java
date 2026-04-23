@@ -1,25 +1,43 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
+import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
+import com.sdk.wms.jitu.dto.request.StockOutOrderRequest;
+import com.sdk.wms.jitu.dto.request.JituOverseasInboundCancelRequest;
+import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
 import com.sdk.wms.jitu.dto.request.WarehouseRequest;
+import com.sdk.wms.jitu.dto.response.StockOutOrderResponse;
+import com.sdk.wms.jitu.dto.response.OverseasInboundCancelResponse;
 import com.sdk.wms.jitu.dto.response.WarehouseResponse;
 import com.sdk.wms.jitu.service.JituService;
+import com.sdk.wms.jitu.dto.response.OverseasInboundCreateResponse;
+import com.sdk.wms.zhongbao.dto.request.OverseasInboundCancelRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +70,12 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
 
+    @Value("${openApi.jitu.key:}")
+    private String key;
+
+    @Value("${openApi.jitu.eccompanyid:}")
+    private String eccompanyid;
+
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.JI_TU;
@@ -68,40 +92,45 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /***
-     * B2C发货单下推海外仓
+     * 头程发货单下推海外仓
      * @param createInboundReq
      * @return
      */
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-//        createInboundReq.setReceivingCode(null);
-//        // 众包推送需要默认ERP的头程发货单号-HH+MM+SS
-//        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-//        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
-//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-//        // 创建入库单
-//        BaseResponse<OverseasInboundApproveResponse> responseBaseResponse = zhongbaoService.overseasInboundApprove(overseasInboundCreateRequest);
-//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage() + ":" + String.join(", ", responseBaseResponse.getErrors()));
-        return null;
+        createInboundReq.setReceivingCode(null);
+        // 众包推送需要默认ERP的头程发货单号-HH+MM+SS
+        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
+        JituOverseasInboundCreateRequest jituOverseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+        // 创建入库单
+        OverseasInboundCreateResponse responseBaseResponse = jituService.overseasInboundCreate(jituOverseasInboundCreateRequest);
+        OverseasInboundCreateResponse.Response response = responseBaseResponse.getResponseitems().get(0);
+        return "true".equals(response.getSuccess()) ? success(response.getEntryOrderId()) : failure(response.getMessage());
+    }
+
+    private JituOverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+        JituOverseasInboundCreateRequest inboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToJitu(createInboundReq);
+        return inboundCreateRequest;
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
-//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-//        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
-//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-//        OverseasInboundCancelRequest overseasInboundCancelRequest = OverseasInboundCancelRequest.builder()
-//                .orderNos(Collections.singletonList(cancelInboundReq.getReceivingCode()))
-//                .cancelRemark(cancelInboundReq.getRemark())
-//                .build();
-//        BaseResponse<OverseasInboundCancelResponse> responseBaseResponse = zhongbaoService.overseasInboundCancel(overseasInboundCancelRequest);
-//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getSuccessList().get(0).getOrderNo()) : failure(responseBaseResponse.getData().getFailList().get(0).getMessage());
-        return null;
+        JituOverseasInboundCancelRequest overseasInboundCancelRequest = JituOverseasInboundCancelRequest.builder()
+                .customerid(cancelInboundReq.getOwnerCode())
+                .warehouseCode(cancelInboundReq.getWarehouseCode())
+                .orderType("CGRK")
+                .orderCode(cancelInboundReq.getSourceCode())
+                .cancelReason(cancelInboundReq.getRemark())
+                .build();
+        OverseasInboundCancelResponse responseBaseResponse = jituService.overseasInboundCancel(overseasInboundCancelRequest);
+        OverseasInboundCancelResponse.Response response = responseBaseResponse.getResponseitems().get(0);
+        return "true".equals(response.getSuccess()) ? success(cancelInboundReq.getSourceCode()) : failure(response.getMessage());
     }
 
     @Override
@@ -201,18 +230,44 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-//        OverseasOutboundCancelRequest overseasOutboundCancelRequest = new OverseasOutboundCancelRequest();
-//        overseasOutboundCancelRequest.setCancelRemark(cancelOutboundReq.getRemark());
-//        overseasOutboundCancelRequest.setOrderNos(Collections.singletonList(cancelOutboundReq.getOrderCode()));
-//        log.warn(getPlatForm().getName() + "取消出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCancelRequest));
-//        BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(overseasOutboundCancelRequest);
-//        log.warn(getPlatForm().getName() + "取消出库单结果:{}", JSONUtil.toJsonStr(response));
-//        if (!response.getData().getResponseData().getSuccessList().isEmpty()) {
-//            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
-//        } else {
-//            return failure(response.getData().getMessage());
-//        }
-        return null;
+        try {
+            // 获取B2B三方发货单信息
+            B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(cancelOutboundReq.getSourceId());
+            if (b2bThirdDelivery == null) {
+                return failure("B2B三方发货单不存在");
+            }
+
+            // 构建授权信息
+            Map<String, Object> authMap = new HashMap<>();
+            authMap.put("key", key);
+            authMap.put("eccompanyid", eccompanyid);
+
+            // 构建取消订单请求参数
+            Map<String, Object> request = new HashMap<>();
+            request.put("customerid", authMap.get("eccompanyid")); // 取发货仓库在三方仓配置绑定的货主编码
+            request.put("warehouseCode", b2bThirdDelivery.getThirdWarehouseCode()); // 取发货仓库在三方仓配置绑定的三方仓仓库编码
+            request.put("orderType", "XSCK"); // 默认XSCK-销售出库
+            request.put("orderCode", cancelOutboundReq.getOrderCode()); // 出库单类型时，传txlogisticid字段的单号
+            request.put("cancelReason", cancelOutboundReq.getRemark()); // 取操作拦截时填写的拦截原因
+
+            // 调用极兔API取消订单
+            StockOutOrderResponse response = jituService.cancelOrder(authMap, request);
+
+            // 处理返回结果
+            if (response != null && response.getResponseitems() != null && !response.getResponseitems().isEmpty()) {
+                StockOutOrderResponse.ResponseItem item = response.getResponseitems().get(0);
+                if (item.getSuccess()) {
+                    return success("SUCCESS");
+                } else {
+                    return failure(item.getMessage());
+                }
+            } else {
+                return failure("极兔接口返回异常");
+            }
+        } catch (Exception e) {
+            log.error("取消极兔B2B出库单失败", e);
+            return failure("取消极兔B2B出库单失败: " + e.getMessage());
+        }
     }
 
     @Override
@@ -276,14 +331,14 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
     }
 
-//    private OverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
-//        OverseasInboundCreateRequest inboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToZhongbao(createInboundReq);
+//    private JituOverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+//        JituOverseasInboundCreateRequest inboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToZhongbao(createInboundReq);
 //        if (CollUtil.isNotEmpty(createInboundReq.getAttachmentList())){
-//            List<OverseasInboundCreateRequest.Attachment> attachmentOpenDTOs = new ArrayList<>();
+//            List<JituOverseasInboundCreateRequest.Attachment> attachmentOpenDTOs = new ArrayList<>();
 //            createInboundReq.getAttachmentList().forEach(attachment -> {
 //                byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
 //                if (bytes != null) {
-//                    attachmentOpenDTOs.add(OverseasInboundCreateRequest.Attachment.builder().base64(Base64.getEncoder().encodeToString(bytes)).fileName(attachment.getAttachName()).build());
+//                    attachmentOpenDTOs.add(JituOverseasInboundCreateRequest.Attachment.builder().base64(Base64.getEncoder().encodeToString(bytes)).fileName(attachment.getAttachName()).build());
 //                }
 //            });
 //            inboundCreateRequest.setAttachmentOpenDTOs(attachmentOpenDTOs);
@@ -293,177 +348,124 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-//        OverseasOutboundCreateRequest overseasOutboundCreateRequest = buildCreateFbaOutboundDto(createOutboundReq);
-//        log.warn(getPlatForm().getName() + "创建b2b出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCreateRequest));
-//        OverseasOutboundCreateResponse response = zhongbaoService.createOutboundBill(overseasOutboundCreateRequest);
-//        log.warn(getPlatForm().getName() + "创建b2b出库单结果:{}", JSONUtil.toJsonStr(response));
-//        return response.getSuccess() ? success(response.getResponseData().getOrderNo()) : failure(response.getMessage());
-        return null;
+        try {
+            Map<String, Object> authMap = new HashMap<>();
+            // 构建极兔出库单请求
+            StockOutOrderRequest request = buildB2BStockOutOrderRequest(createOutboundReq,authMap);
+
+            // 调用极兔API创建出库单
+            StockOutOrderResponse response = jituService.createStockOutOrder(authMap,request);
+
+            // 处理返回结果
+            if (response != null && response.getResponseitems() != null && !response.getResponseitems().isEmpty()) {
+                StockOutOrderResponse.ResponseItem item = response.getResponseitems().get(0);
+                if (item.getSuccess()) {
+                    return success(item.getDeliveryOrderCode());
+                } else {
+                    return failure(item.getMessage());
+                }
+            } else {
+                return failure("极兔接口返回异常");
+            }
+        } catch (Exception e) {
+            log.error("创建极兔B2B出库单失败", e);
+            return failure("创建极兔B2B出库单失败: " + e.getMessage());
+        }
     }
 
-//    public OverseasOutboundCreateRequest buildCreateFbaOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-//
-//        OverseasOutboundCreateRequest overseasOutboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToZhongBao(createOutboundReq);
-//        List<ThirdWarehouseCreateFbaOutboundReq.Item> items = createOutboundReq.getItems();
-//        if (items == null || items.isEmpty()) {
-//            throw new IllegalArgumentException("订单明细不能为空");
-//        }
-//
-//        Set<String> skuIds = new HashSet<>();
-//        B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
-//        if (Objects.nonNull(b2bThirdDelivery)) {
-//            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
-//            overseasOutboundCreateRequest.setShippingMethodCode(b2bThirdDelivery.getLogisticsChannelCode());
-//            if (Objects.nonNull(logisticsChannel)) {
-//                overseasOutboundCreateRequest.setIsSign(logisticsChannel.getIsApiSign() ? 1 : -1);
-//                overseasOutboundCreateRequest.setIsInsure(logisticsChannel.getIsApiInsurance() ? 1 : -1);
-//            }
-//
-//            //取订单金额和汇率（明细行取第一行汇率）换算成人民币金额，在取系统最新美元汇率换算成美元
-//            SoInfoEntity soInfo = soInfoFeign.getSoInfoById(b2bThirdDelivery.getSoId());
-//            if (Objects.nonNull(soInfo)) {
-//                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainId(soInfo.getId());
-//                if (!soDetails.isEmpty()) {
-//                    SoDetailEntity soDetail = soDetails.get(0);
-//                    BigDecimal exchangeRate = soDetail.getExchangeRate();
-//                    if (exchangeRate.compareTo(BigDecimal.ZERO) > 0) {
-//                        BigDecimal cnAmount = MathUtil.multiplyWithTwo(soInfo.getOrderAmount(), exchangeRate);
-//                        exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
-//                        BigDecimal usAmount = cnAmount.divide(exchangeRate,2, RoundingMode.HALF_UP);
-//                        overseasOutboundCreateRequest.setInsurePrice(usAmount);
-//                    }
-//                }
-//            }
-//
-//        }
-//
-//        for (ThirdWarehouseCreateFbaOutboundReq.Item item : items) {
-//            if (item.getSkuId() != null) {
-//                skuIds.add(item.getSkuId());
-//            }
-//        }
-//
-//        int totalQuantity = items.stream()
-//                .mapToInt(item -> {
-//                    Integer boxQty = item.getBoxQty() != null ? item.getBoxQty() : 0;
-//                    Integer perBoxQty = item.getPerBoxQty() != null ? item.getPerBoxQty() : 0;
-//                    return boxQty * perBoxQty;
-//                })
-//                .sum();
-//
-//        // 拣货类型
-//        if (skuIds.size() == 1 && totalQuantity == 1) {
-////            // 只有一个SKU
-////            if (totalQuantity == 1) {
-////                //一票一件
-////                overseasOutboundCreateRequest.setPickType(1);
-////            } else {
-////                //一票一件多个
-////                overseasOutboundCreateRequest.setPickType(2);
-////            }
-//            overseasOutboundCreateRequest.setPickType(1);
-//        } else {
-//            //一票多件
-//            overseasOutboundCreateRequest.setPickType(3);
-//        }
-//
-//        //仓库操作指令类型
-//        List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList =
-//                createOutboundReq.getWarehouseOperationTypeDTOList();
-//
-//        //明细
-//        List<OverseasOutboundCreateRequest.ItemDTOs> itemDTOs = new ArrayList<>();
-//        for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
-//            OverseasOutboundCreateRequest.ItemDTOs itemDTO = new OverseasOutboundCreateRequest.ItemDTOs();
-//            itemDTO.setProductSku(item.getPlatformSkuNo());
-//            itemDTO.setQty(item.getBoxQty());
-//            itemDTO.setPlatformSku(item.getSkuNo());
-//            itemDTOs.add(itemDTO);
-//        }
-//        overseasOutboundCreateRequest.setItemDTOs(itemDTOs);
-//
-//        //仓库操作指令
-//        OverseasOutboundCreateRequest.B2bDto b2bDto = new OverseasOutboundCreateRequest.B2bDto();
-//        if (!warehouseOperationTypeDTOList.isEmpty()) {
-//            for (ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO warehouseOperationTypeDTO : warehouseOperationTypeDTOList) {
-//                if (StringUtils.isNotBlank(warehouseOperationTypeDTO.getWarehouseOperationType())
-//                        && StringUtils.isNotBlank(warehouseOperationTypeDTO.getOperationDesc())) {
-//                    String type = warehouseOperationTypeDTO.getWarehouseOperationType();
-//                    String desc = warehouseOperationTypeDTO.getOperationDesc();
-//                    try {
-//                        WarehouseOperationTypeEnum operationTypeEnum = WarehouseOperationTypeEnum.fromCode(type);
-//                        if (Objects.nonNull(operationTypeEnum)) {
-//                            // 根据枚举值设置 b2bDto 的不同属性
-//                            switch (operationTypeEnum) {
-//                                case IS_CHANGE_PACKAGE:
-//                                    b2bDto.setIsChangePackage(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case CHANGE_BARCODE_TYPE:
-//                                    b2bDto.setChangeBarcodeType(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case IS_COVER_BARCODE:
-//                                    b2bDto.setIsCoverBarcode(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case CHANGE_SHIPPING_MARK_TYPE:
-//                                    b2bDto.setChangeShippingMarkType(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case IS_COVER_SHIPPING_MARK:
-//                                    b2bDto.setIsCoverShippingMark(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case IS_PALLET:
-//                                    b2bDto.setIsPallet(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case IS_DOUBLE_PALLET:
-//                                    b2bDto.setIsDoublePallet(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case IS_MIXED_PALLET:
-//                                    b2bDto.setIsMixedPallet(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case PASTE_CARTON_MARK_TYPE:
-//                                    b2bDto.setPasteCartonMarkType(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case IS_PALLET_SCHEME:
-//                                    b2bDto.setIsPalletScheme(Integer.parseInt(WarehouseOperationTypeValueEnum.getValueByCode(desc)));
-//                                    break;
-//                                case LIMIT_PLATE_NUM:
-//                                    b2bDto.setLimitPlateNum(Integer.parseInt(desc));
-//                                    break;
-//                                case LIMIT_PLATE_HEIGHT:
-//                                    b2bDto.setLimitPlateHeight(new BigDecimal(desc));
-//                                    break;
-//                                case LIMIT_PLATE_WEIGHT:
-//                                    b2bDto.setLimitPlateWeight(new BigDecimal(desc));
-//                                    break;
-//                                default:
-//                                    // 不处理未知枚举
-//                                    break;
-//                            }
-//                        }
-//
-//                    } catch (IllegalArgumentException e) {
-//                        log.info("未知的仓库操作类型: {}",type);
-//                    }
-//                }
-//            }
-//        }
-//        overseasOutboundCreateRequest.setB2bDto(b2bDto);
-//
-//
-//        //附件
-//        List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachments = new ArrayList<>();
-//        if (CharSequenceUtil.isNotBlank(createOutboundReq.getFileBase64())
-//                && CharSequenceUtil.isNotBlank(createOutboundReq.getFileUrl())) {
-//            int lastSlashIndex = createOutboundReq.getFileUrl().lastIndexOf('/');
-//            String fileName = createOutboundReq.getFileUrl().substring(lastSlashIndex + 1);
-//
-//            attachments.add(OverseasOutboundCreateRequest.AttachmentOpenDTOs.builder()
-//                    .attachmentType("OTHER")
-//                    .base64(createOutboundReq.getFileBase64())
-//                    .fileName(fileName)
-//                    .build());
-//        }
-//        overseasOutboundCreateRequest.setAttachmentOpenDTOs(attachments);
-//
-//        return overseasOutboundCreateRequest;
-//    }
+    /**
+     * 构建B2B极兔出库单请求
+     */
+    private StockOutOrderRequest buildB2BStockOutOrderRequest(ThirdWarehouseCreateFbaOutboundReq createOutboundReq,Map<String, Object> authMap) {
+        StockOutOrderRequest request = new StockOutOrderRequest();
+        StockOutOrderRequest.Receiver receiver = new StockOutOrderRequest.Receiver();
+        authMap.put("key",key);
+        authMap.put("eccompanyid",eccompanyid);
+        Map<String, BigDecimal> skuPriceMap = new HashMap<>();
+        B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
+        if (Objects.nonNull(b2bThirdDelivery)) {
+            // 收件人信息
+            receiver.setCountrycode(b2bThirdDelivery.getCountryId());
+            receiver.setShortAddress(b2bThirdDelivery.getReceiveAddress());
+            if (StringUtils.isNotBlank(b2bThirdDelivery.getAddress2())) {
+                receiver.setAddress(b2bThirdDelivery.getAddress2());
+            } else {
+                if (StringUtils.isNotBlank(b2bThirdDelivery.getAddress3())) {
+                    receiver.setAddress(b2bThirdDelivery.getAddress3());
+                } else {
+                    receiver.setAddress(b2bThirdDelivery.getReceiveAddress());
+                }
+            }
+            receiver.setAddress2(b2bThirdDelivery.getAddress3());
+            receiver.setArea(b2bThirdDelivery.getCity());
+            receiver.setCity(b2bThirdDelivery.getCity());
+            receiver.setProv(b2bThirdDelivery.getProvince());
+            receiver.setPostcode(b2bThirdDelivery.getPostCode());
+            receiver.setName(b2bThirdDelivery.getCustomerName());
+            receiver.setPhone(b2bThirdDelivery.getTelNumber());
+            receiver.setMobile(b2bThirdDelivery.getTelNumber());
+            receiver.setDoorNo("");
+            request.setReceiver(receiver);
+
+            SoInfoEntity soInfo = soInfoFeign.getSoInfoById(b2bThirdDelivery.getSoId());
+            if (Objects.nonNull(soInfo)) {
+                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainId(soInfo.getId());
+                String payTimeStr = "";
+                request.setPlatformNumber(StringUtils.isNotBlank(soInfo.getPlatformOrderCode()) ? soInfo.getPlatformOrderCode() : soInfo.getCustomerOrderNo());
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                if(Objects.nonNull(soInfo.getReceiveDate())) {
+                    payTimeStr = soInfo.getReceiveDate().format(formatter);
+                } else {
+                    payTimeStr = soInfo.getBillDate().format(formatter);
+                }
+                request.setPayTime(payTimeStr);
+
+                // 构建SKU价格映射
+                for (SoDetailEntity soDetail : soDetails) {
+                    skuPriceMap.put(soDetail.getSkuId(), soDetail.getPrice());
+                }
+            }
+            //TODO 配送方式=平台物流/商家自联快递时必填
+            request.setMailno(b2bThirdDelivery.getTrackNo());
+        }
+        // 基本信息
+        request.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
+        request.setTxlogisticid(createOutboundReq.getReferenceNo());
+        request.setOrderType("B2BXSCK"); // B2B订单默认B2BXSCK
+        request.setSource("OTHER"); // B2B订单默认OTHER
+        request.setSourceSystem("ERP");
+        request.setBusinessMode("B2B");
+        request.setOutBizNo(createOutboundReq.getReferenceNo());
+
+        // 物流信息
+        //TODO 等4.5开发完
+        request.setTransportMode("PTWL");
+        request.setCarrier("ABF");
+        request.setRouteid(createOutboundReq.getChannelCode());
+        //TODO 配送方式=平台物流时必填，渠道是否需要同步面单标识
+        request.setLabel(createOutboundReq.getFileUrl());
+        request.setDeliveryNote(createOutboundReq.getRemark());
+        request.setIsCod("0"); // 默认0否
+        request.setStoreCode("-"); // 默认-
+        request.setStoreName(""); // 默认空
+
+        //明细
+        List<StockOutOrderRequest.Item> items = new ArrayList<>();
+        for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
+            StockOutOrderRequest.Item stockOutItem = new StockOutOrderRequest.Item();
+            stockOutItem.setItemCode(item.getSkuNo());
+            stockOutItem.setNumber(item.getBoxQty());
+            // 从销售订单明细获取销售单价
+            BigDecimal price = skuPriceMap.get(item.getSkuId());
+            stockOutItem.setItemvalue(price != null ? price : BigDecimal.ZERO);
+            stockOutItem.setInventoryType("ZP"); // 默认ZP
+            stockOutItem.setSkuId(""); // B2B订单：默认为空
+            stockOutItem.setIsGift("0"); // 默认0否
+            items.add(stockOutItem);
+        }
+        request.setItems(items);
+        request.setPricecurrency("CNY"); // 默认CNY
+
+        return request;
+    }
 }
