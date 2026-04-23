@@ -22,11 +22,10 @@ import com.common.business.dto.ApproveDTO;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.CfgDeclareRuleDTO;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
-import com.erp.model.tms.entity.CfgDeclareRuleEntity;
+import java.util.List;
 
 /**
  * 报关规则主表
@@ -107,6 +106,22 @@ public class CfgDeclareRuleController extends BaseController {
         return success(cfgDeclareRuleService.paging(dto));
     }
 
+    /**
+     * 获取报关规则主体下拉列表
+     * 用于页面下拉选择框，支持按发件人/收件人类型筛选，可选按名称搜索会计公司
+     *
+     * @param type 类型：sender-发件人，receiver-收件人
+     * @param name 会计公司名称（可选，用于模糊搜索）
+     * @return 报关规则主体下拉列表（树形结构）
+     * @author jack
+     * @date 2026-04-20
+     */
+    @GetMapping("/dropDownList")
+    public ApiResult<List<BaseDropDownDTO.Tree>> dropDownList(@RequestParam("type") String type,
+                                                              @RequestParam(value = "name", required = false) String name) {
+        return success(cfgDeclareRuleService.dropDownList(type, name));
+    }
+
 
     /**
     * 详情
@@ -144,6 +159,4 @@ public class CfgDeclareRuleController extends BaseController {
     public void exportList(@RequestBody @Validated CfgDeclareRuleDTO.ExportDTO dto, HttpServletResponse response) {
         cfgDeclareRuleService.exportList(dto, response);
     }
-
-
 }

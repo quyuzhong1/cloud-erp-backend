@@ -74,4 +74,16 @@ public interface CfgDeclareRuleService extends SuperService<CfgDeclareRuleEntity
     * @return
     */
     void exportList(CfgDeclareRuleDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 获取报关规则主体下拉列表
+     * 用于页面下拉选择框，支持按发件人/收件人类型筛选，可选按名称搜索会计公司
+     *
+     * @param type 类型：sender-发件人，receiver-收件人
+     * @param name 会计公司名称（可选，用于模糊搜索）
+     * @return 报关规则主体下拉列表（树形结构）
+     * @author jack
+     * @date 2026-04-20
+     */
+    List<BaseDropDownDTO.Tree> dropDownList(String type, String name);
 }

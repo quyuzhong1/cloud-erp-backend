@@ -6,6 +6,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.common.core.controller.vo.ApiResult;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -42,6 +43,10 @@ import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.sys.dto.SysAccountingCompanyDTO;
+import com.erp.model.tms.enums.CfgDeclareRuleReceiverTypeEnum;
+import com.erp.model.tms.enums.CfgDeclareRuleSenderTypeEnum;
+import com.erp.rpc.sys.feign.SysFeign;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -63,6 +68,11 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     private CfgDeclareRuleConditionService cfgDeclareRuleConditionService;
     @Resource
     private CommonService commonService;
+    @Resource
+    private SysFeign sysFeign;
+
+    private static final String SENDER = "sender";
+    private static final String RECEIVER = "receiver";
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -203,6 +213,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     * 新增修改处理数据
     */
     private void handleData(CfgDeclareRuleEntity cfgDeclareRuleEntity) {
+        // 校验唯一性
         if (ObjectUtil.isAllNotEmpty(cfgDeclareRuleEntity.getRuleType(), cfgDeclareRuleEntity.getSenderId(), cfgDeclareRuleEntity.getReceiverId())) {
             CfgDeclareRuleEntity exist = this.lambdaQuery()
                     .eq(CfgDeclareRuleEntity::getRuleType, cfgDeclareRuleEntity.getRuleType())
@@ -213,6 +224,31 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                     .one();
             if (exist != null) {
                 throw new ServiceException(ApiError.BILL_ALREADY_EXIST, "相同规则类型、发货人及收货人的报关规则");
+            }
+        }
+
+        // 填充结算公司名称
+        Set<String> companyIds = Sets.newHashSet();
+        if (StrUtil.isNotEmpty(cfgDeclareRuleEntity.getSenderId()) && CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getCode().equals(cfgDeclareRuleEntity.getSenderType())) {
+            companyIds.add(cfgDeclareRuleEntity.getSenderId());
+        }
+        if (StrUtil.isNotEmpty(cfgDeclareRuleEntity.getReceiverId()) && CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getCode().equals(cfgDeclareRuleEntity.getReceiverType())) {
+            companyIds.add(cfgDeclareRuleEntity.getReceiverId());
+        }
+
+        if (CollUtil.isNotEmpty(companyIds)) {
+            ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList("");
+            if (companyResult != null && companyResult.isSuccess() && CollUtil.isNotEmpty(companyResult.getData())) {
+                Map<String, String> companyMap = companyResult.getData().stream()
+                        .filter(c -> companyIds.contains(c.getId()))
+                        .collect(Collectors.toMap(SysAccountingCompanyDTO.ListDTO::getId, SysAccountingCompanyDTO.ListDTO::getCompanyName, (k1, k2) -> k1));
+
+                if (companyMap.containsKey(cfgDeclareRuleEntity.getSenderId())) {
+                    cfgDeclareRuleEntity.setSenderName(companyMap.get(cfgDeclareRuleEntity.getSenderId()));
+                }
+                if (companyMap.containsKey(cfgDeclareRuleEntity.getReceiverId())) {
+                    cfgDeclareRuleEntity.setReceiverName(companyMap.get(cfgDeclareRuleEntity.getReceiverId()));
+                }
             }
         }
     }
@@ -252,4 +288,67 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         // TODO 其他如需要显示名称的字段赋值
         }
    }
+
+    @Override
+    public List<BaseDropDownDTO.Tree> dropDownList(String type, String name) {
+        if (SENDER.equals(type)) {
+            return Collections.singletonList(buildDropDown(
+                    type,
+                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getCode(),
+                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getName(),
+                    accountingCompanyChildList(name)));
+        }
+
+        if (RECEIVER.equals(type)) {
+            List<BaseDropDownDTO.Tree> result = new ArrayList<>(2);
+            result.add(buildDropDown(
+                    type,
+                    CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getCode(),
+                    CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getName(),
+                    accountingCompanyChildList(name)));
+            result.add(buildDropDown(
+                    type,
+                    CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(),
+                    CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getName(),
+                    Collections.emptyList()));
+            return result;
+        }
+
+        throw new ServiceException("类型参数错误，type必须为sender或receiver");
+    }
+
+    /**
+     * 构建下拉树形结构
+     */
+    private BaseDropDownDTO.Tree buildDropDown(String type,
+                                               String code,
+                                               String value,
+                                               List<BaseDropDownDTO.ChildTree> childTreeList) {
+        BaseDropDownDTO.Tree tree = new BaseDropDownDTO.Tree();
+        tree.setType(type);
+        tree.setCode(code);
+        tree.setValue(value);
+        tree.setDisabled(Boolean.FALSE);
+        tree.setChildTreeList(childTreeList);
+        return tree;
+    }
+
+    /**
+     * 获取会计公司子列表
+     */
+    private List<BaseDropDownDTO.ChildTree> accountingCompanyChildList(String name) {
+        com.common.core.controller.vo.ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList(name);
+        if (companyResult == null || !companyResult.isSuccess()) {
+            throw new ServiceException("获取会计公司列表失败");
+        }
+        return Optional.ofNullable(companyResult.getData())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(company -> BaseDropDownDTO.ChildTree.builder()
+                        .code(company.getId())
+                        .value(company.getCompanyName())
+                        .disabled(company.getDisabled())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }

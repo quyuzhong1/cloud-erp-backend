@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum CfgDeclareRuleReceiverTypeEnum implements EnumMessage {
     BY_COMPANY("byCompany","按结算公司"),
-    BY_CUSTOMER("byCustomer","按客户不能为空"),
+    BY_CUSTOMER("byCustomer","按客户"),
     ;
 
     /**
