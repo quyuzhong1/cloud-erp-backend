@@ -8,6 +8,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -71,6 +72,7 @@ import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
@@ -1148,7 +1150,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<String> outboundTrackNoList = list.stream().map(AfterSaleDTO.ListDTO::getOutboundTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<LogisticsOrderDTO.ListDTO> dtoList = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
         Map<String, LogisticsOrderDTO.ListDTO> listDTOMap = dtoList.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getTrackNo, item -> item));
-        List<String> idList = list.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<String> idList = list.stream().map(AfterSaleDTO.ListDTO::getId).collect(Collectors.toList());
         List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, idList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));
         // 属性赋值
@@ -1786,6 +1788,65 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
         }
         return list;
+    }
+
+    @Override
+    public AfterSaleDTO.LogisticsLabelPreviewDTO printLogisticsLabelPreview(BaseIdsDTO.IdsDTO dto) {
+        AfterSaleDTO.LogisticsLabelPreviewDTO result = new AfterSaleDTO.LogisticsLabelPreviewDTO();
+        List<AfterSaleDTO.OrderInfoDTO> list = this.baseMapper.getPlaceOrderPreview(dto.getIds());
+        // 取出商家寄出快递单号不为空的并且单据类型是API的
+        List<AfterSaleDTO.OrderInfoDTO> filterList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
+        List<String> outboundTrackNoList = filterList.stream().map(AfterSaleDTO.OrderInfoDTO::getOutboundTrackNo).collect(Collectors.toList());
+        List<LogisticsOrderDTO.ListDTO> listDTOS = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
+        Map<String, LogisticsOrderDTO.ListDTO> map = listDTOS.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getAfterSaleId, item -> item));
+        // 查询面单信息
+        List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
+                .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
+                .eq(DmpAttachmentEntity::getType, "after_sale_label"));
+        Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, v -> v));
+        List<AfterSaleDTO.LogisticsLabelPreviewListDTO> labelPreviewListDTOS = new ArrayList<>();
+        for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : list) {
+            AfterSaleDTO.LogisticsLabelPreviewListDTO labelPreviewListDTO = new AfterSaleDTO.LogisticsLabelPreviewListDTO();
+            LogisticsOrderDTO.ListDTO listDTO = map.get(orderInfoDTO.getId());
+            labelPreviewListDTO.setId(orderInfoDTO.getId());
+            labelPreviewListDTO.setLogisticsPlatform(listDTO.getLogisticsPlatform());
+            labelPreviewListDTO.setLogisticsPlatformName(listDTO.getLogisticsPlatformName());
+            labelPreviewListDTO.setLogisticsChannelId(listDTO.getLogisticsChannelId());
+            labelPreviewListDTO.setLogisticsChannelName(listDTO.getLogisticsChannelName());
+            labelPreviewListDTO.setTrackNo(orderInfoDTO.getOutboundTrackNo());
+            labelPreviewListDTO.setCode(orderInfoDTO.getCode());
+            labelPreviewListDTO.setAttachName(attachmentMap.get(orderInfoDTO.getId()) == null ? "" : attachmentMap.get(orderInfoDTO.getId()).getAttachName());
+            labelPreviewListDTO.setAttachUrl(attachmentMap.get(orderInfoDTO.getId()) == null ? "" : attachmentMap.get(orderInfoDTO.getId()).getAttachUrl());
+            labelPreviewListDTOS.add(labelPreviewListDTO);
+        }
+        // 有运单号数量
+        Integer trackNoCount = Math.toIntExact(list.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getOutboundTrackNo())).count());
+        // 无运单号数量
+        Integer notTrackNoCount = Math.toIntExact(list.stream().filter(req -> CharSequenceUtil.isBlank(req.getOutboundTrackNo())).count());
+        result.setLabelPreviewListDTOS(labelPreviewListDTOS);
+        result.setTrackNoCount(trackNoCount);
+        result.setNotTrackNoCount(notTrackNoCount);
+        result.setNotPrintCount(dto.getIds().size() - attachmentList.size());
+        return result;
+    }
+
+    @Override
+    public String printLogisticsLabelConfirm(BaseIdsDTO.IdsDTO dto) {
+        // 查询面单信息
+        List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
+                .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
+                .eq(DmpAttachmentEntity::getType, "after_sale_label"));
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            throw new ServiceException("无可打印的物流面单");
+        }
+        Map<String, String> baseMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, DmpAttachmentEntity::getAttachUrl));
+        List<String> urlList = dto.getIds().stream().map(e -> baseMap.getOrDefault(e, null)).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        try {
+            return fileFeign.mergeFiles(urlList);
+        } catch (Exception e) {
+            log.error("合并文件失败", e);
+            throw new ServiceException(ApiError.LOGISTICS_PDF_SO_MERGE_ERROR);
+        }
     }
 
 }

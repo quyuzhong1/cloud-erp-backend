@@ -21,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -453,7 +452,7 @@ public class AfterSaleController extends BaseController {
     /**
      * 上传物流面单
      *
-     * @param dto LogisticsOrderDTO.UploadFileDTO
+     * @param dto AfterSaleDTO.UploadFileDTO
      * @return String
      */
     @PostMapping("/uploadLogisticLabel")
@@ -470,5 +469,27 @@ public class AfterSaleController extends BaseController {
     @PostMapping("/getPlaceOrderPreview")
     public ApiResult<List<AfterSaleDTO.OrderInfoDTO>> getPlaceOrderPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(afterSaleService.getPlaceOrderPreview(dto));
+    }
+
+    /**
+     * 打印物流面单预览
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return AfterSaleDTO.LogisticsLabelPreviewDTO
+     */
+    @PostMapping("/printLogisticsLabelPreview")
+    public ApiResult<AfterSaleDTO.LogisticsLabelPreviewDTO> printLogisticsLabelPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(afterSaleService.printLogisticsLabelPreview(dto));
+    }
+
+    /**
+     * 打印物流面单确认
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return String
+     */
+    @PostMapping("/printLogisticsLabelConfirm")
+    public ApiResult<String> printLogisticsLabelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(afterSaleService.printLogisticsLabelConfirm(dto));
     }
 }

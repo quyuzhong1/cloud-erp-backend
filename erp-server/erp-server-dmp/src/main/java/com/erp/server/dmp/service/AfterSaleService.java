@@ -210,4 +210,20 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
      * @return List<AfterSaleDTO.OrderInfoDTO>
      */
     List<AfterSaleDTO.OrderInfoDTO> getPlaceOrderPreview(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 打印物流面单预览
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return AfterSaleDTO.LogisticsLabelPreviewDTO
+     */
+    AfterSaleDTO.LogisticsLabelPreviewDTO printLogisticsLabelPreview(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 打印物流面单确认
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return String
+     */
+    String printLogisticsLabelConfirm(BaseIdsDTO.IdsDTO dto);
 }

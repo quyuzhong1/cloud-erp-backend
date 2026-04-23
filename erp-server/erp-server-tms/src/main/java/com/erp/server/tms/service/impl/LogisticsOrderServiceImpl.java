@@ -59,7 +59,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -132,6 +131,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @Resource
     private MQProducerService mqProducerService;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
     @Value("${tms.sf-express.templateCode}")
     private String templateCode;
 
@@ -151,7 +153,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WLD);
         logisticsOrderEntity.setCode(code);
-        logisticsOrderEntity.setOrderId(code + LocalTime.now().format(DateTimeFormatter.ofPattern(DateUtil.FMT_HMS)));
+        logisticsOrderEntity.setOrderId(code + "_" + LocalTime.now().format(DateTimeFormatter.ofPattern(DateUtil.FMT_HMS)));
         // 调用顺丰物流下单接口
         String channelId = dto.getLogisticsChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
@@ -370,6 +372,14 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         log.info("编辑 开始记录物流下单表日志数据，单号：【{}】", logisticsOrderEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsOrderEntity.getCode(), "物流下单表");
         operateLogService.addModuleOperateLogByObj(old, logisticsOrderEntity, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), msg);
+        // 下单成功发送异步请求保存面单
+        if (StringUtils.isNotBlank(logisticsOrderEntity.getTrackNo())) {
+            // 设置redis
+            String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo());
+            redisUtil.set(labelRedisKey, true, 86400);
+            LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(logisticsOrderEntity);
+            mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
+        }
         return Boolean.TRUE;
     }
 
@@ -672,7 +682,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             entity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
             this.updateById(entity);
             // 取消成功删除面单信息
-            TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda().eq(TmsAttachmentEntity::getBusinessId, entity.getId()));
+            TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda()
+                    .eq(TmsAttachmentEntity::getBusinessId, entity.getId())
+                    .eq(TmsAttachmentEntity::getType, "logistics_label"));
             if (tmsAttachmentEntity != null) {
                 attachmentService.removeById(tmsAttachmentEntity.getId());
             }
@@ -699,14 +711,21 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (CollectionUtils.isEmpty(entityList)) {
             return Collections.emptyList();
         }
+        // 查询物流渠道信息
         List<LogisticsChannelEntity> channelList = logisticsChannelService.list(new QueryWrapper<LogisticsChannelEntity>().lambda()
                 .in(LogisticsChannelEntity::getId, entityList.stream().map(LogisticsOrderEntity::getLogisticsChannelId).collect(Collectors.toList())));
         Map<String, String> channelMap = channelList.stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, LogisticsChannelEntity::getName));
+        // 查询物流平台商信息
+        List<DictBasicEntity> platformList = dictBasicService.list(new QueryWrapper<DictBasicEntity>().lambda()
+                .eq(DictBasicEntity::getType, "logisticsPlatform")
+                .in(DictBasicEntity::getCode, entityList.stream().map(LogisticsOrderEntity::getLogisticsPlatform).collect(Collectors.toList())));
+        Map<String, String> platformMap = platformList.stream().collect(Collectors.toMap(DictBasicEntity::getCode, DictBasicEntity::getName));
         List<LogisticsOrderDTO.ListDTO> list = new ArrayList<>(entityList.size());
         for (LogisticsOrderEntity entity : entityList) {
             LogisticsOrderDTO.ListDTO dto = new LogisticsOrderDTO.ListDTO();
             BeanUtils.copyProperties(entity, dto);
             dto.setLogisticsChannelName(channelMap.get(entity.getLogisticsChannelId()));
+            dto.setLogisticsPlatformName(platformMap.get(entity.getLogisticsPlatform()));
             list.add(dto);
         }
         return list;
@@ -799,7 +818,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         // 无运单号数量
         Integer notTrackNoCount = Math.toIntExact(labelPreviewListDTOS.stream().filter(req -> CharSequenceUtil.isBlank(req.getTrackNo())).count());
         // 查询面单信息
-        List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda().in(TmsAttachmentEntity::getBusinessId, dto.getIds()));
+        List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
+                .in(TmsAttachmentEntity::getBusinessId, dto.getIds())
+                .eq(TmsAttachmentEntity::getType, "logistics_label"));
         Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
         labelPreviewListDTOS.forEach(e -> {
             e.setAttachName(attachmentMap.get(e.getId()) == null ? "" : attachmentMap.get(e.getId()).getAttachName());
@@ -820,14 +841,15 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             throw new ServiceException("物流单不存在");
         }
         TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda()
-                .eq(TmsAttachmentEntity::getBusinessId, entity.getId()).eq(TmsAttachmentEntity::getType, "after_sale_label"));
+                .eq(TmsAttachmentEntity::getBusinessId, entity.getId())
+                .eq(TmsAttachmentEntity::getType, "logistics_label"));
         if (tmsAttachmentEntity != null) {
             attachmentService.removeById(tmsAttachmentEntity.getId());
         }
         TmsAttachmentEntity attachmentEntity = new TmsAttachmentEntity();
         attachmentEntity.setAttachName(dto.getAttachName());
         attachmentEntity.setAttachUrl(dto.getAttachUrl());
-        attachmentEntity.setType("after_sale_label");
+        attachmentEntity.setType("logistics_label");
         attachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(attachmentEntity);
         entity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
@@ -840,7 +862,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @Override
     public String printLogisticsLabelConfirm(BaseIdsDTO.IdsDTO dto) {
         // 查询面单信息
-        List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda().in(TmsAttachmentEntity::getBusinessId, dto.getIds()));
+        List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
+                .in(TmsAttachmentEntity::getBusinessId, dto.getIds())
+                .eq(TmsAttachmentEntity::getType, "logistics_label"));
         if (CollectionUtils.isEmpty(attachmentList)) {
             throw new ServiceException("无可打印的物流面单");
         }
@@ -858,14 +882,14 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     public List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> dtoList) {
         List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .in(TmsAttachmentEntity::getBusinessId, dtoList.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getId).collect(Collectors.toList()))
-                .eq(TmsAttachmentEntity::getType, "after_sale_label"));
+                .eq(TmsAttachmentEntity::getType, "logistics_label"));
         Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : dtoList) {
             BatchResultDTO resultDTO = new BatchResultDTO();
             LogisticsOrderEntity logisticsOrderEntity = getById(logisticsLabelDTO.getId());
-            if (logisticsOrderEntity == null) {
-                resultDTO = BatchResultDTO.fail(logisticsLabelDTO.getId(), logisticsLabelDTO.getCode(), "单据不存在");
+            if (logisticsOrderEntity == null || LogisticsStatusEnum.CANCEL.getCode().equals(logisticsOrderEntity.getStatus())) {
+                resultDTO = BatchResultDTO.fail(logisticsLabelDTO.getId(), logisticsLabelDTO.getCode(), "单据不存在或者状态发生变更");
                 resultDTOS.add(resultDTO);
                 continue;
             } else if (StringUtils.isNotBlank(logisticsOrderEntity.getSourceCode())) {

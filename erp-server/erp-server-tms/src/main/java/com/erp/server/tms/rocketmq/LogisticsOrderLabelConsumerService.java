@@ -11,7 +11,7 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * 异步请求存储物流下单面单
@@ -30,6 +30,6 @@ public class LogisticsOrderLabelConsumerService implements RocketMQListener<Logi
     public void onMessage(LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO) {
         log.warn("接收到异步请求打印物流下单面单消息：{}", logisticsLabelDTO);
         logisticsLabelDTO.setIsFromMq(true);
-        logisticsOrderService.getLogisticsOrderLabel(Arrays.asList(logisticsLabelDTO));
+        logisticsOrderService.getLogisticsOrderLabel(Collections.singletonList(logisticsLabelDTO));
     }
 }
