@@ -41,9 +41,9 @@ public class SysCodeDTO implements Serializable {
      */
     private Date updateTime;
 
-    public SysCodeDTO (String category,Integer type) {
+    public SysCodeDTO (String category,String type) {
         this.category = category;
-        this.type = type;
+        this.type = Integer.valueOf(type);
     }
 
 }
