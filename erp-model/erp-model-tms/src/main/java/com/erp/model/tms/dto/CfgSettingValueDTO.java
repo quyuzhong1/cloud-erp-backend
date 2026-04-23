@@ -342,4 +342,17 @@ public class CfgSettingValueDTO implements Serializable {
 
     }
 
+
+    /**
+     * 异步任务单据批次参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BillBatchParamsDTO {
+        private String smallBagBatch;
+        private String smallBagTimeoutSeconds;
+        private String firstMileBatch;
+        private String firstMileTimeoutSeconds;
+    }
+
 }
