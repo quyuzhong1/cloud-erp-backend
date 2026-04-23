@@ -2400,21 +2400,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return count == null ? 0 : count;
     }
 
-    /**
-     * 统计可下推分摊的费用总条数
-     *
-     * @param dto 查询条件
-     * @return 总条数
-     * @author jack
-     * @date 2026-04-22
-     */
-    @Override
-    public int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        Integer count = baseMapper.countByCanPushAllocation(dto);
-        // 防御性处理：count 为 null 时返回 0
-        return count == null ? 0 : count;
-    }
-
 
     @Override
     public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
