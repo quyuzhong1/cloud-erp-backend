@@ -1,6 +1,8 @@
 package com.sdk.wms.jitu;
 
 import cn.hutool.json.JSONUtil;
+import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
 import com.sdk.wms.jitu.dto.request.ProductRequest;
 import com.sdk.wms.jitu.dto.request.WarehouseRequest;
 import com.sdk.wms.jitu.dto.response.WarehouseResponse;
@@ -11,7 +13,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RunWith(SpringRunner.class)
@@ -47,8 +51,32 @@ class JituServiceTest {
                 .customerid((String) authMap.getOrDefault("customerid", ""))
                 .warehouseCode("SH.001")
                 .startPage(1)
-                .pageSize(100)
+                .pageSize(10)
                 .build();
         JituService.productList(authMap, request);
+    }
+
+    @Test
+    public void overseasInboundCreate() {
+        ThirdWarehouseContext.setAuthMap(authMap);
+        List<JituOverseasInboundCreateRequest.Item> items = new ArrayList<>();
+        JituOverseasInboundCreateRequest.Item item = JituOverseasInboundCreateRequest.Item.builder()
+                .LineNo("1")
+                .itemCode("YL001")
+                .quantity(1)
+                .inventoryType("ZP")
+                .build();
+        items.add(item);
+        JituOverseasInboundCreateRequest request = JituOverseasInboundCreateRequest.builder()
+                .customerid((String) authMap.getOrDefault("customerid", ""))
+                .warehouseCode("SH.001")
+                .entryOrderCode("FHD260326000003")
+                .erpOrderCode("FHD260326000003")
+                .sourceSystem("SDC")
+                .orderType("CGRK")
+                .warehouseCode("SH.001")
+                .items(items)
+                .build();
+        JituService.overseasInboundCreate(request);
     }
 }

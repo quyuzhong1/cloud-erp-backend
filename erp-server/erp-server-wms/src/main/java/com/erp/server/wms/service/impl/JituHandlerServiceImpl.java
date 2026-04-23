@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -10,16 +11,24 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
+import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
+import com.sdk.wms.jitu.dto.request.JituOverseasInboundCancelRequest;
+import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
 import com.sdk.wms.jitu.dto.request.WarehouseRequest;
+import com.sdk.wms.jitu.dto.response.OverseasInboundCancelResponse;
 import com.sdk.wms.jitu.dto.response.WarehouseResponse;
 import com.sdk.wms.jitu.service.JituService;
+import com.sdk.wms.jitu.dto.response.OverseasInboundCreateResponse;
+import com.sdk.wms.zhongbao.dto.request.OverseasInboundCancelRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -68,40 +77,45 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /***
-     * B2C发货单下推海外仓
+     * 头程发货单下推海外仓
      * @param createInboundReq
      * @return
      */
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-//        createInboundReq.setReceivingCode(null);
-//        // 众包推送需要默认ERP的头程发货单号-HH+MM+SS
-//        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-//        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
-//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-//        // 创建入库单
-//        BaseResponse<OverseasInboundApproveResponse> responseBaseResponse = zhongbaoService.overseasInboundApprove(overseasInboundCreateRequest);
-//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage() + ":" + String.join(", ", responseBaseResponse.getErrors()));
-        return null;
+        createInboundReq.setReceivingCode(null);
+        // 众包推送需要默认ERP的头程发货单号-HH+MM+SS
+        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
+        JituOverseasInboundCreateRequest jituOverseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+        // 创建入库单
+        OverseasInboundCreateResponse responseBaseResponse = jituService.overseasInboundCreate(jituOverseasInboundCreateRequest);
+        OverseasInboundCreateResponse.Response response = responseBaseResponse.getResponseitems().get(0);
+        return "true".equals(response.getSuccess()) ? success(response.getEntryOrderId()) : failure(response.getMessage());
+    }
+
+    private JituOverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+        JituOverseasInboundCreateRequest inboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToJitu(createInboundReq);
+        return inboundCreateRequest;
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
-//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
-//        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
-//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-//        OverseasInboundCancelRequest overseasInboundCancelRequest = OverseasInboundCancelRequest.builder()
-//                .orderNos(Collections.singletonList(cancelInboundReq.getReceivingCode()))
-//                .cancelRemark(cancelInboundReq.getRemark())
-//                .build();
-//        BaseResponse<OverseasInboundCancelResponse> responseBaseResponse = zhongbaoService.overseasInboundCancel(overseasInboundCancelRequest);
-//        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getSuccessList().get(0).getOrderNo()) : failure(responseBaseResponse.getData().getFailList().get(0).getMessage());
-        return null;
+        JituOverseasInboundCancelRequest overseasInboundCancelRequest = JituOverseasInboundCancelRequest.builder()
+                .customerid(cancelInboundReq.getOwnerCode())
+                .warehouseCode(cancelInboundReq.getWarehouseCode())
+                .orderType("CGRK")
+                .orderCode(cancelInboundReq.getSourceCode())
+                .cancelReason(cancelInboundReq.getRemark())
+                .build();
+        OverseasInboundCancelResponse responseBaseResponse = jituService.overseasInboundCancel(overseasInboundCancelRequest);
+        OverseasInboundCancelResponse.Response response = responseBaseResponse.getResponseitems().get(0);
+        return "true".equals(response.getSuccess()) ? success(cancelInboundReq.getSourceCode()) : failure(response.getMessage());
     }
 
     @Override
@@ -276,14 +290,14 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
     }
 
-//    private OverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
-//        OverseasInboundCreateRequest inboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToZhongbao(createInboundReq);
+//    private JituOverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+//        JituOverseasInboundCreateRequest inboundCreateRequest = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToZhongbao(createInboundReq);
 //        if (CollUtil.isNotEmpty(createInboundReq.getAttachmentList())){
-//            List<OverseasInboundCreateRequest.Attachment> attachmentOpenDTOs = new ArrayList<>();
+//            List<JituOverseasInboundCreateRequest.Attachment> attachmentOpenDTOs = new ArrayList<>();
 //            createInboundReq.getAttachmentList().forEach(attachment -> {
 //                byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
 //                if (bytes != null) {
-//                    attachmentOpenDTOs.add(OverseasInboundCreateRequest.Attachment.builder().base64(Base64.getEncoder().encodeToString(bytes)).fileName(attachment.getAttachName()).build());
+//                    attachmentOpenDTOs.add(JituOverseasInboundCreateRequest.Attachment.builder().base64(Base64.getEncoder().encodeToString(bytes)).fileName(attachment.getAttachName()).build());
 //                }
 //            });
 //            inboundCreateRequest.setAttachmentOpenDTOs(attachmentOpenDTOs);

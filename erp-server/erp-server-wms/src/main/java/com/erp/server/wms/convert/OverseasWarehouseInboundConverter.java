@@ -15,10 +15,7 @@ import com.sdk.wms.antu.dto.request.AntuCreateInboundReq;
 import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
-import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
-import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
-import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
-import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
+import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OutboundB2cCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
@@ -388,4 +385,34 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "boxNo", ignore = true)
     @Mapping(target = "qty", source = "quantity")
     OutboundB2cCreateRequest.Item b2coutboundItemToZhongbao(ThirdWarehouseCreateOutboundReq.Item item);
+
+    @Mapping(target = "trackNo", ignore = true)
+    @Mapping(target = "supplierCode", ignore = true)
+    @Mapping(target = "storerKey", ignore = true)
+    @Mapping(target = "sourceWarehouseCode", ignore = true)
+    @Mapping(target = "sourceStoreCode", ignore = true)
+    @Mapping(target = "reserved1", ignore = true)
+    @Mapping(target = "outBizNo", ignore = true)
+    @Mapping(target = "warehouseCode", source = "warehouseCode")
+    @Mapping(target = "entryOrderCode", source = "referenceNo")
+    @Mapping(target = "customerid", source = "ownerCode")
+    @Mapping(target = "erpOrderCode", source = "referenceNo")
+    @Mapping(target = "sourceSystem", constant = "SDC")
+    @Mapping(target = "orderType", constant = "CGRK")
+    @Mapping(target = "expectStartTime", source = "etaDate")
+    @Mapping(target = "remark", source = "remark")
+    @Mapping(target = "items", source = "items")
+    JituOverseasInboundCreateRequest inboundDtoToJitu(ThirdWarehouseCreateInboundReq createInboundReq);
+
+    @Mapping(target = "reserved1", ignore = true)
+    @Mapping(target = "remark", ignore = true)
+    @Mapping(target = "productDate", ignore = true)
+    @Mapping(target = "produceCode", ignore = true)
+    @Mapping(target = "expirationDate", ignore = true)
+    @Mapping(target = "batchCode", ignore = true)
+    @Mapping(target = "LineNo", source = "index")
+    @Mapping(target = "itemCode", source = "productSkuId")
+    @Mapping(target = "quantity", source = "quantity")
+    @Mapping(target = "inventoryType", constant = "ZP")
+    JituOverseasInboundCreateRequest.Item inboundItemToJitu(ThirdWarehouseCreateInboundReq.Item item);
 }
