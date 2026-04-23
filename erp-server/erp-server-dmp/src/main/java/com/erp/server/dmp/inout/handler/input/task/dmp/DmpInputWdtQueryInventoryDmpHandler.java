@@ -164,7 +164,7 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         warnMsgInfo.setKeyInfo(warnMsg);
         List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
         warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList) ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : new ArrayList<>());
-        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.IMPLEMENT_GROUP_NOTICE);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
