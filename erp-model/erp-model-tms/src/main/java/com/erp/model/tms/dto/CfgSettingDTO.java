@@ -57,6 +57,12 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
+
+        /**
+         * 合同协议号
+         */
+        @Valid
+        private List<CfgSettingValueDTO.ContractAgreementNoDTO> contractAgreementNoList;
     }
 
     /**
@@ -117,6 +123,12 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
+
+        /**
+         * 合同协议号
+         */
+        @Valid
+        private List<CfgSettingValueDTO.ContractAgreementNoDTO> contractAgreementNoList;
     }
 
 

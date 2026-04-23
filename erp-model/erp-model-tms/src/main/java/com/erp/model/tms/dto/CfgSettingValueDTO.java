@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -289,6 +290,40 @@ public class CfgSettingValueDTO implements Serializable {
          * 费用分摊-小包中转-仓库id
          */
         private String transferWarehouseId;
+    }
+
+    /**
+     * 合同协议号
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ContractAgreementNoDTO {
+
+        /**
+         * 核算公司id
+         */
+        @NotBlank(message = "核算公司不能为空")
+        private String companyId;
+
+        /**
+         * 核算公司名称
+         */
+        private String companyName;
+        /**
+         * 序号
+         */
+        private Integer index;
+
+        /**
+         * 合同协议号
+         */
+        @NotBlank(message = "合同协议号不能为空")
+        @Pattern(regexp = "^[A-Za-z]+$", message = "合同协议号只能输入英文字母")
+        private String contractAgreementNo;
+
+        public void setContractAgreementNo(String contractAgreementNo) {
+            this.contractAgreementNo = contractAgreementNo == null ? null : contractAgreementNo.trim();
+        }
     }
 
     /**

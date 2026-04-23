@@ -9,14 +9,17 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
+import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.server.tms.mapper.CfgSettingMapper;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.DictBasicService;
@@ -28,9 +31,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -43,8 +54,14 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
+    private static final String DATA_KEY = "data";
+    private static final Pattern CONTRACT_AGREEMENT_NO_PATTERN = Pattern.compile("^[A-Za-z]+$");
+
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private SysFeign sysFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -78,6 +95,18 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         }
         return viewDTO;
     }
+
+    @Override
+    public CfgSettingDTO.ViewDTO getSetting(String key) {
+        CfgSettingEnum cfgSettingEnum = checkCfgSettingKey(key);
+        CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
+        CfgSettingEntity cfgSetting = getByKey(cfgSettingEnum.getCode());
+        if (Objects.isNull(cfgSetting)) {
+            return viewDTO;
+        }
+        handleViewEnum(cfgSetting, viewDTO);
+        return viewDTO;
+    }
     /**
      * @description: 格式化枚举信息
      * @author Will
@@ -88,6 +117,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private void handleViewEnum (CfgSettingEntity cfgSetting, CfgSettingDTO.ViewDTO viewDTO) {
 
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
+        if (Objects.isNull(cfgSettingEnum)) {
+            return;
+        }
         switch (cfgSettingEnum) {
             case LOGISTICS_PRODUCT_DEST_DECLARE_PRICE:
                 //无值时默认给null
@@ -95,7 +127,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                     viewDTO.setLogisticsProductDestDeclarePrices(null);
                     break;
                 }
-                List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> prices = JSONUtil.toList(cfgSetting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
+                List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> prices = JSONUtil.toList(cfgSetting.getDataJson().getJSONArray(DATA_KEY), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
                 viewDTO.setLogisticsProductDestDeclarePrices(prices);
                 break;
             case NOTIC:
@@ -134,6 +166,15 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.AllocationSettingDTO.class);
                 viewDTO.setAllocationSettingDTO(allocationSettingDTO);
+                break;
+            case CONTRACT_AGREEMENT_NO:
+                if (ObjectUtil.isEmpty(cfgSetting.getDataJson()) || ObjectUtil.isEmpty(cfgSetting.getDataJson().getJSONArray(DATA_KEY))) {
+                    viewDTO.setContractAgreementNoList(Collections.emptyList());
+                    break;
+                }
+                List<CfgSettingValueDTO.ContractAgreementNoDTO> contractAgreementNoList = JSONUtil.toList(cfgSetting.getDataJson().getJSONArray(DATA_KEY), CfgSettingValueDTO.ContractAgreementNoDTO.class);
+                contractAgreementNoList.sort(Comparator.comparing(CfgSettingValueDTO.ContractAgreementNoDTO::getIndex, Comparator.nullsLast(Comparator.naturalOrder())));
+                viewDTO.setContractAgreementNoList(contractAgreementNoList);
                 break;
             default:
                 break;
@@ -203,18 +244,22 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @param addDTO
      * @param cfgSettingList
      */
-    private CfgSettingEntity handleAddEnum (DictBasicDTO.ViewDTO viewDTO, CfgSettingDTO.AddDTO addDTO, List<CfgSettingEntity> cfgSettingList) {
+    private CfgSettingEntity handleAddEnum (DictBasicDTO.ViewDTO viewDTO, CfgSettingDTO.CommonDTO addDTO, List<CfgSettingEntity> cfgSettingList) {
+        return handleAddEnum(viewDTO.getCode(), viewDTO.getIndex(), addDTO, cfgSettingList, true);
+    }
+
+    private CfgSettingEntity handleAddEnum (String key, Integer index, CfgSettingDTO.CommonDTO addDTO, List<CfgSettingEntity> cfgSettingList, boolean skipNullContractAgreementNo) {
         CfgSettingEntity entity = new CfgSettingEntity();
         //系统配置json
         JSONObject jsonObject = new JSONObject();
-        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(viewDTO.getCode());
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(key);
         if (Objects.isNull(cfgSettingEnum)){
             return null;
         }
         switch (cfgSettingEnum) {
             case LOGISTICS_PRODUCT_DEST_DECLARE_PRICE:
                 JSONArray jsonArray = JSONUtil.parseArray(addDTO.getLogisticsProductDestDeclarePrices());
-                jsonObject.putOpt("data", jsonArray);
+                jsonObject.putOpt(DATA_KEY, jsonArray);
                 break;
             case NOTIC:
                  jsonObject = JSONUtil.parseObj(addDTO.getNoticeDTO());
@@ -242,16 +287,86 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 jsonObject = JSONUtil.parseObj(allocationSettingDTO);
                 break;
-            default:
+            case CONTRACT_AGREEMENT_NO:
+                if (ObjectUtil.isEmpty(addDTO.getContractAgreementNoList())) {
+                    addDTO.setContractAgreementNoList(Collections.emptyList());
+                }
+                handleContractAgreementNoList(addDTO.getContractAgreementNoList());
+                JSONArray contractAgreementNoArray = JSONUtil.parseArray(addDTO.getContractAgreementNoList());
+                jsonObject.putOpt(DATA_KEY, contractAgreementNoArray);
                 break;
+            default:
+                return null;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),viewDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),key)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
-        entity.setIndex(viewDTO.getIndex());
-        entity.setKey(viewDTO.getCode());
+        entity.setIndex(index);
+        entity.setKey(key);
         entity.setDataJson(jsonObject);
         return entity;
+    }
+
+    private CfgSettingEnum checkCfgSettingKey(String key) {
+        if (CharSequenceUtil.isBlank(key)) {
+            throw new ServiceException(ApiError.COMMON_CFG_SETTING_KEY, key);
+        }
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(key);
+        if (Objects.isNull(cfgSettingEnum)) {
+            throw new ServiceException(ApiError.COMMON_CFG_SETTING_KEY, key);
+        }
+        return cfgSettingEnum;
+    }
+
+    private void handleContractAgreementNoList(List<CfgSettingValueDTO.ContractAgreementNoDTO> contractAgreementNoList) {
+        if (CollectionUtils.isEmpty(contractAgreementNoList)) {
+            return;
+        }
+        Integer index = 0;
+        Map<String, SysAccountingCompanyDTO.ListDTO> companyMap = listEnabledAccountingCompanyMap();
+        Set<String> uniqueKeySet = new HashSet<>();
+        for (CfgSettingValueDTO.ContractAgreementNoDTO dto : contractAgreementNoList) {
+
+            if (Objects.isNull(dto)) {
+                throw new ServiceException("合同协议号配置不能为空");
+            }
+            if (CharSequenceUtil.isBlank(dto.getCompanyId())) {
+                throw new ServiceException("核算公司不能为空");
+            }
+            String contractAgreementNo = dto.getContractAgreementNo();
+            if (Objects.nonNull(contractAgreementNo)) {
+                contractAgreementNo = contractAgreementNo.trim();
+                dto.setContractAgreementNo(contractAgreementNo);
+            }
+            if (CharSequenceUtil.isBlank(contractAgreementNo)) {
+                throw new ServiceException("合同协议号不能为空");
+            }
+            if (!CONTRACT_AGREEMENT_NO_PATTERN.matcher(contractAgreementNo).matches()) {
+                throw new ServiceException("合同协议号只能输入英文字母");
+            }
+            SysAccountingCompanyDTO.ListDTO company = companyMap.get(dto.getCompanyId());
+            if (Objects.isNull(company)) {
+                throw new ServiceException("核算公司不存在或已禁用");
+            }
+            dto.setCompanyName(company.getCompanyName());
+            String uniqueKey = dto.getCompanyId() + "_" + contractAgreementNo;
+            if (!uniqueKeySet.add(uniqueKey)) {
+                throw new ServiceException("核算公司和合同协议号不可重复");
+            }
+
+            dto.setIndex(index++);
+        }
+    }
+
+    private Map<String, SysAccountingCompanyDTO.ListDTO> listEnabledAccountingCompanyMap() {
+        ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList("");
+        if (Objects.isNull(companyResult) || !companyResult.isSuccess()) {
+            throw new ServiceException("获取核算公司列表失败");
+        }
+        List<SysAccountingCompanyDTO.ListDTO> companyList = Optional.ofNullable(companyResult.getData()).orElse(Collections.emptyList());
+        return companyList.stream()
+                .filter(company -> Objects.nonNull(company) && CharSequenceUtil.isNotBlank(company.getId()) && !Boolean.TRUE.equals(company.getDisabled()))
+                .collect(Collectors.toMap(SysAccountingCompanyDTO.ListDTO::getId, Function.identity(), (first, second) -> first));
     }
 
     /**
