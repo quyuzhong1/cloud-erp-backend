@@ -45,6 +45,12 @@ public interface ThirdWarehouseFeign {
      */
     @PostMapping("feign/thirdWarehouse/queryFbaOutboundBill")
     ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(@RequestBody ThirdWarehouseQueryFbaOutboundReq queryOutboundReq);
+
+    /**
+     * 按时间分页查询海外仓B2B出库单
+     */
+    @PostMapping("feign/thirdWarehouse/queryFbaOutboundBillPage")
+    ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(@RequestBody ThirdWarehouseQueryFbaOutboundPageReq queryOutboundReq);
     /**
      * 运费试算
      * @param params
