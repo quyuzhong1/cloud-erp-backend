@@ -89,6 +89,8 @@ public enum PlatformDictEnum implements EnumMessage {
     WILDBERRIES("wildberries", "Wildberries", "Wildberries", "61"),
 
     CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),
+
+    COUPANG("Coupang", "Coupang", "Coupang", "048"),
         ;
 
 
