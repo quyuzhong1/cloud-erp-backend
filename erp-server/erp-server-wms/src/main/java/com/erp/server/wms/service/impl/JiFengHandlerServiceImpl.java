@@ -362,6 +362,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             skuListDTO.setCount(item.getDeliveryQty());
             skuListDTOS.add(skuListDTO);
         });
+        jiFengCreateB2BOutboundRequest.setSkuInfoList(skuListDTOS);
         if(StringUtils.isNotBlank(createOutboundReq.getFileUrl())) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.putOnce("url", createOutboundReq.getFileUrl());
