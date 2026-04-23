@@ -828,7 +828,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }else if (ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(response.getStatus())){
             //-2=>异常：数大臣单据不做状态变更，但是三方发货单需要增加操作日志记录详情：海外仓出库异常，系统应拦截，
             // 为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息【errorReason】
+            if (!canTransitToExceptionOrder(entity.getStatus())) {
+                log.info("忽略众包异常订单状态回写,id={},code={},currentStatus={},thirdStatus={}", id, response.getCode(), entity.getStatus(), response.getStatus());
+                return;
+            }
             String errorReason = CharSequenceUtil.blankToDefault(response.getErrorReason(), response.getErrorType());
+            service.updateStatus(id, ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(), CharSequenceUtil.blankToDefault(errorReason, "海外仓出库异常"), response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
             operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息:【" + errorReason + "】", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
             soB2bDeliveryInterceptService.handleResultBySourceId(id, HandleResultEnum.FAILURE.getCode(), CharSequenceUtil.blankToDefault(errorReason, "海外仓出库异常"), response.getTrackNo(), "");
         }else if (ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(response.getStatus())){
