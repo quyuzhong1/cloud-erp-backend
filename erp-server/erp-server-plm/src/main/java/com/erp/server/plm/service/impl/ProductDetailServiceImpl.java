@@ -1510,10 +1510,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(productSaleDTO)) {
                 productLogisticsDTO.setProductPropertyId(productSaleDTO.getProductPropertyId());
                 productLogisticsDTO.setProductProperty(productSaleDTO.getProductProperty());
-            }
-            //保险属性
-            if(CollUtil.isNotEmpty(productLogisticsDTO.getInsurancePropertyList())){
-                productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
+                // 保险属性以销售信息为准，同步覆盖物流表
+                productLogisticsDTO.setInsuranceProperty(productSaleDTO.getInsuranceProperty());
             }
             //SKU操作日志
             addProductLogisticsLog(productLogisticsDTO, id);
@@ -4818,7 +4816,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, dto.getUpdateFiledCode());
             }
-            if (ProductBatchFieldEnum.PRODUCT_PROPERTY_ID.getCode().equals(dto.getUpdateFiledCode())) {
+            if (ProductBatchFieldEnum.INSURANCE_PROPERTY.getCode().equals(dto.getUpdateFiledCode())) {
+                String insuranceProperty = Objects.toString(dto.getValues(), "");
+                List<ProductLogisticsDTO> productLogisticsDTOList = dto.getIds().stream().map(skuId -> {
+                    ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
+                    productLogisticsDTO.setSkuId(skuId);
+                    productLogisticsDTO.setInsuranceProperty(insuranceProperty);
+                    return productLogisticsDTO;
+                }).collect(Collectors.toList());
+                productLogisticsService.saveOrUpdateBatch(productLogisticsDTOList);
+
+                List<ProductSaleDTO> productSaleDTOList = dto.getIds().stream().map(skuId -> {
+                    ProductSaleDTO productSaleDTO = new ProductSaleDTO();
+                    productSaleDTO.setSkuId(skuId);
+                    productSaleDTO.setInsuranceProperty(insuranceProperty);
+                    return productSaleDTO;
+                }).collect(Collectors.toList());
+                productSaleService.saveOrUpdateBatch(productSaleDTOList);
+                flag = Boolean.TRUE;
+            } else if (ProductBatchFieldEnum.PRODUCT_PROPERTY_ID.getCode().equals(dto.getUpdateFiledCode())) {
                 String productPropertyId = Objects.toString(dto.getValues(), "");
                 List<ProductLogisticsDTO> productLogisticsDTOList = dto.getIds().stream().map(skuId -> {
                     ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
