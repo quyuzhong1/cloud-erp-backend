@@ -429,7 +429,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         ImlCreateOutboundReq imlCreateOutboundReq = new ImlCreateOutboundReq();
         imlCreateOutboundReq.setPlatformOrderNo(createOutboundReq.getReferenceNo());
         imlCreateOutboundReq.setLogisticsCode(createOutboundReq.getChannelCode());
-        imlCreateOutboundReq.setBizType("TOB");
+        imlCreateOutboundReq.setBizType("TOC");
         imlCreateOutboundReq.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
         imlCreateOutboundReq.setBuyerCountry(createOutboundReq.getReceiverCountryCode());
         imlCreateOutboundReq.setBuyerProvince(createOutboundReq.getProvince());
