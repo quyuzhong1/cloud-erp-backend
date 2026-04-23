@@ -1630,7 +1630,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     @Override
-    public void logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto) {
+    public List<BatchResultDTO> logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto) {
         List<String> afterSaleIdList = dto.getOrderInfoDTOList().stream().map(AfterSaleDTO.OrderInfoDTO::getId).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList());
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
         // 根据id和code分组
@@ -1660,33 +1660,43 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(afterSaleIdList);
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
         List<AfterSaleProgressEntity> progressEntityList = new ArrayList<>();
+        List<BatchResultDTO> resultList = new ArrayList<>();
         for (AfterSaleEntity afterSaleEntity : afterSaleEntityList) {
+            BatchResultDTO batchResultDTO;
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = resultDTOMap.get(afterSaleEntity.getId());
-            AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
-            if (afterSaleProgressEntity == null) {
-                afterSaleProgressEntity = new AfterSaleProgressEntity();
-                afterSaleProgressEntity.setMainId(afterSaleEntity.getId());
-                afterSaleProgressEntity.setIndex(1);
-                afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
-                afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
-                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-                progressEntityList.add(afterSaleProgressEntity);
-            } else {
-                // 售后发货
-                if (afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())) {
-                    if (!afterSaleProgressEntity.getTrackNo().equals(resultDTO.getTrackNo())) {
-                        String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(), afterSaleProgressEntity.getTrackNo(), resultDTO.getTrackNo());
-                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleProgressEntity.getMainId(), "编辑信息");
-                    }
-                } else {
+            if (resultDTO != null) {
+                AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
+                if (afterSaleProgressEntity == null) {
+                    afterSaleProgressEntity = new AfterSaleProgressEntity();
+                    afterSaleProgressEntity.setMainId(afterSaleEntity.getId());
+                    afterSaleProgressEntity.setIndex(1);
                     afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                    afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
+                    afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                    progressEntityList.add(afterSaleProgressEntity);
+                } else {
+                    // 售后发货
+                    if (afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())) {
+                        if (!afterSaleProgressEntity.getTrackNo().equals(resultDTO.getTrackNo())) {
+                            String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(), afterSaleProgressEntity.getTrackNo(), resultDTO.getTrackNo());
+                            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleProgressEntity.getMainId(), "编辑信息");
+                        }
+                    } else {
+                        afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                    }
+                    afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
+                    afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                    progressEntityList.add(afterSaleProgressEntity);
                 }
-                afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
-                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-                progressEntityList.add(afterSaleProgressEntity);
+                batchResultDTO = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "");
+                resultList.add(batchResultDTO);
+            } else {
+                batchResultDTO = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), "下单失败");
+                resultList.add(batchResultDTO);
             }
         }
         afterSaleProgressService.saveOrUpdateBatch(progressEntityList);
+        return resultList;
     }
 
     @Override
@@ -1766,6 +1776,23 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
         return "";
+    }
+
+    @Override
+    public List<AfterSaleDTO.OrderInfoDTO> getPlaceOrderPreview(BaseIdsDTO.IdsDTO dto) {
+        List<AfterSaleDTO.OrderInfoDTO> list = this.baseMapper.getPlaceOrderPreview(dto.getIds());
+        // 过滤出商家寄出快递单号为空的数据
+        List<AfterSaleDTO.OrderInfoDTO> filterList = list.stream().filter(item -> StringUtils.isBlank(item.getOutboundTrackNo())).collect(Collectors.toList());
+        ApiResult<List<BaseDropDownDTO.CommonDTO>> listApiResult = omsDropDownFeign.listInternalSalesPlatform(DictBasicTypeEnum.MINI_PROGRAM_SALES_PLATFORM_INTERNAL.getType());
+        for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : filterList) {
+            if (StringUtils.isNotBlank(orderInfoDTO.getDictPlatform())) {
+                BaseDropDownDTO.CommonDTO commonDTO = listApiResult.getData().stream().filter(e -> e.getCode().equals(orderInfoDTO.getDictPlatform())).findFirst().orElse(null);
+                if (Objects.nonNull(commonDTO)) {
+                    orderInfoDTO.setDictPlatformName(commonDTO.getValue());
+                }
+            }
+        }
+        return list;
     }
 
 }

@@ -33,6 +33,7 @@
        <result column="invalid_remark" property="invalidRemark" />
        <result column="invalid_time" property="invalidTime" />
        <result column="remark" property="remark" />
+       <result column="type" property="type" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -218,6 +219,35 @@
             and afs.thrid_user_id = #{params.thridUserId}
         </if>
         order by afs.create_time desc
+    </select>
+
+    <select id="getPlaceOrderPreview" resultType="com.erp.model.dmp.dto.AfterSaleDTO$OrderInfoDTO">
+        SELECT
+        afs.ID AS id,
+        afs.code AS code,
+        afs.thrid_user_id AS thridUserId,
+        afs.dict_platform AS dictPlatform,
+        afs.address AS address,
+        afsd.sku_id AS skuId,
+        afsd.sku_no AS skuNo,
+        afsd.product_name AS productName,
+        afsd.sku_qty AS skuQty,
+        afs.username AS thridUserName,
+        o.track_no as outboundTrackNo,
+        afs.phone_number AS phoneNumber
+        FROM
+        after_sale AS afs
+        LEFT JOIN after_sale_detail AS afsd ON afs.ID = afsd.main_id AND afsd.is_deleted = FALSE
+        LEFT JOIN after_sale_progress AS o ON o.main_id = afs.ID
+        AND o.node IN ('toBeShipped', 'terminated')  AND o.is_deleted = FALSE
+        where afs.is_deleted = false
+        <if test="ids != null and ids.size > 0">
+            and afs.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY afs.create_time DESC
     </select>
 
 </mapper>

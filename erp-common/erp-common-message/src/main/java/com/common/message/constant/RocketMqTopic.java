@@ -178,4 +178,9 @@ public class RocketMqTopic {
      * tms 费用分摊异步任务
      */
     public static final String TMS_PUSH_ALLOCATION_COST_TOPIC = "${spring.cloud.nacos.discovery.namespace}-tms_push_allocation_cost_topic";
+
+    /**
+     * tms 异步获取物流下单面单标签
+     */
+    public static final String ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-async_get_logistics_order_label_topic";
 }

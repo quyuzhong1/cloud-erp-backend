@@ -24,26 +24,25 @@ public interface LogisticsOrderMapper extends BaseMapper<LogisticsOrderEntity> {
     /**
      * 分页查询
      *
-     * @param query
-     * @param params
-     * @return
+     * @param query  Page
+     * @param params LogisticsOrderDTO.PagingParamDTO
+     * @return LogisticsOrderDTO.ListDTO
      */
     IPage<LogisticsOrderDTO.ListDTO> paging(Page query, @Param("params") LogisticsOrderDTO.PagingParamDTO params);
 
     /**
-     * 导出Excel查询
+     * 根据id列表查询物流下单信息
      *
-     * @param params
-     * @return
+     * @param ids List<String>
+     * @return List<LogisticsOrderDTO.LogisticsLabelPreviewListDTO>
      */
-    List<LogisticsOrderDTO.ListDTO> listExport(@Param("params") LogisticsOrderDTO.ExportDTO params);
-
+    List<LogisticsOrderDTO.LogisticsLabelPreviewListDTO> printLogisticsLabelPreview(@Param("ids") List<String> ids);
 
     /**
      * 获取状态统计
      *
-     * @param searchParam
-     * @return
+     * @param searchParam LogisticsOrderDTO.PagingParamDTO
+     * @return List<LogisticsOrderDTO.TabListDTO>
      */
     List<LogisticsOrderDTO.TabListDTO> tabList(@Param("params") LogisticsOrderDTO.PagingParamDTO searchParam);
 }

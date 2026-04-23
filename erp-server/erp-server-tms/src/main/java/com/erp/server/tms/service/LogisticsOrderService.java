@@ -23,8 +23,8 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
     /**
      * 新增
      *
-     * @param dto
-     * @return
+     * @param dto LogisticsOrderDTO.AddDTO
+     * @return BaseResultDTO.AddDTO
      * @author lei.nie
      * @date: 2026-04-20
      */
@@ -33,8 +33,8 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
     /**
      * 修改
      *
-     * @param dto
-     * @return
+     * @param dto LogisticsOrderDTO.UpdateDTO
+     * @return Boolean
      * @author lei.nie
      * @date: 2026-04-20
      */
@@ -43,7 +43,7 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
     /**
      * 分页列表查询
      *
-     * @param pagingParamDTO
+     * @param pagingParamDTO PagingDTO<LogisticsOrderDTO.PagingParamDTO>
      * @return PagingVO<LogisticsOrderDTO.ListDTO>>
      * @author lei.nie
      * @date: 2026-04-20
@@ -53,7 +53,7 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
     /**
      * 状态统计
      *
-     * @param dto
+     * @param dto PermissionsDTO
      * @return List<LogisticsOrderDTO.TabListDTO>>
      * @author lei.nie
      * @date: 2026-04-20
@@ -63,20 +63,18 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
     /**
      * 详情
      *
-     * @param id
-     * @return
+     * @param id String
+     * @return LogisticsOrderDTO.ViewDTO
      * @author lei.nie
      * @date: 2026-04-20
      */
     LogisticsOrderDTO.ViewDTO view(String id);
 
-
     /**
      * 导出Excel
      *
-     * @param dto
-     * @param response
-     * @return
+     * @param dto      LogisticsOrderDTO.ExportDTO
+     * @param response HttpServletResponse
      * @author lei.nie
      * @date: 2026-04-20
      */
@@ -126,9 +124,9 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
      * 打印物流面单
      *
      * @param dto BaseIdsDTO.IdsDTO
-     * @return
+     * @return LogisticsOrderDTO.LogisticsLabelPreviewDTO
      */
-    List<BatchResultDTO> printLogisticsWaybill(BaseIdsDTO.IdsDTO dto);
+    LogisticsOrderDTO.LogisticsLabelPreviewDTO printLogisticsLabelPreview(BaseIdsDTO.IdsDTO dto);
 
     /**
      * 上传物流面单
@@ -137,4 +135,27 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
      * @return String
      */
     String uploadLogisticLabel(LogisticsOrderDTO.UploadFileDTO dto);
+
+    /**
+     * 打印物流面单确认
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return String
+     */
+    String printLogisticsLabelConfirm(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 获取物流面单
+     *
+     * @param dtoList LogisticsOrderDTO.LogisticsLabelDTO
+     */
+    List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> dtoList);
+
+    /**
+     * 手动批量获取面单
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> batchLogisticsLabel(BaseIdsDTO.IdsDTO dto);
 }

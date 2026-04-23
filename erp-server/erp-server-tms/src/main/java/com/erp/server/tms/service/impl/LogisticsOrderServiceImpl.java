@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -10,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -17,6 +19,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -25,6 +28,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.AfterSaleDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -39,8 +45,10 @@ import com.erp.server.tms.mapper.LogisticsOrderMapper;
 import com.erp.server.tms.service.*;
 import com.sdk.tms.express.model.base.BaseResult;
 import com.sdk.tms.express.model.order.request.*;
+import com.sdk.tms.express.model.order.response.LabelResponse;
 import com.sdk.tms.express.model.order.response.OrderResponse;
 import com.sdk.tms.express.model.order.response.OrderUpdateResponse;
+import com.sdk.tms.express.model.order.response.PrintFile;
 import com.sdk.tms.express.service.ExpressShipperService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +56,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -116,6 +125,21 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private RedisUtil redisUtil;
+
+    @Resource
+    private MQProducerService mqProducerService;
+
+    @Value("${tms.sf-express.templateCode}")
+    private String templateCode;
+
+    @Value("${tms.sf-express.version}")
+    private String version;
+
+    @Value("${tms.sf-express.fileType}")
+    private String fileType;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -215,7 +239,25 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单表", logisticsOrderEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), "新增操作");
+        // 下单成功发送异步请求保存面单
+        if (StringUtils.isNotBlank(logisticsOrderEntity.getTrackNo())) {
+            // 设置redis
+            String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo());
+            redisUtil.set(labelRedisKey, true, 86400);
+            LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(logisticsOrderEntity);
+            mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
+        }
         return new BaseResultDTO.AddDTO(logisticsOrderEntity.getId(), code);
+    }
+
+    private LogisticsOrderDTO.LogisticsLabelDTO getLogisticsOrderLabel(LogisticsOrderEntity logisticsOrderEntity) {
+        LogisticsOrderDTO.LogisticsLabelDTO labelDTO = new LogisticsOrderDTO.LogisticsLabelDTO();
+        labelDTO.setId(logisticsOrderEntity.getId());
+        labelDTO.setCode(logisticsOrderEntity.getCode());
+        labelDTO.setTrackNo(logisticsOrderEntity.getTrackNo());
+        labelDTO.setLogisticsChannelId(logisticsOrderEntity.getLogisticsChannelId());
+        labelDTO.setLogisticsPlatform(logisticsOrderEntity.getLogisticsPlatform());
+        return labelDTO;
     }
 
     /**
@@ -537,6 +579,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             if (baseResult.isSuccess()) {
                 OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
                 resultDTO.setAfterSaleId(map.get(StringUtils.substringBefore(orderResponse.getOrderId(), "_")));
+                resultDTO.setStatus(true);
                 List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
                 if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
                     WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
@@ -546,6 +589,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 }
             } else {
                 resultDTO.setErrorMsg(baseResult.getErrorMsg());
+                resultDTO.setStatus(false);
             }
             resultDTOList.add(resultDTO);
         }
@@ -584,16 +628,16 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         LogisticsOrderEntity entity = this.getById(id);
         // 物流单据状态不等于下单成功，不允许取消
         if (!LogisticsStatusEnum.SUCCESS.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "物流单据状态不是下单成功，不允许取消");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流单据状态不是下单成功，不允许取消");
         }
         // 有来源单号的物流单，不允许在物流下单页面取消
         if (StringUtils.isNotBlank(entity.getSourceCode())) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "有来源单号的物流单，不允许在物流下单页面取消");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "有来源单号的物流单，不允许在物流下单页面取消");
         }
         String channelId = entity.getLogisticsChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "物流渠道不存在");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流渠道不存在");
         }
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
         boolean success = false;
@@ -613,18 +657,19 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 if (orderUpdateResponse.getResStatus() == 2) {
                     success = true;
                 } else {
-                    resultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), baseResult.getErrorMsg());
+                    resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), baseResult.getErrorMsg());
                 }
             } else {
-                resultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), baseResult.getErrorMsg());
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), baseResult.getErrorMsg());
             }
         } catch (Exception e) {
-            resultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), e.getMessage());
+            resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
         }
         if (success) {
             // 取消成功清空物流跟踪号
             entity.setStatus(LogisticsStatusEnum.CANCEL.getCode());
             entity.setTrackNo("");
+            entity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
             this.updateById(entity);
             // 取消成功删除面单信息
             TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda().eq(TmsAttachmentEntity::getBusinessId, entity.getId()));
@@ -746,8 +791,25 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     }
 
     @Override
-    public List<BatchResultDTO> printLogisticsWaybill(BaseIdsDTO.IdsDTO dto) {
-        return Collections.emptyList();
+    public LogisticsOrderDTO.LogisticsLabelPreviewDTO printLogisticsLabelPreview(BaseIdsDTO.IdsDTO dto) {
+        LogisticsOrderDTO.LogisticsLabelPreviewDTO result = new LogisticsOrderDTO.LogisticsLabelPreviewDTO();
+        List<LogisticsOrderDTO.LogisticsLabelPreviewListDTO> labelPreviewListDTOS = this.baseMapper.printLogisticsLabelPreview(dto.getIds());
+        // 有运单号数量
+        Integer trackNoCount = Math.toIntExact(labelPreviewListDTOS.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getTrackNo())).count());
+        // 无运单号数量
+        Integer notTrackNoCount = Math.toIntExact(labelPreviewListDTOS.stream().filter(req -> CharSequenceUtil.isBlank(req.getTrackNo())).count());
+        // 查询面单信息
+        List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda().in(TmsAttachmentEntity::getBusinessId, dto.getIds()));
+        Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
+        labelPreviewListDTOS.forEach(e -> {
+            e.setAttachName(attachmentMap.get(e.getId()) == null ? "" : attachmentMap.get(e.getId()).getAttachName());
+            e.setAttachUrl(attachmentMap.get(e.getId()) == null ? "" : attachmentMap.get(e.getId()).getAttachUrl());
+        });
+        result.setLabelPreviewListDTOS(labelPreviewListDTOS);
+        result.setTrackNoCount(trackNoCount);
+        result.setNotTrackNoCount(notTrackNoCount);
+        result.setNotPrintCount(dto.getIds().size() - attachmentList.size());
+        return result;
     }
 
     @Override
@@ -765,6 +827,11 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (!"application/pdf".equals(multipartFile.getContentType())) {
             throw new ServiceException("文件格式不正确，请上传PDF格式的文件");
         }
+        TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda()
+                .eq(TmsAttachmentEntity::getBusinessId, entity.getId()).eq(TmsAttachmentEntity::getType, "after_sale_label"));
+        if (tmsAttachmentEntity != null) {
+            attachmentService.removeById(tmsAttachmentEntity.getId());
+        }
         String url = fileFeign.uploadFile(multipartFile);
         TmsAttachmentEntity attachmentEntity = new TmsAttachmentEntity();
         attachmentEntity.setAttachName(multipartFile.getOriginalFilename());
@@ -772,9 +839,118 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         attachmentEntity.setType("after_sale_label");
         attachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(attachmentEntity);
+        entity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
+        this.updateById(entity);
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
         return "";
+    }
+
+    @Override
+    public String printLogisticsLabelConfirm(BaseIdsDTO.IdsDTO dto) {
+        // 查询面单信息
+        List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda().in(TmsAttachmentEntity::getBusinessId, dto.getIds()));
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            throw new ServiceException("无可打印的物流面单");
+        }
+        Map<String, String> baseMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, TmsAttachmentEntity::getAttachUrl));
+        List<String> urlList = dto.getIds().stream().map(e -> baseMap.getOrDefault(e, null)).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        try {
+            return fileFeign.mergeFiles(urlList);
+        } catch (Exception e) {
+            log.error("合并文件失败", e);
+            throw new ServiceException(ApiError.LOGISTICS_PDF_SO_MERGE_ERROR);
+        }
+    }
+
+    @Override
+    public List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> dtoList) {
+        List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
+                .in(TmsAttachmentEntity::getBusinessId, dtoList.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getId).collect(Collectors.toList()))
+                .eq(TmsAttachmentEntity::getType, "after_sale_label"));
+        Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : dtoList) {
+            BatchResultDTO resultDTO = new BatchResultDTO();
+            LogisticsOrderEntity logisticsOrderEntity = getById(logisticsLabelDTO.getId());
+            if (logisticsOrderEntity == null) {
+                resultDTO = BatchResultDTO.fail(logisticsLabelDTO.getId(), logisticsLabelDTO.getCode(), "单据不存在");
+                resultDTOS.add(resultDTO);
+                continue;
+            } else if (StringUtils.isNotBlank(logisticsOrderEntity.getSourceCode())) {
+                resultDTO = BatchResultDTO.fail(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), "有来源单号的单据不能在该页面获取面单");
+                resultDTOS.add(resultDTO);
+                continue;
+            }
+            String channelId = logisticsLabelDTO.getLogisticsChannelId();
+            LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
+            if (Objects.isNull(auth)) {
+                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
+            }
+            Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
+            OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
+                    .templateCode(templateCode + authMap.get("clientId"))
+                    .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsLabelDTO.getTrackNo()).build()))
+                    .version(version)
+                    .fileType(fileType)
+                    .sync(true)
+                    .build();
+            boolean success = false;
+            BaseResult baseResult = null;
+            TmsAttachmentEntity attachmentEntity = new TmsAttachmentEntity();
+            try {
+                ValidatorUtil.validateEntity(orderLabelRequest);
+                baseResult = expressShipperService.getLabel(authMap, orderLabelRequest);
+                // 转换实体
+                if (baseResult.isSuccess()) {
+                    LabelResponse labelResponse = JSONUtil.toBean(JSONUtil.toJsonStr(baseResult.getObj()), LabelResponse.class);
+                    // 根据文件列表 下载文件然后转换base64
+                    List<PrintFile> files = labelResponse.getFiles();
+                    if (1 == files.size()) {
+                        logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
+                        attachmentEntity.setAttachName(logisticsLabelDTO.getTrackNo() + ".pdf");
+                        attachmentEntity.setAttachUrl(files.get(0).getUrl());
+                        attachmentEntity.setType("after_sale_label");
+                        attachmentEntity.setBusinessId(logisticsLabelDTO.getId());
+                    }
+                    success = true;
+                } else {
+                    logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+                    logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
+                    logisticsOrderEntity.setExceptionReason(baseResult.getErrorMessage());
+                    resultDTO = BatchResultDTO.fail(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), baseResult.getErrorMessage());
+                }
+            } catch (Exception e) {
+                logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+                logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
+                logisticsOrderEntity.setExceptionReason(e.getMessage());
+                resultDTO = BatchResultDTO.fail(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), e.getMessage());
+            }
+            if (success) {
+                if (attachmentMap.get(logisticsOrderEntity.getId()) != null) {
+                    attachmentService.removeById(attachmentMap.get(logisticsOrderEntity.getId()).getId());
+                }
+                attachmentService.save(attachmentEntity);
+                logisticsOperateService.pullOperateLog(logisticsLabelDTO.getId(),
+                        logisticsLabelDTO.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+                resultDTO = BatchResultDTO.success(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), "获取面单成功");
+            } else {
+                logisticsOperateService.pullOperateLog(logisticsLabelDTO.getId(),
+                        logisticsLabelDTO.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+            }
+            this.updateById(logisticsOrderEntity);
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS;
+    }
+
+    @Override
+    public List<BatchResultDTO> batchLogisticsLabel(BaseIdsDTO.IdsDTO dto) {
+        List<LogisticsOrderEntity> entityList = this.listByIds(dto.getIds());
+        List<LogisticsOrderDTO.LogisticsLabelDTO> labelDTOList = entityList.stream().map(this::getLogisticsOrderLabel).collect(Collectors.toList());
+        return this.getLogisticsOrderLabel(labelDTOList);
     }
 
 }

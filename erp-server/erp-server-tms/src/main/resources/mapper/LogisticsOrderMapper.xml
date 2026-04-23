@@ -31,14 +31,12 @@
         <result column="province" property="province"/>
         <result column="city" property="city"/>
         <result column="detailed_address" property="detailedAddress"/>
+        <result column="order_id" property="orderId"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        t
-        .
-        id
-        ,
+        t.id,
         t.create_user_id,
         t.create_user_name,
         t.create_time,
@@ -90,10 +88,6 @@
         t.create_time DESC
     </select>
 
-    <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsOrderDTO$ListDTO">
-
-    </select>
-
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsOrderDTO$TabListDTO">
         SELECT
         status AS tabFlag,
@@ -104,6 +98,31 @@
             ${params.permissionSql}
         </if>
         GROUP BY status
+    </select>
+
+    <select id="printLogisticsLabelPreview" resultType="com.erp.model.tms.dto.LogisticsOrderDTO$LogisticsLabelPreviewListDTO">
+        select t.id,
+               t.after_sale_id as afterSaleId,
+               t.code,
+               t.status,
+               t.label_status as labelStatus,
+               t.source_code as sourceCode,
+               t.logistics_platform as logisticsPlatform,
+               t.logistics_channel_id as logisticsChannelId,
+               t.track_no as trackNo,
+               t.transport_no as transportNo,
+               ct.name as logisticsChannelName,
+               bt.name as logisticsPlatformName
+          from logistics_order t
+          left join logistics_channel ct on t.logistics_channel_id = ct.id and ct.is_deleted = FALSE
+          left join dict_basic bt on t.logistics_platform = bt.code and bt.is_deleted = FALSE and bt."type" = 'logisticsPlatform'
+         where t.is_deleted = FALSE
+         <if test="ids != null and ids.size != ''">
+             and t.id in
+             <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                 #{id}
+             </foreach>
+         </if>
     </select>
 
 </mapper>

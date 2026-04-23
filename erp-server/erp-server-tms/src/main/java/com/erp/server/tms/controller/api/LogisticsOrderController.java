@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -206,15 +205,27 @@ public class LogisticsOrderController extends BaseController {
     }
 
     /**
-     * 打印物流面单
+     * 打印物流面单预览
      *
      * @param dto BaseIdsDTO.IdsDTO
-     * @return
+     * @return LogisticsOrderDTO.LogisticsLabelPreviewDTO
      */
-    @PostMapping("/printLogisticsWaybill")
-    @LogAction(value = LogActionEnum.GET_LOGISTICS_LABEL, desc = "打印物流面单")
-    public ApiResult<List<BatchResultDTO>> printLogisticsWaybill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(logisticsOrderService.printLogisticsWaybill(dto));
+    @PostMapping("/printLogisticsLabelPreview")
+    @LogAction(value = LogActionEnum.PRINT_LOGISTICS_LABEL_PREVIEW, desc = "打印物流面单预览")
+    public ApiResult<LogisticsOrderDTO.LogisticsLabelPreviewDTO> printLogisticsLabelPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(logisticsOrderService.printLogisticsLabelPreview(dto));
+    }
+
+    /**
+     * 打印物流面单确认
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return String
+     */
+    @PostMapping("/printLogisticsLabelConfirm")
+    @LogAction(value = LogActionEnum.PRINT_LOGISTICS_LABEL_CONFIRM, desc = "打印物流面单确认")
+    public ApiResult<String> printLogisticsLabelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(logisticsOrderService.printLogisticsLabelConfirm(dto));
     }
 
     /**
@@ -224,8 +235,21 @@ public class LogisticsOrderController extends BaseController {
      * @return String
      */
     @PostMapping("/uploadLogisticLabel")
-    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated LogisticsOrderDTO.UploadFileDTO dto) throws IOException {
+    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated LogisticsOrderDTO.UploadFileDTO dto) {
         return success(logisticsOrderService.uploadLogisticLabel(dto));
+    }
+
+    /**
+     * 手动批量获取面单
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return LogisticsOrderDTO.LogisticsLabelPreviewDTO
+     */
+    @PostMapping("/batchLogisticsLabel")
+    @LogAction(value = LogActionEnum.GET_LOGISTICS_LABEL, desc = "手动批量获取面单")
+    public ApiResult<List<BatchResultDTO>> batchLogisticsLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = logisticsOrderService.batchLogisticsLabel(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 }

@@ -433,9 +433,9 @@ public class AfterSaleController extends BaseController {
      * @return Object
      */
     @PostMapping("/logisticsOrder")
-    public ApiResult<Object> logisticsOrder(@RequestBody AfterSaleDTO.LogisticsOrderDTO dto) {
-        afterSaleService.logisticsOrder(dto);
-        return success();
+    public ApiResult<List<BatchResultDTO>> logisticsOrder(@RequestBody AfterSaleDTO.LogisticsOrderDTO dto) {
+        List<BatchResultDTO> resultDTOS = afterSaleService.logisticsOrder(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -457,7 +457,18 @@ public class AfterSaleController extends BaseController {
      * @return String
      */
     @PostMapping("/uploadLogisticLabel")
-    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated AfterSaleDTO.UploadFileDTO dto) throws IOException {
+    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated AfterSaleDTO.UploadFileDTO dto) {
         return success(afterSaleService.uploadLogisticLabel(dto));
+    }
+
+    /**
+     * 获取下单预览
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return List<AfterSaleDTO.OrderInfoDTO>
+     */
+    @PostMapping("/getPlaceOrderPreview")
+    public ApiResult<List<AfterSaleDTO.OrderInfoDTO>> getPlaceOrderPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(afterSaleService.getPlaceOrderPreview(dto));
     }
 }

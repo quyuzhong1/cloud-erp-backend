@@ -512,4 +512,149 @@ public class LogisticsOrderDTO implements Serializable {
         private MultipartFile file;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsLabelPreviewDTO {
+
+        /**
+         * 有运单号数量
+         */
+        private Integer trackNoCount;
+
+        /**
+         * 无运单号数量
+         */
+        private Integer notTrackNoCount;
+
+        /**
+         * 不可打印数量
+         */
+        private Integer notPrintCount;
+
+        /**
+         * 物流面单预览列表
+         */
+        private List<LogisticsLabelPreviewListDTO> labelPreviewListDTOS;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsLabelPreviewListDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 售后申请id,after_sale.id
+         */
+        private String afterSaleId;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 单据状态
+         */
+        private String status;
+
+        /**
+         * 面单状态
+         */
+        private String labelStatus;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 物流平台
+         */
+        private String logisticsPlatform;
+
+        /**
+         * 物流平台名称
+         */
+        private String logisticsPlatformName;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * url
+         */
+        private String attachUrl;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsLabelDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 物流平台
+         */
+        private String logisticsPlatform;
+
+        /**
+         * 物流渠道id
+         */
+        @NotBlank(message = "渠道不能为空")
+        private String logisticsChannelId;
+
+        /**
+         * 物流跟踪号
+         */
+        @NotBlank(message = "物流跟踪号不能为空")
+        private String trackNo;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 是否来自mq消费
+         */
+        private Boolean isFromMq = false;
+
+    }
+
 }

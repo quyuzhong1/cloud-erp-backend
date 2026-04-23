@@ -611,6 +611,10 @@ public enum RocketMqTagEnum {
      * tms 费用分摊异步任务
      */
     TMS_PUSH_ALLOCATION_COST_TAG(10003, RocketMqTagEnum.SYNC_TMS, "tms_push_allocation_cost_tag"),
+    /**
+     * tms 异步获取物流下单面单标签
+     */
+    ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(10004, RocketMqTagEnum.SYNC_TMS,"async_get_logistics_order_label_tag"),
 
     //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
     /**

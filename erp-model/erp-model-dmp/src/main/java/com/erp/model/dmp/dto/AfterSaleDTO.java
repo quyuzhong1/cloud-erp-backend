@@ -941,6 +941,47 @@ public class AfterSaleDTO implements Serializable {
         private String id;
 
         /**
+         * 工单号
+         */
+        private String code;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+        private String dictPlatformName;
+
+        /**
+         * thrid_user_info主键id
+         */
+        private String thridUserId;
+
+        /**
+         * 客户名
+         */
+        private String thridUserName;
+
+        private String skuId;
+        private String skuNo;
+        private String productName;
+        private Integer skuQty;
+
+        /**
+         * 邮寄地址
+         */
+        private String address;
+
+        /**
+         * 仓库寄的快递单号
+         */
+        private String outboundTrackNo;
+
+        /**
+         * 手机号码
+         */
+        private String phoneNumber;
+
+        /**
          * 省/州
          */
         @NotBlank(message = "省/州不能为空")
