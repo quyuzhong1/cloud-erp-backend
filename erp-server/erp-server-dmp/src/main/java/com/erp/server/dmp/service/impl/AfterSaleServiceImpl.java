@@ -71,14 +71,12 @@ import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -1758,22 +1756,17 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (Objects.isNull(entity)) {
             throw new ServiceException("寄修申请单不存在");
         }
-        MultipartFile multipartFile = dto.getFile();
-        if (multipartFile == null || multipartFile.isEmpty()) {
-            throw new ServiceException("文件不能为空");
+        DmpAttachmentEntity attachmentEntity = attachmentService.lambdaQuery().eq(DmpAttachmentEntity::getBusinessId, dto.getId()).eq(DmpAttachmentEntity::getType, "after_sale_label").one();
+        if (Objects.nonNull(attachmentEntity)) {
+            attachmentService.removeById(attachmentEntity.getId());
         }
-        // 获取文件的内容类型并检查是否为PDF
-        if (!"application/pdf".equals(multipartFile.getContentType())) {
-            throw new ServiceException("文件格式不正确，请上传PDF格式的文件");
-        }
-        String url = fileFeign.uploadFile(multipartFile);
         DmpAttachmentEntity dmpAttachmentEntity = new DmpAttachmentEntity();
-        dmpAttachmentEntity.setAttachName(multipartFile.getOriginalFilename());
-        dmpAttachmentEntity.setAttachUrl(url);
+        dmpAttachmentEntity.setAttachName(dto.getAttachName());
+        dmpAttachmentEntity.setAttachUrl(dto.getAttachUrl());
         dmpAttachmentEntity.setType("after_sale_label");
         dmpAttachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(dmpAttachmentEntity);
-        String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
+        String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), dto.getAttachName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
         return "";
     }

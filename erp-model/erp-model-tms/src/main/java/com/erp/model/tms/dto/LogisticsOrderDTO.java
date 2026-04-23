@@ -509,7 +509,11 @@ public class LogisticsOrderDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
-        private MultipartFile file;
+        @NotBlank(message = "附件url不能为空")
+        private String attachUrl;
+
+        @NotBlank(message = "附件名称不能为空")
+        private String attachName;
     }
 
     @Data

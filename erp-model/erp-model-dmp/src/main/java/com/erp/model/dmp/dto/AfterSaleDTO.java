@@ -10,7 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1044,7 +1043,11 @@ public class AfterSaleDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
-        private MultipartFile file;
+        @NotBlank(message = "附件url不能为空")
+        private String attachUrl;
+
+        @NotBlank(message = "附件名称不能为空")
+        private String attachName;
     }
 
 }

@@ -819,29 +819,20 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (Objects.isNull(entity)) {
             throw new ServiceException("物流单不存在");
         }
-        MultipartFile multipartFile = dto.getFile();
-        if (multipartFile == null || multipartFile.isEmpty()) {
-            throw new ServiceException("文件不能为空");
-        }
-        // 获取文件的内容类型并检查是否为PDF
-        if (!"application/pdf".equals(multipartFile.getContentType())) {
-            throw new ServiceException("文件格式不正确，请上传PDF格式的文件");
-        }
         TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .eq(TmsAttachmentEntity::getBusinessId, entity.getId()).eq(TmsAttachmentEntity::getType, "after_sale_label"));
         if (tmsAttachmentEntity != null) {
             attachmentService.removeById(tmsAttachmentEntity.getId());
         }
-        String url = fileFeign.uploadFile(multipartFile);
         TmsAttachmentEntity attachmentEntity = new TmsAttachmentEntity();
-        attachmentEntity.setAttachName(multipartFile.getOriginalFilename());
-        attachmentEntity.setAttachUrl(url);
+        attachmentEntity.setAttachName(dto.getAttachName());
+        attachmentEntity.setAttachUrl(dto.getAttachUrl());
         attachmentEntity.setType("after_sale_label");
         attachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(attachmentEntity);
         entity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
         this.updateById(entity);
-        String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
+        String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), dto.getAttachName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
         return "";
     }
