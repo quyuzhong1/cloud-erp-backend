@@ -165,6 +165,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
     private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -613,7 +614,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 return BatchResultDTO.success(id, code, "操作成功");
             }
             if (ThirdDeliveryStatusEnum.INTERCEPTING.getCode().equals(latestEntity.getStatus())) {
-                return BatchResultDTO.success(id, code, "操作成功，等待拦截结果");
+                String msg = Objects.nonNull(interceptEntity) && CharSequenceUtil.isNotBlank(interceptEntity.getHandleRemark())
+                        ? interceptEntity.getHandleRemark()
+                        : "操作成功，等待拦截结果";
+                return BatchResultDTO.success(id, code, msg);
             }
             String msg = CharSequenceUtil.blankToDefault(latestEntity.getErrorMessage(), "发货拦截失败");
             return BatchResultDTO.fail(id, code, msg);
@@ -1154,14 +1158,17 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (!fbaOutboundBill.isSuccess()) {
             // 创建失败
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
-            soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(), fbaOutboundBill.getMsg(), entity.getTrackNo(), "");
+            String msg = "三方仓拦截请求失败：" + CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败");
+            soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(), msg, entity.getTrackNo(), "");
             return;
         }
 
         if (B2bThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode().equalsIgnoreCase(fbaOutboundBill.getData())) {
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
+            String msg = "三方仓已返回拦截失败："
+                    + CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败");
             soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(),
-                    CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败"), entity.getTrackNo(), "");
+                    msg, entity.getTrackNo(), "");
             return;
         }
 
@@ -1192,13 +1199,17 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             queryResult = thirdWarehouseService.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
         } catch (Exception e) {
             log.warn("取消B2B三方出库后立即查询状态失败,sourceId={},erpOrderCode={},msg={}", sourceId, req.getErpOrderCode(), e.getMessage());
+            markCancelAcceptedQueryFailed(sourceId, e.getMessage());
             return;
         }
         if (!queryResult.isSuccess() || CollUtil.isEmpty(queryResult.getData())) {
+            String queryMsg = Objects.nonNull(queryResult) ? queryResult.getMsg() : "";
+            markCancelAcceptedQueryFailed(sourceId, queryMsg);
             return;
         }
         ThirdWarehouseQueryFbaOutboundResponse response = queryResult.getData().get(0);
         if (Objects.isNull(response) || CharSequenceUtil.isBlank(response.getStatus())) {
+            markCancelAcceptedQueryFailed(sourceId, "查询结果为空");
             return;
         }
         String providerCode = CharSequenceUtil.blankToDefault(response.getPlatform(), req.getThirdWarehouseProvideCode());
@@ -1207,6 +1218,21 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return;
         }
         this.handleResultData(sourceId, response);
+    }
+
+    private void markCancelAcceptedQueryFailed(String sourceId, String queryErrorMsg) {
+        SoB2bDeliveryInterceptEntity entity = soB2bDeliveryInterceptService.getLatestBySourceId(sourceId);
+        if (Objects.isNull(entity) || SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
+            return;
+        }
+        String msg = CANCEL_ACCEPTED_QUERY_FAILED_MSG;
+        if (CharSequenceUtil.isNotBlank(queryErrorMsg)) {
+            msg = msg + "，查询失败原因：" + queryErrorMsg;
+        }
+        entity.setHandleRemark(msg);
+        soB2bDeliveryInterceptService.updateById(entity);
+        operateLogService.addModuleOperateLog("拦截请求已提交三方仓，但立即查询状态失败，备注：" + msg,
+                ModuleTypeEnum.SO_B2B_DELIVERY_INTERCEPT.getCode(), entity.getId(), "状态查询失败");
     }
 
     @Override

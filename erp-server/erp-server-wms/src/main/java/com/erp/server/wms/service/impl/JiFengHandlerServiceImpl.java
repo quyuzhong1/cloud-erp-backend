@@ -231,7 +231,13 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-        JiFengBaseResp<String>  resp = jiFengService.cancelB2BOutbound(ThirdWarehouseContext.getAuthMap(), cancelOutboundReq.getOrderCode());
+        String erpNo = StringUtils.isNotBlank(cancelOutboundReq.getErpOrderCode())
+                ? cancelOutboundReq.getErpOrderCode()
+                : cancelOutboundReq.getOrderCode();
+        if (StringUtils.isBlank(erpNo)) {
+            return failure("取消B2B出库单失败: ERP参考号为空");
+        }
+        JiFengBaseResp<String>  resp = jiFengService.cancelB2BOutbound(ThirdWarehouseContext.getAuthMap(), erpNo);
         if(!isSuccess(resp)){
             return failure(resp.getMessage());
         }
