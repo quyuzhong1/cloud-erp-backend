@@ -48,6 +48,18 @@ public class OverseasOutboundQueryResponse {
     public static class ResponseData {
 
         /**
+         * 当前页
+         */
+        @JSONField(name = "pageNum")
+        private String pageNum;
+
+        /**
+         * 页大小
+         */
+        @JSONField(name = "pageSize")
+        private String pageSize;
+
+        /**
          * 订单号
          */
         @JSONField(name = "totalCount")
@@ -89,6 +101,12 @@ public class OverseasOutboundQueryResponse {
          */
         @JSONField(name = "trackingNo")
         private String trackingNo;
+
+        /**
+         * 出库时间
+         */
+        @JSONField(name = "outboundTime")
+        private String outboundTime;
 
         /**
          * 状态

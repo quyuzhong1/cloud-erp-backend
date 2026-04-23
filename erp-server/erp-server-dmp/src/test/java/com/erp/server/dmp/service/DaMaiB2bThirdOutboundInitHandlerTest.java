@@ -2,8 +2,8 @@ package com.erp.server.dmp.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
-import com.erp.server.dmp.inout.handler.input.task.init.api.b2b.B2bThirdOutboundInitHandler;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
+import com.erp.server.dmp.inout.handler.input.task.init.api.damai.DaMaiB2bThirdOutboundInitHandler;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -13,39 +13,36 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class B2bThirdOutboundInitHandlerTest {
+public class DaMaiB2bThirdOutboundInitHandlerTest {
 
     @Test
-    public void shouldUseGenericProviderActionStatuses() throws Exception {
-        B2bThirdOutboundInitHandler handler = new B2bThirdOutboundInitHandler();
+    public void shouldUseDaMaiActionStatuses() throws Exception {
+        DaMaiB2bThirdOutboundInitHandler handler = new DaMaiB2bThirdOutboundInitHandler();
         setProviderCode(handler, "damai");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
         response.setStatus("SUCCESS");
         assertTrue((Boolean) invoke(handler, "isActionStatus", response));
 
-        response.setStatus("NEW");
+        response.setStatus("SUBMIT");
         assertFalse((Boolean) invoke(handler, "isActionStatus", response));
     }
 
     @Test
-    public void shouldUseZhongBaoActionStatusesAndErrorReason() throws Exception {
-        B2bThirdOutboundInitHandler handler = new B2bThirdOutboundInitHandler();
-        setProviderCode(handler, "zhongbao");
+    public void shouldUseDaMaiErrorTypeInResult() throws Exception {
+        DaMaiB2bThirdOutboundInitHandler handler = new DaMaiB2bThirdOutboundInitHandler();
+        setProviderCode(handler, "damai");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("-1");
-        assertTrue((Boolean) invoke(handler, "isActionStatus", response));
-
-        response.setStatus("1");
-        assertFalse((Boolean) invoke(handler, "isActionStatus", response));
-
-        response.setStatus("-2");
-        response.setCode("SFFH260330000001");
-        response.setPlatformOrderCode("WB-001");
-        response.setErrorReason("众包异常原因");
+        response.setStatus("BLOCK");
+        response.setCode("SFFH260330000002");
+        response.setPlatformOrderCode("FBA001");
+        response.setErrorType("大卖异常原因");
+        response.setDeliveryTimeStr("2026-05-08 10:00:00");
         JSONObject result = (JSONObject) invoke(handler, "toResult", response);
-        assertEquals("众包异常原因", result.getString("abnormalProblemReason"));
+        assertEquals("BLOCK", result.getString("orderStatus"));
+        assertEquals("大卖异常原因", result.getString("abnormalProblemReason"));
+        assertEquals("2026-05-08 10:00:00", result.getString("dateShippingStr"));
     }
 
     private Object invoke(Object target, String methodName, Object arg) throws Exception {
@@ -54,7 +51,7 @@ public class B2bThirdOutboundInitHandlerTest {
         return method.invoke(target, arg);
     }
 
-    private void setProviderCode(B2bThirdOutboundInitHandler handler, String providerCode) throws Exception {
+    private void setProviderCode(DaMaiB2bThirdOutboundInitHandler handler, String providerCode) throws Exception {
         DmpBasicSystemEntity entity = new DmpBasicSystemEntity();
         entity.setCode(providerCode);
         Field field = findField(handler.getClass(), "dmpBasicSystemEntity");

@@ -1,4 +1,4 @@
-package com.erp.server.dmp.inout.handler.input.task.init.api.b2b;
+package com.erp.server.dmp.inout.handler.input.task.init.api.damai;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
@@ -9,12 +9,11 @@ import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.enums.B2BThirdDeliveryCancelResultEnum;
-import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.b2b.B2bThirdOutboundInitHandler;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -29,11 +28,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * B2B三方仓出库状态 DMP init 拉取处理器
+ * 大卖B2B三方仓出库状态 init handler。
+ * 大卖不支持按时间范围查询，这里按ERP参考号分批通过WMS Feign补查。
  */
 @Service
 @Scope("prototype")
-public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
+public class DaMaiB2bThirdOutboundInitHandler extends B2bThirdOutboundInitHandler {
 
     @Resource
     private ThirdWarehouseFeign thirdWarehouseFeign;
@@ -61,7 +61,7 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
             req.setErpOrderCodeList(subCodeList);
             List<ThirdWarehouseQueryFbaOutboundResponse> responseList = OptionalResult.unwrap(
                     thirdWarehouseFeign.queryFbaOutboundBill(req),
-                    "查询B2B三方仓出库单状态失败");
+                    "查询大卖B2B三方仓出库单状态失败");
             if (CollUtil.isEmpty(responseList)) {
                 continue;
             }
@@ -78,39 +78,9 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
         return Collections.singletonList(dto);
     }
 
-    protected List<OverseasProviderWarehouseEntity> queryProviderWarehouseList() {
-        List<OverseasProviderWarehouseEntity> providerWarehouseList = com.common.business.wrapper.FeignQuery.create(OverseasProviderWarehouseEntity.class)
-                .eq(OverseasProviderWarehouseEntity::getMainId, dmpInputTaskEntity.getNextLevelId())
-                .eq(OverseasProviderWarehouseEntity::getDisabled, Boolean.FALSE)
-                .list();
-        return providerWarehouseList.stream()
-                .filter(item -> StringUtils.isNotBlank(item.getWarehouseId()))
-                .collect(Collectors.toList());
-    }
-
-    protected List<B2bThirdDeliveryEntity> queryB2bThirdDeliveryList(List<OverseasProviderWarehouseEntity> providerWarehouseList) {
-        List<String> warehouseIds = providerWarehouseList.stream()
-                .map(OverseasProviderWarehouseEntity::getWarehouseId)
-                .distinct()
-                .collect(Collectors.toList());
-        List<String> statusList = Arrays.asList(
-                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
-                ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),
-                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode()
-        );
-        return com.common.business.wrapper.FeignQuery.create(B2bThirdDeliveryEntity.class)
-                .eq(B2bThirdDeliveryEntity::getIsApiDelivery, Boolean.TRUE)
-                .in(B2bThirdDeliveryEntity::getDeliveryWarehouseId, warehouseIds)
-                .in(B2bThirdDeliveryEntity::getStatus, statusList)
-                .list();
-    }
-
     private boolean isActionStatus(ThirdWarehouseQueryFbaOutboundResponse response) {
         if (Objects.isNull(response) || StringUtils.isBlank(response.getStatus())) {
             return false;
-        }
-        if (isZhongBaoProvider()) {
-            return Arrays.asList("-1", "-2", "5").contains(response.getStatus());
         }
         B2BThirdDeliveryCancelResultEnum statusEnum = B2BThirdDeliveryCancelResultEnum.getByCode(response.getStatus());
         return Objects.nonNull(statusEnum)
@@ -130,14 +100,9 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
         result.put("referenceNo", response.getCode());
         result.put("orderStatus", response.getStatus());
         result.put("trackingNo", response.getTrackNo());
-        result.put("abnormalProblemReason", isZhongBaoProvider() ? response.getErrorReason() : response.getErrorType());
+        result.put("abnormalProblemReason", response.getErrorType());
         result.put("dateShippingStr", response.getDeliveryTimeStr());
         return result;
-    }
-
-    private boolean isZhongBaoProvider() {
-        return Objects.nonNull(dmpBasicSystemEntity)
-                && StringUtils.equalsIgnoreCase("zhongbao", dmpBasicSystemEntity.getCode());
     }
 
     /**
