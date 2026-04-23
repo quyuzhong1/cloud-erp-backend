@@ -1,10 +1,13 @@
 package com.erp.model.wms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 虚拟仓设置
@@ -65,7 +68,52 @@ public class CfgSettingVirtualDTO implements Serializable {
         @Valid
         private CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO;
 
+        /**
+         * 虚拟仓调拨设置
+         */
+        @Valid
+        private CfgSettingVirtualValueDTO.VirtualTransferSettingDTO virtualTransferSettingDTO;
+
     }
 
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MatchVirtualTransferResultDTO{
+
+        /**
+         * 是否匹配
+         */
+        private Boolean isMatch;
+
+        /**
+         * 调拨方向
+         */
+        private String transferDirection;
+
+    }
+
+
+
+    /**
+     * 匹配中转规则
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MatchVirtualTransferRuleDTO{
+
+        /**
+         * 调入仓库
+         */
+        private String inWarehouseCode;
+
+        /**
+         * 调出仓库
+         */
+        private String outWarehouseCode;
+
+    }
 
 }

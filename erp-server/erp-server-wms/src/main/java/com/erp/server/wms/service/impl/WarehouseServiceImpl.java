@@ -24,6 +24,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -406,11 +407,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public List<WarehouseDTO.PullDownDTO> listOverseasWarehouse() {
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
-        if (warehouseBindMap.isEmpty()) {
+        Set<String> ids = new LinkedHashSet<>(warehouseBindMap.keySet());
+        ids.addAll(listShopBoundWarehouseIds());
+        if (ids.isEmpty()) {
             return Collections.emptyList();
         }
         // 查询对应仓库
-        Set<String> ids = warehouseBindMap.keySet();
         List<WarehouseEntity> list = lambdaQuery()
                 .in(WarehouseEntity::getId, ids)
                 .list();
@@ -430,6 +432,25 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             }
         }
         return resultList.stream().distinct().collect(Collectors.toList());
+    }
+
+    private Set<String> listShopBoundWarehouseIds() {
+        try {
+            ApiResult<List<ShopInfoEntity>> result = shopInfoFeign.list();
+            List<ShopInfoEntity> shopInfoList = result == null ? Collections.emptyList() : result.getData();
+            if (CollectionUtils.isEmpty(shopInfoList)) {
+                return Collections.emptySet();
+            }
+            return shopInfoList.stream()
+                    .filter(Objects::nonNull)
+                    .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
+                    .map(ShopInfoEntity::getWarehouseId)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+        } catch (Exception e) {
+            log.warn("查询店铺绑定系统仓失败, err={}", e.getMessage());
+            return Collections.emptySet();
+        }
     }
 
     @Override

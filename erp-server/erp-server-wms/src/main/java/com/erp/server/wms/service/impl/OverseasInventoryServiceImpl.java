@@ -218,10 +218,10 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         if (CollectionUtils.isEmpty(warehouseDTOList)){
             return false;
         }
-        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = warehouseDTOList.stream()
-                .filter(e -> e.getCode().equalsIgnoreCase(data.getDictPlatform()) && e.getPlatformWarehouseCode().equalsIgnoreCase(data.getWarehouseCode()))
-                .findFirst()
-                .orElse(null);
+        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = findWarehouseMatch(
+                data.getDictPlatform(),
+                data.getWarehouseCode(),
+                warehouseDTOList);
         if (null == warehouseDTO){
             return false;
         }
@@ -230,6 +230,26 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         return mappingDTO.getDictPlatform().equalsIgnoreCase(data.getDictPlatform())
                 && mappingDTO.getPlatformSkuNo().equals(data.getPlatformSku())
                 && mappingDTO.getWarehouseId().equalsIgnoreCase(warehouseId);
+    }
+
+    private OverseasProviderDTO.ListWithWarehouseDTO findWarehouseMatch(String platform,
+                                                                        String warehouseCode,
+                                                                        List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOList) {
+        if (CollectionUtils.isEmpty(warehouseDTOList) || CharSequenceUtil.isBlank(platform) || CharSequenceUtil.isBlank(warehouseCode)) {
+            return null;
+        }
+        return warehouseDTOList.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> e.getCode().equalsIgnoreCase(platform))
+                .filter(e -> {
+                    if (CharSequenceUtil.equalsIgnoreCase("fbt", platform)) {
+                        return CharSequenceUtil.equalsIgnoreCase(warehouseCode, e.getWarehouseId())
+                                || CharSequenceUtil.equalsIgnoreCase(warehouseCode, e.getPlatformWarehouseCode());
+                    }
+                    return CharSequenceUtil.equalsIgnoreCase(warehouseCode, e.getPlatformWarehouseCode());
+                })
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
@@ -301,9 +321,10 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                     }
                     ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOList.stream().filter(ListingInfoWithSkuMappingDTO::getHasMappingAll).findFirst().orElse(null);
                     if (null == listingInfoWithSkuMappingDTO){
-                        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = overseasWarehouseList.stream()
-                                .filter(e ->  e.getCode().equalsIgnoreCase(entity.getDictPlatform()) && e.getPlatformWarehouseCode().equalsIgnoreCase(entity.getWarehouseCode()))
-                                .findFirst().orElse(null);
+                        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = findWarehouseMatch(
+                                entity.getDictPlatform(),
+                                entity.getWarehouseCode(),
+                                overseasWarehouseList);
                         if (null != warehouseDTO){
                             listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.stream()
                                     .filter(e-> e.getWarehouseId().equalsIgnoreCase(warehouseDTO.getWarehouseId()) &&

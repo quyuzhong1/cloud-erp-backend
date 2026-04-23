@@ -1,5 +1,6 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -26,6 +27,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +67,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      * 全部数据（用于判断导入是否为空）
      */
     private final List<JSONObject> dataList = new ArrayList<>();
+    /**
+     * 确认状态更新数据
+     */
+    private List<Pair<String, LocalDateTime>> confirmPairList = new ArrayList<>();
 
     /**
      * 成功信息
@@ -117,7 +123,8 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
+                List<Pair<String, LocalDateTime>> pairs = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
+                confirmPairList.addAll(pairs);
                 matchList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
@@ -146,7 +153,8 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (!successList.isEmpty()) {
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(importDTO,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap);
+                List<Pair<String, LocalDateTime>> pairs = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
+                confirmPairList.addAll(pairs);
                 matchList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
@@ -157,7 +165,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         }
         //添加匹配结果
         addMatchExcelResult();
+        //对所有确认数据进行批量确认
+        importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
     }
+
     /**
      * 添加匹配结果
      * @author will

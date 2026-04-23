@@ -4,6 +4,7 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -58,7 +59,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     @CacheEvict(cacheNames = "cache:mrp:getCfgRuleCommon", allEntries = true, beforeInvocation = true)
     public void update(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
         //清除缓存
-        Set<String> keys = redisTemplate.keys("MRP" + "*");
+        Set<String> keys = redisTemplate.keys(RedisCacheConstants.MRP_KEY + "*");
         if (CollectionUtils.isNotEmpty(keys)) {
             redisTemplate.delete(keys);
         }

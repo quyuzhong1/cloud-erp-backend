@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.CfgAfterPlatformShopEntity;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -14,15 +15,13 @@ import com.erp.server.dmp.mapper.CfgAfterPlatformShopMapper;
 import com.erp.server.dmp.service.CfgAfterPlatformShopService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.hssf.record.DVALRecord;
+import com.erp.server.dmp.service.ThirdMappingService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.CfgAfterPlatformShopDTO;
 import java.util.*;
-import java.util.stream.Collectors;
 import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
 
@@ -43,6 +42,9 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ThirdMappingService thirdMappingService;
 
     /**
     * 保存
@@ -262,53 +264,58 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     public List<CfgAfterPlatformShopDTO.CsAgentDTO> matchCsAgent(String dictPlatform, String shopId) {
         List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = new ArrayList<>();
 
-        // 查询所有匹配平台的记录
-        List<CfgAfterPlatformShopEntity> list = this.lambdaQuery()
-                .eq(CfgAfterPlatformShopEntity::getDictPlatform, dictPlatform)
-                .list();
-
-        if (list.isEmpty()) {
-            return csAgentDTOList;
-        }
-
-        //  优先按 平台+店铺ID 匹配
+        // 优先只按店铺匹配（不考虑平台）
         if (Objects.nonNull(shopId)) {
-            for (CfgAfterPlatformShopEntity entity : list) {
-                JSONObject shopJson = entity.getShopJson();
-                if (shopJson == null || shopJson.isEmpty()) {
-                    continue;
-                }
+            ThirdMappingEntity thirdMapping = thirdMappingService.lambdaQuery()
+                    .eq(ThirdMappingEntity::getThirdCode, shopId)
+                    .eq(ThirdMappingEntity::getType, "shop")
+                    .one();
+            if (Objects.nonNull(thirdMapping)) {
+                List<CfgAfterPlatformShopEntity> allList = this.lambdaQuery().list();
+                for (CfgAfterPlatformShopEntity entity : allList) {
+                    JSONObject shopJson = entity.getShopJson();
+                    if (shopJson == null || shopJson.isEmpty()) {
+                        continue;
+                    }
 
-                CfgAfterPlatformShopDTO.ShopJsonDTO shopJsonDTO = JSONUtil.toBean(shopJson, CfgAfterPlatformShopDTO.ShopJsonDTO.class);
-                if (shopJsonDTO.getShops() == null || shopJsonDTO.getShops().isEmpty()) {
-                    continue;
-                }
+                    CfgAfterPlatformShopDTO.ShopJsonDTO shopJsonDTO = JSONUtil.toBean(shopJson, CfgAfterPlatformShopDTO.ShopJsonDTO.class);
+                    if (shopJsonDTO.getShops() == null || shopJsonDTO.getShops().isEmpty()) {
+                        continue;
+                    }
 
-                // 遍历 shops，匹配 shopId
-                for (CfgAfterPlatformShopDTO.Shop shop : shopJsonDTO.getShops()) {
-                    if (Objects.equals(shop.getId(), shopId)) {
-                        CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(
-                                entity.getCsAgentJson(),
-                                CfgAfterPlatformShopDTO.CsAgentJsonDTO.class
-                        );
-                        if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
-                            return BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+                    // 遍历 shops,匹配 shopId
+                    for (CfgAfterPlatformShopDTO.Shop shop : shopJsonDTO.getShops()) {
+                        if (Objects.equals(shop.getId(), thirdMapping.getSysId())) {
+                            CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(
+                                    entity.getCsAgentJson(),
+                                    CfgAfterPlatformShopDTO.CsAgentJsonDTO.class
+                            );
+                            if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
+                                return BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+                            }
                         }
                     }
                 }
             }
         }
 
-        // 如果 平台+店铺ID 匹配失败，或 shopId 为空，则按 平台+空店铺 匹配
-        for (CfgAfterPlatformShopEntity entity : list) {
-            JSONObject shopJson = entity.getShopJson();
-            if (shopJson.isEmpty()) {
-                CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(
-                        entity.getCsAgentJson(),
-                        CfgAfterPlatformShopDTO.CsAgentJsonDTO.class
-                );
-                if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
-                    return BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+        // 如果店铺匹配失败，或 shopId 为空，则按 平台 匹配
+        if (Objects.nonNull(dictPlatform)) {
+            List<CfgAfterPlatformShopEntity> platformList = this.lambdaQuery()
+                    .eq(CfgAfterPlatformShopEntity::getDictPlatform, dictPlatform)
+                    .list();
+
+            for (CfgAfterPlatformShopEntity entity : platformList) {
+                // 先匹配平台+空店铺
+                JSONObject shopJson = entity.getShopJson();
+                if (shopJson.isEmpty()) {
+                    CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(
+                            entity.getCsAgentJson(),
+                            CfgAfterPlatformShopDTO.CsAgentJsonDTO.class
+                    );
+                    if (csAgentJsonDTO != null && csAgentJsonDTO.getCsAgents() != null) {
+                        return BeanMapperUtils.copyList(CfgAfterPlatformShopDTO.CsAgentDTO.class, csAgentJsonDTO.getCsAgents());
+                    }
                 }
             }
         }

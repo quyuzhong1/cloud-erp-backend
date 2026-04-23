@@ -1257,7 +1257,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
             if(CollUtil.isNotEmpty(notHaveRetailSet)) {
                 String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+//                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
             }
         }
 

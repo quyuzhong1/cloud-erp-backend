@@ -56,7 +56,6 @@ public class VirtualInventoryTransactionJob {
         for(VirtualInventoryTransactionEntity l : list) {
         	virtualInventoryTransactionToInventoryHisPool.execute(() -> {
         		String inventoryId = l.getInventoryId();
-            	MDC.put("traceId", inventoryId);
     			try {
     				virtualInventoryTransactionService.inventoryIdToInventoryHis(inventoryId , "");
     			} catch (Exception e) {
