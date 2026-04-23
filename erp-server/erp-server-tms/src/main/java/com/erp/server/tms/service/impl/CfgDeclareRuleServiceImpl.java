@@ -337,7 +337,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
      * 获取会计公司子列表
      */
     private List<BaseDropDownDTO.ChildTree> accountingCompanyChildList(String name) {
-        com.common.core.controller.vo.ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList(name);
+        ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList(name);
         if (companyResult == null || !companyResult.isSuccess()) {
             throw new ServiceException("获取会计公司列表失败");
         }
