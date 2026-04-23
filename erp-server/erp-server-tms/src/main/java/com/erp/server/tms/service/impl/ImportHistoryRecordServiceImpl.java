@@ -646,7 +646,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         } else {
             logisticsBillCostUpdateList.forEach(obj -> obj.setConfirmTime(null));
         }
-        logisticsBillCostService.batchImportUpdate( logisticsBillList,logisticsBillDetailList,logisticsBillCostUpdateList,processingType);
+        List<String> logisticsBillUpdateIdList = logisticsBillCostUpdateList.stream().map(LogisticsBillCostDTO.UpdateDTO::getLogisticsBillId).distinct().collect(Collectors.toList());
+        List<LogisticsBillEntity> logisticsBillUpdateList = logisticsBillService.listByIds(logisticsBillUpdateIdList);
+        logisticsBillCostService.batchImportUpdate(logisticsBillUpdateList,logisticsBillDetailList,logisticsBillCostUpdateList,processingType);
 
         //新增费用项
         List<TmsCostDetailDTO.AddDTO> costDetailAddList = importDataList.stream().flatMap(obj -> {
