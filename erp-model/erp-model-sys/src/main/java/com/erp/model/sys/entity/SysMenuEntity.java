@@ -76,4 +76,9 @@ public class SysMenuEntity implements Serializable {
 	 * 所属系统,/api/sys/dictBasic/list?type=menuSystem
 	 */
 	private String system;
+	
+	/**
+	 * 是否在归档系统可见，默认false不可见
+	 */
+	private Boolean isArchiveDisplay;
 }
