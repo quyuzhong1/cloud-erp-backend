@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -2220,6 +2221,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     public void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         String taskId = dto.getTaskId();
+
+        CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
+        CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
+
+        // 2. 初始化批次配置
+
         
         // 1. 校验任务存在性
         TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
@@ -2229,7 +2236,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         
         // 2. 初始化批次配置
-        int batchSize = dto.getBatchSize() != null && dto.getBatchSize() > 0 ? dto.getBatchSize() : 500;
+        int batchSize = StringUtils.isBlank(billBatchParamsDTO.getFirstMileBatch()) ? 500 : Integer.valueOf(billBatchParamsDTO.getFirstMileBatch());
+        int timeoutSeconds = StringUtils.isBlank(billBatchParamsDTO.getFirstMileTimeoutSeconds()) ? 5000 :Integer.valueOf(billBatchParamsDTO.getFirstMileTimeoutSeconds());
         String lastId = ""; // 游标起点为空
         
         int totalProcessed = 0;
@@ -2279,7 +2287,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchDeliveryIds.size(), lastId);
             
             // 3.3 为本批次创建任务明细并执行
-            TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(taskId, batchDeliveryIds, dto.getReportDate());
+            TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(taskId, batchDeliveryIds, dto.getReportDate(),timeoutSeconds);
             
             // 3.4 累计统计
             totalProcessed += batchDeliveryIds.size();
@@ -2407,7 +2415,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      * @author jack
      * @date 2026-04-22
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileBatch(String taskId, List<String> batchDeliveryIds, String reportDate) {
+    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileBatch(String taskId, List<String> batchDeliveryIds, String reportDate,int timeoutSeconds) {
         LocalDate reportPeriodMonth = LocalDate.parse(reportDate + "-01");
 
         // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
@@ -2454,7 +2462,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         
         // 4. 并发执行本批次
-        return executeFirstMileBatchWithConcurrency(details, deliveryList, reportPeriodMonth);
+        return executeFirstMileBatchWithConcurrency(details, deliveryList, reportPeriodMonth,timeoutSeconds);
     }
 
     /**
@@ -2469,7 +2477,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeFirstMileBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
                                                                                            List<FirstMileDeliveryEntity> deliveryList,
-                                                                                           LocalDate reportPeriodMonth) {
+                                                                                           LocalDate reportPeriodMonth,int timeoutSeconds) {
         
         // 构建Map便于快速查找
         Map<String, FirstMileDeliveryEntity> deliveryMap = deliveryList.stream()
@@ -2551,8 +2559,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             });
         }
         
-        // 等待本批次完成(1小时)
-        int timeoutSeconds = 15 * 60;
         try {
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {

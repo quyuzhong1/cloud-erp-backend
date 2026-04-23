@@ -2449,6 +2449,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         String taskId = dto.getTaskId();
 
+        CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
+        CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
+
         // 1. 校验任务存在性
         TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
         if (Objects.isNull(taskRecord)) {
@@ -2457,7 +2460,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
 
         // 2. 初始化批次配置
-        int batchSize = dto.getBatchSize() != null && dto.getBatchSize() > 0 ? dto.getBatchSize() : 500;
+        int batchSize = StringUtils.isBlank(billBatchParamsDTO.getSmallBagBatch()) ? 500 : Integer.valueOf(billBatchParamsDTO.getSmallBagBatch());
+        int timeoutSeconds = StringUtils.isBlank(billBatchParamsDTO.getSmallBagTimeoutSeconds()) ? 5000 : Integer.valueOf(billBatchParamsDTO.getSmallBagTimeoutSeconds());
         String lastId = ""; // 游标起点为空
 
         int totalProcessed = 0;
@@ -2508,8 +2512,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             log.info("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
 
             // 3.3 为本批次创建任务明细并执行
-            TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate());
-
+            TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate(),timeoutSeconds);
+            
             // 3.4 累计统计
             totalProcessed += batchIds.size();
             totalSuccess += result.getSuccessCount();
@@ -2563,8 +2567,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @date 2026-04-22
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId, String businessType,
-                                             List<String> batchIds, String reportDate) {
-
+                                             List<String> batchIds, String reportDate,int timeoutSeconds) {
+        
         // 1. 批量查询物流费用实体
         List<LogisticsBillCostEntity> costList = listByIds(batchIds);
         if (CollUtil.isEmpty(costList)) {
@@ -2629,7 +2633,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
 
         // 5. 并发执行本批次
-        return executeBatchWithConcurrency(details, reportDate);
+        return executeBatchWithConcurrency(details, reportDate,timeoutSeconds);
     }
 
     /**
@@ -2642,8 +2646,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @date 2026-04-22
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
-                                                            String reportDate) {
-
+                                                            String reportDate,int timeoutSeconds) {
+        
         CountDownLatch latch = new CountDownLatch(batchDetails.size());
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failedCount = new AtomicInteger(0);
@@ -2707,8 +2711,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             });
         }
 
-        // 等待本批次完成(1小时)
-        int timeoutSeconds = 15 * 60;
         try {
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {
