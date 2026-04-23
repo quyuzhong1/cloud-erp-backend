@@ -85,6 +85,12 @@ public class OverseasOutboundQueryResponse {
     public static class DataList {
 
         /**
+         * 平台创建时间
+         */
+        @JSONField(name = "publishTime")
+        private String publishTime;
+
+        /**
          * 订单号
          */
         @JSONField(name = "orderNo")
@@ -123,6 +129,25 @@ public class OverseasOutboundQueryResponse {
          */
         @JSONField(name = "errorReason")
         private String errorReason;
+
+        /**
+         * B2B扩展信息
+         */
+        @JSONField(name = "openB2b")
+        private OpenB2b openB2b;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class OpenB2b {
+
+        /**
+         * 收货仓代码
+         */
+        @JSONField(name = "receiveWarehouseCode")
+        private String receiveWarehouseCode;
     }
 
     /**

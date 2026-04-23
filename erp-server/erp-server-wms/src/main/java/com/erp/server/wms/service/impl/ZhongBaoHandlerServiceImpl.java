@@ -343,12 +343,19 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     private ThirdWarehouseQueryFbaOutboundResponse buildQueryFbaOutboundResponse(OverseasOutboundQueryResponse.DataList dataList, boolean rawStatus) {
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
+        response.setOrderType("B2B");
         response.setPlatformOrderCode(dataList.getOrderNo());
+        response.setSwOrderNumber(dataList.getOrderNo());
         response.setCode(dataList.getReferenceNo());
         response.setTrackNo(dataList.getTrackingNo());
         response.setStatus(rawStatus
                 ? String.valueOf(dataList.getStatus())
                 : ZhongBaoB2BDeliveryStatusEnum.getErpOrderStatus(String.valueOf(dataList.getStatus())));
+        response.setPlatformCreateTimeStr(dataList.getPublishTime());
+        response.setPlatformUpdateTimeStr(dataList.getOutboundTime());
+        if (Objects.nonNull(dataList.getOpenB2b())) {
+            response.setWarehouseCode(dataList.getOpenB2b().getReceiveWarehouseCode());
+        }
         if (rawStatus) {
             response.setDeliveryTimeStr(dataList.getOutboundTime());
         } else {

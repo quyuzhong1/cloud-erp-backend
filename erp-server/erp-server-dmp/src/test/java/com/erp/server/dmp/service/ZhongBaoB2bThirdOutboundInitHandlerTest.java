@@ -39,10 +39,19 @@ public class ZhongBaoB2bThirdOutboundInitHandlerTest {
         response.setPlatformOrderCode("WB-001");
         response.setErrorReason("众包异常原因");
         response.setDeliveryTimeStr("2026-05-07 15:15:26");
+        response.setPlatformCreateTimeStr("2026-05-07 10:00:00");
+        response.setPlatformUpdateTimeStr("2026-05-07 15:15:26");
+        response.setSwOrderNumber("WB-001");
+        response.setWarehouseCode("811");
         JSONObject result = (JSONObject) invoke(handler, "toResult", response);
         assertEquals("众包异常原因", result.getString("abnormalProblemReason"));
         assertEquals("2026-05-07 15:15:26", result.getString("dateShippingStr"));
         assertEquals("-2", result.getString("orderStatus"));
+        assertEquals("2026-05-07 10:00:00", result.getString("platformCreateTimeStr"));
+        assertEquals("2026-05-07 15:15:26", result.getString("platformUpdateTimeStr"));
+        assertEquals("WB-001", result.getString("swOrderNumber"));
+        assertEquals("811", result.getString("warehouseCode"));
+        assertEquals("B2B", result.getString("orderType"));
     }
 
     private Object invoke(Object target, String methodName, Object arg) throws Exception {

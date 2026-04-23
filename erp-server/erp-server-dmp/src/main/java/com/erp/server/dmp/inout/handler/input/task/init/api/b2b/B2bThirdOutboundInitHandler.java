@@ -132,6 +132,13 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
         result.put("trackingNo", response.getTrackNo());
         result.put("abnormalProblemReason", isZhongBaoProvider() ? response.getErrorReason() : response.getErrorType());
         result.put("dateShippingStr", response.getDeliveryTimeStr());
+        result.put("platformCreateTimeStr", response.getPlatformCreateTimeStr());
+        result.put("platformUpdateTimeStr", response.getPlatformUpdateTimeStr());
+        result.put("swOrderNumber", response.getSwOrderNumber());
+        result.put("warehouseCode", response.getWarehouseCode());
+        result.put("shippingMethod", response.getShippingMethod());
+        result.put("carrierName", response.getCarrierName());
+        result.put("orderType", StringUtils.defaultIfBlank(response.getOrderType(), "B2B"));
         return result;
     }
 

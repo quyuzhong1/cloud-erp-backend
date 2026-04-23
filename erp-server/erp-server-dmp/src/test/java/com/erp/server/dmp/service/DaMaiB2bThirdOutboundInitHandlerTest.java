@@ -39,10 +39,19 @@ public class DaMaiB2bThirdOutboundInitHandlerTest {
         response.setPlatformOrderCode("FBA001");
         response.setErrorType("大卖异常原因");
         response.setDeliveryTimeStr("2026-05-08 10:00:00");
+        response.setPlatformCreateTimeStr("2026-05-07 09:00:00");
+        response.setWarehouseCode("DM-WH");
+        response.setShippingMethod("UPS");
+        response.setCarrierName("DAMAI");
         JSONObject result = (JSONObject) invoke(handler, "toResult", response);
         assertEquals("BLOCK", result.getString("orderStatus"));
         assertEquals("大卖异常原因", result.getString("abnormalProblemReason"));
         assertEquals("2026-05-08 10:00:00", result.getString("dateShippingStr"));
+        assertEquals("2026-05-07 09:00:00", result.getString("platformCreateTimeStr"));
+        assertEquals("DM-WH", result.getString("warehouseCode"));
+        assertEquals("UPS", result.getString("shippingMethod"));
+        assertEquals("DAMAI", result.getString("carrierName"));
+        assertEquals("B2B", result.getString("orderType"));
     }
 
     private Object invoke(Object target, String methodName, Object arg) throws Exception {

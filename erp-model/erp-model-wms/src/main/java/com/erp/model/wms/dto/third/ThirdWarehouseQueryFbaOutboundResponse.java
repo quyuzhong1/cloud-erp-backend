@@ -21,6 +21,11 @@ import java.util.List;
 public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
 
     /**
+     * 订单类型，B2B/B2C
+     */
+    private String orderType;
+
+    /**
      * 订单号，根据订单匹配B2B三方发货单更新
      */
     private String platformOrderCode;
@@ -45,6 +50,16 @@ public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
      * 2023-05-29 16:48:07
      */
     private String deliveryTimeStr;
+
+    /**
+     * 平台创建时间
+     */
+    private String platformCreateTimeStr;
+
+    /**
+     * 平台修改时间
+     */
+    private String platformUpdateTimeStr;
     /**
      * 以下状态B2B三方发货单状态不作变更
      * NEW：草稿
@@ -74,5 +89,30 @@ public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
      * 平台：zhongbao用作判断订单状态是否需要解析数据
      */
     private String platform;
+
+    /**
+     * 平台订单号
+     */
+    private String swOrderNumber;
+
+    /**
+     * 仓库代码
+     */
+    private String warehouseCode;
+
+    /**
+     * 运输方式
+     */
+    private String shippingMethod;
+
+    /**
+     * 承运商
+     */
+    private String carrierName;
+
+    /**
+     * 拦截状态
+     */
+    private String interceptStatus;
 
 }
