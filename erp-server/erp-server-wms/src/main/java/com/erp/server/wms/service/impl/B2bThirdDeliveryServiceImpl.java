@@ -598,12 +598,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         SoB2bDeliveryInterceptEntity interceptEntity = soB2bDeliveryInterceptService.getLatestBySourceId(id);
         if (Objects.nonNull(interceptEntity)
                 && SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(interceptEntity.getHandleStatus())) {
-            String msg = CharSequenceUtil.blankToDefault(interceptEntity.getHandleRemark(),
-                    HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult()) ? "拦截成功" : "拦截失败");
             if (HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult())) {
-                return BatchResultDTO.success(id, code, msg);
+                return BatchResultDTO.success(id, code, "操作成功");
             }
             if (HandleResultEnum.FAILURE.getCode().equals(interceptEntity.getHandleResult())) {
+                String msg = CharSequenceUtil.blankToDefault(interceptEntity.getHandleRemark(), "发货拦截失败");
                 return BatchResultDTO.fail(id, code, msg);
             }
         }
@@ -611,13 +610,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryEntity latestEntity = this.getById(id);
         if (Objects.nonNull(latestEntity)) {
             if (ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(latestEntity.getStatus())) {
-                return BatchResultDTO.success(id, code, "拦截成功");
+                return BatchResultDTO.success(id, code, "操作成功");
             }
             if (ThirdDeliveryStatusEnum.INTERCEPTING.getCode().equals(latestEntity.getStatus())) {
-                return BatchResultDTO.success(id, code, "同步发起发货拦截成功，等待三方仓处理");
+                return BatchResultDTO.success(id, code, "操作成功，等待拦截结果");
             }
+            String msg = CharSequenceUtil.blankToDefault(latestEntity.getErrorMessage(), "发货拦截失败");
+            return BatchResultDTO.fail(id, code, msg);
         }
-        return BatchResultDTO.success(id, code, "操作成功，等待拦截结果");
+        return BatchResultDTO.fail(id, code, "发货拦截失败");
     }
 
     @Override
@@ -1156,6 +1157,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
             soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(),
                     CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败"), entity.getTrackNo(), "");
+            return;
+        }
+
+        if (B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode().equalsIgnoreCase(fbaOutboundBill.getData())) {
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", req.getOrderCode(), "", entity.getTrackNo(), null);
+            soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.SUCCESS.getCode(), "海外仓取消出库成功", entity.getTrackNo(), "");
             return;
         }
 
