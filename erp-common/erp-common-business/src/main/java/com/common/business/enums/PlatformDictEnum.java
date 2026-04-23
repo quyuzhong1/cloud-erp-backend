@@ -92,6 +92,8 @@ public enum PlatformDictEnum implements EnumMessage {
     KUAIDI100("KUAIDI100", "快递100", "快递100物流平台", "64"),
 
     CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),
+
+    COUPANG("Coupang", "Coupang", "Coupang", "048"),
         ;
 
 
