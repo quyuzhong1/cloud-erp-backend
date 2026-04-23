@@ -78,6 +78,47 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return new BaseResultDTO.AddDTO("", "");
     }
 
+
+    @Override
+    public  BaseResultDTO.AddDTO addByKey(CfgSettingDTO.AddByKeyDTO addDTO) {
+        // 数据处理
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(addDTO.getKey());
+        if (Objects.isNull(cfgSettingEnum)){
+            throw new ServiceException("系统配置类型不存在");
+        }
+
+        //系统配置json
+        JSONObject jsonObject = new JSONObject();
+        switch (cfgSettingEnum) {
+            case BILL_AUTO_ADD:
+                jsonObject = JSONUtil.parseObj(addDTO.getBillAutoAddDTO());
+                break;
+            case CONTRACT_AGREEMENT_NO:
+                if (ObjectUtil.isEmpty(addDTO.getContractAgreementNoList())) {
+                    addDTO.setContractAgreementNoList(Collections.emptyList());
+                }
+                handleContractAgreementNoList(addDTO.getContractAgreementNoList());
+                JSONArray contractAgreementNoArray = JSONUtil.parseArray(addDTO.getContractAgreementNoList());
+                jsonObject.putOpt(DATA_KEY, contractAgreementNoArray);
+                break;
+            default:
+                throw new ServiceException("系统配置类型不正确");
+        }
+        //查询是否是修改
+        CfgSettingEntity entity = getByKey(addDTO.getKey());
+        if(Objects.isNull(entity)){
+            entity = new CfgSettingEntity();
+            entity.setKey(addDTO.getKey());
+        }
+        entity.setDataJson(jsonObject);
+        log.info("开始新增系统配置管理");
+        boolean save = super.saveOrUpdate(entity);
+        if(!save) {
+            throw new ServiceException("系统配置管理保存失败");
+        }
+        return new BaseResultDTO.AddDTO("", "");
+    }
+
     @Override
     public CfgSettingDTO.ViewDTO view() {
         CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
@@ -240,19 +281,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @description: 格式化枚举信息
      * @author zdy
      * @date: 2024/1/11 15:15
-     * @param viewDTO
      * @param addDTO
      * @param cfgSettingList
      */
-    private CfgSettingEntity handleAddEnum (DictBasicDTO.ViewDTO viewDTO, CfgSettingDTO.CommonDTO addDTO, List<CfgSettingEntity> cfgSettingList) {
-        return handleAddEnum(viewDTO.getCode(), viewDTO.getIndex(), addDTO, cfgSettingList, true);
-    }
-
-    private CfgSettingEntity handleAddEnum (String key, Integer index, CfgSettingDTO.CommonDTO addDTO, List<CfgSettingEntity> cfgSettingList, boolean skipNullContractAgreementNo) {
+    private CfgSettingEntity handleAddEnum (DictBasicDTO.ViewDTO viewDTO, CfgSettingDTO.AddDTO addDTO, List<CfgSettingEntity> cfgSettingList) {
         CfgSettingEntity entity = new CfgSettingEntity();
         //系统配置json
         JSONObject jsonObject = new JSONObject();
-        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(key);
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(viewDTO.getCode());
         if (Objects.isNull(cfgSettingEnum)){
             return null;
         }
@@ -275,9 +311,6 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 jsonObject = JSONUtil.parseObj(addDTO.getReconciliationCycleDTO());
                 break;
-            case BILL_AUTO_ADD:
-                jsonObject = JSONUtil.parseObj(addDTO.getBillAutoAddDTO());
-                break;
             case ALLOCATION_SETTING:
                 //无值时默认给null
                 CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = addDTO.getAllocationSettingDTO();
@@ -287,22 +320,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 jsonObject = JSONUtil.parseObj(allocationSettingDTO);
                 break;
-            case CONTRACT_AGREEMENT_NO:
-                if (ObjectUtil.isEmpty(addDTO.getContractAgreementNoList())) {
-                    addDTO.setContractAgreementNoList(Collections.emptyList());
-                }
-                handleContractAgreementNoList(addDTO.getContractAgreementNoList());
-                JSONArray contractAgreementNoArray = JSONUtil.parseArray(addDTO.getContractAgreementNoList());
-                jsonObject.putOpt(DATA_KEY, contractAgreementNoArray);
-                break;
             default:
                 return null;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),key)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),viewDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
-        entity.setIndex(index);
-        entity.setKey(key);
+        entity.setIndex(viewDTO.getIndex());
+        entity.setKey(viewDTO.getCode());
         entity.setDataJson(jsonObject);
         return entity;
     }

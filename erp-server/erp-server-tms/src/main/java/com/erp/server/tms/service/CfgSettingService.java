@@ -53,4 +53,6 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     List<CfgSettingEntity> listCfgSettingByKeys(List<String> keys);
 
     CfgSettingValueDTO.AllocationSettingDTO getCfgSettingByAllocationSetting();
+
+    BaseResultDTO.AddDTO addByKey(CfgSettingDTO.AddByKeyDTO dto);
 }

@@ -74,6 +74,20 @@ public class CfgSettingDTO implements Serializable {
 
 
     }
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddByKeyDTO extends AddDTO {
+
+        /**
+         * key
+         */
+        @NotBlank(message = "key不能为空")
+        private String key;
+
+    }
 
     /**
      * 修改
