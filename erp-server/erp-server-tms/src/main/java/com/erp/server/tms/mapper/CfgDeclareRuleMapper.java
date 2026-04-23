@@ -28,7 +28,7 @@ public interface CfgDeclareRuleMapper extends BaseMapper<CfgDeclareRuleEntity> {
     * @param params
     * @return
     */
-    IPage<CfgDeclareRuleDTO.ListDTO> paging(Page query, @Param("params") CfgDeclareRuleDTO.PagingParamDTO params);
+    IPage<CfgDeclareRuleDTO.ListDTO> paging(Page query, @Param("params") CfgDeclareRuleDTO.ListParamDTO params);
 
     /**
     * 状态数量

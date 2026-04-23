@@ -37,7 +37,34 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.CfgDeclareRuleDTO$ListDTO">
-
+        SELECT
+            cdr.id,
+            cdr.rule_type,
+            cdr.sender_type,
+            cdr.sender_id,
+            cdr.sender_name,
+            cdr.receiver_type,
+            cdr.receiver_id,
+            cdr.receiver_name,
+            cdr.disabled,
+            cd.id AS detailId,
+            cd.left_bracket,
+            cd.field,
+            cd.compare,
+            cd.value,
+            cd.name,
+            cd.right_bracket,
+            cd.logic,
+            cd.index
+        FROM cfg_declare_rule cdr
+        LEFT JOIN cfg_declare_rule_condition cd ON cd.rule_id = cdr.id AND cd.is_deleted = FALSE
+        where
+        cdr.is_deleted = FALSE
+        <if test="params != null and params.ruleType != null and params.ruleType != ''">
+           and cdr.rule_type = (${params.ruleType})
+        </if>
+        ORDER BY
+        cdr.id DESC, cd.index ASC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -45,7 +72,39 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.tms.dto.CfgDeclareRuleDTO$ListDTO">
-
+        SELECT
+            id,
+            rule_type,
+            sender_type,
+            sender_id,
+            sender_name,
+            receiver_type,
+            receiver_id,
+            receiver_name,
+            disabled,
+            approve_status,
+            create_time,
+            create_user_name
+        FROM cfg_declare_rule cdr
+        <where>
+            cdr.is_deleted = FALSE
+            <!-- 导出勾选ID过滤 -->
+            <if test="ids != null and ids.size() > 0">
+                AND cdr.id IN
+                <foreach collection="ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <!-- 高级查询条件 -->
+            <if test="sqlMap != null and sqlMap.default != null and sqlMap.default != ''">
+                ${sqlMap.default}
+            </if>
+            <!-- 权限过滤 -->
+            <if test="permissionSql != null and permissionSql != ''">
+                ${permissionSql}
+            </if>
+        </where>
+        ORDER BY cdr.create_time DESC
     </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.CfgDeclareRuleDTO$TabListDTO">
         SELECT

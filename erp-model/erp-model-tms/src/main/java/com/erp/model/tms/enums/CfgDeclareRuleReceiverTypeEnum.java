@@ -3,6 +3,7 @@ package com.erp.model.tms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 public enum CfgDeclareRuleReceiverTypeEnum implements EnumMessage {
     BY_COMPANY("byCompany","按结算公司"),
@@ -34,5 +35,18 @@ public enum CfgDeclareRuleReceiverTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (BusinessTypeEnum typeEnums : BusinessTypeEnum.values()) {
+            if (code.equals(typeEnums.getCode())) {
+                return typeEnums.getName();
+            }
+        }
+        return "";
     }
 }

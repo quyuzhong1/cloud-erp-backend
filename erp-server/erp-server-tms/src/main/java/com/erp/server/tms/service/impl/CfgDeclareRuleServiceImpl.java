@@ -1,10 +1,5 @@
 package com.erp.server.tms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.common.business.dto.ApproveDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
 import cn.hutool.core.util.StrUtil;
 import com.common.core.controller.vo.ApiResult;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -35,18 +30,16 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.tms.enums.CfgDeclareRuleReceiverTypeEnum;
 import com.erp.model.tms.enums.CfgDeclareRuleSenderTypeEnum;
 import com.erp.rpc.sys.feign.SysFeign;
+import com.common.business.enums.ApproveStatusEnum;
+import java.util.Arrays;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -156,8 +149,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
 
 
     @Override
-    public PagingVO<CfgDeclareRuleDTO.ListDTO> paging(PagingDTO<CfgDeclareRuleDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+    public PagingVO<CfgDeclareRuleDTO.ListDTO> paging(PagingDTO<CfgDeclareRuleDTO.ListParamDTO> pagingParamDTO) {
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<CfgDeclareRuleDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
@@ -166,26 +158,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
-    }
-
-    @Override
-    public List<CfgDeclareRuleDTO.TabListDTO> tabList(PermissionsDTO param) {
-        CfgDeclareRuleDTO.PagingParamDTO searchParam = new CfgDeclareRuleDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<CfgDeclareRuleDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(CfgDeclareRuleDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new CfgDeclareRuleDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new CfgDeclareRuleDTO.TabListDTO("all", list.stream().mapToInt(CfgDeclareRuleDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
     }
 
     @Override
@@ -283,9 +255,23 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        // 属性赋值
+
         for(CfgDeclareRuleDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
+            // 规则类型
+            if (StrUtil.isNotEmpty(data.getRuleType())) {
+                // 临时处理：根据code直接赋值
+                if ("fmDeclareBill".equals(data.getRuleType())) {
+                    data.setRuleTypeName("头程报关单");
+                } else if ("b2bDeclareBill".equals(data.getRuleType())) {
+                    data.setRuleTypeName("B2B报关单");
+                }
+            }
+            
+            // 发货人类型
+            data.setSenderTypeName(CfgDeclareRuleSenderTypeEnum.getName(data.getSenderType()));
+
+            // 收货人类型
+            data.setReceiverTypeName(CfgDeclareRuleReceiverTypeEnum.getName(data.getReceiverType()));
         }
    }
 

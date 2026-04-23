@@ -44,16 +44,8 @@ public interface CfgDeclareRuleService extends SuperService<CfgDeclareRuleEntity
     * @param pagingParamDTO
     * @return PagingVO<CfgDeclareRuleDTO.ListDTO>>
     */
-    PagingVO<CfgDeclareRuleDTO.ListDTO> paging(PagingDTO<CfgDeclareRuleDTO.PagingParamDTO> pagingParamDTO);
+    PagingVO<CfgDeclareRuleDTO.ListDTO> paging(PagingDTO<CfgDeclareRuleDTO.ListParamDTO> pagingParamDTO);
 
-    /**
-    * 状态统计
-    * @author jack
-    * @date: 2026-04-20
-    * @param dto
-    * @return List<CfgDeclareRuleDTO.TabListDTO>>
-    */
-    List<CfgDeclareRuleDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
     * 详情

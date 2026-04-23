@@ -72,6 +72,21 @@ public class CfgDeclareRuleDTO implements Serializable {
 
 
     /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListParamDTO {
+
+        /**
+         * 规则类型: fmDeclareBill=头程报关单, b2bDeclareBill=B2B报关单
+         */
+        @NotBlank(message = "规则类型不能为空")
+        private String ruleType;
+    }
+
+
+    /**
     * 分页列表
     */
     @Data
@@ -123,22 +138,70 @@ public class CfgDeclareRuleDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+        * 条件表ID（用于关联查询）
+        */
+        private String detailId;
 
         /**
-        * 审核状态名称
+        * 规则主表id
         */
-        private String approveStatusName;
-
-
-        /**
-        * 创建时间
-        */
-        private LocalDateTime createTime;
+        private String ruleId;
 
         /**
-        * 创建人名称
+        * 左括号
         */
-        private String createUserName;
+        private String leftBracket;
+
+        /**
+        * 条件的字段
+        */
+        private String field;
+
+        /**
+        * 比较符
+        */
+        private String compare;
+
+        /**
+        * 值
+        */
+        private String value;
+
+        /**
+        * 值对应名称
+        */
+        private String name;
+
+        /**
+        * 右括号
+        */
+        private String rightBracket;
+
+        /**
+        * 逻辑关系: or=或, and=且
+        */
+        private String logic;
+
+        /**
+        * 顺序
+        */
+        private Integer index;
+
+        /**
+        * 规则类型名称
+        */
+        private String ruleTypeName;
+
+        /**
+        * 发货人类型名称
+        */
+        private String senderTypeName;
+
+        /**
+        * 收货人类型名称
+        */
+        private String receiverTypeName;
 
     }
 

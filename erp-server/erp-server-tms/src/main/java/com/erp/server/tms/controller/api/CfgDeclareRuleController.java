@@ -2,7 +2,6 @@ package com.erp.server.tms.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -12,17 +11,12 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.tms.service.CfgDeclareRuleService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.common.business.dto.ApproveDTO;
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.CfgDeclareRuleDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -74,21 +68,6 @@ public class CfgDeclareRuleController extends BaseController {
         return success();
     }
 
-
-    /**
-    * 获取状态统计
-    * @return
-    */
-    @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:cfgDeclareRule:paging",
-            tableAlias = ""
-    )
-    public ApiResult<List<CfgDeclareRuleDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(cfgDeclareRuleService.tabList(dto));
-    }
-
     /**
     * 列表查询
     * @author jack
@@ -97,12 +76,12 @@ public class CfgDeclareRuleController extends BaseController {
     * @return ApiResult<PagingVO<CfgDeclareRuleDTO.ListDTO>>
     */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:cfgDeclareRule:paging",
-            tableAlias = ""
-    )
-    public ApiResult<PagingVO<CfgDeclareRuleDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgDeclareRuleDTO.PagingParamDTO> dto) {
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "tms:cfgDeclareRule:paging",
+//            tableAlias = ""
+//    )
+    public ApiResult<PagingVO<CfgDeclareRuleDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgDeclareRuleDTO.ListParamDTO> dto) {
         return success(cfgDeclareRuleService.paging(dto));
     }
 
