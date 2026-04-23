@@ -561,17 +561,17 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @return Boolean
      */
     private Boolean isFsApprovePass (String businessId,String businessKey) {
-        //查询三方审批生成记录
+        //查询三方审批生成记录,如果是进行中则是飞书审核
         ApproveTaskInfoEntity approveTaskInfo = approveTaskInfoService.  getByBusinessIdAndKey(businessId, businessKey);
-        if (ObjectUtil.isEmpty(approveTaskInfo)) {
-            return  Boolean.FALSE;
+        if (ObjectUtil.isNotEmpty(approveTaskInfo) && CharSequenceUtil.equals(approveTaskInfo.getBussinessApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+            return  Boolean.TRUE;
         }
-        //查询最后一条第三方流程管理记录，如果已结束则返回false
+        //查询最后一条第三方流程管理记录，如果是进行中则是飞书
         ThirdProcessManagementEntity managementEntity = thirdProcessManagementService.getLastByBusinessIdAndKey(businessId, businessKey);
-        if (ObjectUtil.isNotEmpty(managementEntity) && ObjectUtil.isNotEmpty(managementEntity.getEndTime())) {
-            return Boolean.FALSE;
+        if (ObjectUtil.isNotEmpty(managementEntity) && CharSequenceUtil.equals(managementEntity.getStatus(), ProcessStatusEnum.RUNNING.getCode())) {
+            return Boolean.TRUE;
         }
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
     /**
