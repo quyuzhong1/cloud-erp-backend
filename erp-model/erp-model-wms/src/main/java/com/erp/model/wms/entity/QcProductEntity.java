@@ -43,6 +43,12 @@ public class QcProductEntity extends BaseEntity<QcProductEntity> {
     private String skuNo;
 
     /**
+     * EAN码
+     */
+    @TableField(value = "ean")
+    private String ean;
+
+    /**
      * 产品等级信息
      */
     @TableField("product_grade")

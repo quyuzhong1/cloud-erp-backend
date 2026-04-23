@@ -310,4 +310,5 @@ public interface RedisCacheConstants {
 
     String WDT_ERROR_CODE_KEY = "dmp:wdt:error:code:";
     String SO_B2C_NOT_OUTBOUND_KEY = "oms:b2c:notbound";
+    String SO_B2C_DELIVERY_WITH_NOT_OUTBOUND_KEY = "oms:b2c:deliveryWithNotOutbound:";
 }

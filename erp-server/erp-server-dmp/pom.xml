@@ -258,6 +258,12 @@
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-tms-kuaidi100</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-oms-aliexpress</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
