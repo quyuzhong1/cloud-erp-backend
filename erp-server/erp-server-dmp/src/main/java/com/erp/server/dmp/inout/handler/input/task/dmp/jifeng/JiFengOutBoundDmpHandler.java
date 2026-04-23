@@ -29,6 +29,9 @@ public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
 			Map<String, Object> mongoData = mongoDataMaps.get(0);
+			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+				dmpDataMap.put("referenceNo", mongoData.get("erpNo"));
+			}
 		    if(mongoData.containsKey("shippedTime") && Objects.nonNull(mongoData.get("shippedTime"))){
 				String shippedTimeStr = String.valueOf(mongoData.get("shippedTime"));
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
