@@ -18,6 +18,15 @@ import java.util.TreeMap;
 @Scope("prototype")
 public class B2bThirdOutboundDmpHandler extends DmpInputDbConvertDmpHandler {
 
+    private static final String ORDER_TYPE = "orderType";
+    private static final String DATE_SHIPPING = "dateShipping";
+    private static final String DATE_SHIPPING_STR = "dateShippingStr";
+    private static final String PLATFORM_CREATE_TIME = "platformCreateTime";
+    private static final String PLATFORM_CREATE_TIME_STR = "platformCreateTimeStr";
+    private static final String PLATFORM_UPDATE_TIME = "platformUpdateTime";
+    private static final String PLATFORM_UPDATE_TIME_STR = "platformUpdateTimeStr";
+    private static final String ORDER_TYPE_B2B = "B2B";
+
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
@@ -28,16 +37,22 @@ public class B2bThirdOutboundDmpHandler extends DmpInputDbConvertDmpHandler {
                 continue;
             }
             Map<String, Object> sourceData = sourceDataList.get(0);
-            if (!sourceData.containsKey("dateShippingStr") || Objects.isNull(sourceData.get("dateShippingStr"))) {
-                continue;
-            }
-            LocalDateTime shippingTime = parseDateTime(String.valueOf(sourceData.get("dateShippingStr")));
-            if (Objects.isNull(shippingTime)) {
-                continue;
-            }
             for (TreeMap<String, Object> dmpData : dmpDataList) {
-                dmpData.put("dateShipping", shippingTime);
+                dmpData.put(ORDER_TYPE, ORDER_TYPE_B2B);
+                putDateTimeIfPresent(dmpData, DATE_SHIPPING, sourceData.get(DATE_SHIPPING_STR));
+                putDateTimeIfPresent(dmpData, PLATFORM_CREATE_TIME, sourceData.get(PLATFORM_CREATE_TIME_STR));
+                putDateTimeIfPresent(dmpData, PLATFORM_UPDATE_TIME, sourceData.get(PLATFORM_UPDATE_TIME_STR));
             }
+        }
+    }
+
+    private void putDateTimeIfPresent(TreeMap<String, Object> dmpData, String key, Object value) {
+        if (Objects.isNull(value)) {
+            return;
+        }
+        LocalDateTime dateTime = parseDateTime(String.valueOf(value));
+        if (Objects.nonNull(dateTime)) {
+            dmpData.put(key, dateTime);
         }
     }
 
