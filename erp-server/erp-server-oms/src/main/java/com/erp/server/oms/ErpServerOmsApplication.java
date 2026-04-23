@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableDiscoveryClient
 @EnableAsync
 @EnableTransactionManagement
-@ServletComponentScan
+@ServletComponentScan(basePackages ={"com.erp","com.common"})
 public class ErpServerOmsApplication {
 
     public static void main(String[] args) {
