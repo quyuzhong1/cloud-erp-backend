@@ -108,7 +108,7 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
         result.put("sourcePlatform", dmpBasicSystemEntity.getCode());
         result.put("orderCode", response.getPlatformOrderCode());
         result.put("referenceNo", response.getCode());
-        result.put("orderStatus", response.getStatus());
+        result.put("orderStatus", resolveOrderStatus(response));
         result.put("trackingNo", response.getTrackNo());
         result.put("abnormalProblemReason", isZhongBaoProvider() ? response.getErrorReason() : response.getErrorType());
         result.put("dateShippingStr", response.getDeliveryTimeStr());
@@ -120,6 +120,13 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
         result.put("carrierName", response.getCarrierName());
         result.put("orderType", StringUtils.defaultIfBlank(response.getOrderType(), "B2B"));
         return result;
+    }
+
+    protected String resolveOrderStatus(ThirdWarehouseQueryFbaOutboundResponse response) {
+        if (Objects.isNull(response)) {
+            return null;
+        }
+        return StringUtils.defaultIfBlank(response.getPlatformOriginalStatus(), response.getStatus());
     }
 
     private boolean isZhongBaoProvider() {

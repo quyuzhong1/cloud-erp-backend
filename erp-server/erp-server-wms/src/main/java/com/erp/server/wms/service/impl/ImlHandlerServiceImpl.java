@@ -369,6 +369,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     String deliveryTimeStr = dateTime.format(formatter);
                     response.setDeliveryTimeStr(deliveryTimeStr);
                 }
+                response.setPlatformOriginalStatus(imlQueryOutboundResp.getOrderStatus());
                 response.setStatus(ImlEnums.B2BOrderStatusEnum.getErpOrderStatus(imlQueryOutboundResp.getOrderStatus()));
                 responseList.add(response);
             }else{

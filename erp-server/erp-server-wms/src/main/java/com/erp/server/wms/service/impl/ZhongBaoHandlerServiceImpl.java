@@ -348,6 +348,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         response.setSwOrderNumber(dataList.getOrderNo());
         response.setCode(dataList.getReferenceNo());
         response.setTrackNo(dataList.getTrackingNo());
+        response.setPlatformOriginalStatus(String.valueOf(dataList.getStatus()));
         response.setStatus(rawStatus
                 ? String.valueOf(dataList.getStatus())
                 : ZhongBaoB2BDeliveryStatusEnum.getErpOrderStatus(String.valueOf(dataList.getStatus())));

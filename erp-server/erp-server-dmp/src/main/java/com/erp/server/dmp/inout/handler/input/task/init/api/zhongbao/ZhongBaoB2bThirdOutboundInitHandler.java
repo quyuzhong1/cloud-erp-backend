@@ -119,7 +119,7 @@ public class ZhongBaoB2bThirdOutboundInitHandler extends DmpInputInitHandler {
         result.put("sourcePlatform", dmpBasicSystemEntity.getCode());
         result.put("orderCode", response.getPlatformOrderCode());
         result.put("referenceNo", response.getCode());
-        result.put("orderStatus", response.getStatus());
+        result.put("orderStatus", StringUtils.defaultIfBlank(response.getPlatformOriginalStatus(), response.getStatus()));
         result.put("trackingNo", response.getTrackNo());
         result.put("abnormalProblemReason", response.getErrorReason());
         result.put("dateShippingStr", response.getDeliveryTimeStr());

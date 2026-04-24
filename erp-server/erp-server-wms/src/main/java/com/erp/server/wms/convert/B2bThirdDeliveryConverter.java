@@ -68,6 +68,7 @@ public interface B2bThirdDeliveryConverter {
 
     List<ThirdWarehouseQueryFbaOutboundResponse> toB2bThirdDeliveryQueryDTO(List<DaMaiGetFbaOrderResp> dataList);
     @Mapping(target = "orderType", constant = "B2B")
+    @Mapping(target = "platformOriginalStatus", source = "status")
     @Mapping(target = "status", expression = "java(com.sdk.wms.damai.enums.DaMaiEnums.B2BOrderStatusEnum.getErpOrderStatus(data.getStatus()))")
     @Mapping(target = "trackNo", source = "mainTrackingNo")
     @Mapping(target = "platformOrderCode", source = "fbaSoNo")

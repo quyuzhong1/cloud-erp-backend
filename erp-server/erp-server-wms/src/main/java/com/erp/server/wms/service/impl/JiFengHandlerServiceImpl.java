@@ -269,6 +269,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 if(Objects.nonNull(jiFengB2BOutboundResp.getShippedTime())){
                     res.setDeliveryTimeStr(jiFengB2BOutboundResp.getShippedTime());
                 }
+                res.setPlatformOriginalStatus(jiFengB2BOutboundResp.getStatus().toString());
                 res.setStatus(JiFengEnums.B2BOrderStatusEnum.getErpOrderStatus(jiFengB2BOutboundResp.getStatus().toString()));
                 resultList.add(res);
             }

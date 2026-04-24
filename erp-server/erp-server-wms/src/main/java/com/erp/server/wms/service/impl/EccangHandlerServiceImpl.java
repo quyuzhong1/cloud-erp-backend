@@ -204,6 +204,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     if (Objects.nonNull(antuOutboundResp.getOutBoundTime())) {
                         res.setDeliveryTimeStr(antuOutboundResp.getOutBoundTime().toString());
                     }
+                    res.setPlatformOriginalStatus(antuOutboundResp.getOrderStatus());
                     res.setStatus(AntuEnums.B2BOrderStatusEnum.getErpOrderStatus(antuOutboundResp.getOrderStatus()));
                     resultList.add(res);
                 });
@@ -227,6 +228,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 if(Objects.nonNull(antuOutboundResp.getOutBoundTime())){
                     res.setDeliveryTimeStr(antuOutboundResp.getOutBoundTime().toString());
                 }
+                res.setPlatformOriginalStatus(antuOutboundResp.getOrderStatus());
                 res.setStatus(AntuEnums.B2BOrderStatusEnum.getErpOrderStatus(antuOutboundResp.getOrderStatus()));
                 resultList.add(res);
             }
