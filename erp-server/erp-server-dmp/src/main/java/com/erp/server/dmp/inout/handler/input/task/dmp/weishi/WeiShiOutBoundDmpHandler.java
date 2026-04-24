@@ -5,6 +5,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -32,10 +35,21 @@ public class WeiShiOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 				// 解析为 LocalDateTime 对象
 				LocalDateTime shippedTime = LocalDateTime.parse(shippedTimeStr, formatter);
+				String warehouseCode = String.valueOf(mongoData.get("warehouseCode"));
+				if("MXW1".equals(warehouseCode)){
+					// 1. 解析为北京时间（无时区）
+					// 2. 关联北京时区
+					ZonedDateTime beijingZoned = shippedTime.atZone(ZoneId.of("Asia/Shanghai"));
+					// 3. 转换到墨西哥六区（固定 UTC-6）
+					ZonedDateTime mexicoZoned = beijingZoned.withZoneSameInstant(ZoneOffset.ofHours(-6));
+					// 4. 提取转换后的本地时间
+					shippedTime = mexicoZoned.toLocalDateTime();
+				}
 				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 					dmpDataMap.put("dateShipping", shippedTime);
 				}
 			}
 		}
 	}
+
 }
