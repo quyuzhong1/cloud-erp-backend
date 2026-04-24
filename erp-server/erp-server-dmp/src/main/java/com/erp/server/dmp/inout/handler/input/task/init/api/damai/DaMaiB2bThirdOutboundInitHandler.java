@@ -81,7 +81,7 @@ public class DaMaiB2bThirdOutboundInitHandler extends B2bThirdOutboundInitHandle
         result.put("sourcePlatform", dmpBasicSystemEntity.getCode());
         result.put("orderCode", response.getPlatformOrderCode());
         result.put("referenceNo", response.getCode());
-        result.put("orderStatus", response.getStatus());
+        result.put("orderStatus", resolveOrderStatus(response));
         result.put("trackingNo", response.getTrackNo());
         result.put("abnormalProblemReason", response.getErrorType());
         result.put("dateShippingStr", response.getDeliveryTimeStr());

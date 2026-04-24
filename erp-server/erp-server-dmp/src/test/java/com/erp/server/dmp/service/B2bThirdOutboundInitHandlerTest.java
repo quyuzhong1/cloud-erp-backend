@@ -19,7 +19,8 @@ public class B2bThirdOutboundInitHandlerTest {
         setProviderCode(handler, "damai");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("NEW");
+        response.setStatus("creating");
+        response.setPlatformOriginalStatus("NEW");
         response.setCode("SFFH260330000004");
         response.setPlatformOrderCode("WB-NEW");
         JSONObject result = (JSONObject) invoke(handler, "toResult", response);
@@ -33,13 +34,15 @@ public class B2bThirdOutboundInitHandlerTest {
         setProviderCode(handler, "zhongbao");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("1");
+        response.setStatus("waitShipped");
+        response.setPlatformOriginalStatus("1");
         response.setCode("SFFH260330000001");
         response.setPlatformOrderCode("WB-001");
         JSONObject draftResult = (JSONObject) invoke(handler, "toResult", response);
         assertEquals("1", draftResult.getString("orderStatus"));
 
-        response.setStatus("-2");
+        response.setStatus("exceptionOrder");
+        response.setPlatformOriginalStatus("-2");
         response.setErrorReason("众包异常原因");
         JSONObject result = (JSONObject) invoke(handler, "toResult", response);
         assertEquals("众包异常原因", result.getString("abnormalProblemReason"));
