@@ -204,6 +204,9 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
         java.util.Map<String, String> soCustomerNameMap = soInfoEntityList.stream()
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getCode()))
                 .collect(Collectors.toMap(SoInfoEntity::getCode, item -> customerNameMap.getOrDefault(item.getCustomerId(), ""), (item1, item2) -> item1));
+        java.util.Map<String, String> soPlatformOrderCodeMap = soInfoEntityList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getCode()))
+                .collect(Collectors.toMap(SoInfoEntity::getCode, item -> CharSequenceUtil.blankToDefault(item.getPlatformOrderCode(), ""), (item1, item2) -> item1));
         for (SoB2bDeliveryInterceptDTO.ListDTO record : records) {
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
             record.setHandleResultName(HandleResultEnum.getName(record.getHandleResult()));
@@ -214,6 +217,7 @@ public class SoB2bDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2bDel
             record.setSourceTypeName(SoB2bDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
             record.setDeliveryMethodName(DeliveryModeEnum.getName(record.getDeliveryMethod()));
             record.setStatusName(ThirdDeliveryStatusEnum.getName(record.getStatus()));
+            record.setPlatformOrderCode(soPlatformOrderCodeMap.getOrDefault(record.getSoCode(), ""));
             if (CharSequenceUtil.isBlank(record.getCustomerName())) {
                 record.setCustomerName(soCustomerNameMap.getOrDefault(record.getSoCode(), ""));
             }

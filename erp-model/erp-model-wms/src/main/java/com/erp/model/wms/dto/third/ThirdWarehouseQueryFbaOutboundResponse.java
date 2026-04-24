@@ -61,24 +61,14 @@ public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
      */
     private String platformUpdateTimeStr;
     /**
-     * 以下状态B2B三方发货单状态不作变更
-     * NEW：草稿
-     * SUBMIT：已提交
-     * PROCESSED：出库中
-     * WAIT_UPLOAD：待上传
-     * UPLOADED：已上传
-     * BLOCK：订单拦截中
-     * DISCARD_PROCESSED：作废中
-     *
-     * 以下状态自动变更为取消发货，有拦截标识时清空拦截标识，记录拦截成功
-     * EXCEPTION：出库异常
-     * DISCARD：已作废
-     * PROBLEM：问题件
-     *
-     * 以下状态自动变更为已发货，并自动生成销售出库单自动审核
-     * SUCCESS：已出库
+     * ERP标准状态，供WMS内部业务流转使用
      */
     private String status;
+
+    /**
+     * 海外仓原始状态，供DMP落原始状态使用
+     */
+    private String platformOriginalStatus;
 
     /**
      * zhongbao 海外仓出库异常时，记录异常原型到操作日志

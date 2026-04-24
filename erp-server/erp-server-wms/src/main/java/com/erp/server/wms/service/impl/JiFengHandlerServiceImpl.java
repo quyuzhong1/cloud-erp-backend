@@ -269,6 +269,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 if(Objects.nonNull(jiFengB2BOutboundResp.getShippedTime())){
                     res.setDeliveryTimeStr(jiFengB2BOutboundResp.getShippedTime());
                 }
+                res.setPlatformOriginalStatus(jiFengB2BOutboundResp.getStatus().toString());
                 res.setStatus(JiFengEnums.B2BOrderStatusEnum.getErpOrderStatus(jiFengB2BOutboundResp.getStatus().toString()));
                 resultList.add(res);
             }
@@ -345,6 +346,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private JiFengCreateB2BOutboundRequest buildB2BOrderDTO(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         JiFengCreateB2BOutboundRequest jiFengCreateB2BOutboundRequest = new JiFengCreateB2BOutboundRequest();
         jiFengCreateB2BOutboundRequest.setErpNo(createOutboundReq.getReferenceNo());
+        jiFengCreateB2BOutboundRequest.setReferenceNo(createOutboundReq.getReferenceNo());
         jiFengCreateB2BOutboundRequest.setWarehouse(createOutboundReq.getThirdWarehouseCode());
         jiFengCreateB2BOutboundRequest.setDestination(2);
         jiFengCreateB2BOutboundRequest.setLogisticType(Integer.valueOf(createOutboundReq.getChannelCode()));

@@ -136,15 +136,14 @@ public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
 				.map(OverseasProviderWarehouseEntity::getWarehouseId)
 				.distinct()
 				.collect(Collectors.toList());
-		List<String> statusList = Arrays.asList(
-				ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
-				ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),
-				ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode()
-		);
 		return com.common.business.wrapper.FeignQuery.create(B2bThirdDeliveryEntity.class)
 				.eq(B2bThirdDeliveryEntity::getIsApiDelivery, Boolean.TRUE)
 				.in(B2bThirdDeliveryEntity::getDeliveryWarehouseId, warehouseIds)
-				.in(B2bThirdDeliveryEntity::getStatus, statusList)
+				.notIn(B2bThirdDeliveryEntity::getStatus, Arrays.asList(
+						ThirdDeliveryStatusEnum.CREATING.getCode(),
+						ThirdDeliveryStatusEnum.SHIPPED.getCode(),
+						ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode()
+				))
 				.list();
 	}
 

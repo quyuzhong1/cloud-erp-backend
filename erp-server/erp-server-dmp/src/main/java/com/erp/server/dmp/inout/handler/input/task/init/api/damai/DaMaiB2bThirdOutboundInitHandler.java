@@ -8,7 +8,6 @@ import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
-import com.erp.model.wms.enums.B2BThirdDeliveryCancelResultEnum;
 import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -66,7 +64,7 @@ public class DaMaiB2bThirdOutboundInitHandler extends B2bThirdOutboundInitHandle
                 continue;
             }
             responseList.stream()
-                    .filter(this::isActionStatus)
+                    .filter(Objects::nonNull)
                     .map(this::toResult)
                     .forEach(resultList::add);
         }
@@ -78,27 +76,12 @@ public class DaMaiB2bThirdOutboundInitHandler extends B2bThirdOutboundInitHandle
         return Collections.singletonList(dto);
     }
 
-    private boolean isActionStatus(ThirdWarehouseQueryFbaOutboundResponse response) {
-        if (Objects.isNull(response) || StringUtils.isBlank(response.getStatus())) {
-            return false;
-        }
-        B2BThirdDeliveryCancelResultEnum statusEnum = B2BThirdDeliveryCancelResultEnum.getByCode(response.getStatus());
-        return Objects.nonNull(statusEnum)
-                && !Arrays.asList(
-                B2BThirdDeliveryCancelResultEnum.NEW,
-                B2BThirdDeliveryCancelResultEnum.SUBMIT,
-                B2BThirdDeliveryCancelResultEnum.PROCESSED,
-                B2BThirdDeliveryCancelResultEnum.WAIT_UPLOAD,
-                B2BThirdDeliveryCancelResultEnum.UPLOADED
-        ).contains(statusEnum);
-    }
-
     private JSONObject toResult(ThirdWarehouseQueryFbaOutboundResponse response) {
         JSONObject result = new JSONObject();
         result.put("sourcePlatform", dmpBasicSystemEntity.getCode());
         result.put("orderCode", response.getPlatformOrderCode());
         result.put("referenceNo", response.getCode());
-        result.put("orderStatus", response.getStatus());
+        result.put("orderStatus", resolveOrderStatus(response));
         result.put("trackingNo", response.getTrackNo());
         result.put("abnormalProblemReason", response.getErrorType());
         result.put("dateShippingStr", response.getDeliveryTimeStr());

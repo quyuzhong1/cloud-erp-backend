@@ -601,8 +601,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "B2B三方发货单");
         }
-        //只有待发货允许发货拦截
-        if (!ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())) {
+        // 只有待发货、异常订单允许发货拦截
+        if (!canStartDeliveryIntercept(entity.getStatus())) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED);
         }
         if (isApiPushDelivery(entity)) {
@@ -1175,6 +1175,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_NOT_EXIST_GENERIC.getMsg(), req.getSourceCode()), "", "", "", null);
             return;
         }
+        String fallbackStatus = CharSequenceUtil.blankToDefault(entity.getStatus(), ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode());
 
         ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(thirdWarehouseService)) {
@@ -1184,14 +1185,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         ApiResult<String> fbaOutboundBill = cancelFbaOutboundBill(thirdWarehouseService, req, 0);
         if (!fbaOutboundBill.isSuccess()) {
             // 创建失败
-            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
+            proxyService.updateStatus(sourceId, fallbackStatus, "", "", "", "", null);
             String msg = "三方仓拦截请求失败：" + CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败");
             soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(), msg, entity.getTrackNo(), "");
             return;
         }
 
         if (B2bThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode().equalsIgnoreCase(fbaOutboundBill.getData())) {
-            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
+            proxyService.updateStatus(sourceId, fallbackStatus, "", "", "", "", null);
             String msg = "三方仓已返回拦截失败："
                     + CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败");
             soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(),
@@ -1444,6 +1445,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
     }
 
+    private boolean canStartDeliveryIntercept(String currentStatus) {
+        return isOneOf(currentStatus,
+                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+    }
+
     private boolean canTransitToShipped(String currentStatus) {
         return isOneOf(currentStatus,
                 ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
@@ -1456,12 +1463,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return isOneOf(currentStatus,
                 ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
                 ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(),
                 ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
     }
 
     private boolean canTransitToIntercepting(String currentStatus) {
         return isOneOf(currentStatus,
                 ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(),
                 ThirdDeliveryStatusEnum.INTERCEPTING.getCode());
     }
 
