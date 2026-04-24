@@ -10,6 +10,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.wms.enums.B2BThirdDeliveryCancelResultEnum;
 import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
+import com.erp.model.wms.enums.ZhongBaoB2BDeliveryStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.springframework.context.annotation.Scope;
@@ -70,9 +71,6 @@ public class B2bThirdOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
             return null;
         }
         String targetStatus = convertStatus(entity.getSourcePlatform(), entity.getOrderStatus());
-        if (Objects.isNull(targetStatus)) {
-            return null;
-        }
         PlatformOutboundDTO dto = BeanUtil.copyProperties(entity, PlatformOutboundDTO.class);
         dto.setUniqueId(entity.getReferenceNo());
         dto.setPlatform(entity.getSourcePlatform());
@@ -80,28 +78,27 @@ public class B2bThirdOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         dto.setTrackNo(entity.getTrackingNo());
         dto.setOutBoundTime(entity.getDateShipping());
         dto.setThirdOrderStatus(entity.getOrderStatus());
-        dto.setOrderStatus(targetStatus);
+        dto.setOrderStatus(Objects.nonNull(targetStatus) ? targetStatus : entity.getOrderStatus());
         return dto;
     }
 
     private String convertStatus(String sourcePlatform, String thirdOrderStatus) {
         if (PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(sourcePlatform)) {
-            switch (thirdOrderStatus) {
-                case "-1":
-                    return ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode();
-                case "-2":
-                    return ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode();
-                case "5":
-                    return ThirdDeliveryStatusEnum.SHIPPED.getCode();
-                default:
-                    return null;
-            }
+            ZhongBaoB2BDeliveryStatusEnum statusEnum = ZhongBaoB2BDeliveryStatusEnum.getByCode(thirdOrderStatus);
+            return Objects.nonNull(statusEnum) ? statusEnum.getErpStatus().getCode() : null;
         }
         B2BThirdDeliveryCancelResultEnum statusEnum = B2BThirdDeliveryCancelResultEnum.getByCode(thirdOrderStatus);
         if (Objects.isNull(statusEnum)) {
             return null;
         }
         switch (statusEnum) {
+            case NEW:
+                return ThirdDeliveryStatusEnum.CREATING.getCode();
+            case SUBMIT:
+            case PROCESSED:
+            case WAIT_UPLOAD:
+            case UPLOADED:
+                return ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode();
             case SUCCESS:
                 return ThirdDeliveryStatusEnum.SHIPPED.getCode();
             case DISCARD:

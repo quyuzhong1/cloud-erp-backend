@@ -7,7 +7,7 @@ import com.erp.server.dmp.inout.handler.output.task.mq.B2bThirdOutboundRocketMQT
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 
 public class B2bThirdOutboundRocketMQTaskHandlerTest {
 
@@ -25,6 +25,17 @@ public class B2bThirdOutboundRocketMQTaskHandlerTest {
     }
 
     @Test
+    public void shouldConvertDaMaiNoActionStatusToWaitShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "SUBMIT");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("SUBMIT", dto.getThirdOrderStatus());
+    }
+
+    @Test
     public void shouldConvertZhongBaoStatus() {
         DmpThirdOutboundEntity entity = buildEntity("zhongbao", "-2");
         entity.setAbnormalProblemReason("众包异常");
@@ -37,12 +48,14 @@ public class B2bThirdOutboundRocketMQTaskHandlerTest {
     }
 
     @Test
-    public void shouldIgnoreZhongBaoNoActionStatus() {
+    public void shouldConvertZhongBaoNoActionStatus() {
         DmpThirdOutboundEntity entity = buildEntity("zhongbao", "1");
 
         PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
 
-        assertNull(dto);
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("1", dto.getThirdOrderStatus());
     }
 
     private DmpThirdOutboundEntity buildEntity(String sourcePlatform, String orderStatus) {

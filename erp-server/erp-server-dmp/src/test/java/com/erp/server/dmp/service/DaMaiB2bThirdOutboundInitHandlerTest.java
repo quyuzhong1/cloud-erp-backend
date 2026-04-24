@@ -10,22 +10,21 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class DaMaiB2bThirdOutboundInitHandlerTest {
 
     @Test
-    public void shouldUseDaMaiActionStatuses() throws Exception {
+    public void shouldKeepDaMaiRawStatusInResult() throws Exception {
         DaMaiB2bThirdOutboundInitHandler handler = new DaMaiB2bThirdOutboundInitHandler();
         setProviderCode(handler, "damai");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("SUCCESS");
-        assertTrue((Boolean) invoke(handler, "isActionStatus", response));
-
         response.setStatus("SUBMIT");
-        assertFalse((Boolean) invoke(handler, "isActionStatus", response));
+        response.setCode("SFFH260330000003");
+        response.setPlatformOrderCode("FBA002");
+        JSONObject result = (JSONObject) invoke(handler, "toResult", response);
+
+        assertEquals("SUBMIT", result.getString("orderStatus"));
     }
 
     @Test

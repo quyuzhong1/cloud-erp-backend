@@ -8,7 +8,6 @@ import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
-import com.erp.model.wms.enums.B2BThirdDeliveryCancelResultEnum;
 import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -66,7 +65,7 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
                 continue;
             }
             responseList.stream()
-                    .filter(this::isActionStatus)
+                    .filter(Objects::nonNull)
                     .map(this::toResult)
                     .forEach(resultList::add);
         }
@@ -93,34 +92,15 @@ public class B2bThirdOutboundInitHandler extends DmpInputInitHandler {
                 .map(OverseasProviderWarehouseEntity::getWarehouseId)
                 .distinct()
                 .collect(Collectors.toList());
-        List<String> statusList = Arrays.asList(
-                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
-                ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),
-                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode()
-        );
         return com.common.business.wrapper.FeignQuery.create(B2bThirdDeliveryEntity.class)
                 .eq(B2bThirdDeliveryEntity::getIsApiDelivery, Boolean.TRUE)
                 .in(B2bThirdDeliveryEntity::getDeliveryWarehouseId, warehouseIds)
-                .in(B2bThirdDeliveryEntity::getStatus, statusList)
+                .notIn(B2bThirdDeliveryEntity::getStatus, Arrays.asList(
+                        ThirdDeliveryStatusEnum.CREATING.getCode(),
+                        ThirdDeliveryStatusEnum.SHIPPED.getCode(),
+                        ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode()
+                ))
                 .list();
-    }
-
-    private boolean isActionStatus(ThirdWarehouseQueryFbaOutboundResponse response) {
-        if (Objects.isNull(response) || StringUtils.isBlank(response.getStatus())) {
-            return false;
-        }
-        if (isZhongBaoProvider()) {
-            return Arrays.asList("-1", "-2", "5").contains(response.getStatus());
-        }
-        B2BThirdDeliveryCancelResultEnum statusEnum = B2BThirdDeliveryCancelResultEnum.getByCode(response.getStatus());
-        return Objects.nonNull(statusEnum)
-                && !Arrays.asList(
-                B2BThirdDeliveryCancelResultEnum.NEW,
-                B2BThirdDeliveryCancelResultEnum.SUBMIT,
-                B2BThirdDeliveryCancelResultEnum.PROCESSED,
-                B2BThirdDeliveryCancelResultEnum.WAIT_UPLOAD,
-                B2BThirdDeliveryCancelResultEnum.UPLOADED
-        ).contains(statusEnum);
     }
 
     private JSONObject toResult(ThirdWarehouseQueryFbaOutboundResponse response) {
