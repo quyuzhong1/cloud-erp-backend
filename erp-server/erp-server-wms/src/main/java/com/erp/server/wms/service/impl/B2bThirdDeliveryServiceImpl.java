@@ -1159,13 +1159,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             throw new ServiceException("上传B2B三方仓附件失败:{}", uploadFileResult.getMsg());
         }
         req.setFileId(String.valueOf(uploadFileResult.getData().getAttachId()));
-        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
+                || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
             req.setFileType(getAttachmentExtension(req));
         }
     }
 
     private boolean needUploadAttachment(String providerCode) {
         return PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(providerCode)
                 || PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(providerCode);
     }
 
