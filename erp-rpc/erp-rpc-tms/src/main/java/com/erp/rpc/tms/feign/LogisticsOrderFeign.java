@@ -38,5 +38,14 @@ public interface LogisticsOrderFeign {
      * @return List<AfterSaleDTO.LogisticsOrderResultDTO>
      */
     @PostMapping("/feign/logisticsOrder/batchCancel")
-    List<AfterSaleDTO.LogisticsOrderResultDTO> batchCancel(List<String> codeList);
+    List<AfterSaleDTO.LogisticsOrderResultDTO> batchCancel(@RequestBody List<String> codeList);
+
+    /**
+     * 批量获取物流单标签
+     *
+     * @param logisticsLabelDTOS List<LogisticsOrderDTO.LogisticsLabelDTO>
+     * @return List<AfterSaleDTO.LogisticsOrderResultDTO>
+     */
+    @PostMapping("/feign/logisticsOrder/batchGetLabel")
+    List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(@RequestBody List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS);
 }

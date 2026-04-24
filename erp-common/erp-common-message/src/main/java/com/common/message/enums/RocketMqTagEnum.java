@@ -169,6 +169,11 @@ public enum RocketMqTagEnum {
      */
     DMP_WECHAT_SUBSCRIBE_MSG_TAG(31,RocketMqTagEnum.WECHAT_SUBSCRIBE,"dmp_wechat_subscribe_msg_tag"),
 
+    /**
+     * dmp 异步获取物流下单面单标签
+     */
+    DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(32, RocketMqTagEnum.SYNC_TMS,"dmp_async_get_logistics_order_label_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -614,7 +619,7 @@ public enum RocketMqTagEnum {
     /**
      * tms 异步获取物流下单面单标签
      */
-    ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(10004, RocketMqTagEnum.SYNC_TMS,"async_get_logistics_order_label_tag"),
+    TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(10004, RocketMqTagEnum.SYNC_TMS,"tms_async_get_logistics_order_label_tag"),
 
     //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
     /**

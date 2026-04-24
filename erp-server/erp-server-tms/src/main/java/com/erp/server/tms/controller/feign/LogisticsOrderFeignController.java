@@ -58,4 +58,15 @@ public class LogisticsOrderFeignController {
     List<AfterSaleDTO.LogisticsOrderResultDTO> batchCancel(@RequestBody List<String> codeList) {
         return logisticsOrderService.batchCancel(codeList);
     }
+
+    /**
+     * 批量获取物流单标签
+     *
+     * @param logisticsLabelDTOS List<LogisticsOrderDTO.LogisticsLabelDTO>
+     * @return List<AfterSaleDTO.LogisticsOrderResultDTO>
+     */
+    @PostMapping("/batchGetLabel")
+    List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(@RequestBody List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
+        return logisticsOrderService.batchGetLabel(logisticsLabelDTOS);
+    }
 }

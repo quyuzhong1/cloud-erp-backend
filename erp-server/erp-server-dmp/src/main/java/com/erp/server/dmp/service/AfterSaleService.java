@@ -7,6 +7,7 @@ import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
+import com.erp.model.tms.dto.LogisticsOrderDTO;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -226,4 +227,20 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
      * @return String
      */
     String printLogisticsLabelConfirm(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 获取物流下单面单
+     *
+     * @param logisticsLabelDTOS List<LogisticsOrderDTO.LogisticsLabelDTO>
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS);
+
+    /**
+     * 手工批量获取物流面单
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> manualBatchGetLabel(BaseIdsDTO.IdsDTO dto);
 }

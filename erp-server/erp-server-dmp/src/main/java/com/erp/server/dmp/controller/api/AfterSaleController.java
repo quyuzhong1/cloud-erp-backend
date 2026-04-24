@@ -492,4 +492,16 @@ public class AfterSaleController extends BaseController {
     public ApiResult<String> printLogisticsLabelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(afterSaleService.printLogisticsLabelConfirm(dto));
     }
+
+    /**
+     * 手动批量获取面单
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return String
+     */
+    @PostMapping("/manualBatchGetLabel")
+    public ApiResult<List<BatchResultDTO>> manualBatchGetLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = afterSaleService.manualBatchGetLabel(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

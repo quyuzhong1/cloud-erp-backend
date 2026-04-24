@@ -659,6 +659,16 @@ public class LogisticsOrderDTO implements Serializable {
          */
         private Boolean isFromMq = false;
 
+        /**
+         * 售后申请id,after_sale.id
+         */
+        private String afterSaleId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
     }
 
 }

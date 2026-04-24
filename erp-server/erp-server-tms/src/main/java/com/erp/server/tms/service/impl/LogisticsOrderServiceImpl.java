@@ -26,7 +26,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FileUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -249,7 +248,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo());
             redisUtil.set(labelRedisKey, true, 86400);
             LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(logisticsOrderEntity);
-            mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
+            mqProducerService.asyncClassMsg(RocketMqTopic.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
         }
         return new BaseResultDTO.AddDTO(logisticsOrderEntity.getId(), code);
     }
@@ -261,6 +260,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         labelDTO.setTrackNo(logisticsOrderEntity.getTrackNo());
         labelDTO.setLogisticsChannelId(logisticsOrderEntity.getLogisticsChannelId());
         labelDTO.setLogisticsPlatform(logisticsOrderEntity.getLogisticsPlatform());
+        labelDTO.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
+        labelDTO.setSourceCode(logisticsOrderEntity.getSourceCode());
         return labelDTO;
     }
 
@@ -380,7 +381,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo());
             redisUtil.set(labelRedisKey, true, 86400);
             LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(logisticsOrderEntity);
-            mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
+            mqProducerService.asyncClassMsg(RocketMqTopic.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
         }
         return Boolean.TRUE;
     }
@@ -610,6 +611,12 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             if (resultDTOMap.get(e.getAfterSaleId()) != null) {
                 e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
                 e.setTrackNo(resultDTOMap.get(e.getAfterSaleId()).getTrackNo());
+                // 下单成功发送异步请求保存面单
+                // 设置redis
+                String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
+                redisUtil.set(labelRedisKey, true, 86400);
+                LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
+                mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
             } else {
                 e.setStatus(LogisticsStatusEnum.FAILED.getCode());
                 e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
@@ -938,14 +945,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                     }
                     success = true;
                 } else {
-                    logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
-                    logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
                     logisticsOrderEntity.setExceptionReason(baseResult.getErrorMessage());
                     resultDTO = BatchResultDTO.fail(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), baseResult.getErrorMessage());
                 }
             } catch (Exception e) {
-                logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
-                logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
                 logisticsOrderEntity.setExceptionReason(e.getMessage());
                 resultDTO = BatchResultDTO.fail(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), e.getMessage());
             }
@@ -959,6 +962,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
                 resultDTO = BatchResultDTO.success(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), "获取面单成功");
             } else {
+                logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+                logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
                 logisticsOperateService.pullOperateLog(logisticsLabelDTO.getId(),
                         logisticsLabelDTO.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
@@ -974,6 +979,84 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         List<LogisticsOrderEntity> entityList = this.listByIds(dto.getIds());
         List<LogisticsOrderDTO.LogisticsLabelDTO> labelDTOList = entityList.stream().map(this::getLogisticsOrderLabel).collect(Collectors.toList());
         return this.getLogisticsOrderLabel(labelDTOList);
+    }
+
+    @Override
+    public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
+        List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
+        for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : logisticsLabelDTOS) {
+            AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
+            LogisticsOrderEntity logisticsOrderEntity = this.lambdaQuery().eq(LogisticsOrderEntity::getAfterSaleId, logisticsLabelDTO.getAfterSaleId()).one();
+            if (logisticsOrderEntity == null || LogisticsStatusEnum.CANCEL.getCode().equals(logisticsOrderEntity.getStatus())) {
+                resultDTO.setStatus(false);
+                resultDTO.setAfterSaleId(logisticsLabelDTO.getAfterSaleId());
+                resultDTO.setErrorMsg("单据不存在或者状态发生变更");
+                resultDTOList.add(resultDTO);
+                continue;
+            }
+            String channelId = logisticsOrderEntity.getLogisticsChannelId();
+            LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
+            if (Objects.isNull(auth)) {
+                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
+            }
+            Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
+            OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
+                    .templateCode(templateCode + authMap.get("clientId"))
+                    .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsOrderEntity.getTrackNo()).build()))
+                    .version(version)
+                    .fileType(fileType)
+                    .sync(true)
+                    .build();
+            boolean success = false;
+            BaseResult baseResult = null;
+            String url = "";
+            try {
+                ValidatorUtil.validateEntity(orderLabelRequest);
+                baseResult = expressShipperService.getLabel(authMap, orderLabelRequest);
+                // 转换实体
+                if (baseResult.isSuccess()) {
+                    LabelResponse labelResponse = JSONUtil.toBean(JSONUtil.toJsonStr(baseResult.getObj()), LabelResponse.class);
+                    // 根据文件列表 调用文件中心的接口获得ERP的文件url
+                    List<PrintFile> files = labelResponse.getFiles();
+                    if (1 == files.size()) {
+                        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                                .url(files.get(0).getUrl())
+                                .token(files.get(0).getToken())
+                                .fileName(logisticsOrderEntity.getTrackNo() + ".pdf")
+                                .build();
+                        url = fileFeign.uploadFileByUrl(uploadBase64);
+                    }
+                    success = true;
+                } else {
+                    resultDTO.setErrorMsg(baseResult.getErrorMessage());
+                    logisticsOrderEntity.setExceptionReason(baseResult.getErrorMessage());
+                }
+            } catch (Exception e) {
+                resultDTO.setErrorMsg(e.getMessage());
+                logisticsOrderEntity.setExceptionReason(e.getMessage());
+            }
+            if (success) {
+                logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
+                resultDTO.setStatus(true);
+                resultDTO.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
+                resultDTO.setUrl(url);
+                resultDTOList.add(resultDTO);
+                logisticsOperateService.pullOperateLog(logisticsOrderEntity.getId(),
+                        logisticsOrderEntity.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+            } else {
+                resultDTO.setStatus(false);
+                resultDTO.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
+                resultDTOList.add(resultDTO);
+                logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+                logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
+                logisticsOperateService.pullOperateLog(logisticsOrderEntity.getId(),
+                        logisticsOrderEntity.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+            }
+            this.updateById(logisticsOrderEntity);
+        }
+        return resultDTOList;
     }
 
 }

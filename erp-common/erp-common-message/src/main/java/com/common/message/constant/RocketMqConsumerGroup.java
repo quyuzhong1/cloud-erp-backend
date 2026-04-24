@@ -379,9 +379,12 @@ public class RocketMqConsumerGroup {
     public static final String TMS_PUSH_ALLOCATION_COST_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-tms_push_allocation_cost_consumer";
 
     /**
-     * 异步获取物流下单面单标签
+     * tms 异步获取物流下单面单标签
      */
-    public static final String ASYNC_GET_LOGISTICS_ORDER_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_get_logistics_order_label_consumer";
+    public static final String TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-tms_async_get_logistics_order_label_consumer";
 
-
+    /**
+     * dmp 异步获取物流下单面单标签
+     */
+    public static final String DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_async_get_logistics_order_label_consumer";
 }

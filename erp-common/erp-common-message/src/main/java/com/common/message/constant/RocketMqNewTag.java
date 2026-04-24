@@ -305,6 +305,11 @@ public class RocketMqNewTag {
     /**
      * tms 异步获取物流下单面单标签
      */
-    public static final String ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG = "async_get_logistics_order_label_tag";
+    public static final String TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG = "tms_async_get_logistics_order_label_tag";
+
+    /**
+     * dmp 异步获取物流下单面单标签
+     */
+    public static final String DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG = "dmp_async_get_logistics_order_label_tag";
 
 }

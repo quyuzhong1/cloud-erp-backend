@@ -1849,4 +1849,49 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
     }
 
+    @Override
+    public List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
+        List<String> afterSaleIdList = logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getAfterSaleId).collect(Collectors.toList());
+        List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
+                .in(DmpAttachmentEntity::getBusinessId, afterSaleIdList)
+                .eq(DmpAttachmentEntity::getType, "after_sale_label"));
+        Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, v -> v));
+        List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchGetLabel(logisticsLabelDTOS);
+        List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
+        Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, v -> v));
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        BatchResultDTO batchResultDTO;
+        List<DmpAttachmentEntity> saveList = new ArrayList<>();
+        for (AfterSaleDTO.LogisticsOrderResultDTO resultDTO : resultDTOList) {
+            if (resultDTO.getStatus()) {
+                if (attachmentMap.get(resultDTO.getAfterSaleId()) != null) {
+                    attachmentService.removeById(attachmentMap.get(resultDTO.getAfterSaleId()).getId());
+                }
+                DmpAttachmentEntity attachmentEntity = new DmpAttachmentEntity();
+                attachmentEntity.setBusinessId(resultDTO.getAfterSaleId());
+                attachmentEntity.setType("after_sale_label");
+                attachmentEntity.setAttachName(resultDTO.getTrackNo() + ".pdf");
+                attachmentEntity.setAttachUrl(resultDTO.getUrl());
+                saveList.add(attachmentEntity);
+                batchResultDTO = BatchResultDTO.success(resultDTO.getAfterSaleId(), afterSaleEntityMap.get(resultDTO.getAfterSaleId()).getCode(), "获取面单成功");
+            } else {
+                batchResultDTO = BatchResultDTO.fail(resultDTO.getAfterSaleId(), afterSaleEntityMap.get(resultDTO.getAfterSaleId()).getCode(), resultDTO.getErrorMsg());
+            }
+            batchResultDTOList.add(batchResultDTO);
+        }
+        attachmentService.saveOrUpdateBatch(saveList);
+        return batchResultDTOList;
+    }
+
+    @Override
+    public List<BatchResultDTO> manualBatchGetLabel(BaseIdsDTO.IdsDTO dto) {
+        List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS = new ArrayList<>();
+        dto.getIds().forEach(id -> {
+            LogisticsOrderDTO.LogisticsLabelDTO labelDTO = new LogisticsOrderDTO.LogisticsLabelDTO();
+            labelDTO.setId(id);
+            logisticsLabelDTOS.add(labelDTO);
+        });
+        return getLogisticsOrderLabel(logisticsLabelDTOS);
+    }
+
 }

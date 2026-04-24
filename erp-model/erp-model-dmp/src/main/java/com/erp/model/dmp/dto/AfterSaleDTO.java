@@ -1034,6 +1034,11 @@ public class AfterSaleDTO implements Serializable {
          */
         private Boolean status;
 
+        /**
+         * 面单地址
+         */
+        private String url;
+
     }
 
     @Data
