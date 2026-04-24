@@ -4,13 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
-import com.erp.model.wms.enums.B2BThirdDeliveryCancelResultEnum;
-import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
-import com.erp.model.wms.enums.ZhongBaoB2BDeliveryStatusEnum;
+import com.erp.model.wms.resolver.B2bThirdDeliveryStatusResolver;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.springframework.context.annotation.Scope;
@@ -84,35 +81,7 @@ public class B2bThirdOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
     }
 
     private String convertStatus(String sourcePlatform, String thirdOrderStatus) {
-        if (PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(sourcePlatform)) {
-            ZhongBaoB2BDeliveryStatusEnum statusEnum = ZhongBaoB2BDeliveryStatusEnum.getByCode(thirdOrderStatus);
-            return Objects.nonNull(statusEnum) ? statusEnum.getErpStatus().getCode() : null;
-        }
-        B2BThirdDeliveryCancelResultEnum statusEnum = B2BThirdDeliveryCancelResultEnum.getByCode(thirdOrderStatus);
-        if (Objects.isNull(statusEnum)) {
-            return null;
-        }
-        switch (statusEnum) {
-            case NEW:
-                return ThirdDeliveryStatusEnum.CREATING.getCode();
-            case SUBMIT:
-            case PROCESSED:
-            case WAIT_UPLOAD:
-            case UPLOADED:
-                return ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode();
-            case SUCCESS:
-                return ThirdDeliveryStatusEnum.SHIPPED.getCode();
-            case DISCARD:
-            case PROBLEM:
-                return ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode();
-            case BLOCK:
-            case DISCARD_PROCESSED:
-                return ThirdDeliveryStatusEnum.INTERCEPTING.getCode();
-            case EXCEPTION:
-                return ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode();
-            default:
-                return null;
-        }
+        return B2bThirdDeliveryStatusResolver.resolveErpStatus(sourcePlatform, thirdOrderStatus);
     }
 
     @Override
