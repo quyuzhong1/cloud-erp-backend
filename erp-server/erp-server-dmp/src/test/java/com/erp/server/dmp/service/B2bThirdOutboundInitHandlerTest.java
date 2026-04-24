@@ -10,39 +10,36 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class B2bThirdOutboundInitHandlerTest {
 
     @Test
-    public void shouldUseGenericProviderActionStatuses() throws Exception {
+    public void shouldKeepGenericProviderRawStatusInResult() throws Exception {
         B2bThirdOutboundInitHandler handler = new B2bThirdOutboundInitHandler();
         setProviderCode(handler, "damai");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("SUCCESS");
-        assertTrue((Boolean) invoke(handler, "isActionStatus", response));
-
         response.setStatus("NEW");
-        assertFalse((Boolean) invoke(handler, "isActionStatus", response));
+        response.setCode("SFFH260330000004");
+        response.setPlatformOrderCode("WB-NEW");
+        JSONObject result = (JSONObject) invoke(handler, "toResult", response);
+
+        assertEquals("NEW", result.getString("orderStatus"));
     }
 
     @Test
-    public void shouldUseZhongBaoActionStatusesAndErrorReason() throws Exception {
+    public void shouldKeepZhongBaoRawStatusAndUseErrorReason() throws Exception {
         B2bThirdOutboundInitHandler handler = new B2bThirdOutboundInitHandler();
         setProviderCode(handler, "zhongbao");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("-1");
-        assertTrue((Boolean) invoke(handler, "isActionStatus", response));
-
         response.setStatus("1");
-        assertFalse((Boolean) invoke(handler, "isActionStatus", response));
-
-        response.setStatus("-2");
         response.setCode("SFFH260330000001");
         response.setPlatformOrderCode("WB-001");
+        JSONObject draftResult = (JSONObject) invoke(handler, "toResult", response);
+        assertEquals("1", draftResult.getString("orderStatus"));
+
+        response.setStatus("-2");
         response.setErrorReason("众包异常原因");
         JSONObject result = (JSONObject) invoke(handler, "toResult", response);
         assertEquals("众包异常原因", result.getString("abnormalProblemReason"));

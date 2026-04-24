@@ -6,7 +6,10 @@ import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.server.dmp.inout.handler.output.task.mq.B2bThirdOutboundRocketMQTaskHandler;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class B2bThirdOutboundRocketMQTaskHandlerTest {
@@ -25,6 +28,17 @@ public class B2bThirdOutboundRocketMQTaskHandlerTest {
     }
 
     @Test
+    public void shouldConvertDaMaiNoActionStatusToWaitShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "SUBMIT");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("SUBMIT", dto.getThirdOrderStatus());
+    }
+
+    @Test
     public void shouldConvertZhongBaoStatus() {
         DmpThirdOutboundEntity entity = buildEntity("zhongbao", "-2");
         entity.setAbnormalProblemReason("众包异常");
@@ -37,12 +51,33 @@ public class B2bThirdOutboundRocketMQTaskHandlerTest {
     }
 
     @Test
-    public void shouldIgnoreZhongBaoNoActionStatus() {
+    public void shouldConvertZhongBaoNoActionStatus() {
         DmpThirdOutboundEntity entity = buildEntity("zhongbao", "1");
 
         PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
 
-        assertNull(dto);
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("1", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldUseThirdWarehouseOrderCodeAsSourceCode() {
+        List<String> sourceCodeKeys = handler.exposeSourceCodeKeys();
+
+        assertEquals(1, sourceCodeKeys.size());
+        assertEquals("orderCode", sourceCodeKeys.get(0));
+    }
+
+    @Test
+    public void shouldKeepRawThirdStatusWhenNoErpStatusMapping() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "UNKNOWN_STATUS");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals("UNKNOWN_STATUS", dto.getThirdOrderStatus());
+        assertNull(dto.getOrderStatus());
     }
 
     private DmpThirdOutboundEntity buildEntity(String sourcePlatform, String orderStatus) {
@@ -60,6 +95,10 @@ public class B2bThirdOutboundRocketMQTaskHandlerTest {
         @Override
         protected boolean validateDataBlack(Object object, String cfgOutputId) {
             return false;
+        }
+
+        private List<String> exposeSourceCodeKeys() {
+            return getSourceCodeKeys();
         }
     }
 }
