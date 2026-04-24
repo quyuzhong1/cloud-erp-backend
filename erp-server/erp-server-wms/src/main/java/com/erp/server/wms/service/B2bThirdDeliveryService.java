@@ -110,8 +110,6 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
 
     void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
 
-    void handleZhongBaoResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
-
     void syncOutboundStatus(PlatformOutboundDTO dto);
 
     List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds);
