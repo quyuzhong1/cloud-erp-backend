@@ -6,7 +6,6 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -31,7 +30,6 @@ import com.erp.server.sys.service.AuthUserShopService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -140,51 +138,27 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
         int shopTableFieldSize = shopTableFieldList.size();
         if ("part".equals(authType)){
-            boolean isDoris = DynamicDataSourceTypeEnum.isDorisByStr(dynamicDataSource);
-        	if(isDoris) {
-                if (shopTableFieldSize == 1) {
-                    sqlString.append(" AND ((").append(shopTableFieldList.get(0)).append( " = '') OR (");
-                    SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                    sqlString.append(" )) ");
-                } else {
-                    sqlString.append(" AND ((");
-                    sqlString.append(shopTableFieldList.get(0)).append( " = '')");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append(" OR (");
-                        sqlString.append(shopTableFieldList.get(i)).append(" = ''");
-                        sqlString.append(" )");
-                    }
+            if (shopTableFieldSize == 1) {
+                sqlString.append(" AND ((").append(shopTableFieldList.get(0)).append(" = '') OR (");
+                SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
+                sqlString.append(" )) ");
+            } else {
+                sqlString.append(" AND ((");
+                sqlString.append(shopTableFieldList.get(0)).append(" = '')");
+                for (int i = 1; i < shopTableFieldSize; i++) {
                     sqlString.append(" OR (");
-                    SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                    sqlString.append(" )");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append("OR (");
-                        SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(i), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                        sqlString.append(" )");
-                    }
+                    sqlString.append(shopTableFieldList.get(i)).append(" = ''");
                     sqlString.append(" )");
                 }
-            }else {
-                if (shopTableFieldSize == 1) {
-                    sqlString.append(" AND ((").append(shopTableFieldList.get(0)).append( " = '') OR (");
-                    sqlString.append(" string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')))");
-                } else {
-                    sqlString.append(" AND ((");
-                    sqlString.append(shopTableFieldList.get(0)).append( " = '')");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append(" OR (");
-                        sqlString.append(shopTableFieldList.get(i)).append(" = ''");
-                        sqlString.append(" )");
-                    }
-                    sqlString.append(" OR (");
-                    sqlString.append(" string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
-                    sqlString.append(" )");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append("OR (");
-                        sqlString.append("string_to_array(").append(shopTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
-                    }
+                sqlString.append(" OR (");
+                SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
+                sqlString.append(" )");
+                for (int i = 1; i < shopTableFieldSize; i++) {
+                    sqlString.append("OR (");
+                    SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(i), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
                     sqlString.append(" )");
                 }
+                sqlString.append(" )");
             }
         }
         return sqlString.toString();
