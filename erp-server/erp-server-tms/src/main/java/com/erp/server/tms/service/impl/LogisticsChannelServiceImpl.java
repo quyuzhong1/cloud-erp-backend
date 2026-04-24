@@ -444,6 +444,31 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(List<String> channelNames) {
+        List<LogisticsChannelEntity> logisticsChannelEntities = this.listByName(channelNames);
+        if (CollectionUtils.isEmpty(logisticsChannelEntities)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
+        }
+        List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
+        List<String> mainIds = baseDTOS.stream().map(req -> req.getMainId()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
+        for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
+            baseDTO.setLogisticsSupplierId(baseDTO.getMainId());
+            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
+            if (Objects.nonNull(logisticsSupplierEntity)) {
+                baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+                baseDTO.setLogisticsSupplierShortName(logisticsSupplierEntity.getShortName());
+                baseDTO.setSupplierId(logisticsSupplierEntity.getSupplierId());
+
+            }
+        }
+        return baseDTOS;
+    }
+
+    @Override
     public List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId) {
         return baseMapper.listBySupplierId(supplierId);
     }

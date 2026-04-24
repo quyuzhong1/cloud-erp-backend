@@ -155,6 +155,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_OMS_KOL_B2B_APPLICATION("IMPORT_OMS_KOL_B2B_APPLICATION","B2B寄样申请导入","com.erp.rpc.wms.feign.ImportWmsFeign","importKolB2bApplication",""),
     EXPORT_OMS_KOL_B2C_APPLICATION("EXPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导出","","",""),
     IMPORT_OMS_KOL_B2C_APPLICATION("IMPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolB2cApplication",""),
+    IMPORT_OMS_B2C_MANUAL_DELIVERY("IMPORT_OMS_B2C_MANUAL_DELIVERY","B2C销售订单手动发货","com.erp.rpc.oms.feign.ImportOmsFeign","importB2cManualDelivery",""),
+
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表","","",""),
     EXPORT_SCM_PURCHASE_PRICE_CHANGE("EXPORT_SCM_PURCHASE_PRICE_CHANGE","采购调价数据","","",""),
