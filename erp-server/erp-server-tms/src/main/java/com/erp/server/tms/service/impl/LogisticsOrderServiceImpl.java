@@ -26,6 +26,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FileUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -33,6 +34,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.AfterSaleDetailEntity;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsOrderDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
@@ -269,7 +271,6 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsOrderDTO.UpdateDTO updateDTO) {
-
         LogisticsOrderEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流下单表"));
         // 物流单据状态等于下单中或者下单成功，不允许编辑
@@ -281,6 +282,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             throw new ServiceException(ApiError.LOGISTICS_ORDER_CANNOT_EDIT);
         }
         LogisticsOrderEntity logisticsOrderEntity = BeanMapperUtils.map(LogisticsOrderEntity.class, updateDTO);
+        logisticsOrderEntity.setId(old.getId());
         logisticsOrderEntity.setCode(old.getCode());
         logisticsOrderEntity.setOrderId(old.getCode() + "_" + LocalTime.now().format(DateTimeFormatter.ofPattern(DateUtil.FMT_HMS)));
         log.info("编辑 开始修改物流下单表数据，单号：【{}】", logisticsOrderEntity.getCode());
@@ -919,13 +921,19 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 // 转换实体
                 if (baseResult.isSuccess()) {
                     LabelResponse labelResponse = JSONUtil.toBean(JSONUtil.toJsonStr(baseResult.getObj()), LabelResponse.class);
-                    // 根据文件列表 下载文件然后转换base64
+                    // 根据文件列表 调用文件中心的接口获得ERP的文件url
                     List<PrintFile> files = labelResponse.getFiles();
                     if (1 == files.size()) {
+                        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                                .url(files.get(0).getUrl())
+                                .token(files.get(0).getToken())
+                                .fileName(logisticsLabelDTO.getTrackNo() + ".pdf")
+                                .build();
+                        String url = fileFeign.uploadFileByUrl(uploadBase64);
                         logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
-                        attachmentEntity.setAttachName(logisticsLabelDTO.getTrackNo() + ".pdf");
-                        attachmentEntity.setAttachUrl(files.get(0).getUrl());
-                        attachmentEntity.setType("after_sale_label");
+                        attachmentEntity.setAttachName(uploadBase64.getFileName());
+                        attachmentEntity.setAttachUrl(url);
+                        attachmentEntity.setType("logistics_label");
                         attachmentEntity.setBusinessId(logisticsLabelDTO.getId());
                     }
                     success = true;
