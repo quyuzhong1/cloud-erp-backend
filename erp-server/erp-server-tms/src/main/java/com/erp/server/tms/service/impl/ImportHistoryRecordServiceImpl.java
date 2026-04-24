@@ -928,7 +928,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
                 continue;
             }
-            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
+            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex())
+                    && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))
+                    && ((CharSequenceUtil.equals("costItem",obj.getTargetField()) && CharSequenceUtil.equals(obj.getSourceDetailField(),ObjectUtil.defaultIfNull(entry.getValue(),"").toString()))
+                    || !CharSequenceUtil.equals("costItem",obj.getTargetField()))
+            ).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(cfgDetailEntity)) {
                 log.warn("导入配置未找到字段【{}】的配置项",field);
                 continue;
