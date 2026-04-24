@@ -69,7 +69,15 @@ public class WebhookController extends BaseController {
         WebhookResult result = handler.process(data, headers, serviceFlag);
         log.info("========接收到webhook接口请求=======end");
         // 返回 ResponseEntity，支持 JSON 和 XML
-        return ResponseEntity.ok(result);
+        return getWebhookResultResponseEntity(result, serviceFlag);
+    }
+
+    private static ResponseEntity<?> getWebhookResultResponseEntity(WebhookResult result, String serviceFlag) {
+        if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)){
+            return ResponseEntity.ok().body(result.toXml());
+        }else {
+            return ResponseEntity.ok(result);
+        }
     }
 
     private String getService(String serviceFlag, Map<String, String> headers, String data) {

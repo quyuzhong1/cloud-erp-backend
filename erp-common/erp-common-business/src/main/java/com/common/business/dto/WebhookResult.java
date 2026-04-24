@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 @XmlRootElement(name = "response")
 public class WebhookResult {
     private String flag;
+    private String request_id;
+    private Boolean success;
     private Integer code;
     private String message;
     private LocalDateTime createTime;
@@ -34,6 +36,23 @@ public class WebhookResult {
         result.setCode(code);
         result.setMessage(message);
         result.setCreateTime(LocalDateTime.now());
+        return result;
+    }
+
+    public static WebhookResult isJituSuccess(String requestId, Integer code, String message) {
+        WebhookResult result = new WebhookResult();
+        result.setCode(code);
+        result.setMessage(message);
+        result.setRequest_id(requestId);
+        result.setSuccess(Boolean.TRUE);
+        return result;
+    }
+    public static WebhookResult isJituFailed(Integer code, String message) {
+        WebhookResult result = new WebhookResult();
+        result.setCode(code);
+        result.setMessage(message);
+        result.setRequest_id("");
+        result.setSuccess(Boolean.TRUE);
         return result;
     }
 
