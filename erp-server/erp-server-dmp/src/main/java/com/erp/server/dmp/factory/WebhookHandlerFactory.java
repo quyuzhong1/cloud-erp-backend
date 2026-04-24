@@ -23,6 +23,7 @@ public class WebhookHandlerFactory {
         handlerMap.put("inbound", new InboundHandler());
         handlerMap.put("returnInstock", new ReturnInstockHandler());
         handlerMap.put("jituOverseasInbound", new JituOverseasInboundHandler());
+        handlerMap.put("qimenCallback", new QimenCallbackHandler());
     }
 
     public WebhookHandler getHandler(String service) {

@@ -24,8 +24,8 @@ import java.util.Map;
 @SpringBootTest(classes = JituService.class)
 class JituServiceTest {
     //test
-    static final String key = "MGY3MTU3M2M3NjYxN2RhNjc3NzM4MzM2Y2Q5ZjQ0ZWU=";
-    static final String eccompanyid = "STANDARD";
+    static final String key = "YTQ1OTM0NjA5M2VlMmZhYTIzNjQxNjE1MWZmZTAwMzA=";
+    static final String eccompanyid = "CS001_SDC";
     static final String customerid = "CS001";
 
     @Resource
