@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.List;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -35,16 +34,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DynamicDataSourceFilter implements Filter {
 	
-	private static final List<String> ARCHIVE_BLACK_URL = Arrays.asList(
-			"/workOption/"
-			);
-	
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
     	String requestURI = "";
     	requestURI = ((HttpServletRequest) request).getRequestURI();
-    	if(BusinessCommonConstants.isArchive() && !requestURI.contains("/feign") && ARCHIVE_BLACK_URL.stream().noneMatch(requestURI::contains)) {
+    	if(BusinessCommonConstants.isArchive() && BusinessCommonConstants.isDynamicEnabled()) {
     		try {
         		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
 	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());

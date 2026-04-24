@@ -24,8 +24,8 @@ import java.util.Map;
 @SpringBootTest(classes = JituService.class)
 class JituServiceTest {
     //test
-    static final String key = "MGY3MTU3M2M3NjYxN2RhNjc3NzM4MzM2Y2Q5ZjQ0ZWU=";
-    static final String eccompanyid = "STANDARD";
+    static final String key = "YTQ1OTM0NjA5M2VlMmZhYTIzNjQxNjE1MWZmZTAwMzA=";
+    static final String eccompanyid = "CS001_SDC";
     static final String customerid = "CS001";
 
     @Resource
@@ -131,8 +131,8 @@ class JituServiceTest {
         JituOverseasInboundCreateRequest request = JituOverseasInboundCreateRequest.builder()
                 .customerid((String) authMap.getOrDefault("customerid", ""))
                 .warehouseCode("SH.001")
-                .entryOrderCode("FHD260326000003")
-                .erpOrderCode("FHD260326000003")
+                .entryOrderCode("FHD260326000004")
+                .erpOrderCode("FHD260326000004")
                 .sourceSystem("SDC")
                 .orderType("CGRK")
                 .warehouseCode("SH.001")

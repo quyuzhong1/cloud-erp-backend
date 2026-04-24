@@ -50,6 +50,7 @@
             pv.update_user_id AS updateUserId,
             pv.update_user_name AS updateUserName,
             pv.update_time AS updateTime,
+            NULL AS noticeTime,
             pv.upgrade_time AS upgradeTime
             FROM
             pda_version pv
@@ -74,15 +75,14 @@
             m.update_user_id AS updateUserId,
             m.update_user_name AS updateUserName,
             m.update_time AS updateTime,
-            m.create_time AS upgradeTime
+            COALESCE(m.notice_time, m.create_time) AS noticeTime,
+            COALESCE(m.notice_time, m.create_time) AS upgradeTime
             FROM
             message m
             WHERE
             m.is_deleted = FALSE
             AND m.type = 'sys'
             AND m.application IN ('PDA', 'PC')
-            AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
-            AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
         ) AS d
         WHERE
         ${params.sqlMap.default}

@@ -114,6 +114,11 @@ public class PdaVersionDTO implements Serializable {
         private LocalDateTime updateTime;
 
         /**
+         * 通知时间
+         */
+        private LocalDateTime noticeTime;
+
+        /**
          * 升级时间
          */
         private LocalDateTime upgradeTime;
