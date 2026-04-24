@@ -262,6 +262,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
             res.setTrackNo(goodCangOrderDTO.getTrackNo());
             res.setDeliveryTimeStr(String.valueOf(goodCangOrderDTO.getOutBoundTime()));
+            res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
             res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
             responses.add(res);
         }

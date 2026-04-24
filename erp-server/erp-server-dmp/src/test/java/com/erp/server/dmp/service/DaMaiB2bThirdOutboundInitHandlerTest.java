@@ -19,7 +19,8 @@ public class DaMaiB2bThirdOutboundInitHandlerTest {
         setProviderCode(handler, "damai");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("SUBMIT");
+        response.setStatus("waitShipped");
+        response.setPlatformOriginalStatus("SUBMIT");
         response.setCode("SFFH260330000003");
         response.setPlatformOrderCode("FBA002");
         JSONObject result = (JSONObject) invoke(handler, "toResult", response);
@@ -33,7 +34,8 @@ public class DaMaiB2bThirdOutboundInitHandlerTest {
         setProviderCode(handler, "damai");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("BLOCK");
+        response.setStatus("intercepting");
+        response.setPlatformOriginalStatus("BLOCK");
         response.setCode("SFFH260330000002");
         response.setPlatformOrderCode("FBA001");
         response.setErrorType("大卖异常原因");
