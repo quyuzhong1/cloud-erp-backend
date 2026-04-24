@@ -2402,20 +2402,29 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        if (Objects.isNull(dto)) {
+            throw new ServiceException("下推分摊参数不能为空");
+        }
+        if (StringUtils.isBlank(dto.getReportDate())) {
+            throw new ServiceException("核算日期不能为空");
+        }
+        if (StringUtils.isBlank(dto.getType())) {
+            throw new ServiceException("费用类型不能为空");
+        }
+        if (!Objects.equals(dto.getType(), DictCostAttributionEnum.SELF_DELIVER.getCode())
+            && !Objects.equals(dto.getType(), DictCostAttributionEnum.LAST_MILE.getCode())) {
+            throw new ServiceException("仅支持自发货/尾程费用下推分摊");
+        }
+        String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
+        dto.setBusinessType(businessType);
+
         // 先统计总数（用于前端展示预期处理量）
         int totalCount = countByCanPushAllocation(dto);
         if (totalCount == 0) {
             throw new ServiceException("没有可下推分摊的数据");
         }
 
-        String businessType ="";
-        if(dto.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())){
-            businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode(); //自发货
-        }else if(dto.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())){
-            businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();//尾程
-        }
         //新建一个任务
-        dto.setBusinessType(businessType);
         String jsonStr = JSONUtil.toJsonStr(dto);
         if(StringUtils.isBlank(businessType)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
@@ -2469,6 +2478,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         int batchNumber = 0;
 
         log.error("开始分批处理任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
+        // 将主任务状态更新为处理中
+        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.ING.getCode(), "分批处理中");
 
         // 3. 循环分批处理
         while (true) {
@@ -2603,10 +2614,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             detail.setMainId(taskId);
             detail.setBusinessType(businessType);
             detail.setBusinessId(cost.getId());
-            detail.setBusinessCode(bill.getOutstockCode());
             detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
             detail.setStartTime(now);
-
+            if (Objects.nonNull(bill)){
+                detail.setBusinessCode(bill.getOutstockCode());
+            }
             // 过滤无效数据
             if (Objects.isNull(bill)||Objects.isNull(bill.getIsAllocateCostRequired()) || !bill.getIsAllocateCostRequired()) {
                 log.warn("费用单【{}】关联的物流单不存在，跳过", cost.getId());
@@ -2653,6 +2665,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         for (TmsAsyncTaskDetailEntity detail : batchDetails) {
             if(Objects.equals(detail.getStatus(),TmsAsyncTaskRecordStatusEnum.FAILED.getCode())){
+                failedCount.incrementAndGet();
+                latch.countDown();
                 continue;
             }
             String taskDetailId = detail.getId();
@@ -2679,8 +2693,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     );
 
                     // 执行分摊逻辑
-                    BatchResultDTO result = pushAllocation(businessId, reportDate);
-
+                    BatchResultDTO result = service.pushAllocation(businessId, reportDate);
+                    
                     if (result.getSuccess()) {
                         asyncTaskDetailRecordService.updateDetail(
                             taskDetailId,
@@ -2783,7 +2797,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			if(CollUtil.isEmpty(soOutstockDetailEntityList)) {
 				throw new ServiceException("销售出库单明细不存在");
 			}
-			String warehouseId = FeignQuery.getById(SoOutstockEntity.class, outstockId).getWarehouseId();
+            SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, outstockId);
+            if (Objects.isNull(soOutstockEntity)) {
+                throw new ServiceException("销售出库单不存在");
+            }
+			String warehouseId = soOutstockEntity.getWarehouseId();
 			soOutstockDetailEntityList.forEach(s -> s.setWarehouseId(warehouseId));
 		}
 
@@ -2884,7 +2902,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		soOutstockDetailEntityList.sort((s1 , s2) -> s1.getActualQty().compareTo(s2.getActualQty()));
 		int i = 0;
 		
-		Map<String, String> orgIdNameMaps = sysUserFeign.listAccountingCompany().stream().collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName));
+        List<BaseIdDTO> accountingCompanies = sysUserFeign.listAccountingCompany();
+        Map<String, String> orgIdNameMaps = new HashMap<>();
+        if (CollUtil.isNotEmpty(accountingCompanies)) {
+            orgIdNameMaps = accountingCompanies.stream().collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName));
+        }
 		
 		String feeRule = entity.getFeeRule();
 		if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
@@ -2930,6 +2952,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             String orgName = orgIdNameMaps.get(orgId);
 
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
+            if (actualQty == null || actualQty <= 0) {
+                throw new ServiceException("出库明细实际数量不能为0或空");
+            }
 			BigDecimal skuCostPre = BigDecimal.ZERO;
             String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? soOutstockDetailEntity.getWarehouseId() : packageWarehouseId;
             InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);

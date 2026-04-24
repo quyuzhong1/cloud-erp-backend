@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -18,6 +19,7 @@ import com.common.business.enums.SystemCodeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -34,6 +36,7 @@ import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.TmsAsyncTaskRecordMapper;
+import com.erp.server.tms.service.AsyncService;
 import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
@@ -92,16 +95,18 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Lazy
     @Resource
     private TmsAsyncTaskRecordService selfServer;
+    private AsyncService asyncService;
 
 
     /**
      * 新增手动任务
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
     public String addManualTask(String businessType, String json){
         Integer count = lambdaQuery()
                 .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
-                .eq(TmsAsyncTaskRecordEntity::getDataJson, json)
                 .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
                 .count();
         if(count > 0){
@@ -126,6 +131,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * 新增自动任务
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
     public String addAutoTask(String businessType, String json,String startTimeStr){
         //默认8小时
         Integer execTimeout = null;
@@ -327,8 +334,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO retry(String id) {
-        TmsAsyncTaskRecordEntity entity = getById(id);
+    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType", unlockAfterTx = true)
+    public BatchResultDTO retry(TmsAsyncTaskRecordEntity entity) {
         //数据校验
         checkData(entity);
 
@@ -336,7 +343,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         Integer execTimeout = null;
         //获取分摊配置--任务超时时间
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
-        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
+        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isNotEmpty(cfgSettingEntity.getDataJson()) && !Objects.equals(cfgSettingEntity.getDataJson(), "{}")){
             CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
             String businessType = entity.getBusinessType();
             //头程对账单
@@ -366,7 +373,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_Z);
         newTask.setCode(code);
         //减少可以重试的次数
-        newTask.setErrorCount(entity.getErrorCount() - 1 );
+        newTask.setRetryTimes(entity.getRetryTimes() - 1 );
         newTask.setStartTime(LocalDateTime.now());
         newTask.setDataJson(entity.getDataJson());
         newTask.setBusinessType(entity.getBusinessType());
@@ -391,22 +398,22 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         }
 
         Boolean isRetry = entity.getIsRetry();
-        if(isRetry){
+        if(Boolean.TRUE.equals(isRetry)){
             throw new ServiceException("已有重试任务，无法再次重试");
         }
 
         Integer retryTimes = entity.getRetryTimes();
-        if(null == retryTimes || retryTimes == 0){
+        if(null == retryTimes || retryTimes <= 0){
             throw new ServiceException("已超过最大重试次数");
         }
 
         String status = entity.getStatus();
-        if(Objects.equals(status, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())){
+        if(!Objects.equals(status, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())){
             throw new ServiceException("仅支持失败任务重试");
         }
 
         String execType = entity.getExecType();
-        if(StringUtils.isBlank(execType) && !Objects.equals(execType, TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode())){
+        if(StringUtils.isBlank(execType) || !Objects.equals(execType, TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode())){
             throw new ServiceException("仅支持执行类型为自动的任务重试");
         }
         String dataJson = entity.getDataJson();
@@ -416,16 +423,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     @Override
-    public BatchResultDTO errorRetry(String id) {
-        TmsAsyncTaskRecordEntity entity = getById(id);
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType", unlockAfterTx = true)
+    public BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity) {
         //数据校验
         checkData(entity);
-        Integer errorCount = entity.getErrorCount();
-        if(null == errorCount || errorCount == 0){
-            throw new ServiceException("未找到错误明细");
-        }
         //失败明细业务id集合
-        List<String> businessIds = tmsAsyncTaskDetailService.listErrorDetail(id).stream().map(TmsAsyncTaskDetailEntity::getBusinessId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> businessIds = tmsAsyncTaskDetailService.listErrorDetail(entity.getId()).stream().map(TmsAsyncTaskDetailEntity::getBusinessId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         if(CollUtil.isEmpty(businessIds)){
             throw new ServiceException("未找到错误明细");
         }
@@ -433,7 +437,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         Integer execTimeout = null;
         //获取分摊配置--任务超时时间
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
-        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())){
+        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isNotEmpty(cfgSettingEntity.getDataJson()) && !Objects.equals(cfgSettingEntity.getDataJson(), "{}")){
             CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
             String businessType = entity.getBusinessType();
             //头程对账单
@@ -467,7 +471,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_Z);
         newTask.setCode(code);
         //减少可以重试的次数
-        newTask.setErrorCount(entity.getErrorCount() - 1 );
+        newTask.setRetryTimes(entity.getRetryTimes() - 1 );
         newTask.setStartTime(LocalDateTime.now());
         newTask.setDataJson(JSONUtil.toJsonStr(pushDTO));
         newTask.setBusinessType(entity.getBusinessType());

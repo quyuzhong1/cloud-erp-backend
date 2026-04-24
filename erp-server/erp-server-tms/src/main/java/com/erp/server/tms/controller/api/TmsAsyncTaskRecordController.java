@@ -152,6 +152,11 @@ public class TmsAsyncTaskRecordController extends BaseController {
      * @param dto
      */
     @PostMapping("/batchRetry")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsAsyncTaskRecord:update",
+            serviceClass = TmsAsyncTaskRecordService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -159,8 +164,14 @@ public class TmsAsyncTaskRecordController extends BaseController {
         Map<String, TmsAsyncTaskRecordEntity> idEntityMap = list.stream().collect(Collectors.toMap(TmsAsyncTaskRecordEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO batchResultDTO;
+            TmsAsyncTaskRecordEntity recordEntity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(recordEntity)) {
+                batchResultDTO = BatchResultDTO.fail(id, id, "异步任务记录不存在");
+                resultDTOS.add(batchResultDTO);
+                continue;
+            }
             try {
-                batchResultDTO = tmsAsyncTaskRecordService.retry(id);
+                batchResultDTO = tmsAsyncTaskRecordService.retry(recordEntity);
             }catch (Exception e){
                 TmsAsyncTaskRecordEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
@@ -182,6 +193,11 @@ public class TmsAsyncTaskRecordController extends BaseController {
      * @param dto
      */
     @PostMapping("/batchErrorRetry")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsAsyncTaskRecord:update",
+            serviceClass = TmsAsyncTaskRecordService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchErrorRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -189,8 +205,14 @@ public class TmsAsyncTaskRecordController extends BaseController {
         Map<String, TmsAsyncTaskRecordEntity> idEntityMap = list.stream().collect(Collectors.toMap(TmsAsyncTaskRecordEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO batchResultDTO;
+            TmsAsyncTaskRecordEntity recordEntity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(recordEntity)) {
+                batchResultDTO = BatchResultDTO.fail(id, id, "异步任务记录不存在");
+                resultDTOS.add(batchResultDTO);
+                continue;
+            }
             try {
-                batchResultDTO = tmsAsyncTaskRecordService.errorRetry(id);
+                batchResultDTO = tmsAsyncTaskRecordService.errorRetry(recordEntity);
             }catch (Exception e){
                 TmsAsyncTaskRecordEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
