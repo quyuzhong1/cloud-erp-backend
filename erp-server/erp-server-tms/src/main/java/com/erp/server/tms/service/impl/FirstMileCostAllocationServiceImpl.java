@@ -2230,6 +2230,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         
         log.error("开始分批处理头程费用分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}",
                  taskId, batchSize, taskRecord.getDetailCount());
+
+        // 将主任务状态更新为处理中
+        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.ING.getCode(), "分批处理中");
         
         // 3. 循环分批处理
         while (true) {
