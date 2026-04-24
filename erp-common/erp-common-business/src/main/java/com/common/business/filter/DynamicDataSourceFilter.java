@@ -35,16 +35,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DynamicDataSourceFilter implements Filter {
 	
-	private static final List<String> ARCHIVE_BLACK_URL = Arrays.asList(
-			"/workOption/"
-			);
-	
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
     	String requestURI = "";
     	requestURI = ((HttpServletRequest) request).getRequestURI();
-    	if(BusinessCommonConstants.isArchive() && !requestURI.contains("/feign") && ARCHIVE_BLACK_URL.stream().noneMatch(requestURI::contains)) {
+    	if(BusinessCommonConstants.isArchive()) {
     		try {
         		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
 	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
