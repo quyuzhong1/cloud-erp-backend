@@ -1,6 +1,7 @@
 package com.erp.server.dmp.handler;
 
 import cn.hutool.extra.spring.SpringUtil;
+import com.common.business.dto.WebhookResult;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
@@ -38,9 +39,9 @@ public class QimenCallbackHandler implements WebhookHandler{
     }
 
     @Override
-    public String process(String data, Map<String, String> headers, String serviceFlag) {
+    public WebhookResult process(String data, Map<String, String> headers, String serviceFlag) {
         if(StringUtils.isBlank(data)){
-            return "";
+            return WebhookResult.isSuccess();
         }
         log.warn("webhook 获取奇门数据,{}",data);
 //        try {
@@ -51,6 +52,6 @@ public class QimenCallbackHandler implements WebhookHandler{
 //        }finally {
 //            ThirdWarehouseContext.remove();
 //        }
-        return "success";
+        return WebhookResult.isSuccess();
     }
 }
