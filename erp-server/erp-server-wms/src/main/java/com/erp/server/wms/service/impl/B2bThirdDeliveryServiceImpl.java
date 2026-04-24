@@ -67,6 +67,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.model.wms.resolver.B2bThirdDeliveryStatusResolver;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -885,19 +886,30 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
         response.setCode(referenceNo);
-        response.setPlatform(dto.getProvider());
+        String providerCode = CharSequenceUtil.blankToDefault(dto.getProvider(), dto.getPlatform());
+        response.setPlatform(providerCode);
         response.setPlatformOrderCode(dto.getOrderCode());
         response.setTrackNo(dto.getTrackNo());
-        response.setStatus(CharSequenceUtil.blankToDefault(dto.getOrderStatus(), dto.getThirdOrderStatus()));
+        response.setPlatformOriginalStatus(dto.getThirdOrderStatus());
+        response.setStatus(resolveMqSyncStatus(providerCode, dto));
         response.setErrorType(dto.getAbnormalProblemReason());
         response.setErrorReason(dto.getAbnormalProblemReason());
         response.setDeliveryTimeStr(Objects.nonNull(dto.getOutBoundTime()) ? dto.getOutBoundTime().toString() : null);
-        String providerCode = CharSequenceUtil.blankToDefault(dto.getProvider(), dto.getPlatform());
+        if (CharSequenceUtil.isBlank(response.getStatus())) {
+            log.info("B2B三方仓出库状态消息忽略，ERP状态为空，referenceNo={}, provider={}, thirdOrderStatus={}",
+                    referenceNo, dto.getProvider(), dto.getThirdOrderStatus());
+            return;
+        }
         if (PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)) {
             this.handleZhongBaoResultData(entity.getId(), response);
             return;
         }
         this.handleResultData(entity.getId(), response);
+    }
+
+    private String resolveMqSyncStatus(String providerCode, PlatformOutboundDTO dto) {
+        String resolvedStatus = B2bThirdDeliveryStatusResolver.resolveErpStatus(providerCode, dto.getThirdOrderStatus());
+        return CharSequenceUtil.blankToDefault(resolvedStatus, dto.getOrderStatus());
     }
 
 
