@@ -508,12 +508,14 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Override
     public void updateTaskFinally(String taskId) {
         Integer errorCount = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode()).count();
+        Integer detailCount = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).count();
 
         lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
                 .set(TmsAsyncTaskRecordEntity::getErrorData, "")
                 .set(TmsAsyncTaskRecordEntity::getErrorCount,errorCount)
+                .set(TmsAsyncTaskRecordEntity::getDetailCount,detailCount)
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
     }
