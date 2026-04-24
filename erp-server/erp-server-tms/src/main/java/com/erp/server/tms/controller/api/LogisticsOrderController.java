@@ -235,7 +235,7 @@ public class LogisticsOrderController extends BaseController {
      * @return String
      */
     @PostMapping("/uploadLogisticLabel")
-    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated LogisticsOrderDTO.UploadFileDTO dto) {
+    public ApiResult<String> uploadLogisticLabel(@RequestBody @Validated LogisticsOrderDTO.UploadFileDTO dto) {
         return success(logisticsOrderService.uploadLogisticLabel(dto));
     }
 

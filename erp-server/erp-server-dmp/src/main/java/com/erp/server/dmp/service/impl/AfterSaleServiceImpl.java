@@ -1769,7 +1769,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         dmpAttachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(dmpAttachmentEntity);
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), dto.getAttachName());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), dto.getId(), "上传面单");
         return "";
     }
 
@@ -1888,7 +1888,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS = new ArrayList<>();
         dto.getIds().forEach(id -> {
             LogisticsOrderDTO.LogisticsLabelDTO labelDTO = new LogisticsOrderDTO.LogisticsLabelDTO();
-            labelDTO.setId(id);
+            labelDTO.setAfterSaleId(id);
             logisticsLabelDTOS.add(labelDTO);
         });
         return getLogisticsOrderLabel(logisticsLabelDTOS);

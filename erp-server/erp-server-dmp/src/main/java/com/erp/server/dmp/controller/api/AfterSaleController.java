@@ -456,7 +456,7 @@ public class AfterSaleController extends BaseController {
      * @return String
      */
     @PostMapping("/uploadLogisticLabel")
-    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated AfterSaleDTO.UploadFileDTO dto) {
+    public ApiResult<String> uploadLogisticLabel(@RequestBody @Validated AfterSaleDTO.UploadFileDTO dto) {
         return success(afterSaleService.uploadLogisticLabel(dto));
     }
 

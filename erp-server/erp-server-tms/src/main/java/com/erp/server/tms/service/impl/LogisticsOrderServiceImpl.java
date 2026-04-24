@@ -240,7 +240,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             throw new ServiceException("物流下单表保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单表", logisticsOrderEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", logisticsOrderEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), "新增操作");
         // 下单成功发送异步请求保存面单
         if (StringUtils.isNotBlank(logisticsOrderEntity.getTrackNo())) {
@@ -373,7 +373,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         }
         // 记录主单操作日志
         log.info("编辑 开始记录物流下单表日志数据，单号：【{}】", logisticsOrderEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsOrderEntity.getCode(), "物流下单表");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), logisticsOrderEntity.getCode(), "物流下单");
         operateLogService.addModuleOperateLogByObj(old, logisticsOrderEntity, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), msg);
         // 下单成功发送异步请求保存面单
         if (StringUtils.isNotBlank(logisticsOrderEntity.getTrackNo())) {
@@ -611,6 +611,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             if (resultDTOMap.get(e.getAfterSaleId()) != null) {
                 e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
                 e.setTrackNo(resultDTOMap.get(e.getAfterSaleId()).getTrackNo());
+                // 操作日志
+                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
                 // 下单成功发送异步请求保存面单
                 // 设置redis
                 String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
@@ -632,11 +635,16 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @Override
     public BatchResultDTO delete(String id) {
         LogisticsOrderEntity entity = this.getById(id);
+        log.info("开始执行删除操作，单号：【{}】", entity.getCode());
         // 物流单据状态等于下单中或者下单成功，不允许删除
         if (LogisticsStatusEnum.ORDERING.getCode().equals(entity.getStatus()) || LogisticsStatusEnum.SUCCESS.getCode().equals(entity.getStatus())) {
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "物流单据不是已取消或者下单失败状态，不能编辑");
         }
         this.removeById(id);
+        // 记录主单操作日志
+        log.info("删除 开始记录物流下单表日志数据，单号：【{}】", entity.getCode());
+        String msg = StrUtil.format("用户【{}】删除单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "物流下单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), entity.getId(), "删除物流单");
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
     }
 
@@ -645,6 +653,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @Override
     public BatchResultDTO cancel(String id) {
         LogisticsOrderEntity entity = this.getById(id);
+        log.info("开始执行取消操作，单号：【{}】", entity.getCode());
         // 物流单据状态不等于下单成功，不允许取消
         if (!LogisticsStatusEnum.SUCCESS.getCode().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流单据状态不是下单成功，不允许取消");
@@ -684,6 +693,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         } catch (Exception e) {
             resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
         }
+        // 记录主单操作日志
+        log.info("取消 开始记录物流下单表日志数据，单号：【{}】", entity.getCode());
+        String msg = StrUtil.format("用户【{}】取消单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "物流下单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), entity.getId(), "取消物流单");
         if (success) {
             // 取消成功清空物流跟踪号
             entity.setStatus(LogisticsStatusEnum.CANCEL.getCode());
@@ -814,6 +827,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                         JSONUtil.toJsonStr(baseResult), false);
             }
             this.updateById(entity);
+            // 记录主单操作日志
+            log.info("取消 开始记录物流下单表日志数据，单号：【{}】", entity.getCode());
+            String msg = StrUtil.format("用户【{}】取消单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "物流下单");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), entity.getId(), "取消物流单");
         }
         return resultList;
     }
@@ -864,7 +881,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         entity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
         this.updateById(entity);
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), dto.getAttachName());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), dto.getId(), "上传面单");
         return "";
     }
 
@@ -969,6 +986,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
             }
             this.updateById(logisticsOrderEntity);
+            // 记录主单操作日志
+            log.info("获取面单 开始记录物流下单表日志数据，单号：【{}】", logisticsOrderEntity.getCode());
+            String msg = StrUtil.format("获取物流面单{}", success ? "成功" : "失败");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), "获取物流面单");
             resultDTOS.add(resultDTO);
         }
         return resultDTOS;
@@ -1039,6 +1060,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
                 resultDTO.setStatus(true);
                 resultDTO.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
+                resultDTO.setTrackNo(logisticsOrderEntity.getTrackNo());
                 resultDTO.setUrl(url);
                 resultDTOList.add(resultDTO);
                 logisticsOperateService.pullOperateLog(logisticsOrderEntity.getId(),
@@ -1055,6 +1077,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
             }
             this.updateById(logisticsOrderEntity);
+            // 记录主单操作日志
+            log.info("寄修申请下单的数据 开始记录物流下单表日志数据，单号：【{}】", logisticsOrderEntity.getCode());
+            String msg = StrUtil.format("获取物流面单{}", success ? "成功" : "失败");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), "获取物流面单");
         }
         return resultDTOList;
     }
