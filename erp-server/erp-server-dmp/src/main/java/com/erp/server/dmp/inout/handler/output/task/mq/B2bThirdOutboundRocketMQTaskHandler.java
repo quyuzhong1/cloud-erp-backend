@@ -70,15 +70,16 @@ public class B2bThirdOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         if (Objects.isNull(entity) || this.validateDataBlack(entity, cfgOutputId)) {
             return null;
         }
-        String targetStatus = convertStatus(entity.getSourcePlatform(), entity.getOrderStatus());
+        String thirdOrderStatus = entity.getOrderStatus();
+        String targetStatus = convertStatus(entity.getSourcePlatform(), thirdOrderStatus);
         PlatformOutboundDTO dto = BeanUtil.copyProperties(entity, PlatformOutboundDTO.class);
         dto.setUniqueId(entity.getReferenceNo());
         dto.setPlatform(entity.getSourcePlatform());
         dto.setProvider(entity.getSourcePlatform());
         dto.setTrackNo(entity.getTrackingNo());
         dto.setOutBoundTime(entity.getDateShipping());
-        dto.setThirdOrderStatus(entity.getOrderStatus());
-        dto.setOrderStatus(Objects.nonNull(targetStatus) ? targetStatus : entity.getOrderStatus());
+        dto.setThirdOrderStatus(thirdOrderStatus);
+        dto.setOrderStatus(targetStatus);
         return dto;
     }
 
@@ -116,6 +117,6 @@ public class B2bThirdOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("referenceNo");
+        return Arrays.asList("orderCode");
     }
 }

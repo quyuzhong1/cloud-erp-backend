@@ -6,8 +6,11 @@ import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.server.dmp.inout.handler.output.task.mq.B2bThirdOutboundRocketMQTaskHandler;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class B2bThirdOutboundRocketMQTaskHandlerTest {
 
@@ -58,6 +61,25 @@ public class B2bThirdOutboundRocketMQTaskHandlerTest {
         assertEquals("1", dto.getThirdOrderStatus());
     }
 
+    @Test
+    public void shouldUseThirdWarehouseOrderCodeAsSourceCode() {
+        List<String> sourceCodeKeys = handler.exposeSourceCodeKeys();
+
+        assertEquals(1, sourceCodeKeys.size());
+        assertEquals("orderCode", sourceCodeKeys.get(0));
+    }
+
+    @Test
+    public void shouldKeepRawThirdStatusWhenNoErpStatusMapping() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "UNKNOWN_STATUS");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals("UNKNOWN_STATUS", dto.getThirdOrderStatus());
+        assertNull(dto.getOrderStatus());
+    }
+
     private DmpThirdOutboundEntity buildEntity(String sourcePlatform, String orderStatus) {
         DmpThirdOutboundEntity entity = new DmpThirdOutboundEntity();
         entity.setId("1");
@@ -73,6 +95,10 @@ public class B2bThirdOutboundRocketMQTaskHandlerTest {
         @Override
         protected boolean validateDataBlack(Object object, String cfgOutputId) {
             return false;
+        }
+
+        private List<String> exposeSourceCodeKeys() {
+            return getSourceCodeKeys();
         }
     }
 }
