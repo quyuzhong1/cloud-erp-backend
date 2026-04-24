@@ -59,7 +59,7 @@ public class ZhongBaoB2bThirdOutboundInitHandler extends DmpInputInitHandler {
                 break;
             }
             pageResponse.getList().stream()
-                    .filter(this::isActionStatus)
+                    .filter(Objects::nonNull)
                     .map(this::toResult)
                     .forEach(resultList::add);
             totalPage = parseTotalPage(pageResponse.getTotalPage());
@@ -112,12 +112,6 @@ public class ZhongBaoB2bThirdOutboundInitHandler extends DmpInputInitHandler {
             return 1;
         }
         return Integer.parseInt(totalPage);
-    }
-
-    private boolean isActionStatus(ThirdWarehouseQueryFbaOutboundResponse response) {
-        return Objects.nonNull(response)
-                && StringUtils.isNotBlank(response.getStatus())
-                && ("-1".equals(response.getStatus()) || "-2".equals(response.getStatus()) || "5".equals(response.getStatus()));
     }
 
     private JSONObject toResult(ThirdWarehouseQueryFbaOutboundResponse response) {

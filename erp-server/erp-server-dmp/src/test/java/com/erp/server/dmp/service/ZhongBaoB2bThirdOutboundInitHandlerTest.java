@@ -10,22 +10,20 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class ZhongBaoB2bThirdOutboundInitHandlerTest {
 
     @Test
-    public void shouldUseZhongBaoActionStatuses() throws Exception {
+    public void shouldKeepZhongBaoRawStatusInResult() throws Exception {
         ZhongBaoB2bThirdOutboundInitHandler handler = new ZhongBaoB2bThirdOutboundInitHandler();
         setProviderCode(handler, "zhongbao");
 
         ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
-        response.setStatus("-1");
-        assertTrue((Boolean) invoke(handler, "isActionStatus", response));
-
         response.setStatus("1");
-        assertFalse((Boolean) invoke(handler, "isActionStatus", response));
+        response.setCode("SFFH260330000010");
+        response.setPlatformOrderCode("WB-010");
+        JSONObject result = (JSONObject) invoke(handler, "toResult", response);
+        assertEquals("1", result.getString("orderStatus"));
     }
 
     @Test
