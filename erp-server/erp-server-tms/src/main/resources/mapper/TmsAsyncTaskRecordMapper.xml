@@ -100,7 +100,7 @@ tatr.exec_type AS execType
         tms_async_task_record as tatr
         left join tms_async_task_detail as tatd on tatd.main_id = tatr.id and tatd.is_deleted = FALSE
         WHERE
-        tatr.is_deleted = FALSE
+        tatr.is_deleted = FALSE and tatd.status ='failed'
         and tatr.id = #{id}
         ORDER BY
         tatd.create_time desc

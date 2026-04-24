@@ -70,6 +70,7 @@ public class RedisKeyConstant {
     public static final String WMS_VIRTUAL_DETAIL_MSG_KEY = "WMS_VIRTUAL_DETAIL_MSG_KEY";
     public static final String PURCHASE_SUGGEST_MERGE = "PURCHASE_SUGGEST_MERGE";
     public static final String INVOICE_INFO_KEY = "INVOICE_INFO_KEY";
+
     // 工作流接口分布式锁KEY
     public static final String WORKFLOW_LOCK_KEY = "WORKFLOW_LOCK_KEY";
 
@@ -98,4 +99,8 @@ public class RedisKeyConstant {
      * B2B销售订单key
      */
     public static final String SO_B2B_ORDER_KEY = "SO_B2B_ORDER_KEY";
+    /**
+     * tms 生成异步任务key
+     */
+    public static final String TMS_ASYNC_TASK_RECORD_KEY = "TMS_ASYNC_TASK_RECORD_KEY";
 }

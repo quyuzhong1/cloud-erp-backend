@@ -85,7 +85,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         /**
          * 勾选的id
          */
-        @NotNull(message = "id不能为空")
+        @NotBlank(message = "id不能为空")
         private String id;
 
     }

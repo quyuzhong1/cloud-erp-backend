@@ -43,9 +43,9 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     void updateStartTime(TmsAsyncTaskRecordDTO.UpdateDTO dto);
 
-    BatchResultDTO retry(String id);
+    BatchResultDTO retry(TmsAsyncTaskRecordEntity entity);
 
-    BatchResultDTO errorRetry(String id);
+    BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity);
 
     Boolean isExist(String businessType,  String startTimeStr);
 
