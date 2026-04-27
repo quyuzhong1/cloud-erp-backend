@@ -112,7 +112,9 @@
                t.track_no as trackNo,
                t.transport_no as transportNo,
                ct.name as logisticsChannelName,
-               bt.name as logisticsPlatformName
+               bt.name as logisticsPlatformName,
+               t.exception_type as exceptionType,
+               t.exception_reason as exceptionReason
           from logistics_order t
           left join logistics_channel ct on t.logistics_channel_id = ct.id and ct.is_deleted = FALSE
           left join dict_basic bt on t.logistics_platform = bt.code and bt.is_deleted = FALSE and bt."type" = 'logisticsPlatform'

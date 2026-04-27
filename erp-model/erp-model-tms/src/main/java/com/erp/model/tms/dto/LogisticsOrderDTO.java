@@ -536,6 +536,11 @@ public class LogisticsOrderDTO implements Serializable {
         private Integer notPrintCount;
 
         /**
+         * 不可打印原因map
+         */
+        private Map<String, String> notPrintReasonMap;
+
+        /**
          * 物流面单预览列表
          */
         private List<LogisticsLabelPreviewListDTO> labelPreviewListDTOS;
@@ -615,6 +620,16 @@ public class LogisticsOrderDTO implements Serializable {
          * url
          */
         private String attachUrl;
+
+        /**
+         * 异常类型
+         */
+        private String exceptionType;
+
+        /**
+         * 异常原因
+         */
+        private String exceptionReason;
 
     }
 

@@ -157,81 +157,24 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         logisticsOrderEntity.setOrderId(code + "_" + LocalTime.now().format(DateTimeFormatter.ofPattern(DateUtil.FMT_HMS)));
         // 调用顺丰物流下单接口
         String channelId = dto.getLogisticsChannelId();
-        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
-        if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
-        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
-        LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(channelId);
-        if (Objects.isNull(logisticsChannel)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
-        LogisticsSaleChannelEntity logisticsSaleChannelEntity = logisticsSaleChannelService.getById(logisticsChannel.getSyncSourceId());
-        if (Objects.isNull(logisticsSaleChannelEntity)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
+        ChannelAuthInfo channelAuth = getChannelAuthInfo(channelId);
         // 收寄双方信息
         List<ContactInfo> contactInfoList = new ArrayList<>();
-        // 寄件方信息
-        ContactInfo sender = new ContactInfo();
-        // 收货人地址信息
-        List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, "all");
-        LogisticsAddressTypeEnum finalDeliverType = LogisticsAddressTypeEnum.DELIVER;
-        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> finalDeliverType.equals(a.getType())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(deliverList)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY, logisticsChannel.getName(), finalDeliverType.getName());
-        }
-        // 寄件方信息
-        LogisticsAddressEntity logisticsAddress = deliverList.get(0);
-        sender.setContactType(1);
-        sender.setContact(logisticsAddress.getContact());
-        sender.setMobile(logisticsAddress.getTelNumber());
-        sender.setCountry(logisticsAddress.getCountry());
-        sender.setProvince(logisticsAddress.getProvinceName());
-        sender.setCity(logisticsAddress.getCityName());
-        sender.setAddress(logisticsAddress.getAddressFirst());
-        contactInfoList.add(sender);
-        // 到件方信息
-        ContactInfo receiver = new ContactInfo();
-        receiver.setContactType(2);
-        receiver.setContact(dto.getReceiver());
-        receiver.setMobile(dto.getContactNumber());
-        receiver.setCountry(CountrySiteEnum.CHINA.getSite());
-        receiver.setProvince(dto.getProvince());
-        receiver.setCity(dto.getCity());
-        receiver.setAddress(dto.getDetailedAddress());
-        contactInfoList.add(receiver);
+        contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
+        contactInfoList.add(buildReceiverContactInfo(dto.getReceiver(), dto.getContactNumber(), dto.getProvince(), dto.getCity(), dto.getDetailedAddress()));
         OrderRequest orderRequest = OrderRequest.builder()
                 .language("zh-CN")
                 .orderId(logisticsOrderEntity.getOrderId())
-                // 收寄双方信息
                 .contactInfoList(contactInfoList)
                 .payMethod(1)
-                // 快件产品类别
-                .expressTypeId(Integer.valueOf(logisticsSaleChannelEntity.getCode()))
+                .expressTypeId(Integer.valueOf(channelAuth.saleChannel.getCode()))
                 .parcelQty(1)
-                // 是否返回路由标签： 默认1， 1：返回路由标签， 0：不返回；除部分特殊用户外，其余用户都默认返回
                 .isReturnRoutelabel(1)
                 .build();
         BaseResult baseResult;
         try {
-            baseResult = expressShipperService.createOrder(authMap, orderRequest);
-            // 转换实体
-            if (baseResult.isSuccess()) {
-                logisticsOrderEntity.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
-                OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
-                List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
-                if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
-                    WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
-                    if (Objects.nonNull(waybillNoInfo)) {
-                        logisticsOrderEntity.setTrackNo(waybillNoInfo.getWaybillNo());
-                    }
-                }
-            } else {
-                logisticsOrderEntity.setStatus(LogisticsStatusEnum.FAILED.getCode());
-                logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
-                logisticsOrderEntity.setExceptionReason(baseResult.getErrorMsg());
-            }
+            baseResult = expressShipperService.createOrder(channelAuth.authMap, orderRequest);
+            handleOrderResult(baseResult, logisticsOrderEntity);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -243,13 +186,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", logisticsOrderEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), "新增操作");
         // 下单成功发送异步请求保存面单
-        if (StringUtils.isNotBlank(logisticsOrderEntity.getTrackNo())) {
-            // 设置redis
-            String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo());
-            redisUtil.set(labelRedisKey, true, 86400);
-            LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(logisticsOrderEntity);
-            mqProducerService.asyncClassMsg(RocketMqTopic.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
-        }
+        asyncSendLabelRequest(logisticsOrderEntity);
         return new BaseResultDTO.AddDTO(logisticsOrderEntity.getId(), code);
     }
 
@@ -289,81 +226,24 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         log.info("编辑 开始修改物流下单表数据，单号：【{}】", logisticsOrderEntity.getCode());
         // 调用顺丰物流下单接口
         String channelId = updateDTO.getLogisticsChannelId();
-        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
-        if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
-        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
-        LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(channelId);
-        if (Objects.isNull(logisticsChannel)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
-        LogisticsSaleChannelEntity logisticsSaleChannelEntity = logisticsSaleChannelService.getById(logisticsChannel.getSyncSourceId());
-        if (Objects.isNull(logisticsSaleChannelEntity)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
+        ChannelAuthInfo channelAuth = getChannelAuthInfo(channelId);
         // 收寄双方信息
         List<ContactInfo> contactInfoList = new ArrayList<>();
-        // 寄件方信息
-        ContactInfo sender = new ContactInfo();
-        // 收货人地址信息
-        List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, "all");
-        LogisticsAddressTypeEnum finalDeliverType = LogisticsAddressTypeEnum.DELIVER;
-        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> finalDeliverType.equals(a.getType())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(deliverList)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY, logisticsChannel.getName(), finalDeliverType.getName());
-        }
-        // 寄件方信息
-        LogisticsAddressEntity logisticsAddress = deliverList.get(0);
-        sender.setContactType(1);
-        sender.setContact(logisticsAddress.getContact());
-        sender.setMobile(logisticsAddress.getTelNumber());
-        sender.setCountry(logisticsAddress.getCountry());
-        sender.setProvince(logisticsAddress.getProvinceName());
-        sender.setCity(logisticsAddress.getCityName());
-        sender.setAddress(logisticsAddress.getAddressFirst());
-        contactInfoList.add(sender);
-        // 到件方信息
-        ContactInfo receiver = new ContactInfo();
-        receiver.setContactType(2);
-        receiver.setContact(updateDTO.getReceiver());
-        receiver.setMobile(updateDTO.getContactNumber());
-        receiver.setCountry(CountrySiteEnum.CHINA.getSite());
-        receiver.setProvince(updateDTO.getProvince());
-        receiver.setCity(updateDTO.getCity());
-        receiver.setAddress(updateDTO.getDetailedAddress());
-        contactInfoList.add(receiver);
+        contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
+        contactInfoList.add(buildReceiverContactInfo(updateDTO.getReceiver(), updateDTO.getContactNumber(), updateDTO.getProvince(), updateDTO.getCity(), updateDTO.getDetailedAddress()));
         OrderRequest orderRequest = OrderRequest.builder()
                 .language("zh-CN")
                 .orderId(logisticsOrderEntity.getOrderId())
-                // 收寄双方信息
                 .contactInfoList(contactInfoList)
                 .payMethod(1)
-                // 快件产品类别
-                .expressTypeId(Integer.valueOf(logisticsSaleChannelEntity.getCode()))
+                .expressTypeId(Integer.valueOf(channelAuth.saleChannel.getCode()))
                 .parcelQty(1)
-                // 是否返回路由标签： 默认1， 1：返回路由标签， 0：不返回；除部分特殊用户外，其余用户都默认返回
                 .isReturnRoutelabel(1)
                 .build();
         BaseResult baseResult;
         try {
-            baseResult = expressShipperService.createOrder(authMap, orderRequest);
-            // 转换实体
-            if (baseResult.isSuccess()) {
-                logisticsOrderEntity.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
-                OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
-                List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
-                if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
-                    WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
-                    if (Objects.nonNull(waybillNoInfo)) {
-                        logisticsOrderEntity.setTrackNo(waybillNoInfo.getWaybillNo());
-                    }
-                }
-            } else {
-                logisticsOrderEntity.setStatus(LogisticsStatusEnum.FAILED.getCode());
-                logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
-                logisticsOrderEntity.setExceptionReason(baseResult.getErrorMsg());
-            }
+            baseResult = expressShipperService.createOrder(channelAuth.authMap, orderRequest);
+            handleOrderResult(baseResult, logisticsOrderEntity);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -376,13 +256,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), logisticsOrderEntity.getCode(), "物流下单");
         operateLogService.addModuleOperateLogByObj(old, logisticsOrderEntity, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), msg);
         // 下单成功发送异步请求保存面单
-        if (StringUtils.isNotBlank(logisticsOrderEntity.getTrackNo())) {
-            // 设置redis
-            String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo());
-            redisUtil.set(labelRedisKey, true, 86400);
-            LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(logisticsOrderEntity);
-            mqProducerService.asyncClassMsg(RocketMqTopic.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
-        }
+        asyncSendLabelRequest(logisticsOrderEntity);
         return Boolean.TRUE;
     }
 
@@ -477,19 +351,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         Map<String, AfterSaleDTO.ViewDTO> viewDTOMap = viewDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.ViewDTO::getId, w -> w));
         // 调用顺丰物流下单接口
         String channelId = entityList.get(0).getLogisticsChannelId();
-        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
-        if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
-        LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(channelId);
-        if (Objects.isNull(logisticsChannel)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
-        LogisticsSaleChannelEntity logisticsSaleChannelEntity = logisticsSaleChannelService.getById(logisticsChannel.getSyncSourceId());
-        if (Objects.isNull(logisticsSaleChannelEntity)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
-        }
-        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
+        ChannelAuthInfo channelAuth = getChannelAuthInfo(channelId);
         // 组装请求参数
         List<OrderRequest> orderRequestList = new ArrayList<>();
         for (LogisticsOrderEntity logisticsOrderEntity : entityList) {
@@ -515,35 +377,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             }
             // 收寄双方信息
             List<ContactInfo> contactInfoList = new ArrayList<>();
-            // 寄件方信息
-            ContactInfo sender = new ContactInfo();
-            // 收货人地址信息
-            List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, "all");
-            LogisticsAddressTypeEnum finalDeliverType = LogisticsAddressTypeEnum.DELIVER;
-            List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> finalDeliverType.equals(a.getType())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(deliverList)) {
-                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY, logisticsChannel.getName(), finalDeliverType.getName());
-            }
-            // 寄件方信息
-            LogisticsAddressEntity logisticsAddress = deliverList.get(0);
-            sender.setContactType(1);
-            sender.setContact(logisticsAddress.getContact());
-            sender.setMobile(logisticsAddress.getTelNumber());
-            sender.setCountry(logisticsAddress.getCountry());
-            sender.setProvince(logisticsAddress.getProvinceName());
-            sender.setCity(logisticsAddress.getCityName());
-            sender.setAddress(logisticsAddress.getAddressFirst());
-            contactInfoList.add(sender);
-            // 到件方信息
-            ContactInfo receiver = new ContactInfo();
-            receiver.setContactType(2);
-            receiver.setContact(viewDTO.getThridUserName());
-            receiver.setMobile(viewDTO.getPhoneNumber());
-            receiver.setCountry(CountrySiteEnum.CHINA.getSite());
-            receiver.setProvince(logisticsOrderEntity.getProvince());
-            receiver.setCity(logisticsOrderEntity.getCity());
-            receiver.setAddress(logisticsOrderEntity.getDetailedAddress());
-            contactInfoList.add(receiver);
+            contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
+            contactInfoList.add(buildReceiverContactInfo(viewDTO.getThridUserName(), viewDTO.getPhoneNumber(), logisticsOrderEntity.getProvince(), logisticsOrderEntity.getCity(), logisticsOrderEntity.getDetailedAddress()));
             OrderRequest orderRequest = OrderRequest.builder()
                     .language("zh-CN")
                     .orderId(logisticsOrderEntity.getOrderId())
@@ -555,7 +390,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                     .contactInfoList(contactInfoList)
                     .payMethod(1)
                     // 快件产品类别
-                    .expressTypeId(Integer.valueOf(logisticsSaleChannelEntity.getCode()))
+                    .expressTypeId(Integer.valueOf(channelAuth.saleChannel.getCode()))
                     .parcelQty(1)
                     // 是否返回路由标签： 默认1， 1：返回路由标签， 0：不返回；除部分特殊用户外，其余用户都默认返回
                     .isReturnRoutelabel(1)
@@ -567,7 +402,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 .map(orderRequest -> CompletableFuture.supplyAsync(() -> {
                     // 这里是调用外部接口的具体逻辑
                     try {
-                        return expressShipperService.createOrder(authMap, orderRequest);
+                        return expressShipperService.createOrder(channelAuth.authMap, orderRequest);
                     } catch (UnsupportedEncodingException e) {
                         throw new RuntimeException(e);
                     }
@@ -710,14 +545,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             if (tmsAttachmentEntity != null) {
                 attachmentService.removeById(tmsAttachmentEntity.getId());
             }
-            logisticsOperateService.pushOperateLog(entity.getCode(), entity.getTrackNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(),
-                    LogisticsPlatformEnum.SF_EXPRESS.getCode(), RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(orderUpdateRequest),
-                    JSONUtil.toJsonStr(baseResult), false);
+            pushCancelOperateLog(entity, RequestStatusEnums.SUCCESS.getCode(), orderUpdateRequest, baseResult);
             return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.CANCEL);
         } else {
-            logisticsOperateService.pushOperateLog(entity.getCode(), entity.getTrackNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(),
-                    LogisticsPlatformEnum.SF_EXPRESS.getCode(), RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(orderUpdateRequest),
-                    JSONUtil.toJsonStr(baseResult), false);
+            pushCancelOperateLog(entity, RequestStatusEnums.FAILED.getCode(), orderUpdateRequest, baseResult);
             return resultDTO;
         }
     }
@@ -764,11 +595,11 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultList = new ArrayList<>(list.size());
         for (LogisticsOrderEntity entity : list) {
             AfterSaleDTO.LogisticsOrderResultDTO result = new AfterSaleDTO.LogisticsOrderResultDTO();
+            result.setAfterSaleId(entity.getAfterSaleId());
+            result.setCode(entity.getSourceCode());
             String channelId = entity.getLogisticsChannelId();
             LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
             if (Objects.isNull(auth)) {
-                result.setAfterSaleId(entity.getAfterSaleId());
-                result.setCode(entity.getSourceCode());
                 result.setStatus(false);
                 result.setErrorMsg("物流渠道不存在");
                 resultList.add(result);
@@ -785,46 +616,30 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             try {
                 ValidatorUtil.validateEntity(orderUpdateRequest);
                 baseResult = expressShipperService.updateOrder(authMap, orderUpdateRequest);
-                // 转换实体
                 if (baseResult.isSuccess()) {
                     OrderUpdateResponse orderUpdateResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderUpdateResponse.class);
                     if (orderUpdateResponse.getResStatus() == 2) {
                         success = true;
-                        result.setAfterSaleId(entity.getAfterSaleId());
-                        result.setCode(entity.getSourceCode());
                         result.setStatus(true);
-                        resultList.add(result);
                     } else {
-                        result.setAfterSaleId(entity.getAfterSaleId());
-                        result.setCode(entity.getSourceCode());
                         result.setStatus(false);
                         result.setErrorMsg(baseResult.getErrorMsg());
-                        resultList.add(result);
                     }
                 } else {
-                    result.setAfterSaleId(entity.getAfterSaleId());
-                    result.setCode(entity.getSourceCode());
                     result.setStatus(false);
                     result.setErrorMsg(baseResult.getErrorMsg());
-                    resultList.add(result);
                 }
             } catch (Exception e) {
-                result.setAfterSaleId(entity.getAfterSaleId());
-                result.setCode(entity.getSourceCode());
                 result.setStatus(false);
                 result.setErrorMsg(e.getMessage());
-                resultList.add(result);
             }
+            resultList.add(result);
             if (success) {
                 entity.setStatus(LogisticsStatusEnum.CANCEL.getCode());
                 entity.setTrackNo("");
-                logisticsOperateService.pushOperateLog(entity.getCode(), entity.getTrackNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(),
-                        LogisticsPlatformEnum.SF_EXPRESS.getCode(), RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(orderUpdateRequest),
-                        JSONUtil.toJsonStr(baseResult), false);
+                pushCancelOperateLog(entity, RequestStatusEnums.SUCCESS.getCode(), orderUpdateRequest, baseResult);
             } else {
-                logisticsOperateService.pushOperateLog(entity.getCode(), entity.getTrackNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(),
-                        LogisticsPlatformEnum.SF_EXPRESS.getCode(), RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(orderUpdateRequest),
-                        JSONUtil.toJsonStr(baseResult), false);
+                pushCancelOperateLog(entity, RequestStatusEnums.FAILED.getCode(), orderUpdateRequest, baseResult);
             }
             this.updateById(entity);
             // 记录主单操作日志
@@ -848,14 +663,26 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 .in(TmsAttachmentEntity::getBusinessId, dto.getIds())
                 .eq(TmsAttachmentEntity::getType, "logistics_label"));
         Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
-        labelPreviewListDTOS.forEach(e -> {
-            e.setAttachName(attachmentMap.get(e.getId()) == null ? "" : attachmentMap.get(e.getId()).getAttachName());
-            e.setAttachUrl(attachmentMap.get(e.getId()) == null ? "" : attachmentMap.get(e.getId()).getAttachUrl());
-        });
+        Map<String, String> notPrintReasonMap = null;
+        for (LogisticsOrderDTO.LogisticsLabelPreviewListDTO labelPreviewListDTO : labelPreviewListDTOS) {
+            TmsAttachmentEntity att = attachmentMap.get(labelPreviewListDTO.getId());
+            if (att == null) {
+                notPrintReasonMap = new HashMap<>();
+                if (StringUtils.isBlank(labelPreviewListDTO.getExceptionType())) {
+                    notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), "未获取面单");
+                } else if (ExceptionTypeEnum.LABEL_EXCEPTION.getCode().equals(labelPreviewListDTO.getExceptionType())) {
+                    notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), labelPreviewListDTO.getExceptionReason());
+                }
+            } else {
+                labelPreviewListDTO.setAttachName(att.getAttachName());
+                labelPreviewListDTO.setAttachUrl(att.getAttachUrl());
+            }
+        }
         result.setLabelPreviewListDTOS(labelPreviewListDTOS);
         result.setTrackNoCount(trackNoCount);
         result.setNotTrackNoCount(notTrackNoCount);
         result.setNotPrintCount(dto.getIds().size() - attachmentList.size());
+        result.setNotPrintReasonMap(notPrintReasonMap);
         return result;
     }
 
@@ -929,13 +756,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
             }
             Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
-            OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
-                    .templateCode(templateCode + authMap.get("clientId"))
-                    .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsLabelDTO.getTrackNo()).build()))
-                    .version(version)
-                    .fileType(fileType)
-                    .sync(true)
-                    .build();
+            OrderLabelRequest orderLabelRequest = buildLabelRequest(authMap, logisticsLabelDTO.getTrackNo());
             boolean success = false;
             BaseResult baseResult = null;
             TmsAttachmentEntity attachmentEntity = new TmsAttachmentEntity();
@@ -974,16 +795,12 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                     attachmentService.removeById(attachmentMap.get(logisticsOrderEntity.getId()).getId());
                 }
                 attachmentService.save(attachmentEntity);
-                logisticsOperateService.pullOperateLog(logisticsLabelDTO.getId(),
-                        logisticsLabelDTO.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+                pushLabelOperateLog(logisticsLabelDTO.getId(), logisticsLabelDTO.getTrackNo(), RequestStatusEnums.SUCCESS.getCode(), logisticsLabelDTO, baseResult);
                 resultDTO = BatchResultDTO.success(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), "获取面单成功");
             } else {
                 logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
                 logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
-                logisticsOperateService.pullOperateLog(logisticsLabelDTO.getId(),
-                        logisticsLabelDTO.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+                pushLabelOperateLog(logisticsLabelDTO.getId(), logisticsLabelDTO.getTrackNo(), RequestStatusEnums.FAILED.getCode(), logisticsLabelDTO, baseResult);
             }
             this.updateById(logisticsOrderEntity);
             // 记录主单操作日志
@@ -1021,13 +838,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
             }
             Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
-            OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
-                    .templateCode(templateCode + authMap.get("clientId"))
-                    .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsOrderEntity.getTrackNo()).build()))
-                    .version(version)
-                    .fileType(fileType)
-                    .sync(true)
-                    .build();
+            OrderLabelRequest orderLabelRequest = buildLabelRequest(authMap, logisticsOrderEntity.getTrackNo());
             boolean success = false;
             BaseResult baseResult = null;
             String url = "";
@@ -1063,18 +874,14 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 resultDTO.setTrackNo(logisticsOrderEntity.getTrackNo());
                 resultDTO.setUrl(url);
                 resultDTOList.add(resultDTO);
-                logisticsOperateService.pullOperateLog(logisticsOrderEntity.getId(),
-                        logisticsOrderEntity.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+                pushLabelOperateLog(logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo(), RequestStatusEnums.SUCCESS.getCode(), logisticsLabelDTO, baseResult);
             } else {
                 resultDTO.setStatus(false);
                 resultDTO.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
                 resultDTOList.add(resultDTO);
                 logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
                 logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
-                logisticsOperateService.pullOperateLog(logisticsOrderEntity.getId(),
-                        logisticsOrderEntity.getTrackNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsLabelDTO), JSONUtil.toJsonStr(baseResult));
+                pushLabelOperateLog(logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo(), RequestStatusEnums.FAILED.getCode(), logisticsLabelDTO, baseResult);
             }
             this.updateById(logisticsOrderEntity);
             // 记录主单操作日志
@@ -1083,6 +890,137 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), "获取物流面单");
         }
         return resultDTOList;
+    }
+
+    /**
+     * 渠道授权信息载体
+     */
+    private static class ChannelAuthInfo {
+        LogisticsSupplierDTO.AuthDTO auth;
+        Map<String, String> authMap;
+        LogisticsChannelEntity channel;
+        LogisticsSaleChannelEntity saleChannel;
+    }
+
+    /**
+     * 获取渠道授权、渠道、销售渠道信息（add/update/addBatch 共用）
+     */
+    private ChannelAuthInfo getChannelAuthInfo(String channelId) {
+        ChannelAuthInfo info = new ChannelAuthInfo();
+        info.auth = logisticsAuthService.getAuthByChannelId(channelId);
+        if (Objects.isNull(info.auth)) {
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
+        }
+        info.authMap = logisticsAuthService.getLogisticsAuthConfig(info.auth.getAuthId(), null, info.auth.getLogisticsPlatform());
+        info.channel = logisticsChannelService.getById(channelId);
+        if (Objects.isNull(info.channel)) {
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
+        }
+        info.saleChannel = logisticsSaleChannelService.getById(info.channel.getSyncSourceId());
+        if (Objects.isNull(info.saleChannel)) {
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
+        }
+        return info;
+    }
+
+    /**
+     * 构建寄件方ContactInfo（add/update/addBatch 共用）
+     */
+    private ContactInfo buildSenderContactInfo(String channelId, String channelName) {
+        List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, "all");
+        LogisticsAddressTypeEnum finalDeliverType = LogisticsAddressTypeEnum.DELIVER;
+        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> finalDeliverType.equals(a.getType())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliverList)) {
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY, channelName, finalDeliverType.getName());
+        }
+        LogisticsAddressEntity logisticsAddress = deliverList.get(0);
+        ContactInfo sender = new ContactInfo();
+        sender.setContactType(1);
+        sender.setContact(logisticsAddress.getContact());
+        sender.setMobile(logisticsAddress.getTelNumber());
+        sender.setCountry(logisticsAddress.getCountry());
+        sender.setProvince(logisticsAddress.getProvinceName());
+        sender.setCity(logisticsAddress.getCityName());
+        sender.setAddress(logisticsAddress.getAddressFirst());
+        return sender;
+    }
+
+    /**
+     * 构建收件方ContactInfo（add/update/addBatch 共用）
+     */
+    private ContactInfo buildReceiverContactInfo(String contact, String mobile, String province, String city, String address) {
+        ContactInfo receiver = new ContactInfo();
+        receiver.setContactType(2);
+        receiver.setContact(contact);
+        receiver.setMobile(mobile);
+        receiver.setCountry(CountrySiteEnum.CHINA.getSite());
+        receiver.setProvince(province);
+        receiver.setCity(city);
+        receiver.setAddress(address);
+        return receiver;
+    }
+
+    /**
+     * 处理下单结果，设置status/trackNo/exceptionType/exceptionReason（add/update 共用）
+     */
+    private void handleOrderResult(BaseResult baseResult, LogisticsOrderEntity entity) {
+        if (baseResult.isSuccess()) {
+            entity.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
+            OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
+            List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
+            if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
+                WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
+                if (Objects.nonNull(waybillNoInfo)) {
+                    entity.setTrackNo(waybillNoInfo.getWaybillNo());
+                }
+            }
+        } else {
+            entity.setStatus(LogisticsStatusEnum.FAILED.getCode());
+            entity.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
+            entity.setExceptionReason(baseResult.getErrorMsg());
+        }
+    }
+
+    /**
+     * 下单成功后异步发送获取面单的MQ消息（add/update 共用）
+     */
+    private void asyncSendLabelRequest(LogisticsOrderEntity entity) {
+        if (StringUtils.isNotBlank(entity.getTrackNo())) {
+            String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, entity.getId(), entity.getTrackNo());
+            redisUtil.set(labelRedisKey, true, 86400);
+            LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(entity);
+            mqProducerService.asyncClassMsg(RocketMqTopic.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
+        }
+    }
+
+    /**
+     * 推送取消订单操作日志（cancel/batchCancel 共用）
+     */
+    private void pushCancelOperateLog(LogisticsOrderEntity entity, String requestStatus, OrderUpdateRequest request, BaseResult result) {
+        logisticsOperateService.pushOperateLog(entity.getCode(), entity.getTrackNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(),
+                LogisticsPlatformEnum.SF_EXPRESS.getCode(), requestStatus, JSONUtil.toJsonStr(request),
+                JSONUtil.toJsonStr(result), false);
+    }
+
+    /**
+     * 构建面单请求（getLogisticsOrderLabel/batchGetLabel 共用）
+     */
+    private OrderLabelRequest buildLabelRequest(Map<String, String> authMap, String trackNo) {
+        return OrderLabelRequest.builder()
+                .templateCode(templateCode + authMap.get("clientId"))
+                .documents(Collections.singletonList(Document.builder().masterWaybillNo(trackNo).build()))
+                .version(version)
+                .fileType(fileType)
+                .sync(true)
+                .build();
+    }
+
+    /**
+     * 推送面单操作日志（getLogisticsOrderLabel/batchGetLabel 共用）
+     */
+    private void pushLabelOperateLog(String id, String trackNo, String status, Object request, Object result) {
+        logisticsOperateService.pullOperateLog(id, trackNo, BusinessTypeEnum.GET_LABEL.getCode(),
+                LogisticsPlatformEnum.SF_EXPRESS.getCode(), status, JSONUtil.toJsonStr(request), JSONUtil.toJsonStr(result));
     }
 
 }
