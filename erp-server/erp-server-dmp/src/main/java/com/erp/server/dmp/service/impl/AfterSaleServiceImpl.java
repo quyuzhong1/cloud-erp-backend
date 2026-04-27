@@ -49,6 +49,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsOrderEntity;
+import com.erp.model.tms.enums.ExceptionTypeEnum;
 import com.erp.model.tms.enums.LogisticsLabelStatusEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -1631,26 +1632,29 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Override
     public List<BatchResultDTO> logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto) {
+        log.info("开始新增物流下单表");
         List<String> afterSaleIdList = dto.getOrderInfoDTOList().stream().map(AfterSaleDTO.OrderInfoDTO::getId).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList());
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
         // 根据id和code分组
         Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, w -> w));
-        List<LogisticsOrderEntity> entityList = dto.getOrderInfoDTOList().stream().map(orderInfoDTO -> {
+        List<LogisticsOrderEntity> entityList = new ArrayList<>();
+        for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : dto.getOrderInfoDTOList()) {
             AfterSaleEntity afterSaleEntity = afterSaleEntityMap.get(orderInfoDTO.getId());
-            LogisticsOrderEntity logisticsOrderEntity = new LogisticsOrderEntity();
-            BeanMapperUtils.copy(orderInfoDTO, logisticsOrderEntity);
-            logisticsOrderEntity.setAfterSaleId(orderInfoDTO.getId());
-            logisticsOrderEntity.setLogisticsPlatform(dto.getLogisticsPlatform());
-            logisticsOrderEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
-            logisticsOrderEntity.setSourceCode(afterSaleEntity.getCode());
-            logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
-            logisticsOrderEntity.setSourceType(SourceTypeEnum.AFTER_SALE.getCode());
-            logisticsOrderEntity.setCountry(CountrySiteEnum.CHINA.getSite());
-            logisticsOrderEntity.setReceiver(afterSaleEntity.getUsername());
-            logisticsOrderEntity.setContactNumber(afterSaleEntity.getPhoneNumber());
-            log.info("开始新增物流下单表");
-            return logisticsOrderEntity;
-        }).collect(Collectors.toList());
+            if (afterSaleEntity != null) {
+                LogisticsOrderEntity logisticsOrderEntity = new LogisticsOrderEntity();
+                BeanMapperUtils.copy(orderInfoDTO, logisticsOrderEntity);
+                logisticsOrderEntity.setAfterSaleId(orderInfoDTO.getId());
+                logisticsOrderEntity.setLogisticsPlatform(dto.getLogisticsPlatform());
+                logisticsOrderEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
+                logisticsOrderEntity.setSourceCode(afterSaleEntity.getCode());
+                logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+                logisticsOrderEntity.setSourceType(SourceTypeEnum.AFTER_SALE.getCode());
+                logisticsOrderEntity.setCountry(CountrySiteEnum.CHINA.getSite());
+                logisticsOrderEntity.setReceiver(afterSaleEntity.getUsername());
+                logisticsOrderEntity.setContactNumber(afterSaleEntity.getPhoneNumber());
+                entityList.add(logisticsOrderEntity);
+            }
+        }
         // 调用物流下单服务
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.addBatch(entityList);
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, w -> w));
@@ -1804,20 +1808,33 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
                 .eq(DmpAttachmentEntity::getType, "after_sale_label"));
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, v -> v));
+        Map<String, String> notPrintReasonMap = null;
         List<AfterSaleDTO.LogisticsLabelPreviewListDTO> labelPreviewListDTOS = new ArrayList<>();
         for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : list) {
             AfterSaleDTO.LogisticsLabelPreviewListDTO labelPreviewListDTO = new AfterSaleDTO.LogisticsLabelPreviewListDTO();
             LogisticsOrderDTO.ListDTO listDTO = map.get(orderInfoDTO.getId());
-            labelPreviewListDTO.setId(orderInfoDTO.getId());
-            labelPreviewListDTO.setLogisticsPlatform(listDTO.getLogisticsPlatform());
-            labelPreviewListDTO.setLogisticsPlatformName(listDTO.getLogisticsPlatformName());
-            labelPreviewListDTO.setLogisticsChannelId(listDTO.getLogisticsChannelId());
-            labelPreviewListDTO.setLogisticsChannelName(listDTO.getLogisticsChannelName());
-            labelPreviewListDTO.setTrackNo(orderInfoDTO.getOutboundTrackNo());
-            labelPreviewListDTO.setCode(orderInfoDTO.getCode());
-            labelPreviewListDTO.setAttachName(attachmentMap.get(orderInfoDTO.getId()) == null ? "" : attachmentMap.get(orderInfoDTO.getId()).getAttachName());
-            labelPreviewListDTO.setAttachUrl(attachmentMap.get(orderInfoDTO.getId()) == null ? "" : attachmentMap.get(orderInfoDTO.getId()).getAttachUrl());
-            labelPreviewListDTOS.add(labelPreviewListDTO);
+            if (listDTO != null) {
+                labelPreviewListDTO.setId(orderInfoDTO.getId());
+                labelPreviewListDTO.setLogisticsPlatform(listDTO.getLogisticsPlatform());
+                labelPreviewListDTO.setLogisticsPlatformName(listDTO.getLogisticsPlatformName());
+                labelPreviewListDTO.setLogisticsChannelId(listDTO.getLogisticsChannelId());
+                labelPreviewListDTO.setLogisticsChannelName(listDTO.getLogisticsChannelName());
+                labelPreviewListDTO.setTrackNo(orderInfoDTO.getOutboundTrackNo());
+                labelPreviewListDTO.setCode(orderInfoDTO.getCode());
+                DmpAttachmentEntity attachmentEntity = attachmentMap.get(orderInfoDTO.getId());
+                if (attachmentEntity == null) {
+                    notPrintReasonMap = new HashMap<>();
+                    if (StringUtils.isBlank(listDTO.getExceptionType())) {
+                        notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), "未获取面单");
+                    } else if (ExceptionTypeEnum.LABEL_EXCEPTION.getCode().equals(listDTO.getExceptionType())) {
+                        notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), listDTO.getExceptionReason());
+                    }
+                } else {
+                    labelPreviewListDTO.setAttachName(attachmentMap.get(orderInfoDTO.getId()).getAttachName());
+                    labelPreviewListDTO.setAttachUrl(attachmentMap.get(orderInfoDTO.getId()).getAttachUrl());
+                }
+                labelPreviewListDTOS.add(labelPreviewListDTO);
+            }
         }
         // 有运单号数量
         Integer trackNoCount = Math.toIntExact(list.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getOutboundTrackNo())).count());
@@ -1827,6 +1844,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         result.setTrackNoCount(trackNoCount);
         result.setNotTrackNoCount(notTrackNoCount);
         result.setNotPrintCount(dto.getIds().size() - attachmentList.size());
+        result.setNotPrintReasonMap(notPrintReasonMap);
         return result;
     }
 

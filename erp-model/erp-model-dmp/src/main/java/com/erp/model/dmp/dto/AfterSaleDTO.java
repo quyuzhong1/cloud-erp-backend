@@ -1077,6 +1077,11 @@ public class AfterSaleDTO implements Serializable {
         private Integer notPrintCount;
 
         /**
+         * 不可打印原因map
+         */
+        private Map<String, String> notPrintReasonMap;
+
+        /**
          * 物流面单预览列表
          */
         private List<LogisticsLabelPreviewListDTO> labelPreviewListDTOS;
