@@ -16,21 +16,13 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.tms.feign.TmsBaseDataFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
-import com.sdk.wms.jitu.dto.request.StockOutOrderRequest;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCancelRequest;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
-import com.sdk.wms.jitu.dto.request.WarehouseRequest;
-import com.sdk.wms.jitu.dto.response.StockOutOrderResponse;
-import com.sdk.wms.jitu.dto.response.OverseasInboundCancelResponse;
-import com.sdk.wms.jitu.dto.response.WarehouseResponse;
+import com.sdk.wms.jitu.dto.request.*;
+import com.sdk.wms.jitu.dto.response.*;
 import com.sdk.wms.jitu.service.JituService;
-import com.sdk.wms.jitu.dto.response.OverseasInboundCreateResponse;
-import com.sdk.wms.zhongbao.dto.request.OverseasInboundCancelRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,7 +33,6 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -144,7 +135,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        StockOutOrderRequest createRequest = OverseasWarehouseInboundConverter.INSTANCE.b2cOutboundDtoToJitu(createOutboundReq);
+        StockOutOrderCreateRequest createRequest = OverseasWarehouseInboundConverter.INSTANCE.b2cOutboundDtoToJitu(createOutboundReq);
         //平台订单号
         setPlatformNumber(createOutboundReq, createRequest);
         //设置付款时间
@@ -152,14 +143,14 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         //重置地址
         setAddress(createOutboundReq,createRequest);
         log.warn(getPlatForm().getName() + "创建出库单请求:{}", JSONUtil.toJsonStr(createRequest));
-        StockOutOrderResponse response = jituService.createStockOutOrder(createRequest);
+        StockOutOrderCreateResponse response = jituService.createStockOutOrder(createRequest);
         log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(response));
-        StockOutOrderResponse.ResponseItem responseItem = response.getResponseitems().get(0);
+        StockOutOrderCreateResponse.ResponseItem responseItem = response.getResponseitems().get(0);
         return "true".equals(responseItem.getSuccess()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(responseItem.getDeliveryOrderCode()).trackNo(responseItem.getMailno()).build()) : failure(responseItem.getMessage() + ":" + responseItem.getReason());
     }
 
-    private void setAddress(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderRequest createRequest) {
-        StockOutOrderRequest.Receiver receiver = createRequest.getReceiver();
+    private void setAddress(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderCreateRequest createRequest) {
+        StockOutOrderCreateRequest.Receiver receiver = createRequest.getReceiver();
         if (CharSequenceUtil.isNotBlank(createOutboundReq.getReceiverInfo().getAddress1())){
             receiver.setAddress(createOutboundReq.getReceiverInfo().getAddress1());
         }else if (CharSequenceUtil.isNotBlank(createOutboundReq.getReceiverInfo().getAddress2())){
@@ -174,13 +165,13 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     //取B2C销售订单的付款时间，如无取当前系统时间，时间格式（默认北京时间）2024-11-14 22:04:22
-    private void setPayTime(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderRequest createRequest) {
+    private void setPayTime(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderCreateRequest createRequest) {
         if (Objects.isNull(createRequest.getPayTime())) {
             createRequest.setPayTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
     }
     //取B2C销售订单的平台订单编号，如无可与客户订单号保持一致
-    private void setPlatformNumber(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderRequest createRequest) {
+    private void setPlatformNumber(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderCreateRequest createRequest) {
         if (CharSequenceUtil.isBlank(createRequest.getPlatformNumber())) {
             createRequest.setPlatformNumber(createOutboundReq.getReferenceNo());
         }
@@ -199,16 +190,16 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-//        BaseResponse<OutboundB2cCancelResponse> response = zhongbaoService.cancelB2cOutboundBill(OutboundB2cCancelRequest.builder().orderNos(Collections.singletonList(cancelOutboundReq.getOrderCode())).cancelRemark(cancelOutboundReq.getReason()).build());
-//        if (!response.getSuccess()) {
-//            return failure(response.getMessage());
-//        }else {
-//            if (Objects.nonNull(response.getData().getFailQty()) && response.getData().getFailQty() > 0){
-//                return failure(response.getData().getFailList().get(0).getMessage());
-//            }
-//            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
-//        }
-        return null;
+        StockOutOrderCancelRequest request = StockOutOrderCancelRequest.builder()
+                .customerid(cancelOutboundReq.getOwnerCode())
+                .warehouseCode(cancelOutboundReq.getWarehouseCode())
+                .orderType("XSCK")
+                .orderCode(cancelOutboundReq.getOrderCode())
+                .cancelReason(cancelOutboundReq.getReason())
+                .build();
+        StockOutOrderCancelResponse stockOutOrderCreateResponse = jituService.cancelOrder(request);
+        StockOutOrderCancelResponse.ResponseItem responseItem = stockOutOrderCreateResponse.getResponseitems().get(0);
+        return "true".equals(responseItem.getSuccess()) ? success(cancelOutboundReq.getOrderCode()) : failure(responseItem.getMessage() + ":" + responseItem.getReason());
     }
 
     @Override
@@ -219,26 +210,20 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             if (b2bThirdDelivery == null) {
                 return failure("B2B三方发货单不存在");
             }
-
-            // 构建授权信息
-            Map<String, Object> authMap = new HashMap<>();
-            authMap.put("key", key);
-            authMap.put("eccompanyid", eccompanyid);
-
             // 构建取消订单请求参数
-            Map<String, Object> request = new HashMap<>();
-            request.put("customerid", authMap.get("eccompanyid")); // 取发货仓库在三方仓配置绑定的货主编码
-            request.put("warehouseCode", b2bThirdDelivery.getThirdWarehouseCode()); // 取发货仓库在三方仓配置绑定的三方仓仓库编码
-            request.put("orderType", "XSCK"); // 默认XSCK-销售出库
-            request.put("orderCode", cancelOutboundReq.getOrderCode()); // 出库单类型时，传txlogisticid字段的单号
-            request.put("cancelReason", cancelOutboundReq.getRemark()); // 取操作拦截时填写的拦截原因
+            StockOutOrderCancelRequest request = new StockOutOrderCancelRequest();
+//            request.setCustomerid(b2bThirdDelivery.getc); // 取发货仓库在三方仓配置绑定的货主编码
+            request.setWarehouseCode(b2bThirdDelivery.getThirdWarehouseCode()); // 取发货仓库在三方仓配置绑定的三方仓仓库编码
+            request.setOrderType("XSCK"); // 默认XSCK-销售出库
+            request.setOrderCode(cancelOutboundReq.getOrderCode()); // 出库单类型时，传txlogisticid字段的单号
+            request.setCancelReason(cancelOutboundReq.getRemark()); // 取操作拦截时填写的拦截原因
 
             // 调用极兔API取消订单
-            StockOutOrderResponse response = jituService.cancelOrder(authMap, request);
+            StockOutOrderCancelResponse response = jituService.cancelOrder(request);
 
             // 处理返回结果
             if (response != null && response.getResponseitems() != null && !response.getResponseitems().isEmpty()) {
-                StockOutOrderResponse.ResponseItem item = response.getResponseitems().get(0);
+                StockOutOrderCancelResponse.ResponseItem item = response.getResponseitems().get(0);
                 if ("true".equals(item.getSuccess())) {
                     return success("SUCCESS");
                 } else {
@@ -328,14 +313,14 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         try {
             // 构建极兔出库单请求
-            StockOutOrderRequest request = buildB2BStockOutOrderRequest(createOutboundReq);
+            StockOutOrderCreateRequest request = buildB2BStockOutOrderRequest(createOutboundReq);
 
             // 调用极兔API创建出库单
-            StockOutOrderResponse response = jituService.createStockOutOrder(request);
+            StockOutOrderCreateResponse response = jituService.createStockOutOrder(request);
 
             // 处理返回结果
             if (response != null && response.getResponseitems() != null && !response.getResponseitems().isEmpty()) {
-                StockOutOrderResponse.ResponseItem item = response.getResponseitems().get(0);
+                StockOutOrderCreateResponse.ResponseItem item = response.getResponseitems().get(0);
                 if ("true".equals(item.getSuccess())) {
                     return success(item.getDeliveryOrderCode());
                 } else {
@@ -353,9 +338,9 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     /**
      * 构建B2B极兔出库单请求
      */
-    private StockOutOrderRequest buildB2BStockOutOrderRequest(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        StockOutOrderRequest request = new StockOutOrderRequest();
-        StockOutOrderRequest.Receiver receiver = new StockOutOrderRequest.Receiver();
+    private StockOutOrderCreateRequest buildB2BStockOutOrderRequest(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        StockOutOrderCreateRequest request = new StockOutOrderCreateRequest();
+        StockOutOrderCreateRequest.Receiver receiver = new StockOutOrderCreateRequest.Receiver();
         Map<String, BigDecimal> skuPriceMap = new HashMap<>();
         B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
         LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
@@ -449,9 +434,9 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         request.setStoreName(""); // 默认空
 
         //明细
-        List<StockOutOrderRequest.Item> items = new ArrayList<>();
+        List<StockOutOrderCreateRequest.Item> items = new ArrayList<>();
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
-            StockOutOrderRequest.Item stockOutItem = new StockOutOrderRequest.Item();
+            StockOutOrderCreateRequest.Item stockOutItem = new StockOutOrderCreateRequest.Item();
             stockOutItem.setItemCode(item.getSkuNo());
             stockOutItem.setNumber(item.getBoxQty());
             // 从销售订单明细获取销售单价
