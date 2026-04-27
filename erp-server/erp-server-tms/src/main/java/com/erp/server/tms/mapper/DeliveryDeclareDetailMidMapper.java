@@ -17,7 +17,7 @@ import java.util.List;
  * </p>
  *
  * @author jack
- * @since 2026-04-20
+ * @since 2026-04-27
  */
 @Mapper
 public interface DeliveryDeclareDetailMidMapper extends BaseMapper<DeliveryDeclareDetailMidEntity> {

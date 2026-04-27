@@ -18,7 +18,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2026-04-20
+ * @since 2026-04-27
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -48,7 +48,7 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("source_code")
     private String sourceCode;
     /**
-    * 单据分类: firstMileDelivery=头程发货单, soDeliveryNotice=B2B发货通知单
+    * 单据分类: firstMileDelivery=头程发货单, soDeliveryNotice=B2B发货通知单  枚举：DeliveryDeclareDetailMidSourceTypeEnum
     */
     @TableField("source_type")
     private String sourceType;
@@ -147,6 +147,46 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("qty")
     private Integer qty;
+    /**
+    * 仓库ID
+    */
+    @TableField("from_warehouse_id")
+    private String fromWarehouseId;
+    /**
+    * 仓库名称
+    */
+    @TableField("from_warehouse_name")
+    private String fromWarehouseName;
+    /**
+    * 目的仓库ID
+    */
+    @TableField("dest_warehouse_id")
+    private String destWarehouseId;
+    /**
+    * 目的仓库名称
+    */
+    @TableField("dest_warehouse_name")
+    private String destWarehouseName;
+    /**
+    * 中转仓库ID
+    */
+    @TableField("transfer_warehouse_id")
+    private String transferWarehouseId;
+    /**
+    * 中转仓库名称
+    */
+    @TableField("transfer_warehouse_name")
+    private String transferWarehouseName;
+    /**
+    * 销售组织ID
+    */
+    @TableField("sales_org_id")
+    private String salesOrgId;
+    /**
+    * 销售组织名称
+    */
+    @TableField("sales_org_name")
+    private String salesOrgName;
 
 
     public static final String REMARK = "remark";
@@ -196,6 +236,22 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     public static final String UNIT_PRICE = "unit_price";
 
     public static final String QTY = "qty";
+
+    public static final String FROM_WAREHOUSE_ID = "from_warehouse_id";
+
+    public static final String FROM_WAREHOUSE_NAME = "from_warehouse_name";
+
+    public static final String DEST_WAREHOUSE_ID = "dest_warehouse_id";
+
+    public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
+
+    public static final String TRANSFER_WAREHOUSE_ID = "transfer_warehouse_id";
+
+    public static final String TRANSFER_WAREHOUSE_NAME = "transfer_warehouse_name";
+
+    public static final String SALES_ORG_ID = "sales_org_id";
+
+    public static final String SALES_ORG_NAME = "sales_org_name";
 
     @Override
     public Serializable pkVal() {
