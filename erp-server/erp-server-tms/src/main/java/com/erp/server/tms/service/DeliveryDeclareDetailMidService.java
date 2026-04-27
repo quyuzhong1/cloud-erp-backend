@@ -14,14 +14,14 @@ import java.util.List;
  * </p>
  *
  * @author jack
- * @since 2026-04-20
+ * @since 2026-04-27
  */
 public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDeclareDetailMidEntity> {
 
     /**
     * 新增
     * @author jack
-    * @date: 2026-04-20
+    * @date: 2026-04-27
     * @param dto
     * @return
     */
@@ -30,7 +30,7 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     /**
     * 修改
     * @author jack
-    * @date: 2026-04-20
+    * @date: 2026-04-27
     * @param dto
     * @return
     */
@@ -40,7 +40,7 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     /**
     * 分页列表查询
     * @author jack
-    * @date: 2026-04-20
+    * @date: 2026-04-27
     * @param pagingParamDTO
     * @return PagingVO<DeliveryDeclareDetailMidDTO.ListDTO>>
     */
@@ -49,7 +49,7 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     /**
     * 状态统计
     * @author jack
-    * @date: 2026-04-20
+    * @date: 2026-04-27
     * @param dto
     * @return List<DeliveryDeclareDetailMidDTO.TabListDTO>>
     */
@@ -58,7 +58,7 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     /**
     * 详情
     * @author jack
-    * @date: 2026-04-20
+    * @date: 2026-04-27
     * @param id
     * @return
     */
@@ -68,7 +68,7 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     /**
     * 导出Excel
     * @author jack
-    * @date: 2026-04-20
+    * @date: 2026-04-27
     * @param dto
     * @param response
     * @return

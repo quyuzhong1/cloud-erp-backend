@@ -32,7 +32,7 @@ import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
  * 报关明细中间表
  *
  * @author jack
- * @since 2026-04-20
+ * @since 2026-04-27
  */
 @Slf4j
 @RestController
@@ -46,7 +46,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     /**
     * 新增
     * @author jack
-    * @date:  2026-04-20
+    * @date:  2026-04-27
     * @param dto
     * @return ApiResult<String>
     */
@@ -59,7 +59,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     /**
     * 修改
     * @author jack
-    * @date:  2026-04-20
+    * @date:  2026-04-27
     * @param dto
     * @return ApiResult
     */
@@ -93,7 +93,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     /**
     * 列表查询
     * @author jack
-    * @date: 2026-04-20
+    * @date: 2026-04-27
     * @param dto
     * @return ApiResult<PagingVO<DeliveryDeclareDetailMidDTO.ListDTO>>
     */
@@ -111,7 +111,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     /**
     * 详情
     * @author jack
-    * @date:  2026-04-20
+    * @date:  2026-04-27
     * @param id
     * @return ApiResult<DeliveryDeclareDetailMidDTO.ViewDTO>>
     */
@@ -129,7 +129,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     /**
     * 导出Excel数据
     * @author jack
-    * @date:  2026-04-20
+    * @date:  2026-04-27
     * @param dto
     * @param response
     * @return
