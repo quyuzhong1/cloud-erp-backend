@@ -29,6 +29,7 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
     MANUAL_COMPLETE("manualComplete","手动完结", Constants.RECEIVED,"已签收"),
     SYSTEM_COMPLETE("systemComplete","系统完结", Constants.RECEIVED,"已签收"),
     MAYBE_EXCEPTION("maybeException","可能异常","trackException","运输异常"),
+    RETURNED("returned", "快递退回", Constants.TRACK_ING1, "运输途中"),
     TRANSPORT_LONG("transportLong","运输过久","trackException","运输异常"),
     /**
      * 海运

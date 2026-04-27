@@ -10,7 +10,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @Slf4j
 @SpringBootApplication(exclude = MongoAutoConfiguration.class, scanBasePackages ={"com.erp","com.common"})
 @EnableFeignClients(basePackages = {"com.erp.rpc"})
-@ServletComponentScan
+@ServletComponentScan(basePackages ={"com.erp","com.common"})
 public class ErpServerDmpApplication {
 
     public static void main(String[] args) {

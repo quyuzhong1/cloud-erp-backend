@@ -272,10 +272,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     logisticsBillEntity.setSoDeliveryCode(businessDTO.getCode());
                 }
             } else  {
-                SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
-                if (ObjectUtil.isNotEmpty(soOutstockEntity) && Arrays.asList(SourceTypeEnum.SO_B2C_DELIVERY.getCode(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()).contains(soOutstockEntity.getSourceType())) {
-                    logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
-                    logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
+                //发货单id为空则查询销售出库单取发货单
+                if (CharSequenceUtil.isBlank(logisticsBillEntity.getSoDeliveryId())) {
+                    SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
+                    if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+                        logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
+                        logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
+                    }
                 }
             }
         }

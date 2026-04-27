@@ -86,13 +86,14 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (!Objects.isNull(oldEntity)) {
             skuIdList.add(oldEntity.getSkuId());
         }
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
 
         SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
         if(skuVO!=null){
             qcProductEntity.setProductGrade(skuVO.getProductGrade());
             qcProductEntity.setVariantProperty(skuVO.getVariantProperty());
             qcProductEntity.setSkuNo(skuVO.getSkuNo());
+            qcProductEntity.setEan(skuVO.getEan());
         }
         //产品信息
         List<String> productImageNameList = qcProduct.getProductImageNameList();
