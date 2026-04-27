@@ -481,6 +481,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return null;
         }
         boolean statusChanged = !Objects.equals(status, old.getStatus());
+        boolean shouldGenerateOutstock = ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(status)
+                && isMissingSoOutstock(old);
         boolean shouldClearErrorMessage = statusChanged
                 && !ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(status)
                 && CharSequenceUtil.isNotBlank(old.getErrorMessage())
@@ -491,21 +493,23 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 || isFieldValueChanged(old.getTrackNo(), trackNo)
                 || isFieldValueChanged(old.getErrorMessage(), errorMsg)
                 || (Objects.nonNull(deliveryTime) && !Objects.equals(old.getDeliveryTime(), deliveryTime));
-        if (!statusChanged && !fieldChanged) {
+        if (!statusChanged && !fieldChanged && !shouldGenerateOutstock) {
             return null;
         }
-        this.lambdaUpdate()
-                .set(statusChanged, B2bThirdDeliveryEntity::getStatus, status)
-                .set(CharSequenceUtil.isNotBlank(errorMsg), B2bThirdDeliveryEntity::getErrorMessage, errorMsg)
-                .set(shouldClearErrorMessage, B2bThirdDeliveryEntity::getErrorMessage, CharSequenceUtil.EMPTY)
-                .set(CharSequenceUtil.isNotBlank(platformOrderCode), B2bThirdDeliveryEntity::getPlatformOrderCode, platformOrderCode)
-                .set(CharSequenceUtil.isNotBlank(remark), B2bThirdDeliveryEntity::getRemark, remark)
-                .set(CharSequenceUtil.isNotBlank(trackNo), B2bThirdDeliveryEntity::getTrackNo, trackNo)
-                .set(Objects.nonNull(deliveryTime), B2bThirdDeliveryEntity::getDeliveryTime, deliveryTime)
-                .eq(B2bThirdDeliveryEntity::getId, id).update();
-        B2bThirdDeliveryEntity newEntity = this.getById(id);
-        operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "更新操作");
-        if (!statusChanged) {
+        if (statusChanged || fieldChanged) {
+            this.lambdaUpdate()
+                    .set(statusChanged, B2bThirdDeliveryEntity::getStatus, status)
+                    .set(CharSequenceUtil.isNotBlank(errorMsg), B2bThirdDeliveryEntity::getErrorMessage, errorMsg)
+                    .set(shouldClearErrorMessage, B2bThirdDeliveryEntity::getErrorMessage, CharSequenceUtil.EMPTY)
+                    .set(CharSequenceUtil.isNotBlank(platformOrderCode), B2bThirdDeliveryEntity::getPlatformOrderCode, platformOrderCode)
+                    .set(CharSequenceUtil.isNotBlank(remark), B2bThirdDeliveryEntity::getRemark, remark)
+                    .set(CharSequenceUtil.isNotBlank(trackNo), B2bThirdDeliveryEntity::getTrackNo, trackNo)
+                    .set(Objects.nonNull(deliveryTime), B2bThirdDeliveryEntity::getDeliveryTime, deliveryTime)
+                    .eq(B2bThirdDeliveryEntity::getId, id).update();
+            B2bThirdDeliveryEntity newEntity = this.getById(id);
+            operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "更新操作");
+        }
+        if (!statusChanged && !shouldGenerateOutstock) {
             return null;
         }
         if (ThirdDeliveryStatusEnum.FAILED.getCode().equals(status) || ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(status)) {
@@ -525,6 +529,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         return null;
+    }
+
+    private boolean isMissingSoOutstock(B2bThirdDeliveryEntity entity) {
+        return Objects.nonNull(entity)
+                && CharSequenceUtil.isNotBlank(entity.getCode())
+                && Objects.isNull(soOutstockService.getBySourceCode(entity.getCode()));
     }
 
     /**
