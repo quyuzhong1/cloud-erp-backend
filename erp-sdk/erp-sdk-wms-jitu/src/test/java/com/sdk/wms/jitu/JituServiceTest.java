@@ -107,10 +107,10 @@ class JituServiceTest {
         item.setInventoryType("ZP");
         items.add(item);
         request.setItems(items);
-
+        ThirdWarehouseContext.setAuthMap(authMap);
         // 调用API
         try {
-            com.sdk.wms.jitu.dto.response.StockOutOrderResponse response = JituService.createStockOutOrder(authMap, request);
+            com.sdk.wms.jitu.dto.response.StockOutOrderResponse response = JituService.createStockOutOrder(request);
             System.out.println(JSONUtil.toJsonStr(response));
         } catch (Exception e) {
             e.printStackTrace();
