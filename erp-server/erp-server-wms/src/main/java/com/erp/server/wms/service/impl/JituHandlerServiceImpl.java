@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
@@ -13,6 +14,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.TmsBaseDataFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
@@ -383,6 +385,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         authMap.put("eccompanyid",eccompanyid);
         Map<String, BigDecimal> skuPriceMap = new HashMap<>();
         B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
+        LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
         if (Objects.nonNull(b2bThirdDelivery)) {
             // 收件人信息
             receiver.setCountrycode(b2bThirdDelivery.getCountryId());
@@ -426,8 +429,18 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 }
             }
             //TODO 配送方式=平台物流/商家自联快递时必填
-            request.setMailno(b2bThirdDelivery.getTrackNo());
+            if (StringUtils.isNotBlank(logisticsChannel.getUndeliverableDecision())){
+                if (Objects.equals(logisticsChannel.getUndeliverableDecision(),"PTWL")
+                        || Objects.equals(logisticsChannel.getUndeliverableDecision(),"SJZL")) {
+                    if (StringUtils.isNotBlank(b2bThirdDelivery.getTrackNo())) {
+                        request.setMailno(b2bThirdDelivery.getTrackNo());
+                    } else {
+                        throw new ServiceException("配送方式为平台物流/商家自联快递时物流跟踪号必填");
+                    }
+                }
+            }
         }
+
         // 基本信息
         request.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
         request.setTxlogisticid(createOutboundReq.getReferenceNo());
@@ -439,11 +452,25 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         // 物流信息
         //TODO 等4.5开发完
-        request.setTransportMode("PTWL");
-        request.setCarrier("ABF");
-        request.setRouteid(createOutboundReq.getChannelCode());
-        //TODO 配送方式=平台物流时必填，渠道是否需要同步面单标识
+        if (StringUtils.isNotBlank(logisticsChannel.getUndeliverableDecision())){
+            request.setTransportMode(logisticsChannel.getUndeliverableDecision());
+            if (Objects.equals(logisticsChannel.getUndeliverableDecision(),"PTWL")
+                    && StringUtils.isBlank(createOutboundReq.getFileUrl())) {
+                //TODO 配送方式=平台物流时必填，渠道是否需要同步面单标识
+                throw new ServiceException("配送方式为平台物流时必填，渠道需要同步面单");
+            }
+            //TODO 配送方式=平台物流/商家自联快递/仓配快递 时必填
+            if (Objects.equals(logisticsChannel.getUndeliverableDecision(),"PTWL")
+                    || Objects.equals(logisticsChannel.getUndeliverableDecision(),"SJZL")
+                    || Objects.equals(logisticsChannel.getUndeliverableDecision(),"CPKD")){
+                if (StringUtils.isBlank(logisticsChannel.getLastMileCarrier())) {
+                    throw new ServiceException("配送方式为平台物流/商家自联快递/仓配快递时尾程服务商必填");
+                }
+            }
+        }
         request.setLabel(createOutboundReq.getFileUrl());
+        request.setCarrier(logisticsChannel.getLastMileCarrier());
+        request.setRouteid(createOutboundReq.getChannelCode());
         request.setDeliveryNote(createOutboundReq.getRemark());
         request.setIsCod("0"); // 默认0否
         request.setStoreCode("-"); // 默认-
