@@ -3,6 +3,7 @@ package com.erp.rpc.dmp.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -71,4 +72,11 @@ public interface DmpThirdMappingFeign {
     @GetMapping("/getShopByThirdCode")
     ThirdMappingEntity getShopByThirdCode(@RequestParam String thirdCode, @RequestParam String sysType);
 
+    /**
+     * 查询三方仓库映射关系
+     * @param queryMapParamDTO
+     * @return
+     */
+    @PostMapping("/listQueryMapping")
+    List<ThirdWarehouseDTO.QueryMapDTO> listQueryMapping(@RequestBody @Validated ThirdWarehouseDTO.QueryMapParamDTO queryMapParamDTO);
 }

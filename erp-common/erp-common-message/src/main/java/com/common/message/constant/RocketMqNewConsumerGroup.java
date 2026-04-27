@@ -71,6 +71,11 @@ public class RocketMqNewConsumerGroup {
     public static final String DMP_TRACK123_TO_TMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_track123_to_tms_group";
 
     /**
+     * 新中台Kuaidi100
+     */
+    public static final String DMP_KUAIDI100_TO_TMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_kuaidi100_to_tms_group";
+
+    /**
      * 新中台平台仓库
      */
     public static final String DMP_PLATFORM_WAREHOUSE_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_warehouse_to_wms_group";

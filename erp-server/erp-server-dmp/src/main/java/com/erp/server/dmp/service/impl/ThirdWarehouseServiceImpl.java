@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -167,6 +168,11 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     @Override
     public ThirdWarehouseEntity getByWarehouseId(String thirdId, String category) {
         return baseMapper.getByWarehouseId(thirdId,category);
+    }
+
+    @Override
+    public List<ThirdWarehouseDTO.QueryMapDTO> listQueryMapping(ThirdWarehouseDTO.QueryMapParamDTO dto) {
+        return baseMapper.listQueryMapping(dto);
     }
 
 

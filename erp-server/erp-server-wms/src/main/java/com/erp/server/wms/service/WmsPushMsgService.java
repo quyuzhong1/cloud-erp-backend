@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.WmsPushMsgDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 本地推送消息表 服务类
@@ -33,4 +35,5 @@ public interface WmsPushMsgService extends SuperService<WmsPushMsgEntity> {
     Boolean update(WmsPushMsgDTO.UpdateDTO dto);
 
 
+    List<WmsPushMsgEntity> searchByDTO(WmsPushMsgDTO.SearchDTO searchDTO);
 }

@@ -23,6 +23,7 @@ public class CreateOtherStockoutRequest
 	private String remark;
 	private String reason;
 	private String dmpSyncTaskId;
+	private String orderType;
 
 	/**
 	 * 来源单据编码

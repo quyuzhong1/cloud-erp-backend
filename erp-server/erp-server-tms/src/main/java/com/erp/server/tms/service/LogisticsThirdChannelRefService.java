@@ -1,9 +1,11 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -27,15 +29,6 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
     * @return
     */
     BaseResultDTO.AddDTO add(LogisticsThirdChannelRefDTO.AddDTO dto);
-
-    /**
-    * 批量新增
-    * @author zdy
-    * @date: 2025-05-29
-    * @param dto
-    * @return
-    */
-    List<BatchResultDTO> batchAdd(LogisticsThirdChannelRefDTO.AddDTO dto);
 
     /**
     * 修改
@@ -94,6 +87,9 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
+    @Transactional(rollbackFor = Exception.class)
+    void handleImportFile(List<ImportLogisticsThirdChannelRefExcelDTO> successList, List<String> errorNoList, List<ImportLogisticsThirdChannelRefExcelDTO> errorList, String importType);
+
     void downloadTemplate(HttpServletResponse response);
 
     /**
@@ -111,4 +107,18 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
     List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(String channelId);
 
     Boolean existRefBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId);
+
+    /**
+     * 根据单号搜索对应的三方渠道配置映射
+     *
+     * @param trackNos 物流单号列表
+     * @return 映射关系列表
+     * @author jack
+     * @date 2026-04-02
+     */
+    List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> listByTrackNos(List<String> trackNos);
+
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    void importLogisticsThirdChannelRef(BaseDTO.ImportDTO dto);
 }
