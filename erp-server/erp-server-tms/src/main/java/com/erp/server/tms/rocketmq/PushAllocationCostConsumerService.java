@@ -190,90 +190,60 @@ public class PushAllocationCostConsumerService implements RocketMQListener<Async
     }
 
 
-    /**
-     * 下推小包费用分摊（游标分页版）
-     * <p>
-     * 核心改进：放弃"一次性查出全量IDs再分批"的方案，改为 SQL 层 keyset pagination。
-     * 每次仅从 DB 加载 BATCH_SIZE 条数据，处理完毕后以最后一条的 id 为游标继续查下一批，
-     * 内存中永远只持有当前批次数据，彻底规避超大 IN 语句和 OOM 风险。
-     * </p>
-     *
-     * @param dto MQ 消息体，含 taskId / type / reportDate / ids（可为空，空则全量）
-     * @author jack
-     * @date 2026-04-22
-     */
     private void pushSmallBagCostAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
         String taskId = dto.getTaskId();
-        // 每批从 DB 查询的条数，可按实际机器内存调整
-        final int BATCH_SIZE = 500;
+//        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByCanPushAllocation(dto.getType() ,dto.getReportDate());
+        List<String> ids = logisticsBillCostService.listByCanPushAllocation(dto);
+        List<LogisticsBillCostEntity> list = logisticsBillCostService.listByIds(ids);
 
-        // ① 先统计总条数（SQL层统计，不加载数据到内存）
-        int totalCount = logisticsBillCostService.countByCanPushAllocation(dto);
-        if (totalCount == 0) {
-            asyncTaskRecordService.updateTask(taskId, AsyncTaskRecordStatusEnum.FAILED.getCode(),
-                    ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+        if(CollUtil.isEmpty(list)) {
+            asyncTaskRecordService.updateTask(taskId,AsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
             return;
+        }else {
+            asyncTaskRecordService.lambdaUpdate().set(AsyncTaskRecordEntity::getDetailCount,list.size()).eq(AsyncTaskRecordEntity::getId,taskId).update();
         }
-        asyncTaskRecordService.lambdaUpdate()
-                .set(AsyncTaskRecordEntity::getDetailCount, totalCount)
-                .eq(AsyncTaskRecordEntity::getId, taskId)
-                .update();
 
-        // ② 游标分页循环：每次只从 DB 取 BATCH_SIZE 条，处理完推进游标
-        // pageByCanPushAllocation 已在 SQL 中 INNER JOIN logistics_bill
-        // 并过滤 is_allocate_cost_required = TRUE，无需 Java 层再做物流单判断
-        dto.setBatchSize(BATCH_SIZE);
-        dto.setLastId("")      ;  // 首次从头开始
+        List<String> logisticsBillIds = list.stream().map(LogisticsBillCostEntity::getLogisticsBillId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+
+        Map<String, LogisticsBillEntity> logisticsBillMap = logisticsBillService.listByIds(logisticsBillIds).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(LogisticsBillEntity::getId, Function.identity(),(o1,o2)->o1));
+
         LocalDateTime now = LocalDateTime.now();
-
-        while (true) {
-            // 每批仅查 BATCH_SIZE 条费用ID，DB 侧走 id > lastId ORDER BY id LIMIT N
-            List<String> batchIds = logisticsBillCostService.pageByCanPushAllocation(dto);
-            if (CollUtil.isEmpty(batchIds)) {
-                // 无更多数据，退出循环
-                break;
+        for(LogisticsBillCostEntity logisticsBillCostEntity : list) {
+            LogisticsBillEntity logisticsBillEntity = logisticsBillMap.get(logisticsBillCostEntity.getLogisticsBillId());
+            if(Objects.isNull(logisticsBillEntity) || Objects.isNull(logisticsBillEntity.getIsAllocateCostRequired()) || Objects.equals(logisticsBillEntity.getIsAllocateCostRequired(),Boolean.FALSE)){
+                log.error("asyncPushAllocation id: 【{}】, 异常: 【{}】",logisticsBillCostEntity.getId(),"费用分摊设置为不分摊，不能生成小包费用分摊");
+                continue;
             }
 
-            // 本批查完整实体（最多 BATCH_SIZE 条，不会触发超大 IN）
-            List<LogisticsBillCostEntity> batchList = logisticsBillCostService.listByIds(batchIds);
+            AsyncTaskDetailRecordEntity detail = new AsyncTaskDetailRecordEntity();
+            detail.setMainId(taskId);
+            detail.setBusinessType(dto.getBusinessType());
+            detail.setBusinessId(logisticsBillCostEntity.getId());
+            detail.setStatus(AsyncTaskRecordStatusEnum.ING.getCode());
+            detail.setStartTime(now);
+            asyncTaskDetailRecordService.save(detail);
 
-            for (LogisticsBillCostEntity logisticsBillCostEntity : batchList) {
-                AsyncTaskDetailRecordEntity detail = new AsyncTaskDetailRecordEntity();
-                detail.setMainId(taskId);
-                detail.setBusinessType(dto.getBusinessType());
-                detail.setBusinessId(logisticsBillCostEntity.getId());
-                detail.setStatus(AsyncTaskRecordStatusEnum.ING.getCode());
-                detail.setStartTime(now);
-                asyncTaskDetailRecordService.save(detail);
+            String id = detail.getId();
 
-                String detailId = detail.getId();
-
-                costAllocationPool.execute(() -> {
-                    try {
-                        BatchResultDTO result = logisticsBillCostService.pushAllocation(
-                                logisticsBillCostEntity.getId(), dto.getReportDate());
-                        if (result.getSuccess()) {
-                            asyncTaskDetailRecordService.updateDetail(detailId, AsyncTaskRecordStatusEnum.SUCCESS.getCode(), "");
-                        } else {
-                            asyncTaskDetailRecordService.updateDetail(detailId, AsyncTaskRecordStatusEnum.FAILED.getCode(), result.getMsg());
-                        }
-                    } catch (Exception e) {
-                        log.error("asyncPushAllocation id: 【{}】, 异常: 【{}】", logisticsBillCostEntity.getId(), e);
-                        String errorMsg = ExceptionUtils.getStackTrace(e);
-                        asyncTaskDetailRecordService.updateDetail(detailId, AsyncTaskRecordStatusEnum.FAILED.getCode(), errorMsg);
-                    } finally {
-                        asyncTaskRecordService.updateTaskFinally(taskId);
+            costAllocationPool.execute(() -> {
+                try {
+                    BatchResultDTO result = logisticsBillCostService.pushAllocation(logisticsBillCostEntity.getId(), dto.getReportDate());
+                    if(result.getSuccess()){
+                        asyncTaskDetailRecordService.updateDetail(id,AsyncTaskRecordStatusEnum.SUCCESS.getCode(),"");
+                    }else {
+                        asyncTaskDetailRecordService.updateDetail(id,AsyncTaskRecordStatusEnum.FAILED.getCode(),result.getMsg());
                     }
-                });
-            }
-
-            // 推进游标：以本批最后一条的 id 作为下次查询起点
-            dto.setLastId(batchIds.get(batchIds.size() - 1));
-
-            // 本批不足 BATCH_SIZE，说明已到最后一批
-            if (batchIds.size() < BATCH_SIZE) {
-                break;
-            }
+                } catch (Exception e) {
+                    log.error("asyncPushAllocation id: 【{}】, 异常: 【{}】",logisticsBillCostEntity.getId(),e);
+                    //把Exception e 转字符串
+                    String errorMsg = ExceptionUtils.getStackTrace(e);
+                    asyncTaskDetailRecordService.updateDetail(id,AsyncTaskRecordStatusEnum.FAILED.getCode(),errorMsg);
+                } finally {
+                    asyncTaskRecordService.updateTaskFinally(taskId);
+                }
+            });
         }
     }
 

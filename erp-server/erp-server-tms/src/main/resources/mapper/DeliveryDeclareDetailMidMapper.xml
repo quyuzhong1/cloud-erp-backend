@@ -36,6 +36,14 @@
        <result column="unit" property="unit" />
        <result column="unit_price" property="unitPrice" />
        <result column="qty" property="qty" />
+       <result column="from_warehouse_id" property="fromWarehouseId" />
+       <result column="from_warehouse_name" property="fromWarehouseName" />
+       <result column="dest_warehouse_id" property="destWarehouseId" />
+       <result column="dest_warehouse_name" property="destWarehouseName" />
+       <result column="transfer_warehouse_id" property="transferWarehouseId" />
+       <result column="transfer_warehouse_name" property="transferWarehouseName" />
+       <result column="sales_org_id" property="salesOrgId" />
+       <result column="sales_org_name" property="salesOrgName" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -49,7 +57,7 @@
         update_time,
         version,
         is_deleted,
-        remark, declare_status, source_id, source_code, source_type, source_detail_id, business_id, business_code, business_type, contract_no, sku_id, sku_no, currency, currency_symbol, declare_id, declare_code, declare_detail_id, box_no, hs_code, product_name_cn, declare_element, unit, unit_price, qty
+        remark, declare_status, source_id, source_code, source_type, source_detail_id, business_id, business_code, business_type, contract_no, sku_id, sku_no, currency, currency_symbol, declare_id, declare_code, declare_detail_id, box_no, hs_code, product_name_cn, declare_element, unit, unit_price, qty, from_warehouse_id, from_warehouse_name, dest_warehouse_id, dest_warehouse_name, transfer_warehouse_id, transfer_warehouse_name, sales_org_id, sales_org_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">

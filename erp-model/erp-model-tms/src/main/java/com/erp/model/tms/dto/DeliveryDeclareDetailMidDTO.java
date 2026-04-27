@@ -23,7 +23,7 @@ import javax.validation.constraints.Digits;
  * </p>
  *
  * @author jack
- * @since 2026-04-20
+ * @since 2026-04-27
 */
 @Data
 @NoArgsConstructor
@@ -204,6 +204,46 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         */
         private Integer qty;
 
+        /**
+        * 仓库ID
+        */
+        private String fromWarehouseId;
+
+        /**
+        * 仓库名称
+        */
+        private String fromWarehouseName;
+
+        /**
+        * 目的仓库ID
+        */
+        private String destWarehouseId;
+
+        /**
+        * 目的仓库名称
+        */
+        private String destWarehouseName;
+
+        /**
+        * 中转仓库ID
+        */
+        private String transferWarehouseId;
+
+        /**
+        * 中转仓库名称
+        */
+        private String transferWarehouseName;
+
+        /**
+        * 销售组织ID
+        */
+        private String salesOrgId;
+
+        /**
+        * 销售组织名称
+        */
+        private String salesOrgName;
+
 
         /**
         * 审核状态名称
@@ -367,6 +407,46 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 数量
         */
         private Integer qty;
+
+        /**
+        * 仓库ID
+        */
+        private String fromWarehouseId;
+
+        /**
+        * 仓库名称
+        */
+        private String fromWarehouseName;
+
+        /**
+        * 目的仓库ID
+        */
+        private String destWarehouseId;
+
+        /**
+        * 目的仓库名称
+        */
+        private String destWarehouseName;
+
+        /**
+        * 中转仓库ID
+        */
+        private String transferWarehouseId;
+
+        /**
+        * 中转仓库名称
+        */
+        private String transferWarehouseName;
+
+        /**
+        * 销售组织ID
+        */
+        private String salesOrgId;
+
+        /**
+        * 销售组织名称
+        */
+        private String salesOrgName;
 
 
     }
@@ -558,6 +638,46 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         */
         @NotNull(message = "数量不能为空")
         private Integer qty;
+
+        /**
+        * 仓库ID
+        */
+        private String fromWarehouseId;
+
+        /**
+        * 仓库名称
+        */
+        private String fromWarehouseName;
+
+        /**
+        * 目的仓库ID
+        */
+        private String destWarehouseId;
+
+        /**
+        * 目的仓库名称
+        */
+        private String destWarehouseName;
+
+        /**
+        * 中转仓库ID
+        */
+        private String transferWarehouseId;
+
+        /**
+        * 中转仓库名称
+        */
+        private String transferWarehouseName;
+
+        /**
+        * 销售组织ID
+        */
+        private String salesOrgId;
+
+        /**
+        * 销售组织名称
+        */
+        private String salesOrgName;
 
 
     }

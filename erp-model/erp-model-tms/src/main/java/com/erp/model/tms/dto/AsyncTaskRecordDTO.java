@@ -56,20 +56,9 @@ public class AsyncTaskRecordDTO implements Serializable {
           */
          private String businessType;
          /**
-          * 物流标签类型
+          *物流标签类型
           */
          private String type;
-
-         /**
-          * 游标分页：上一批最后一条记录的 id（首次传空字符串）
-          * 仅在服务内部循环中使用，不随 MQ 消息体传递
-          */
-         private String lastId;
-
-         /**
-          * 游标分页：每批查询条数
-          */
-         private Integer batchSize;
      }
 
 
