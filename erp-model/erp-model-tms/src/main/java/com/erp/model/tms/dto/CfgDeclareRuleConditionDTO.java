@@ -117,7 +117,6 @@ public class CfgDeclareRuleConditionDTO implements Serializable {
         @Size(max = 10, message = "rightBracket length must be <= 10")
         private String rightBracket;
 
-        @NotBlank(message = "logic can not be blank")
         @Size(max = 10, message = "logic length must be <= 10")
         private String logic;
 
