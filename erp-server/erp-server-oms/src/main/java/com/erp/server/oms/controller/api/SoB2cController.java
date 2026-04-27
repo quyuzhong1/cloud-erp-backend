@@ -32,12 +32,10 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
@@ -46,7 +44,6 @@ import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -62,7 +59,6 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -121,6 +117,9 @@ public class SoB2cController extends BaseController {
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+
+    @Resource
+    private SoB2cImportService soB2cImportService;
     /**
      * 获取状态统计
      *
@@ -1852,4 +1851,26 @@ public class SoB2cController extends BaseController {
         soB2cService.retryPlatformOutbound(dto.getIds());
         return success();
     }
+
+
+    /**
+     * 导入手动发货Excel数据
+     */
+    @PostMapping("/importManualDelivery")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "B2C销售订单手动发货导入Excel数据")
+    public ApiResult<Boolean> importManualDelivery(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        // 异步导入任务
+        soB2cImportService.importManualDelivery(dto);
+        return success(true);
+    }
+
+    /**
+     * 下载手动导入模板
+     */
+    @GetMapping("/downloadManualDeliveryTemplate")
+    public ApiResult<Object> downloadManualDeliveryTemplate(HttpServletResponse response) {
+        soB2cImportService.downloadManualDeliveryTemplate(response);
+        return success();
+    }
+
 }
