@@ -419,6 +419,7 @@ public class ZhongbaoService {
     public BaseResponse<OverseasOutboundCancelResponse> cancelOutboundBill(OverseasOutboundCancelRequest overseasOutboundCancelRequest){
         String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(overseasOutboundCancelRequest));
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(overseasOutboundCancelRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
         RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(overseasOutboundCancelRequest));
@@ -432,10 +433,12 @@ public class ZhongbaoService {
             Response response = client.newCall(request).execute();
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
+            ThirdWarehouseContext.setResponseJson(bodyStr);
             return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OverseasOutboundCancelResponse>>() {
             }.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
+            ThirdWarehouseContext.setResponseJson("请求失败,异常:" + e.getMessage());
             throw new ServiceException("请求失败,异常: " + e.getMessage());
         }
     }
