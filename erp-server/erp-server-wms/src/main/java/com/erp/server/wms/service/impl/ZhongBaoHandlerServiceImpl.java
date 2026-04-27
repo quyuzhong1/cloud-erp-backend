@@ -248,11 +248,25 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName() + "取消出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCancelRequest));
         BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(overseasOutboundCancelRequest);
         log.warn(getPlatForm().getName() + "取消出库单结果:{}", JSONUtil.toJsonStr(response));
-        if (!response.getData().getResponseData().getSuccessList().isEmpty()) {
-            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
-        } else {
-            return failure(response.getData().getMessage());
+        if (Objects.isNull(response)) {
+            return failure("众包取消出库返回为空");
         }
+        if (!Boolean.TRUE.equals(response.getSuccess())) {
+            return failure(response.getMessage());
+        }
+        OverseasOutboundCancelResponse data = response.getData();
+        if (Objects.isNull(data)) {
+            return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "众包取消出库返回空数据"));
+        }
+        if (Objects.nonNull(data.getSuccessQty()) && data.getSuccessQty() > 0) {
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        String failMsg = null;
+        if (CollUtil.isNotEmpty(data.getFailList())) {
+            failMsg = CharSequenceUtil.blankToDefault(data.getFailList().get(0).getMessage(), null);
+        }
+        return failure(CharSequenceUtil.blankToDefault(failMsg,
+                CharSequenceUtil.blankToDefault(response.getMessage(), "众包取消出库失败")));
     }
 
     @Override
