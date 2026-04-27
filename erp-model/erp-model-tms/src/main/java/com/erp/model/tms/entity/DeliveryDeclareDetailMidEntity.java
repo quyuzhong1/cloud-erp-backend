@@ -168,16 +168,6 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("dest_warehouse_name")
     private String destWarehouseName;
     /**
-    * 中转仓库ID
-    */
-    @TableField("transfer_warehouse_id")
-    private String transferWarehouseId;
-    /**
-    * 中转仓库名称
-    */
-    @TableField("transfer_warehouse_name")
-    private String transferWarehouseName;
-    /**
     * 销售组织ID
     */
     @TableField("sales_org_id")
@@ -187,6 +177,8 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("sales_org_name")
     private String salesOrgName;
+    @TableField("transfer_warehouse_id")
+    private String transferWarehouseId;
 
 
     public static final String REMARK = "remark";
@@ -245,13 +237,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
 
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
-    public static final String TRANSFER_WAREHOUSE_ID = "transfer_warehouse_id";
-
-    public static final String TRANSFER_WAREHOUSE_NAME = "transfer_warehouse_name";
-
     public static final String SALES_ORG_ID = "sales_org_id";
 
     public static final String SALES_ORG_NAME = "sales_org_name";
+
+    public static final String TRANSFER_WAREHOUSE_ID = "transfer_warehouse_id";
 
     @Override
     public Serializable pkVal() {
