@@ -5,8 +5,10 @@ import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.tms.dto.LogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsOrderEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -48,4 +50,12 @@ public interface LogisticsOrderFeign {
      */
     @PostMapping("/feign/logisticsOrder/batchGetLabel")
     List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(@RequestBody List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS);
+
+    /**
+     * 更新面单状态
+     *
+     * @param afterSaleId String
+     */
+    @GetMapping("/feign/logisticsOrder/updateLogisticsOrder")
+    void updateLogisticsOrder(@RequestParam(value = "afterSaleId") String afterSaleId);
 }

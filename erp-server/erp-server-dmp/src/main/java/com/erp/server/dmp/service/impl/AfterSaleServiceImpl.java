@@ -1775,6 +1775,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         dmpAttachmentEntity.setType("after_sale_label");
         dmpAttachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(dmpAttachmentEntity);
+        // 更新面单状态
+        logisticsOrderFeign.updateLogisticsOrder(entity.getId());
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), dto.getAttachName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), dto.getId(), "上传面单");
         return "";
@@ -1810,6 +1812,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
                 .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
                 .eq(DmpAttachmentEntity::getType, "after_sale_label"));
+        List<String> bussinessIdList = attachmentList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getAttachUrl())).map(DmpAttachmentEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<String> notPrintCodes = list.stream().filter(e -> !bussinessIdList.contains(e.getId())).map(AfterSaleDTO.OrderInfoDTO::getCode).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notPrintCodes)) {
+            throw new ServiceException(ApiError.SO_LOGISTICS_WAYBILL_NOT_OBTAINED, CharSequenceUtil.join(",", notPrintCodes));
+        }
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, v -> v));
         Map<String, String> notPrintReasonMap = null;
         List<AfterSaleDTO.LogisticsLabelPreviewListDTO> labelPreviewListDTOS = new ArrayList<>();

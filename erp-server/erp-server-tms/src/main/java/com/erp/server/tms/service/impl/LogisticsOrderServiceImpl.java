@@ -663,6 +663,11 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .in(TmsAttachmentEntity::getBusinessId, dto.getIds())
                 .eq(TmsAttachmentEntity::getType, "logistics_label"));
+        List<String> bussinessIdList = attachmentList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getAttachUrl())).map(TmsAttachmentEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<String> notPrintCodes = labelPreviewListDTOS.stream().filter(e -> !bussinessIdList.contains(e.getId())).map(LogisticsOrderDTO.LogisticsLabelPreviewListDTO::getCode).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notPrintCodes)) {
+            throw new ServiceException(ApiError.SO_LOGISTICS_WAYBILL_NOT_OBTAINED, CharSequenceUtil.join(",", notPrintCodes));
+        }
         Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
         Map<String, String> notPrintReasonMap = null;
         for (LogisticsOrderDTO.LogisticsLabelPreviewListDTO labelPreviewListDTO : labelPreviewListDTOS) {
@@ -891,6 +896,11 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), logisticsOrderEntity.getId(), "获取物流面单");
         }
         return resultDTOList;
+    }
+
+    @Override
+    public void updateLogisticsOrder(String afterSaleId) {
+        super.lambdaUpdate().eq(LogisticsOrderEntity::getAfterSaleId, afterSaleId).set(LogisticsOrderEntity::getLabelStatus, LogisticsLabelStatusEnum.OBTAINED.getCode()).update();
     }
 
     /**

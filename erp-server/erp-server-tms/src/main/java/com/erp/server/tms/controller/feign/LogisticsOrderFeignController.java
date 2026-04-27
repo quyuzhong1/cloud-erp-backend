@@ -6,10 +6,7 @@ import com.erp.model.tms.dto.LogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsOrderEntity;
 import com.erp.server.tms.service.LogisticsOrderService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -68,5 +65,15 @@ public class LogisticsOrderFeignController {
     @PostMapping("/batchGetLabel")
     List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(@RequestBody List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
         return logisticsOrderService.batchGetLabel(logisticsLabelDTOS);
+    }
+
+    /**
+     * 更新面单状态
+     *
+     * @param afterSaleId String
+     */
+    @GetMapping("/updateLogisticsOrder")
+    void updateLogisticsOrder(@RequestParam(value = "afterSaleId") String afterSaleId) {
+        logisticsOrderService.updateLogisticsOrder(afterSaleId);
     }
 }

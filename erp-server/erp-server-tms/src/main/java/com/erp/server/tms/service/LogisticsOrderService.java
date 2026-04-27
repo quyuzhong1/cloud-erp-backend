@@ -166,4 +166,11 @@ public interface LogisticsOrderService extends SuperService<LogisticsOrderEntity
      * @return List<AfterSaleDTO.LogisticsOrderResultDTO>
      */
     List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS);
+
+    /**
+     * 更新面单状态
+     *
+     * @param afterSaleId String
+     */
+    void updateLogisticsOrder(String afterSaleId);
 }
