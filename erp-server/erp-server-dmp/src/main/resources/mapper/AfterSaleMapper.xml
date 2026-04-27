@@ -126,7 +126,8 @@
         o.track_no as outboundTrackNo,
         afs.shop_id as shopId,
         afs.cs_agent_id as csAgentId,
-        afs.cs_agent_name as csAgentName
+        afs.cs_agent_name as csAgentName,
+        afs.logistics_channel_id as logisticsChannelId
         FROM
         after_sale AS afs
         LEFT JOIN after_sale_detail AS afsd ON afs.ID = afsd.main_id 	AND afsd.is_deleted = FALSE

@@ -1187,6 +1187,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 data.setCity(listDTOMap.get(data.getOutboundTrackNo()).getCity());
                 data.setDetailedAddress(listDTOMap.get(data.getOutboundTrackNo()).getDetailedAddress());
                 data.setAttachment(attachmentMap.get(data.getId()));
+                data.setLabelStatus(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatus());
+                data.setLabelStatusName(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatusName());
             }
         }
     }
@@ -1658,8 +1660,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 调用物流下单服务
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.addBatch(entityList);
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, w -> w));
-        afterSaleEntityList.forEach(entity -> entity.setType(OutboundTrackNoTypeEnum.API.getCode()));
-        super.updateBatchById(afterSaleEntityList);
         // 更新运单号
         List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(afterSaleIdList);
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
@@ -1669,6 +1669,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             BatchResultDTO batchResultDTO;
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = resultDTOMap.get(afterSaleEntity.getId());
             if (resultDTO != null) {
+                afterSaleEntity.setType(OutboundTrackNoTypeEnum.API.getCode());
+                afterSaleEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
                 AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
                 if (afterSaleProgressEntity == null) {
                     afterSaleProgressEntity = new AfterSaleProgressEntity();
@@ -1699,6 +1701,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 resultList.add(batchResultDTO);
             }
         }
+        super.updateBatchById(afterSaleEntityList);
         afterSaleProgressService.saveOrUpdateBatch(progressEntityList);
         return resultList;
     }

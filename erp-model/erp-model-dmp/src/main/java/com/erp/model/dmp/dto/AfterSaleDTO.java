@@ -315,6 +315,16 @@ public class AfterSaleDTO implements Serializable {
          * 物流面单信息
          */
         private DmpAttachmentEntity attachment;
+
+        /**
+         * 面单状态
+         */
+        private String labelStatus;
+
+        /**
+         * 面单状态名称
+         */
+        private String labelStatusName;
     }
 
     /**

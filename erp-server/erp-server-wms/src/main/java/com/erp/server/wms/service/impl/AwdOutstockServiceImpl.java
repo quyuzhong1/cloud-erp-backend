@@ -11,6 +11,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AwdInventoryDTO;
 import com.erp.model.wms.dto.AwdOutstockDetailDTO;
 import com.erp.model.wms.entity.AwdOutstockDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.AwdOutstockDetailService;
@@ -247,10 +248,19 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         }
        List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+       List<String> idList = list.stream().map(AwdOutstockDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+       List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.lambdaQuery()
+               .in(FirstMileDeliveryEntity::getSourceId, idList)
+               .list();
+       Map<String, FirstMileDeliveryEntity> firstMileDeliveryEntityMap = firstMileDeliveryEntityList.stream().collect(Collectors.toMap(FirstMileDeliveryEntity::getSourceId, item -> item));
        // 属性赋值
        for (AwdOutstockDTO.ListDTO data : list) {
            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
            data.setProductName(skuVO.getSkuName());
+           FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityMap.get(data.getId());
+           if (ObjectUtil.isNotEmpty(firstMileDeliveryEntity)) {
+               data.setFirstMileDeliveryCode(firstMileDeliveryEntity.getCode());
+           }
        }
    }
 

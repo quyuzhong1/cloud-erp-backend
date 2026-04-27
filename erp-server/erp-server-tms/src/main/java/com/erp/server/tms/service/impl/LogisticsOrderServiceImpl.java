@@ -579,6 +579,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             BeanUtils.copyProperties(entity, dto);
             dto.setLogisticsChannelName(channelMap.get(entity.getLogisticsChannelId()));
             dto.setLogisticsPlatformName(platformMap.get(entity.getLogisticsPlatform()));
+            dto.setLabelStatusName(LogisticsLabelStatusEnum.getName(entity.getLabelStatus()));
             list.add(dto);
         }
         return list;

@@ -180,6 +180,12 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     @TableField("type")
     private String type;
 
+    /**
+     * 物流渠道id
+     */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
+
 
     public static final String CODE = "code";
 
@@ -224,6 +230,8 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     public static final String REMARK = "remark";
 
     public static final String TYPE = "type";
+
+    public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 
     @Override
     public Serializable pkVal() {
