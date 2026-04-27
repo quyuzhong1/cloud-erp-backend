@@ -8,7 +8,7 @@ import java.util.List;
  * 极兔出库单创建响应
  */
 @Data
-public class StockOutOrderResponse extends BaseResponse {
+public class StockOutOrderCreateResponse extends BaseResponse {
 
     /**
      * 返回列表

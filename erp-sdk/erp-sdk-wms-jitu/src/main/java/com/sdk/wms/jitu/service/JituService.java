@@ -4,16 +4,9 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCancelRequest;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
-import com.sdk.wms.jitu.dto.request.ProductRequest;
-import com.sdk.wms.jitu.dto.request.StockOutOrderRequest;
-import com.sdk.wms.jitu.dto.request.WarehouseRequest;
-import com.sdk.wms.jitu.dto.response.OverseasInboundCancelResponse;
-import com.sdk.wms.jitu.dto.response.OverseasInboundCreateResponse;
-import com.sdk.wms.jitu.dto.response.ProductResponse;
-import com.sdk.wms.jitu.dto.response.StockOutOrderResponse;
-import com.sdk.wms.jitu.dto.response.WarehouseResponse;
+import com.sdk.wms.jitu.dto.request.*;
+import com.sdk.wms.jitu.dto.request.StockOutOrderCreateRequest;
+import com.sdk.wms.jitu.dto.response.*;
 import com.sdk.wms.jitu.utils.AuthUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -129,7 +122,7 @@ public class JituService {
      * @param request 出库单请求
      * @return 出库单响应
      */
-    public StockOutOrderResponse createStockOutOrder(StockOutOrderRequest request) {
+    public StockOutOrderCreateResponse createStockOutOrder(StockOutOrderCreateRequest request) {
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         String url = getPreUrl() + "/gateway/edi/stockOutOrder/create";
         authMap.put("msg_type", "CREATESTOCKOUTORDER");
@@ -144,16 +137,16 @@ public class JituService {
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
-        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderResponse>() {}.getType());
+        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderCreateResponse>() {}.getType());
     }
     
     /**
      * 取消订单
-     * @param authMap 授权信息
      * @param request 取消订单请求
      * @return 取消订单响应
      */
-    public StockOutOrderResponse cancelOrder(Map<String, Object> authMap, Map<String, Object> request) {
+    public StockOutOrderCancelResponse cancelOrder(StockOutOrderCancelRequest request) {
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         String url = getPreUrl() + "/gateway/edi/order/cancel";
         authMap.put("msg_type", "CANCELORDER");
         authMap.put("logistics_interface", JSONUtil.toJsonStr(request));
@@ -167,6 +160,6 @@ public class JituService {
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
-        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderResponse>() {}.getType());
+        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderCancelResponse>() {}.getType());
     }
 }

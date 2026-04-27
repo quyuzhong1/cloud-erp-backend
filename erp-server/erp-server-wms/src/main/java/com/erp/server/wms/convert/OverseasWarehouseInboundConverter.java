@@ -16,7 +16,7 @@ import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
-import com.sdk.wms.jitu.dto.request.StockOutOrderRequest;
+import com.sdk.wms.jitu.dto.request.StockOutOrderCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OutboundB2cCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasOutboundCreateRequest;
 import com.sdk.wms.zhongbao.dto.request.OverseasInboundCreateRequest;
@@ -449,7 +449,7 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "isCod", constant = "0")
     @Mapping(target = "storeCode", constant = "-")
     @Mapping(target = "items", source = "items")
-    StockOutOrderRequest b2cOutboundDtoToJitu(ThirdWarehouseCreateOutboundReq createOutboundReq);
+    StockOutOrderCreateRequest b2cOutboundDtoToJitu(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
     @Mapping(target = "countrycode", source = "countryCode3")
     @Mapping(target = "shortAddress", source = "address3")
@@ -463,7 +463,7 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "phone", source = "phone")
     @Mapping(target = "mobile", source = "buyerNumber")
     @Mapping(target = "doorNo", source = "houseNumber")
-    StockOutOrderRequest.Receiver receiverInfoToJitu(ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo);
+    StockOutOrderCreateRequest.Receiver receiverInfoToJitu(ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo);
 
     @Mapping(target = "itemCode", source = "productSku")
     @Mapping(target = "number", source = "quantity")
@@ -475,5 +475,5 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "lineNo", ignore = true)
     @Mapping(target = "isGift", ignore = true)
     @Mapping(target = "batchCode", ignore = true)
-    StockOutOrderRequest.Item outboundItemToJitu(ThirdWarehouseCreateOutboundReq.Item item);
+    StockOutOrderCreateRequest.Item outboundItemToJitu(ThirdWarehouseCreateOutboundReq.Item item);
 }
