@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /**
@@ -25,6 +26,11 @@ public class JituInBoundReturnDmpHandler extends DmpInputDbConvertDmpHandler {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
 			Map<String, Object> mongoData = mongoDataMaps.get(0);
+			//收到0类型时不做处理
+			Integer confirmType = (Integer)mongoData.get("confirmType");
+			if (Objects.isNull(confirmType) || confirmType == 0) {
+				continue;
+			}
 			Object overseasDetail = mongoData.get("orderLines");
 			if(overseasDetail != null) {
 				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {

@@ -294,7 +294,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             currentItem.setThirdBarcode(thirdBarcode);
             currentItem.setQuantity(itemDTO.getPackQty());
             currentItem.setBoxNo(Integer.parseInt(itemDTO.getBoxNo()));
-            currentItem.setIndex(i + 1);
+            currentItem.setDetailId(firstMileDeliveryDetailEntity.getId());
             itemList.add(currentItem);
         }
         String contactName = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_FIRST_NAME) + shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_LAST_NAME);
