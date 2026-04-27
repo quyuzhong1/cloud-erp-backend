@@ -35,7 +35,7 @@ public class StockOutOrderResponse extends BaseResponse {
         /**
          * 是否成功
          */
-        private Boolean success;
+        private String success;
 
         /**
          * 错误编码

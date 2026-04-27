@@ -92,6 +92,8 @@ public class JituService {
         String bodyStr = "";
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
+            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
+            ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
@@ -112,6 +114,8 @@ public class JituService {
         String bodyStr = "";
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
+            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
+            ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
@@ -122,24 +126,25 @@ public class JituService {
 
     /**
      * 创建出库单
-     * @param authMap 授权信息
      * @param request 出库单请求
      * @return 出库单响应
      */
-    public StockOutOrderResponse createStockOutOrder(Map<String, Object> authMap, StockOutOrderRequest request) {
+    public StockOutOrderResponse createStockOutOrder(StockOutOrderRequest request) {
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         String url = getPreUrl() + "/gateway/edi/stockOutOrder/create";
         authMap.put("msg_type", "CREATESTOCKOUTORDER");
         authMap.put("logistics_interface", JSONUtil.toJsonStr(request));
         String bodyStr = "";
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
+            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
+            ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
-        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderResponse>() {
-        }.getType());
+        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderResponse>() {}.getType());
     }
     
     /**
@@ -155,12 +160,13 @@ public class JituService {
         String bodyStr = "";
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
+            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
+            ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
-        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderResponse>() {
-        }.getType());
+        return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderResponse>() {}.getType());
     }
 }

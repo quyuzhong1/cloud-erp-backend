@@ -191,6 +191,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String skuId;
 
         private String skuNo;
+        private BigDecimal price;
 
         private String platformSkuNo;
 

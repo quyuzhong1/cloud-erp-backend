@@ -104,5 +104,19 @@ public class TypeConversionWorker {
         }
         return sourceType;
     }
+
+
+    /**
+     * 字符串转大写
+     * @param source
+     * @return
+     */
+    @Named("toUpperCase")
+    public String toUpperCase(String source){
+        if (CharSequenceUtil.isBlank(source)){
+            return source;
+        }
+        return source.toUpperCase();
+    }
 }
 
