@@ -408,7 +408,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         }
 
         String status = entity.getStatus();
-        if(!Objects.equals(status, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())){
+        if(!(Objects.equals(status, TmsAsyncTaskRecordStatusEnum.FINISH.getCode()) && Objects.nonNull(entity.getErrorCount()) && entity.getErrorCount() >0)){
             throw new ServiceException("仅支持失败任务重试");
         }
 
