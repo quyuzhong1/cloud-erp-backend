@@ -503,6 +503,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     JSONObject successJson = new JSONObject();
                     List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
                     HashMap<String, String> currencyMap = new HashMap<>();
+                    // 逐条处理每个jsonObject，分别校验和赋值
                     for (JSONObject jsonObject : value) {
                         jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
                         List<String> costErrorMsgList = new ArrayList<>();
@@ -513,26 +514,25 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                             synchronized (matchImportList) { matchImportList.add(jsonObject); }
                             continue;
                         }
-                        updateAllList.addAll(updateList);
+                        // 主数据校验
+                        List<String> mainErrorMsgList = new ArrayList<>();
+                        try {
+                            List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateList);
+                            LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
+                                    preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList, preQueryResult.getDictCostAttribution(), preQueryResult.getMainIdListMap());
+                            if (importDataDTO != null) importDataList.add(importDataDTO);
+                        } catch (Exception e) {
+                            log.error("数据处理失败 ,e = {}", e.getMessage());
+                            mainErrorMsgList.add(e.getMessage());
+                        }
+                        if (CollectionUtils.isNotEmpty(mainErrorMsgList)) {
+                            jsonObject.set(matchIndex.toString(), MATCH_FAIL);
+                            jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(mainErrorMsgList));
+                        } else {
+                            jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
+                        }
+                        synchronized (matchImportList) { matchImportList.add(jsonObject); }
                     }
-                    if (CollUtil.isEmpty(updateAllList)) {
-                        System.out.println("23");
-                    }
-                    List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateAllList);
-                    List<JSONObject> costSuccessList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
-                    if (CollUtil.isEmpty(costSuccessList)) {
-                        continue;
-                    }
-                    List<String> mainErrorMsgList = new ArrayList<>();
-                    try {
-                        LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
-                                preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList, preQueryResult.getDictCostAttribution(), preQueryResult.getMainIdListMap());
-                        if (importDataDTO != null) importDataList.add(importDataDTO);
-                    } catch (Exception e) {
-                        log.error("数据处理失败 ,e = {}", e.getMessage());
-                        mainErrorMsgList.add(e.getMessage());
-                    }
-                    updateMatchResult(costSuccessList, matchIndex.toString(), errorIndex.toString(), mainErrorMsgList, matchImportList);
                 }
                 return null;
             }));
@@ -932,9 +932,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
             if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
                 continue;
-            }
-            if (CharSequenceUtil.equals(entry.getValue().toString(),"订单多品处理费")) {
-                System.out.println("11");
             }
             CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex())
                     && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))
