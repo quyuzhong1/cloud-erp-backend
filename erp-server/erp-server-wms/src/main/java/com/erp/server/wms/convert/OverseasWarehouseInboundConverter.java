@@ -410,7 +410,7 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "produceCode", ignore = true)
     @Mapping(target = "expirationDate", ignore = true)
     @Mapping(target = "batchCode", ignore = true)
-    @Mapping(target = "LineNo", source = "index")
+    @Mapping(target = "LineNo", source = "detailId")
     @Mapping(target = "itemCode", source = "productSkuId")
     @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "inventoryType", constant = "ZP")

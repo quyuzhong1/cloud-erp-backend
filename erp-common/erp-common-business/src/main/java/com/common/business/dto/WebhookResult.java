@@ -1,8 +1,10 @@
 package com.common.business.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -13,14 +15,16 @@ import java.time.LocalDateTime;
  * @version: 1.0
  */
 @Data
+@NoArgsConstructor
 @XmlRootElement(name = "response")
-public class WebhookResult {
+public class WebhookResult<T> implements Serializable {
     private String flag;
     private String request_id;
     private Boolean success;
     private Integer code;
     private String message;
     private LocalDateTime createTime;
+    private T data;
 
     public static WebhookResult isSuccess() {
         WebhookResult result = new WebhookResult();
