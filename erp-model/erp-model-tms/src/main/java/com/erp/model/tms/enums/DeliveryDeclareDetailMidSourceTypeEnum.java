@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  *
  * @author jack
- * @since 2026-04-27 15:35:05
+ * @since 2026-04-27 15:53:56
  */
 public enum DeliveryDeclareDetailMidSourceTypeEnum implements EnumMessage {
 	FIRSTMILEDELIVERY("firstMileDelivery", "头程发货单"),
