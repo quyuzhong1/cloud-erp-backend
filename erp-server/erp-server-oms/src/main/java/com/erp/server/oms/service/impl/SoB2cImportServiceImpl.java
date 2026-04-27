@@ -109,7 +109,7 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
     @Override
     public void importManualDelivery(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("手动发货导入", FileTaskEventEnum.IMPORT_PLM_PRODUCT_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveImportTask("手动发货导入", FileTaskEventEnum.IMPORT_OMS_B2C_MANUAL_DELIVERY.getCode(), dto);
     }
 
     @Override
