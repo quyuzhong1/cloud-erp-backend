@@ -759,7 +759,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             String errorMsg = getThirdWarehouseErrorMsg(response);
             proxyService.updateStatus(id, ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(), errorMsg, response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
             soB2bDeliveryInterceptService.handleResultBySourceId(id, HandleResultEnum.FAILURE.getCode(), CharSequenceUtil.blankToDefault(errorMsg, "海外仓出库异常"), response.getTrackNo(), "");
-            operateLogService.addModuleOperateLog("海外仓出库异常：" + CharSequenceUtil.blankToDefault(errorMsg, ""), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
+            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息:【" + errorMsg + "】", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
         } else {
             log.info("不操作的状态,id={},code={},status={}", id, response.getCode(), response.getStatus());
         }
