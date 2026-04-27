@@ -4349,10 +4349,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> deliverySkuIds = soDetailEntityList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
         //库存sku映射查询
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        if (CharSequenceUtil.isNotBlank(providerCode)){
-            paramDTO.setPlatform(providerCode);
-        }else if (CharSequenceUtil.isNotBlank(warehouseId)){
+        if ( CharSequenceUtil.isNotBlank(warehouseId)){
             paramDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
+        }else if ( CharSequenceUtil.isNotBlank(providerCode)){
+            paramDTO.setPlatform(providerCode);
         }
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setSkuIdList(deliverySkuIds);
