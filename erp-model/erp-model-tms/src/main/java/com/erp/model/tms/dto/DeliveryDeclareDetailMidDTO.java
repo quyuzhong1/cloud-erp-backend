@@ -225,16 +225,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String destWarehouseName;
 
         /**
-        * 中转仓库ID
-        */
-        private String transferWarehouseId;
-
-        /**
-        * 中转仓库名称
-        */
-        private String transferWarehouseName;
-
-        /**
         * 销售组织ID
         */
         private String salesOrgId;
@@ -243,6 +233,8 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 销售组织名称
         */
         private String salesOrgName;
+
+        private String transferWarehouseId;
 
 
         /**
@@ -429,16 +421,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String destWarehouseName;
 
         /**
-        * 中转仓库ID
-        */
-        private String transferWarehouseId;
-
-        /**
-        * 中转仓库名称
-        */
-        private String transferWarehouseName;
-
-        /**
         * 销售组织ID
         */
         private String salesOrgId;
@@ -447,6 +429,8 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 销售组织名称
         */
         private String salesOrgName;
+
+        private String transferWarehouseId;
 
 
     }
@@ -660,16 +644,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String destWarehouseName;
 
         /**
-        * 中转仓库ID
-        */
-        private String transferWarehouseId;
-
-        /**
-        * 中转仓库名称
-        */
-        private String transferWarehouseName;
-
-        /**
         * 销售组织ID
         */
         private String salesOrgId;
@@ -678,6 +652,8 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 销售组织名称
         */
         private String salesOrgName;
+
+        private String transferWarehouseId;
 
 
     }
