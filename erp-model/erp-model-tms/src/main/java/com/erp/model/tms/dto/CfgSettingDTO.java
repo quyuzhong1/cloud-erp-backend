@@ -57,6 +57,12 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
+
+        /**
+         * 合同协议号
+         */
+        @Valid
+        private List<CfgSettingValueDTO.ContractAgreementNoDTO> contractAgreementNoList;
     }
 
     /**
@@ -66,6 +72,20 @@ public class CfgSettingDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+
+    }
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddByKeyDTO extends AddDTO {
+
+        /**
+         * key
+         */
+        @NotBlank(message = "key不能为空")
+        private String key;
 
     }
 
@@ -117,6 +137,12 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
+
+        /**
+         * 合同协议号
+         */
+        @Valid
+        private List<CfgSettingValueDTO.ContractAgreementNoDTO> contractAgreementNoList;
     }
 
 

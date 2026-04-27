@@ -36,6 +36,12 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     CfgSettingDTO.ViewDTO view();
 
     /**
+     * 根据key查询类型化配置
+     * @param key 配置key
+     * @return ViewDTO
+     */
+    CfgSettingDTO.ViewDTO getSetting(String key);
+    /**
      * 根据key查询配置
      * @Author Luo_WG
      * @Date 2024/1/11 19:34
@@ -47,4 +53,6 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     List<CfgSettingEntity> listCfgSettingByKeys(List<String> keys);
 
     CfgSettingValueDTO.AllocationSettingDTO getCfgSettingByAllocationSetting();
+
+    BaseResultDTO.AddDTO addByKey(CfgSettingDTO.AddByKeyDTO dto);
 }

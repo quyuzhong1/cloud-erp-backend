@@ -45,6 +45,21 @@ public class CfgSettingController extends BaseController {
     }
 
     /**
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author zdy
+     * @date: 2024-02-29
+     */
+    @PostMapping("/addByKey")
+    @LogAction(value = LogActionEnum.INSERT, desc = "系统配置管理新增")
+    public ApiResult<BaseResultDTO.AddDTO> addByKey(@RequestBody @Validated CfgSettingDTO.AddByKeyDTO dto) {
+        return success(cfgSettingService.addByKey(dto));
+    }
+
+
+    /**
      * 查询配置
      *
      * @return ApiResult
@@ -58,4 +73,14 @@ public class CfgSettingController extends BaseController {
         return success(view);
     }
 
+    /**
+     * 根据key查询配置
+     *
+     * @param key 配置key
+     * @return ApiResult
+     */
+    @GetMapping("/getSetting")
+    public ApiResult<CfgSettingDTO.ViewDTO> getSetting(@RequestParam("key") String key) {
+        return success(cfgSettingService.getSetting(key));
+    }
 }
