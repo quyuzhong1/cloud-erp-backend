@@ -225,7 +225,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         TmsDeclareBillEntity tmsDeclareBillEntity =  BeanMapperUtils.map(TmsDeclareBillEntity.class, updateDTO);
         if(!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
-            throw new ServiceException("报关单状态不是待报关，不能编辑");
+            throw new ServiceException("报关单状态不是待确认，不能编辑");
         }
         boolean save = super.updateById(tmsDeclareBillEntity);
         if(!save) {
@@ -487,7 +487,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
             if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
-                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能更新成已报关"));
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待确认的单据才能更新成已报关"));
                 continue;
             }
             if(sourceTypeEnum == SourceTypeEnum.B2B_DECLARE_BILL){
@@ -554,7 +554,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         // 校验合并条件
         if(entityList.stream().anyMatch(v->!v.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode()))){
-            throw new ServiceException("仅支持待报关的报关单合并");
+            throw new ServiceException("仅支持待确认的报关单合并");
         }
         TmsDeclareBillEntity mergedEntity = entityList.stream().filter(v->v.getCode().equals(dto.getCode())).findFirst().orElse(null);
         if(Objects.isNull(mergedEntity)){
@@ -631,7 +631,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
             if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
-                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能取消合并"));
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待确认的单据才能取消合并"));
                 continue;
             }
             List<String> list = Arrays.asList(entity.getMergeSourceId().split(","));
@@ -662,7 +662,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> updateOutSourceIds = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
             if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
-                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能删除"));
+                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待确认的单据才能删除"));
                 continue;
             }
             resultList.add(BatchResultDTO.success(entity.getId(),entity.getCode(),"删除成功"));

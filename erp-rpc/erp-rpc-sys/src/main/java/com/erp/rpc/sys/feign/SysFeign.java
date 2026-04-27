@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public interface SysFeign {
      * 公司列表
      */
     @GetMapping("/feign/company/list")
-    ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyList();
+    ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyList(@RequestParam(value = "name", required = false) String name);
 
     /**
      * 国家字典列表

@@ -206,6 +206,7 @@ public enum SourceTypeEnum {
     TRANSFER_DECLARE("transferDeclare", "中转报关","transfer_declare"),
     DICT_BASIC("dictBasic", "字典","dict_basic"),
     TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
+    CFG_DECLARE_RULE("cfgDeclareRule", "报关配置", "cfg_declare_rule"),
 
     LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
     FIRST_MILE_LOGISTICS_BILL_COST("firstMileLogisticsBillCost", "头程物流费用","logistics_bill_cost"),

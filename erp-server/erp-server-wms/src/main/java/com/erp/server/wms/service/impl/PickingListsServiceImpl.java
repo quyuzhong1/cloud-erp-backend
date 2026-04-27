@@ -1346,12 +1346,24 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (CollectionUtils.isEmpty(wmsCartonDetailEntityList)) {
             return;
         }
+        List<PickingListsDTO.SourceView> otherPickList = this.listBySourceIds(Collections.singletonList(entity.getSourceId()));
+        otherPickList = otherPickList.stream().filter(v -> !v.getId().equals(entity.getId())).collect(Collectors.toList());
+        Map<String, Integer> otherPickingQtyMap;
+        if(!CollectionUtils.isEmpty(otherPickList)){
+            List<String> otherPickListIds = otherPickList.stream().map(PickingListsDTO.SourceView::getId).collect(Collectors.toList());
+            List<PickingDetailEntity> otherPickListDetails = pickingDetailService.listByMainIdList(otherPickListIds);
+            otherPickingQtyMap = otherPickListDetails.stream().collect(Collectors.toMap(PickingDetailEntity::getSkuNo, PickingDetailEntity::getQty, Integer::sum));
+        } else {
+            otherPickingQtyMap = new HashMap<>();
+        }
+
         Map<String, Integer> packingQtyMap = wmsCartonDetailEntityList.stream().collect(Collectors.toMap(WmsCartonDetailEntity::getSkuNo, WmsCartonDetailEntity::getPackQty, Integer::sum));
         Map<String, Integer> pickingQtyMap = detailList.stream().collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
 
         pickingQtyMap.forEach((skuNo, qty) -> {
             Integer packingQty = packingQtyMap.get(skuNo);
-            if (Objects.nonNull(packingQty) && qty < packingQty) {
+            Integer otherPickingQty = otherPickingQtyMap.getOrDefault(skuNo, 0);
+            if (Objects.nonNull(packingQty) && qty < packingQty + otherPickingQty) {
                 throw new ServiceException(CharSequenceUtil.format("sku【{}】编辑数量校验不可小于装箱数量{}", skuNo, packingQty));
             }
         });
