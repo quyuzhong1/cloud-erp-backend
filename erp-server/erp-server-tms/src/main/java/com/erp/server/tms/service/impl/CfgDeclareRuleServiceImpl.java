@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -143,13 +144,8 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     @Override
-    public List<CfgDeclareRuleDTO.ListDTO> paging(CfgDeclareRuleDTO.ListParamDTO dto) {
-        List<CfgDeclareRuleDTO.ListDTO> list = this.baseMapper.paging(dto);
-        if (CollUtil.isEmpty(list)) {
-            return Collections.emptyList();
-        }
-        fillList(list);
-        return list;
+    public CfgDeclareRuleDTO.SaveListDTO paging(CfgDeclareRuleDTO.ListParamDTO dto) {
+        return buildSaveListResult(dto.getRuleType(), this.baseMapper.paging(dto));
     }
 
     @Override
@@ -286,6 +282,36 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 entity.setReceiverName(companyMap.get(entity.getReceiverId()));
             }
         }
+    }
+
+    CfgDeclareRuleDTO.SaveListDTO buildSaveListResult(String ruleType, List<CfgDeclareRuleDTO.ListDTO> rowList) {
+        CfgDeclareRuleDTO.SaveListDTO result = new CfgDeclareRuleDTO.SaveListDTO();
+        result.setRuleType(ruleType);
+        if (CollUtil.isEmpty(rowList)) {
+            result.setList(Collections.emptyList());
+            return result;
+        }
+
+        Map<String, CfgDeclareRuleDTO.SaveDTO> ruleMap = new LinkedHashMap<>();
+        for (CfgDeclareRuleDTO.ListDTO row : rowList) {
+            CfgDeclareRuleDTO.SaveDTO ruleDTO = ruleMap.computeIfAbsent(row.getId(), key -> {
+                CfgDeclareRuleDTO.SaveDTO item = BeanMapperUtils.map(CfgDeclareRuleDTO.SaveDTO.class, row);
+                item.setId(row.getId());
+                item.setRuleType(StrUtil.isNotBlank(row.getRuleType()) ? row.getRuleType() : ruleType);
+                item.setDetailList(new ArrayList<>());
+                return item;
+            });
+
+            if (StrUtil.isNotBlank(row.getDetailId())) {
+                CfgDeclareRuleConditionDTO.SaveDTO detailDTO = BeanMapperUtils.map(CfgDeclareRuleConditionDTO.SaveDTO.class, row);
+                detailDTO.setId(row.getDetailId());
+                detailDTO.setRuleId(row.getRuleId());
+                ruleDTO.getDetailList().add(detailDTO);
+            }
+        }
+
+        result.setList(new ArrayList<>(ruleMap.values()));
+        return result;
     }
 
     private void persistRule(CfgDeclareRuleEntity entity,

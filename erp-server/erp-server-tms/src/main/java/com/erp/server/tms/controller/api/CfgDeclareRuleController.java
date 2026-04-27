@@ -56,7 +56,7 @@ public class CfgDeclareRuleController extends BaseController {
     }
 
     @PostMapping("/paging")
-    public ApiResult<List<CfgDeclareRuleDTO.ListDTO>> paging(@RequestBody @Validated CfgDeclareRuleDTO.ListParamDTO dto) {
+    public ApiResult<CfgDeclareRuleDTO.SaveListDTO> paging(@RequestBody @Validated CfgDeclareRuleDTO.ListParamDTO dto) {
         return success(cfgDeclareRuleService.paging(dto));
     }
 

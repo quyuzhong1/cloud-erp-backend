@@ -20,7 +20,7 @@ public interface CfgDeclareRuleService extends SuperService<CfgDeclareRuleEntity
 
     Boolean update(CfgDeclareRuleDTO.UpdateDTO dto);
 
-    List<CfgDeclareRuleDTO.ListDTO> paging(CfgDeclareRuleDTO.ListParamDTO dto);
+    CfgDeclareRuleDTO.SaveListDTO paging(CfgDeclareRuleDTO.ListParamDTO dto);
 
     CfgDeclareRuleDTO.ViewDTO view(String id);
 
