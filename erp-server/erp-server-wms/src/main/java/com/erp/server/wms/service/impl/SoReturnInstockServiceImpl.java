@@ -241,7 +241,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        query.setSearchCount(Boolean.FALSE);
+        Integer totalCount = this.baseMapper.pagingCount(pagingParamDTO.getParams());
         IPage<SoReturnInstockDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        pageData.setTotal(ObjectUtils.isEmpty(totalCount) ? MathUtil.ZERO : totalCount);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }

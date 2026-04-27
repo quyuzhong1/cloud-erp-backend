@@ -195,7 +195,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         String url = "";
         String fileName = "物流商费用导入结果.xlsx";
         if (CollectionUtils.isNotEmpty(matchList) && headList != null) {
-            matchList = matchList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+            //matchList = matchList.stream().filter(Objects::nonNull).collect(Collectors.toList());
             File file = ExcelUtil.customExportUtil(fileName, matchList, headList);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
