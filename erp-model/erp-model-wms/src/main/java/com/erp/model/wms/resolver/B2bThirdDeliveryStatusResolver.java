@@ -73,6 +73,7 @@ public final class B2bThirdDeliveryStatusResolver {
             case "SUCCESS":
                 return ThirdDeliveryStatusEnum.SHIPPED.getCode();
             case "EXCEPTION":
+                return ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode();
             case "DISCARD":
             case "PROBLEM":
                 return ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode();
