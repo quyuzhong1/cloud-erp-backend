@@ -970,7 +970,11 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-		
+
+		if (mappingSkuViewDTOList.isEmpty()) {
+			throw new ServiceException("没有找到sku映射");
+		}
+
 		// 获取订单明细和关联数据
 		BigDecimal rate = new BigDecimal("1");
 		if (Objects.nonNull(soB2cEntity)) {
