@@ -520,7 +520,7 @@ public class SampleOpenApi {
 
     @OpenApi("sysCompanyList")
     public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> sysCompanyList() {
-        return sysFeign.companyList("");
+        return sysFeign.companyList();
     }
 
     @OpenApi("sysDictCountryList")
