@@ -90,7 +90,7 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String remark;
 
         /**
-        * 报关状态 DeclareStatusEnum
+        * 报关状态：
         */
         private String declareStatus;
 
@@ -225,6 +225,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String destWarehouseName;
 
         /**
+        * 中转仓库IDS
+        */
+        private String transferWarehouseIds;
+
+        /**
         * 销售组织ID
         */
         private String salesOrgId;
@@ -233,8 +238,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 销售组织名称
         */
         private String salesOrgName;
-
-        private String transferWarehouseId;
 
 
         /**
@@ -286,7 +289,7 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String remark;
 
         /**
-        * 报关状态 DeclareStatusEnum
+        * 报关状态：
         */
         private String declareStatus;
 
@@ -421,6 +424,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String destWarehouseName;
 
         /**
+        * 中转仓库IDS
+        */
+        private String transferWarehouseIds;
+
+        /**
         * 销售组织ID
         */
         private String salesOrgId;
@@ -429,8 +437,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 销售组织名称
         */
         private String salesOrgName;
-
-        private String transferWarehouseId;
 
 
     }
@@ -472,10 +478,10 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String remark;
 
         /**
-        * 报关状态 DeclareStatusEnum
+        * 报关状态：
         */
-        @NotBlank(message = "报关状态 DeclareStatusEnum不能为空")
-        @Size(max = 50,message = "报关状态 DeclareStatusEnum最大长度不能超过50位")
+        @NotBlank(message = "报关状态：不能为空")
+        @Size(max = 50,message = "报关状态：最大长度不能超过50位")
         private String declareStatus;
 
         /**
@@ -644,6 +650,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String destWarehouseName;
 
         /**
+        * 中转仓库IDS
+        */
+        private String transferWarehouseIds;
+
+        /**
         * 销售组织ID
         */
         private String salesOrgId;
@@ -652,8 +663,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 销售组织名称
         */
         private String salesOrgName;
-
-        private String transferWarehouseId;
 
 
     }

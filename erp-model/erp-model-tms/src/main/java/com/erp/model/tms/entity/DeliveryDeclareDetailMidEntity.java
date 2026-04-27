@@ -33,7 +33,7 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("remark")
     private String remark;
     /**
-    * 报关状态 DeclareStatusEnum
+    * 报关状态：
     */
     @TableField("declare_status")
     private String declareStatus;
@@ -168,6 +168,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("dest_warehouse_name")
     private String destWarehouseName;
     /**
+    * 中转仓库IDS
+    */
+    @TableField("transfer_warehouse_ids")
+    private String transferWarehouseIds;
+    /**
     * 销售组织ID
     */
     @TableField("sales_org_id")
@@ -177,8 +182,6 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("sales_org_name")
     private String salesOrgName;
-    @TableField("transfer_warehouse_id")
-    private String transferWarehouseId;
 
 
     public static final String REMARK = "remark";
@@ -237,11 +240,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
 
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
+    public static final String TRANSFER_WAREHOUSE_IDS = "transfer_warehouse_ids";
+
     public static final String SALES_ORG_ID = "sales_org_id";
 
     public static final String SALES_ORG_NAME = "sales_org_name";
-
-    public static final String TRANSFER_WAREHOUSE_ID = "transfer_warehouse_id";
 
     @Override
     public Serializable pkVal() {
