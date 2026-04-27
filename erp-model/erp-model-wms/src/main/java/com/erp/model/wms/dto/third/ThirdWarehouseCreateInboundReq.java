@@ -287,8 +287,8 @@ public class ThirdWarehouseCreateInboundReq {
     @NoArgsConstructor
     @Builder
     public static class Item {
-        //排序 从1开始
-        private Integer index;
+        //发货单明细id
+        private String detailId;
 
         private String batchNo;
         /**

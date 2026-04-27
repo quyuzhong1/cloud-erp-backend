@@ -2,6 +2,8 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -37,13 +39,14 @@ public class JituInboundReturnInitHandler extends DmpInputInitHandler{
 			return new ArrayList<>();
 		}
 		JituInboundReturnDTO returnDTO = JSONUtil.toBean(data, JituInboundReturnDTO.class);
-		if(Objects.isNull(returnDTO) || Objects.isNull(returnDTO.getEntryOrder())){
+		if(Objects.isNull(returnDTO) || Objects.isNull(returnDTO.getEntryOrderCode())){
 			return new ArrayList<>();
 		}
-		returnDTO.getEntryOrder().setOrderLines(returnDTO.getOrderLines());
-		returnDTO.getEntryOrder().setPackages(returnDTO.getTotalOrders());
+		returnDTO.setSourcePlatform(OmsPlatformEnum.JI_TU.getCode());
+		returnDTO.setWarehousePlatformType(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode());
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(returnDTO.getEntryOrder()));
+		returnDTO.getOrderLines().forEach(line -> line.setOperateTime(returnDTO.getOperateTime()));
+		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(returnDTO));
 		return Collections.singletonList(dmpInputTaskInitDTO);
 	}
 }
