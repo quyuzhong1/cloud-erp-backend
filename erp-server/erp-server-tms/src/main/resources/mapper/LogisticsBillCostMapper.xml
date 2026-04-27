@@ -350,10 +350,16 @@
         </where>
     </select>
 
+    <!--
+      查询可下推费用分摊的物流费用ID列表
+      优化说明：
+      1. 原 NOT IN (子查询) 在大数据量下无法走索引，改为 LEFT JOIN...IS NULL 可利用 cost_id 索引
+      2. 将原两段 UNION ALL 合并为单次查询，减少数据库扫描次数
+      3. 当 ids 非空时直接精确过滤，避免全量扫描
+    -->
     <select id="listByCanPushAllocation" resultType="java.lang.String">
         SELECT lbc.id
         FROM logistics_bill_cost AS lbc
-        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         LEFT JOIN (
             SELECT DISTINCT cost_id
             FROM small_bag_cost_allocation_main
@@ -374,12 +380,13 @@
               )
         ) excl_estimate ON lbc.id = excl_estimate.cost_id
         WHERE lbc.is_deleted = FALSE
-          AND lb.is_allocate_cost_required = true
           AND lbc.type = #{params.type}
           AND lbc.reconciliation_month = #{params.reportDate}
           AND (
+              /* 账单确认：排除已含 confirmed/fee_source=confirmed 的分摊记录 */
               (lbc.reconciliation_status = 'confirmed'      AND excl_confirmed.cost_id IS NULL)
               OR
+              /* 暂估确认：排除已含当期或已确认的分摊记录 */
               (lbc.reconciliation_status = 'estimateConfirm' AND excl_estimate.cost_id IS NULL)
           )
         <if test="params.ids != null and params.ids.size() > 0">
@@ -395,10 +402,8 @@
         lbc.ID
         FROM
         logistics_bill_cost lbc
-        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         WHERE
         lbc.is_deleted = FALSE
-        AND lb.is_allocate_cost_required = true
         AND lbc.TYPE = #{params.type}
         AND lbc.reconciliation_month = #{params.reportDate}
         AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
@@ -432,10 +437,8 @@
         COUNT(lbc.id)
         FROM
         logistics_bill_cost lbc
-        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         WHERE
         lbc.is_deleted = FALSE
-        AND lb.is_allocate_cost_required = true
         AND lbc.TYPE = #{params.type}
         AND lbc.reconciliation_month = #{params.reportDate}
         AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
