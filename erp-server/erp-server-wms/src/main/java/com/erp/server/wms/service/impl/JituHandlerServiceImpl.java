@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.enums.JituDeliveryTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
@@ -400,10 +401,10 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     skuPriceMap.put(soDetail.getSkuId(), soDetail.getPrice());
                 }
             }
-            //TODO 配送方式=平台物流/商家自联快递时必填
+            // 配送方式=平台物流/商家自联快递时必填
             if (StringUtils.isNotBlank(logisticsChannel.getUndeliverableDecision())){
-                if (Objects.equals(logisticsChannel.getUndeliverableDecision(),"PTWL")
-                        || Objects.equals(logisticsChannel.getUndeliverableDecision(),"SJZL")) {
+                if (Objects.equals(logisticsChannel.getUndeliverableDecision(), JituDeliveryTypeEnum.PLATFORM_LOGISTICS.getCode())
+                        || Objects.equals(logisticsChannel.getUndeliverableDecision(),JituDeliveryTypeEnum.SHOP_SELF_DELIVERY.getCode())) {
                     if (StringUtils.isNotBlank(b2bThirdDelivery.getTrackNo())) {
                         request.setMailno(b2bThirdDelivery.getTrackNo());
                     } else {
@@ -423,18 +424,17 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         request.setOutBizNo(createOutboundReq.getReferenceNo());
 
         // 物流信息
-        //TODO 等4.5开发完
+        // 配送方式=平台物流时必填，渠道是否需要同步面单标识
         if (StringUtils.isNotBlank(logisticsChannel.getUndeliverableDecision())){
             request.setTransportMode(logisticsChannel.getUndeliverableDecision());
-            if (Objects.equals(logisticsChannel.getUndeliverableDecision(),"PTWL")
+            if (Objects.equals(logisticsChannel.getUndeliverableDecision(),JituDeliveryTypeEnum.PLATFORM_LOGISTICS.getCode())
                     && StringUtils.isBlank(createOutboundReq.getFileUrl())) {
-                //TODO 配送方式=平台物流时必填，渠道是否需要同步面单标识
                 throw new ServiceException("配送方式为平台物流时必填，渠道需要同步面单");
             }
-            //TODO 配送方式=平台物流/商家自联快递/仓配快递 时必填
-            if (Objects.equals(logisticsChannel.getUndeliverableDecision(),"PTWL")
-                    || Objects.equals(logisticsChannel.getUndeliverableDecision(),"SJZL")
-                    || Objects.equals(logisticsChannel.getUndeliverableDecision(),"CPKD")){
+            // 配送方式=平台物流/商家自联快递/仓配快递 时必填
+            if (Objects.equals(logisticsChannel.getUndeliverableDecision(),JituDeliveryTypeEnum.PLATFORM_LOGISTICS.getCode())
+                    || Objects.equals(logisticsChannel.getUndeliverableDecision(),JituDeliveryTypeEnum.SHOP_SELF_DELIVERY.getCode())
+                    || Objects.equals(logisticsChannel.getUndeliverableDecision(),JituDeliveryTypeEnum.WAREHOUSE_DELIVERY.getCode())){
                 if (StringUtils.isBlank(logisticsChannel.getLastMileCarrier())) {
                     throw new ServiceException("配送方式为平台物流/商家自联快递/仓配快递时尾程服务商必填");
                 }
