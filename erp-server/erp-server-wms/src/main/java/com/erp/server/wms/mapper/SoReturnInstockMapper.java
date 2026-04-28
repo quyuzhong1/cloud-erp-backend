@@ -34,6 +34,8 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      **/
     IPage<SoReturnInstockDTO.PagingView> paging(Page query, @Param("params") SoReturnInstockDTO.PagingParam params);
 
+    Integer pagingCount(@Param("params") SoReturnInstockDTO.PagingParam params);
+
     /**
      * 列表状态数量统计
      * @Author Luo_WG
