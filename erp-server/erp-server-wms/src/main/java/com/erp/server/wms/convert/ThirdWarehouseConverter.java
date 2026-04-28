@@ -102,12 +102,21 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "module", constant = "order_label")
     @Mapping(target = "fileData", source = "fileData", qualifiedByName = "replacePdf")
     AntuUploadFileReq reqToAntuUpdateFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
+
+    @Mapping(target = "fileData", source = "fileData", qualifiedByName = "replaceBase64DataUrlPrefix")
+    AntuUploadFileReq reqToAntuB2bAttachmentUploadFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
+
     ThirdWarehouseUploadFileResponse antuResToThirdWarehouseUploadFileResponse(AntuUploadFileResp antuCalculateFeeRespList);
 
     @Mapping(target = "useFor", constant = "ORDER_LABEL_ATTACHMENT")
     @Mapping(target = "file", source = "fileData", qualifiedByName = "replacePdf")
     @Mapping(target = "fileName", source = "orderCode", qualifiedByName = "getPdfFileName")
     GoodCangUploadFileReq reqToGoodCangUploadFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
+
+    @Mapping(target = "useFor", source = "fileType")
+    @Mapping(target = "file", source = "fileData", qualifiedByName = "replaceBase64DataUrlPrefix")
+    @Mapping(target = "fileName", source = "fileName")
+    GoodCangUploadFileReq reqToGoodCangB2bAttachmentUploadFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
 
     @Mapping(target = "url", ignore = true)
     @Mapping(target = "attachId", source = "attachmentId")

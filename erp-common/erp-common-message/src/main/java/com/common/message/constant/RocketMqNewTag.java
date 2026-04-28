@@ -67,6 +67,11 @@ public class RocketMqNewTag {
     public static final String DMP_TRACK123_TO_TMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_track123_to_tms_tag";
 
     /**
+     * 物流轨迹
+     */
+    public static final String DMP_KUAIDI100_TO_TMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_kuaidi100_to_tms_tag";
+
+    /**
      * 新中台平台仓库
      */
     public static final String DMP_PLATFORM_WAREHOUSE_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_warehouse_to_wms_tag";
@@ -95,6 +100,12 @@ public class RocketMqNewTag {
      * 新中台平台出库
      */
     public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_tag";
+
+    /**
+     * 新中台B2B三方仓出库状态
+     */
+    public static final String DMP_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_third_outbound_to_wms_tag";
+
     /**
      * 新中台平出库单更新B2C并下推出库
      */
@@ -296,5 +307,10 @@ public class RocketMqNewTag {
      * tms 费用分摊异步任务
      */
     public static final String TMS_PUSH_ALLOCATION_COST_TAG = "tms_push_allocation_cost_tag";
+
+    /**
+     * 新中台B2B三方仓出库状态
+     */
+    public static final String RESTCLOUD_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_third_outbound_to_wms_tag";
 
 }

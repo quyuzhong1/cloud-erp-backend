@@ -65,6 +65,11 @@ public class RocketMqNewTopic {
     public static final String DMP_TRACK123_TO_TMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_track123_to_tms_topic";
 
     /**
+     * 新中台Kuaidi100
+     */
+    public static final String DMP_KUAIDI100_TO_TMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_kuaidi100_to_tms_topic";
+
+    /**
      * 新中台平台仓库
      */
     public static final String DMP_PLATFORM_WAREHOUSE_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_warehouse_to_wms_topic";
@@ -94,6 +99,11 @@ public class RocketMqNewTopic {
      * 新中台平台入库
      */
     public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_topic";
+
+    /**
+     * 新中台B2B三方仓出库状态
+     */
+    public static final String DMP_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_third_outbound_to_wms_topic";
 
 
     /**
@@ -298,5 +308,9 @@ public class RocketMqNewTopic {
      * 新中台飞书用户对接
      */
     public static final String DMP_FS_USER_TO_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_user_to_sys_topic";
+    /**
+     * 新中台B2B三方仓出库状态
+     */
+    public static final String RESTCLOUD_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_third_outbound_to_wms_topic";
 
 }

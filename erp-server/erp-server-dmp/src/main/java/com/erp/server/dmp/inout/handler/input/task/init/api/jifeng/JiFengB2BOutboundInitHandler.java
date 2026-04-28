@@ -1,0 +1,153 @@
+package com.erp.server.dmp.inout.handler.input.task.init.api.jifeng;
+
+import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
+import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
+import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
+import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
+import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.sdk.wms.jifeng.dto.response.JiFengB2BOutboundResp;
+import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
+import com.sdk.wms.jifeng.dto.response.JiFengOutboundResp;
+import com.sdk.wms.jifeng.service.JiFengService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * dmp输入init任务基础处理器下的极风api获取数据方式
+ * @author Administrator
+ *
+ */
+@Service
+@Slf4j
+@Scope("prototype")
+public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
+
+	@Resource
+    private DmpHandlerCache dmpHandlerCache;
+
+	@Resource
+	private JiFengService jiFengService;
+	
+	@Resource
+    private WmsOverseasWarehouseFeign overseasWarehouseFeign;
+
+	@Resource
+	private SoB2cFeign soB2cFeign;
+
+	@Resource
+	private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
+
+	@Resource
+	private OverseasProviderFeign overseasProviderFeign;
+
+	@Override
+	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+		List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
+				.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+				.eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.JIFENG.getCode())
+				.list();
+		if(CollUtil.isEmpty(overseasProviderEntityList)) {
+			throw new ServiceException("极风授权信息不存在");
+		}
+		// 取对应授权ID授权
+		OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+				.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+				.findFirst()
+				.orElse(null);
+		if(null == overseasProviderEntity) {
+			throw new ServiceException("极风对应授权ID信息不存在");
+		}
+		//查询海外仓库
+		List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = FeignQuery.create(OverseasProviderWarehouseEntity.class).eq(OverseasProviderWarehouseEntity::getMainId,overseasProviderEntity.getId()).list();
+		overseasProviderWarehouseEntities = overseasProviderWarehouseEntities.stream().filter(v-> !v.getDisabled() && StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.toList());
+		if(CollectionUtils.isEmpty(overseasProviderWarehouseEntities)){
+			log.warn("极风对应海外仓库信息不存在");
+			return Collections.emptyList();
+		}
+		List<B2bThirdDeliveryEntity> deliveryList = queryB2bThirdDeliveryList(overseasProviderWarehouseEntities);
+		if (CollUtil.isEmpty(deliveryList)) {
+			return Collections.emptyList();
+		}
+		List<JiFengB2BOutboundResp> resultList = new ArrayList<>();
+		List<String> codeList = deliveryList.stream()
+				.map(B2bThirdDeliveryEntity::getCode)
+				.filter(StringUtils::isNotBlank)
+				.distinct()
+				.collect(Collectors.toList());
+		for (String code : codeList) {
+			JiFengBaseResp<JiFengB2BOutboundResp> resp = jiFengService.getB2BOrder(overseasProviderEntity.getAuthJson(),code);
+			if(Objects.isNull(resp)){
+				log.warn("极风获取B2B订单数据失败，响应结果为空");
+				throw new ServiceException("极风获取B2B订单数据失败，响应结果为空");
+			}
+			if(resp.getCode() != 0){
+				if(resp.getMessage().contains("Invalid ACCESS TOKEN")){
+					overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
+					resp = jiFengService.getB2BOrder(overseasProviderEntity.getAuthJson(),code);
+					if(Objects.isNull(resp)){
+						log.warn("极风获取B2B订单数据失败，响应结果为空");
+						throw new ServiceException("极风获取B2B订单数据失败，响应结果为空");
+					}
+					if(resp.getCode() != 0){
+						log.warn("极风获取B2B数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
+						throw new ServiceException("极风获取B2B订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());
+					}
+					resultList.add(resp.getData());
+				}else{
+					log.warn("极风获取B2B数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
+					throw new ServiceException("极风获取B2B订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());
+				}
+			}else{
+				resultList.add(resp.getData());
+			}
+		}
+
+		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(resultList));
+		return Collections.singletonList(dmpInputTaskInitDTO);
+	}
+
+	private List<B2bThirdDeliveryEntity> queryB2bThirdDeliveryList(List<OverseasProviderWarehouseEntity> providerWarehouseList) {
+		List<String> warehouseIds = providerWarehouseList.stream()
+				.map(OverseasProviderWarehouseEntity::getWarehouseId)
+				.distinct()
+				.collect(Collectors.toList());
+		return com.common.business.wrapper.FeignQuery.create(B2bThirdDeliveryEntity.class)
+				.eq(B2bThirdDeliveryEntity::getIsApiDelivery, Boolean.TRUE)
+				.in(B2bThirdDeliveryEntity::getDeliveryWarehouseId, warehouseIds)
+				.notIn(B2bThirdDeliveryEntity::getStatus, Arrays.asList(
+						ThirdDeliveryStatusEnum.CREATING.getCode(),
+						ThirdDeliveryStatusEnum.SHIPPED.getCode(),
+						ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode()
+				))
+				.list();
+	}
+
+
+
+
+}

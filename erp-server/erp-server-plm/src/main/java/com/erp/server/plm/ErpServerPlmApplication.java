@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
 @EnableAsync
-@ServletComponentScan
+@ServletComponentScan(basePackages ={"com.erp","com.common"})
 public class ErpServerPlmApplication {
 
     public static void main(String[] args) {

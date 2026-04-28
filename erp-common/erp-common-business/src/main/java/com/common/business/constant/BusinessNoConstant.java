@@ -130,6 +130,8 @@ public interface BusinessNoConstant {
     String FHDC = "FHDC";
     // b2c发货拦截单
     String FHLJ = "FHLJ";
+    // b2b发货拦截单
+    String FHLJB = "FHLJB";
     // 委外发料单
     String FLD = "FLD";
     // 送货单
