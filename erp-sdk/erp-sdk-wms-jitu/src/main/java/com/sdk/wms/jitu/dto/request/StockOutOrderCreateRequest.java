@@ -111,7 +111,7 @@ public class StockOutOrderCreateRequest implements Serializable {
     /**
      * 是否代收货款
      */
-    private String isCod;
+    private Integer isCod;
 
     /**
      * 店铺编码

@@ -349,17 +349,19 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (Objects.nonNull(b2bThirdDelivery)) {
             // 收件人信息
             receiver.setCountrycode(b2bThirdDelivery.getCountryId());
-            receiver.setShortAddress(b2bThirdDelivery.getReceiveAddress());
             if (StringUtils.isNotBlank(b2bThirdDelivery.getAddress2())) {
                 receiver.setAddress(b2bThirdDelivery.getAddress2());
             } else {
                 if (StringUtils.isNotBlank(b2bThirdDelivery.getAddress3())) {
-                    receiver.setAddress(b2bThirdDelivery.getAddress3());
+                    receiver.setAddress2(b2bThirdDelivery.getAddress3());
                 } else {
-                    receiver.setAddress(b2bThirdDelivery.getReceiveAddress());
+                    receiver.setAddress2(b2bThirdDelivery.getReceiveAddress());
                 }
             }
-            receiver.setAddress2(b2bThirdDelivery.getAddress3());
+            StringBuilder sb = new StringBuilder();
+            sb.append(b2bThirdDelivery.getAddress3());
+            sb.append(b2bThirdDelivery.getReceiveAddress());
+            receiver.setAddress2(sb.toString());
             receiver.setArea(b2bThirdDelivery.getCity());
             receiver.setCity(b2bThirdDelivery.getCity());
             receiver.setProv(b2bThirdDelivery.getProvince());
@@ -432,7 +434,8 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         request.setCarrier(logisticsChannel.getLastMileCarrier());
         request.setRouteid(createOutboundReq.getChannelCode());
         request.setDeliveryNote(createOutboundReq.getRemark());
-        request.setIsCod("0"); // 默认0否
+        request.setIsCod(0); // 默认0否
+        request.setItemsvalue(BigDecimal.ZERO); // 极兔bug,等后续迭代
         request.setStoreCode("-"); // 默认-
         request.setStoreName(""); // 默认空
 
