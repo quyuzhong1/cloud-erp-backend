@@ -203,6 +203,7 @@ public enum ApiError implements Serializable {
     COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
     COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
+    COMMON_FILE_HEAD_READ_HEAD_FAIL(98134,"配置有误，开始行读取失败"),
 
     COMMON_NO_SKU(98128,"SKU不存在"),
     /**
