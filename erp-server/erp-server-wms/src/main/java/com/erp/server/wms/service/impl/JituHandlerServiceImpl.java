@@ -21,10 +21,7 @@ import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
-import com.sdk.wms.jitu.dto.request.StockOutOrderRequest;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCancelRequest;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
-import com.sdk.wms.jitu.dto.request.WarehouseRequest;
+import com.sdk.wms.jitu.dto.request.*;
 import com.sdk.wms.jitu.dto.response.StockOutOrderResponse;
 import com.sdk.wms.jitu.dto.response.OverseasInboundCancelResponse;
 import com.sdk.wms.jitu.dto.response.WarehouseResponse;
@@ -220,21 +217,16 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 return failure("B2B三方发货单不存在");
             }
 
-            // 构建授权信息
-            Map<String, Object> authMap = new HashMap<>();
-            authMap.put("key", key);
-            authMap.put("eccompanyid", eccompanyid);
-
             // 构建取消订单请求参数
-            Map<String, Object> request = new HashMap<>();
-            request.put("customerid", authMap.get("eccompanyid")); // 取发货仓库在三方仓配置绑定的货主编码
-            request.put("warehouseCode", b2bThirdDelivery.getThirdWarehouseCode()); // 取发货仓库在三方仓配置绑定的三方仓仓库编码
-            request.put("orderType", "XSCK"); // 默认XSCK-销售出库
-            request.put("orderCode", cancelOutboundReq.getOrderCode()); // 出库单类型时，传txlogisticid字段的单号
-            request.put("cancelReason", cancelOutboundReq.getRemark()); // 取操作拦截时填写的拦截原因
+            JituOverseasFbaOutboundCancelRequest request = new JituOverseasFbaOutboundCancelRequest();
+            request.setCustomerid(cancelOutboundReq.getOwnerCode());
+            request.setWarehouseCode(b2bThirdDelivery.getThirdWarehouseCode());// 取发货仓库在三方仓配置绑定的三方仓仓库编码
+            request.setOrderType("XSCK");// 默认XSCK-销售出库
+            request.setOrderCode(cancelOutboundReq.getOrderCode());// 出库单类型时，传txlogisticid字段的单号
+            request.setCancelReason(cancelOutboundReq.getRemark());// 取操作拦截时填写的拦截原因
 
             // 调用极兔API取消订单
-            StockOutOrderResponse response = jituService.cancelOrder(authMap, request);
+            StockOutOrderResponse response = jituService.cancelOrder(request);
 
             // 处理返回结果
             if (response != null && response.getResponseitems() != null && !response.getResponseitems().isEmpty()) {

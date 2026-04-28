@@ -230,6 +230,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setSourceCode(entity.getCode());
         req.setSoCode(entity.getSoCode());
         req.setRemark(entity.getRemark());
+        req.setOwnerCode(overseasProviderEntity.getOwnerCode());
         return BeanUtil.beanToMap(req);
     }
 }

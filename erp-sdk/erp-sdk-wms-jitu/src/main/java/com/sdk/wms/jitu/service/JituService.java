@@ -4,11 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCancelRequest;
-import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
-import com.sdk.wms.jitu.dto.request.ProductRequest;
-import com.sdk.wms.jitu.dto.request.StockOutOrderRequest;
-import com.sdk.wms.jitu.dto.request.WarehouseRequest;
+import com.sdk.wms.jitu.dto.request.*;
 import com.sdk.wms.jitu.dto.response.OverseasInboundCancelResponse;
 import com.sdk.wms.jitu.dto.response.OverseasInboundCreateResponse;
 import com.sdk.wms.jitu.dto.response.ProductResponse;
@@ -149,11 +145,11 @@ public class JituService {
     
     /**
      * 取消订单
-     * @param authMap 授权信息
      * @param request 取消订单请求
      * @return 取消订单响应
      */
-    public StockOutOrderResponse cancelOrder(Map<String, Object> authMap, Map<String, Object> request) {
+    public StockOutOrderResponse cancelOrder(JituOverseasFbaOutboundCancelRequest request) {
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         String url = getPreUrl() + "/gateway/edi/order/cancel";
         authMap.put("msg_type", "CANCELORDER");
         authMap.put("logistics_interface", JSONUtil.toJsonStr(request));
