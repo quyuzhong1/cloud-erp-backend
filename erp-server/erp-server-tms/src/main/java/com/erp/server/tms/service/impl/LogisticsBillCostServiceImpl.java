@@ -2224,6 +2224,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 3.5 实时更新主任务进度
             try {
                 asyncTaskRecordService.lambdaUpdate()
+                     .set(Objects.isNull(taskRecord.getDetailCount()) || Objects.equals(taskRecord.getDetailCount(),0)  ,TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
                     .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .update();
