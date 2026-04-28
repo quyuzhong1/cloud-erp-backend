@@ -96,7 +96,7 @@ class JituServiceTest {
         request.setMailno("1234564698789002");
         request.setLabel("");
         request.setDeliveryNote("备注");
-        request.setIsCod("0");
+        request.setIsCod(0);
         request.setStoreCode("UPFOS001");
 
         // 商品信息
@@ -104,7 +104,7 @@ class JituServiceTest {
         StockOutOrderCreateRequest.Item item = new StockOutOrderCreateRequest.Item();
         item.setItemCode("YL001");
         item.setNumber(1);
-        item.setItemvalue(new BigDecimal("5000.02"));
+        //item.setItemvalue(new BigDecimal("5000.02"));
         item.setInventoryType("ZP");
         items.add(item);
         request.setItems(items);
