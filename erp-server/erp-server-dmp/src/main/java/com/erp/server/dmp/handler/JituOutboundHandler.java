@@ -16,7 +16,7 @@ import java.util.Map;
  * 极兔海外仓入库单状态回转接口
  */
 @Slf4j
-public class JituOverseasInboundHandler implements WebhookHandler{
+public class JituOutboundHandler implements WebhookHandler{
 
     private final DmpInputCreateFactory dmpInputCreateFactory = SpringUtil.getBean(DmpInputCreateFactory.class);
 
@@ -32,15 +32,15 @@ public class JituOverseasInboundHandler implements WebhookHandler{
         }
         JSONObject jsonObject = JSONUtil.parseObj(data);
         String requestId = jsonObject.getStr("requestId");
-        log.warn("webhook 获取极兔海外仓入库单数据,{}",data);
-        try {
-            ThirdWarehouseContext.setData(data);
-            DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-            dmpInputHotfixCreateRequest.setCfgInputId("1938157629872288000");
-            dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-        }finally {
-            ThirdWarehouseContext.remove();
-        }
+        log.warn("webhook 获取极兔出库单数据,{}",data);
+//        try {
+//            ThirdWarehouseContext.setData(data);
+//            DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+//            dmpInputHotfixCreateRequest.setCfgInputId("1938157629872288000");
+//            dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+//        }finally {
+//            ThirdWarehouseContext.remove();
+//        }
         return WebhookResult.isJituSuccess(requestId,0,"回传成功");
     }
 }

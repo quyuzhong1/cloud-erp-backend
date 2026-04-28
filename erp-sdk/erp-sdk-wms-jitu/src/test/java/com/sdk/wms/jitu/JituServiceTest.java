@@ -4,8 +4,9 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.jitu.dto.request.JituOverseasInboundCreateRequest;
 import com.sdk.wms.jitu.dto.request.ProductRequest;
-import com.sdk.wms.jitu.dto.request.StockOutOrderRequest;
+import com.sdk.wms.jitu.dto.request.StockOutOrderCreateRequest;
 import com.sdk.wms.jitu.dto.request.WarehouseRequest;
+import com.sdk.wms.jitu.dto.response.StockOutOrderCreateResponse;
 import com.sdk.wms.jitu.dto.response.WarehouseResponse;
 import com.sdk.wms.jitu.service.JituService;
 import org.junit.jupiter.api.Test;
@@ -59,14 +60,14 @@ class JituServiceTest {
     }
 
     @Test
-    public void stockOutOrderList() {
-        StockOutOrderRequest request = new StockOutOrderRequest();
+    public void createStockOutOrder() {
+        StockOutOrderCreateRequest request = new StockOutOrderCreateRequest();
 
         // 基本信息
         request.setWarehouseCode("SH.001");
         request.setCustomerid("CS001");
         //``request.setEccompanyid("STANDARD");
-        request.setTxlogisticid("TT20230529001");
+        request.setTxlogisticid("TT20230529002");
         request.setOrderType("XSCK");
         request.setSource("pdd");
         request.setPlatformNumber("XXXXX");
@@ -74,7 +75,7 @@ class JituServiceTest {
         request.setItemsvalue(new BigDecimal("100.78"));
 
         // 收件人信息
-        StockOutOrderRequest.Receiver receiver = new StockOutOrderRequest.Receiver();
+        StockOutOrderCreateRequest.Receiver receiver = new StockOutOrderCreateRequest.Receiver();
         receiver.setName("客户");
         receiver.setCountrycode("CHN");
         receiver.setPostcode("155555");
@@ -99,9 +100,9 @@ class JituServiceTest {
         request.setStoreCode("UPFOS001");
 
         // 商品信息
-        java.util.List<StockOutOrderRequest.Item> items = new java.util.ArrayList<>();
-        StockOutOrderRequest.Item item = new StockOutOrderRequest.Item();
-        item.setItemCode("test-sdflfekfeww-green");
+        java.util.List<StockOutOrderCreateRequest.Item> items = new java.util.ArrayList<>();
+        StockOutOrderCreateRequest.Item item = new StockOutOrderCreateRequest.Item();
+        item.setItemCode("YL001");
         item.setNumber(1);
         item.setItemvalue(new BigDecimal("5000.02"));
         item.setInventoryType("ZP");
@@ -110,7 +111,7 @@ class JituServiceTest {
         ThirdWarehouseContext.setAuthMap(authMap);
         // 调用API
         try {
-            com.sdk.wms.jitu.dto.response.StockOutOrderResponse response = JituService.createStockOutOrder(request);
+            StockOutOrderCreateResponse response = JituService.createStockOutOrder(request);
             System.out.println(JSONUtil.toJsonStr(response));
         } catch (Exception e) {
             e.printStackTrace();
