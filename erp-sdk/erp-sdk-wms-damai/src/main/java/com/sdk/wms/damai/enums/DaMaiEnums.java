@@ -3,6 +3,7 @@ package com.sdk.wms.damai.enums;
 
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import io.seata.common.util.StringUtils;
 import lombok.Getter;
@@ -60,6 +61,41 @@ public enum DaMaiEnums {
                     .findFirst()
                     .map(OrderStatusEnum::getName)
                     .orElse(null);
+        }
+    }
+
+    /**
+     * B2B三方发货单状态
+     */
+    @Getter
+    public enum B2BOrderStatusEnum {
+        SUBMIT("SUBMIT","已提交", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        WAIT_PROCESSED("WAIT_PROCESSED","预报成功", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        PROCESSED("PROCESSED","出库中", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        SUCCESS("SUCCESS","已出库", ThirdDeliveryStatusEnum.SHIPPED),
+        DISCARD_PROCESSED("DISCARD_PROCESSED","取消中", ThirdDeliveryStatusEnum.INTERCEPTING),
+        DISCARD("DISCARD","已取消", ThirdDeliveryStatusEnum.CANCEL_DELIVERY),
+        PROBLEM("PROBLEM","问题件", ThirdDeliveryStatusEnum.CANCEL_DELIVERY),
+        EXCEPTION ("EXCEPTION","出库异常", ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
+        BLOCK ("BLOCK","拦截中", ThirdDeliveryStatusEnum.INTERCEPTING),
+        ;
+        private final String code;
+        private final String name;
+        private final ThirdDeliveryStatusEnum erpSoStatus;
+
+        B2BOrderStatusEnum(String code, String name, ThirdDeliveryStatusEnum erpSoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpSoStatus = erpSoStatus;
+        }
+
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getErpSoStatus)
+                    .map(ThirdDeliveryStatusEnum::getCode)
+                    .orElse("");
         }
     }
 }

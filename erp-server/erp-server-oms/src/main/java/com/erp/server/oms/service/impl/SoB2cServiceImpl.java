@@ -140,12 +140,15 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.jetbrains.annotations.NotNull;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -169,6 +172,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -191,6 +195,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public static final String BAD_GATEWAY = "The server sent HTTP status code 502: Bad Gateway";
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private RedissonClient redissonClient;
+
+    @Resource
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
 
     @Resource
     private OperateLogService operateLogService;
@@ -11323,6 +11333,94 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             XxlJobHelper.log(StrUtil.format("展会订单任务节点记录补偿重试MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "重试组包任务");
+    }
+
+    @Override
+    public void lockDeliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, List<BatchResultDTO> resultDTOList) {
+        String lockKey = RedisCacheConstants.SO_B2C_DELIVERY_WITH_NOT_OUTBOUND_KEY + soB2cEntity.getId();
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean locked = false;
+        try {
+            // 尝试获取锁，等待3秒，锁持有时间30秒
+            locked = lock.tryLock(3, 60, TimeUnit.SECONDS);
+
+            if (!locked) {
+                // 获取锁失败，说明有其他线程正在处理该订单
+                log.warn("订单{}正在处理中，拒绝重复请求", soB2cEntity.getId());
+                resultDTOList.add(BatchResultDTO.fail(
+                        soB2cEntity.getId(),
+                        soB2cEntity.getCode(),
+                        "订单处理中"
+                ));
+                return;
+            }
+            //查询最新数据
+            soB2cEntity = this.getById(soB2cEntity.getId());
+            SoB2cEntity oldSoB2cEntity = SerializationUtils.clone(soB2cEntity);
+            beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity, soB2cReceiverEntity, updateDTO, detailEntityList);
+            try {
+                BatchResultDTO resultDTO = soB2cService.deliveryWithNotOutbound(dto, soB2cEntity, soB2cLogisticsEntity, detailEntityList, soB2cReceiverEntity, baseDTO, noInventorySkuIdList, overseasWarehouse, oldSoB2cEntity);
+                resultDTOList.add(resultDTO);
+            } catch (Exception e) {
+                log.error("B2C销售订单不出库发货失败,id:{}", soB2cEntity.getId(), e);
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage()));
+            }
+        }catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("订单{}获取分布式锁被中断", soB2cEntity.getId(), e);
+            resultDTOList.add(BatchResultDTO.fail(
+                    soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    "操作被中断，请稍后重试"
+            ));
+        } finally {
+            // 只有当前线程持有锁时才释放
+            if (locked && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+    }
+
+    private void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList) {
+        soB2cLogisticsEntity.setCode(dto.getTrackNo());
+        soB2cLogisticsEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
+        soB2cLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
+        soB2cLogisticsEntity.setDeliveryTime(dto.getDeliveryTime());
+        soB2cLogisticsService.updateById(soB2cLogisticsEntity);
+        soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        soB2cEntity.setAbnormalType("");
+        soB2cEntity.setIsMatchLogisticsRule(true);
+        soB2cEntity.setIsMatchOrderRule(true);
+        soB2cEntity.setIsNotOutbound(true);
+        soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+        soB2cEntity.setSoOutstockDate(dto.getDeliveryTime().toLocalDate());
+        if (!dto.getPlatformShipFlag() && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)) {
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            soB2cService.approveEnd(approveOneDTO, soB2cEntity, true);
+            soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+        }
+        //虚拟仓库查询
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+        platformDTO.setRelationId(soB2cEntity.getShopId());
+        platformDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
+        platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        for (SoB2cDetailEntity detailEntity : detailEntityList) {
+            if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(virtualWarehouseList)){
+                String virtualWarehouseId = virtualWarehouseList.get(0).getVirtualWarehouseId();
+                detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+            }else{
+                detailEntity.setVirtualWarehouseId("");
+            }
+            detailEntity.setWarehouseId(dto.getWarehouseId());
+            detailEntity.setWarehouseName(updateDTO.getName());
+        }
+        //先更新订单信息
+        soB2cEntity.setSignOrderError("");
+        soB2cService.updateById(soB2cEntity);
+        soB2cDetailService.updateBatchById(detailEntityList);
     }
 
     @Override

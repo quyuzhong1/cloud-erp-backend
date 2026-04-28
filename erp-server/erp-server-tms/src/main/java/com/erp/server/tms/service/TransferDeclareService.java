@@ -4,12 +4,10 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -206,4 +204,9 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     BatchResultDTO pushAllocation(String id , String reportDate);
     
     void singPushAllocation(String id , String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList);
+
+    @Transactional(rollbackFor = Exception.class)
+    Boolean addTaskDetailByTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    void pushTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 }

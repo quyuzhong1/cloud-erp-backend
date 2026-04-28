@@ -23,11 +23,13 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
@@ -58,6 +60,10 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private SoInfoFeign soInfoFeign;
     @Resource
     private FileFeign fileFeign;
+
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
@@ -158,14 +164,76 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
-        if (CollUtil.isNotEmpty(attachmentList)) {
-            String url = FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl();
-            byte[] bytes = fileFeign.downloadFile(attachmentList.get(0).getAttachUrl());
-            String fileBase64 = Base64.getEncoder().encodeToString(bytes);
-            req.setFileUrl(url);
-            req.setFileBase64(fileBase64);
+        LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(entity.getLogisticsChannelId());
+        if(Objects.nonNull(logisticsChannelEntity)){
+            req.setIsInsurance(logisticsChannelEntity.getIsApiInsurance());
+            req.setIsSignature(logisticsChannelEntity.getIsApiSign());
         }
+        fillAttachmentInfo(req, attachmentList);
         return BeanUtil.beanToMap(req);
+    }
+
+    private void fillAttachmentInfo(ThirdWarehouseCreateFbaOutboundReq req, List<WmsAttachmentDTO.UpdateDTO> attachmentList) {
+        if (CollUtil.isEmpty(attachmentList)) {
+            return;
+        }
+        WmsAttachmentDTO.UpdateDTO attachment = attachmentList.get(0);
+        if (Objects.isNull(attachment) || StrUtil.isBlank(attachment.getAttachUrl())) {
+            return;
+        }
+        String fileName = attachment.getAttachName();
+        req.setFileName(fileName);
+        req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
+
+        byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        if (Objects.isNull(bytes) || bytes.length == 0) {
+            log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
+            return;
+        }
+        bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
+        req.setFileBase64(Base64.getEncoder().encodeToString(bytes));
+    }
+
+    private byte[] cleanAttachmentBytes(byte[] bytes, String fileName, String fileUrl, String sourceId) {
+        String extension = StrUtil.blankToDefault(FileUtil.getFileExtension(fileName), FileUtil.getFileExtension(fileUrl));
+        if ("pdf".equalsIgnoreCase(extension)) {
+            return trimLeadingBytes(bytes, new byte[]{'%', 'P', 'D', 'F', '-'}, fileName, sourceId);
+        }
+        if ("xlsx".equalsIgnoreCase(extension) || "docx".equalsIgnoreCase(extension)) {
+            return trimLeadingBytes(bytes, new byte[]{'P', 'K'}, fileName, sourceId);
+        }
+        return bytes;
+    }
+
+    private byte[] trimLeadingBytes(byte[] bytes, byte[] magic, String fileName, String sourceId) {
+        int index = indexOf(bytes, magic);
+        if (index <= 0) {
+            if (index < 0) {
+                log.warn("B2B三方发货单附件文件头未匹配, sourceId={}, fileName={}", sourceId, fileName);
+            }
+            return bytes;
+        }
+        log.warn("B2B三方发货单附件存在前置脏字节，已裁剪, sourceId={}, fileName={}, offset={}", sourceId, fileName, index);
+        return Arrays.copyOfRange(bytes, index, bytes.length);
+    }
+
+    private int indexOf(byte[] bytes, byte[] magic) {
+        if (Objects.isNull(bytes) || Objects.isNull(magic) || bytes.length < magic.length) {
+            return -1;
+        }
+        for (int i = 0; i <= bytes.length - magic.length; i++) {
+            boolean matched = true;
+            for (int j = 0; j < magic.length; j++) {
+                if (bytes[i + j] != magic[j]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched) {
+                return i;
+            }
+        }
+        return -1;
     }
     /**
      * @param operate

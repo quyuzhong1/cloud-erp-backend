@@ -61,13 +61,13 @@ public class SoChangeFeignController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    @PostMapping("feign/soChange/listByCodes")
-     List<SoChangeEntity> listByCodes(List<String> list){
+    @PostMapping("/listByCodes")
+     List<SoChangeEntity> listByCodes(@RequestBody List<String> list){
         return soChangeService.listByCodes(list);
     }
 
-     @PostMapping ("feign/soChange/updateApproveStatus")
-     void updateApproveStatus(SoChangeEntity entity){
+     @PostMapping ("/updateApproveStatus")
+     void updateApproveStatus(@RequestBody SoChangeEntity entity){
          soChangeService.updateApproveStatus(entity);
      }
 }

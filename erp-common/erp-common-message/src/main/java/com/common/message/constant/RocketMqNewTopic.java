@@ -100,6 +100,11 @@ public class RocketMqNewTopic {
      */
     public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_topic";
 
+    /**
+     * 新中台B2B三方仓出库状态
+     */
+    public static final String DMP_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_third_outbound_to_wms_topic";
+
 
     /**
      * 新中台平出库单更新B2C并下推出库
@@ -303,5 +308,9 @@ public class RocketMqNewTopic {
      * 新中台飞书用户对接
      */
     public static final String DMP_FS_USER_TO_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_user_to_sys_topic";
+    /**
+     * 新中台B2B三方仓出库状态
+     */
+    public static final String RESTCLOUD_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_third_outbound_to_wms_topic";
 
 }

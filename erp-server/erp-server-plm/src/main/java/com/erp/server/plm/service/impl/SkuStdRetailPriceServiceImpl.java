@@ -177,9 +177,14 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
 
     @Override
     public List<SkuStdRetailPriceDTO.TabListDTO> tabList(PermissionsDTO param) {
-    	int allCount = productDetailService.count();
+    	int allCount = productDetailService.lambdaQuery()
+    			.eq(ProductDetailEntity::getIsDeleted, false)
+    			.last(" and id not in (select distinct bs.parent_sku_id FROM product_bom_sku bs inner JOIN product_bom_info b ON bs.bom_id = b.id AND b.is_deleted = FALSE and b.type ='combination' where bs.is_deleted = false ) ")
+    			.count();
     	Integer inCount = productDetailService.lambdaQuery().eq(ProductDetailEntity::getIsDeleted, false)
-    			.last(" and id in (select sku_id from sku_std_retail_price where is_deleted = false) ").count();
+    			.last(" and id in (select sku_id from sku_std_retail_price where is_deleted = false) "
+    					+ "  and id not in (select distinct bs.parent_sku_id FROM product_bom_sku bs inner JOIN product_bom_info b ON bs.bom_id = b.id AND b.is_deleted = FALSE and b.type ='combination' where bs.is_deleted = false ) ")
+    			.count();
     	
     	SkuStdRetailPriceDTO.TabListDTO allDto = new SkuStdRetailPriceDTO.TabListDTO();
     	allDto.setTabFlag("all");

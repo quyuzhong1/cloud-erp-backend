@@ -230,11 +230,25 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName() + "取消出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCancelRequest));
         BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(overseasOutboundCancelRequest);
         log.warn(getPlatForm().getName() + "取消出库单结果:{}", JSONUtil.toJsonStr(response));
-        if (!response.getData().getResponseData().getSuccessList().isEmpty()) {
-            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
-        } else {
-            return failure(response.getData().getMessage());
+        if (Objects.isNull(response)) {
+            return failure("众包取消出库返回为空");
         }
+        if (!Boolean.TRUE.equals(response.getSuccess())) {
+            return failure(response.getMessage());
+        }
+        OverseasOutboundCancelResponse data = response.getData();
+        if (Objects.isNull(data)) {
+            return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "众包取消出库返回空数据"));
+        }
+        if (Objects.nonNull(data.getSuccessQty()) && data.getSuccessQty() > 0) {
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        String failMsg = null;
+        if (CollUtil.isNotEmpty(data.getFailList())) {
+            failMsg = CharSequenceUtil.blankToDefault(data.getFailList().get(0).getMessage(), null);
+        }
+        return failure(CharSequenceUtil.blankToDefault(failMsg,
+                CharSequenceUtil.blankToDefault(response.getMessage(), "众包取消出库失败")));
     }
 
     @Override
@@ -268,19 +282,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             if (Objects.nonNull(response.getResponseData())
                     && !response.getResponseData().getList().isEmpty()) {
                 for (OverseasOutboundQueryResponse.DataList dataList : response.getResponseData().getList()) {
-                    ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
-                    thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getReferenceNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    Calendar now = Calendar.getInstance();
-                    String delievery = sdf.format(now.getTime());
-                    String isoFormatStr = delievery.replace(" ", "T");
-                    thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(isoFormatStr);
-                    thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
-                    thirdWarehouseQueryFbaOutboundResponse.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
-                    thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
+                    thirdWarehouseQueryFbaOutboundResponses.add(buildQueryFbaOutboundResponse(dataList, false));
                 }
                 return success(thirdWarehouseQueryFbaOutboundResponses);
             } else {
@@ -291,6 +293,77 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             }
         }
         return !thirdWarehouseQueryFbaOutboundResponses.isEmpty() ? success(thirdWarehouseQueryFbaOutboundResponses) : failure(response.getMessage());
+    }
+
+    @Override
+    protected ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(ThirdWarehouseQueryFbaOutboundPageReq req) {
+        OverseasOutboundQueryRequest queryRequest = new OverseasOutboundQueryRequest();
+        queryRequest.setStartCreateTime(req.getStartCreateTime());
+        queryRequest.setEndCreateTime(req.getEndCreateTime());
+        queryRequest.setStartUpdateTime(req.getStartUpdateTime());
+        queryRequest.setEndUpdateTime(req.getEndUpdateTime());
+        queryRequest.setCommonParam(CommonRequest.builder()
+                .pageParam(PageRequest.builder()
+                        .pageNum(Objects.nonNull(req.getPageNum()) ? req.getPageNum() : 1)
+                        .pageSize(Objects.nonNull(req.getPageSize()) ? req.getPageSize() : 100)
+                        .build())
+                .build());
+        log.warn(getPlatForm().getName() + "分页查询b2b出库单请求:{}", JSONUtil.toJsonStr(queryRequest));
+        OverseasOutboundQueryResponse response = zhongbaoService.queryOutboundBill(queryRequest);
+        log.warn(getPlatForm().getName() + "分页查询b2b出库单结果:{}", JSONUtil.toJsonStr(response));
+        if (Objects.isNull(response)) {
+            return failure("众包查询B2B出库单响应为空");
+        }
+        if (!StringUtils.equals(response.getCode(), "20000") || !response.isSuccess()) {
+            return failure(response.getMessage());
+        }
+        ThirdWarehouseQueryFbaOutboundPageResponse pageResponse = new ThirdWarehouseQueryFbaOutboundPageResponse();
+        OverseasOutboundQueryResponse.ResponseData responseData = response.getResponseData();
+        if (Objects.isNull(responseData)) {
+            pageResponse.setList(Collections.emptyList());
+            return success(pageResponse);
+        }
+        pageResponse.setPageNum(responseData.getPageNum());
+        pageResponse.setPageSize(responseData.getPageSize());
+        pageResponse.setTotalCount(responseData.getTotalCount());
+        pageResponse.setTotalPage(responseData.getTotalPage());
+        List<ThirdWarehouseQueryFbaOutboundResponse> list = new ArrayList<>();
+        if (CollUtil.isNotEmpty(responseData.getList())) {
+            for (OverseasOutboundQueryResponse.DataList dataList : responseData.getList()) {
+                list.add(buildQueryFbaOutboundResponse(dataList, true));
+            }
+        }
+        pageResponse.setList(list);
+        return success(pageResponse);
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildQueryFbaOutboundResponse(OverseasOutboundQueryResponse.DataList dataList, boolean rawStatus) {
+        ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
+        response.setOrderType("B2B");
+        response.setPlatformOrderCode(dataList.getOrderNo());
+        response.setSwOrderNumber(dataList.getOrderNo());
+        response.setCode(dataList.getReferenceNo());
+        response.setTrackNo(dataList.getTrackingNo());
+        response.setPlatformOriginalStatus(String.valueOf(dataList.getStatus()));
+        response.setStatus(rawStatus
+                ? String.valueOf(dataList.getStatus())
+                : ZhongBaoB2BDeliveryStatusEnum.getErpOrderStatus(String.valueOf(dataList.getStatus())));
+        response.setPlatformCreateTimeStr(dataList.getPublishTime());
+        response.setPlatformUpdateTimeStr(dataList.getOutboundTime());
+        if (Objects.nonNull(dataList.getOpenB2b())) {
+            response.setWarehouseCode(dataList.getOpenB2b().getReceiveWarehouseCode());
+        }
+        if (rawStatus) {
+            response.setDeliveryTimeStr(dataList.getOutboundTime());
+        } else {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Calendar now = Calendar.getInstance();
+            String delievery = sdf.format(now.getTime());
+            response.setDeliveryTimeStr(delievery.replace(" ", "T"));
+        }
+        response.setErrorReason(dataList.getErrorReason());
+        response.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
+        return response;
     }
 
     @Override
@@ -480,8 +553,11 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachments = new ArrayList<>();
         if (CharSequenceUtil.isNotBlank(createOutboundReq.getFileBase64())
                 && CharSequenceUtil.isNotBlank(createOutboundReq.getFileUrl())) {
-            int lastSlashIndex = createOutboundReq.getFileUrl().lastIndexOf('/');
-            String fileName = createOutboundReq.getFileUrl().substring(lastSlashIndex + 1);
+            String fileName = createOutboundReq.getFileName();
+            if (CharSequenceUtil.isBlank(fileName)) {
+                int lastSlashIndex = createOutboundReq.getFileUrl().lastIndexOf('/');
+                fileName = createOutboundReq.getFileUrl().substring(lastSlashIndex + 1);
+            }
 
             attachments.add(OverseasOutboundCreateRequest.AttachmentOpenDTOs.builder()
                     .attachmentType("OTHER")
