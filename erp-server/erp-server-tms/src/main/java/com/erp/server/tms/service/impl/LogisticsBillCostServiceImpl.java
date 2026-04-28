@@ -2116,34 +2116,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return count == null ? 0 : count;
     }
 
-    /**
-     * 游标分页查询可下推分摊的费用ID，每次仅从DB加载一批，不全量持有
-     *
-     * @param dto 查询条件（含 lastId 游标位置、batchSize 批大小）
-     * @return 当前批次的费用ID列表
-     * @author jack
-     * @date 2026-04-22
-     */
-    @Override
-    public List<String> pageByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
-        return baseMapper.pageByCanPushAllocation(dto);
-    }
-
-    /**
-     * 统计可下推分摊的费用总条数
-     *
-     * @param dto 查询条件
-     * @return 总条数
-     * @author jack
-     * @date 2026-04-22
-     */
-    @Override
-    public int countByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto) {
-        Integer count = baseMapper.countByCanPushAllocation(dto);
-        // 防御性处理：count 为 null 时返回 0
-        return count == null ? 0 : count;
-    }
-
     @Override
     public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         if (Objects.isNull(dto)) {
