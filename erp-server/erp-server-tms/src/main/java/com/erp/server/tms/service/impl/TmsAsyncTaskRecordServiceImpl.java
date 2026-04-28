@@ -19,7 +19,7 @@ import com.common.business.enums.SystemCodeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -101,7 +101,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
     public String addManualTask(String businessType, String json){
         Integer count = lambdaQuery()
                 .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
@@ -130,7 +130,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
     public String addAutoTask(String businessType, String json,String startTimeStr){
         //默认8小时
         Integer execTimeout = null;
@@ -336,7 +336,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType", unlockAfterTx = true)
     public BatchResultDTO retry(TmsAsyncTaskRecordEntity entity) {
         //数据校验
         checkData(entity);
@@ -431,7 +431,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType", unlockAfterTx = true)
     public BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity) {
         //数据校验
         checkData(entity);

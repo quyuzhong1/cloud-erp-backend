@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class JituOutboundReturnDTO implements Serializable {
     private String warehousePlatformType;
@@ -83,6 +86,8 @@ public class JituOutboundReturnDTO implements Serializable {
     }
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Item {
         //入库单行号
         private Integer lineNo;

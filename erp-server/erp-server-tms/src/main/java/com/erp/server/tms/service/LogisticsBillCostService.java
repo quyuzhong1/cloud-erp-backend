@@ -256,6 +256,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
+
+
+
     void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);

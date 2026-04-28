@@ -109,15 +109,6 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
     List<String> listByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
 
     /**
-     * 查询计费重合计
-     * @author will
-     * @date 2026/4/15 10:53
-     * @param params
-     * @return java.math.BigDecimal
-     */
-    BigDecimal listTotalBillingWeightLogisticsCount(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
-
-    /**
      * 游标分页查询可下推分摊的费用ID（keyset pagination）
      * 直接 JOIN logistics_bill 过滤无需分摊的单据，每次仅加载一批
      *
@@ -137,4 +128,12 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @date 2026-04-22
      */
     Integer countByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+    /**
+     * 查询计费重合计
+     * @author will
+     * @date 2026/4/15 10:53
+     * @param params
+     * @return java.math.BigDecimal
+     */
+    BigDecimal listTotalBillingWeightLogisticsCount(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
 }

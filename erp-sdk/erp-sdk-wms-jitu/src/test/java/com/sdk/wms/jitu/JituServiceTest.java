@@ -67,7 +67,7 @@ class JituServiceTest {
         request.setWarehouseCode("SH.001");
         request.setCustomerid("CS001");
         //``request.setEccompanyid("STANDARD");
-        request.setTxlogisticid("TT20230529003");
+        request.setTxlogisticid("TT20230529004");
         request.setOrderType("XSCK");
         request.setSource("pdd");
         request.setPlatformNumber("XXXXX");
@@ -93,7 +93,7 @@ class JituServiceTest {
         request.setTransportMode("ZTJ");
         request.setCarrier("JT");
         request.setRouteid("PD");
-        request.setMailno("1234564698789001");
+        request.setMailno("1234564698789002");
         request.setLabel("");
         request.setDeliveryNote("备注");
         request.setIsCod("0");
@@ -111,8 +111,7 @@ class JituServiceTest {
         ThirdWarehouseContext.setAuthMap(authMap);
         // 调用API
         try {
-            StockOutOrderCreateResponse response = JituService.createStockOutOrder(request);
-            System.out.println(JSONUtil.toJsonStr(response));
+            JituService.createStockOutOrder(request);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -2367,6 +2367,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return pushAllocatedCostCountDTO;
     }
 
+    @Override
+    public void confirmImport(String id, String reconciliationStatus, LocalDateTime confirmTime) {
+        LogisticsBillCostEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
+
+        //状态变更
+        lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
+                .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
+                .set(LogisticsBillCostEntity::getConfirmTime, confirmTime)
+                .set(LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
+                .update();
+
+        // 状态变更日志
+        log.info("状态变更日志数据，id集合：【{}】", id);
+        String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
+    }
 
     @Override
     public List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
@@ -2399,6 +2417,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         // 防御性处理：count 为 null 时返回 0
         return count == null ? 0 : count;
     }
+
 
     @Override
     public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
@@ -2519,11 +2538,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 break;
             }
 
-            log.info("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
+            log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
 
             // 3.3 为本批次创建任务明细并执行
             TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate(),timeoutSeconds);
-            
+
             // 3.4 累计统计
             totalProcessed += batchIds.size();
             totalSuccess += result.getSuccessCount();
@@ -2537,7 +2556,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .update();
 
-                log.info("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
+                log.error("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
                          batchNumber, result.getSuccessCount(), result.getFailedCount(),
                          totalSuccess, totalFailed);
             } catch (Exception e) {
@@ -2579,7 +2598,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId, String businessType,
                                              List<String> batchIds, String reportDate,int timeoutSeconds) {
-        
+
         // 1. 批量查询物流费用实体
         List<LogisticsBillCostEntity> costList = listByIds(batchIds);
         if (CollUtil.isEmpty(costList)) {
@@ -2659,7 +2678,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
                                                             String reportDate,int timeoutSeconds) {
-        
+
         CountDownLatch latch = new CountDownLatch(batchDetails.size());
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failedCount = new AtomicInteger(0);
@@ -2695,7 +2714,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
                     // 执行分摊逻辑
                     BatchResultDTO result = service.pushAllocation(businessId, reportDate);
-                    
+
                     if (result.getSuccess()) {
                         asyncTaskDetailRecordService.updateDetail(
                             taskDetailId,
