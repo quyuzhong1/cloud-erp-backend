@@ -161,7 +161,8 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
         if (finalExecuteTime == null) {
             finalExecuteTime = LocalDateTime.now();
         }
-        if (!shouldEnterDelayQueue(finalExecuteTime)) {
+        LocalDateTime now = getDatabaseNow();
+        if (!shouldEnterDelayQueue(finalExecuteTime, now)) {
             messageDispatchDelayQueueSupport.removeQueuedTask(taskId);
             log.info("Skip queue distant message dispatch task, taskId={}, executeTime={}, windowMinutes={}",
                     taskId, finalExecuteTime, DELAY_QUEUE_PREHEAT_WINDOW_MINUTES);
@@ -173,7 +174,7 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
                         taskId, finalExecuteTime);
                 return;
             }
-            messageDispatchDelayQueueSupport.offer(taskId, finalExecuteTime);
+            messageDispatchDelayQueueSupport.offer(taskId, finalExecuteTime, now);
             log.info("Queue message dispatch task success, taskId={}, executeTime={}", taskId, finalExecuteTime);
         } catch (Exception e) {
             log.error("Queue message dispatch task failed, taskId={}, executeTime={}", taskId, finalExecuteTime, e);
@@ -191,10 +192,15 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
             return;
         }
         MessageEntity messageEntity = messageMapper.selectById(task.getMessageId());
+        LocalDateTime now = getDatabaseNow();
         if (messageEntity == null
                 || Boolean.TRUE.equals(messageEntity.getIsDeleted())
-                || (messageEntity.getExpireTime() != null && messageEntity.getExpireTime().isBefore(LocalDateTime.now()))) {
+                || (messageEntity.getExpireTime() != null && messageEntity.getExpireTime().isBefore(now))) {
             markSuccess(taskId);
+            return;
+        }
+        if (messageEntity.getNoticeTime() != null && messageEntity.getNoticeTime().isAfter(now)) {
+            postponeTask(taskId, messageEntity.getNoticeTime());
             return;
         }
         if (MessageDispatchTaskSceneEnum.SYS_NOTICE == sceneEnum) {
@@ -251,14 +257,25 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
                 || Objects.equals(MessageDispatchTaskStatusEnum.RUNNING.getCode(), task.getStatus())) {
             return false;
         }
-        if (task.getExecuteTime() != null && task.getExecuteTime().isAfter(LocalDateTime.now())) {
+        LocalDateTime now = getDatabaseNow();
+        if (task.getExecuteTime() != null && task.getExecuteTime().isAfter(now)) {
             return false;
         }
-        return task.getNextRetryTime() == null || !task.getNextRetryTime().isAfter(LocalDateTime.now());
+        return task.getNextRetryTime() == null || !task.getNextRetryTime().isAfter(now);
     }
 
-    private boolean shouldEnterDelayQueue(LocalDateTime executeTime) {
-        return !executeTime.isAfter(LocalDateTime.now().plusMinutes(DELAY_QUEUE_PREHEAT_WINDOW_MINUTES));
+    private boolean shouldEnterDelayQueue(LocalDateTime executeTime, LocalDateTime now) {
+        return !executeTime.isAfter(now.plusMinutes(DELAY_QUEUE_PREHEAT_WINDOW_MINUTES));
+    }
+
+    private LocalDateTime getDatabaseNow() {
+        try {
+            LocalDateTime now = messageMapper.getDatabaseNow();
+            return now == null ? LocalDateTime.now() : now;
+        } catch (Exception e) {
+            log.warn("Get database current time failed, fallback to application time", e);
+            return LocalDateTime.now();
+        }
     }
 
     private void markSuccess(String taskId) {
@@ -268,6 +285,18 @@ public class MessageDispatchTaskServiceImpl extends SuperServiceImpl<MessageDisp
                 .set(MessageDispatchTaskEntity::getErrorMsg, null)
                 .set(MessageDispatchTaskEntity::getNextRetryTime, null)
                 .update();
+    }
+
+    private void postponeTask(String taskId, LocalDateTime executeTime) {
+        this.lambdaUpdate()
+                .eq(MessageDispatchTaskEntity::getId, taskId)
+                .set(MessageDispatchTaskEntity::getExecuteTime, executeTime)
+                .set(MessageDispatchTaskEntity::getStatus, MessageDispatchTaskStatusEnum.INIT.getCode())
+                .set(MessageDispatchTaskEntity::getErrorMsg, null)
+                .set(MessageDispatchTaskEntity::getNextRetryTime, null)
+                .update();
+        queueTask(taskId, executeTime);
+        log.info("Postpone message dispatch task because notice time is in future, taskId={}, executeTime={}", taskId, executeTime);
     }
 
     private void markFailed(String taskId, String errorMsg) {
