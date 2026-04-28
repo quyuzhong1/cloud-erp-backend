@@ -360,7 +360,7 @@
               AND fwa.source_id &gt; #{params.lastId}
           </if>
           <if test="params.ids != null and params.ids.size() > 0">
-              AND fwa.id IN
+              AND fwa.source_id IN
               <foreach collection="params.ids" item="item" open="(" separator="," close=")">
                   #{item}
               </foreach>

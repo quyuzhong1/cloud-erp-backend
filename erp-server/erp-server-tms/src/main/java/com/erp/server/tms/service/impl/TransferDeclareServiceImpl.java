@@ -1340,7 +1340,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         LocalDateTime endTime = dto.getEndTime();
         List<String> logisticsSupplierIds = dto.getIds();
         if (null == startTime || null == endTime) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"开始时间或结束时间为空");
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
             return true;
         }
         List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
@@ -1348,7 +1348,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             list = list.stream().filter(e -> logisticsSupplierIds.contains(e.getLogisticsSupplierId())).collect(Collectors.toList());
         }
         if (CollectionUtils.isEmpty(list)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"b2c报关对账单明细为空");
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"b2c报关对账单明细为空");
             return true;
         }
         //记录本次任务数量
@@ -1382,7 +1382,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
         if(Objects.isNull(tmsAsyncTaskRecordEntity)){
             log.error("任务记录不存在，taskId: {}", taskId);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
             return;
         }
 
