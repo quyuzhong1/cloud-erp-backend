@@ -1661,7 +1661,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.addBatch(entityList);
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, w -> w));
         // 更新运单号
-        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(afterSaleIdList);
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.lambdaQuery()
+                .in(AfterSaleProgressEntity::getMainId, afterSaleIdList)
+                .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
+                .list();
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
         List<AfterSaleProgressEntity> progressEntityList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
@@ -1713,7 +1716,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             return Collections.emptyList();
         }
         List<String> afterSaleIdList = list.stream().map(AfterSaleEntity::getId).collect(Collectors.toList());
-        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(afterSaleIdList);
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.lambdaQuery()
+                .in(AfterSaleProgressEntity::getMainId, afterSaleIdList)
+                .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
+                .list();
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().filter(w -> w.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())).collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
         List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, afterSaleIdList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));

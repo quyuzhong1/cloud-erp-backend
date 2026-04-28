@@ -34,6 +34,7 @@
        <result column="invalid_time" property="invalidTime" />
        <result column="remark" property="remark" />
        <result column="type" property="type" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -69,7 +70,8 @@
 	afs.invalid_time,
 	afs.remark,
     afs.csr_remark,
-    afs.rma_remark
+    afs.rma_remark,
+    afs.logistics_channel_id
     </sql>
     <sql id="paging_sql">
         SELECT
