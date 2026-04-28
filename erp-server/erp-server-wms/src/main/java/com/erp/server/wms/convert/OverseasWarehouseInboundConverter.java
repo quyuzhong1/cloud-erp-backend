@@ -452,7 +452,7 @@ public interface OverseasWarehouseInboundConverter {
     StockOutOrderCreateRequest b2cOutboundDtoToJitu(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
     @Mapping(target = "countrycode", source = "countryCode3")
-    @Mapping(target = "shortAddress", source = "address3")
+    @Mapping(target = "shortAddress", ignore = true)
     @Mapping(target = "address", source = "address1")
     @Mapping(target = "address2", source = "address2")
     @Mapping(target = "area", source = "district")

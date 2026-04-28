@@ -16,6 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,8 +68,8 @@ class JituServiceTest {
         request.setWarehouseCode("SH.001");
         request.setCustomerid("CS001");
         //``request.setEccompanyid("STANDARD");
-        request.setTxlogisticid("TT20230529004");
-        request.setOrderType("XSCK");
+        request.setTxlogisticid("TT20230529006");
+        request.setOrderType("JYCK");
         request.setSource("pdd");
         request.setPlatformNumber("XXXXX");
         request.setPayTime("2023-05-29 23:11:12");
@@ -93,7 +94,7 @@ class JituServiceTest {
         request.setTransportMode("ZTJ");
         request.setCarrier("JT");
         request.setRouteid("PD");
-        request.setMailno("1234564698789002");
+        request.setMailno("1234564698789004");
         request.setLabel("");
         request.setDeliveryNote("备注");
         request.setIsCod(0);
@@ -106,6 +107,7 @@ class JituServiceTest {
         item.setNumber(1);
         //item.setItemvalue(new BigDecimal("5000.02"));
         item.setInventoryType("ZP");
+        item.setBatchCode("20230529001");
         items.add(item);
         request.setItems(items);
         ThirdWarehouseContext.setAuthMap(authMap);
@@ -124,6 +126,9 @@ class JituServiceTest {
         JituOverseasInboundCreateRequest.Item item = JituOverseasInboundCreateRequest.Item.builder()
                 .LineNo("1")
                 .itemCode("YL001")
+                .batchCode("20230529001")
+                .expirationDate("2027-05-29")
+                .productDate("2025-05-29")
                 .quantity(1)
                 .inventoryType("ZP")
                 .build();
@@ -131,11 +136,11 @@ class JituServiceTest {
         JituOverseasInboundCreateRequest request = JituOverseasInboundCreateRequest.builder()
                 .customerid((String) authMap.getOrDefault("customerid", ""))
                 .warehouseCode("SH.001")
-                .entryOrderCode("FHD260326000006")
-                .erpOrderCode("FHD260326000006")
+                .entryOrderCode("FHD260326000009")
+                .erpOrderCode("FHD260326000009")
                 .sourceSystem("SDC")
                 .orderType("CGRK")
-                .warehouseCode("SH.001")
+                .expectStartTime("2026-04-29")
                 .items(items)
                 .build();
         JituService.overseasInboundCreate(request);
