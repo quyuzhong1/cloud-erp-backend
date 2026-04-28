@@ -41,7 +41,7 @@ public class JituOverseasInboundCreateRequest implements Serializable {
      */
     private String orderType;
     //计划到达日期:YYYY-MM-DD
-    private LocalDate expectStartTime;
+    private String expectStartTime;
     //客退运单号
     private String trackNo;
     //供应商编码
