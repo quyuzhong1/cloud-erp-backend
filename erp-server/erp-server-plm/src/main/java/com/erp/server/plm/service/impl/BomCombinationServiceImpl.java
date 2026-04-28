@@ -639,6 +639,10 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
             throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
         }
+        if(skuIdVatMap.values().stream().allMatch(s -> BigDecimal.ZERO.compareTo(s) == 0)) {
+        	String allSku = skuIdVatMap.keySet().stream().collect(Collectors.joining("}{", "{", "}"));
+            throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING_ZERO, allSku);
+        }
         
         for (BomCombinationDetailDTO.AddDTO addDetail : dto.getDetailList()) {
             BomChildrenSkuDTO childrenSkuDTO = new BomChildrenSkuDTO();
@@ -716,6 +720,10 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         if(CollUtil.isNotEmpty(notHaveRetailSet)) {
             String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
             throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+        }
+        if(skuIdVatMap.values().stream().allMatch(s -> BigDecimal.ZERO.compareTo(s) == 0)) {
+        	String allSku = skuIdVatMap.keySet().stream().collect(Collectors.joining("}{", "{", "}"));
+            throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING_ZERO, allSku);
         }
 
         //子级SKU

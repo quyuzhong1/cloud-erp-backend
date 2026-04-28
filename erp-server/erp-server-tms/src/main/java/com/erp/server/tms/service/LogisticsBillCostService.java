@@ -3,7 +3,7 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
@@ -225,6 +225,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
 
+    void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
     BatchResultDTO pushAllocation(String id , String reportDate);
 
     /**
@@ -254,8 +256,13 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+    List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
+    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
+
+    void confirmImport(String key, String code, LocalDateTime dateTime);
     /**
      * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
      *
@@ -264,7 +271,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @author jack
      * @date 2026-04-22
      */
-    List<String> pageByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+    List<String> pageByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     /**
      * 统计可下推分摊的费用总条数
@@ -274,11 +281,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @author jack
      * @date 2026-04-22
      */
-    int countByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+    int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
-    void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
-
-    LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
-
-    void confirmImport(String key, String code, LocalDateTime dateTime);
 }

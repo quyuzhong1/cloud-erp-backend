@@ -475,18 +475,17 @@ public class BomInfoController extends BaseController {
         if (CollectionUtils.isEmpty(skuNos)) {
             ServiceException.runError(ApiError.PRODUCT_RETAIL_SKU_MISSING);
         }
-        // 查询标准零售价记录
-        List<SkuStdRetailPriceEntity> skuList = skuStdRetailPriceService.lambdaQuery().in(SkuStdRetailPriceEntity::getSkuNo, skuNos).list();
-        if (CollectionUtils.isEmpty(skuList)){
-            ServiceException.runError(ApiError.PRODUCT_RETAIL_SKU_MISSING);
-        }
         // 发送飞书消息MQ
-        skuList.forEach(item -> {
-            Map<String, Object> before = BeanUtil.beanToMap(item);
-            Map<String, Object> after = new HashMap<>(before);
+        skuNos.forEach(item -> {
+            Map<String, Object> after = new HashMap<>();
             after.put("table", "sku_std_retail_price");
             after.put("P_TAG_IUD", "U");
             after.put("db", "plm");
+            after.put("skuNo", item);
+            after.put("currency", "CNY");
+            after.put("stdRetailPrice", 0);
+            after.put("vatRate", 0);
+            after.put("stdRetailPriceVat", 0);
             after.put(ThirdNoticePushRecordNoticeNodeEnum.SET_SKU_STD_RETAIL_PRICE.getCode(), Boolean.TRUE);
 
             List<Map<String, Map<String, Object>>> list = new ArrayList<>();
@@ -497,7 +496,7 @@ public class BomInfoController extends BaseController {
 
             // 转换为JSON字符串
             String jsonStr = JSONUtil.toJsonStr(list);
-            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(), jsonStr, item.getId());
+            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(), jsonStr, item);
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
                 throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
             }

@@ -29,14 +29,14 @@ public interface OtherInstockFeign {
      * @author hcg
      */
      @PostMapping("/feign/otherInstock/listByCodes")
-    List<OtherInstockEntity> listByCodes(List<String> list);
+    List<OtherInstockEntity> listByCodes(@RequestBody List<String> list);
 
      /**
      * 审核
      * @author hcg
      */
      @PostMapping("/feign/otherInstock/updateApproveStatus")
-    void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+    void updateApproveStatus(@RequestBody OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     @GetMapping("/feign/otherInstock/listOtherInstockByExhibitionId")
     List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId);

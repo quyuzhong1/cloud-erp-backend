@@ -112,6 +112,22 @@ public class AntuService {
         ThirdWarehouseContext.setResponseJson(response);
         return JSON.parseObject(response,new TypeReference<AntuResponse<AntuOutboundResp>>() {}.getType());
     }
+
+    /**
+     * 根据参考号获取出库订单信息
+     * @param antuGetOutboundRefReq
+     * @param platformEnum
+     * @return
+     */
+    public AntuResponse<AntuOutboundResp> getOrderByCode(AntuGetOutboundRefReq antuGetOutboundRefReq,OmsPlatformEnum platformEnum){
+        log.warn("getOrderByCode request :{}", JSONUtil.toJsonStr(antuGetOutboundRefReq));
+        String response = AntuUtils.callService(platformEnum,AntuConstants.GET_ORDER_BY_CODE,antuGetOutboundRefReq);
+        log.warn("getOrderByCode response :{}", response);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(antuGetOutboundRefReq));
+        ThirdWarehouseContext.setResponseJson(response);
+        return JSON.parseObject(response,new TypeReference<AntuResponse<AntuOutboundResp>>() {}.getType());
+    }
+
     /**
      * 获取物流产品
      */
