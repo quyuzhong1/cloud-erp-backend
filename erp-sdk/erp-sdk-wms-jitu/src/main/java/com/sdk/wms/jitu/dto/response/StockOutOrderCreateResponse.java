@@ -46,5 +46,10 @@ public class StockOutOrderCreateResponse extends BaseResponse {
          * 错误信息
          */
         private String message;
+
+        /**
+         * 错误信息
+         */
+        private String errorMsg;
     }
 }
