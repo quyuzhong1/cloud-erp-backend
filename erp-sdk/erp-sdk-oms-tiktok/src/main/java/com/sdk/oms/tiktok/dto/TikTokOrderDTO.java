@@ -132,6 +132,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
 
         Map<String, String> lableMap = new HashMap<>();
         lableMap.put("tikTokStatus", ordersBean.getStatus());
+        lableMap.put("fulfillmentType", ordersBean.getFulfillmentType());
         //自发货(shipping_type=SELLER)	中转仓（shipping_type=TIKTOK）
         lableMap.put("shippingType", ordersBean.getShippingType());
         orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
@@ -177,6 +178,12 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         //创建时间
         LocalDateTime createTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getCreateTime()), ZoneId.systemDefault());
         orderDTO.setPlatformOrderCreateTime(createTime);
+        if (ordersBean.getRtsTime() > 0) {
+            LocalDateTime rtsTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getRtsTime()), ZoneId.systemDefault());
+            orderDTO.setBillDate(rtsTime.toLocalDate());
+        } else {
+            orderDTO.setBillDate(createTime.toLocalDate());
+        }
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(ordersBean);

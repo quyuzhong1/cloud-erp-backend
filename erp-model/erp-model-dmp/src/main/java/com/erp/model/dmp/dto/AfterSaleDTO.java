@@ -145,6 +145,7 @@ public class AfterSaleDTO implements Serializable {
         * 销售平台
         */
         private String dictPlatform;
+        private String dictPlatformName;
 
         /**
         * 购买日期
@@ -226,6 +227,26 @@ public class AfterSaleDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 售后人员id
+         */
+        private String csAgentId;
+
+        /**
+         * 售后人员名称
+         */
+        private String csAgentName;
 
         // after_sale_detail 表字段
         private String detailId;
@@ -338,6 +359,16 @@ public class AfterSaleDTO implements Serializable {
         */
         private String dictPlatform;
         private String dictPlatformName;
+
+        /**
+         * 售后人员id
+         */
+        private String csAgentId;
+
+        /**
+         * 售后人员名称
+         */
+        private String csAgentName;
 
         /**
         * 购买日期
@@ -510,6 +541,16 @@ public class AfterSaleDTO implements Serializable {
         @NotBlank(message = "销售平台不能为空")
         @Size(max = 32,message = "销售平台最大长度不能超过32位")
         private String dictPlatform;
+
+        /**
+         * 售后人员id
+         */
+        private String csAgentId;
+
+        /**
+         * 售后人员名称
+         */
+        private String csAgentName;
 
         /**
          * 购买日期
@@ -782,6 +823,49 @@ public class AfterSaleDTO implements Serializable {
         @NotBlank(message = "快递单号不能为空")
         private String trackNo;
 
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CsAgentDTO {
+        /**
+         * 平台编码
+         */
+        @NotBlank(message = "平台编码不能为空")
+        private String platformCode;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CsAgentResultDTO {
+        /**
+         * 售后人员id
+         */
+        private String csAgentId;
+
+        /**
+         * 售后人员名称
+         */
+        private String csAgentName;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListCsAgentDTO {
+        /**
+         * 售后申请单id
+         */
+        private List<String> afterSaleIds;
 
     }
 

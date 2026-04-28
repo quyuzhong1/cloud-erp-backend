@@ -280,4 +280,8 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return List<WarehouseChannelDTO>
      */
     List<LogisticsChannelDTO.WarehouseChannelDTO> listThirdWarehouseChannel(LogisticsChannelDTO.WarehouseChannelParamDTO dto);
+
+    List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel(LogisticsSupplierDTO.SelectDTO dto);
+
+    List<BaseDropDownDTO.DisabledDTO> listWithAll(String logisticsSupplierId);
 }

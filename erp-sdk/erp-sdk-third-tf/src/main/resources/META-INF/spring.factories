@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.sdk.third.tf.TfFiscalService
+  com.sdk.third.tf.config.TfFiscalAutoConfiguration

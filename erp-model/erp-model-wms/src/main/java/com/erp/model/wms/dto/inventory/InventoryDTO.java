@@ -213,6 +213,10 @@ public class InventoryDTO implements Serializable {
         private List<String> skuIdList;
 
         /**
+         * 导出是否包含供应商
+         */
+        private Boolean includeSupplier = false;
+        /**
          * sku编码
          */
         private List<String> skuNoList;

@@ -1,9 +1,11 @@
 package com.erp.server.dmp.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.server.dmp.service.ThirdMappingService;
+import com.erp.server.dmp.service.ThirdWarehouseService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -23,6 +25,8 @@ public class DmpThirdMappingFeignController {
 
     @Resource
     private ThirdMappingService thirdMappingService;
+    @Resource
+    private ThirdWarehouseService thirdWarehouseService;
 
     @GetMapping("/getBySysId")
     public ThirdWarehouseEntity getBySysId(@RequestParam String sysId, @RequestParam String sysType) {
@@ -65,6 +69,12 @@ public class DmpThirdMappingFeignController {
         return thirdMappingService.listMappingBySysIds(warehouseIdList, sysType);
     }
 
+    @GetMapping("/resolveErpWarehouseBySourceId")
+    public ThirdMappingDTO.ErpWarehouseDTO resolveErpWarehouseBySourceId(@RequestParam("platform") String platform,
+                                                                         @RequestParam("sourceWarehouseId") String sourceWarehouseId) {
+        return thirdMappingService.resolveErpWarehouseBySourceId(platform, sourceWarehouseId);
+    }
+
     @PostMapping("/view")
     public ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         return thirdMappingService.view(viewParamDTO);
@@ -76,5 +86,15 @@ public class DmpThirdMappingFeignController {
     @GetMapping("/getShopByThirdCode")
     ThirdMappingEntity getShopByThirdCode(@RequestParam String thirdCode, @RequestParam String sysType){
         return thirdMappingService.getShopByThirdCode(thirdCode, sysType);
+    }
+
+    /**
+     * 查询三方仓库映射关系
+     * @param queryMapParamDTO
+     * @return
+     */
+    @PostMapping("/listQueryMapping")
+    public List<ThirdWarehouseDTO.QueryMapDTO> listQueryMapping(@RequestBody @Validated ThirdWarehouseDTO.QueryMapParamDTO queryMapParamDTO) {
+        return thirdWarehouseService.listQueryMapping(queryMapParamDTO);
     }
 }

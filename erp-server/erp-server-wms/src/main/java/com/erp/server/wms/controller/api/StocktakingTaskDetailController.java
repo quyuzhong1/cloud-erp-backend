@@ -75,4 +75,29 @@ public class StocktakingTaskDetailController extends BaseController {
         Boolean result = stocktakingTaskDetailService.updateBatchDetail(dto);
         return result ? success() : failure();
     }
+
+    /**
+     * 导入初盘数量
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入初盘数量")
+    @PostMapping("/importFirstQty")
+    public ApiResult importFirstQty(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = stocktakingTaskDetailService.importFirstQty(excelFile, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载初盘数量模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载初盘数量模板")
+    @GetMapping("/downloadFirstQtyTemplate")
+    public ApiResult downloadFirstQtyTemplate(HttpServletResponse response) {
+        stocktakingTaskDetailService.downloadFirstQtyTemplate(response);
+        return success();
+    }
 }

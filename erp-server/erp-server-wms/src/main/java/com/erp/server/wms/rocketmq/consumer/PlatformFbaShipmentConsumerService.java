@@ -22,6 +22,7 @@ import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -114,6 +115,24 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         // 组合信息
         FbaShipmentEntity entity = FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToEntity(dto);
 
+        /**
+         * 更新映射
+         */
+        List<CfgAmzFulfillmentCenterEntity> list = cfgAmzFulfillmentCenterService.lambdaQuery()
+                .eq(CfgAmzFulfillmentCenterEntity::getCode, entity.getFulfillmentCenter())
+                .list();
+        if (list.isEmpty()) {
+            CfgAmzFulfillmentCenterEntity cfgAmzFulfillmentCenterEntity = new CfgAmzFulfillmentCenterEntity();
+            cfgAmzFulfillmentCenterEntity.setCode(entity.getFulfillmentCenter());
+            cfgAmzFulfillmentCenterEntity.setCountry(dto.getFulfillmentCenterCountry());
+            cfgAmzFulfillmentCenterService.save(cfgAmzFulfillmentCenterEntity);
+        } else {
+            cfgAmzFulfillmentCenterService.lambdaUpdate()
+                    .set(CfgAmzFulfillmentCenterEntity::getCountry, dto.getFulfillmentCenterCountry())
+                    .eq(CfgAmzFulfillmentCenterEntity::getCode, entity.getFulfillmentCenter())
+                    .update();
+        }
+
         // 签收信息
         List<PlatformFbaShipmentReceiveDTO> receiveDTOList = dto.getReceiveDTOList();
 
@@ -138,6 +157,11 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
         // 查询当前店铺
         ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
+
+        //国家
+        entity.setCountryId(dto.getFulfillmentCenterCountry());
+        DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getFulfillmentCenterCountry());
+        entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
         // 查询仓库中心对应国家并设置对应店铺
         checkAndSetCountryWithShop(entity, dto, currentShopEntity);
@@ -173,9 +197,6 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
                     .collect(Collectors.toList());
         }
 
-        // 查询国家信息
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
-        entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
         // 新增或更新
         FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentId(entity.getFbaShipmentId());
@@ -233,5 +254,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         }
         entity.setShopId(shopInfoEntity.getId());
         entity.setShopName(shopInfoEntity.getName());
+        entity.setCountryId(shopInfoEntity.getDictCountryCode());
+        entity.setCountryName(shopInfoEntity.getCountryName());
     }
 }

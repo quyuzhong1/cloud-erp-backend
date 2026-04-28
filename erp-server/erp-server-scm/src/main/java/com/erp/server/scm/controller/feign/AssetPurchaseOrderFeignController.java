@@ -64,5 +64,14 @@ public class AssetPurchaseOrderFeignController extends BaseController {
     public ApiResult<Boolean> rewriteAssetPurchaseOrder(@RequestBody AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO){
         return success(assetPurchaseOrderService.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO));
     }
+
+    @PostMapping("/batchRewriteAssetPurchaseOrder")
+    public ApiResult<Boolean> batchRewriteAssetPurchaseOrder(@RequestBody List<AssetPurchaseOrderDTO.rewritePurchaseOrderDTO> rewritePurchaseOrderDTOList){
+        boolean flag = Boolean.TRUE;
+        for (AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO : rewritePurchaseOrderDTOList) {
+            flag = assetPurchaseOrderService.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO);
+        }
+        return flag == Boolean.TRUE ? success() : failure();
+    }
 }
 

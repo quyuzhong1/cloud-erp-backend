@@ -102,8 +102,9 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
                 ServiceException.runError("速卖通发货单明细分摊信息不存在,明细唯一ID【{}】", aliexpressDeliveryDetailEntity.getUniqueId());
             }
             aliexpressDeliveryDetailEntity.setPlatformDetailId(proratedInfoDTO.getPlatformOrderDetailId());
-            aliexpressDeliveryDetailEntity.setProratedAmount(proratedInfoDTO.getProratedAmount());
-            aliexpressDeliveryDetailEntity.setProratedUnitPrice(proratedInfoDTO.getProratedUnitPrice());
+            // 20260324调整为税后
+            aliexpressDeliveryDetailEntity.setProratedAmount(proratedInfoDTO.getProratedAfterTaxAmount());
+            aliexpressDeliveryDetailEntity.setProratedUnitPrice(proratedInfoDTO.getProratedAfterTaxUnitPrice());
         }
         return aliexpressDeliveryDetailEntityList;
     }

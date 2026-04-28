@@ -144,6 +144,8 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     
     void dmpInputMoveToHistoryTable(String beforeUpdateTime , String size);
     
+    void dmpFdsDeleteHisFile(String beforeUpdateTime , String size);
+    
     void dmpRelationMoveToHistoryTable(String beforeUpdateTime , String size);
     
     void dmpOutputMoveToHistoryTable(String beforeUpdateTime , String size);
@@ -161,7 +163,7 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
 
     List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(List<String> sourceIdList, String sourceType);
 
-    List<String> outputErrorCountMsg();
+    List<String> outputErrorCountMsg(String conditionSql);
 
 
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO);

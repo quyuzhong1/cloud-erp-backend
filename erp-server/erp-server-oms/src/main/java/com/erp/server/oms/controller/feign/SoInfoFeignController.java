@@ -220,12 +220,17 @@ public class SoInfoFeignController extends BaseController {
     }
 
     @PostMapping("/listByCodes")
-    public List<SoInfoEntity> listByCodes(List<String> list) {
+    public List<SoInfoEntity> listByCodes(@RequestBody List<String> list) {
         return soInfoService.listByCodes(list);
     }
 
+    @PostMapping("/getByCode")
+    public SoInfoEntity getByCode(@RequestParam("soCode") String soCode) {
+        return soInfoService.getByCode(soCode);
+    }
+
     @PostMapping("/updateApproveStatus")
-    public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+    public void updateApproveStatus(@RequestBody SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         soInfoService.updateApproveStatus(updateApprovalStatusDTO);
     }
 
@@ -249,5 +254,13 @@ public class SoInfoFeignController extends BaseController {
     @PostMapping("/getB2bThirdDeliveryView")
     public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto){
         return soInfoService.getB2bThirdDeliveryView(dto);
+    }
+
+    /**
+     * 根据平台订单号获取订单
+     */
+    @PostMapping("/getByPlatformOrderCode")
+    List<SoInfoEntity> getByPlatformOrderCode(@RequestBody String platformCode){
+        return soInfoService.getByPlatformOrderCode(platformCode);
     }
 }

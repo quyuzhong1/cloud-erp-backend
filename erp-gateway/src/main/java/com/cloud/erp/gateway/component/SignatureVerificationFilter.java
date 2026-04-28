@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.cloud.erp.gateway.utils.GatewayLocaleUtils;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.SignTypeEnum;
 import com.erp.model.sys.enums.LogicTypeEnum;
@@ -178,7 +179,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             }
 
             // 6. 从Redis获取对称密钥
-            String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, signSessionId);
+            String redisKey = String.format(RedisCacheConstants.SSO_SIGN_SESSION+"%s:%s:%s", appId, userId, signSessionId);
             String symmetricKey = null;
             
             try {

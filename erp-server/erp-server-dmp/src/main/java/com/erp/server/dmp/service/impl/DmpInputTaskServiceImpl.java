@@ -26,6 +26,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.OperateLogService;
 import org.apache.commons.lang.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -145,7 +146,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     		}
 			errorBeforeStatus = dmpInputTaskEntity.getStatus() + "@@";
     	}
-    	String errorMessage = errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e);
+    	String errorMessage = errorBeforeStatus + "traceId=【" + TraceContext.traceId() + "】" + ExceptionUtil.stacktraceToString(e);
 		boolean update = lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
 				.set(DmpInputTaskEntity::getErrorCount, errorCount)
 				.set(errorFlag , DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
@@ -330,6 +331,9 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
                 updateResult = super.updateById(entity);
             }
             dmpInputTaskEntity.setId(IdWorker.getIdStr());
+            dmpInputTaskEntity.setErrorMessage("");
+            dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+            dmpInputTaskEntity.setErrorCount(0);
             // 重试主单数据
             log.info("重试 开始重试拉取任务主单数据，id：【{}】", entity.getId());
             boolean saveResult = super.save(dmpInputTaskEntity);

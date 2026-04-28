@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -59,7 +60,7 @@ public class ErpPushSdyService {
 			JSONObject object = new JSONObject();
 			object.put("count", extArray.size());
 			object.put("list", extArray);
-			object.put("trace_id", MDC.get("traceId"));
+			object.put("trace_id", TraceContext.traceId());
 			requestData = object.toJSONString();
 		} else {
 			requestData = data;

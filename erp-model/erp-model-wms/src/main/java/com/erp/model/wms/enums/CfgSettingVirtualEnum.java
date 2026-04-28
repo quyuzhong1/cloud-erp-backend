@@ -9,6 +9,7 @@ public enum CfgSettingVirtualEnum implements EnumMessage {
     SALES_DASHBOARD("salesDashboard","销售看板"),
     REPORT_ORDER_DEMAND("reportOrderDemand","缺货统计"),
     VIRTUAL_RULE("virtualRule","规则设置"),
+    VIRTUAL_TRANSFER("virtualTransfer","虚拟仓调拨"),
     ;
 
     /**

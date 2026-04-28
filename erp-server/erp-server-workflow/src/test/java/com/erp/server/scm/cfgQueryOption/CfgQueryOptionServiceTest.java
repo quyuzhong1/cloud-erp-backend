@@ -65,15 +65,15 @@ public class CfgQueryOptionServiceTest {
         // 准备测试数据
         CfgQueryOptionDTO.GenDTO dto = new CfgQueryOptionDTO.GenDTO();
         //系统
-        dto.setModel("oms");
+        dto.setModel("fms");
         //表名, 多个使用英文逗号隔开
-        dto.setTableName("so_multi_channel,so_multi_channel_detail");
+        dto.setTableName("asset_accept,asset_accept_detail");
         //表归属类型：main（主表）,detailList(明细)，自定义名称（根据实际单据）
         dto.setFieldBelongsType("main,detailList");
         //业务key，跟流程单据key保持一致（menu）
-        dto.setBussinessKey("soMultiChannel");
+        dto.setBussinessKey("assetAcceptance");
         //使用类型，CfgQueryOptionUseTypeEnum枚举
-        dto.setUseType("cfgApproveSync");
+        dto.setUseType("allData");
 
         dto.setSql(sql);
         dto.setUrl(url);

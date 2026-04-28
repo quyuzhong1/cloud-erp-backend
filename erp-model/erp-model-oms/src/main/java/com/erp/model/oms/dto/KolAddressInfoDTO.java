@@ -201,13 +201,13 @@ public class KolAddressInfoDTO implements Serializable {
         * 联系电话
         */
         @NotBlank(message = "联系电话不能为空")
-        @Size(max = 20,message = "联系电话最大长度不能超过20位")
+        @Size(max = 50,message = "联系电话最大长度不能超过50位")
         private String phone;
 
         /**
         * 邮编
         */
-        @Size(max = 20,message = "邮编最大长度不能超过20位")
+        @Size(max = 50,message = "邮编最大长度不能超过50位")
         private String zipCode;
 
         /**
@@ -226,6 +226,10 @@ public class KolAddressInfoDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+         * 收件人税号
+         */
+        private String receiverTaxNo;
 
     }
 

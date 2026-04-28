@@ -426,7 +426,20 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list = this.lambdaQuery().orderByAsc(LogisticsChannelEntity::getDisabled).list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
         Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+        return resultList;
+    }
 
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listWithAll(String logisticsSupplierId) {
+        List<BaseDropDownDTO.DisabledDTO> resultList = new ArrayList<>();
+        resultList.add(new BaseDropDownDTO.DisabledDTO("all", "全部", false));
+        List<LogisticsChannelEntity> list = this.lambdaQuery()
+                .eq(StringUtils.isNotBlank(logisticsSupplierId),LogisticsChannelEntity::getMainId, logisticsSupplierId)
+                .orderByAsc(LogisticsChannelEntity::getDisabled)
+                .list();
+        List<BaseDropDownDTO.DisabledDTO> disabledDTOList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
+        Collections.sort(disabledDTOList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+        resultList.addAll(disabledDTOList);
         return resultList;
     }
 
@@ -1069,5 +1082,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return true;
         }).collect(Collectors.toList());
         return warehouseChannelDTOS;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel(LogisticsSupplierDTO.SelectDTO dto) {
+        return baseMapper.listChannel(dto);
     }
 }

@@ -2044,6 +2044,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
         addDTO.setOutstockId(autoGenerateBillDTO.getId());
         addDTO.setIsAuto(true);
+        addDTO.setDeliveryTime(autoGenerateBillDTO.getFirstMileDeliveryEntity().getDeliveryDate().atStartOfDay());
         this.addFirstMileLogistics(addDTO);
         return BatchResultDTO.success(autoGenerateBillDTO.getId(),"", "头程物流单创建成功");
     }

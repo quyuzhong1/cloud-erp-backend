@@ -221,12 +221,32 @@ public class LogisticsSupplierController extends BaseController {
 
 
     /**
+     * 所有物流商简称下拉
+     * @return
+     */
+    @GetMapping("/listWithAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listWithAll(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
+        return success(logisticsSupplierService.listWithAll(filterDisabled));
+    }
+
+
+    /**
      * 物流商渠道树形结构
      * @return
      */
+    @Deprecated
     @GetMapping("/tree")
     public ApiResult<List<LogisticsSupplierDTO.ListChildTreeDTO>> tree(){
         return success(logisticsSupplierService.tree());
+    }
+
+    /**
+     * 物流商渠道树形结构
+     * @return
+     */
+    @PostMapping("/listSupplierTree")
+    public ApiResult<List<LogisticsSupplierDTO.ListChildTreeDTO>> listSupplierTree(@RequestBody LogisticsSupplierDTO.SelectDTO dto){
+        return success(logisticsSupplierService.listSupplierTree(dto));
     }
 
 

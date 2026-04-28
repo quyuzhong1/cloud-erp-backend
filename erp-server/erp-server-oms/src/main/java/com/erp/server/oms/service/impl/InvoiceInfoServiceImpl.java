@@ -34,7 +34,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -43,13 +43,14 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
+import com.sdk.third.tf.dto.CancelInvoiceResponseDTO;
 import com.google.common.collect.Lists;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
+import com.sdk.third.tf.dto.ReturnInvoiceResponseDTO;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +81,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INFO;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_XML;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_PDF;
 
 /**
  * <p>
@@ -125,6 +128,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    
+    @Resource
+    private com.erp.rpc.file.feign.FileFeign fileFeign;
 
     @Resource
     private InvoiceTaxService invoiceTaxService;
@@ -239,7 +245,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.INVOICE_INFO_KEY,keyName = "id",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.INVOICE_INFO_KEY,keyName = "id",waiteTime = 60)
     public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
         log.warn("开始生成nfe发票，订单id：【{}】,是否异步：【{}】",id,isAsync);
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
@@ -307,7 +313,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }else {
             //同步生成发票,调用第三方
             try {
-                Boolean result = nfeInvoiceService.createInvoice(soB2cEntity);
+                Boolean result = nfeInvoiceService.createInvoiceV2(soB2cEntity);
                 if (result){
                     //添加日志
                     operateLogService.addModuleOperateLog(CharSequenceUtil.format("用户【{}】销售订单【{}】生成NF-e发票【{}】",UserContext.getDefaultLoginUser().getUserName(),soB2cEntity.getCode(),invoiceInfoEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "生成NF-e发票操作");
@@ -770,14 +776,18 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.FIN_INVOICE_OPERATION_NOT_ALLOWED);
         }
 
-        //取消发票,调用第三方
-        NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO = NfeInvoiceConverter.INSTANCE.invoiceInfoEntityToNfeCancel(invoiceInfoEntity);
-        nfeInvoiceService.cancelInvoice(invoiceInfoEntity,nfeCancelDTO);
-
-        invoiceInfoEntity.setCancelReason(remark);
-        invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.CANCEL.getCode());
-        this.updateById(invoiceInfoEntity);
-        return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "取消发票");
+        //取消发票,调用第三方（使用新接口V2）
+        try {
+            CancelInvoiceResponseDTO.CancelInvoiceDataDTO responseData = nfeInvoiceService.cancelInvoiceV2(invoiceInfoEntity, remark);
+            // cancelInvoiceV2方法内部已经更新了invoiceNature和cancelReason，以及上传了新的XML
+            // 如果上传平台失败，会在remark中记录失败原因
+            return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "取消发票成功");
+        } catch (Exception e) {
+            // 取消失败时，记录失败原因
+            invoiceInfoEntity.setRemark(CharSequenceUtil.format("取消发票失败: {}", e.getMessage()));
+            this.updateById(invoiceInfoEntity);
+            return BatchResultDTO.fail(id, invoiceInfoEntity.getCode(), CharSequenceUtil.format("取消发票失败: {}", e.getMessage()));
+        }
     }
 
     @Override
@@ -794,19 +804,30 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (!InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode().equals(invoiceInfoEntity.getStatus())) {
             throw new ServiceException(ApiError.FIN_INVOICE_OPERATION_NOT_ALLOWED);
         }
-        NfeInvoiceDTO.NfeReturnDTO nfeReturnDTO = new NfeInvoiceDTO.NfeReturnDTO();
-        nfeReturnDTO.setMotivo(remark);
-        if (CharSequenceUtil.isBlank(invoiceInfoEntity.getQueryKey())){
-            throw new ServiceException("发票秘钥不存在，无法进行退票操作");
+        //退货发票,调用第三方（使用新接口V2）
+        try {
+            ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO responseData = nfeInvoiceService.returnInvoiceV2(invoiceInfoEntity, remark, returnTaxCode);
+            // 退货成功，更新发票性质为退货
+            invoiceInfoEntity.setCancelReason(remark);
+            invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.RETURN_INVOICE.getCode());
+            invoiceInfoEntity.setReturnTaxCode(returnTaxCode);
+            // 更新退货发票的UUID和chave
+            if (CharSequenceUtil.isNotBlank(responseData.getUuid())) {
+                invoiceInfoEntity.setQueryId(responseData.getUuid());
+            }
+            if (CharSequenceUtil.isNotBlank(responseData.getChave())) {
+                invoiceInfoEntity.setQueryKey(responseData.getChave());
+                invoiceInfoEntity.setPlatformInvoiceNo(responseData.getChave());
+            }
+            // 如果返回了新的XML，已经在上传方法中处理
+            this.updateById(invoiceInfoEntity);
+            return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "退货发票成功");
+        } catch (Exception e) {
+            // 退货失败时，记录失败原因
+            invoiceInfoEntity.setRemark(CharSequenceUtil.format("退货发票失败: {}", e.getMessage()));
+            this.updateById(invoiceInfoEntity);
+            return BatchResultDTO.fail(id, invoiceInfoEntity.getCode(), CharSequenceUtil.format("退货发票失败: {}", e.getMessage()));
         }
-        nfeReturnDTO.setChaveNfe(invoiceInfoEntity.getQueryKey());
-        //第三方对接
-        nfeInvoiceService.returnInvoice(invoiceInfoEntity,nfeReturnDTO);
-        invoiceInfoEntity.setCancelReason(remark);
-        invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.RETURN_INVOICE.getCode());
-        invoiceInfoEntity.setReturnTaxCode(returnTaxCode);
-        this.updateById(invoiceInfoEntity);
-        return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "退票");
     }
 
     @Override
@@ -1104,35 +1125,19 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     public InvoiceInfoDTO.ExportResultDTO exportXml(InvoiceInfoDTO.PagingParamDTO dto) {
+        // 创建异步导出任务
+        String taskId = downloadTaskFeign.saveDownloadTask("导出发票XML", EXPORT_INVOICE_XML.getCode(), dto);
         InvoiceInfoDTO.ExportResultDTO resultDTO = new InvoiceInfoDTO.ExportResultDTO();
-        // 1. 查询附件URL列表
-        List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto,AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
-
-        if (CollUtil.isEmpty(exportResultList)) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        // 动态生成文件名
-        String fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
-        resultDTO.setFileName(fileName);
-        resultDTO.setResponseBody(streamingResponseBody);
+        resultDTO.setTaskId(taskId);
         return resultDTO;
     }
 
     @Override
     public InvoiceInfoDTO.ExportResultDTO exportPdf(InvoiceInfoDTO.PagingParamDTO dto) {
+        // 创建异步导出任务
+        String taskId = downloadTaskFeign.saveDownloadTask("导出发票PDF", EXPORT_INVOICE_PDF.getCode(), dto);
         InvoiceInfoDTO.ExportResultDTO resultDTO = new InvoiceInfoDTO.ExportResultDTO();
-        // 1. 查询附件URL列表
-        List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto,AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
-
-        if (CollUtil.isEmpty(exportResultList)) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        // 动态生成文件名
-        String fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
-        resultDTO.setFileName(fileName);
-        resultDTO.setResponseBody(streamingResponseBody);
+        resultDTO.setTaskId(taskId);
         return resultDTO;
     }
 
@@ -1360,35 +1365,205 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public StreamingResponseBody downloadZip(List<InvoiceInfoDTO.ExportAttachDTO> exportAttachList) {
         return outputStream -> {
-            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
-                // 使用并发下载所有文件内容
+            // 创建一个不关闭底层流的 ZipOutputStream 包装类
+            ZipOutputStream zipOut = new ZipOutputStream(outputStream) {
+                private boolean finished = false;
+                
+                @Override
+                public void finish() throws java.io.IOException {
+                    if (!finished) {
+                        super.finish();
+                        finished = true;
+                    }
+                }
+                
+                @Override
+                public void close() throws java.io.IOException {
+                    // 只调用 finish()，不关闭底层流，让 Spring 自己管理 outputStream
+                    finish();
+                    // 不调用 super.close()，避免关闭底层流
+                }
+            };
+            
+            try {
+                // 用于记录每个文件名出现的次数，避免重复文件名
+                Map<String, Integer> fileNameCountMap = new HashMap<>();
+                
+                // 使用并发下载所有文件内容，单个文件失败不影响其他文件
                 List<CompletableFuture<Pair<String, byte[]>>> downloadFutures = exportAttachList.stream()
                         .map(attachDTO -> CompletableFuture.supplyAsync(() -> {
-                            String[] split = attachDTO.getAttachUrl().split("/");
-                            String fileName = split[split.length - 1];
+                            String fileName = attachDTO.getAttachName();
+                            // 如果附件名称为空，从URL提取文件名
+                            if (CharSequenceUtil.isBlank(fileName)) {
+                                String[] split = attachDTO.getAttachUrl().split("/");
+                                fileName = split[split.length - 1];
+                            }
                             try {
                                 byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
-                                return Pair.of(fileName, content); // 使用合适的Pair或自定义对象
+                                return Pair.of(fileName, content);
                             } catch (Exception e) {
-                                throw new ServiceException("文件处理失败: " + attachDTO.getAttachName(), e);
+                                log.error("文件下载失败: {}", attachDTO.getAttachUrl(), e);
+                                // 返回 null 标记失败，而不是抛出异常，避免影响其他文件
+                                return null;
                             }
                         }, executorPool))
                         .collect(Collectors.toList());
 
-                // 等待所有下载任务完成
+                // 等待所有下载任务完成（不抛出异常，允许部分失败）
                 CompletableFuture.allOf(downloadFutures.toArray(new CompletableFuture[0])).join();
 
+                int successCount = 0;
+                int failCount = 0;
+                
                 // 单线程按顺序写入ZIP
                 for (CompletableFuture<Pair<String, byte[]>> future : downloadFutures) {
-                    Pair<String, byte[]> fileData = future.get(); // 获取下载结果
-                    zipOut.putNextEntry(new ZipEntry(fileData.getKey()));
-                    zipOut.write(fileData.getValue());
-                    zipOut.closeEntry();
+                    try {
+                        Pair<String, byte[]> fileData = future.get(); // 获取下载结果
+                        
+                        // 跳过下载失败的文件（返回null）
+                        if (fileData == null) {
+                            failCount++;
+                            continue;
+                        }
+                        
+                        String fileName = fileData.getKey();
+                        byte[] content = fileData.getValue();
+                        
+                        if (content == null || content.length == 0) {
+                            log.warn("文件内容为空，跳过: {}", fileName);
+                            failCount++;
+                            continue;
+                        }
+                        
+                        // 处理重复文件名
+                        String uniqueFileName = generateUniqueFileName(fileName, fileNameCountMap);
+                        
+                        zipOut.putNextEntry(new ZipEntry(uniqueFileName));
+                        zipOut.write(content);
+                        zipOut.closeEntry();
+                        successCount++;
+                    } catch (Exception e) {
+                        log.error("写入ZIP文件失败: {}", e.getMessage(), e);
+                        failCount++;
+                        // 继续处理下一个文件，不中断整个流程
+                    }
                 }
+                
+                // 如果所有文件都失败了，抛出异常
+                if (successCount == 0) {
+                    throw new ServiceException("所有文件下载或写入失败，无法生成ZIP文件");
+                }
+                
+                if (failCount > 0) {
+                    log.warn("ZIP文件生成完成，成功: {} 个，失败: {} 个", successCount, failCount);
+                }
+                
+                // 显式调用 finish() 确保 ZIP 文件结构完整（写入中央目录结束标记）
+                zipOut.finish();
+                zipOut.flush();
             } catch (Exception e) {
-                throw new ServiceException("压缩包生成失败", e);
+                log.error("压缩包生成失败", e);
+                // 确保在异常情况下也完成ZIP文件
+                try {
+                    zipOut.finish();
+                } catch (Exception ex) {
+                    log.error("异常情况下完成ZIP文件失败", ex);
+                }
+                throw new ServiceException("压缩包生成失败: " + e.getMessage(), e);
             }
         };
+    }
+
+    @Override
+    public List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(InvoiceInfoDTO.PagingParamDTO dto, String type) {
+        return baseMapper.listExportUrl(dto, type);
+    }
+
+    @Override
+    public String buildInvoiceAttachZip(InvoiceInfoDTO.PagingParamDTO dto, String type) {
+        log.info("开始构建发票附件ZIP文件，type={}", type);
+        
+        // 1. 查询附件URL列表
+        List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto, type);
+        
+        if (CollUtil.isEmpty(exportResultList)) {
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
+        }
+        
+        // 2. 构建文件URL列表和文件名映射
+        Map<String, List<String>> folderStructure = new HashMap<>();
+        Map<String, String> fileUrlToNameMap = new HashMap<>();
+        List<String> fileUrlList = new ArrayList<>();
+        
+        for (InvoiceInfoDTO.ExportAttachDTO attachDTO : exportResultList) {
+            String fileUrl = attachDTO.getAttachUrl();
+            String fileName = attachDTO.getAttachName();
+            
+            if (StrUtil.isBlank(fileUrl)) {
+                continue;
+            }
+            
+            // 如果附件名称为空，从URL提取文件名
+            if (StrUtil.isBlank(fileName)) {
+                String[] split = fileUrl.split("/");
+                fileName = split[split.length - 1];
+            }
+            
+            fileUrlList.add(fileUrl);
+            fileUrlToNameMap.put(fileUrl, fileName);
+        }
+        
+        if (fileUrlList.isEmpty()) {
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
+        }
+        
+        // 所有文件放在根目录
+        folderStructure.put("", fileUrlList);
+        
+        // 3. 构建CreateZipDTO并调用文件中心创建ZIP
+        com.erp.model.file.dto.FileDTO.CreateZipDTO createZipDTO = com.erp.model.file.dto.FileDTO.CreateZipDTO.builder()
+                .folderStructure(folderStructure)
+                .fileUrlToNameMap(fileUrlToNameMap)
+                .build();
+        
+        String zipUrl = fileFeign.createZipFromFolderStructure(createZipDTO);
+        
+        if (StrUtil.isBlank(zipUrl)) {
+            throw new ServiceException(ApiError.FILE_ZIP_CREATE_FAILED, "");
+        }
+        
+        log.info("构建发票附件ZIP文件完成，type={}, zipUrl={}, count={}", type, zipUrl, exportResultList.size());
+        return zipUrl;
+    }
+
+    /**
+     * 生成唯一的文件名，避免重复
+     *
+     * @param baseFileName 原始文件名
+     * @param fileNameCountMap 记录已出现的文件名及其次数
+     * @return 唯一文件名
+     */
+    private String generateUniqueFileName(String baseFileName, Map<String, Integer> fileNameCountMap) {
+        int count = fileNameCountMap.getOrDefault(baseFileName, 0);
+        fileNameCountMap.put(baseFileName, count + 1);
+
+        if (count == 0) {
+            return baseFileName;
+        }
+
+        // 插入递增序号防止重复
+        String nameWithoutExt = "";
+        String ext = "";
+
+        int dotIndex = baseFileName.lastIndexOf(".");
+        if (dotIndex > 0) {
+            nameWithoutExt = baseFileName.substring(0, dotIndex);
+            ext = baseFileName.substring(dotIndex);
+        } else {
+            nameWithoutExt = baseFileName;
+        }
+
+        return nameWithoutExt + "_" + count + ext;
     }
 
 

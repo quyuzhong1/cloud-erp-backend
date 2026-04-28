@@ -618,6 +618,11 @@ public class ShudiyunB2cOrderDTO {
      * 发货类型：按照0/1推送【(0:平台配送1:自发货)】
      */
     private String fulfillment_type;
+    
+    /**
+     *签收模式
+     */
+    private String signed_mode;
 
 
     public String sdyStatusHandle(String operateEnum, int mainVersion, int detailVersion) {

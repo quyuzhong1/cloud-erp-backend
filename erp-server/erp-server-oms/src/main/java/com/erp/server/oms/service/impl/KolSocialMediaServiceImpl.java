@@ -396,6 +396,9 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         
         // 标题
         entity.setTitle(dto.getTitle());
+
+        // 正文内容
+        entity.setContent(dto.getContent());
         
         // 入库时间戳（从字符串转换为Long）
         if (StrUtil.isNotBlank(dto.getInsertTimestamp())) {
@@ -417,7 +420,35 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
                 log.warn("views转换失败：{}", dto.getViews());
             }
         }
-        
+
+        // 粉丝
+        if (StrUtil.isNotBlank(dto.getFollowerCount())) {
+            try {
+                entity.setFollowerCount(Long.parseLong(dto.getFollowerCount()));
+            } catch (NumberFormatException e) {
+                log.warn("followerCount转换失败：{}", dto.getFollowerCount());
+            }
+        }
+
+        // 转发
+        if (StrUtil.isNotBlank(dto.getRepostCount())) {
+            try {
+                entity.setRepostCount(Long.parseLong(dto.getRepostCount()));
+            } catch (NumberFormatException e) {
+                log.warn("repostCount转换失败：{}", dto.getRepostCount());
+            }
+        }
+
+
+        // 播放
+        if (StrUtil.isNotBlank(dto.getPlayCount())) {
+            try {
+                entity.setPlayCount(Long.parseLong(dto.getPlayCount()));
+            } catch (NumberFormatException e) {
+                log.warn("playCount转换失败：{}", dto.getPlayCount());
+            }
+        }
+
         // 评论数（comments）
         if (StrUtil.isNotBlank(dto.getComments())) {
             try {
@@ -433,6 +464,24 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
                 entity.setLikeCount(Long.parseLong(dto.getLikes()));
             } catch (NumberFormatException e) {
                 log.warn("likes转换失败：{}", dto.getLikes());
+            }
+        }
+
+        // 收藏数（collects）
+        if (StrUtil.isNotBlank(dto.getCollects())) {
+            try {
+                entity.setCollectCount(Long.parseLong(dto.getCollects()));
+            } catch (NumberFormatException e) {
+                log.warn("collects转换失败：{}", dto.getCollects());
+            }
+        }
+
+        // 投币数（coins）
+        if (StrUtil.isNotBlank(dto.getCoins())) {
+            try {
+                entity.setCoinCount(Long.parseLong(dto.getCoins()));
+            } catch (NumberFormatException e) {
+                log.warn("coins转换失败：{}", dto.getCoins());
             }
         }
         

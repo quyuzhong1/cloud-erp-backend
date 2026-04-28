@@ -85,6 +85,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
 
         long current = 1;
         LocalDateTime trackTime = LocalDateTime.now().minusMonths(3);
+        LocalDateTime deliveryLimitTime = LocalDateTime.of(2026, 3, 1, 0, 0, 0);
         //根据跟踪单获取跟踪轨迹
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
@@ -168,7 +169,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
      * 分页查询
      */
     private List<LogisticsTrackDTO.UpdateTrackDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
-        return foreignService.listTrackDto(query);
+        return foreignService.listWaitingRegisterByConfig(query,query.getTrackQueryMode());
     }
 
     private static int getPageSizeValue(DmpInputApiInitRequest dmpInputApiInitRequest) {

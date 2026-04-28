@@ -38,7 +38,15 @@ public class TypeConversionWorker {
         if (CharSequenceUtil.isBlank(fileData)){
             return fileData;
         }
-        return fileData.replace("data:application/pdf;base64,","");
+        return fileData.replaceFirst("(?i)^data:application/pdf;base64,", "");
+    }
+
+    @Named("replaceBase64DataUrlPrefix")
+    public String replaceBase64DataUrlPrefix(String fileData){
+        if (CharSequenceUtil.isBlank(fileData)){
+            return fileData;
+        }
+        return fileData.replaceFirst("(?i)^data:[^;]+;base64,", "");
     }
 
     @Named("getPdfFileName")
@@ -65,6 +73,26 @@ public class TypeConversionWorker {
         return value.setScale(2, RoundingMode.HALF_UP);
     }
 
+    @Named("decimalToPlainString")
+    public String decimalToPrintData(BigDecimal value){
+        if (Objects.isNull(value)){
+            return "";
+        }
+        return value.stripTrailingZeros().toPlainString();
+    }
+
+    @Named("decimal2ToPlainString")
+    public String decimal2ToPlainString(BigDecimal value){
+        if (Objects.isNull(value)){
+            return "";
+        }
+        return value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    }
+
+    @Named("booleanToInt")
+    public Integer booleanToInt(Boolean value){
+        return Boolean.TRUE.equals(value) ? 1 : -1;
+    }
      /**
      * 转换sourceType到demandType
      */
@@ -76,9 +104,13 @@ public class TypeConversionWorker {
         if (ShipmentSourceTypeEnum.FBA.getCode().equals(sourceType)){
             return FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode();
         }
+        if (ShipmentSourceTypeEnum.FBT.getCode().equals(sourceType)){
+            return FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode();
+        }
         if (ShipmentSourceTypeEnum.AWD.getCode().equals(sourceType)){
             return FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode();
         }
         return sourceType;
     }
 }
+

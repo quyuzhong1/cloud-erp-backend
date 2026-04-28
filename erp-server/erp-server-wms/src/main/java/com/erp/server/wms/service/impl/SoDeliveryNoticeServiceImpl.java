@@ -547,7 +547,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //匹配中转规则
         matchTransferRule(soDeliveryNoticeEntity,soInfoEntity);
         this.save(soDeliveryNoticeEntity);
-        soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
+        soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId(),soInfoEntity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
         //生成装箱任务
@@ -1421,7 +1421,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 detailList.add(detailAdd);
             }
             add.setDetailList(detailList);
-            this.add(add);
+            // 创建发货通知单
+            String deliveryNoticeId = this.add(add);
+            // 获取创建的发货通知单实体
+            SoDeliveryNoticeEntity entity = this.getById(deliveryNoticeId);
+            if (ObjectUtil.isNotEmpty(entity)) {
+                // 自动提审
+                this.submit(entity, Boolean.TRUE);
+            }
         }
         return Boolean.TRUE;
     }

@@ -230,6 +230,23 @@
             ls.supplier_name asc
         ) wls
     </select>
+    <select id="listSupplier" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$ListChildTreeDTO">
+        select
+            ls.id,
+            ls.disabled,
+            ls.supplier_name as name,
+            ls.short_name as shortName
+        from logistics_supplier ls
+        where
+            ls.is_deleted = false
+            <if test="params.supplierIds != null and params.supplierIds.size > 0">
+                and ls.id in
+                <foreach collection="params.supplierIds" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        order by ls.disabled asc
+    </select>
 
 
 </mapper>

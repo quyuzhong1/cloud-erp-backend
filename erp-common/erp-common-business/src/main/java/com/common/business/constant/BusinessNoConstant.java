@@ -130,6 +130,8 @@ public interface BusinessNoConstant {
     String FHDC = "FHDC";
     // b2c发货拦截单
     String FHLJ = "FHLJ";
+    // b2b发货拦截单
+    String FHLJB = "FHLJB";
     // 委外发料单
     String FLD = "FLD";
     // 送货单
@@ -267,6 +269,15 @@ public interface BusinessNoConstant {
     String DZ="DZ";
     //费用配置
     String FYPZ="FYPZ";
+
+    String BG = "BG";
+
+    //抽样方案
+    String CYFA="CYFA";
+
+    //质检申请
+    String ZJSQ = "ZJSQ";
+    String WDGL = "WDGL";
     //tms异步任务记录
     String Z="Z";
 }

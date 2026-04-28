@@ -1122,4 +1122,41 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         }
         return warehouseLocationMapper.getOneWareInventoryQty(warehouseId,skuNo);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> updateStatusBatch(WarehouseLocationDTO.UpdateStatusDto dto) {
+        if(CollectionUtils.isEmpty(dto.getIds())){
+            return Collections.emptyList();
+        }
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        LoginUser user = UserContext.getNonLoginUser();
+
+        List<WarehouseLocationEntity> list = baseMapper.selectBatchIds(dto.getIds());
+        List<String> warehouseLocationList = list.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.toList());
+        List<String> warehouseIdList = list.stream().map(WarehouseLocationEntity::getWarehouseId).collect(Collectors.toList());
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(InventoryEntity::getWarehouseLocation, warehouseLocationList).in(InventoryEntity::getWarehouseId, warehouseIdList).eq(InventoryEntity::getIsDeleted, false);
+        List<InventoryEntity> inventoryList = inventoryMapper.selectList(queryWrapper);
+        List<WarehouseLocationEntity> updateList = new ArrayList<>();
+        for (WarehouseLocationEntity entity : list) {
+            if(entity.getDisabled().equals(Boolean.parseBoolean(dto.getDisabled()))){
+                continue;
+            }
+            List<InventoryEntity> currentInventoryList = inventoryList.stream().filter(item -> item.getWarehouseId().equals(entity.getWarehouseId()) && item.getWarehouseLocation().equals(entity.getCode())).collect(Collectors.toList());
+
+            int sum = currentInventoryList.stream().mapToInt(InventoryEntity::getQty).sum();
+            if(sum > 0 && Boolean.parseBoolean(dto.getDisabled())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("仓位【%s】库存不为零，无法禁用", entity.getName())));
+                continue;
+            }
+            entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
+            updateList.add(entity);
+            operateLogService.addModuleOperateLog(String.format("更新仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
+        }
+        if(!updateList.isEmpty()){
+            this.updateBatchById(updateList);
+        }
+        return resultDTOList;
+    }
 }

@@ -104,7 +104,9 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 					// 虾皮 fulfillment_flag =fulfilled_by_cb_seller/fulfilled _by_local_seller时  v2.logistics.get_shipping_partameter 接口 返回  dropoff / pickup 时为中转仓标识transitWarehouse
 					//虾皮 fulfillment_flag =fulfilled_by_cb_seller/fulfilled _by_local_seller时  v2.logistics.get_shipping_partameter 接口 返回 non_intergrated  时为 自发货标识 selfShipment
 					deliveryType = parseDeliveryTypeType(dmpDataMap, orderSnShipmentMaps);
-					logisticType = "non_integrated".equalsIgnoreCase(deliveryType) ? "selfShipment" : "transitWarehouse";
+					if(StringUtils.isNotBlank(deliveryType)){
+						logisticType = "non_integrated".equalsIgnoreCase(deliveryType) ? "selfShipment" : "transitWarehouse";
+					}
 				} else {
 					ServiceException.runError("未知配送方式fulfillment_flag=" + fulfillmentFlagStr);
 				}
@@ -212,6 +214,15 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 						Instant instant = Instant.ofEpochSecond(createTime);
 						dmpDataMap.put("platformCreateTime", LocalDateTime.ofInstant(instant, zone));
 					}
+				}else{
+					create_time = detailMaps.get("create_time");
+					if(create_time != null) {
+						Long createTime = Long.valueOf(create_time.toString());
+						if(createTime.compareTo(0L) > 0) {
+							Instant instant = Instant.ofEpochSecond(createTime);
+							dmpDataMap.put("platformCreateTime", LocalDateTime.ofInstant(instant, zone));
+						}
+					}
 				}
 				Object update_time = dmpDataMap.get("update_time");
 				if(update_time != null) {
@@ -219,6 +230,15 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 					if(updateTime.compareTo(0L) > 0) {
 						Instant instant = Instant.ofEpochSecond(updateTime);
 						dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(instant, zone));
+					}
+				}else{
+					update_time = detailMaps.get("update_time");
+					if(update_time != null) {
+						Long updateTime = Long.valueOf(update_time.toString());
+						if(updateTime.compareTo(0L) > 0) {
+							Instant instant = Instant.ofEpochSecond(updateTime);
+							dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(instant, zone));
+						}
 					}
 				}
 				
@@ -257,11 +277,12 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 	 * 解析发货类型
 	 */
 	private static String parseDeliveryTypeType(TreeMap<String, Object> dmpDataMap, Map<String, List<Map<String, Object>>> orderSnShipmentMapsList) {
+
 		// 自发货（跨境卖家） fulfilled_by_cb_seller
 		// 自发货（本地卖家）fulfilled_by_local_seller
 		List<Map<String, Object>> shipmentDataList = orderSnShipmentMapsList.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
 		if (CollectionUtils.isEmpty(shipmentDataList)){
-			ServiceException.runError("配送信息为空");
+			return "";
 		}
 		// 获取 mongoUpdateTime 最大时间的 Map
 		Map<String, Object> shipmentData = shipmentDataList.stream()

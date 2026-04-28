@@ -1,5 +1,6 @@
 package com.erp.server.plm.config;
 
+import com.common.business.config.TraceableThreadPoolTaskExecutor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +24,7 @@ public class ThreadPoolConfig {
 
     @Bean("customExecutor")
     public ThreadPoolTaskExecutor  threadPoolExecutor() {
-        ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(8);
         // 设置最大线程数

@@ -94,6 +94,11 @@ public class AliexpressDeliveryProratedInfoDTO implements Serializable {
     private BigDecimal proratedAfterTaxAmount;
 
     /**
+     * 计算后的发货单明细支付单价
+     */
+    private BigDecimal proratedAfterTaxUnitPrice;
+
+    /**
      * 计算后的发货明细单价
      */
     private BigDecimal proratedUnitPrice;

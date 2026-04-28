@@ -1,23 +1,19 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
+import org.python.antlr.ast.Str;
+
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-
-import com.common.business.dto.AdvanceQueryDTO;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -258,6 +254,11 @@ public class QcNoticeDTO implements Serializable {
         private String qcDetailStatusName;
 
         /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
+
+        /**
          * 质检时间
          */
         private LocalDateTime qcDate;
@@ -273,8 +274,40 @@ public class QcNoticeDTO implements Serializable {
          */
         private LocalDateTime putawayDate;
 
+        /**
+         * 来源id【可排序】
+         */
+        private String sourceId;
 
+        /**
+         * 来源编码【可排序】
+         */
+        private String sourceCode;
 
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 采购订单id【可排序】
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单编码【可排序】
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
     }
 
     /**
@@ -332,13 +365,76 @@ public class QcNoticeDTO implements Serializable {
         private String qcTypeName;
 
         /**
+         * 质检状态 QcNoticeStatusEnum
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称 QcNoticeStatusEnum
+         */
+        private String qcStatusName;
+
+        /**
+         * 质检人名称
+         */
+        private String qcUserName;
+
+        /**
+         * 质检时间
+         */
+        private LocalDateTime qcDate;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
         * 备注
         */
         private String remark;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
         private List<QcNoticeDetailDTO.ViewDTO> detailList;
 
-
+        /**
+         * 质检标准
+         */
+        private QcStandardView qcStandardView;
     }
 
     /**
@@ -348,41 +444,40 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class QcInfoView  {
         /**
-         *
+         * id
          */
+        @NotBlank(message = "id不允许为空")
         private String id;
         /**
-         *
+         * 明细id
          */
         private String detailId;
         /**
          * 通知单号
          */
         private String code;
+
         /**
-         *
-         */
-        private String qcType;
-        /**
-         *
+         *skuid
          */
         private String skuId;
         /**
-         *
+         *sku编码
          */
         private String skuNo;
         /**
-         *
+         *产品名称
          */
         private String productName;
-        /**
-         *
-         */
-        private String qcWarehouseId;
+
         /**
          * 质检通知数量
          */
         private Integer qcNoticeQty;
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
         /**
          * 质检数量
          */
@@ -391,42 +486,242 @@ public class QcNoticeDTO implements Serializable {
          *差异数量
          */
         private Integer qcDiffQty;
+
         /**
-         *
+         * 质检单id
+         */
+        private String qcBillId;
+
+        /**
+         * 质检单号
+         */
+        private String qcBillCode;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+
+        /**
+         * 抽样方案编码
+         */
+        private String samplingPlanCode;
+
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 一般缺陷允收数（Ac）
+         */
+        private Integer generalAcceptQty;
+
+        /**
+         * 一般缺陷拒收数(Re)
+         */
+        private Integer generalRejectQty;
+
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+
+        /**
+         * 严重缺陷拒收数(Re)
+         */
+        private Integer majorRejectQty;
+
+        /**
+         *良品数量
          */
         @NotNull(message = "良品数量不能为空")
         @Min(value = 0, message = "良品数量不能小于0")
         private Integer qcGoodQty;
         /**
-         *
+         *不良品数量
          */
         @NotNull(message = "不良品数量不能为空")
         @Min(value = 0, message = "不良品数量不能小于0")
         private Integer qcBadQty;
+
         /**
-         *问题属性
-         */
-        private String qcProblemDict;
-        private String qcProblemDictName;
-        /**
-         * 不良描述
-         */
-        private String badDesc;
-        /**
-         *
+         * 质检员id
          */
         private String qcUserId;
+
+        /**
+         * 质检员名称
+         */
         private String qcUserName;
         /**
-         *
+         * 质检日期
          */
         @NotNull(message = "质检日期不能为空")
         private LocalDate qcDate;
+
+        /**
+         * 质检标准
+         */
+        private QcStandardView qcStandardView;
+
+        /**
+         * 缺陷信息
+         */
+        private List<DefectView> defectViewList;
+
+        /**
+         * 检验结果 QcResultEnum
+         */
+        @NotBlank(message = "检验结果不允许为空")
+        private String qcResult;
+
+        /**
+         * 批次合格量
+         */
+        @NotNull(message = "批次合格量不允许为空")
+        private Integer lotQualifiedQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcStandardView{
+
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+
+        /**
+         * 抽样方案编码
+         */
+        private String samplingPlanCode;
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 附件url
+         */
+        private String attachUrl;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemView>  qcInspectItemViewDTOList;
+
+        /**
+         * 参考图片
+         */
+        private List<QcImageView>  qcImageViewDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DefectView{
+        /**
+         * 缺陷等级,枚举接口待定
+         */
+        private String defectLevl;
+        /**
+         * 缺陷数量
+         */
+        private Integer defectQty;
+        /**
+         * 问题属性type=qcProblemType
+         */
+        private String issueProperty;
+        /**
+         * 缺陷描述
+         */
+        private String defectDesc;
+        /**
+         * 不良图片
+         */
+        private List<BadImageView> badImageViewList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BadImageView{
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
         /**
          *
          */
-        private List<String> attachNameList;
-        private List<String> attachUrlList;
+        private String attachUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInspectItemView{
+
+        /**
+         * 质检项目
+         */
+        private String inspectItem;
+
+        /**
+         * 质检要求
+         */
+        private String inspectRequirement;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcImageView{
+
+        /**
+         * 图片类型
+         */
+        private String imageType;
+
+        /**
+         * 图片类型名称
+         */
+        private String imageTypeName;
+
+
+        /**
+         * 图片url列表
+         */
+        private List<String> imageUrlList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcNoticeParamDTO{
+
+        /**
+         * 质检通知单号
+         */
+        @NotBlank(message = "质检通知单号不允许为空")
+        private String qcNoticeCode;
 
     }
 
@@ -436,6 +731,45 @@ public class QcNoticeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 质检人id
+         */
+        private String qcUserId;
+
+        /**
+         * 质检人名称
+         */
+        private String qcUserName;
+
+        /**
+         * 期望质检日期
+         */
+        private LocalDate planQcDate;
 
         @NotEmpty
         private List<QcNoticeDetailDTO.@Valid AddDTO> detailList;
@@ -522,4 +856,294 @@ public class QcNoticeDTO implements Serializable {
         private String remark;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class QcStandardAddDTO{
+
+        private String id;
+        /**
+         * 抽样方案id
+         */
+        private String samplingPlanId;
+        /**
+         * 抽样方案编码
+         */
+        private String samplingPlanCode;
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 附件url
+         */
+        private String attachUrl;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemAddDTO>  qcInspectItemAddDTOList;
+
+        /**
+         * 参考图片
+         */
+        private List<QcImageAddDTO>  qcImageAddDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInspectItemAddDTO{
+
+        private String id;
+        /**
+         * 质检项目
+         */
+        private String inspectItem;
+
+        /**
+         * 质检要求
+         */
+        private String inspectRequirement;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcImageAddDTO{
+
+        private String id;
+        /**
+         * 图片类型
+         */
+        private String imageType;
+
+        /**
+         * 图片url
+         */
+        private String imageUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QcInfoFullView {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 通知单号
+         */
+        private String code;
+
+        /**
+         * 质检单id
+         */
+        private String qcBillId;
+
+        /**
+         * 质检单号
+         */
+        private String qcBillCode;
+
+        /**
+         * 质检通知数量
+         */
+        private Integer qcNoticeQty;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+
+        /**
+         * 质检单状态
+         */
+        private String qcInfoStatus;
+
+        /**
+         * 质检单状态名称
+         */
+        private String qcInfoStatusName;
+
+        /**
+         * 抽象方案id
+         */
+        private String samplingPlanId;
+
+        /**
+         * 抽象方案编码
+         */
+        private String samplingPlanCode;
+
+        /**
+         * 抽象方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 一般缺陷允收数（Ac）
+         */
+        private Integer generalAcceptQty;
+
+        /**
+         * 一般缺陷拒收数(Re)
+         */
+        private Integer generalRejectQty;
+
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+
+        /**
+         * 严重缺陷拒收数(Re)
+         */
+        private Integer majorRejectQty;
+
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * EAN码
+         */
+        private String ean;
+
+        /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称
+         */
+        private String qcStatusName;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+        /**
+         * 质检标准
+         */
+        @NotNull(message = "质检标准不允许为空")
+        private QcStandardView qcStandardView;
+
+        /**
+         * 缺陷信息
+         */
+        private List<DefectView> defectViewList;
+
+        /**
+         * 产品信息
+         */
+        @NotNull(message = "产品信息不允许为空")
+        private QcProductDTO.ViewDTO qcProductView;
+
+        /**
+         * 备注
+         */
+        private List<QcRemarkDTO.ViewDTO> remarkViewList;
+
+        /**
+         * 质检结果
+         */
+        @NotNull(message = "质检结果不允许为空")
+        private QcRemarkDTO.QcResultView qcResultView;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintQcStandardParamDTO{
+
+        /**
+         * 明细id列表
+         */
+        @NotNull(message = "明细id列表不允许为空")
+        private List<String> detailIds;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintQcStandardDTO{
+
+        /**
+         * 质检通知单号
+         */
+        private String code;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 质检单号
+         */
+        private String qcInfoCode;
+
+        /**
+         * 抽样方案编码
+         */
+        private String samplingPlanCode;
+
+        /**
+         * 抽样方案名称
+         */
+        private String samplingPlanName;
+
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+
+        /**
+         * 质检项目
+         */
+        private List<QcInspectItemView>  detailList;
+
+    }
 }

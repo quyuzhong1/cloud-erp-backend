@@ -1,33 +1,37 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
-import com.common.core.utils.ExcelUtil;
-import com.erp.server.oms.query.KolB2cApplicationQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.KolB2cApplicationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
+import com.erp.model.oms.entity.KolB2cApplicationEntity;
+import com.erp.server.oms.query.KolB2cApplicationQueryHandler;
+import com.erp.server.oms.service.KolB2cApplicationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import com.erp.model.oms.entity.KolB2cApplicationEntity;
 
 /**
  * B2C寄样申请单
@@ -73,6 +77,21 @@ public class KolB2cApplicationController extends BaseController {
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated KolB2cApplicationDTO.UpdateDTO dto) {
         kolB2cApplicationService.update(dto);
+        return success();
+    }
+
+    /**
+     * 更新明细备注
+     */
+    @PostMapping("/updateDetailRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "B2C寄样申请明细备注更新:备注={remark}", keyIdName = "detailId")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "oms:kolB2cApplication:update",
+//            serviceClass = KolB2cApplicationService.class,
+//            keyIdName = "id")
+    public ApiResult<?> updateDetailRemark(@RequestBody @Validated KolB2cApplicationDTO.UpdateDetailRemarkDTO dto) {
+        kolB2cApplicationService.updateDetailRemark(dto.getId(), dto.getDetailId(), dto.getRemark());
         return success();
     }
 
@@ -337,8 +356,44 @@ public class KolB2cApplicationController extends BaseController {
     }
 
     /**
-    * 撤销
-    * @author jack
+     * 业务取消
+     * @param dto ids
+     * @return 取消结果
+     */
+    @PostMapping("/cancel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:kolB2cApplication:cancel",
+            serviceClass = KolB2cApplicationService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "B2C寄样申请单取消")
+    public ApiResult<List<BatchResultDTO>> batchCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<KolB2cApplicationEntity> list = kolB2cApplicationService.lambdaQuery().in(KolB2cApplicationEntity::getId, ids).list();
+        Map<String, KolB2cApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolB2cApplicationEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = kolB2cApplicationService.cancel(id);
+            }catch (Exception e){
+                log.error("B2C寄样申请单取消失败",e);
+                KolB2cApplicationEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "B2C寄样申请单不存在, 取消失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 撤销
+     * @author jack
     * @date:  2025-12-04
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -358,7 +413,7 @@ public class KolB2cApplicationController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = kolB2cApplicationService.cancelProcess(id);
+                cancelResult = kolB2cApplicationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("B2C寄样申请单撤回流程失败",e);
                 KolB2cApplicationEntity entity = idEntityMap.get(id);
@@ -438,7 +493,7 @@ public class KolB2cApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "B2C-KOL寄样申请下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/kolB2cApplicationTemplate.xlsx";
+        String standardPath = "excel/kolB2cApplicationTemplate.xlsx";
         String standardExcelName = "kolB2cApplicationTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
@@ -459,6 +514,14 @@ public class KolB2cApplicationController extends BaseController {
     @LogViewService
     public ApiResult<List<KolB2cApplicationDTO.DetailViewDTO>> detailView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
         return success(kolB2cApplicationService.detailView(dto.getDetailIdList()));
+    }
+
+    /**
+     * 地址解析
+     */
+    @PostMapping("/addressParse")
+    public ApiResult<AddressParseDTO.ParseResultDTO> addressParse(@RequestBody @Validated AddressParseDTO.ParseRequestDTO dto) {
+        return success(kolB2cApplicationService.addressParse(dto));
     }
 
     /**

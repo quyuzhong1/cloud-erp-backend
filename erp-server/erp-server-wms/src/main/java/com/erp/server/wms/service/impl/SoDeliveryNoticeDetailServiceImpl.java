@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -13,8 +14,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
@@ -40,6 +44,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -85,13 +90,14 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+    @Lazy
     @Resource
     private SoOutstockService soOutstockService;
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean add(SoDeliveryNoticeDTO.Add dto, String id) {
+    public Boolean add(SoDeliveryNoticeDTO.Add dto, String id,SoInfoEntity soInfoEntity) {
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
@@ -99,6 +105,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         }
         List<SoDeliveryNoticeDetailEntity> detailEntityList = this.listDetailBySourceDetailIds(detailIds);
         List<SoDeliveryNoticeDetailEntity> list = new ArrayList<>();
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
 
         for (SoDeliveryNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
@@ -106,7 +113,13 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES);
+                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES,soDetailEntity.getSkuNo());
+            }
+            if(StringUtils.isNotBlank(soInfoEntity.getVirtualWarehouseId())){
+                SkuVO ignoreSku = ignoreInventorySkuList.stream().filter(sku -> sku.getSkuId().equals(soDetailEntity.getDeliverySkuId())).findFirst().orElse(null);
+                if (Objects.isNull(ignoreSku) && soDetailEntity.getFrozenQty() < detailDto.getDeliveryQty() ) {
+                    throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_FROZEN,soDetailEntity.getSkuNo());
+                }
             }
             String idStr = IdWorker.getIdStr();
             soDeliveryNoticeDetailEntity.setId(idStr);
@@ -193,7 +206,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             }
              */
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES);
+                throw new ServiceException(ApiError.SO_DELIVERY_QTY_EXCEEDS_SALES,soDetailEntity.getSkuNo());
             }
 
             soDeliveryNoticeDetailEntity.setMainId(dto.getId());

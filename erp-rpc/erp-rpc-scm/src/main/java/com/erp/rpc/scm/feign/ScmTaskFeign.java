@@ -141,6 +141,14 @@ public interface ScmTaskFeign {
     PurchaseOrderDTO.GetOneDTO getByOrderId(@RequestBody String purchaseOrderId);
 
     /**
+     * 累加质检合格量
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/addQcGoodQty")
+    Boolean addQcGoodQty(@RequestBody List<PurchaseOrderDTO.QcQtyDTO> dtoList);
+
+    /**
      * 根据采购订单id获取到
      * 采购对应的信息
      * @author yl
@@ -534,4 +542,17 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/contractInfo/updateContractNameByTempId")
     void updateContractNameByTempId(@RequestBody ContractInfoDTO.UpdateContractNameDTO dto);
+
+    /**
+     * 下推委外订单
+     * @return
+     */
+    @PostMapping("feign/subcontractOrder/pushDownSubcontractOrder")
+    Boolean pushDownSubcontractOrder(SubcontractOrderDTO.AddDTO dto);
+
+    /**
+     * 根据金蝶id查询委外订单
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractOrderByKingdeeId")
+    SubcontractOrderEntity listSubcontractOrderByKingdeeId(@RequestBody String kingdeeId);
 }

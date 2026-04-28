@@ -390,7 +390,37 @@ public class ThirdMappingDTO implements Serializable {
          * 第三方仓库id
          */
         private String thirdWarehouseId;
+        /**
+         * 库存同步模式
+         * InventorySyncModeEnum
+         */
+        private String inventorySyncMode;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ErpWarehouseDTO implements Serializable {
+        /**
+         * ERP仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * ERP仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * ERP仓库组织id
+         */
+        private String warehouseOrgId;
+
+        /**
+         * ERP仓库组织名称
+         */
+        private String warehouseOrgName;
+    }
+
     @Data
     public static class WarehouseListDto
     {

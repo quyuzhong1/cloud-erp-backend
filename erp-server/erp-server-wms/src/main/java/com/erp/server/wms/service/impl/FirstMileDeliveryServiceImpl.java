@@ -211,6 +211,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO addDTO) {
+        normalizeFbtFnSku(addDTO.getDemandType(), addDTO.getDetailList());
         FirstMileDeliveryEntity firstMileDeliveryEntity = new FirstMileDeliveryEntity();
         BeanMapperUtils.copy(addDTO, firstMileDeliveryEntity);
         String idStr = IdWorker.getIdStr();
@@ -348,6 +349,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || old.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
+        normalizeFbtFnSku(updateDTO.getDemandType(), updateDTO.getDetailList());
         FirstMileDeliveryEntity firstMileDeliveryEntity =  BeanMapperUtils.map(FirstMileDeliveryEntity.class, updateDTO);
         if (CollectionUtils.isNotEmpty(updateDTO.getTransferWarehouseIdList())){
             firstMileDeliveryEntity.setTransferWarehouseIds(String.join(",", updateDTO.getTransferWarehouseIdList()));
@@ -375,6 +377,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), firstMileDeliveryEntity.getCode(), "发货单");
         operateLogService.addModuleOperateLogByObj(old, firstMileDeliveryEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstMileDeliveryEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private void normalizeFbtFnSku(String demandType, List<? extends FirstMileDeliveryDetailDTO.CommonDTO> detailList) {
+        if (!FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(demandType) || CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        for (FirstMileDeliveryDetailDTO.CommonDTO detailDTO : detailList) {
+            if (detailDTO == null || StrUtil.isNotBlank(detailDTO.getFnSku())) {
+                continue;
+            }
+            detailDTO.setFnSku(StrUtil.blankToDefault(detailDTO.getPlatformSkuNo(), ""));
+        }
     }
 
 
@@ -853,7 +867,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //如果是FBA货件来源，反审核修改货件发货状态和发货数量
-        if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(entity.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+        if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(entity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(entity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(entity.getDemandType())) {
             fbaShipmentService.deliveryDisApprove(entity);
         }
 
@@ -1066,8 +1082,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
                 RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
                 if (ObjectUtil.isNotEmpty(application)) {
-                    //如果是FBA货件来源，审核通过修改货件发货状态为已发货
-                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
+                    //如果是FBA/FBT/AWD货件来源，审核通过修改货件发货状态和发货数量
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())
+                            || RequisitionApplicationTypeEnum.FBT.getCode().equals(application.getType())
+                            || RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
                         fbaShipmentService.deliveryStatus(entity);
                     } else {
                         //如果是发货计划来源
@@ -1098,6 +1116,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && !OmsPlatformEnum.WEI_SHI.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())) {
                         // 推送第三方发货单审核通过
                         ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
@@ -1541,7 +1560,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(tmsFirstMileLogisticEntity.getShippingMethod()));
             logisticsViewDTO.setLogisticsMethod(tmsFirstMileLogisticEntity.getShippingMethod());
             //发货时间
-            logisticsViewDTO.setDeliveryTime(tmsFirstMileLogisticEntity.getDeliveryTime());
+            logisticsViewDTO.setDeliveryTime(data.getDeliveryDate().atStartOfDay());
             //备注
             logisticsViewDTO.setLogisticsRemark(tmsFirstMileLogisticEntity.getRemark());
             //物流运单号
@@ -1997,7 +2016,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
                 data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
             }
-            if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(data.getDemandType())){
+            if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(data.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(data.getDemandType())){
                 List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailEntityList.stream().filter(v->v.getTaskId().equals(data.getTaskId()) && v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getFnSku())).collect(Collectors.toList());
                 data.setPackingQty(cartonDetailEntityList.stream().mapToInt(v->v.getPackQty()).sum());
             }else{
@@ -2380,7 +2401,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         PackingTaskEntity packingTaskEntity = packingTaskEntityList.get(0);
         PackingTaskDTO.PackedDetailDTO packedDetailDTO = new PackingTaskDTO.PackedDetailDTO();
-        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType()) || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
+        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
             List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(id);
             String fbaShipmentCode = detailEntityList.get(0).getFbaShipmentCode();
             List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(fbaShipmentCode));

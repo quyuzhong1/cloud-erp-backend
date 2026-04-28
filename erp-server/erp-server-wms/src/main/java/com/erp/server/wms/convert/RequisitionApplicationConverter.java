@@ -182,7 +182,8 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
             @Mapping(target = "toWarehouseId", ignore = true),
             @Mapping(target = "toWarehouseName", ignore = true),
-            @Mapping(target = "virtualFrozenQty", ignore = true)
+            @Mapping(target = "virtualFrozenQty", ignore = true),
+            @Mapping(target = "platformFnSku", source = "detailEntity.platformFnSku")
     })
     RequisitionApplicationDetailEntity wmsDeliveryPlanDetailToRequisitionApplicationDetail(WmsDeliveryPlanDetailEntity detailEntity);
     List<RequisitionApplicationDetailEntity> wmsDeliveryPlanDetailToRequisitionApplicationDetail(List<WmsDeliveryPlanDetailEntity> planDetailEntityList);

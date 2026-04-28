@@ -20,6 +20,7 @@ import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -137,12 +138,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     /**
      * 打印物流面单确认
      *
-     * @param dto
+     * @param printType
+     * @param detailList
+     * @param response
      * @return void
      * @Author Luo_WG
      * @Date 2023/12/19 16:39
      **/
-    String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response);
+    String printLogisticsBillConfirm(String printType, LinkedList<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList, HttpServletResponse response);
 
     /**
      * 根据来源id查询发货单
@@ -486,4 +489,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param id
      */
     void deleteSoB2cDelivery(String id);
+
+    /**
+     * 打印物流面单确认分页查询
+     * @param dto
+     * @param response
+     * @return
+     */
+    PagingVO<String> printLogisticsBillConfirmPaging(PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response);
 }

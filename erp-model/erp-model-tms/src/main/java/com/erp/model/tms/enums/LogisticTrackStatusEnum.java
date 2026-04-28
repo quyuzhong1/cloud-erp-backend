@@ -29,13 +29,18 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
     MANUAL_COMPLETE("manualComplete","手动完结", Constants.RECEIVED,"已签收"),
     SYSTEM_COMPLETE("systemComplete","系统完结", Constants.RECEIVED,"已签收"),
     MAYBE_EXCEPTION("maybeException","可能异常","trackException","运输异常"),
+    RETURNED("returned", "快递退回", Constants.TRACK_ING1, "运输途中"),
     TRANSPORT_LONG("transportLong","运输过久","trackException","运输异常"),
     /**
      * 海运
      */
     OCEAN_TRACK_ING("oceanTrackIng","运输中", Constants.TRACK_ING1,"运输中"),
     OCEAN_ARRIVE("oceanArrive","已到港","arrive","已到港"),
-    OCEAN_HOLD("oceanHold","查验中","hold","查验中")
+    OCEAN_HOLD("oceanHold","查验中","hold","查验中"),
+    /**
+     * 暂不查询（未配置查询配置时使用）
+     */
+    NOT_QUERY("notQuery","暂不查询","notQuery","暂不查询")
     ;
 
 

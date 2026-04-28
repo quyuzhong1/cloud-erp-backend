@@ -99,7 +99,14 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@date 2023-11-20
      */
     Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto);
-
+    /**
+     * 获取物流商树形结构
+     *@parms
+     *@return
+     *@author yl
+     *@date 2023-12-05
+     */
+    List<LogisticsSupplierDTO.ListChildTreeDTO> tree();
     /**
      * 获取物流商树形结构
      *@parms
@@ -107,7 +114,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@author yl
      *@date 2023-12-05
      */
-    List<LogisticsSupplierDTO.ListChildTreeDTO> tree();
+    List<LogisticsSupplierDTO.ListChildTreeDTO> listSupplierTree(LogisticsSupplierDTO.SelectDTO dto);
     /**
      * @description: 查询渠道
      * @author Will
@@ -131,4 +138,6 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
     PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
 
     PagingVO<LogisticsSupplierDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsSupplierDTO.SelectDTO> dto);
+
+    List<BaseDropDownDTO.DisabledDTO> listWithAll(Boolean filterDisabled);
 }

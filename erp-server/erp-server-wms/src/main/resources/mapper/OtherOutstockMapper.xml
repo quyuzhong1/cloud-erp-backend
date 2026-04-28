@@ -38,6 +38,8 @@
     <select id="paging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select
             oo.id,
+            oo.usage,
+            oo.remark,
             ood.id as detailId,
             oo.code,
             oo.type,
@@ -64,8 +66,8 @@
             oo.source_code as sourceCode,
             ood.remark as detailRemark
         from other_outstock oo
-        inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
-        inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
+        left join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
+        left join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and  oo.is_deleted = false
@@ -125,6 +127,8 @@
         select
             oo.id,
             ood.id as detailId,
+            oo.remark,
+            oo.usage,
             oo.code,
             oo.type,
             oo.out_type as outType,

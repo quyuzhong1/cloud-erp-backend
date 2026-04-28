@@ -214,6 +214,21 @@ public class DmpOutputTaskJob {
 		}
 		log.warn("归档中台输出任务无记录数据结束");
 		
+		beforeDay = 180;
+		size = 10000;
+		if(parseObject != null) {
+			beforeDay = parseObject.getInteger("fdsDay");
+			size = parseObject.getInteger("fdsSize");
+		}
+		log.warn("归档中台删除归档文件开始");
+		try {
+			dmpOutputTaskRecordService.dmpFdsDeleteHisFile(DateUtil.formatDateTime(DateUtil.offsetDay(now, beforeDay*-1)), size.toString());
+		} catch (Exception e) {
+			log.error("归档中台删除归档文件失败：" , e);
+			DmpHandlerUtils.sendFeiShuMsg("归档中台删除归档文件失败：" + "【" + e.getMessage() + "】");
+		}
+		log.warn("归档中台删除归档文件结束");
+		
 		return ReturnT.SUCCESS;
 	}
 
@@ -250,7 +265,11 @@ public class DmpOutputTaskJob {
 	
 	@XxlJob("outputErrorCountMsg")
 	public ReturnT outputErrorCountMsg(){
-		dmpOutputUtils.outputErrorCountMsg();
+		String jobParam = XxlJobHelper.getJobParam();
+		if(StringUtils.isBlank(jobParam)) {
+			jobParam = " and 1 = 1 ";
+		}
+		dmpOutputUtils.outputErrorCountMsg(jobParam);
 		return ReturnT.SUCCESS;
 	}
 }

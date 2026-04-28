@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
@@ -12,10 +13,14 @@ import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -353,9 +358,17 @@ public class SoB2cDeliveryDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
 
     }
 
@@ -875,6 +888,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String logisticsChannelName;
         /**
+         * 纸张大小
+         */
+        private String paperSize;
+        /**
          * 订单编号
          */
         private String soCode;
@@ -978,7 +995,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 详情
          */
-        private List<PrintLogisticsWaybillDetailDTO> detailList;
+        private LinkedList<PrintLogisticsWaybillDetailDTO> detailList;
     }
 
     /**

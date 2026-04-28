@@ -279,4 +279,34 @@ public class VirtualWarehouseAllocationDetailDTO implements Serializable {
          */
         private LocalDate handleDate;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class RepeatHandleDetailDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 出库实体仓id
+         */
+        private String warehouseId;
+         /**
+          * 出库虚拟仓id
+          */
+        private String virtualWarehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
 }

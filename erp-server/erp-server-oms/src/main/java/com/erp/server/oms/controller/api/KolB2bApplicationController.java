@@ -4,6 +4,7 @@ package com.erp.server.oms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -75,6 +76,21 @@ public class KolB2bApplicationController extends BaseController {
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated KolB2bApplicationDTO.UpdateDTO dto) {
         kolB2bApplicationService.update(dto);
+        return success();
+    }
+
+    /**
+     * 更新明细备注
+     */
+    @PostMapping("/updateDetailRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "B2B寄样申请明细备注更新:备注={remark}", keyIdName = "detailId")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "oms:kolB2bApplication:update",
+//            serviceClass = KolB2bApplicationService.class,
+//            keyIdName = "id")
+    public ApiResult<?> updateDetailRemark(@RequestBody @Validated KolB2bApplicationDTO.UpdateDetailRemarkDTO dto) {
+        kolB2bApplicationService.updateDetailRemark(dto.getId(), dto.getDetailId(), dto.getRemark());
         return success();
     }
 
@@ -353,7 +369,7 @@ public class KolB2bApplicationController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = kolB2bApplicationService.cancelProcess(id);
+                cancelResult = kolB2bApplicationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("B2B寄样申请主单撤回流程失败",e);
                 KolB2bApplicationEntity entity = idEntityMap.get(id);

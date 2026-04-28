@@ -14,21 +14,24 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
-import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
-import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +39,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -55,6 +56,15 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private WmsAttachmentService wmsAttachmentService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private SoInfoFeign soInfoFeign;
+    @Resource
+    private FileFeign fileFeign;
+
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
         //生成任务
@@ -112,15 +122,118 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
+
+        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(entity.getDeliveryWarehouseId());
+        if (Objects.nonNull(overseasProviderWarehouse)) {
+            req.setMappingWarehouseCode(overseasProviderWarehouse.getPlatformWarehouseCode());
+        }
+
         List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO.convert(
                 entity.getWarehouseOperationType(),
                 entity.getOperationDesc()
         );
+        if (!req.getItems().isEmpty()) {
+            List<String> soDetailIds = detailEntityList.stream().map(B2bThirdDeliveryDetailEntity::getSoDetailId).collect(Collectors.toList());
+            List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByIds(soDetailIds);
+
+            if (!soDetails.isEmpty()) {
+                // 创建 soDetailId 到 platformSkuNo 的映射
+                Map<String, String> soDetailSkuMap = soDetails.stream()
+                        .collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getPlatformSkuNo));
+
+                // 创建 detailId 到 soDetailId 的映射
+                Map<String, String> detailSoDetailMap = detailEntityList.stream()
+                        .collect(Collectors.toMap(B2bThirdDeliveryDetailEntity::getId, B2bThirdDeliveryDetailEntity::getSoDetailId));
+
+                for (ThirdWarehouseCreateFbaOutboundReq.Item item : req.getItems()) {
+                    String detailId = item.getId();
+
+                    // 找到对应的 soDetailId
+                    String soDetailId = detailSoDetailMap.get(detailId);
+                    if (soDetailId != null) {
+                        // 从映射中获取 platformSkuNo
+                        String platformSkuNo = soDetailSkuMap.get(soDetailId);
+                        if (platformSkuNo != null) {
+                            item.setSkuNo(platformSkuNo);
+                        }
+                    }
+                    item.setPlatformSkuNo(item.getWarehousePlatformSku());
+                }
+            }
+        }
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
-        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null);
+        LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(entity.getLogisticsChannelId());
+        if(Objects.nonNull(logisticsChannelEntity)){
+            req.setIsInsurance(logisticsChannelEntity.getIsApiInsurance());
+            req.setIsSignature(logisticsChannelEntity.getIsApiSign());
+        }
+        fillAttachmentInfo(req, attachmentList);
         return BeanUtil.beanToMap(req);
+    }
+
+    private void fillAttachmentInfo(ThirdWarehouseCreateFbaOutboundReq req, List<WmsAttachmentDTO.UpdateDTO> attachmentList) {
+        if (CollUtil.isEmpty(attachmentList)) {
+            return;
+        }
+        WmsAttachmentDTO.UpdateDTO attachment = attachmentList.get(0);
+        if (Objects.isNull(attachment) || StrUtil.isBlank(attachment.getAttachUrl())) {
+            return;
+        }
+        String fileName = attachment.getAttachName();
+        req.setFileName(fileName);
+        req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
+
+        byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        if (Objects.isNull(bytes) || bytes.length == 0) {
+            log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
+            return;
+        }
+        bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
+        req.setFileBase64(Base64.getEncoder().encodeToString(bytes));
+    }
+
+    private byte[] cleanAttachmentBytes(byte[] bytes, String fileName, String fileUrl, String sourceId) {
+        String extension = StrUtil.blankToDefault(FileUtil.getFileExtension(fileName), FileUtil.getFileExtension(fileUrl));
+        if ("pdf".equalsIgnoreCase(extension)) {
+            return trimLeadingBytes(bytes, new byte[]{'%', 'P', 'D', 'F', '-'}, fileName, sourceId);
+        }
+        if ("xlsx".equalsIgnoreCase(extension) || "docx".equalsIgnoreCase(extension)) {
+            return trimLeadingBytes(bytes, new byte[]{'P', 'K'}, fileName, sourceId);
+        }
+        return bytes;
+    }
+
+    private byte[] trimLeadingBytes(byte[] bytes, byte[] magic, String fileName, String sourceId) {
+        int index = indexOf(bytes, magic);
+        if (index <= 0) {
+            if (index < 0) {
+                log.warn("B2B三方发货单附件文件头未匹配, sourceId={}, fileName={}", sourceId, fileName);
+            }
+            return bytes;
+        }
+        log.warn("B2B三方发货单附件存在前置脏字节，已裁剪, sourceId={}, fileName={}, offset={}", sourceId, fileName, index);
+        return Arrays.copyOfRange(bytes, index, bytes.length);
+    }
+
+    private int indexOf(byte[] bytes, byte[] magic) {
+        if (Objects.isNull(bytes) || Objects.isNull(magic) || bytes.length < magic.length) {
+            return -1;
+        }
+        for (int i = 0; i <= bytes.length - magic.length; i++) {
+            boolean matched = true;
+            for (int j = 0; j < magic.length; j++) {
+                if (bytes[i + j] != magic[j]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched) {
+                return i;
+            }
+        }
+        return -1;
     }
     /**
      * @param operate
@@ -184,6 +297,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setSourceId(entity.getId());
         req.setSourceCode(entity.getCode());
         req.setSoCode(entity.getSoCode());
+        req.setRemark(entity.getRemark());
         return BeanUtil.beanToMap(req);
     }
 }

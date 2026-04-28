@@ -14,26 +14,34 @@ public class InventoryTransactionSynchronizationAdapter extends TransactionSynch
 	 */
 	private String transactionId;
 	
+	/**
+	 * 分布式事务下，本地事务不需要注册提交事务，等分布式事务最终提交
+	 */
+	private boolean needCommit = true;
+	
 	public void setTransactionId(String transactionId) {
 		this.transactionId = transactionId;
+	}
+	public void setNeedCommit(boolean needCommit) {
+		this.needCommit = needCommit;
 	}
 
 	@Override
 	public void afterCompletion(int status) {
 		InventoryTransactionService bean = ApplicationContextUtils.getBean(InventoryTransactionService.class);
 		if (status == STATUS_COMMITTED) {
-			bean.commitRedis(transactionId , true);
+			if(needCommit) {
+				bean.commitRedis(transactionId , true);
+			}
 		}else {
 			bean.rollbackRedis(transactionId);
 		}
 	}
 	
 	public static void register(String transactionId) {
-		if(RootContext.inGlobalTransaction()) {
-			return;
-		}
 		InventoryTransactionSynchronizationAdapter synchronization = new InventoryTransactionSynchronizationAdapter();
 		synchronization.setTransactionId(transactionId);
+		synchronization.setNeedCommit(!RootContext.inGlobalTransaction());
 		if(TransactionSynchronizationManager.isActualTransactionActive()) {
 			TransactionSynchronizationManager.registerSynchronization(synchronization);
 		}else {

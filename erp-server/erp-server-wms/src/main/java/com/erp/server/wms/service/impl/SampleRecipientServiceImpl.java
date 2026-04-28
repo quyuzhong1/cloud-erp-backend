@@ -17,6 +17,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.core.utils.*;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -632,6 +633,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         .map(detail -> {
                             SampleRecipientDTO.ProductDTO dto = new SampleRecipientDTO.ProductDTO();
                             dto.setSkuId(detail.getSkuId());
+                            dto.setSkuNo(detail.getSkuNo());
                             dto.setQuantity(detail.getRecipientQty());
                             return dto;
                         })
@@ -1404,6 +1406,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 userIdSet.add(dto.getWarehouseChargeId());
             }
         });
+        List<String> deptIdList = list.stream()
+                .map(SampleRecipientDTO.ListDTO::getDeptId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SysDepartmentEntity> sysDepartmentEntityList = sysUserFeign.getDeptByIds(deptIdList);
+        Map<String, String> deptNameMap = sysDepartmentEntityList.stream()
+                .collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName, (v1, v2) -> v1));
+
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
         // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
@@ -1416,6 +1427,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
+            data.setDeptName(deptNameMap.getOrDefault(data.getDeptId(),""));
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setUsage(usageNameMap.getOrDefault(data.getUsage(), ""));
@@ -1658,26 +1670,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     /**
      * 校验领用数量（新增和修改场景通用）
-     * 实时库存-冻结库存-领用数量>0，否则报错"可领用库存不足"
+     * 可领用库存 = 实体仓未分配虚拟仓库库存 = 实体仓可用库存 + 冻结库存 - 虚拟仓实际库存
+     * 可领用库存 - 总领用数量 >= 0，否则报错"可领用库存不足"
      */
     private void validateRecipientQuantity(String warehouseId, List<SampleRecipientDTO.ProductDTO> detailList) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
-
-        // 构建库存查询参数
-        List<InventoryDTO.InventoryBySkuIdAndWarehouseDTO> inventoryParams = new ArrayList<>();
-        for (SampleRecipientDTO.ProductDTO detail : detailList) {
-            InventoryDTO.InventoryBySkuIdAndWarehouseDTO param = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
-            param.setWarehouseId(warehouseId);
-            param.setSkuId(detail.getSkuId());
-            inventoryParams.add(param);
-        }
-
-        // 查询库存信息
-        List<InventoryDTO.InventoryViewQtyDTO> inventoryList = sampleRecipientEntity.getInventoryQty(inventoryParams);
-        Map<String, InventoryDTO.InventoryViewQtyDTO> inventoryMap = inventoryList.stream()
-            .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item, (existing, replacement) -> existing));
 
         // 按SKU分组累计数量
         Map<String, Integer> skuTotalQuantityMap = detailList.stream()
@@ -1691,32 +1690,28 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             String skuId = entry.getKey();
             Integer totalQuantity = entry.getValue();
             
-            InventoryDTO.InventoryViewQtyDTO inventory = inventoryMap.get(skuId);
-            if (inventory == null) {
-                // 从detailList中找到对应的SKU编号用于错误提示
-                String skuNo = detailList.stream()
-                    .filter(detail -> skuId.equals(detail.getSkuId()))
-                    .map(SampleRecipientDTO.ProductDTO::getSkuNo)
-                    .findFirst()
-                    .orElse(skuId);
+            // 从detailList中找到对应的SKU编号用于错误提示
+            String skuNo = detailList.stream()
+                .filter(detail -> skuId.equals(detail.getSkuId()))
+                .map(SampleRecipientDTO.ProductDTO::getSkuNo)
+                .findFirst()
+                .orElse(skuId);
+            
+            // 使用getRecipientAvailableQty方法获取可领用库存（实体仓可用+冻结-虚拟仓实际库存）
+            Integer recipientAvailableQty = sampleRecipientEntity.getRecipientAvailableQty(warehouseId, skuId);
+            if (recipientAvailableQty == null) {
                 throw new ServiceException(String.format("SKU【%s】在仓库【%s】中不存在库存信息", skuNo, warehouseId));
             }
 
-            // 计算可领用库存：可用库存 - 总领用数量
-            int availableQty = inventory.getUsableQty() - totalQuantity;
-            if (availableQty < 0) {
-                // 从detailList中找到对应的SKU编号用于错误提示
-                String skuNo = detailList.stream()
-                    .filter(detail -> skuId.equals(detail.getSkuId()))
-                    .map(SampleRecipientDTO.ProductDTO::getSkuNo)
-                    .findFirst()
-                    .orElse(skuId);
-                throw new ServiceException(String.format("SKU【%s】可领用库存不足，可用库存：%d，总领用数量：%d", 
-                    skuNo, inventory.getUsableQty(), totalQuantity));
+            // 计算剩余可领用库存：可领用库存 - 总领用数量
+            int remainingQty = recipientAvailableQty - totalQuantity;
+            if (remainingQty < 0) {
+                throw new ServiceException(String.format("SKU【%s】可领用库存不足，可领用库存：%d，总领用数量：%d", 
+                    skuNo, recipientAvailableQty, totalQuantity));
             }
 
-            log.info("SKU【{}】库存校验通过，可用库存：{}，总领用数量：{}，剩余可领用库存：{}", 
-                skuId, inventory.getUsableQty(), totalQuantity, availableQty);
+            log.info("SKU【{}】库存校验通过，可领用库存：{}，总领用数量：{}，剩余可领用库存：{}", 
+                skuNo, recipientAvailableQty, totalQuantity, remainingQty);
         }
 
 
@@ -2558,7 +2553,17 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setReceiveOrgId(sampleRecipient.getPickOrgId()); // 领料组织ID
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
             addDTO.setProcessApplyCode(firstItem.getSourceCode()); // 流程申请单号：样品领用单号
-            addDTO.setRemark("样品领用单【下推】其他出库单"); // 备注
+            addDTO.setRemark(sampleRecipient.getUsageDesc()); // 备注
+            // 用途：从字典获取中文名称
+            if (StringUtils.isNotBlank(sampleRecipient.getUsage())) {
+                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                Map<String, String> usageNameMap = usageDictList.stream()
+                        .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                String usageCn = usageNameMap.getOrDefault(sampleRecipient.getUsage(), sampleRecipient.getUsage());
+                addDTO.setUsage(usageCn);
+            } else {
+                addDTO.setUsage("");
+            }
             
             // 构建客户信息
             OtherOutstockCustomerDTO.AddDTO customerDTO = new OtherOutstockCustomerDTO.AddDTO();

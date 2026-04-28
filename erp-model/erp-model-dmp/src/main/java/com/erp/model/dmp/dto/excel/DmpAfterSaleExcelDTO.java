@@ -33,6 +33,11 @@ public class DmpAfterSaleExcelDTO implements Serializable {
         private String platformCode;
 
         /**
+         * 售后人员名称
+         */
+        private String csAgentName;
+
+        /**
          * 审核状态
          */
 //        @ExcelProperty(value = "审核状态", index = 2)

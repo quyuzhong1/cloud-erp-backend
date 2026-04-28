@@ -8,7 +8,9 @@ import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 
@@ -256,10 +258,31 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
+    /**
+     * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
+     *
+     * @param dto 查询条件（含 lastId 游标、batchSize 批大小）
+     * @return 当前批次费用ID列表
+     * @author jack
+     * @date 2026-04-22
+     */
+    List<String> pageByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+
+    /**
+     * 统计可下推分摊的费用总条数
+     *
+     * @param dto 查询条件
+     * @return 总条数
+     * @author jack
+     * @date 2026-04-22
+     */
+    int countByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+
     void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 
+    void confirmImport(String key, String code, LocalDateTime dateTime);
     /**
      * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
      *

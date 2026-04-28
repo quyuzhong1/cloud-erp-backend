@@ -136,10 +136,11 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
             }
 
             //获取到所有客户的产品id
-            List<com.sdk.oms.tiktok.dto.tiktok.order.OrdersBean> ordersBeans = orderDTO.getData().getOrders().stream()
-                    .filter(req -> !"UNPAID".equalsIgnoreCase(req.getStatus())
-                            && !"ON_HOLD".equalsIgnoreCase(req.getStatus())
-                    ).distinct().collect(Collectors.toList());
+//            List<com.sdk.oms.tiktok.dto.tiktok.order.OrdersBean> ordersBeans = orderDTO.getData().getOrders().stream()
+//                    .filter(req -> !"UNPAID".equalsIgnoreCase(req.getStatus())
+//                            && !"ON_HOLD".equalsIgnoreCase(req.getStatus())
+//                    ).distinct().collect(Collectors.toList());
+            List<com.sdk.oms.tiktok.dto.tiktok.order.OrdersBean> ordersBeans = orderDTO.getData().getOrders();
 
 
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

@@ -33,6 +33,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
@@ -113,6 +114,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     
     @Resource
     private DmpInputTaskService dmpInputTaskService;
+    
+    @Resource
+    private DmpInputTaskFileHisService dmpInputTaskFileHisService;
     
     @Resource
     private DmpInputFileMongoRelationService dmpInputFileMongoRelationService;
@@ -689,6 +693,28 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 			this.getBaseMapper().dmpInputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
 		}
 	}
+	
+	@Override
+	public void dmpFdsDeleteHisFile(String beforeUpdateTime, String size) {
+		List<DmpInputTaskFileHisEntity> list = dmpInputTaskFileHisService.lambdaQuery()
+				.ne(DmpInputTaskFileHisEntity::getFileUrl, "")
+				.lt(DmpInputTaskFileHisEntity::getUpdateTime, beforeUpdateTime)
+				.last(" limit " + size + " ")
+				.select(DmpInputTaskFileHisEntity::getId , DmpInputTaskFileHisEntity::getFileUrl)
+				.list();
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<DmpInputTaskFileHisEntity>> partition = Lists.partition(list, 1000);
+		for(List<DmpInputTaskFileHisEntity> p : partition) {
+			FastDFSClientUtil.deleteBatchFile(p.stream().map(DmpInputTaskFileHisEntity::getFileUrl).collect(Collectors.toList()));
+			dmpInputTaskFileHisService.lambdaUpdate()
+			.in(DmpInputTaskFileHisEntity::getId, p.stream().map(DmpInputTaskFileHisEntity::getId).collect(Collectors.toList()))
+			.set(DmpInputTaskFileHisEntity::getFileUrl, "")
+			.update();
+		}
+	}
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
@@ -760,8 +786,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
 	@Override
-	public List<String> outputErrorCountMsg() {
-		return baseMapper.outputErrorCountMsg();
+	public List<String> outputErrorCountMsg(String conditionSql) {
+		return baseMapper.outputErrorCountMsg(conditionSql);
 	}
 
     @Override
@@ -794,7 +820,16 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         if (CollectionUtils.isEmpty(sourceCodeList)) {
             return Boolean.FALSE;
         }
-
+        List<DmpOutputTaskRecordEntity> historyList = this.lambdaQuery()
+                .select(DmpOutputTaskRecordEntity::getSourceCode)
+                .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
+                .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+                .list();
+        //过滤已完结的任务记录
+        sourceCodeList = sourceCodeList.stream().filter(v-> historyList.stream().noneMatch(history->history.getSourceCode().equals(v))).collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceCodeList)) {
+            return Boolean.TRUE;
+        }
         //校验是否存在黑名单
 //        checkExistsBlack(ids);
         remark = "无需同步原因：" + remark + "，推送失败原因：";
@@ -803,6 +838,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
                 .setSql(" response_data = ('" + remark + "' || response_data) " )
                 .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
+                .ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
                 .update();
     }
 

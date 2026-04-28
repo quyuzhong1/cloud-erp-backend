@@ -94,10 +94,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException("正在申请授权中");
         }
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
-//        String grantOptions = "per-user";
-        // 离线模式：token无过期
-        String grantOptions = "offline-access";
-        return String.format(cfgAppClient.getUrl(), fullDomain, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
+        return String.format(cfgAppClient.getUrl(), fullDomain, cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
     }
 
     /**

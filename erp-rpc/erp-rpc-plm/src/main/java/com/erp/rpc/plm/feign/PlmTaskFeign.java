@@ -155,6 +155,14 @@ public interface PlmTaskFeign {
     List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds);
 
     /**
+     * 根据skuNo 集合获取到产品包装信息
+     * @param skuNos
+     * @return
+     */
+    @PostMapping("feign/product/getProductPackBySkuNos")
+    List<ProductVO.ProductPackVO> getProductPackBySkuNos(@RequestBody List<String> skuNos);
+
+    /**
      * 根据用户获取各任务阶段数量
      *
      * @param optionUserId optionUserId
@@ -224,8 +232,8 @@ public interface PlmTaskFeign {
      * @param
      * @return 新增结果
      */
-    @PostMapping("feign/plmWorkOption/productChangeApprove")
-    void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
+    @PostMapping("feign/plmWorkOption/bomChangeApprove")
+    void bomChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
 
     /**
      * @param skuIds
@@ -586,6 +594,17 @@ public interface PlmTaskFeign {
     List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds);
 
     /**
+     * 根据sku编码 集合获取到sku分类信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author will
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuPurchaseBySkuNos")
+    List<SkuVO> listSkuPurchaseBySkuNos(@RequestBody List<String> skuNos);
+
+    /**
      * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息+采购信息）
      *
      * @param skuIds
@@ -740,4 +759,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/moldRefSkuApprove")
     void moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto);
+
+    /**
+     * 根据金蝶id查询sku
+     */
+    @PostMapping("feign/productDetail/getSkuBySyncKingdeeId")
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
 }

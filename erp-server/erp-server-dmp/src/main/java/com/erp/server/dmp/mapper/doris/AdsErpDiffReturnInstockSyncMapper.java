@@ -1,6 +1,7 @@
 package com.erp.server.dmp.mapper.doris;
 import java.util.List;
 
+import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -56,4 +57,6 @@ public interface AdsErpDiffReturnInstockSyncMapper extends BaseMapper<AdsErpDiff
     AdsErpDiffReturnInstockSyncDTO.TotalDTO total(@Param("params") AdsErpDiffReturnInstockSyncDTO.PagingParamDTO params);
     
     void updateDws(@Param("params") List<AdsErpDiffReturnInstockSyncEntity> params);
+
+    void updateSuggestType(@Param("params") AdsErpDiffOutstockSyncDTO.UpdateSuggestTypeParamsDTO updateSuggestTypeParamsDTO);
 }

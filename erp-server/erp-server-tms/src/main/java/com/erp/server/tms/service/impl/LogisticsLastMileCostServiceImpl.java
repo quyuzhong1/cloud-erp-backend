@@ -145,6 +145,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      */
     private LinkedList<String> getHeaderNameList() {
         LinkedList<String> headerNameList = new LinkedList<>();
+        headerNameList.add("物流商");
         headerNameList.add("平台订单号");
         headerNameList.add("销售订单号");
         headerNameList.add("发货订单号");
@@ -168,6 +169,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      */
     private JSONObject getHeaderNameJsonObject() {
         JSONObject jsonObject = new JSONObject();
+        jsonObject.set("物流商","logisticsSupplierName");
         jsonObject.set("平台订单号","platformCode");
         jsonObject.set("销售订单号","soCode");
         jsonObject.set("发货订单号","soDeliveryCode");
@@ -381,6 +383,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 logisticsBillCostEntity = logisticsBillCost.get(0);
 
                 LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO,updateList, errorList, jsonObject, errorIndex, cfgCostList);
+                //对账月份
+                updateDataDTO.setReconciliationMonth(reconciliationMonth);
                 updateDataDTO.setCostDetailList(updateList);
                 BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE);
                 pairList.add(new Pair<>(update.getId(),confirmTime));
@@ -450,6 +454,11 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
             }
         }
+        //订单类型默认其他
+        if (CharSequenceUtil.isBlank(addDTO.getOrderType())) {
+            addDTO.setOrderType(OrderTypeEnum.OTHER.getCode());
+        }
+
         addDTO.setSourceCode(excelDTO.getSoCode());
         addDTO.setPlatformCode(excelDTO.getPlatformCode());
         addDTO.setSoDeliveryCode(excelDTO.getSoDeliveryCode());

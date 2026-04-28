@@ -104,7 +104,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @param params
      * @return ListDTO
      */
-    List<LogisticsBillCostDTO.ListDTO> listTotalCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
+    LogisticsBillCostDTO.TotalCountDTO listTotalCostValueCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
 
     List<String> listByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
 
@@ -128,4 +128,12 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @date 2026-04-22
      */
     Integer countByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+    /**
+     * 查询计费重合计
+     * @author will
+     * @date 2026/4/15 10:53
+     * @param params
+     * @return java.math.BigDecimal
+     */
+    BigDecimal listTotalBillingWeightLogisticsCount(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
 }

@@ -19,6 +19,8 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -354,8 +356,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean platformWarehouseOrderHandle(String id , Map<String,Object> map);
 
-  
-    /** 
+
+    SoB2cDTO.RuleResultDTO warehouseRuleNotRequiresNew(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
+
+    /**
      * @description 正常订单拉取处理规则
      * @param id
      * @author Lambda
@@ -514,6 +518,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
 
+    SoB2cDTO.RuleResultDTO logisticsRuleNotRequiresNew(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
+
     /**
      * 获取客户信息
      * @description
@@ -558,6 +564,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2024-01-03 17:37
      */
     Boolean updateWarehouseByShopId(String id, String shopId);
+
+    /**
+     * 重新按TikTok平台仓库映射回填订单仓库
+     */
+    Boolean updateTikTokOrderWarehouse(String soId);
 
     /**
      * 撤销流程
@@ -900,6 +911,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
     SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
 
+    Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
+            , SoB2cDetailDTO.ListDTO detailDTO, List<String> ignoreInventorySkuIds);
+
+    void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
+            , SoB2cDetailDTO.DetailLabelDTO detailLabelDTO, SoB2cDetailDTO.ListDTO detailDTO);
+
     /**
      * 校验是否缺货状态
      *
@@ -989,6 +1006,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
 
     List<SoB2cEntity> getByPlatformCode(String platformCode);
+
+    List<SoB2cEntity> getByShippingOrderNo(String shippingOrderNo);
 
     /**
      * 更换发货sku预览
@@ -1152,7 +1171,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     BatchResultDTO retryPackagePlan(String soId);
 
-    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse);
+    void lockDeliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, List<BatchResultDTO> resultDTOList);
+
+    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse,SoB2cEntity oldSoB2cEntity);
     /**
      * 1,创建订单
      * 2,匹配订单规则
@@ -1165,4 +1186,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
 
     void retryPlatformOutbound( List<String> ids);
+
+    void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
 }

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -20,6 +21,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -586,6 +588,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.FIRST_MILE_WEIGHT_ALLOCATION_KEY,keyName = "logisticsBillId",waiteTime = 60)
     public BatchResultDTO add(String logisticsBillId) throws InterruptedException {
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
@@ -660,9 +663,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
         }
         if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())
+                || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode())
                 || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode())
                 || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode())){
-            //备货FBA仓：取FBA货件单号
+            //备货FBA/FBT/AWD/速卖通仓：取货件单号
             String fbaShipmentCode = firstMileDeliveryDetailList.get(0).getFbaShipmentCode();
             weightAllocationDTO.setBusinessCode(fbaShipmentCode);
         }

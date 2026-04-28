@@ -28,7 +28,10 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
@@ -918,6 +921,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if(mappingList.isEmpty()){
             return;
         }
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            log.warn("采购入库单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getDeliveryWarehouseId());
+            return;//存在库存同步的配置则不再推送旺店通
+        }
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
@@ -1038,7 +1046,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if(mappingList.isEmpty()){
             return;
         }
-
+        List<ThirdMappingDTO.WarehouseMappingDTO> collect = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            log.warn("采购入库单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), entity.getDeliveryWarehouseId());
+            return;//存在库存同步的配置则不再推送旺店通
+        }
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
         for (PoInstockDetailEntity detailEntity : detailList) {
             CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
@@ -2169,21 +2181,42 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (CollectionUtils.isEmpty(subDetailList)) {
                     throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
                 }
+                //获取委外订单
+                List<String> subIdList = subDetailList.stream().map(item -> item.getMainId()).collect(Collectors.toList());
+                List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(subIdList);
+                if (subcontractOrderList.isEmpty()) {
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+                }
+
                 List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (SubcontractOrderDetailEntity childSubDetail : subDetailList) {
                     SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
                     addDetailDTO.setSubcontractOrderDetailId(childSubDetail.getId());
                     addDetailDTO.setSourceDetailId(detailEntity.getId());
-                    //父级SKU和子级SKU之间的用量
-                    Integer quantity = bomList.stream()
-                            .filter(obj -> childSubDetail.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(childSubDetail.getSkuId()) && obj.getParentSkuId().equals(detailEntity.getSkuId()))
-                            .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(quantity)) {
-                        throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
+
+                    SubcontractOrderEntity subcontractOrder = subcontractOrderList.stream()
+                            .filter(item -> Objects.equals(item.getId(), childSubDetail.getMainId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (Objects.isNull(subcontractOrder)) {
+                        throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
                     }
-                    addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
-                    addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
-                    addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
+                    if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+                        addDetailDTO.setIssueQty(detailEntity.getStockInQty());
+                        addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
+                        addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
+                    } else {
+                        //父级SKU和子级SKU之间的用量
+                        Integer quantity = bomList.stream()
+                                .filter(obj -> childSubDetail.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(childSubDetail.getSkuId()) && obj.getParentSkuId().equals(detailEntity.getSkuId()))
+                                .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
+                        if (ObjectUtils.isEmpty(quantity)) {
+                            throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
+                        }
+                        addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
+                        addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
+                        addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
+                    }
                     detailList.add(addDetailDTO);
                 }
                 addDTO.setDetailList(detailList);
