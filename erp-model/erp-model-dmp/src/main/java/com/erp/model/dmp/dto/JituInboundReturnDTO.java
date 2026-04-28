@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class JituInboundReturnDTO implements Serializable {
      */
     private String orderType;
     //确认类型 支持入库单多次收货(多次收货后确认时: 0:表示入库单最终状态确认，全量回传； 1:表示入库单中间状态确认，增量回传； 特殊情况:同一入库单;如果先收到0;后又收到1;允许修改收货的数量)
-    private String confirmType;
+    private Integer confirmType;
     //入库单备注
     private String remark;
     //入库单状态 (NEW-未开始处理; ACCEPT-仓库接单; PARTFULFILLED-部分收货完成; FULFILLED-收货完成; EXCEPTION-异常; CANCELED-取消; 只传英文编码)
@@ -72,9 +73,9 @@ public class JituInboundReturnDTO implements Serializable {
         //库存类型：ZP/CC，默认ZP
         private String inventoryType;
         //生产日期：YYYY-MM-DD
-        private String productDate;
+        private LocalDate productDate;
         //失效日期：YYYY-MM-DD
-        private String expireDate;
+        private LocalDate expireDate;
         //生产批号
         private String produceCode;
         //批次编码
@@ -94,9 +95,9 @@ public class JituInboundReturnDTO implements Serializable {
             //库存类型 ZP/CC,默认ZP
             private String inventoryType;
             //生产日期
-            private String productDate;
+            private LocalDate productDate;
             //过期日期
-            private String expireDate;
+            private LocalDate expireDate;
             //生产批号
             private String produceCode;
             //批次编码

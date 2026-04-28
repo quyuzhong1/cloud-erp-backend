@@ -34,6 +34,7 @@ public class JituOutboundHandler implements WebhookHandler{
         String requestId = jsonObject.getStr("requestId");
         log.warn("webhook 获取极兔出库单数据,{}",data);
 //        try {
+
 //            ThirdWarehouseContext.setData(data);
 //            DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
 //            dmpInputHotfixCreateRequest.setCfgInputId("1938157629872288000");
