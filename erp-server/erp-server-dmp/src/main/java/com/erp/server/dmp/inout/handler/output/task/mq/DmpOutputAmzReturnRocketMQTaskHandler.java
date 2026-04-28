@@ -104,7 +104,7 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
         }
         PlatformReturnOrderDTO dto = new PlatformReturnOrderDTO();
         BeanUtils.copyProperties(dmpEntity, dto);
-        dto.setUniqueId(CharSequenceUtil.format("return_{}_{}_{}", dmpEntity.getThirdCode(), dmpEntity.getSourceId(), dmpEntity.getBatchNo()));
+        dto.setUniqueId(dmpDetailList.get(0).getThirdDetailId());
         dto.setPlatformReturnNo(dmpEntity.getThirdCode());
         dto.setPlatformOrderNo(resolvePlatformOrderNo(dmpEntity));
         dto.setReason(dmpEntity.getRemark());

@@ -24,6 +24,8 @@ import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
+import com.erp.model.tms.enums.TrackPlatformTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
@@ -266,17 +268,17 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records, String transportType, List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList) {
+    public List<LogisticsBillDetailDTO.BillDetailDTO> processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records, String transportType, List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList) {
         if (CollectionUtils.isEmpty(records)){
-            return;
+            return Collections.emptyList();
         }
         LogisticsService service = logisticsRegistry.getHandler(platformType);
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
         if (CollectionUtils.isEmpty(mapList)) {
-            return;
+            return Collections.emptyList();
         }
         if (CollectionUtils.isEmpty(records)) {
-            return;
+            return Collections.emptyList();
         }
         //查询过滤单号开头配置
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList("trackNoFilterPrefix"));
@@ -291,7 +293,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             listApiResult = processRegisterOceanData(mapList,record2s,service);
         }
         if (Objects.isNull(listApiResult)){
-            return;
+            return Collections.emptyList();
         }
         List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList = new ArrayList<>();
         List<LogisticsBillDetailDTO.BillDetailDTO> sucessList = new ArrayList<>();
@@ -323,6 +325,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (CollectionUtils.isNotEmpty(sucessList)){
             logisticsBillDetailService.updateRegisterStatusByParams(sucessList, 1);
         }
+        return sucessList;
     }
 
     private List<LogisticsTrackDTO.UpdateTrackDTO> buildRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records, List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList, List<String> prefixList) {
@@ -353,7 +356,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             }
             //处理供应商编码和手机号
 //            List<LogisticsThirdChannelRefDTO.PagingVO> collect = channelRefList.stream().filter(e -> e.getLogisticsChannelName().equals(record.getChannelName()) && !e.getDisabled()).collect(Collectors.toList());
-            List<LogisticsThirdChannelRefDTO.PagingVO> collect = channelRefList.stream().filter(e->Objects.equals(e.getId(),record.getCfgId())).collect(Collectors.toList());
+            List<LogisticsThirdChannelRefDTO.PagingVO> collect = channelRefList.stream().filter(e->Objects.equals(e.getId(),record.getThirdRefId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(collect)){
                 record.setTelNumber("");
                 record.setThirdSupplierCode("");
@@ -436,7 +439,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
-                    .courierCode(record.getThirdSupplierCode())
+                    .courierCode(record.getThirdChannelName())
                     .build());
         }
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
@@ -471,17 +474,111 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         return track;
     }
 
+    /**
+     * 批量更新物流轨迹信息（增强版：支持多平台自动识别、注册与分片同步）
+     * <p>
+     * 核心流程：按平台枚举逐一处理 → 查询待注册/已注册单据 → 尝试注册 → 将注册成功单据并入已注册池 → 分片同步轨迹
+     * <p>
+     * 注意：每轮平台的待同步任务池（readyToSync）必须在循环内独立构建，严禁提升至循环外共享，
+     * 否则会将其他平台的单据以错误的 platformType 调用接口，导致数据错乱。
+     * <p>
+     * ===================== 性能优化指南（dtos 数量较大时必读）=====================
+     * <p>
+     * 【优化点 1】渠道配置提前批量缓存（当前：N次 DB/Feign 查询 → 优化后：1次）
+     *   当前实现在每轮平台枚举内调用 listByPlatform()，导致有多少个平台枚举就发起多少次查询。
+     *   渠道配置属于低频变更的配置类数据，应在循环外一次性加载所有平台配置，
+     *   按 platformCode 分组为 Map&lt;String, List&lt;PagingVO&gt;&gt;，循环内直接 Map.get() 取用。
+     *   参考：logisticsThirdChannelRefService.listAll() + Collectors.groupingBy(PagingVO::getPlatform)
+     * <p>
+     * 【优化点 2】轨迹分片同步改为并行执行（当前：最坏 dtos.size() 次串行 HTTP → 优化后：并发执行）
+     *   当 batchSize=1（如快递100等平台）时，500条数据对应 500次串行 HTTP 请求，
+     *   按每次 800ms 估算总耗时约 400秒，在定时任务场景下极易触发超时或任务积压。
+     *   建议引入专用线程池（如 trackSyncExecutor），使用 CompletableFuture.supplyAsync()
+     *   并行提交所有分片任务，并统一设置超时（如 30s）防止单次 HTTP 无限阻塞。
+     *   注意：并行化后需确认下游接口的 QPS 限制，避免并发过高触发限流。
+     * <p>
+     * 【优化点 3】dtos 按平台预分组，减少 IN 查询数据量（当前：每平台查全量 trackNos）
+     *   当前实现将所有 trackNos 传入每个平台的 listWaitingRegisterByConfig() 查询，
+     *   若 DTO 本身已携带平台标识字段（如 trackQueryType），可提前按平台分组，
+     *   每轮查询只传入当前平台相关的 trackNos，大幅缩小 IN 子句的参数规模。
+     * =========================================================================
+     *
+     * @param dtos          待更新的轨迹数据列表
+     * @param transportType 运输类型（小包/海运），对应 {@link com.common.business.enums.LogisticsTransportTypeEnum}
+     * @return 更新结果清单
+     * @author jack
+     * @date 2026-04-02
+     */
     @Override
-    public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos,String transportType) {
-        if (CollectionUtils.isEmpty(dtos)){
+    public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos, String transportType) {
+        if (CollUtil.isEmpty(dtos)) {
             return Collections.emptyList();
         }
-        List<BatchResultDTO> dtoList = new ArrayList<>(dtos.size());
-        List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = Lists.partition(dtos, 100);
-        for (List<LogisticsTrackDTO.UpdateTrackDTO> entityList : partition) {
-            dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), entityList,transportType));
+
+        List<BatchResultDTO> resultList = new ArrayList<>(dtos.size());
+        // 提取所有有效跟踪单号，用于后续按平台统一查询（仅取 trackNo 字段，transportNo 由 service 层自行处理）
+        List<String> trackNos = dtos.stream()
+                .map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        for (TrackPlatformTypeEnum typeEnums : TrackPlatformTypeEnum.values()) {
+            // 【第一步】查询当前平台下所有待处理的单据（包含已注册与待注册两类）
+            LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                    .trackQueryMode(typeEnums.getCode())
+                    .trackNoList(trackNos)
+                    .trackEnable(true)
+                    .transportType(transportType)
+                    .build();
+            List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listWaitingRegisterByConfig(query, typeEnums.getCode());
+            log.warn("【{}】批量更新物流轨迹信息查询到：{} 条", typeEnums.getName(), list.size());
+
+            // 【第二步】按注册状态拆分：registerStatus=1 已注册，registerStatus=0 待注册
+            List<LogisticsTrackDTO.UpdateTrackDTO> registered = list.stream()
+                    .filter(e -> e.getRegisterStatus() == 1)
+                    .collect(Collectors.toList());
+            log.warn("【{}】批量更新物流轨迹信息查询到已注册数：{}", typeEnums.getName(), registered.size());
+
+            List<LogisticsTrackDTO.UpdateTrackDTO> unregistered = list.stream()
+                    .filter(e -> e.getRegisterStatus() == 0)
+                    .collect(Collectors.toList());
+            log.warn("【{}】批量更新物流轨迹信息查询到待注册数：{}", typeEnums.getName(), unregistered.size());
+
+            // 【第三步】对待注册单据执行注册动作，获取本轮注册成功的单据集合
+            List<LogisticsThirdChannelRefDTO.PagingVO> configs = logisticsThirdChannelRefService.listByPlatform(typeEnums.getCode());
+            List<LogisticsBillDetailDTO.BillDetailDTO> successList = processRegisterData(typeEnums.getCode(), unregistered, transportType, configs);
+
+            Set<String> successNos = CollUtil.isEmpty(successList) ? Collections.emptySet() :
+                    successList.stream().map(LogisticsBillDetailDTO.BillDetailDTO::getTrackNo).collect(Collectors.toSet());
+
+            // 将本轮注册成功的任务对象找出，用于后续轨迹同步（实现"即注册即查"）
+            List<LogisticsTrackDTO.UpdateTrackDTO> successTasks = unregistered.stream()
+                    .filter(m -> successNos.contains(m.getTrackNo()))
+                    .collect(Collectors.toList());
+
+            // 汇总本轮注册失败的结果：注册失败则无法查轨迹，直接标记失败并跳过
+            unregistered.stream()
+                    .filter(m -> !successNos.contains(m.getTrackNo()))
+                    .forEach(m -> resultList.add(BatchResultDTO.fail(m.getId(), m.getTrackNo(), typeEnums.getName() + "自动匹配平台注册失败")));
+
+            // 【第四步】构建本轮平台的待同步任务池：已注册单据 + 本轮注册成功单据
+            // 关键：readyToSync 为循环内局部变量，严禁提升至循环外，防止跨平台数据污染
+            List<LogisticsTrackDTO.UpdateTrackDTO> readyToSync = new ArrayList<>(registered.size() + successTasks.size());
+            readyToSync.addAll(registered);
+            readyToSync.addAll(successTasks);
+
+            if (CollUtil.isEmpty(readyToSync)) {
+                continue;
+            }
+            // Track123 支持批量查询（100条/批），快递100 等仅支持单次查询（1条/批,请求频率30次/秒）
+            int batchSize = LogisticsPlatformEnum.TRACK123.getCode().equals(typeEnums.getCode()) ? 100 : 30;
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> chunks = Lists.partition(readyToSync, batchSize);
+            for (List<LogisticsTrackDTO.UpdateTrackDTO> chunk : chunks) {
+                resultList.addAll(processTrackData(typeEnums.getCode(), chunk, transportType));
+            }
         }
-        return dtoList;
+        return resultList;
     }
 
     @Override

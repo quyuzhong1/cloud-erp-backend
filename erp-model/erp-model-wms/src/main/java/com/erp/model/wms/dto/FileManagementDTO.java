@@ -83,10 +83,6 @@ public class FileManagementDTO implements Serializable {
          */
         private String id;
         /**
-         * sku引用id
-         */
-        private String skuRefId;
-        /**
          * 文件id
          */
         private String fileId;
@@ -408,6 +404,7 @@ public class FileManagementDTO implements Serializable {
     @NoArgsConstructor
     public static class CountDTO {
         private String id;
+        private String code;
         private String fileType;
         private String skuId;
         private String skuNo;

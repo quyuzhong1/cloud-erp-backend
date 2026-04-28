@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.third;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.dto.ReceiverDTO;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
@@ -61,6 +62,9 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      */
     private String channelCode;
 
+    private Boolean isInsurance = false;
+
+    private Boolean isSignature = false;
     /**
      * 平台发货号，默认N/A
      */
@@ -80,6 +84,16 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      * 文件base64
      */
     private String fileBase64;
+
+    private String fileName;
+    /**
+     * 三方仓的文件type
+     */
+    private String fileType;
+    /**
+     * 三方仓的文件ID
+     */
+    private String fileId;
 
     /**
      * 是否为FBA地址 1：是 0：否
@@ -171,6 +185,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          * 客户商品编码，取发货通知的库存SKU
          */
         private String warehousePlatformSku;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
 
         /**
          * 平台sku

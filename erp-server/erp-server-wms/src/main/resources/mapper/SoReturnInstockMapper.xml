@@ -70,10 +70,9 @@
 
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct sri.id)
+        count(*)
         FROM so_return_instock sri
-        INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
-        WHERE srid.is_deleted = FALSE
+        WHERE sri.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and sri.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
@@ -86,9 +85,15 @@
         <if test="params.invalidStatus != null ">
             and sri.invalid_status = #{params.invalidStatus}
         </if>
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
+        and exists (
+            select 1
+            from so_return_instock_detail srid
+            where sri.id = srid.main_id
+              and srid.is_deleted = FALSE
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        )
     </select>
 
     <select id="soReturnInstockExportExcel" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$PagingView">
@@ -146,6 +151,22 @@
             </foreach>
         </if>
         sri.create_time desc, sri.id desc, srid.id desc
+    </select>
+
+    <select id="pagingCount" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM so_return_instock_detail srid
+        WHERE srid.is_deleted = FALSE
+        AND EXISTS (
+            SELECT 1
+            FROM so_return_instock sri
+            WHERE sri.id = srid.main_id
+            AND sri.is_deleted = FALSE
+            AND ${params.sqlMap.default}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        )
     </select>
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$PdaPagingView">

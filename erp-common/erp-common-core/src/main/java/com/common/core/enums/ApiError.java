@@ -234,6 +234,7 @@ public enum ApiError implements Serializable {
     AUTH_SSO_INVALID_PAYLOAD(2023, "单点登录Payload内容无效"),
     AUTH_SSO_USER_NOT_BOUND_ERP(2024, "用户未绑定ERP系统"),
     AUTH_SSO_SYSTEM_ERROR(2025, "单点登录系统异常：{0}"),
+    AUTH_ARCHIVE_DENIED(2026,"归档系统不允许增删改数据"),
 
     /**
      * EMAIL 邮件相关 2200 - 2400
@@ -692,6 +693,7 @@ public enum ApiError implements Serializable {
     PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
     PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
     PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
+    PRODUCT_RETAIL_PRICE_MISSING_ZERO(5120, "{0}零售价都是0，会导致订单无法分摊"),
     PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
     PRODUCT_RETAIL_SKU_DUPLICATE(5122, "已存在同SKU同币种零售价,不可重复创建"),
 
@@ -1325,7 +1327,7 @@ public enum ApiError implements Serializable {
     SO_B2C_ADD_GIFT_STATUS_FORBIDDEN(10715,"非待提交或审核不通过状态的订单不允许添加赠品"),
     SO_WDT_SALES_RAW_TRADE_PUSHSELF(10716,"ERP原始订单推送旺店通结果：新增订单的数量:【{0}】，更新订单的数量:【{1}】，错误信息:【{2}】"),
     SO_LOGISTICS_WAYBILL_NOT_OBTAINED(92118,"【{0}】面单未获取，无法打印，请获取后操作！"),
-    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货允许发货拦截"),
+    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货、异常订单允许发货拦截"),
     SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED(92248,"只有未开启B2B发货的允许手动发货"),
     SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED(92248,"只有待发货状态的允许发货"),
     SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED(92248,"只有已发货状态的允许生成销售出库单"),
@@ -1758,6 +1760,21 @@ public enum ApiError implements Serializable {
     LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
     LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND(13628,"导入未匹配到表头字段，请检查费用配置"),
     LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED(13629,"【{0}】不能作为识别单号字段"),
+    LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED(13630,"推送类型不能为空"),
+    LOGISTICS_THIRD_CHANNEL_SAVE_FAILED(13631,"物流-第三方渠道关系单保存失败"),
+    LOGISTICS_THIRD_CHANNEL_NOT_FOUND(13632,"未找到渠道配置数据"),
+    LOGISTICS_THIRD_CHANNEL_IN_USE_DELETE_FORBIDDEN(13633,"该渠道配置已被使用，不能删除"),
+    LOGISTICS_THIRD_CHANNEL_STATUS_UNCHANGED(13634,"渠道配置数据状态未变更"),
+    LOGISTICS_THIRD_CHANNEL_DUPLICATE(13635,"同一个平台下我司物流商【{0}】+渠道【{1}】，查询物流商+渠道仅可创建一条"),
+    LOGISTICS_THIRD_CHANNEL_SUPPLIER_NOT_FOUND(13636,"物流商不存在"),
+    LOGISTICS_THIRD_CHANNEL_CHANNEL_NOT_FOUND(13637,"物流商渠道不存在"),
+    LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND(13638,"查询物流商【{0}】不存在"),
+    LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE(13639,"是否推送电话不能修改"),
+    LOGISTICS_THIRD_CHANNEL_MOBILE_REQUIRED(13640,"手机号码不能为空"),
+    LOGISTICS_THIRD_CHANNEL_SHOP_ID_REQUIRED(13641,"店铺Id不能为空"),
+    LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED(13642,"平台不能为空"),
+    LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED(13643,"推送明细不需要配置"),
+    LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED(13644,"查询物流商(中文)不能为空"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
@@ -1825,7 +1842,7 @@ public enum ApiError implements Serializable {
     QC_STANDARD_SKU_NOT_FOUND(11140,  "SKU【{0}】未查得质检标准"),
     QC_STANDARD_NOT_FOUND(11141, "质检标准不存在"),
     QC_STANDARD_SKU_EXISTS(11142, "该SKU已存在质检标准"),
-    QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”关键字或对应数值"),
+    QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”对应值"),
     QC_STANDARD_IMPORT_DETAIL_NOT_FOUND(11144, "未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）"),
     QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY(16006,"申请质检数量不能大于剩余送货数量，SKU【{0}】剩余送货数量：【{1}】"),
     QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION(16007,"待发货来源质检申请单不允许操作"),

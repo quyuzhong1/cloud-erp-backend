@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -119,4 +120,22 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
     List<FirstMileWeightAllocationEntity> listBySourceCodeList(List<String> businessCodeList, List<String> sourceCodeList, List<String> transportNoList);
 
     void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 游标分页查询可下推分摊的发货单ID
+     * @param params 查询参数（含lastId游标、batchSize批大小）
+     * @return 发货单ID列表
+     * @author jack
+     * @date 2026-04-22
+     */
+    List<String> pageFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 统计可下推分摊的总条数
+     * @param params 查询参数
+     * @return 总条数
+     * @author jack
+     * @date 2026-04-22
+     */
+    int countFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params);
 }

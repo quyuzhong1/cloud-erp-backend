@@ -19,6 +19,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -101,14 +102,13 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
         List<QcApplicationDTO.TabListDTO> list = baseMapper.srmTabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(QcApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-                list.add(new QcApplicationDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
-            }
-        });
-        return list;
+        List<QcApplicationDTO.TabListDTO> result = new ArrayList<>();
+        for (String status : statusList) {
+            Integer count = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getTabFlag(), status))
+                    .map(QcApplicationDTO.TabListDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+            result.add(new QcApplicationDTO.TabListDTO(status, ApproveStatusEnum.getName(status), count));
+        }
+        return result;
     }
 
     @Override

@@ -66,7 +66,7 @@ public class DmpInputAmzReportFbaReturnInstockDetailDmpHandler extends DmpInputD
 				String key = CharSequenceUtil.format("{}_{}_{}",
                         listMap.get("platform_order_no").toString(),
                         listMap.get("auth_id").toString(),
-                        listMap.getOrDefault("batch_no","").toString()
+                        listMap.getOrDefault("order_reference_no","").toString()
                 );
 				dmpReturnIdMap.put(key, listMap.get(BaseEntity.FIELD_ID).toString());
 			}

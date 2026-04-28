@@ -30,10 +30,12 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.listener.B2CCustomerImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
@@ -530,5 +532,14 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         }
         receiverEntity.setCountry(country);
         updateById(receiverEntity);
+    }
+
+    @Override
+    public LogisticsBillDTO.ReceiverDTO listReceiverByMainId(String id) {
+        SoB2cReceiverEntity receiverEntity = getByMainId(id);
+        if (null == receiverEntity) {
+            return null;
+        }
+        return B2cOrderConverter.INSTANCE.convertReceiver(receiverEntity);
     }
 }

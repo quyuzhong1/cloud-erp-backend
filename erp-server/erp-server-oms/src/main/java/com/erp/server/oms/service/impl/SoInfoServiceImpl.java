@@ -43,7 +43,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
@@ -467,7 +467,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
     public BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht) {
         if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
@@ -4208,6 +4208,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(warehouseId));
         String  providerCode = CollUtil.isNotEmpty(viewDTOS) ? viewDTOS.get(0).getProviderCode() : "";
+        String  providerId = CollUtil.isNotEmpty(viewDTOS) ? viewDTOS.get(0).getMainId() : "";
         List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(dto.getSoDetailIds());
         //根据销售订单查询三方仓发货明细
         List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryFeign.listBySoDetailIds(dto.getSoDetailIds());
@@ -4232,9 +4233,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> deliverySkuIds = soDetailEntityList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
         //库存sku映射查询
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        if (CharSequenceUtil.isNotBlank(providerCode)){
+        if ( CharSequenceUtil.isNotBlank(providerId)){
+            paramDTO.setAuthId(providerId);
+        }else if ( CharSequenceUtil.isNotBlank(providerCode)){
             paramDTO.setPlatform(providerCode);
-        }else if (CharSequenceUtil.isNotBlank(warehouseId)){
+        }else if ( CharSequenceUtil.isNotBlank(warehouseId)){
             paramDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
         }
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());

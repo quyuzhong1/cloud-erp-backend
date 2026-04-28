@@ -62,6 +62,7 @@ public enum SourceTypeEnum {
     B2B_THIRD_DELIVERY("b2bThirdDelivery", "B2B三方发货单","b2b_third_delivery"),
     B2B_THIRD_DELIVERY_CREATE("b2bthirdWarehouseDeliveryCreate", "数大臣B2B三方发货单创建","b2b_third_delivery"),
     B2B_THIRD_DELIVERY_CANCEL("b2bthirdWarehouseDeliveryCancel", "数大臣B2B三方发货单取消","b2b_third_delivery"),
+    SO_B2B_DELIVERY_INTERCEPT("soB2bDeliveryIntercept", "B2B发货单拦截","so_b2b_delivery_intercept"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
@@ -288,6 +289,7 @@ public enum SourceTypeEnum {
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
     WDT_RETURN_ORDER("wdt_return_order", "旺店通退货入库单","dmp_pull_task"),
     WDT_VIRTUAL_INVENTORY("wdt_virtual_inventory", "旺店通虚拟仓库存","dmp_pull_task"),
+    WDT_INVENTORY_COMPARE("wdtInventoryCompare", "旺店通库存比对","virtual_warehouse_allocation"),
 
 
     //旺店通
