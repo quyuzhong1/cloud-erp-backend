@@ -24,89 +24,91 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class JituInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
-	@Override
-	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-		Map<String , DmpThirdInboundEntity> dmpThirdInboundEntityMap = new HashMap<>();
-		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
-			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
-			if(CollUtil.isNotEmpty(value)) {
-				String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
-				if("dmp_third_inbound".equals(storageName)) {
-					for(BaseEntity v : value) {
-						DmpThirdInboundEntity dmpThirdInboundEntity = (DmpThirdInboundEntity) v;
-						dmpThirdInboundEntityMap.put(dmpThirdInboundEntity.getId(), dmpThirdInboundEntity);
-					}
-				}
-			}
-		}
-		
-		Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
-		Set<String> changeIds = new HashSet<>(); 
-		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
-			List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
-			if(CollUtil.isNotEmpty(value)) {
-				String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
-				if("dmp_third_inbound".equals(storageName)) {
-					for(BaseEntity v : value) {
-						changeIds.add(v.getId());
-					}
-				}
-			}
-		}
-		Map<String, String> map = new HashMap<>();
-		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
-		for(String changId : changeIds) {
-			DmpThirdInboundEntity dmpThirdInboundEntity = dmpThirdInboundEntityMap.get(changId);
-			PlatformInboundDTO platformInboundDTO = this.convert(dmpThirdInboundEntity, cfgOutputId);
-			if(platformInboundDTO != null) {
-				map.put(dmpThirdInboundEntity.getId(), JSON.toJSONString(platformInboundDTO));
-			}
-		}
-		return map;
-	}
-	
-	/**
+    @Override
+    public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpThirdInboundEntity> dmpThirdInboundEntityMap = new HashMap<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_third_inbound".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpThirdInboundEntity dmpThirdInboundEntity = (DmpThirdInboundEntity) v;
+                        dmpThirdInboundEntityMap.put(dmpThirdInboundEntity.getId(), dmpThirdInboundEntity);
+                    }
+                }
+            }
+        }
+
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+        Set<String> changeIds = new HashSet<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_third_inbound".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        changeIds.add(v.getId());
+                    }
+                }
+            }
+        }
+        Map<String, String> map = new HashMap<>();
+        String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+        for (String changId : changeIds) {
+            DmpThirdInboundEntity dmpThirdInboundEntity = dmpThirdInboundEntityMap.get(changId);
+            PlatformInboundDTO platformInboundDTO = this.convert(dmpThirdInboundEntity, cfgOutputId);
+            if (platformInboundDTO != null) {
+                map.put(dmpThirdInboundEntity.getId(), JSON.toJSONString(platformInboundDTO));
+            }
+        }
+        return map;
+    }
+
+    /**
      * 解析订单数据
      **/
-    public PlatformInboundDTO convert(DmpThirdInboundEntity dmpThirdInboundEntity , String cfgOutputId) {
-    	if(this.validateDataBlack(dmpThirdInboundEntity, cfgOutputId)) {
-    		return null;
-    	}
-		if(!"1".equals(dmpThirdInboundEntity.getReceivingStatus())) {
-			return null;
-		}
-    	PlatformInboundDTO platformInboundDTO = BeanUtil.copyProperties(dmpThirdInboundEntity, PlatformInboundDTO.class);
-    	String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
-		platformInboundDTO.setPlatform(sourcePlatform);
-    	platformInboundDTO.setProvider(sourcePlatform);
-		List<JituInboundReturnDTO.Item> boxListDTOS = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson(), JituInboundReturnDTO.Item.class);
+    public PlatformInboundDTO convert(DmpThirdInboundEntity dmpThirdInboundEntity, String cfgOutputId) {
+        if (this.validateDataBlack(dmpThirdInboundEntity, cfgOutputId)) {
+            return null;
+        }
+        if (!"1".equals(dmpThirdInboundEntity.getReceivingStatus())) {
+            return null;
+        }
+        PlatformInboundDTO platformInboundDTO = BeanUtil.copyProperties(dmpThirdInboundEntity, PlatformInboundDTO.class);
+        String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
+        platformInboundDTO.setPlatform(sourcePlatform);
+        platformInboundDTO.setProvider(sourcePlatform);
+        List<JituInboundReturnDTO.Item> boxListDTOS = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson(), JituInboundReturnDTO.Item.class);
 
-		platformInboundDTO.setReceivingStatus(this.convertStatus(dmpThirdInboundEntity.getReceivingStatus()));
-		List<Receiving> receivingDataList = new ArrayList<>();
+        platformInboundDTO.setReceivingStatus(this.convertStatus(dmpThirdInboundEntity.getReceivingStatus()));
+        List<Receiving> receivingDataList = new ArrayList<>();
 
 
-    	for(JituInboundReturnDTO.Item skuListDTO : boxListDTOS) {
-			if(!skuListDTO.getInventoryType().equals("ZP")){
-				continue;
-			}
-			LocalDateTime operateTime = skuListDTO.getOperateTime();
-			String lineNo = skuListDTO.getLineNo();
-			for (JituInboundReturnDTO.Item.Batche batch : skuListDTO.getBatches()) {
-				Receiving receiving = new Receiving();
-				platformInboundDTO.setDownloadTime( LocalDateTime.now());
-    			receiving.setProductSku(skuListDTO.getItemCode());
-    			receiving.setReceiveQty(Integer.valueOf(batch.getActualQty()));
-				receiving.setReceiveTime(operateTime);
-				receiving.setThirdId(lineNo);
-				receivingDataList.add(receiving);
-			}
+        for (JituInboundReturnDTO.Item skuListDTO : boxListDTOS) {
+            if (!skuListDTO.getInventoryType().equals("ZP")) {
+                continue;
+            }
+            LocalDateTime operateTime = skuListDTO.getOperateTime();
+            String lineNo = skuListDTO.getLineNo();
+            for (JituInboundReturnDTO.Item.Batche batch : skuListDTO.getBatches()) {
+                Receiving receiving = new Receiving();
+                platformInboundDTO.setDownloadTime(LocalDateTime.now());
+                receiving.setProductSku(skuListDTO.getItemCode());
+                receiving.setReceiveQty(batch.getActualQty());
+                receiving.setReceiveTime(operateTime);
+                receiving.setThirdId(lineNo);
+                receivingDataList.add(receiving);
+            }
 
-    	}
-		platformInboundDTO.setReceivingDataList(receivingDataList);
-		
-		this.groupBySku(platformInboundDTO);
-    	
+        }
+        platformInboundDTO.setReceivingDataList(receivingDataList);
+        if (CollUtil.isNotEmpty(receivingDataList)) {
+            platformInboundDTO.setHasReceivedData(true);
+        }
+        this.groupBySku(platformInboundDTO);
+
         return platformInboundDTO;
     }
 
@@ -121,17 +123,17 @@ public class JituInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         dto.setItems(items);
     }
 
-	private String convertStatus(String status) {
-		if(status.equals("0")){
-			return OverseasInstockStatusEnum.SIGNED.getCode();
-		}else if(status.equals("1")){
-			return OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode();
-		}
-		return null;
-	}
-    
+    private String convertStatus(String status) {
+        if (status.equals("0")) {
+            return OverseasInstockStatusEnum.SIGNED.getCode();
+        } else if (status.equals("1")) {
+            return OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode();
+        }
+        return null;
+    }
+
     @Override
     protected List<String> getSourceCodeKeys() {
-    	return Arrays.asList("receivingCode");
+        return Arrays.asList("receivingCode");
     }
 }
