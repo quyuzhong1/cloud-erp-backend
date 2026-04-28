@@ -391,11 +391,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
             if(CollUtil.isNotEmpty(notHaveRetailSet)) {
                 String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
-                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+//                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
             }
             if(skuIdVatMap.values().stream().allMatch(s -> BigDecimal.ZERO.compareTo(s) == 0)) {
             	String allSku = skuIdVatMap.keySet().stream().collect(Collectors.joining("}{", "{", "}"));
-                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING_ZERO, allSku);
+//                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING_ZERO, allSku);
             }
         }
 
@@ -806,7 +806,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 if(CollUtil.isNotEmpty(notHaveRetailSet)) {
                     String allSku = notHaveRetailSet.stream().collect(Collectors.joining("}{", "{", "}"));
 //                    return BatchResultDTO.fail(bomId, bom.getSerialNumber(), MessageFormat.format(ApiError.PRODUCT_RETAIL_PRICE_MISSING.getMsg(),allSku));
-//                    throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+                    throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING, allSku);
+                }
+                
+                if(skuIdVatMap.values().stream().allMatch(s -> BigDecimal.ZERO.compareTo(s) == 0)) {
+                	String allSku = skuIdVatMap.keySet().stream().collect(Collectors.joining("}{", "{", "}"));
+                    throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_MISSING_ZERO, allSku);
                 }
             }
         }
