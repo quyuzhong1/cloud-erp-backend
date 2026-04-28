@@ -1688,7 +1688,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
 
             // 去除当前value的首尾空格、换行等空白字符
-            String cleanedValue = value.trim().replaceAll("\n","");
+            String cleanedValue = value.trim().replaceAll("\n"," ");
 
 
 
