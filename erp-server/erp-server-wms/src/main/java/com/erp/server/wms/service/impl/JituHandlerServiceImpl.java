@@ -403,6 +403,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         // 基本信息
         request.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
+        request.setCustomerid(createOutboundReq.getOwnerCode());
         request.setTxlogisticid(createOutboundReq.getReferenceNo());
         request.setOrderType("B2BXSCK"); // B2B订单默认B2BXSCK
         request.setSource("OTHER"); // B2B订单默认OTHER
