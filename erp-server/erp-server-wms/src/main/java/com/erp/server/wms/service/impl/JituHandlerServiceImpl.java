@@ -228,7 +228,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 if ("true".equals(item.getSuccess())) {
                     return success("SUCCESS");
                 } else {
-                    return failure(item.getMessage());
+                    return failure(item.getErrorMsg());
                 }
             } else {
                 return failure("极兔接口返回异常");
@@ -326,7 +326,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 if ("true".equals(item.getSuccess())) {
                     return success(item.getDeliveryOrderCode());
                 } else {
-                    return failure(item.getMessage());
+                    return failure(item.getErrorMsg());
                 }
             } else {
                 return failure("极兔接口返回异常");
