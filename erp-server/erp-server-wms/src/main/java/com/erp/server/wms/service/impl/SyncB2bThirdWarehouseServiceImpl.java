@@ -164,6 +164,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
+        req.setOwnerCode(overseasProviderEntity.getOwnerCode());
         LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(entity.getLogisticsChannelId());
         if(Objects.nonNull(logisticsChannelEntity)){
             req.setIsInsurance(logisticsChannelEntity.getIsApiInsurance());

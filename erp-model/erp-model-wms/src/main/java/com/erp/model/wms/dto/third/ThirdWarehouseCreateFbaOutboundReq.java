@@ -159,6 +159,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
     private String email;
 
     /**
+     * 货主编码
+     */
+    private String ownerCode;
+
+    /**
      * 入库单明细
      */
     private List<Item> items;
