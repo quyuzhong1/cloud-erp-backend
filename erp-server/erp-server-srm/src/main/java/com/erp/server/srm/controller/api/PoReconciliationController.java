@@ -201,4 +201,17 @@ public class PoReconciliationController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 上传发票
+     *
+     * @param dto PoReconciliationDetailDTO.UploadFileDTO
+     * @return String
+     */
+    @PostMapping("/uploadInvoice")
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传发票")
+    public ApiResult<String> uploadInvoice(@RequestBody @Validated PoReconciliationDTO.UploadFileDTO dto) {
+        poReconciliationService.uploadInvoice(dto);
+        return success();
+    }
 }

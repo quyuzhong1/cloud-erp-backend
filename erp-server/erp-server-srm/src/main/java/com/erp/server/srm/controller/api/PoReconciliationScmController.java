@@ -431,4 +431,24 @@ public class PoReconciliationScmController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 上传发票
+     *
+     * @param dto PoReconciliationDetailDTO.UploadFileDTO
+     * @return String
+     */
+    @PostMapping("/uploadInvoice")
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传发票")
+    public ApiResult<String> uploadInvoice(@RequestBody @Validated PoReconciliationDTO.UploadFileDTO dto) {
+        poReconciliationScmService.uploadInvoice(dto);
+        return success();
+    }
+
+    @PostMapping("/downloadInvoice")
+    @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载发票")
+    public ApiResult<Object> downloadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        List<BatchResultDTO> resultDTOS = poReconciliationScmService.downloadInvoice(dto.getIds(), response);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

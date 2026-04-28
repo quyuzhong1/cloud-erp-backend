@@ -297,6 +297,11 @@ public class AfterSaleDTO implements Serializable {
         private String country;
 
         /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
          * 省/州
          */
         private String province;

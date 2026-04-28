@@ -219,4 +219,9 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         //保存附件
         attachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
     }
+
+    @Override
+    public void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto) {
+        poReconciliationScmService.uploadInvoice(dto);
+    }
 }

@@ -10,6 +10,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -47,11 +48,13 @@ import com.erp.model.srm.dto.PoReconciliationRefDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.entity.PoReconciliationRefDetailEntity;
+import com.erp.model.srm.entity.SrmAttachmentEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -73,17 +76,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PO_RECONCILIATION_DETAIL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT;
@@ -131,6 +134,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     @Resource
     private PoReconciliationRefDetailService poReconciliationRefDetailService;
 
+    @Resource
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -896,6 +901,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             listDTO.setCurrencySymbol(currencySymbol);
+            listDTO.setInvoiceStatusName(listDTO.getInvoiceStatus() ? "已上传" : "未上传");
         }
     }
 
@@ -929,5 +935,83 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .eq(PoReconciliationEntity::getId, updateDTO.getId())
                 .set(PoReconciliationEntity::getRemark, updateDTO.getRemark())
                 .update();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto) {
+        PoReconciliationEntity poReconciliationEntity = getById(dto.getId());
+        if (ObjectUtil.isEmpty(poReconciliationEntity)) {
+            throw new ServiceException(ApiError.PO_RECONCILIATION_NOT_FOUND);
+        }
+        // 单据状态不等于“已确认待完结”，不允许上传发票
+        if (!PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(poReconciliationEntity.getStatus())) {
+            throw new ServiceException(ApiError.PO_RECONCILIATION_STATUS_NOT_CONFIRM);
+        }
+        SrmAttachmentEntity attachmentEntity = attachmentService.getOne(new QueryWrapper<SrmAttachmentEntity>().lambda()
+                .eq(SrmAttachmentEntity::getBusinessId, poReconciliationEntity.getId())
+                .eq(SrmAttachmentEntity::getType, "po_reconciliation_invoice"));
+        if (ObjectUtil.isNotEmpty(attachmentEntity)) {
+            attachmentService.removeById(attachmentEntity.getId());
+        }
+        SrmAttachmentEntity srmAttachmentEntity = new SrmAttachmentEntity();
+        srmAttachmentEntity.setBusinessId(dto.getId());
+        srmAttachmentEntity.setType("po_reconciliation_invoice");
+        srmAttachmentEntity.setAttachName(dto.getAttachName());
+        srmAttachmentEntity.setAttachUrl(dto.getAttachUrl());
+        attachmentService.save(srmAttachmentEntity);
+        poReconciliationEntity.setInvoiceStatus(true);
+        updateById(poReconciliationEntity);
+        // 操作日志
+        String msg =  CharSequenceUtil.format("用户【{}】上传【{}】单据单号为【{}】的发票", UserContext.getDefaultLoginUser().getUserName(), "采购对账单", poReconciliationEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), poReconciliationEntity.getId(), "上传发票");
+    }
+
+    @Override
+    public List<BatchResultDTO> downloadInvoice(List<String> ids, HttpServletResponse response) {
+        List<PoReconciliationEntity> poReconciliationEntities = listByIds(ids);
+        Map<String, PoReconciliationEntity> reconciliationMap = poReconciliationEntities.stream()
+                .collect(Collectors.toMap(PoReconciliationEntity::getId, obj -> obj));
+        List<SrmAttachmentEntity> srmAttachmentEntityList = attachmentService.list(new QueryWrapper<SrmAttachmentEntity>().lambda()
+                .eq(SrmAttachmentEntity::getType, "po_reconciliation_invoice")
+                .in(SrmAttachmentEntity::getBusinessId, ids));
+        Map<String, SrmAttachmentEntity> attachmentMap = srmAttachmentEntityList.stream()
+                .collect(Collectors.toMap(SrmAttachmentEntity::getBusinessId, obj -> obj));
+        List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
+        response.setContentType("application/zip");
+        response.setCharacterEncoding("UTF-8");
+        try {
+            String zipFileName = URLEncoder.encode("发票文件.zip", "UTF-8");
+            response.setHeader("Content-Disposition", "attachment;filename=" + zipFileName);
+        } catch (UnsupportedEncodingException e) {
+            throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, e.getMessage());
+        }
+        try (ZipOutputStream zos = new ZipOutputStream(response.getOutputStream())) {
+            for (String id : ids) {
+                PoReconciliationEntity entity = reconciliationMap.get(id);
+                if (entity == null) {
+                    batchResultDTOS.add(BatchResultDTO.fail(id, "", "对账单不存在"));
+                    continue;
+                }
+                SrmAttachmentEntity attachmentEntity = attachmentMap.get(id);
+                if (!entity.getInvoiceStatus() || attachmentEntity == null) {
+                    batchResultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "未上传发票"));
+                    continue;
+                }
+                try {
+                    String entryName = entity.getCode() + "/" + attachmentEntity.getAttachName();
+                    zos.putNextEntry(new ZipEntry(entryName));
+                    zos.write(fileFeign.downloadFile(attachmentEntity.getAttachUrl()));
+                    zos.closeEntry();
+                    batchResultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "下载成功"));
+                } catch (Exception e) {
+                    batchResultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "文件下载失败"));
+                }
+            }
+            zos.finish();
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, e.getMessage());
+        }
+        return batchResultDTOS;
     }
 }

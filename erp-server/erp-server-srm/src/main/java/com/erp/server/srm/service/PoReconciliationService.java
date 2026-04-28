@@ -87,4 +87,10 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
 
     Integer countByStatus(String supplierId, String status);
 
+    /**
+     * 上传发票
+     *
+     * @param dto PoReconciliationDetailDTO.UploadFileDTO
+     */
+    void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto);
 }
