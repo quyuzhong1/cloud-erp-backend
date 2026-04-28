@@ -508,13 +508,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         if (CollectionUtils.isNotEmpty(costErrorMsgList)) {
                             jsonObject.set(matchIndex.toString(), MATCH_FAIL);
                             jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(costErrorMsgList));
-                            synchronized (matchImportList) { matchImportList.add(jsonObject); }
+                            synchronized (matchImportList) { updateMatchResult(Collections.singletonList(jsonObject), matchIndex.toString(), errorIndex.toString(), costErrorMsgList, matchImportList); } ;
                             continue;
                         }
                         updateAllList.addAll(updateList);
-                    }
-                    if (CollUtil.isEmpty(updateAllList)) {
-                        System.out.println("23");
                     }
                     List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateAllList);
                     List<JSONObject> costSuccessList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
@@ -579,7 +576,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         log.error("数据处理失败 ,e = {}", e.getMessage());
                         errorMsgList.add(e.getMessage());
                     }
-                    updateMatchResult(Collections.singletonList(jsonObject), matchIndex.toString(), errorIndex.toString(), errorMsgList, matchImportList);
+                    synchronized (matchImportList) {  updateMatchResult(Collections.singletonList(jsonObject), matchIndex.toString(), errorIndex.toString(), errorMsgList, matchImportList);} ;
                 }
                 return null;
             }));
