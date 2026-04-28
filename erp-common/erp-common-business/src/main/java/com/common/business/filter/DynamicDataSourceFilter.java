@@ -31,7 +31,7 @@ import com.common.business.wrapper.FeignQuery;
 
 import lombok.extern.slf4j.Slf4j;
 
-@WebFilter("/*")
+@WebFilter(urlPatterns = "/*", asyncSupported = true)
 @Slf4j
 public class DynamicDataSourceFilter implements Filter {
 	
