@@ -440,8 +440,8 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<StockOutOrderCreateRequest.Item> items = new ArrayList<>();
         for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
             StockOutOrderCreateRequest.Item stockOutItem = new StockOutOrderCreateRequest.Item();
-            stockOutItem.setItemCode(item.getSkuNo());
-            stockOutItem.setNumber(item.getBoxQty());
+            stockOutItem.setItemCode(item.getPlatformSkuNo());
+            stockOutItem.setNumber(item.getDeliveryQty());
             // 从销售订单明细获取销售单价
             BigDecimal price = skuPriceMap.get(item.getSkuId());
             stockOutItem.setItemvalue(price != null ? price : BigDecimal.ZERO);
