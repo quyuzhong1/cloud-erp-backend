@@ -85,19 +85,23 @@ public class JituOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 continue;
             }
             String itemCode = item.getItemCode();
-            for (JituOutboundReturnDTO.Item.Batche batch : item.getBatches()) {
+            if (CollUtil.isNotEmpty(item.getBatches())) {
+                for (JituOutboundReturnDTO.Item.Batche batch : item.getBatches()) {
+                    PlatformOutboundDTO.Receiving receiving = new PlatformOutboundDTO.Receiving();
+                    receiving.setProductSku(itemCode);
+                    receiving.setActualQty(batch.getActualQty());
+                    receiving.setBatchCode(batch.getBatchCode());
+                    receivingList.add(receiving);
+                }
+            }else {
                 PlatformOutboundDTO.Receiving receiving = new PlatformOutboundDTO.Receiving();
                 receiving.setProductSku(itemCode);
-                receiving.setActualQty(batch.getActualQty());
-                receiving.setBatchCode(batch.getBatchCode());
+                receiving.setActualQty(item.getActualQty());
                 receivingList.add(receiving);
             }
-
         }
         dto.setReceivingDataList(receivingList);
-
         this.groupBySku(dto);
-
         return dto;
     }
 
