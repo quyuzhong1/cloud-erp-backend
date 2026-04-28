@@ -251,7 +251,9 @@
             m.create_time as createTime,
             m.expire_time as expireTime
         FROM message m
-        WHERE m.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and m.is_deleted = FALSE
         AND (m.type = 'sysVersion' OR m.application = 'sysVersion')
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
