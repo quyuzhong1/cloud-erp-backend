@@ -223,6 +223,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
             // 处理返回结果
             if (response != null && response.getResponseitems() != null && !response.getResponseitems().isEmpty()) {
+                log.warn(getPlatForm().getName() + "取消B2B出库单结果:{}", JSONUtil.toJsonStr(response));
                 StockOutOrderCancelResponse.ResponseItem item = response.getResponseitems().get(0);
                 if ("true".equals(item.getSuccess())) {
                     return success("SUCCESS");
@@ -320,6 +321,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
             // 处理返回结果
             if (response != null && response.getResponseitems() != null && !response.getResponseitems().isEmpty()) {
+                log.warn(getPlatForm().getName() + "创建B2B出库单结果:{}", JSONUtil.toJsonStr(response));
                 StockOutOrderCreateResponse.ResponseItem item = response.getResponseitems().get(0);
                 if ("true".equals(item.getSuccess())) {
                     return success(item.getDeliveryOrderCode());
