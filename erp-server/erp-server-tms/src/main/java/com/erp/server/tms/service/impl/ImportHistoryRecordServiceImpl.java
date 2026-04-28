@@ -855,16 +855,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 Boolean isAbsoluteValue = cfgDetailEntity.getIsAbsoluteValue();
 
                 if (ObjectUtil.isNotEmpty(tmsCfgCostEntity) && ObjectUtil.isNotEmpty(entry.getValue())) {
+                    String entryAmount = normalizeAmountText(String.valueOf(entry.getValue()));
                     //校验费用值类型
-                    List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckValueDTO(entry.getValue().toString()));
+                    List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckValueDTO(entryAmount));
                     if (CollUtil.isNotEmpty(errorMsg)) {
                         errorMsgList.add(tmsCfgCostEntity.getCostName() + errorMsg.get(0));
                         continue;
                     }
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     //实际金额
-                    BigDecimal costValue =   isAbsoluteValue ? new BigDecimal(entry.getValue().toString()).abs() : new BigDecimal(entry.getValue().toString());
-                    updateDTO.setCostValue(costValue);
+                    updateDTO.setCostValue(toCostValue(entryAmount, isAbsoluteValue));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
@@ -911,12 +911,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //查询实际金额
         String actualAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "actualAmount"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String actualAmount = ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? null : String.valueOf(jsonObject.get(actualAmountIndex));
+        String actualAmount = normalizeAmountText(ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? null : String.valueOf(jsonObject.get(actualAmountIndex)));
 
         //查询预估金额
         String estimatedAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "estimatedAmount"))
                 .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String estimatedAmount = ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? null : String.valueOf(jsonObject.get(estimatedAmountIndex));
+        String estimatedAmount = normalizeAmountText(ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? null : String.valueOf(jsonObject.get(estimatedAmountIndex)));
 
         //校验费用值类型
         List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckAmountDTO(actualAmount,estimatedAmount));
@@ -949,6 +949,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】",cfgDetailEntity.getTargetDetailFieldName()));
                     continue;
                 }
+
                 String oldCurrency = currencyMap.get(tmsCfgCostEntity.getDictCostCategory());
                 if (CharSequenceUtil.isNotBlank(oldCurrency) &&  !CharSequenceUtil.equals(oldCurrency, currency)) {
                     errorMsgList.add("同一费用分类下币种必须一致");
@@ -966,8 +967,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (StrUtil.isNotBlank(actualAmount)) {
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     //实际金额
-                    BigDecimal costValue =   isAbsoluteValue ? new BigDecimal(actualAmount).abs() : new BigDecimal(actualAmount);
-                    updateDTO.setCostValue(costValue);
+                    updateDTO.setCostValue(toCostValue(actualAmount, isAbsoluteValue));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
@@ -978,8 +978,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if(StrUtil.isNotBlank(estimatedAmount)) {
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     //预计金额
-                    BigDecimal costValue =   isAbsoluteValue ? new BigDecimal(estimatedAmount).abs() : new BigDecimal(estimatedAmount);
-                    updateDTO.setCostValue(costValue);
+                    updateDTO.setCostValue(toCostValue(estimatedAmount, isAbsoluteValue));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setSourceType(sourceType);
@@ -991,6 +990,36 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
         }
         return updateList;
+    }
+
+    /**
+     * 金额字符串标准化，兼容科学计数法（如 1.2E+3 -> 1200）和逗号分隔格式（如 1,123,456.152 -> 1123456.152）
+     */
+    private String normalizeAmountText(String rawAmount) {
+        if (StrUtil.isBlank(rawAmount)) {
+            return rawAmount;
+        }
+        String trimmed = rawAmount.trim();
+
+        try {
+            // 1. 先移除所有逗号（千位分隔符）
+            // 注意：某些地区可能使用逗号作为小数点，这里假设逗号是千位分隔符
+            String withoutCommas = trimmed.replaceAll(",", "");
+
+            // 2. 转换并标准化
+            return new BigDecimal(withoutCommas).toPlainString();
+        } catch (Exception e) {
+            // 无法转换时保留原值，沿用现有校验逻辑输出错误信息
+            return trimmed;
+        }
+    }
+
+    /**
+     * 费用金额转换，支持绝对值配置。
+     */
+    private BigDecimal toCostValue(String amount, Boolean isAbsoluteValue) {
+        BigDecimal value = new BigDecimal(amount);
+        return Boolean.TRUE.equals(isAbsoluteValue) ? value.abs() : value;
     }
 
     /**
@@ -1294,7 +1323,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         importSyncDTO.setCfgLogisticsCostImportList(cfgLogisticsCostImportList);
         importSyncDTO.setImportDetailList(importDetailList);
         importSyncDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        return preprocessingImportExcel(importSyncDTO);
+        String taskId = downloadTaskFeign.reImportTask(fileTaskDTOS.get(0).getTaskId(),"物流商费用导入", IMPORT_TMS_IMPORT_HISTORY_RECORD.getCode(), importSyncDTO);
+        return  BatchResultDTO.success(taskId,importSyncDTO.getFileName(),"重新导入成功");
     }
 
     /**
@@ -1639,20 +1669,30 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param targetValue
      * @return String
      */
-    private Integer getMapKey (Map<Integer,String> headMap,String targetValue) {
+    private Integer getMapKey(Map<Integer, String> headMap, String targetValue) {
         Integer resultKey = null;
+
+        // 预处理目标值：去除首尾空格、换行等空白字符
+        String cleanedTarget = targetValue.trim();
+
         for (Integer key : headMap.keySet()) {
-            // 获取对应的value
             String value = headMap.get(key);
 
-            // 如果value等于目标值，输出对应的key
-            if (value.contains(targetValue)) {
+            // 如果value为null，跳过避免空指针异常
+            if (value == null) {
+                continue;
+            }
+
+            // 去除当前value的首尾空格、换行等空白字符
+            String cleanedValue = value.trim();
+
+            // 精准匹配（完全相等）
+            if (cleanedValue.equals(cleanedTarget)) {
                 resultKey = key;
-                // 如果只需要找到一个匹配的key，可以break
-                break;
+                break;  // 找到第一个匹配的就返回
             }
         }
-        return  resultKey;
+        return resultKey;
     }
 
     /**
