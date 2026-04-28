@@ -435,6 +435,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         request.setRouteid(createOutboundReq.getChannelCode());
         request.setDeliveryNote(createOutboundReq.getRemark());
         request.setIsCod(0); // 默认0否
+        request.setItemsvalue(BigDecimal.ZERO); // 极兔bug,等后续迭代
         request.setStoreCode("-"); // 默认-
         request.setStoreName(""); // 默认空
 
