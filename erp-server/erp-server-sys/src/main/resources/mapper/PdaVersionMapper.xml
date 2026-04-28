@@ -110,11 +110,32 @@
             url,
             type,
             upgrade_time
-        FROM pda_version pv
-        WHERE pv.is_deleted = FALSE
-        AND now() >= pv.upgrade_time
-        AND pv.upgrade_time IN (SELECT MAX(upgrade_time) FROM pda_version WHERE release_type = 0)
-		AND NOT EXISTS (
+        FROM (
+            SELECT
+                id,
+                create_user_id,
+                create_user_name,
+                create_time,
+                update_user_id,
+                update_user_name,
+                update_time,
+                version,
+                is_deleted,
+                pda_version,
+                remark,
+                force,
+                url,
+                type,
+                upgrade_time
+            FROM pda_version
+            WHERE is_deleted = FALSE
+              AND release_type = '0'
+              AND type IN ('PDA', 'ALL')
+              AND (upgrade_time IS NULL OR NOW() >= upgrade_time)
+            ORDER BY COALESCE(upgrade_time, create_time) DESC, create_time DESC
+            LIMIT 1
+        ) pv
+        WHERE NOT EXISTS (
 		    SELECT
 			    pusv.id
 			FROM pda_user_skip_version pusv
@@ -122,7 +143,5 @@
 			AND pusv.is_deleted = FALSE
 			AND pusv.user_id = #{userId}
 		)
-        ORDER BY pv.create_time DESC
-        LIMIT 1
     </select>
 </mapper>
