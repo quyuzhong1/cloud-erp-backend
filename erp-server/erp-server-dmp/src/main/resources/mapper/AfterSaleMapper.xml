@@ -71,6 +71,7 @@
 	afs.remark,
     afs.csr_remark,
     afs.rma_remark,
+    afs.type,
     afs.logistics_channel_id
     </sql>
     <sql id="paging_sql">
@@ -129,6 +130,7 @@
         afs.shop_id as shopId,
         afs.cs_agent_id as csAgentId,
         afs.cs_agent_name as csAgentName,
+        afs.type,
         afs.logistics_channel_id as logisticsChannelId
         FROM
         after_sale AS afs

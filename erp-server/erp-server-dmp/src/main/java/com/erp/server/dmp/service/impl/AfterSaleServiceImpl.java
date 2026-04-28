@@ -1919,13 +1919,27 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Override
     public List<BatchResultDTO> manualBatchGetLabel(BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        List<AfterSaleEntity> afterSaleEntityList = super.listByIds(dto.getIds());
+        // 筛选出单据类型是MANUAL的
+        List<AfterSaleEntity> manualList = afterSaleEntityList.stream().filter(e -> OutboundTrackNoTypeEnum.MANUAL.getCode().equals(e.getType())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(manualList)) {
+            for (AfterSaleEntity afterSaleEntity : manualList) {
+                BatchResultDTO batchResultDTO = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), "手动添加类型的单据不能获取面单");
+                batchResultDTOList.add(batchResultDTO);
+            }
+        }
+        // 筛选出单据类型是API的
+        List<AfterSaleEntity> apiList = afterSaleEntityList.stream().filter(e -> OutboundTrackNoTypeEnum.API.getCode().equals(e.getType())).collect(Collectors.toList());
         List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS = new ArrayList<>();
-        dto.getIds().forEach(id -> {
+        apiList.forEach(e -> {
             LogisticsOrderDTO.LogisticsLabelDTO labelDTO = new LogisticsOrderDTO.LogisticsLabelDTO();
-            labelDTO.setAfterSaleId(id);
+            labelDTO.setAfterSaleId(e.getId());
             logisticsLabelDTOS.add(labelDTO);
         });
-        return getLogisticsOrderLabel(logisticsLabelDTOS);
+        List<BatchResultDTO> batchResultDTOS = getLogisticsOrderLabel(logisticsLabelDTOS);
+        batchResultDTOList.addAll(batchResultDTOS);
+        return batchResultDTOList;
     }
 
 }

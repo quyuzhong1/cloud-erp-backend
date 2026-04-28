@@ -325,6 +325,11 @@ public class AfterSaleDTO implements Serializable {
          * 面单状态名称
          */
         private String labelStatusName;
+
+        /**
+         * 单号类型,API:API获取, MANUAL:手动获取
+         */
+        private String type;
     }
 
     /**
@@ -990,6 +995,9 @@ public class AfterSaleDTO implements Serializable {
          */
         private String phoneNumber;
 
+        /**
+         * 单号类型,API:API获取, MANUAL:手动获取
+         */
         private String type;
 
         /**
