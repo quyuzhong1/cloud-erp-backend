@@ -2811,7 +2811,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         String transportNo ="";
         List<String> logisticsSupplierIds = dto.getIds();
         if (null == startDate || null == endDate) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"开始时间或结束时间为空");
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
             return true;
         }
         // 查询周期内已签收未对账的物流单
@@ -2822,7 +2822,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(list)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),"周期内已签收未对账的物流单为空");
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"周期内已签收未对账的物流单为空");
             return true;
         }
         // 根据物流商
@@ -2861,7 +2861,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
         if(Objects.isNull(tmsAsyncTaskRecordEntity)){
             log.error("任务记录不存在，taskId: {}", taskId);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
             return;
         }
 
