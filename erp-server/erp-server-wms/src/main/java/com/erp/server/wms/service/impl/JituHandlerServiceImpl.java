@@ -212,7 +212,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             }
             // 构建取消订单请求参数
             StockOutOrderCancelRequest request = new StockOutOrderCancelRequest();
-//            request.setCustomerid(b2bThirdDelivery.getc); // 取发货仓库在三方仓配置绑定的货主编码
+            request.setCustomerid(cancelOutboundReq.getOwnerCode()); // 取发货仓库在三方仓配置绑定的货主编码
             request.setWarehouseCode(b2bThirdDelivery.getThirdWarehouseCode()); // 取发货仓库在三方仓配置绑定的三方仓仓库编码
             request.setOrderType("XSCK"); // 默认XSCK-销售出库
             request.setOrderCode(cancelOutboundReq.getOrderCode()); // 出库单类型时，传txlogisticid字段的单号
