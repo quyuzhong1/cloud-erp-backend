@@ -1292,7 +1292,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "导入记录");
         }
-        if (CharSequenceUtil.equals(entity.getStatus(),ImportHistoryRecordStatusEnum.WAIT_HANDLE.getCode())) {
+        if (!CharSequenceUtil.equals(entity.getStatus(),ImportHistoryRecordStatusEnum.WAIT_HANDLE.getCode())) {
             return BatchResultDTO.fail(id,entity.getFileName(),"当前导入记录非待处理，无法重新导入");
         }
 
