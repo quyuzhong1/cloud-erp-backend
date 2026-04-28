@@ -1,9 +1,12 @@
 package com.common.business.vo;
 
+import com.alibaba.fastjson.JSON;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 
 /**
@@ -54,4 +57,17 @@ public class LoginUser {
 
     //菜单的列表 后面还会改
     private List<String> permissionList;
+
+    public static String simpleLoginUser(LoginUser loginUser) throws UnsupportedEncodingException {
+        LoginUser compactUser = new LoginUser();
+        compactUser.setUid(loginUser.getUid());
+        compactUser.setUserName(loginUser.getUserName());
+        compactUser.setRealName(loginUser.getRealName());
+        compactUser.setMobile(loginUser.getMobile());
+        compactUser.setUserAccount(loginUser.getUserAccount());
+        compactUser.setAccessToken(loginUser.getAccessToken());
+        compactUser.setBindingPlatform(loginUser.getBindingPlatform());
+        compactUser.setIsSupper(loginUser.getIsSupper());
+        return URLEncoder.encode(JSON.toJSONString(compactUser), "UTF-8");
+    }
 }
