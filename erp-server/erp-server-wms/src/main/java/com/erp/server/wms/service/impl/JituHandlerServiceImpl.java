@@ -217,7 +217,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             request.setOrderType("XSCK"); // 默认XSCK-销售出库
             request.setOrderCode(cancelOutboundReq.getOrderCode()); // 出库单类型时，传txlogisticid字段的单号
             request.setCancelReason(cancelOutboundReq.getRemark()); // 取操作拦截时填写的拦截原因
-
+            log.warn(getPlatForm().getName() + "取消B2B出库单请求:{}", JSONUtil.toJsonStr(request));
             // 调用极兔API取消订单
             StockOutOrderCancelResponse response = jituService.cancelOrder(request);
 
@@ -315,7 +315,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         try {
             // 构建极兔出库单请求
             StockOutOrderCreateRequest request = buildB2BStockOutOrderRequest(createOutboundReq);
-
+            log.warn(getPlatForm().getName() + "创建B2B出库单请求:{}", JSONUtil.toJsonStr(request));
             // 调用极兔API创建出库单
             StockOutOrderCreateResponse response = jituService.createStockOutOrder(request);
 
