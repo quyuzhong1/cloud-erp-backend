@@ -1347,6 +1347,10 @@ public class SoB2cController extends BaseController {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), CharSequenceUtil.format("订单状态为{},不允许操作不出库发货", SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus()))));
                 continue;
             }
+            if (soB2cEntity.getInvalidStatus()) {
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "订单已作废,不允许操作不出库发货"));
+                continue;
+            }
             if (soB2cEntity.hasPlatformWarehouseOrder()) {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "平台仓订单不允许操作不出库发货"));
                 continue;

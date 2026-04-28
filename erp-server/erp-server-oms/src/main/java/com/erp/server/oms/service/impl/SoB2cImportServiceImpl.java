@@ -229,6 +229,9 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
             if(Objects.isNull(baseDTO)){
                 errorMsgList.add("物流渠道在系统中不存在");
             }
+            if(soB2cEntity.getInvalidStatus()){
+                errorMsgList.add("订单已作废");
+            }
             List<SoB2cDetailEntity> details = soB2cDetailEntityList.stream().filter(e -> Objects.equals(e.getMainId(), soB2cEntity.getId())).collect(Collectors.toList());
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(e -> Objects.equals(e.getMainId(), soB2cEntity.getId())) .findFirst().orElse(null);
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntityList.stream().filter(e -> Objects.equals(e.getMainId(), soB2cEntity.getId())) .findFirst().orElse(null);
