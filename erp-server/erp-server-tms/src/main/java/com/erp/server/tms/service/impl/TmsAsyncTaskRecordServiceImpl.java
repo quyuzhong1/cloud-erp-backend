@@ -76,7 +76,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTaskRecordMapper, TmsAsyncTaskRecordEntity> implements TmsAsyncTaskRecordService {
 
     @Resource
-    private static TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
+    private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -93,8 +93,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Lazy
     @Resource
     private TmsAsyncTaskRecordService selfServer;
-    private AsyncService asyncService;
-
 
     /**
      * 新增手动任务
@@ -392,7 +390,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
     }
 
-    private static void checkData(TmsAsyncTaskRecordEntity entity) {
+    private void checkData(TmsAsyncTaskRecordEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("异步任务记录不存在");
         }
