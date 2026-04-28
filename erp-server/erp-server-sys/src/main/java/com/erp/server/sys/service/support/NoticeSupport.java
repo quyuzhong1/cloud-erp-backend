@@ -34,9 +34,7 @@ public final class NoticeSupport {
     }
 
     public static LocalDateTime resolveExecuteTime(MessageEntity messageEntity) {
-        if (messageEntity != null
-                && messageEntity.getNoticeTime() != null
-                && messageEntity.getNoticeTime().isAfter(LocalDateTime.now())) {
+        if (messageEntity != null && messageEntity.getNoticeTime() != null) {
             return messageEntity.getNoticeTime();
         }
         return LocalDateTime.now();

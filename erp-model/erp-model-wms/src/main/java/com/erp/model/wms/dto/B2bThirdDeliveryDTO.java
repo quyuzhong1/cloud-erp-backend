@@ -8,6 +8,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
 import io.seata.common.util.StringUtils;
 import lombok.Builder;
@@ -206,6 +207,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
          */
         private String thirdWarehouseCode;
 
+        /**
+         * 异常原因
+         */
+        private String errorMessage;
         /**
          * 产品明细
          */
@@ -546,9 +551,6 @@ public class B2bThirdDeliveryDTO implements Serializable {
          */
         private Boolean isApiDelivery;
         /**
-         * 产品明细
-         */
-        /**
          * 明细id
          */
         private String  detailId;
@@ -637,9 +639,17 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
     }
 
     @Data

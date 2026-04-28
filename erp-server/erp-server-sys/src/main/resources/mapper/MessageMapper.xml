@@ -14,7 +14,7 @@
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
         <result column="type" property="type" />
-        <result column="data_json" property="dataJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="data_json" property="dataJson" />
         <result column="remark" property="remark" />
         <result column="is_read" property="isRead" />
     </resultMap>
@@ -32,6 +32,10 @@
         is_deleted,
         code, approve_status, type, data_json, remark
     </sql>
+
+    <select id="getDatabaseNow" resultType="java.time.LocalDateTime">
+        SELECT LOCALTIMESTAMP
+    </select>
 
     <select id="listByNotReadMessage" resultType="com.erp.model.sys.entity.MessageEntity">
         SELECT
@@ -196,6 +200,8 @@
             WHERE is_deleted = FALSE
               AND type = 'sys'
               AND application = #{application}
+              AND (notice_time IS NULL OR notice_time <![CDATA[ <= ]]> NOW())
+              AND (expire_time IS NULL OR expire_time <![CDATA[ >= ]]> NOW())
             ORDER BY COALESCE(notice_time, create_time) DESC, create_time DESC
             LIMIT 1
         ) m

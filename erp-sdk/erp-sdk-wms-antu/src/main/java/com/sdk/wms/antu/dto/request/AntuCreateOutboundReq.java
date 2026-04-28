@@ -173,6 +173,10 @@ public class AntuCreateOutboundReq {
     @JSONField(name = "payer_phone")
     private String payerPhone;
 
+    //remark
+    @JSONField(name = "remark")
+    private String remark;
+
     //保税:税费，没有填0
     @JSONField(name = "tax")
     private String tax;
@@ -292,6 +296,10 @@ public class AntuCreateOutboundReq {
     //菜鸟lp单号（非必填，不填默认为空）
     @JSONField(name = "lp_code")
     private String lpCode;
+
+
+    @JSONField(name = "order_kind")
+    private String orderKind;
     /**
      * 订单附件
      */

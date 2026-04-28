@@ -121,7 +121,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 生成随机数据
         String randomGSAState = randomGSAState();
         // 加密后state
-        String resultState = base64AndUrlEncode(randomGSAState);
+//        String resultState = base64AndUrlEncode(randomGSAState);
         // 缓存state
         String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, randomGSAState);
 
@@ -132,7 +132,8 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 批量缓存店铺
         List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
         redisUtil.set(key, shopIds, RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
-        return String.format(cfgAppClient.getUrl(), sellerCentralUrl, resultState);
+//        return String.format(cfgAppClient.getUrl(), sellerCentralUrl, resultState);
+        return String.format(cfgAppClient.getUrl(), sellerCentralUrl, randomGSAState);
     }
 
 

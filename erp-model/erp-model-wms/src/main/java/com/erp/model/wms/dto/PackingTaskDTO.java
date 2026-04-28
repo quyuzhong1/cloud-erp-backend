@@ -3,6 +3,8 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -11,6 +13,9 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -295,9 +300,17 @@ public class PackingTaskDTO implements Serializable {
          */
         private String sourceCode;
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
     }
 
     /**

@@ -9,10 +9,7 @@ import com.alibaba.fastjson.parser.ParserConfig;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
-import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
-import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
-import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
-import com.sdk.wms.jifeng.dto.request.JiFengReturnOrderRequest;
+import com.sdk.wms.jifeng.dto.request.*;
 import com.sdk.wms.jifeng.dto.response.*;
 import com.sdk.wms.jifeng.utils.JiFengUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -496,6 +493,58 @@ public class JiFengService {
         return headerMap;
     }
 
+
+    /**
+     * 创建出库单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<JiFengCreateB2bOrderResp> createB2BOutbound(Map<String,Object> authMap, JiFengCreateB2BOutboundRequest request){
+        String path = "/api/b2b/outbound/create";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(request));
+        String bodyStr = OkHttpUtils.doPostJson(url+path, JSONUtil.toJsonStr(request), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        JiFengBaseResp<JiFengCreateB2bOrderResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateB2bOrderResp.class);
+        return response;
+    }
+
+
+    /**
+     * 取消B2B出库单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<String> cancelB2BOutbound(Map<String,Object> authMap, String erpNo){
+        String path = "/api/b2b/outbound/cancel";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("erpNo",erpNo);
+
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(bodyMap));
+        String bodyStr = OkHttpUtils.doPostJson(url+path, JSONUtil.toJsonStr(bodyMap), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        JiFengBaseResp<String> response = JiFengUtils.parseToJiFengResp(bodyStr,String.class);
+        return response;
+    }
+
+    /**
+     * 查询订单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<JiFengB2BOutboundResp> getB2BOrder(Map<String,Object> authMap, String erpNo){
+        String path = "/api/b2b/outbound/get";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("erpNo", erpNo);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        JiFengBaseResp<JiFengB2BOutboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengB2BOutboundResp.class);
+        return response;
+    }
     private String getUrl(String domain) {
         return "https://" + domain + ".jfwms.com";
     }

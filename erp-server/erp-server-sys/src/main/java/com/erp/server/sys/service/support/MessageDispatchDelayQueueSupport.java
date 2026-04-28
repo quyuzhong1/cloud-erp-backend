@@ -71,15 +71,20 @@ public class MessageDispatchDelayQueueSupport {
     }
 
     public void offer(String taskId, LocalDateTime executeTime) {
+        offer(taskId, executeTime, LocalDateTime.now());
+    }
+
+    public void offer(String taskId, LocalDateTime executeTime, LocalDateTime baseTime) {
         if (taskId == null || executeTime == null) {
             return;
         }
+        LocalDateTime finalBaseTime = baseTime == null ? LocalDateTime.now() : baseTime;
         RBlockingQueue<String> blockingQueue = redissonClient.getBlockingQueue(RedisCacheConstants.SYS_MESSAGE_DISPATCH_DELAY_QUEUE);
         RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue(blockingQueue);
         removeQueuedTask(taskId, blockingQueue, delayedQueue);
-        long delayMs = Math.max(Duration.between(LocalDateTime.now(), executeTime).toMillis(), 0L);
+        long delayMs = Math.max(Duration.between(finalBaseTime, executeTime).toMillis(), 0L);
         delayedQueue.offer(taskId, delayMs, TimeUnit.MILLISECONDS);
-        markQueued(taskId, executeTime);
+        markQueued(taskId, executeTime, finalBaseTime);
     }
 
     public void removeQueuedTask(String taskId) {
@@ -113,9 +118,9 @@ public class MessageDispatchDelayQueueSupport {
         clearQueuedMarker(taskId);
     }
 
-    private void markQueued(String taskId, LocalDateTime executeTime) {
+    private void markQueued(String taskId, LocalDateTime executeTime, LocalDateTime baseTime) {
         long executeEpochMs = executeTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
-        long ttlSeconds = Math.max(Duration.between(LocalDateTime.now(), executeTime).getSeconds(), 0L) + QUEUED_MARKER_EXTRA_SECONDS;
+        long ttlSeconds = Math.max(Duration.between(baseTime, executeTime).getSeconds(), 0L) + QUEUED_MARKER_EXTRA_SECONDS;
         getQueuedTaskMap().fastPut(taskId, executeEpochMs, ttlSeconds, TimeUnit.SECONDS);
     }
 

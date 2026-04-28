@@ -13,6 +13,7 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.sys.dto.MessageDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -59,4 +60,6 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
     IPage<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(Page query, @Param("params") SysVersionDTO.HistoryVersionPagingParamDTO params, @Param("userId") String userId);
 
     SysVersionDTO.LatestVersionDTO getLatestVersion(@Param("userId") String userId);
+
+    LocalDateTime getDatabaseNow();
 }

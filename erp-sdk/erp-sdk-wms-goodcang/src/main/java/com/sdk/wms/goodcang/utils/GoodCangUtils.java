@@ -34,6 +34,17 @@ public class GoodCangUtils {
         return response;
     }
 
+    public static String sendPost(String apiUrl, Map<String, Object> paramsMap,Boolean isRecord){
+        Map<String,String> headerMap = headerMap();
+        String url = BASE_URL + apiUrl;
+        String response = OkHttpUtils.doPostJson(url, paramsMap, headerMap);
+        if(isRecord){
+            ThirdWarehouseContext.setRequestJson(JSON.toJSONString(paramsMap));
+            ThirdWarehouseContext.setResponseJson(response);
+        }
+        return response;
+    }
+
     public static String sendPost(String apiUrl, String paramsJson){
         Map<String,String> headerMap = headerMap();
         String url = BASE_URL + apiUrl;

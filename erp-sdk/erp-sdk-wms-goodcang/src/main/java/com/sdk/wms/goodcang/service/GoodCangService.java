@@ -2,6 +2,7 @@ package com.sdk.wms.goodcang.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
@@ -193,6 +194,27 @@ public class GoodCangService {
         }
         return respDto;
     }
+
+    /**
+     * 创建B2b订单
+     */
+    public GoodCangResponse<String> createB2bBill(@Valid GoodCangCreateB2bReq goodCangCreateB2bReq){
+        String json = JSON.toJSONString(goodCangCreateB2bReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CREATE_B2B_BILL,json);
+        //处理返回值
+        GoodCangResponse<String> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓创建B2B订单返回数据为空,返回值:{}", response);
+            throw new ServiceException(GOOG_CANG_RESPONSE + ":" +response);
+        }
+        JSONObject data = JSON.parseObject(respDto.getData());
+        if(Objects.nonNull(data)){
+            respDto.setData(data.getString("order_code"));
+            respDto.setRequestId(data.getString("request_id"));
+        }
+        return respDto;
+    }
+
     /**
      * 获取出库单号
      */
@@ -210,6 +232,25 @@ public class GoodCangService {
         }
         if(Objects.nonNull(respDto.getData())){
             respDto.setData(JSON.parseObject(respDto.getData()).get("order_code").toString());
+        }
+        return respDto;
+    }
+
+
+    /**
+     * 获取出库单号
+     */
+    public GoodCangResponse<GoodCangOrderDTO> getOrderByRefCode(@Valid @NotEmpty(message = "参考单号不能为空")String referenceNo){
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("reference_no",referenceNo);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_OUT_BOUND_CODE,paramsMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramsMap));
+        ThirdWarehouseContext.setResponseJson(response);
+        //处理返回值
+        GoodCangResponse<GoodCangOrderDTO> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangOrderDTO>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓获取订单号返回数据为空,返回值:{}", response);
+            return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
         }
         return respDto;
     }
@@ -279,6 +320,20 @@ public class GoodCangService {
         GoodCangResponse<GoodCangUploadOrderLabelResp> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangUploadOrderLabelResp>>() {}.getType());
         if(Objects.isNull(respDto)){
             return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+        }
+        return respDto;
+    }
+
+
+    public GoodCangResponse<List<GoodCangTaskResp>> taskStatusList(List<String> requestIdList){
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("request_id_list",requestIdList);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.TASK_STATUS_LIST,paramsMap,false);
+        //处理返回值
+        GoodCangResponse<List<GoodCangTaskResp>> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangTaskResp>>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓查询任务返回数据为空,返回值:{}", response);
+            throw new ServiceException(GOOG_CANG_RESPONSE + ":" +response);
         }
         return respDto;
     }
