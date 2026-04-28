@@ -48,10 +48,10 @@ public class XssInjectionFilter implements GlobalFilter, Ordered {
             "/api/sys/sysmessage/update",
             "/sys/sysmessage/release",
             "/sys/sysmessage/update",
-            "/api/sys/sysVersion/release",
-            "/api/sys/sysVersion/update",
-            "/sys/sysVersion/release",
-            "/sys/sysVersion/update"
+            "/api/sys/sysversion/release",
+            "/api/sys/sysversion/update",
+            "/sys/sysversion/release",
+            "/sys/sysversion/update"
     ));
 
     @Override
