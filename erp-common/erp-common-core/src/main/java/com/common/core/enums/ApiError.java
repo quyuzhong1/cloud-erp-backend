@@ -204,6 +204,8 @@ public enum ApiError implements Serializable {
     COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
     COMMON_STATUS_SAME(92134,"存在相同状态"),
+    COMMON_FILE_HEAD_READ_HEAD_FAIL(98134,"配置有误，开始行读取失败"),
+
     COMMON_NO_SKU(98128,"SKU不存在"),
     COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
     COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),

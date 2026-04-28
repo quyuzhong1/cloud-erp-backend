@@ -1,6 +1,5 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -27,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.File;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +105,11 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (Objects.nonNull(importCount) && count < importCount){
             return;
         }
+        //无表头数据报错
+        if (ObjectUtil.isEmpty(headMap)) {
+            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
+        }
+
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
         for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
             String value = map.get(entry.getKey());
@@ -222,11 +225,6 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
         List<String> headList = map.values().stream().map(obj -> CharSequenceUtil.isBlank(obj) ? "" : obj).collect(Collectors.toList());
-
-        long blankCount = map.values().stream().filter(CharSequenceUtil::isBlank).count();
-        if (blankCount > 1) {
-            throw new ServiceException(ApiError.COMMON_FILE_HEAD_NOT_EMPTY);
-        }
         headList.add(MATCH_FIELD);
         headList.add(ERROR_MSG);
         int size = map.size();
@@ -253,7 +251,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         for (Integer key : headMap.keySet()) {
             // 获取对应的value
             String value = headMap.get(key);
-
+            if (CharSequenceUtil.isBlank(value)) {
+                continue;
+            }
             // 如果value等于目标值，输出对应的key
             if (value.contains(targetValue)) {
                 resultKey = key;
