@@ -2116,7 +2116,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return count == null ? 0 : count;
     }
 
-
     @Override
     public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         if (Objects.isNull(dto)) {
