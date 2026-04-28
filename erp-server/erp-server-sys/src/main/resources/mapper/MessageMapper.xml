@@ -14,7 +14,7 @@
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
         <result column="type" property="type" />
-        <result column="data_json" property="dataJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="data_json" property="dataJson" />
         <result column="remark" property="remark" />
         <result column="is_read" property="isRead" />
     </resultMap>
