@@ -377,9 +377,9 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 request.setPlatformNumber(StringUtils.isNotBlank(soInfo.getPlatformOrderCode()) ? soInfo.getPlatformOrderCode() : soInfo.getCustomerOrderNo());
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 if(Objects.nonNull(soInfo.getReceiveDate())) {
-                    payTimeStr = soInfo.getReceiveDate().format(formatter);
-                } else {
-                    payTimeStr = soInfo.getBillDate().format(formatter);
+                    payTimeStr = soInfo.getReceiveDate().atStartOfDay().format(formatter);
+                } else if(Objects.nonNull(soInfo.getBillDate())) {
+                    payTimeStr = soInfo.getBillDate().atStartOfDay().format(formatter);
                 }
                 request.setPayTime(payTimeStr);
 
