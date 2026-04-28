@@ -76,7 +76,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTaskRecordMapper, TmsAsyncTaskRecordEntity> implements TmsAsyncTaskRecordService {
 
     @Resource
-    private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
+    private static TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -190,6 +190,10 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     public void updateTask(String taskId,String status, String errorMsg) {
+        // 主表不允许有failed状态，统一改为finish，但必须记录errorData
+        if (TmsAsyncTaskRecordStatusEnum.FAILED.getCode().equals(status)) {
+            status = TmsAsyncTaskRecordStatusEnum.FINISH.getCode();
+        }
         lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, status)
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
@@ -215,7 +219,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .update();
 
         lambdaUpdate()
-                .set(TmsAsyncTaskRecordEntity::getStatus,  TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .set(TmsAsyncTaskRecordEntity::getStatus,  TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
                 .set(TmsAsyncTaskRecordEntity::getErrorData, errorMsg)
                 .set(TmsAsyncTaskRecordEntity::getDetailCount, detailCount)
@@ -404,8 +408,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         }
 
         String status = entity.getStatus();
-        if(!(Objects.equals(status, TmsAsyncTaskRecordStatusEnum.FINISH.getCode()) && Objects.nonNull(entity.getErrorCount()) && entity.getErrorCount() >0)){
-            throw new ServiceException("仅支持失败任务重试");
+        if(!Objects.equals(status, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())){
+            throw new ServiceException("任务未完成不支持重新创建任务重试");
+        }
+
+        Integer count = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, entity.getId()).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode()).count();
+        if(Objects.isNull(count) || count <= 0){
+            throw new ServiceException("无错误数量不支持重新创建任务重试");
         }
 
         String execType = entity.getExecType();

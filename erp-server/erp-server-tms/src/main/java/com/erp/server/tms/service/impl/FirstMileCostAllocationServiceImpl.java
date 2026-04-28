@@ -2195,7 +2195,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
             log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), "MQ消息发送失败");
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "MQ消息发送失败");
         }else {
             log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
         }
@@ -2244,7 +2244,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 long elapsedSeconds = java.time.Duration.between(currentTask.getStartTime(), LocalDateTime.now()).getSeconds();
                 if (elapsedSeconds > currentTask.getExecTimeout()) {
                     log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
-                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), 
+                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
                         "任务执行超时，已耗时" + elapsedSeconds + "秒");
                     break;
                 }
@@ -2259,7 +2259,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 batchDeliveryIds = firstMileWeightAllocationService.pageFirstMileDeliveryIds(dto);
             } catch (Exception e) {
                 log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
-                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), 
+                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
                     "第" + batchNumber + "批查询失败: " + e.getMessage());
                 break;
             }
