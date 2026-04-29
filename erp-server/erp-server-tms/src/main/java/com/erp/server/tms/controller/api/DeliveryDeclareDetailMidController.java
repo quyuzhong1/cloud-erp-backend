@@ -126,5 +126,18 @@ public class DeliveryDeclareDetailMidController extends BaseController {
         return success(deliveryDeclareDetailMidService.view(id));
     }
 
+    /**
+     * 合并前预览
+     *
+     * @param dto 报关明细中间表id集合
+     * @return ApiResult<List<DeliveryDeclareDetailMidDTO.MergePreviewDTO>>
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/mergePreview")
+    public ApiResult<List<DeliveryDeclareDetailMidDTO.MergePreviewDTO>> mergePreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        return success(deliveryDeclareDetailMidService.mergePreview(dto.getIds()));
+    }
+
 
 }

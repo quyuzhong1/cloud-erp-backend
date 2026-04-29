@@ -310,6 +310,94 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
     }
 
     /**
+     * 合并前预览列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergePreviewDTO implements Serializable {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 来源单据id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 单据分类
+         */
+        private String sourceType;
+
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+
+        /**
+         * 箱号
+         */
+        private String boxNo;
+
+        /**
+         * 商品SKU
+         */
+        private String skuNo;
+
+        /**
+         * 中国海关编码
+         */
+        private String hsCode;
+
+        /**
+         * 报关中文名称
+         */
+        private String productNameCn;
+
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 出口申报单价
+         */
+        private BigDecimal unitPrice;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 国家编码
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+    }
+
+    /**
     * 详情
     */
     @Data
@@ -758,6 +846,22 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
          * 是否检查自动生成配置
          */
         private Boolean checkCfg = true;
+    }
+
+    /**
+     * 合并预览国家信息
+     *
+     * @author jack
+     * @date 2026-04-29
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PreviewCountryDTO {
+
+        private String countryId;
+
+        private String countryName;
     }
 
 }
