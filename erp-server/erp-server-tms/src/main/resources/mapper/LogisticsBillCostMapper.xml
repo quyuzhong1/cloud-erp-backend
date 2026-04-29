@@ -460,4 +460,19 @@
         </if>
     </select>
 
+    <!-- 查询计费重合计 -->
+    <select id="listTotalBillingWeightLogisticsCount" resultType="java.math.BigDecimal">
+        select
+            sum(lbc.billing_weight_logistics) as totalBillingWeightLogistics
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and lbc.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
 </mapper>
