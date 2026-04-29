@@ -136,30 +136,9 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         StringBuilder sqlString = new StringBuilder();
         //店铺
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
-        int shopTableFieldSize = shopTableFieldList.size();
         if ("part".equals(authType)){
-            if (shopTableFieldSize == 1) {
-                sqlString.append(" AND ((").append(shopTableFieldList.get(0)).append(" = '') OR (");
-                SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                sqlString.append(" )) ");
-            } else {
-                sqlString.append(" AND ((");
-                sqlString.append(shopTableFieldList.get(0)).append(" = '')");
-                for (int i = 1; i < shopTableFieldSize; i++) {
-                    sqlString.append(" OR (");
-                    sqlString.append(shopTableFieldList.get(i)).append(" = ''");
-                    sqlString.append(" )");
-                }
-                sqlString.append(" OR (");
-                SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                sqlString.append(" )");
-                for (int i = 1; i < shopTableFieldSize; i++) {
-                    sqlString.append("OR (");
-                    SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(i), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                    sqlString.append(" )");
-                }
-                sqlString.append(" )");
-            }
+            List<String> shopIdList = shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).distinct().collect(Collectors.toList());
+            SqlUtils.appendBlankOrInPermissionSql(sqlString, shopTableFieldList, shopIdList);
         }
         return sqlString.toString();
     }
