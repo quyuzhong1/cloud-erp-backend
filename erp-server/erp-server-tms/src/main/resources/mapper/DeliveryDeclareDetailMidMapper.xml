@@ -14,6 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="remark" property="remark" />
        <result column="declare_status" property="declareStatus" />
+       <result column="generate_status" property="generateStatus" />
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
        <result column="source_type" property="sourceType" />
@@ -24,6 +25,7 @@
        <result column="contract_no" property="contractNo" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
+       <result column="combo_sku_no" property="comboSkuNo" />
        <result column="currency" property="currency" />
        <result column="currency_symbol" property="currencySymbol" />
        <result column="declare_id" property="declareId" />
@@ -56,30 +58,69 @@
         update_time,
         version,
         is_deleted,
-        remark, declare_status, source_id, source_code, source_type, source_detail_id, business_id, business_code, business_type, contract_no, sku_id, sku_no, currency, currency_symbol, declare_id, declare_code, declare_detail_id, box_no, hs_code, product_name_cn, declare_element, unit, unit_price, qty, from_warehouse_id, from_warehouse_name, dest_warehouse_id, dest_warehouse_name, transfer_warehouse_ids, sales_org_id, sales_org_name
+        remark, declare_status, generate_status, source_id, source_code, source_type, source_detail_id, business_id,
+        business_code, business_type, contract_no, sku_id, sku_no, combo_sku_no, currency, currency_symbol,
+        declare_id, declare_code, declare_detail_id, box_no, hs_code, product_name_cn, declare_element, unit,
+        unit_price, qty, from_warehouse_id, from_warehouse_name, dest_warehouse_id, dest_warehouse_name,
+        transfer_warehouse_ids, sales_org_id, sales_org_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">
-
-    </select>
-
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from delivery_declare_detail_mid where is_deleted = false group by approve_status
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM delivery_declare_detail_mid
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params != null and params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        <if test="params == null or params.sortList == null or params.sortList.size == 0">
+            create_time DESC
+        </if>
     </select>
 
     <select id="listExport" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">
-
+        SELECT
+        <include refid="Base_Column_List"/>,
+        create_time,
+        create_user_name
+        FROM delivery_declare_detail_mid
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.ids != null and params.ids.size > 0">
+            AND id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY create_time DESC
     </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        generate_status AS tabFlag,
         count(*)  AS count
         FROM  delivery_declare_detail_mid
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        GROUP BY generate_status
     </select>
 
 </mapper>

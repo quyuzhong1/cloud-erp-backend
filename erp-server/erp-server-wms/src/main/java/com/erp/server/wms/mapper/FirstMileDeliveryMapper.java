@@ -85,6 +85,17 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("ids") List<String> ids);
 
     /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 头程发货单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@Param("ids") List<String> ids);
+
+    /**
      * 导出装箱清单Excel
      * @Author Luo_WG
      * @Date 2023/11/29 12:17

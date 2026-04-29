@@ -5,6 +5,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -70,6 +71,18 @@ public interface WmsFirstMileDeliveryFeign {
      */
     @PostMapping("/feign/firstMileDelivery/getCanGenerateDeclare")
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 头程发货单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/feign/firstMileDelivery/listDeclarePackingDetail")
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids);
 
     /**
      * 亚马逊仓库中心配置
