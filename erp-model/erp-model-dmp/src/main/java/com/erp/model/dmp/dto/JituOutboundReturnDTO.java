@@ -53,7 +53,8 @@ public class JituOutboundReturnDTO implements Serializable {
     private List<Item> orderLines;
 
     @Data
-    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Package {
         //物流服务商编码
         private String logisticCode;
@@ -68,7 +69,8 @@ public class JituOutboundReturnDTO implements Serializable {
         //包裹-包材子列表
         private List<PackageMaterial> packageMaterialList;
         @Data
-        @Builder
+        @AllArgsConstructor
+        @NoArgsConstructor
         public static class PackageItem {
             //货品编号
             private String itemCode;
@@ -76,7 +78,8 @@ public class JituOutboundReturnDTO implements Serializable {
             private Integer quantity;
         }
         @Data
-        @Builder
+        @AllArgsConstructor
+        @NoArgsConstructor
         public static class PackageMaterial {
             //包材编号
             private String Materialtype;
@@ -117,7 +120,8 @@ public class JituOutboundReturnDTO implements Serializable {
         private List<Batche> batches;
 
         @Data
-        @Builder
+        @AllArgsConstructor
+        @NoArgsConstructor
         public static class Batche {
             //实收商品数量 当前货品的最小单位实收数量，根据上架任务进行分批次回传/或整单回传。
             private Integer actualQty;

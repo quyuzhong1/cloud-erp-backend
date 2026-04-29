@@ -426,7 +426,7 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "pricecurrency", ignore = true)
     @Mapping(target = "outBizNo", ignore = true)
     @Mapping(target = "logisticsName", ignore = true)
-    @Mapping(target = "itemsvalue", ignore = true)
+    @Mapping(target = "itemsvalue", constant = "0")
     @Mapping(target = "eccompanyid", ignore = true)
     @Mapping(target = "createOrderTime", ignore = true)
     @Mapping(target = "customerid", source = "ownerCode")

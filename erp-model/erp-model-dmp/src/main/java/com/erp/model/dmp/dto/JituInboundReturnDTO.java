@@ -91,7 +91,8 @@ public class JituInboundReturnDTO implements Serializable {
         private List<Batche> batches;
 
         @Data
-        @Builder
+        @NoArgsConstructor
+        @AllArgsConstructor
         public static class Batche {
             //实收商品数量 当前货品的最小单位实收数量，根据上架任务进行分批次回传/或整单回传。
             private Integer actualQty;

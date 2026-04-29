@@ -126,7 +126,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .build();
         OverseasInboundCancelResponse responseBaseResponse = jituService.overseasInboundCancel(overseasInboundCancelRequest);
         OverseasInboundCancelResponse.Response response = responseBaseResponse.getResponseitems().get(0);
-        return "true".equals(response.getSuccess()) ? success(cancelInboundReq.getSourceCode()) : failure(response.getMessage());
+        return "true".equals(response.getSuccess()) ? success(cancelInboundReq.getSourceCode()) : failure(response.getErrorMsg());
     }
 
     @Override
@@ -147,7 +147,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         StockOutOrderCreateResponse response = jituService.createStockOutOrder(createRequest);
         log.warn(getPlatForm().getName() + "创建出库单结果:{}", JSONUtil.toJsonStr(response));
         StockOutOrderCreateResponse.ResponseItem responseItem = response.getResponseitems().get(0);
-        return "true".equals(responseItem.getSuccess()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(responseItem.getDeliveryOrderCode()).trackNo(responseItem.getMailno()).build()) : failure(responseItem.getMessage() + ":" + responseItem.getReason());
+        return "true".equals(responseItem.getSuccess()) ? success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(responseItem.getDeliveryOrderCode()).trackNo(responseItem.getMailno()).build()) : failure(responseItem.getReason() + ":" + responseItem.getErrorMsg());
     }
 
     private void setAddress(ThirdWarehouseCreateOutboundReq createOutboundReq, StockOutOrderCreateRequest createRequest) {
@@ -200,7 +200,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .build();
         StockOutOrderCancelResponse stockOutOrderCreateResponse = jituService.cancelOrder(request);
         StockOutOrderCancelResponse.ResponseItem responseItem = stockOutOrderCreateResponse.getResponseitems().get(0);
-        return "true".equals(responseItem.getSuccess()) ? success(cancelOutboundReq.getOrderCode()) : failure(responseItem.getMessage() + ":" + responseItem.getReason());
+        return "true".equals(responseItem.getSuccess()) ? success(cancelOutboundReq.getOrderCode()) : failure(responseItem.getReason() + ":" + responseItem.getErrorMsg());
     }
 
     @Override
