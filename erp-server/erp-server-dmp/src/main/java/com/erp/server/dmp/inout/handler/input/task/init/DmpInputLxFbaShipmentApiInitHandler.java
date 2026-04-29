@@ -104,13 +104,13 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         LocalDate today = LocalDate.now();
         System.out.println("当前日期: " + today.format(formatter));
 
-        // 获取30天前的日期
-        LocalDate dateBefore30Days = today.minusDays(30);
-        String startDate = dateBefore30Days.format(formatter);
+        // 获取10年前的日期
+        LocalDate dateBefore10Years = today.minusYears(10);
+        String startDate = dateBefore10Years.format(formatter);
 
-        // 获取30天后的日期
-        LocalDate dateAfter30Days = today.plusDays(30);
-        String endDate = dateAfter30Days.format(formatter);
+        // 获取10年后的日期
+        LocalDate dateAfter10Years = today.plusYears(10);
+        String endDate = dateAfter10Years.format(formatter);
 
         String shipmentId = findMongoData.get(0).getOrDefault("shipmentId", "").toString();
         if (StringUtils.isBlank(shipmentId)) {
