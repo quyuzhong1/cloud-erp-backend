@@ -84,6 +84,10 @@ public interface ExportTmsFeign {
     PagingVO<TmsCfgSailingDTO.ListDTO> exportTmsCfgSailing(@RequestBody PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportTmsCfgLogisticsCost")
     PagingVO<CfgLogisticsCostImportDTO.ListDTO> exportTmsCfgLogisticsCost(@RequestBody PagingDTO<CfgLogisticsCostImportDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportTmsAsyncTaskRecord")
+    PagingVO<TmsAsyncTaskRecordDTO.ListDTO> exportTmsAsyncTaskRecord(PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportTmsAsyncTaskDetail")
+    PagingVO<TmsAsyncTaskRecordDTO.DetailListDTO> exportTmsAsyncTaskDetail(PagingDTO<TmsAsyncTaskRecordDTO.PagingDetailParamDTO> dto);
 
     @PostMapping("/feign/export/exportTmsLogisticsOrder")
     PagingVO<TmsLogisticsOrderExcelDTO> exportTmsLogisticsOrder(@RequestBody PagingDTO<LogisticsOrderDTO.PagingParamDTO> dto);

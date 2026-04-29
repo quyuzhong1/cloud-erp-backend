@@ -280,6 +280,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField(exist = false)
     private String productName;
 
+    /**
+     * 分摊来源金额
+     */
+    @TableField(exist = false)
+    private BigDecimal allocationAmount;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String IMAGE_URL = "image_url";

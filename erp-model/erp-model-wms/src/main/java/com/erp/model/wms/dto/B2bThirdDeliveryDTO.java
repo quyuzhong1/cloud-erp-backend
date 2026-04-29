@@ -208,6 +208,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String thirdWarehouseCode;
 
         /**
+         * 异常原因
+         */
+        private String errorMessage;
+        /**
          * 产品明细
          */
         private List<B2bThirdDeliveryDetailDTO.ViewDTO> detailList;
@@ -546,9 +550,6 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 是否API发货
          */
         private Boolean isApiDelivery;
-        /**
-         * 产品明细
-         */
         /**
          * 明细id
          */

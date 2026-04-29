@@ -47,14 +47,14 @@
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
-            ORDER BY
-            <if test="params.sortList != null and params.sortList.size > 0">
-                <foreach collection="params.sortList" item="item" separator="," close=",">
-                    ${item.field} ${item.sort}
-                </foreach>
-            </if>
-            tcc.id desc
         </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        tcc.id desc
     </select>
 
 

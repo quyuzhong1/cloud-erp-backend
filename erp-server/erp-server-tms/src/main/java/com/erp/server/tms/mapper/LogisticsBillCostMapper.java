@@ -3,7 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -106,7 +106,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCostValueCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
 
-    List<String> listByCanPushAllocation(@Param("params") AsyncTaskRecordDTO.TaskDTO params);
+    List<String> listByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
 
     /**
      * 游标分页查询可下推分摊的费用ID（keyset pagination）
@@ -117,7 +117,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @author jack
      * @date 2026-04-22
      */
-    List<String> pageByCanPushAllocation(@Param("params") AsyncTaskRecordDTO.TaskDTO params);
+    List<String> pageByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
 
     /**
      * 统计可下推分摊的费用总条数，用于设置任务的 detailCount
@@ -127,7 +127,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @author jack
      * @date 2026-04-22
      */
-    Integer countByCanPushAllocation(@Param("params") AsyncTaskRecordDTO.TaskDTO params);
+    Integer countByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
     /**
      * 查询计费重合计
      * @author will

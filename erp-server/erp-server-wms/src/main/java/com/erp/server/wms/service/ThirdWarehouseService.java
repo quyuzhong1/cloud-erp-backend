@@ -89,6 +89,11 @@ public interface ThirdWarehouseService {
      * @return
      */
     ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq queryOutboundReq, String authId);
+
+    /**
+     * 按时间分页查询FBA出库单
+     */
+    ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(ThirdWarehouseQueryFbaOutboundPageReq queryOutboundReq, String authId);
     /**
      * 运费试算
      */

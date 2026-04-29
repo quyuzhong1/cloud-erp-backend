@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -66,14 +67,14 @@ public class ProcessFeignController extends BaseController {
 
     //根据人员查看任务
     @PostMapping("/queryMyToDo")
-    public List<TaskShowDTO> queryMyToDo(String userId) {
+    public List<TaskShowDTO> queryMyToDo(@RequestParam("userId") String userId) {
         List<TaskShowDTO> list = processTaskService.queryMyToDo(userId);
         return list;
     }
 
     //根据人员查看任务
     @PostMapping("/getMyToDoTasks")
-    public List<MyToDoTaskVO> getMyToDoTasks(String userId) {
+    public List<MyToDoTaskVO> getMyToDoTasks(@RequestParam("userId") String userId) {
         List<MyToDoTaskVO> list = processTaskService.getMyToDoTasks(userId);
         return list;
     }
@@ -166,14 +167,14 @@ public class ProcessFeignController extends BaseController {
 
     //根据审核任务id查看任务
     @PostMapping("/queryMyToDoByTaskId")
-    public List<TaskShowDTO> queryMyToDoByTaskId(String taskId) {
+    public List<TaskShowDTO> queryMyToDoByTaskId(@RequestParam("taskId") String taskId) {
         List<TaskShowDTO> list = processTaskService.queryMyToDoByTaskId(taskId);
         return list;
     }
 
     //查看流程审批情况
     @PostMapping("/getHistoryTaskByProcessId")
-    public List<AuditorHandleDTO> getHistoryTaskByProcessId(String processId) {
+    public List<AuditorHandleDTO> getHistoryTaskByProcessId(@RequestParam("processId") String processId) {
         return processTaskService.getHistoryTaskByProcessId(processId);
     }
 

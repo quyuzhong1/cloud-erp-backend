@@ -58,6 +58,11 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        // 兼容日期格式
+        LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
+        if (Objects.nonNull(reportMonth)) {
+            excelDTO.setReportMonth(reportMonth.toString());
+        }
         //校验货件单号是否存在
         List<AdsErpFirstMileInTransitDiffEntity> shipmentList = adsErpFirstMileInTransitDiffService.lambdaQuery()
                 .eq(AdsErpFirstMileInTransitDiffEntity::getShipmentCode, excelDTO.getShipmentCode())
@@ -82,7 +87,6 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
             errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】货件明细不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getPlatformSkuNo()));
         }
         String reportMonthStr = excelDTO.getReportMonth();
-        LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
         if (null != reportMonth){
             excelDTO.setReportMonth(reportMonth.toString());
         }

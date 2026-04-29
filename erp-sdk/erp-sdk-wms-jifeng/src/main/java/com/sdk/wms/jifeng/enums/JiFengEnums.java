@@ -3,6 +3,7 @@ package com.sdk.wms.jifeng.enums;
 
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import io.seata.common.util.StringUtils;
 import lombok.Getter;
@@ -145,6 +146,45 @@ public enum JiFengEnums {
                     .map(ReturnInstockTypeEnum::getErpEnum)
                     .map(ReturnTypeEnum::getCode)
                     .orElse("");
+        }
+    }
+
+    /**
+     * 出库单状态
+     */
+    @Getter
+    public enum B2BOrderStatusEnum {
+        PENDING_MOVES("1","待处理", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        TO_BE_GENERATED("2","待出库", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        TO_BE_PICKED("3","已出库", ThirdDeliveryStatusEnum.SHIPPED),
+        TO_BE_PACKED("4","已取消", ThirdDeliveryStatusEnum.CANCEL_DELIVERY),
+        IN_THE_PACKAGE("5","异常", ThirdDeliveryStatusEnum.EXCEPTION_ORDER)
+        ;
+        private final String code;
+        private final String name;
+        private final ThirdDeliveryStatusEnum erpSoStatus;
+
+        B2BOrderStatusEnum(String code, String name,ThirdDeliveryStatusEnum erpSoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpSoStatus = erpSoStatus;
+        }
+
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getErpSoStatus)
+                    .map(ThirdDeliveryStatusEnum::getCode)
+                    .orElse("");
+        }
+
+        public static String getName(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getName)
+                    .orElse(null);
         }
     }
 }
