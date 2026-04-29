@@ -2958,6 +2958,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             firstMildDetailDTO.setDeclareQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setDeliveryQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setSourceDetailId(awdOutstockDetailEntity.getId());
+            firstMildDetailDTO.setFbaShipmentCode(awdOutstockEntity.getFbaShipmentCode());
             for (SkuVO skuVO : skuVOList) {
                 firstMildDetailDTO.setNetWeight(skuVO.getNetWeight());
                 firstMildDetailDTO.setProductSizeLength(skuVO.getProductLength());
