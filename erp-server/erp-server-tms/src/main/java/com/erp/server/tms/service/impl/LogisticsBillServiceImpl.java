@@ -194,9 +194,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
 
         //查询渠道配置(针对尾程物流单)
-        Boolean flag = logisticsThirdChannelRefService.existRefBySalePlatform(logisticsBillEntity.getSalesPlatform(), logisticsBillEntity.getChannelId(), logisticsBillEntity.getLogisticsSupplierId());
+        String trackQueryMode = logisticsThirdChannelRefService.getTrackQueryModeBySalePlatform(logisticsBillEntity.getSalesPlatform(), logisticsBillEntity.getChannelId(), logisticsBillEntity.getLogisticsSupplierId());
+        boolean hasTrackQueryConfig = CharSequenceUtil.isNotBlank(trackQueryMode);
+        if (!hasTrackQueryConfig) {
+            trackQueryMode = TrackPlatformTypeEnum.TRACK123.getCode();
+        }
+        String finalTrackQueryMode = trackQueryMode;
         List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
-        if(!flag){
+        detailList.forEach(l -> l.setTrackQueryMode(finalTrackQueryMode));
+        if(!hasTrackQueryConfig){
             detailList.forEach(l -> {
                 l.setTrackStatus(LogisticTrackStatusEnum.NOT_QUERY.getCode());
                 l.setTrackEnable(false);
