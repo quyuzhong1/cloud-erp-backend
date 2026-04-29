@@ -256,40 +256,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
-
-
-
     void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 
-    /**
-     * @description: 批量导入新增
-     * @author Will
-     * @date: 2026/04/02 20:30
-     * @param dtoList
-     * @return List<AddDTO>
-     */
-    List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList, String processingType);
-
-    /**
-     * @description: 批量导入新增
-     * @author Will
-     * @date: 2026/04/02 20:30
-     * @param dtoList
-     * @return List<AddDTO>
-     */
-    List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList, String processingType);
-
-    /**
-     * 确认导入
-     * @author will
-     * @date 2026/4/16 11:24
-     * @param logisticsCostId
-     * @param code
-     * @param confirmDateTime
-     */
-    void confirmImport(String logisticsCostId, String code, LocalDateTime confirmDateTime);
     /**
      * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
      *
@@ -310,4 +280,30 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList,String processingType);
+
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType);
+    /**
+     * 确认导入
+     * @author will
+     * @date 2026/4/16 11:24
+     * @param logisticsCostId
+     * @param code
+     * @param confirmDateTime
+     */
+    void confirmImport(String logisticsCostId, String code, LocalDateTime confirmDateTime);
 }
