@@ -196,10 +196,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         addOrUpdateDTO.setFileName(importDTO.getFileName());
         //清洗结果
         String url = "";
-        String fileName = "物流商费用导入结果.xlsx";
+        String fileName = importDTO.getFileName();
         if (CollectionUtils.isNotEmpty(matchList) && headList != null) {
             //matchList = matchList.stream().filter(Objects::nonNull).collect(Collectors.toList());
-            File file = ExcelUtil.customExportUtil(fileName, matchList, headList);
+            File file = ExcelUtil.customExportUtil(costImportEntity.getSheetName(), matchList, headList);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
