@@ -166,11 +166,6 @@ public class AwdOutstockDTO implements Serializable {
          */
         private LocalDateTime updateTime;
 
-        /**
-         * 头程发货单的发货单号
-         */
-        private String firstMileDeliveryCode;
-
     }
 
 

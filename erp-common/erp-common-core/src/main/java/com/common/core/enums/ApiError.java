@@ -1780,6 +1780,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED(13644,"查询物流商(中文)不能为空"),
     LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),
     LOGISTICS_ORDER_CANNOT_EDIT(13646,"该单据不能再当前页面编辑"),
+    LOGISTICS_CHANNEL_CODE_EMPTY(13647,"渠道代码为空或者格式不正确"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
