@@ -11,14 +11,18 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
+import com.erp.model.tms.entity.CfgDeclareRuleConditionEntity;
+import com.erp.model.tms.entity.CfgDeclareRuleEntity;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -38,6 +42,8 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.mapper.DeliveryDeclareDetailMidMapper;
+import com.erp.server.tms.service.CfgDeclareRuleConditionService;
+import com.erp.server.tms.service.CfgDeclareRuleService;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.DeliveryDeclareDetailMidService;
 import com.erp.server.tms.service.OperateLogService;
@@ -50,6 +56,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 import com.common.business.enums.SourceTypeEnum;
@@ -72,6 +80,10 @@ import com.common.business.enums.SourceTypeEnum;
 public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<DeliveryDeclareDetailMidMapper, DeliveryDeclareDetailMidEntity>
         implements DeliveryDeclareDetailMidService {
 
+    private static final String RULE_TYPE_FIRST_MILE_DECLARE = "fmDeclareBill";
+    private static final String RULE_TYPE_B2B_DECLARE = "b2bDeclareBill";
+    private static final String CONDITION_VALUE_TYPE_STRING = "String";
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -82,6 +94,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private CfgDeclareRuleService cfgDeclareRuleService;
+    @Resource
+    private CfgDeclareRuleConditionService cfgDeclareRuleConditionService;
+    @Resource
+    private SpElServer spElServer;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -163,6 +181,54 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         DeliveryDeclareDetailMidEntity entity = super.getByIdOpt(id)
                 .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关明细中间表"));
         return BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.ViewDTO.class, entity);
+    }
+
+    /**
+     * 合并前预览
+     *
+     * @param ids 报关明细中间表id集合
+     * @return 合并前预览列表
+     * @throws ServiceException 校验失败时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @Override
+    public List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> mergePreview(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED);
+        }
+        List<String> distinctIds = ids.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctIds)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED);
+        }
+        if(distinctIds.size() <= 0){
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_MERGE_MIN_COUNT_REQUIRED);
+        }
+        List<DeliveryDeclareDetailMidEntity> entityList = super.listByIds(distinctIds);
+        if (CollectionUtils.isEmpty(entityList) || entityList.size() != distinctIds.size()) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
+        }
+        if (entityList.stream().anyMatch(item -> !CharSequenceUtil.equals(item.getGenerateStatus(),
+                DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT);
+        }
+        Set<String> sourceTypeSet = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceType)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        if (sourceTypeSet.size() != 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
+        }
+        Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> countryMap = getPreviewCountryMap(entityList, sourceTypeSet.iterator().next());
+        validatePreviewCountry(entityList, countryMap);
+        validatePreviewDeclareRule(entityList, countryMap, sourceTypeSet.iterator().next());
+        return entityList.stream()
+                .sorted(Comparator.comparing(item -> distinctIds.indexOf(item.getId())))
+                .map(item -> buildMergePreviewDTO(item, countryMap.get(item.getId())))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -748,6 +814,296 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (Objects.isNull(productLogisticDTO.getPrice())) {
             throw new ServiceException(ApiError.LOGISTICS_PRODUCT_LOGISTIC_DECLARE_PRICE_REQUIRED, skuNo);
         }
+    }
+
+    /**
+     * 查询合并预览国家信息
+     *
+     * @param entityList 报关明细中间表集合
+     * @param sourceType 来源类型
+     * @return 中间表id到国家信息映射
+     * @throws ServiceException 上游数据缺失时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    private Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> getPreviewCountryMap(List<DeliveryDeclareDetailMidEntity> entityList,
+                                                                String sourceType) {
+        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.FIRSTMILEDELIVERY.getCode())) {
+            return getFirstMilePreviewCountryMap(entityList);
+        }
+        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.SODELIVERYNOTICE.getCode())) {
+            return getSoDeliveryNoticePreviewCountryMap(entityList);
+        }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
+    }
+
+    /**
+     * 查询头程合并预览国家信息
+     *
+     * @param entityList 报关明细中间表集合
+     * @return 中间表id到国家信息映射
+     * @throws ServiceException 头程发货单缺失时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    private Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> getFirstMilePreviewCountryMap(List<DeliveryDeclareDetailMidEntity> entityList) {
+        List<String> sourceIds = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> headerList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
+        Map<String, FirstMileDeliveryEntity> headerMap = CollectionUtils.isEmpty(headerList)
+                ? Collections.<String, FirstMileDeliveryEntity>emptyMap()
+                : headerList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(FirstMileDeliveryEntity::getId, item -> item, (o1, o2) -> o1));
+        Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> resultMap = new HashMap<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO>();
+        for (DeliveryDeclareDetailMidEntity entity : entityList) {
+            FirstMileDeliveryEntity header = headerMap.get(entity.getSourceId());
+            if (Objects.isNull(header)) {
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "头程发货单");
+            }
+            resultMap.put(entity.getId(), new DeliveryDeclareDetailMidDTO.PreviewCountryDTO(header.getCountryId(), header.getCountryName()));
+        }
+        return resultMap;
+    }
+
+    /**
+     * 查询B2B发货通知合并预览国家信息
+     *
+     * @param entityList 报关明细中间表集合
+     * @return 中间表id到国家信息映射
+     * @throws ServiceException 发货通知明细缺失时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    private Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> getSoDeliveryNoticePreviewCountryMap(List<DeliveryDeclareDetailMidEntity> entityList) {
+        List<String> sourceIds = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeFeign.listDetailByMainIds(sourceIds);
+        Map<String, SoDeliveryNoticeDetailEntity> detailMap = CollectionUtils.isEmpty(detailList)
+                ? Collections.<String, SoDeliveryNoticeDetailEntity>emptyMap()
+                : detailList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(SoDeliveryNoticeDetailEntity::getId, item -> item, (o1, o2) -> o1));
+        Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> resultMap = new HashMap<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO>();
+        for (DeliveryDeclareDetailMidEntity entity : entityList) {
+            SoDeliveryNoticeDetailEntity detail = detailMap.get(entity.getSourceDetailId());
+            if (Objects.isNull(detail)) {
+                throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, "发货通知单");
+            }
+            resultMap.put(entity.getId(), new DeliveryDeclareDetailMidDTO.PreviewCountryDTO(detail.getToCountry(), detail.getToCountry()));
+        }
+        return resultMap;
+    }
+
+    /**
+     * 校验预览国家一致
+     *
+     * @param entityList 报关明细中间表集合
+     * @param countryMap 国家映射
+     * @throws ServiceException 国家为空或不一致时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    private void validatePreviewCountry(List<DeliveryDeclareDetailMidEntity> entityList,
+                                        Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> countryMap) {
+        Set<String> countrySet = new HashSet<String>();
+        for (DeliveryDeclareDetailMidEntity entity : entityList) {
+            DeliveryDeclareDetailMidDTO.PreviewCountryDTO countryDTO = countryMap.get(entity.getId());
+            if (Objects.isNull(countryDTO) || CharSequenceUtil.isBlank(countryDTO.getCountryId())) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT);
+            }
+            countrySet.add(countryDTO.getCountryId());
+        }
+        if (countrySet.size() > 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT);
+        }
+    }
+
+    /**
+     * 校验预览命中的报关规则发货人类型一致
+     *
+     * @param entityList 报关明细中间表集合
+     * @param countryMap 国家映射
+     * @param sourceType 来源类型
+     * @throws ServiceException 规则未命中或发货人类型不一致时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    private void validatePreviewDeclareRule(List<DeliveryDeclareDetailMidEntity> entityList,
+                                            Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> countryMap,
+                                            String sourceType) {
+        String ruleType = getDeclareRuleType(sourceType);
+        List<CfgDeclareRuleEntity> ruleList = cfgDeclareRuleService.lambdaQuery()
+                .eq(CfgDeclareRuleEntity::getRuleType, ruleType)
+                .eq(CfgDeclareRuleEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (CollectionUtils.isEmpty(ruleList)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND);
+        }
+        List<String> ruleIds = ruleList.stream().map(CfgDeclareRuleEntity::getId).collect(Collectors.toList());
+        Map<String, List<CfgDeclareRuleConditionEntity>> conditionMap = cfgDeclareRuleConditionService.lambdaQuery()
+                .in(CfgDeclareRuleConditionEntity::getRuleId, ruleIds)
+                .orderByAsc(CfgDeclareRuleConditionEntity::getIndex)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(CfgDeclareRuleConditionEntity::getRuleId, LinkedHashMap::new, Collectors.toList()));
+        Set<String> senderTypeSet = new HashSet<String>();
+        for (DeliveryDeclareDetailMidEntity entity : entityList) {
+            Set<String> matchedSenderTypes = matchPreviewSenderTypes(ruleList, conditionMap, entity, countryMap.get(entity.getId()));
+            if (CollectionUtils.isEmpty(matchedSenderTypes)) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND);
+            }
+            senderTypeSet.addAll(matchedSenderTypes);
+        }
+        if (senderTypeSet.size() > 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SENDER_TYPE_CONFLICT);
+        }
+    }
+
+    /**
+     * 匹配预览行发货人类型
+     *
+     * @param ruleList 规则集合
+     * @param conditionMap 规则条件映射
+     * @param entity 报关明细中间表
+     * @param countryDTO 国家信息
+     * @return 命中的发货人类型集合
+     * @throws RuntimeException 当前方法不主动抛出业务异常
+     * @author jack
+     * @date 2026-04-29
+     */
+    private Set<String> matchPreviewSenderTypes(List<CfgDeclareRuleEntity> ruleList,
+                                                Map<String, List<CfgDeclareRuleConditionEntity>> conditionMap,
+                                                DeliveryDeclareDetailMidEntity entity,
+                                                DeliveryDeclareDetailMidDTO.PreviewCountryDTO countryDTO) {
+        Set<String> senderTypeSet = new HashSet<String>();
+        Map<String, Object> ruleData = buildPreviewRuleData(entity, countryDTO);
+        for (CfgDeclareRuleEntity rule : ruleList) {
+            List<CfgDeclareRuleConditionEntity> conditionList = conditionMap.get(rule.getId());
+            if (CollectionUtils.isEmpty(conditionList)) {
+                continue;
+            }
+            List<ConditionElement> conditionElementList = conditionList.stream()
+                    .sorted(Comparator.comparing(CfgDeclareRuleConditionEntity::getIndex,
+                            Comparator.nullsLast(Integer::compareTo)))
+                    .map(this::buildConditionElement)
+                    .collect(Collectors.toList());
+            if (Boolean.TRUE.equals(spElServer.matchExpressionByConditionList(conditionElementList, ruleData, ""))) {
+                senderTypeSet.add(rule.getSenderType());
+            }
+        }
+        return senderTypeSet;
+    }
+
+    /**
+     * 构建报关规则匹配参数
+     *
+     * @param entity 报关明细中间表
+     * @param countryDTO 国家信息
+     * @return 规则匹配参数
+     * @throws RuntimeException 当前方法不主动抛出业务异常
+     * @author jack
+     * @date 2026-04-29
+     */
+    private Map<String, Object> buildPreviewRuleData(DeliveryDeclareDetailMidEntity entity,
+                                                     DeliveryDeclareDetailMidDTO.PreviewCountryDTO countryDTO) {
+        Map<String, Object> data = new HashMap<String, Object>();
+        String countryId = Objects.isNull(countryDTO) ? "" : CharSequenceUtil.blankToDefault(countryDTO.getCountryId(), "");
+        data.put("country", countryId);
+        data.put("countryId", countryId);
+        data.put("countryCode", countryId);
+        data.put("destCountry", countryId);
+        data.put("destinationCountry", countryId);
+        data.put("receiveCountry", countryId);
+        data.put("fromWarehouseId", CharSequenceUtil.blankToDefault(entity.getFromWarehouseId(), ""));
+        data.put("deliveryWarehouseId", CharSequenceUtil.blankToDefault(entity.getFromWarehouseId(), ""));
+        data.put("warehouseId", CharSequenceUtil.blankToDefault(entity.getFromWarehouseId(), ""));
+        data.put("destWarehouseId", CharSequenceUtil.blankToDefault(entity.getDestWarehouseId(), ""));
+        data.put("toWarehouseId", CharSequenceUtil.blankToDefault(entity.getDestWarehouseId(), ""));
+        data.put("transferWarehouseIds", CharSequenceUtil.blankToDefault(entity.getTransferWarehouseIds(), ""));
+        data.put("salesOrgId", CharSequenceUtil.blankToDefault(entity.getSalesOrgId(), ""));
+        data.put("detailList", Collections.singletonList(new HashMap<String, Object>(data)));
+        return data;
+    }
+
+    /**
+     * 构建规则条件元素
+     *
+     * @param condition 规则条件
+     * @return 规则条件元素
+     * @throws RuntimeException 当前方法不主动抛出业务异常
+     * @author jack
+     * @date 2026-04-29
+     */
+    private ConditionElement buildConditionElement(CfgDeclareRuleConditionEntity condition) {
+        ConditionElement element = new ConditionElement();
+        element.setLeftBracket(condition.getLeftBracket());
+        element.setField(condition.getField());
+        element.setCompare(condition.getCompare());
+        element.setValue(condition.getValue());
+        element.setRightBracket(condition.getRightBracket());
+        element.setLogic(condition.getLogic());
+        element.setValueType(CONDITION_VALUE_TYPE_STRING);
+        return element;
+    }
+
+    /**
+     * 获取报关规则类型
+     *
+     * @param sourceType 来源类型
+     * @return 报关规则类型
+     * @throws ServiceException 来源类型不支持时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    private String getDeclareRuleType(String sourceType) {
+        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.FIRSTMILEDELIVERY.getCode())) {
+            return RULE_TYPE_FIRST_MILE_DECLARE;
+        }
+        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.SODELIVERYNOTICE.getCode())) {
+            return RULE_TYPE_B2B_DECLARE;
+        }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
+    }
+
+    /**
+     * 构建合并前预览返回行
+     *
+     * @param entity 报关明细中间表
+     * @param countryDTO 国家信息
+     * @return 合并前预览返回行
+     * @throws RuntimeException 当前方法不主动抛出业务异常
+     * @author jack
+     * @date 2026-04-29
+     */
+    private DeliveryDeclareDetailMidDTO.MergePreviewDTO buildMergePreviewDTO(DeliveryDeclareDetailMidEntity entity,
+                                                                             DeliveryDeclareDetailMidDTO.PreviewCountryDTO countryDTO) {
+        DeliveryDeclareDetailMidDTO.MergePreviewDTO dto = new DeliveryDeclareDetailMidDTO.MergePreviewDTO();
+        dto.setId(entity.getId());
+        dto.setSourceId(entity.getSourceId());
+        dto.setSourceCode(entity.getSourceCode());
+        dto.setSourceType(entity.getSourceType());
+        dto.setBusinessCode(entity.getBusinessCode());
+        dto.setBoxNo(entity.getBoxNo());
+        dto.setSkuNo(entity.getSkuNo());
+        dto.setHsCode(entity.getHsCode());
+        dto.setProductNameCn(entity.getProductNameCn());
+        dto.setDeclareElement(entity.getDeclareElement());
+        dto.setUnit(entity.getUnit());
+        dto.setUnitPrice(entity.getUnitPrice());
+        dto.setQty(entity.getQty());
+        dto.setCurrency(entity.getCurrency());
+        if (Objects.nonNull(countryDTO)) {
+            dto.setCountryId(countryDTO.getCountryId());
+            dto.setCountryName(countryDTO.getCountryName());
+        }
+        return dto;
     }
 
     /**
