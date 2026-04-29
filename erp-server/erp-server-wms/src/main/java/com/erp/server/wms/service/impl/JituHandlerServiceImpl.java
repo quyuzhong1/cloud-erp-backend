@@ -402,7 +402,9 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (StringUtils.isNotBlank(logisticsChannel.getDeliveryType())) {
             if (Objects.equals(logisticsChannel.getDeliveryType(), JituDeliveryTypeEnum.PLATFORM_LOGISTICS.getCode())
                     || Objects.equals(logisticsChannel.getDeliveryType(), JituDeliveryTypeEnum.SHOP_SELF_DELIVERY.getCode())) {
-                if (StringUtils.isBlank(b2bThirdDelivery.getTrackNo())) {
+                if (StringUtils.isNotBlank(b2bThirdDelivery.getTrackNo())) {
+                    request.setMailno(b2bThirdDelivery.getTrackNo());
+                }else {
                     throw new ServiceException("配送方式为平台物流/商家自联快递时物流跟踪号必填");
                 }
             }
@@ -445,7 +447,6 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         request.setLabel(createOutboundReq.getFileUrl());
         request.setCarrier(logisticsChannel.getLastMileCarrier());
-        request.setMailno(b2bThirdDelivery.getTrackNo());
         request.setRouteid(createOutboundReq.getChannelCode());
         request.setDeliveryNote(createOutboundReq.getRemark());
         request.setIsCod(0); // 默认0否
