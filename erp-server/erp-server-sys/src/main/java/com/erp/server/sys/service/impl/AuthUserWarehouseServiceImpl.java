@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
@@ -19,7 +18,6 @@ import com.common.business.threadlocal.UserContext;
 //import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -124,51 +122,10 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         StringBuilder sqlString = new StringBuilder();
         //店铺
         List<String> warehouseTableFieldList = Arrays.asList(warehouseTableField.split(","));
-        int warehouseTableFieldSize = warehouseTableFieldList.size();
         if (CollectionUtils.isNotEmpty(warehouseUserList)) {
-        	boolean isDoris = DynamicDataSourceTypeEnum.isDorisByStr(dynamicDataSource);
             if ("part".equals(authType)){
-            	if(isDoris) {
-                    if (warehouseTableFieldSize == 1) {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '') OR (");
-                        SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
-                        sqlString.append(" )) ");
-                    } else {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '')");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            sqlString.append(warehouseTableFieldList.get(i)).append(" = '')");
-                        }
-                        sqlString.append(" OR (");
-                        SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
-                        sqlString.append(" )");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(i), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
-                            sqlString.append(" )");
-                        }
-                        sqlString.append(" )");
-                    }
-                }else {
-                    if (warehouseTableFieldSize == 1) {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '') OR (");
-                        sqlString.append(" string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
-                        sqlString.append(" )");
-                    } else {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '')");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            sqlString.append(warehouseTableFieldList.get(i)).append(" = '')");
-                        }
-                        sqlString.append(" OR (");
-                        sqlString.append(" string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            sqlString.append("string_to_array(").append(warehouseTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
-                        }
-                        sqlString.append(" )");
-                    }
-                }
+                List<String> warehouseIdList = warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
+                SqlUtils.appendBlankOrInPermissionSql(sqlString, warehouseTableFieldList, warehouseIdList);
             }
         }
         return sqlString.toString();
