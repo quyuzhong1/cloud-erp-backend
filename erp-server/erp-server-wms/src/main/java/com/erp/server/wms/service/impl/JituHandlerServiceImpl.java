@@ -216,7 +216,7 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             request.setCustomerid(cancelOutboundReq.getOwnerCode()); // 取发货仓库在三方仓配置绑定的货主编码
             request.setWarehouseCode(b2bThirdDelivery.getThirdWarehouseCode()); // 取发货仓库在三方仓配置绑定的三方仓仓库编码
             request.setOrderType("XSCK"); // 默认XSCK-销售出库
-            request.setOrderCode(cancelOutboundReq.getOrderCode()); // 出库单类型时，传txlogisticid字段的单号
+            request.setOrderCode(cancelOutboundReq.getErpOrderCode()); // 出库单类型时，传txlogisticid字段的单号
             request.setCancelReason(cancelOutboundReq.getRemark()); // 取操作拦截时填写的拦截原因
             log.warn(getPlatForm().getName() + "取消B2B出库单请求:{}", JSONUtil.toJsonStr(request));
             // 调用极兔API取消订单
