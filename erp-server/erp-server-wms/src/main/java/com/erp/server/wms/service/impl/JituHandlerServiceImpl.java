@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -345,58 +346,64 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         StockOutOrderCreateRequest.Receiver receiver = new StockOutOrderCreateRequest.Receiver();
         Map<String, BigDecimal> skuPriceMap = new HashMap<>();
         B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
+        if (Objects.isNull(b2bThirdDelivery)) {
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"B2B三方发货单");
+        }
         LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
-        if (Objects.nonNull(b2bThirdDelivery)) {
-            // 收件人信息
-            receiver.setCountrycode(b2bThirdDelivery.getCountryId());
-            if (StringUtils.isNotBlank(b2bThirdDelivery.getAddress2())) {
-                receiver.setAddress(b2bThirdDelivery.getAddress2());
-            } else {
-                if (StringUtils.isNotBlank(b2bThirdDelivery.getAddress3())) {
-                    receiver.setAddress2(b2bThirdDelivery.getAddress3());
-                } else {
-                    receiver.setAddress2(b2bThirdDelivery.getReceiveAddress());
-                }
+        if (Objects.isNull(logisticsChannel)) {
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"物流渠道");
+        }
+        if (createOutboundReq.getItems() == null || createOutboundReq.getItems().isEmpty()) {
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"出库明细");
+        }
+        // 收件人信息
+        receiver.setCountrycode(b2bThirdDelivery.getCountryId());
+        receiver.setAddress(StringUtils.firstNonBlank(
+                b2bThirdDelivery.getAddress2(),
+                b2bThirdDelivery.getReceiveAddress(),
+                b2bThirdDelivery.getAddress3()
+        ));
+        String receiverAddress2 = StringUtils.defaultString(b2bThirdDelivery.getAddress3())
+                + StringUtils.defaultString(b2bThirdDelivery.getReceiveAddress());
+        if (StringUtils.isNotBlank(receiverAddress2)) {
+            receiver.setAddress2(receiverAddress2);
+        }
+        receiver.setArea(b2bThirdDelivery.getCity());
+        receiver.setCity(b2bThirdDelivery.getCity());
+        receiver.setProv(b2bThirdDelivery.getProvince());
+        receiver.setPostcode(b2bThirdDelivery.getPostCode());
+        receiver.setName(b2bThirdDelivery.getCustomerName());
+        receiver.setPhone(b2bThirdDelivery.getTelNumber());
+        receiver.setMobile(b2bThirdDelivery.getTelNumber());
+        receiver.setDoorNo("");
+        request.setReceiver(receiver);
+
+        SoInfoEntity soInfo = soInfoFeign.getSoInfoById(b2bThirdDelivery.getSoId());
+        if (Objects.nonNull(soInfo)) {
+            List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainId(soInfo.getId());
+            String payTimeStr = null;
+            request.setPlatformNumber(StringUtils.isNotBlank(soInfo.getPlatformOrderCode()) ? soInfo.getPlatformOrderCode() : soInfo.getCustomerOrderNo());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            if (Objects.nonNull(soInfo.getReceiveDate())) {
+                payTimeStr = soInfo.getReceiveDate().atStartOfDay().format(formatter);
+            } else if (Objects.nonNull(soInfo.getBillDate())) {
+                payTimeStr = soInfo.getBillDate().atStartOfDay().format(formatter);
             }
-            StringBuilder sb = new StringBuilder();
-            sb.append(b2bThirdDelivery.getAddress3());
-            sb.append(b2bThirdDelivery.getReceiveAddress());
-            receiver.setAddress2(sb.toString());
-            receiver.setArea(b2bThirdDelivery.getCity());
-            receiver.setCity(b2bThirdDelivery.getCity());
-            receiver.setProv(b2bThirdDelivery.getProvince());
-            receiver.setPostcode(b2bThirdDelivery.getPostCode());
-            receiver.setName(b2bThirdDelivery.getCustomerName());
-            receiver.setPhone(b2bThirdDelivery.getTelNumber());
-            receiver.setMobile(b2bThirdDelivery.getTelNumber());
-            receiver.setDoorNo("");
-            request.setReceiver(receiver);
+            request.setPayTime(StringUtils.defaultIfBlank(payTimeStr, LocalDateTime.now().format(formatter)));
 
-            SoInfoEntity soInfo = soInfoFeign.getSoInfoById(b2bThirdDelivery.getSoId());
-            if (Objects.nonNull(soInfo)) {
-                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainId(soInfo.getId());
-                String payTimeStr = "";
-                request.setPlatformNumber(StringUtils.isNotBlank(soInfo.getPlatformOrderCode()) ? soInfo.getPlatformOrderCode() : soInfo.getCustomerOrderNo());
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                if(Objects.nonNull(soInfo.getReceiveDate())) {
-                    payTimeStr = soInfo.getReceiveDate().atStartOfDay().format(formatter);
-                } else if(Objects.nonNull(soInfo.getBillDate())) {
-                    payTimeStr = soInfo.getBillDate().atStartOfDay().format(formatter);
-                }
-                request.setPayTime(payTimeStr);
-
-                // 构建SKU价格映射
+            // 构建SKU价格映射
+            if (soDetails != null && !soDetails.isEmpty()) {
                 for (SoDetailEntity soDetail : soDetails) {
                     skuPriceMap.put(soDetail.getSkuId(), soDetail.getPrice());
                 }
             }
-            // 配送方式=平台物流/商家自联快递时必填
-            if (StringUtils.isNotBlank(logisticsChannel.getDeliveryType())){
-                if (Objects.equals(logisticsChannel.getDeliveryType(), JituDeliveryTypeEnum.PLATFORM_LOGISTICS.getCode())
-                        || Objects.equals(logisticsChannel.getDeliveryType(),JituDeliveryTypeEnum.SHOP_SELF_DELIVERY.getCode())) {
-                    if (StringUtils.isBlank(b2bThirdDelivery.getTrackNo())) {
-                        throw new ServiceException("配送方式为平台物流/商家自联快递时物流跟踪号必填");
-                    }
+        }
+        // 配送方式=平台物流/商家自联快递时必填
+        if (StringUtils.isNotBlank(logisticsChannel.getDeliveryType())) {
+            if (Objects.equals(logisticsChannel.getDeliveryType(), JituDeliveryTypeEnum.PLATFORM_LOGISTICS.getCode())
+                    || Objects.equals(logisticsChannel.getDeliveryType(), JituDeliveryTypeEnum.SHOP_SELF_DELIVERY.getCode())) {
+                if (StringUtils.isBlank(b2bThirdDelivery.getTrackNo())) {
+                    throw new ServiceException("配送方式为平台物流/商家自联快递时物流跟踪号必填");
                 }
             }
         }
@@ -410,6 +417,9 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         request.setSourceSystem("ERP");
         request.setBusinessMode("B2B");
         request.setOutBizNo(createOutboundReq.getReferenceNo());
+        if (StringUtils.isBlank(request.getPayTime())) {
+            request.setPayTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        }
 
         // 物流信息
         // 配送方式=平台物流时必填，渠道是否需要同步面单标识
