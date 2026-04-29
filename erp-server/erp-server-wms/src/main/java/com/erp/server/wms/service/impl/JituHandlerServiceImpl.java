@@ -96,13 +96,13 @@ public class JituHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         createInboundReq.setReceivingCode(null);
         // 众包推送需要默认ERP的头程发货单号-HH+MM+SS
-        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
+//        String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+//        createInboundReq.setReferenceNo(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
         JituOverseasInboundCreateRequest jituOverseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
         // 创建入库单
         OverseasInboundCreateResponse responseBaseResponse = jituService.overseasInboundCreate(jituOverseasInboundCreateRequest);
         OverseasInboundCreateResponse.Response response = responseBaseResponse.getResponseitems().get(0);
-        return "true".equals(response.getSuccess()) ? success(response.getEntryOrderId()) : failure(response.getMessage());
+        return "true".equals(response.getSuccess()) ? success(response.getEntryOrderId()) : failure(response.getErrorMsg());
     }
 
     private JituOverseasInboundCreateRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
