@@ -126,24 +126,5 @@ public class DeliveryDeclareDetailMidController extends BaseController {
         return success(deliveryDeclareDetailMidService.view(id));
     }
 
-    /**
-    * 导出Excel数据
-    * @author jack
-    * @date:  2026-04-27
-    * @param dto
-    * @param response
-    * @return
-    */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:deliveryDeclareDetailMid:export",
-            tableAlias = ""
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "报关明细中间表导出Excel数据")
-    public void exportList(@RequestBody @Validated DeliveryDeclareDetailMidDTO.ExportDTO dto, HttpServletResponse response) {
-        deliveryDeclareDetailMidService.exportList(dto, response);
-    }
-
 
 }

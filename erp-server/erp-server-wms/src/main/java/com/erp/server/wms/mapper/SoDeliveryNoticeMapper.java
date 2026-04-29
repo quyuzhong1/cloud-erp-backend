@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -74,4 +75,15 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 
     List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(@Param("detailIds") List<String> detailIds);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货通知单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@Param("ids") List<String> ids);
 }

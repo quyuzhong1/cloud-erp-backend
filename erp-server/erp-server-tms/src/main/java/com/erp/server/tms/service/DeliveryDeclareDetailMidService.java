@@ -3,8 +3,8 @@ import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.ApproveDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -66,12 +66,13 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
 
 
     /**
-    * 导出Excel
-    * @author jack
-    * @date: 2026-04-27
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(DeliveryDeclareDetailMidDTO.ExportDTO dto, HttpServletResponse response);
+     * 自动生成报关明细中间表
+     *
+     * @param dto 自动生成参数
+     * @return 是否生成成功
+     * @throws com.common.core.exception.ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    Boolean autoGenerateMidData(AutoGenerateBillDTO dto);
 }

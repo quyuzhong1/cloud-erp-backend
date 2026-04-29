@@ -228,6 +228,35 @@
         ORDER BY CAST(wc.box_no AS INTEGER)
     </select>
 
+    <select id="listDeclarePackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
+        SELECT
+        fmd.id AS sourceId,
+        wc.id AS boxId,
+        wc.box_no AS boxNo,
+        wcd.sku_id AS skuId,
+        wcd.sku_no AS skuNo,
+        wcd.fn_sku AS fnSku,
+        wcd.pack_qty AS packQty
+        FROM first_mile_delivery fmd
+        INNER JOIN packing_task pt
+        ON (pt.source_id = fmd.id OR pt.source_id = fmd.source_id)
+        AND pt.is_deleted = FALSE
+        INNER JOIN wms_carton wc
+        ON wc.packing_task_id = pt.id
+        AND wc.is_deleted = FALSE
+        INNER JOIN wms_carton_detail wcd
+        ON wcd.main_id = wc.id
+        AND wcd.is_deleted = FALSE
+        WHERE fmd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY fmd.code, CAST(wc.box_no AS INTEGER), wcd.sku_no
+    </select>
+
     <!--导出装箱清单Excel-->
     <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$ExportPackingDTO">
         SELECT
