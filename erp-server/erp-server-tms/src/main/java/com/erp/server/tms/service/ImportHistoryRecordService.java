@@ -8,6 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
@@ -33,17 +34,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param dto
      * @return
      */
-    BaseResultDTO.AddDTO add(ImportHistoryRecordDTO.AddDTO dto);
-
-    /**
-     * 修改
-     * @author will
-     * @date: 2026-01-19
-     * @param dto
-     * @return
-     */
-    Boolean update(ImportHistoryRecordDTO.UpdateDTO dto);
-
+    BaseResultDTO.AddDTO addOrUpdate(ImportHistoryRecordDTO.AddOrUpdateDTO dto);
 
     /**
      * 分页列表查询
@@ -78,9 +69,9 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param errorList2
      * @param headList
      * @param headMap
-     * @return void
+     * @return List<ImportHistoryRecordDTO.ImportConfirmDTO>
      */
-    List<Pair<String, LocalDateTime>> handleImportSuccessList(ImportHistoryRecordDTO.ImportSyncDTO dto, CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
+    List<ImportHistoryRecordDTO.ImportConfirmDTO> handleImportSuccessList(ImportHistoryRecordDTO.ImportSyncDTO dto, CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap);
     /**
      * 重新生成
      * @author will
@@ -88,7 +79,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO regenerateImportExcel(String id);
+    BatchResultDTO regenerateImportExcel(String id,String processingType);
     /**
      * 导入
      * @author will
@@ -97,11 +88,20 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @return null
      */
     BatchResultDTO importFile(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO);
+
+    /**
+     * 导入成功后批量新增或修改物流单成本数据
+     * @author will
+     * @date 2026/1/29 10:00
+     * @param importDataList
+     * @return void
+     */
+    List<ImportHistoryRecordDTO.ImportConfirmDTO> importBatchAddOrUpdate(List<LogisticsBillCostDTO.ImportDataDTO> importDataList,String processingType);
     /**
      * 更新对账状态
      * @author will
      * @date 2026/4/14 15:09
      * @param confirmPairList
      */
-    void confirmImportData(ImportHistoryRecordDTO.ImportSyncDTO importDTO,List<Pair<String, LocalDateTime>> confirmPairList);
+    void confirmImportData(ImportHistoryRecordDTO.ImportSyncDTO importDTO, List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmPairList);
 }

@@ -1,6 +1,5 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -23,11 +22,10 @@ import com.erp.server.tms.service.ImportHistoryRecordService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +40,7 @@ import java.util.stream.Collectors;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Slf4j
 public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<Integer,String>> {
 
     public static final String MATCH_FIELD  = "匹配结果";
@@ -50,7 +49,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     public static final String ERROR_MSG  = "错误信息";
 
 
-    private static final int BATCH_COUNT = 1000;
+    private static final int BATCH_COUNT = 3000;
     private final String taskId;
     private final Integer importCount;
     private final ImportHistoryRecordDTO.ImportSyncDTO importDTO;
@@ -63,20 +62,17 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     @Getter
     private List<JSONObject> matchList = new ArrayList<>();
-    /**
-     * 全部数据（用于判断导入是否为空）
-     */
-    private final List<JSONObject> dataList = new ArrayList<>();
-    /**
-     * 确认状态更新数据
-     */
-    private List<Pair<String, LocalDateTime>> confirmPairList = new ArrayList<>();
 
     /**
      * 成功信息
      */
     @Getter
     private List<JSONObject> successList = new ArrayList<>();
+
+    /**
+     * 确认状态更新数据
+     */
+    private List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmPairList = new ArrayList<>();
 
     private Map<Integer,String> headMap;
 
@@ -85,6 +81,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+
     public ImportHistoryRecordExcelListener(CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, ImportHistoryRecordDTO.ImportSyncDTO importDTO) {
         this.costImportEntity = costImportEntity;
         this.cfgImportDetailList = cfgImportDetailList;
@@ -102,13 +99,17 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      * @return void
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
         count += 1;
         //已经导入的数据跳过进度
         if (Objects.nonNull(importCount) && count < importCount){
             return;
         }
+        //无表头数据报错
+        if (ObjectUtil.isEmpty(headMap)) {
+            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
+        }
+
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
         for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
             String value = map.get(entry.getKey());
@@ -117,58 +118,68 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             }
         }
         JSONObject excelDTO = new JSONObject(map);
-        //添加数据用于判断是否为空
-        dataList.add(excelDTO);
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
-            try {
-                List<JSONObject> errorList2 = new ArrayList<>();
-                List<Pair<String, LocalDateTime>> pairs = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
-                confirmPairList.addAll(pairs);
-                matchList.addAll(errorList2);
-            }catch (Exception e){
-                successList.forEach(jsonObject -> {
-                    jsonObject.set(ObjectUtil.isNull(jsonObject) ? "" : String.valueOf(jsonObject.size() - 1) ,e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
-                });
-                matchList.addAll(successList);
-            }
+            processBatch();
             successList.clear();
             updateTask(count);
         }
     }
 
-    public List<JSONObject> getExcelDateList(){
-        return dataList;
+    /**
+     * @description: 批量处理
+     * @author Will
+     * @date: 2026/1/21 15:31
+     */
+    private void processBatch() {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        try {
+            List<JSONObject> errorList2 = new ArrayList<>();
+            // 批量处理，由 Service 内部负责事务控制
+            List<ImportHistoryRecordDTO.ImportConfirmDTO> importConfirmDTOS = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
+            matchList.addAll(errorList2);
+            confirmPairList.addAll(importConfirmDTOS);
+        } catch (Exception e) {
+            log.error("批量导入处理异常批次，条数：{}", successList.size(), e);
+            // 整个批次失败的处理逻辑
+            String msg = e.getMessage();
+            if (CharSequenceUtil.isNotBlank(msg) && msg.length() > 100) {
+                msg = msg.substring(0, 100);
+            }
+            final String finalMsg = msg != null ? msg : "未知异常";
+            Integer errorIdx = getMapKey(headMap, ERROR_MSG);
+            Integer matchIdx = getMapKey(headMap, MATCH_FIELD);
+            String errorIdxStr = errorIdx != null ? errorIdx.toString() : null;
+            String matchIdxStr = matchIdx != null ? matchIdx.toString() : null;
+
+            successList.forEach(jsonObject -> {
+                // 将错误信息写入匹配结果
+                if (matchIdxStr != null) jsonObject.set(matchIdxStr, MATCH_FAIL);
+                if (errorIdxStr != null) jsonObject.set(errorIdxStr, finalMsg);
+            });
+            matchList.addAll(new ArrayList<>(successList));
+        }
     }
 
     /**
-     * @description: 数据全部解析完后删除明细
+     * @description: 数据全部解析完后
      * @author Will
      * @date: 2026/1/21 15:32
      * @param analysisContext
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()) {
-            try {
-                List<JSONObject> errorList2 = new ArrayList<>();
-                List<Pair<String, LocalDateTime>> pairs = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
-                confirmPairList.addAll(pairs);
-                matchList.addAll(errorList2);
-            }catch (Exception e){
-                successList.forEach(jsonObject -> {
-                    jsonObject.set(ObjectUtil.isNull(jsonObject) ? "" : String.valueOf(jsonObject.size() - 1) ,e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
-                });
-                matchList.addAll(successList);
-            }
+            processBatch();
+            successList.clear();
         }
         //添加匹配结果
         addMatchExcelResult();
         //对所有确认数据进行批量确认
         importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
     }
-
     /**
      * 添加匹配结果
      * @author will
@@ -178,46 +189,42 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     private void addMatchExcelResult() {
 
         //添加导入历史记录表数据
-        ImportHistoryRecordDTO.AddDTO addDTO = new ImportHistoryRecordDTO.AddDTO();
-        addDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
-        addDTO.setBusinessType(costImportEntity.getBusinessType());
-        addDTO.setFileUrl(importDTO.getFileUrl());
-        addDTO.setFileName(importDTO.getFileName());
+        ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO = new ImportHistoryRecordDTO.AddOrUpdateDTO();
+        addOrUpdateDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
+        addOrUpdateDTO.setBusinessType(costImportEntity.getBusinessType());
+        addOrUpdateDTO.setFileUrl(importDTO.getFileUrl());
+        addOrUpdateDTO.setFileName(importDTO.getFileName());
         //清洗结果
         String url = "";
         String fileName = "物流商费用导入结果.xlsx";
-        if (CollectionUtils.isNotEmpty(matchList)) {
+        if (CollectionUtils.isNotEmpty(matchList) && headList != null) {
+            //matchList = matchList.stream().filter(Objects::nonNull).collect(Collectors.toList());
             File file = ExcelUtil.customExportUtil(fileName, matchList, headList);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        addDTO.setCleanFileUrl(url);
-        addDTO.setCleanFileName(fileName);
+        addOrUpdateDTO.setCleanFileUrl(url);
+        addOrUpdateDTO.setCleanFileName(fileName);
         if (CharSequenceUtil.equals(importDTO.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
-            addDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
+            addOrUpdateDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
         } else {
-            addDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
+            addOrUpdateDTO.setStatus( ImportHistoryRecordStatusEnum.HANDLE.getStatus());
         }
-        addDTO.setType(importDTO.getType());
-        addDTO.setOperationUserId(importDTO.getUserId());
-        addDTO.setImportCount(count);
+        addOrUpdateDTO.setType(importDTO.getType());
+        addOrUpdateDTO.setOperationUserId(importDTO.getUserId());
+        addOrUpdateDTO.setImportCount(count);
 
         //匹配结果序号
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         long errorCount = matchList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) obj.get(matchIndex.toString()))).count();
-        addDTO.setMatchCount((int)errorCount);
-        importHistoryRecordService.add(addDTO);
+        addOrUpdateDTO.setMatchCount((int)errorCount);
+        importHistoryRecordService.addOrUpdate(addOrUpdateDTO);
     }
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
         List<String> headList = map.values().stream().map(obj -> CharSequenceUtil.isBlank(obj) ? "" : obj).collect(Collectors.toList());
-
-        long blankCount = map.values().stream().filter(CharSequenceUtil::isBlank).count();
-        if (blankCount > 1) {
-            throw new ServiceException(ApiError.COMMON_FILE_HEAD_NOT_EMPTY);
-        }
         headList.add(MATCH_FIELD);
         headList.add(ERROR_MSG);
         int size = map.size();
@@ -244,7 +251,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         for (Integer key : headMap.keySet()) {
             // 获取对应的value
             String value = headMap.get(key);
-
+            if (CharSequenceUtil.isBlank(value)) {
+                continue;
+            }
             // 如果value等于目标值，输出对应的key
             if (value.contains(targetValue)) {
                 resultKey = key;
