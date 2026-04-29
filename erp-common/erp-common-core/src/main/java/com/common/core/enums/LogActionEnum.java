@@ -48,6 +48,8 @@ public enum LogActionEnum {
     EXECUTE("execute", "执行",true),
     GET_LOGISTICS_NO("getLogisticsNo", "获取物流跟踪号",true),
     GET_LOGISTICS_LABEL("getLogisticsLabel", "获取物流面单",true),
+    PRINT_LOGISTICS_LABEL_PREVIEW("printLogisticsLabelPreview", "打印物流面单预览",true),
+    PRINT_LOGISTICS_LABEL_CONFIRM("printLogisticsLabelConfirm", "打印物流面单确认",true),
     ;
 
     @EnumValue

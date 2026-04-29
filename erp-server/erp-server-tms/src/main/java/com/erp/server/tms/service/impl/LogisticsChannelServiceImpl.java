@@ -1146,4 +1146,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             }
         });
     }
+
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannelByPlatform(LogisticsSupplierDTO.SelectDTO dto) {
+        return baseMapper.listChannelByPlatform(dto);
+    }
 }

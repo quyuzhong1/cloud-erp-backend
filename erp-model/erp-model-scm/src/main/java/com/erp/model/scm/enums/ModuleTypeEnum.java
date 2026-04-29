@@ -215,6 +215,8 @@ public enum ModuleTypeEnum {
     PDA_VERSION("164","PDA系统升级"),
     CFG_DECLARE_RULE("165", "报关规则配置"),
 
+    LOGISTICS_ORDER("168", "物流下单"),
+
 
 
 

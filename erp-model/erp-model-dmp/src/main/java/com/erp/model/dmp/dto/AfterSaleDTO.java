@@ -5,7 +5,9 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.dmp.entity.AfterSaleDetailEntity;
+import com.erp.model.dmp.entity.DmpAttachmentEntity;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -278,6 +280,61 @@ public class AfterSaleDTO implements Serializable {
          * 手机号码
          */
         private String phoneNumber;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 国家,dict_country.id
+         */
+        private String country;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 详细地址
+         */
+        private String detailedAddress;
+
+        /**
+         * 物流面单信息
+         */
+        private DmpAttachmentEntity attachment;
+
+        /**
+         * 面单状态
+         */
+        private String labelStatus;
+
+        /**
+         * 面单状态名称
+         */
+        private String labelStatusName;
+
+        /**
+         * 单号类型,API:API获取, MANUAL:手动获取
+         */
+        private String type;
     }
 
     /**
@@ -866,6 +923,252 @@ public class AfterSaleDTO implements Serializable {
          * 售后申请单id
          */
         private List<String> afterSaleIds;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsOrderDTO {
+
+        /**
+         * 物流平台
+         */
+        @Size(max = 30, message = "物流平台最大长度不能超过30位")
+        private String logisticsPlatform;
+
+        /**
+         * 物流渠道id
+         */
+        @Size(max = 19, message = "物流渠道id最大长度不能超过19位")
+        private String logisticsChannelId;
+
+        /**
+         * 下单信息
+         */
+        private List<OrderInfoDTO> orderInfoDTOList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class OrderInfoDTO {
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 工单号
+         */
+        private String code;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+        private String dictPlatformName;
+
+        /**
+         * thrid_user_info主键id
+         */
+        private String thridUserId;
+
+        /**
+         * 客户名
+         */
+        private String thridUserName;
+
+        private String skuId;
+        private String skuNo;
+        private String productName;
+        private Integer skuQty;
+
+        /**
+         * 邮寄地址
+         */
+        private String address;
+
+        /**
+         * 仓库寄的快递单号
+         */
+        private String outboundTrackNo;
+
+        /**
+         * 手机号码
+         */
+        private String phoneNumber;
+
+        /**
+         * 单号类型,API:API获取, MANUAL:手动获取
+         */
+        private String type;
+
+        /**
+         * 省/州
+         */
+        @NotBlank(message = "省/州不能为空")
+        @Size(max = 100, message = "省/州最大长度不能超过100位")
+        private String province;
+
+        /**
+         * 城市
+         */
+        @NotBlank(message = "城市不能为空")
+        @Size(max = 100, message = "城市最大长度不能超过100位")
+        private String city;
+
+        /**
+         * 详细地址
+         */
+        @NotBlank(message = "详细地址不能为空")
+        @Size(max = 200, message = "详细地址最大长度不能超过200位")
+        private String detailedAddress;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsOrderResultDTO {
+
+        /**
+         * 寄修申请id
+         */
+        private String afterSaleId;
+
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 错误信息
+         */
+        private String errorMsg;
+
+        /**
+         * 工单号
+         */
+        private String code;
+
+        /**
+         * 状态
+         */
+        private Boolean status;
+
+        /**
+         * 面单地址
+         */
+        private String url;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UploadFileDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        @NotBlank(message = "附件url不能为空")
+        private String attachUrl;
+
+        @NotBlank(message = "附件名称不能为空")
+        private String attachName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsLabelPreviewDTO {
+
+        /**
+         * 有运单号数量
+         */
+        private Integer trackNoCount;
+
+        /**
+         * 无运单号数量
+         */
+        private Integer notTrackNoCount;
+
+        /**
+         * 不可打印数量
+         */
+        private Integer notPrintCount;
+
+        /**
+         * 不可打印原因map
+         */
+        private Map<String, String> notPrintReasonMap;
+
+        /**
+         * 物流面单预览列表
+         */
+        private List<LogisticsLabelPreviewListDTO> labelPreviewListDTOS;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsLabelPreviewListDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 面单状态
+         */
+        private String labelStatus;
+
+        /**
+         * 物流平台
+         */
+        private String logisticsPlatform;
+
+        /**
+         * 物流平台名称
+         */
+        private String logisticsPlatformName;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * url
+         */
+        private String attachUrl;
 
     }
 
