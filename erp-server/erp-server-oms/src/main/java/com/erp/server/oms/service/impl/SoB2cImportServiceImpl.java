@@ -1,6 +1,5 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -169,17 +168,6 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
             return;
         }
 
-        if(CollUtil.isNotEmpty(errorNoList)){
-            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getCode()) && !errorNoList.contains(e.getCode())).collect(Collectors.toList());
-
-            //全部返回到错误列表
-            List<B2CManualDeliveryImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getCode()) || errorNoList.contains(e.getCode())).collect(Collectors.toList());
-            errorList.addAll(collect);
-        }
-
-        if(CollUtil.isEmpty(successList)){
-            return;
-        }
         List<String> codeList = successList.stream().map(B2CManualDeliveryImportExcelDTO::getCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = this.lambdaQuery().in(SoB2cEntity::getCode, codeList).list();
         if(CollectionUtils.isEmpty(soB2cEntityList)){
@@ -216,18 +204,17 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
             if(Objects.isNull(soB2cEntity)){
                 errorMsgList.add("订单编号在系统中不存在");
             }
-            if(handleCodes.contains(dto.getCode())) {
-                errorMsgList.add("订单编号存在重复");
-            }
-            handleCodes.add(dto.getCode());
-
             WarehouseEntity warehouseEntity = warehouseEntityList.stream().filter(e -> StringUtils.isNotBlank(dto.getWarehouseName()) && Objects.equals(e.getName(), dto.getWarehouseName())).findFirst().orElse(null);
             if(Objects.isNull(warehouseEntity)){
                 errorMsgList.add("仓库名称在系统中不存在");
+            } else if(Boolean.TRUE.equals(warehouseEntity.getDisabled())){
+                errorMsgList.add("仓库未启用");
             }
             LogisticsChannelDTO.BaseDTO baseDTO = channelEntities.stream().filter(e -> StringUtils.isNotBlank(dto.getChannelName()) && Objects.equals(e.getName(), dto.getChannelName())).findFirst().orElse(null);
             if(Objects.isNull(baseDTO)){
                 errorMsgList.add("物流渠道在系统中不存在");
+            } else if(Boolean.TRUE.equals(baseDTO.getDisabled())){
+                errorMsgList.add("物流渠道未启用");
             }
             if(CollectionUtils.isNotEmpty(errorMsgList)){
                 List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
@@ -238,6 +225,16 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
             if(Boolean.TRUE.equals(soB2cEntity.getInvalidStatus())){
                 errorMsgList.add("订单已作废");
             }
+            if(CollectionUtils.isNotEmpty(errorMsgList)){
+                List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
+                dto.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
+                errorList.add(dto);
+                continue;
+            }
+            if(handleCodes.contains(dto.getCode())) {
+                errorMsgList.add("订单编号存在重复");
+            }
+            handleCodes.add(dto.getCode());
             if(CollectionUtils.isNotEmpty(errorMsgList)){
                 List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
