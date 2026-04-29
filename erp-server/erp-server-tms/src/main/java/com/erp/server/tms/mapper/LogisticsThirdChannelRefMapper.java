@@ -41,6 +41,11 @@ public interface LogisticsThirdChannelRefMapper extends BaseMapper<LogisticsThir
     List<LogisticsThirdChannelRefEntity> existRefBySalePlatform(@Param("salePlatform") String salePlatform, @Param("channelId")String channelId,@Param("logisticsSupplierId") String logisticsSupplierId);
 
     /**
+     * 根据销售平台、物流渠道、物流商获取轨迹查询方式
+     */
+    String getTrackQueryModeBySalePlatform(@Param("salePlatform") String salePlatform, @Param("channelId") String channelId, @Param("logisticsSupplierId") String logisticsSupplierId);
+
+    /**
      * 根据单号批量查询轨迹配置信息
      *
      * @param trackNos 单号列表

@@ -59,6 +59,10 @@ public class LogisticsBillDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 查询方式
+         */
+        private String trackQueryMode;
 
     }
 
