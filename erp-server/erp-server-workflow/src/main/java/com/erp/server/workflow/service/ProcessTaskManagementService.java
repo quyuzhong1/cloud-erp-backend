@@ -103,6 +103,11 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
     List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(String businessId);
 
     /**
+     * 根据业务ID列表批量查询已完结任务备注
+     */
+    List<ProcessTaskManagementDTO.FinishedRemarkDTO> listFinishedTaskRemarksBatch(List<String> businessIds);
+
+    /**
      * 根据BusinessKey,taskStatus,curApproveId获取流程信息
      * @Author jack
      * @Date 2024/9/19
