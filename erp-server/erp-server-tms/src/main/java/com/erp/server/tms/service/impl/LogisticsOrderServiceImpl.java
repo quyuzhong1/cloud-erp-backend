@@ -112,9 +112,6 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     private ExpressShipperService expressShipperService;
 
     @Resource
-    private LogisticsSaleChannelService logisticsSaleChannelService;
-
-    @Resource
     private LogisticsOperateService logisticsOperateService;
 
     @Resource
@@ -151,26 +148,19 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         LogisticsOrderEntity logisticsOrderEntity = new LogisticsOrderEntity();
         BeanMapperUtils.copy(dto, logisticsOrderEntity);
         log.info("开始新增物流下单表");
+        // 调用顺丰物流下单接口
+        String channelId = dto.getLogisticsChannelId();
+        ChannelAuthInfo channelAuth = getChannelAuthInfo(channelId);
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WLD);
         logisticsOrderEntity.setCode(code);
         logisticsOrderEntity.setOrderId(code + "_" + LocalTime.now().format(DateTimeFormatter.ofPattern(DateUtil.FMT_HMS)));
-        // 调用顺丰物流下单接口
-        String channelId = dto.getLogisticsChannelId();
-        ChannelAuthInfo channelAuth = getChannelAuthInfo(channelId);
         // 收寄双方信息
         List<ContactInfo> contactInfoList = new ArrayList<>();
         contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
         contactInfoList.add(buildReceiverContactInfo(dto.getReceiver(), dto.getContactNumber(), dto.getProvince(), dto.getCity(), dto.getDetailedAddress()));
-        OrderRequest orderRequest = OrderRequest.builder()
-                .language("zh-CN")
-                .orderId(logisticsOrderEntity.getOrderId())
-                .contactInfoList(contactInfoList)
-                .payMethod(1)
-                .expressTypeId(Integer.valueOf(channelAuth.saleChannel.getCode()))
-                .parcelQty(1)
-                .isReturnRoutelabel(1)
-                .build();
+        // 组装请求顺丰下单接口参数
+        OrderRequest orderRequest = getOrderRequest(logisticsOrderEntity, contactInfoList, channelAuth);
         BaseResult baseResult;
         try {
             baseResult = expressShipperService.createOrder(channelAuth.authMap, orderRequest);
@@ -231,15 +221,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         List<ContactInfo> contactInfoList = new ArrayList<>();
         contactInfoList.add(buildSenderContactInfo(channelId, channelAuth.channel.getName()));
         contactInfoList.add(buildReceiverContactInfo(updateDTO.getReceiver(), updateDTO.getContactNumber(), updateDTO.getProvince(), updateDTO.getCity(), updateDTO.getDetailedAddress()));
-        OrderRequest orderRequest = OrderRequest.builder()
-                .language("zh-CN")
-                .orderId(logisticsOrderEntity.getOrderId())
-                .contactInfoList(contactInfoList)
-                .payMethod(1)
-                .expressTypeId(Integer.valueOf(channelAuth.saleChannel.getCode()))
-                .parcelQty(1)
-                .isReturnRoutelabel(1)
-                .build();
+        // 组装请求顺丰下单接口参数
+        OrderRequest orderRequest = getOrderRequest(logisticsOrderEntity, contactInfoList, channelAuth);
         BaseResult baseResult;
         try {
             baseResult = expressShipperService.createOrder(channelAuth.authMap, orderRequest);
@@ -258,6 +241,18 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         // 下单成功发送异步请求保存面单
         asyncSendLabelRequest(logisticsOrderEntity);
         return Boolean.TRUE;
+    }
+
+    private static OrderRequest getOrderRequest(LogisticsOrderEntity logisticsOrderEntity, List<ContactInfo> contactInfoList, ChannelAuthInfo channelAuth) {
+        return OrderRequest.builder()
+                .language("zh-CN")
+                .orderId(logisticsOrderEntity.getOrderId())
+                .contactInfoList(contactInfoList)
+                .payMethod(1)
+                .expressTypeId(Integer.valueOf(channelAuth.channel.getCode()))
+                .parcelQty(1)
+                .isReturnRoutelabel(1)
+                .build();
     }
 
     @Override
@@ -390,7 +385,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                     .contactInfoList(contactInfoList)
                     .payMethod(1)
                     // 快件产品类别
-                    .expressTypeId(Integer.valueOf(channelAuth.saleChannel.getCode()))
+                    .expressTypeId(Integer.valueOf(channelAuth.channel.getCode()))
                     .parcelQty(1)
                     // 是否返回路由标签： 默认1， 1：返回路由标签， 0：不返回；除部分特殊用户外，其余用户都默认返回
                     .isReturnRoutelabel(1)
@@ -910,7 +905,6 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         LogisticsSupplierDTO.AuthDTO auth;
         Map<String, String> authMap;
         LogisticsChannelEntity channel;
-        LogisticsSaleChannelEntity saleChannel;
     }
 
     /**
@@ -927,9 +921,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (Objects.isNull(info.channel)) {
             throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
-        info.saleChannel = logisticsSaleChannelService.getById(info.channel.getSyncSourceId());
-        if (Objects.isNull(info.saleChannel)) {
-            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
+        // 渠道编码不能为空，或者必须是数字
+        if (StringUtils.isBlank(info.channel.getCode()) || !StringUtils.isNumeric(info.channel.getCode())) {
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_CODE_EMPTY);
         }
         return info;
     }
