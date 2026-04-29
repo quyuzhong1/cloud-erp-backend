@@ -68,7 +68,7 @@ class JituServiceTest {
         request.setWarehouseCode("SH.001");
         request.setCustomerid("CS001");
         //``request.setEccompanyid("STANDARD");
-        request.setTxlogisticid("TT20230529006");
+        request.setTxlogisticid("TT20230529007");
         request.setOrderType("JYCK");
         request.setSource("pdd");
         request.setPlatformNumber("XXXXX");
@@ -94,7 +94,7 @@ class JituServiceTest {
         request.setTransportMode("ZTJ");
         request.setCarrier("JT");
         request.setRouteid("PD");
-        request.setMailno("1234564698789004");
+        request.setMailno("1234564698789005");
         request.setLabel("");
         request.setDeliveryNote("备注");
         request.setIsCod(0);
@@ -107,7 +107,7 @@ class JituServiceTest {
         item.setNumber(1);
         //item.setItemvalue(new BigDecimal("5000.02"));
         item.setInventoryType("ZP");
-        item.setBatchCode("20230529001");
+//        item.setBatchCode("20230529001");
         items.add(item);
         request.setItems(items);
         ThirdWarehouseContext.setAuthMap(authMap);
@@ -126,7 +126,7 @@ class JituServiceTest {
         JituOverseasInboundCreateRequest.Item item = JituOverseasInboundCreateRequest.Item.builder()
                 .LineNo("1")
                 .itemCode("YL001")
-                .batchCode("20230529001")
+//                .batchCode("20230529001")
                 .expirationDate("2027-05-29")
                 .productDate("2025-05-29")
                 .quantity(1)

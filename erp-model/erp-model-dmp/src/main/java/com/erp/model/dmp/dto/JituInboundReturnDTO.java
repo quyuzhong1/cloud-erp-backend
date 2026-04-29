@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class JituInboundReturnDTO implements Serializable {
     //消息ID
     private String requestId;
@@ -56,7 +58,8 @@ public class JituInboundReturnDTO implements Serializable {
     private List<Item> orderLines;
 
     @Data
-    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Item {
         //操作时间(YYYY-MM-DD HH:MM:SS;当status=FULFILLED;operateTime为上架时间)
         private LocalDateTime operateTime;

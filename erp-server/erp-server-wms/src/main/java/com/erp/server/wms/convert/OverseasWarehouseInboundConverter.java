@@ -412,7 +412,7 @@ public interface OverseasWarehouseInboundConverter {
     @Mapping(target = "expirationDate", ignore = true)
     @Mapping(target = "batchCode", ignore = true)
     @Mapping(target = "LineNo", source = "detailId")
-    @Mapping(target = "itemCode", source = "productSkuId")
+    @Mapping(target = "itemCode", source = "productSku")
     @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "inventoryType", constant = "ZP")
     JituOverseasInboundCreateRequest.Item inboundItemToJitu(ThirdWarehouseCreateInboundReq.Item item);
