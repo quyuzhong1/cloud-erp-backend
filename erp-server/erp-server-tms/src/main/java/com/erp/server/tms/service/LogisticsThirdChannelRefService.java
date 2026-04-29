@@ -109,6 +109,16 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
     Boolean existRefBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId);
 
     /**
+     * 根据销售平台、物流渠道、物流商获取轨迹查询方式
+     *
+     * @param salePlatform 销售平台
+     * @param channelId 物流渠道id
+     * @param logisticsSupplierId 物流商id
+     * @return TrackPlatformTypeEnum code
+     */
+    String getTrackQueryModeBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId);
+
+    /**
      * 根据单号搜索对应的三方渠道配置映射
      *
      * @param trackNos 物流单号列表

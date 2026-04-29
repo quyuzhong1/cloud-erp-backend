@@ -27,4 +27,20 @@ public interface IFileTaskRepository extends IService<FileTask> {
      * @return List<FileTaskDTO>
      */
     List<FileDTO.FileTaskDTO> listLatestFileTask(List<String> fileUrlList);
+    /**
+     * 根据类型查询超时的导入任务
+     * @author will
+     * @date 2026/1/26 11:31
+     * @param code
+     * @return List<FileTask>
+     */
+    List<FileTask> listTimeOutImportTask(String code,Integer hours);
+    /**
+     * 更新任务状态
+     * @author will
+     * @date 2026/1/26 11:31
+     * @param taskIdList
+     * @return void
+     */
+    void updateTaskStatus(List<String> taskIdList);
 }

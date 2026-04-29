@@ -20,6 +20,15 @@ public interface DownloadTaskFeign {
     @PostMapping("/feign/downloadTask/updateTask")
     void updateTask(@RequestBody BaseDTO.ImportResultDTO importResultDTO);
 
+    /**
+     *  导入走新事务
+     */
     @PostMapping("/feign/downloadTask/saveImportNewTask")
     String saveImportNewTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params);
+
+    /**
+     *  重新导入
+     */
+    @PostMapping("/feign/downloadTask/reImportTask")
+    String reImportTask(@RequestParam String taskId,@RequestParam String fileName, @RequestParam String event, @RequestBody Object params);
 }

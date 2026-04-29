@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -109,12 +108,12 @@ public class ImportHistoryRecordController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping(value = "/regenerateImportExcel")
-    public ApiResult<List<BatchResultDTO>> regenerateImportExcel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> regenerateImportExcel(@RequestBody @Validated ImportHistoryRecordDTO.RegenerateImportDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = importHistoryRecordService.regenerateImportExcel(id);
+                result = importHistoryRecordService.regenerateImportExcel(id,dto.getProcessingType());
             } catch (Exception e) {
                 log.error("重新生成失败{}", e.getMessage());
                 ImportHistoryRecordEntity entity = importHistoryRecordService.getById(id);

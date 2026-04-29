@@ -204,6 +204,8 @@ public enum ApiError implements Serializable {
     COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
     COMMON_STATUS_SAME(92134,"存在相同状态"),
+    COMMON_FILE_HEAD_READ_HEAD_FAIL(98134,"配置有误，开始行读取失败"),
+
     COMMON_NO_SKU(98128,"SKU不存在"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
