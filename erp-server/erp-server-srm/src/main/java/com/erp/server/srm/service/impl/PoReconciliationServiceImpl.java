@@ -36,10 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -223,5 +220,10 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     @Override
     public void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto) {
         poReconciliationScmService.uploadInvoice(dto);
+    }
+
+    @Override
+    public List<BatchResultDTO> downloadInvoice(List<String> ids) {
+        return poReconciliationScmService.downloadInvoice(ids);
     }
 }

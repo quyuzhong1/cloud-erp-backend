@@ -34,6 +34,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -78,15 +79,12 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PO_RECONCILIATION_DETAIL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT;
@@ -968,7 +966,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
-    public List<BatchResultDTO> downloadInvoice(List<String> ids, HttpServletResponse response) {
+    public List<BatchResultDTO> downloadInvoice(List<String> ids) {
         List<PoReconciliationEntity> poReconciliationEntities = listByIds(ids);
         Map<String, PoReconciliationEntity> reconciliationMap = poReconciliationEntities.stream()
                 .collect(Collectors.toMap(PoReconciliationEntity::getId, obj -> obj));
@@ -978,40 +976,39 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         Map<String, SrmAttachmentEntity> attachmentMap = srmAttachmentEntityList.stream()
                 .collect(Collectors.toMap(SrmAttachmentEntity::getBusinessId, obj -> obj));
         List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
-        response.setContentType("application/zip");
-        response.setCharacterEncoding("UTF-8");
-        try {
-            String zipFileName = URLEncoder.encode("发票文件.zip", "UTF-8");
-            response.setHeader("Content-Disposition", "attachment;filename=" + zipFileName);
-        } catch (UnsupportedEncodingException e) {
-            throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, e.getMessage());
-        }
-        try (ZipOutputStream zos = new ZipOutputStream(response.getOutputStream())) {
-            for (String id : ids) {
-                PoReconciliationEntity entity = reconciliationMap.get(id);
-                if (entity == null) {
-                    batchResultDTOS.add(BatchResultDTO.fail(id, "", "对账单不存在"));
-                    continue;
-                }
-                SrmAttachmentEntity attachmentEntity = attachmentMap.get(id);
-                if (!entity.getInvoiceStatus() || attachmentEntity == null) {
-                    batchResultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "未上传发票"));
-                    continue;
-                }
-                try {
-                    String entryName = entity.getCode() + "/" + attachmentEntity.getAttachName();
-                    zos.putNextEntry(new ZipEntry(entryName));
-                    zos.write(fileFeign.downloadFile(attachmentEntity.getAttachUrl()));
-                    zos.closeEntry();
-                    batchResultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "下载成功"));
-                } catch (Exception e) {
-                    batchResultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "文件下载失败"));
-                }
+        // 2. 构建文件夹结构：对账单号作为文件夹名
+        Map<String, List<String>> folderStructure = new HashMap<>();
+        Map<String, String> fileUrlToNameMap = new HashMap<>();
+        for (String id : ids) {
+            PoReconciliationEntity entity = reconciliationMap.get(id);
+            if (entity == null) {
+                batchResultDTOS.add(BatchResultDTO.fail(id, "", "对账单不存在"));
+                continue;
             }
-            zos.finish();
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, e.getMessage());
+            SrmAttachmentEntity attachmentEntity = attachmentMap.get(id);
+            if (!entity.getInvoiceStatus() || attachmentEntity == null) {
+                batchResultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "未上传发票"));
+                continue;
+            }
+            // 获取发票文件URL
+            String fileUrl = attachmentEntity.getAttachUrl();
+            String fileName = attachmentEntity.getAttachName();
+            // 将对账单号作为文件夹路径
+            String folderPath = entity.getCode();
+            // 添加到文件夹结构
+            folderStructure.computeIfAbsent(folderPath, k -> new ArrayList<>()).add(fileUrl);
+            // 添加文件URL到文件名的映射
+            fileUrlToNameMap.put(fileUrl, fileName);
         }
+        if (folderStructure.isEmpty()) {
+            return batchResultDTOS;
+        }
+        // 3. 调用 createZipFromFolderStructure 方法创建ZIP
+        FileDTO.CreateZipDTO createZipDTO = new FileDTO.CreateZipDTO();
+        createZipDTO.setFolderStructure(folderStructure);
+        createZipDTO.setFileUrlToNameMap(fileUrlToNameMap);
+        String zipUrl = fileFeign.createZipFromFolderStructure(createZipDTO);
+        batchResultDTOS.add(BatchResultDTO.success(null, null, zipUrl));
         return batchResultDTOS;
     }
 }

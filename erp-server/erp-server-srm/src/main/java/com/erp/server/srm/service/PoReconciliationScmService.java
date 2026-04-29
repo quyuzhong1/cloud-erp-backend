@@ -13,7 +13,6 @@ import com.erp.model.srm.entity.PoReconciliationEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -204,8 +203,7 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * 下载发票
      *
      * @param ids List<String>
-     * @param response HttpServletResponse
      * @return List<BatchResultDTO>
      */
-    List<BatchResultDTO> downloadInvoice(List<String> ids, HttpServletResponse response);
+    List<BatchResultDTO> downloadInvoice(List<String> ids);
 }

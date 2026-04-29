@@ -93,4 +93,12 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      * @param dto PoReconciliationDetailDTO.UploadFileDTO
      */
     void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto);
+
+    /**
+     * 下载发票
+     *
+     * @param ids List<String>
+     * @return ApiResult<Object>
+     */
+    List<BatchResultDTO> downloadInvoice(List<String> ids);
 }

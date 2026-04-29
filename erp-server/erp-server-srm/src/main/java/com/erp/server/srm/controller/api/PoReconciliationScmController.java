@@ -447,8 +447,8 @@ public class PoReconciliationScmController extends BaseController {
 
     @PostMapping("/downloadInvoice")
     @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载发票")
-    public ApiResult<Object> downloadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
-        List<BatchResultDTO> resultDTOS = poReconciliationScmService.downloadInvoice(dto.getIds(), response);
+    public ApiResult<Object> downloadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = poReconciliationScmService.downloadInvoice(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
