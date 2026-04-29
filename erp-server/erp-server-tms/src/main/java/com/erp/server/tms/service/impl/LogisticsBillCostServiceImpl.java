@@ -436,25 +436,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return logisticsBillCostList;
     }
 
-    @Override
-    public void confirmImport(String id, String reconciliationStatus, LocalDateTime confirmTime) {
-        LogisticsBillCostEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用"));
-
-        //状态变更
-        lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
-                .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
-                .set(LogisticsBillCostEntity::getConfirmTime, confirmTime)
-                .set(LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
-                .set(LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
-                .update();
-
-        // 状态变更日志
-        log.info("状态变更日志数据，id集合：【{}】", id);
-        String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
-    }
-
     /**
      * 处理导入成功的数据
      * @author will
@@ -2398,7 +2379,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         // 防御性处理：count 为 null 时返回 0
         return count == null ? 0 : count;
     }
-
 
     @Override
     public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
