@@ -210,10 +210,13 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
             } else if(Boolean.TRUE.equals(warehouseEntity.getDisabled())){
                 errorMsgList.add("仓库未启用");
             }
-            LogisticsChannelDTO.BaseDTO baseDTO = channelEntities.stream().filter(e -> StringUtils.isNotBlank(dto.getChannelName()) && Objects.equals(e.getName(), dto.getChannelName())).findFirst().orElse(null);
-            if(Objects.isNull(baseDTO)){
+            List<LogisticsChannelDTO.BaseDTO> matchingChannels = channelEntities.stream()
+                    .filter(e -> StringUtils.isNotBlank(dto.getChannelName()) && Objects.equals(e.getName(), dto.getChannelName()))
+                    .collect(Collectors.toList());
+            LogisticsChannelDTO.BaseDTO baseDTO = matchingChannels.stream().filter(e -> !Boolean.TRUE.equals(e.getDisabled())).findFirst().orElse(null);
+            if(CollectionUtils.isEmpty(matchingChannels)){
                 errorMsgList.add("物流渠道在系统中不存在");
-            } else if(Boolean.TRUE.equals(baseDTO.getDisabled())){
+            } else if(Objects.isNull(baseDTO)){
                 errorMsgList.add("物流渠道未启用");
             }
             if(CollectionUtils.isNotEmpty(errorMsgList)){
