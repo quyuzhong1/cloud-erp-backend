@@ -73,18 +73,11 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         if (CollectionUtils.isEmpty(detailList)) {
             return Boolean.FALSE;
         }
-        //查询渠道配置
-        Boolean flag = logisticsThirdChannelRefService.existRefBySalePlatform(billEntity.getSalesPlatform(), billEntity.getChannelId(), billEntity.getLogisticsSupplierId());
-
         String mainId = billEntity.getId();
         String channelId = billEntity.getChannelId();
         LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
         List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
         list.forEach(l -> {
-            if(!flag){
-                l.setTrackStatus(LogisticTrackStatusEnum.NOT_QUERY.getCode());
-                l.setTrackEnable(false);
-            }
             l.setMainId(mainId);
             if(StringUtils.isNotBlank(authEntity.getId())){
                 l.setLogisticsAuthId(authEntity.getId());

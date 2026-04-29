@@ -172,6 +172,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private CfgSettingService cfgSettingService;
     @Resource
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -191,7 +193,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
+        //查询渠道配置(针对尾程物流单)
+        Boolean flag = logisticsThirdChannelRefService.existRefBySalePlatform(logisticsBillEntity.getSalesPlatform(), logisticsBillEntity.getChannelId(), logisticsBillEntity.getLogisticsSupplierId());
+        List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        if(!flag){
+            detailList.forEach(l -> {
+                l.setTrackStatus(LogisticTrackStatusEnum.NOT_QUERY.getCode());
+                l.setTrackEnable(false);
+            });
+        }
+        logisticsBillDetailService.add(logisticsBillEntity, detailList,true);
 
         //同步速递云运单
         pushSdyFieldHandler(logisticsBillEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
