@@ -107,6 +107,12 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 		return JSON.toJSONString(success(result));
 	}
 
+	@GetMapping("/deleteArchiveData")
+	@Override
+	public int deleteArchiveData(String tableName, String timeField, int retentionDay, int limitCount, String extSql) {
+		return baseDataMapper.deleteArchiveData(tableName, timeField, retentionDay, limitCount, extSql);
+	}
+
 	private static Object[] parseParamVarArgs(List<Object> param, Method invokeMethod) {
 		Object [] paramVarArgs = new Object[param.size()];
 		Class<?>[] parameterTypes = invokeMethod.getParameterTypes();
