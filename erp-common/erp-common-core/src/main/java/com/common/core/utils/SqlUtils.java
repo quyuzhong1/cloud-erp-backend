@@ -58,7 +58,11 @@ public class SqlUtils {
             if (i > 0) {
                 sqlString.append(" OR ");
             }
-            appendPermissionSql(sqlString, fieldList.get(i), permissionListWithBlank);
+            sqlString.append(" ( ");
+            sqlString.append(fieldList.get(i));
+            sqlString.append(" in (");
+            sqlString.append(permissionListWithBlank.stream().map(SqlUtils::toSqlLiteral).collect(Collectors.joining(",")));
+            sqlString.append(" ) ) ");
         }
         sqlString.append(" )");
     }
