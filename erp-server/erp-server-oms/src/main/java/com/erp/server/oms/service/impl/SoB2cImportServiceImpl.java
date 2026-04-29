@@ -221,22 +221,14 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
             } else if(Objects.isNull(baseDTO)){
                 errorMsgList.add("物流渠道未启用");
             }
-            if(CollectionUtils.isNotEmpty(errorMsgList)){
-                List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
-                dto.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
-                errorList.add(dto);
-                continue;
-            }
             if(Boolean.TRUE.equals(soB2cEntity.getInvalidStatus())){
                 errorMsgList.add("订单已作废");
             }
             if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(soB2cEntity.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
                 errorMsgList.add( CharSequenceUtil.format("订单状态为{},不允许操作不出库发货", SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus())));
-                continue;
             }
             if (soB2cEntity.hasPlatformWarehouseOrder()) {
                 errorMsgList.add("平台仓订单不允许操作不出库发货");
-                continue;
             }
             if(CollectionUtils.isNotEmpty(errorMsgList)){
                 List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
