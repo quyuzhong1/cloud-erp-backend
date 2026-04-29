@@ -77,4 +77,9 @@ public class MenuEntity implements Serializable {
 	 */
 	@NotBlank(message = "所属系统不能为空")
 	private String system;
+
+	/**
+	 * 是否在归档系统可见，默认false不可见
+	 */
+	private Boolean isArchiveDisplay;
 }
