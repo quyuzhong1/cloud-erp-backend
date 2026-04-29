@@ -366,6 +366,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF("IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF", "轨迹查询策略导入","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsThirdChannelRef",""),
     EXPORT_TMS_DICT_HS_CODE("EXPORT_TMS_DICT_HS_CODE", "出口申报要素导出","","",""),
     EXPORT_TMS_CFG_SAILING("EXPORT_TMS_CFG_SAILING", "截单开船导出","","",""),
+    EXPORT_TMS_LOGISTICS_ORDER("EXPORT_TMS_LOGISTICS_ORDER", "物流下单导出","","",""),
 
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入尾程费用(自发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用(平台发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),

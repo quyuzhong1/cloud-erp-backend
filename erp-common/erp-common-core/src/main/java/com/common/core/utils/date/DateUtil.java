@@ -43,6 +43,7 @@ public class DateUtil {
     public static final String DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm";
     public static final String DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd";
     public static final String DATE_PATTERN_SHORT_TIME_NO_SP = "yyyyMMddHHmmss";
+    public static final String FMT_HMS = "HHmmss";
 
 
     public static LocalDateTime nowDay() {

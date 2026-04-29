@@ -1085,6 +1085,7 @@ public enum ApiError implements Serializable {
     PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9670,"良品/不良品数量不允许小于0或空"),
     PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
     PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
+    PO_RECONCILIATION_STATUS_NOT_CONFIRM(9672,"单据状态不是【已确认待完结】，不允许上传发票"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1783,6 +1784,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED(13642,"平台不能为空"),
     LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED(13643,"推送明细不需要配置"),
     LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED(13644,"查询物流商(中文)不能为空"),
+    LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),
+    LOGISTICS_ORDER_CANNOT_EDIT(13646,"该单据不能再当前页面编辑"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

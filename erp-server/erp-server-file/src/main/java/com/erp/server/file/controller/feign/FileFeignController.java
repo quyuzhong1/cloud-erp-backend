@@ -165,4 +165,16 @@ public class FileFeignController {
         FileService fileService = fileRegistry.getHandler();
         return fileTaskRepository.listLatestFileTask(fileUrlList);
     }
+
+    /**
+     * 通过URL上传文件
+     *
+     * @param uploadBase64 FileDTO.UploadBase64
+     * @return String
+     */
+    @PostMapping(value = "/uploadFileByUrl")
+    String uploadFileByUrl(@RequestBody FileDTO.UploadBase64 uploadBase64) {
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.uploadFileByUrl(uploadBase64);
+    }
 }
