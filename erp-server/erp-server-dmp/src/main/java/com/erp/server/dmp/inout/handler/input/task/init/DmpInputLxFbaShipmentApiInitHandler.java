@@ -142,13 +142,12 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
 
-        List<Object> l = resultData.getData();
-        if (l instanceof List) {
-            List<?> list = (List<?>) l;
+        if (resultData.getData() instanceof List) {
+            List<?> list = (List<?>) resultData.getData();
             log.warn("Data is a List: {}", list);
-        } else if (l instanceof Map) {
+        } else if (resultData.getData() instanceof Map) {
             // 处理Map情况（如提取某个字段）
-            Map<?, ?> map = (Map<?, ?>) l;
+            Map<?, ?> map = (Map<?, ?>) resultData.getData();
             log.warn("Data is a Map: {}", map);
             Object value = map.get("expectedKey");
             if (value instanceof List) {
@@ -158,7 +157,7 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 log.warn("Value for key 'expectedKey' is not a List: {}", value);
             }
         } else {
-            log.warn("Data is neither List nor Map: {}", l);
+            log.warn("Data is neither List nor Map: {}", resultData.getData());
         }
 
 
