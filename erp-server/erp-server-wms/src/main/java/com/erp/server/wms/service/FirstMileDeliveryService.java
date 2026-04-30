@@ -34,6 +34,15 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     */
     BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO dto);
 
+    /**
+     * 按装箱状态自动生成报关明细中间表
+     *
+     * @param entity 头程发货单
+     * @param billGenerateTimingEnum 单据生成时机
+     * @throws com.common.core.exception.ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
     void autoGenerateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum);
 
     /**
@@ -287,6 +296,17 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryEntity> advanceQuery(AdvanceQueryContainer advanceQueryContainer);
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货单id
+     * @return List<WmsCartonDetailDTO.ListPackingDetailDTO>
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids);
 
     int countNotVoided(String id);
 

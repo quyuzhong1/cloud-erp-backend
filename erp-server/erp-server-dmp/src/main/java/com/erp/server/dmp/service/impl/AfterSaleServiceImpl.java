@@ -1166,7 +1166,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, idList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));
         // 查询国家信息
-        List<String> countryIdList = list.stream().map(AfterSaleDTO.ListDTO::getCountry).collect(Collectors.toList());
+        List<String> countryIdList = dtoList.stream().map(LogisticsOrderDTO.ListDTO::getCountry).collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
         Map<String, DictCountryEntity> countryMap = countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, item -> item));
         // 属性赋值

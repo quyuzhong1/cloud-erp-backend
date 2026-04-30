@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -37,6 +36,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("declare_status")
     private String declareStatus;
+    /**
+    * 生成状态：wait=未生成 finish=已生成
+    */
+    @TableField("generate_status")
+    private String generateStatus;
     /**
     * 来源单据id
     */
@@ -87,6 +91,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("sku_no")
     private String skuNo;
+    /**
+    * 组合品SKU
+    */
+    @TableField("combo_sku_no")
+    private String comboSkuNo;
     /**
     * 币种
     */
@@ -148,27 +157,27 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("qty")
     private Integer qty;
     /**
-    * 仓库ID
+    * 发货仓ID
     */
     @TableField("from_warehouse_id")
     private String fromWarehouseId;
     /**
-    * 仓库名称
+    * 发货仓名称
     */
     @TableField("from_warehouse_name")
     private String fromWarehouseName;
     /**
-    * 目的仓库ID
+    * 目的仓ID
     */
     @TableField("dest_warehouse_id")
     private String destWarehouseId;
     /**
-    * 目的仓库名称
+    * 目的仓名称
     */
     @TableField("dest_warehouse_name")
     private String destWarehouseName;
     /**
-    * 中转仓库IDS
+    * 中转仓IDs(逗号分隔)
     */
     @TableField("transfer_warehouse_ids")
     private String transferWarehouseIds;
@@ -187,6 +196,8 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     public static final String REMARK = "remark";
 
     public static final String DECLARE_STATUS = "declare_status";
+
+    public static final String GENERATE_STATUS = "generate_status";
 
     public static final String SOURCE_ID = "source_id";
 
@@ -207,6 +218,8 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
+
+    public static final String COMBO_SKU_NO = "combo_sku_no";
 
     public static final String CURRENCY = "currency";
 

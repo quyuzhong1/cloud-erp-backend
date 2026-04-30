@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
@@ -129,6 +130,48 @@ public class SoDeliveryNoticeFeignController {
     @PostMapping("/getNoticeDetailById")
     public SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id) {
         return soDeliveryNoticeDetailService.getById(id);
+    }
+
+    /**
+     * 批量查询发货通知单
+     *
+     * @param ids 发货通知单id集合
+     * @return 发货通知单集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/listByIds")
+    public List<SoDeliveryNoticeEntity> listByIds(@RequestBody List<String> ids) {
+        return soDeliveryNoticeService.listByIds(ids);
+    }
+
+    /**
+     * 按主表批量查询发货通知明细
+     *
+     * @param mainIds 发货通知单id集合
+     * @return 发货通知明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/listDetailByMainIds")
+    public List<SoDeliveryNoticeDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
+        return soDeliveryNoticeDetailService.listDetailByMainIds(mainIds);
+    }
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货通知单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/listDeclarePackingDetail")
+    public List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids) {
+        return soDeliveryNoticeService.listDeclarePackingDetail(ids);
     }
     /**
      * 更新销售信息

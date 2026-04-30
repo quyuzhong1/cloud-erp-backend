@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
@@ -339,6 +340,17 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids);
 
     List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(List<String> soIds);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货通知单id
+     * @return List<WmsCartonDetailDTO.ListPackingDetailDTO>
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids);
 
     void updateSalesInfo(SoInfoEntity soInfoEntity);
 

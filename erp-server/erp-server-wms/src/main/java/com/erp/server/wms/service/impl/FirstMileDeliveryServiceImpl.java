@@ -76,6 +76,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
@@ -175,6 +176,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private LogisticsFeign logisticsFeign;
     @Resource
+    private DeliveryDeclareDetailMidFeign deliveryDeclareDetailMidFeign;
+    @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
     @Resource
     private PackingTaskService packingTaskService;
@@ -246,30 +249,39 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //新增装箱任务
 //        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
 
-        //根据装箱状态自动生成报关单
+        // 当前单据提交完成后再检查装箱状态，避免事务未提交时读取不到装箱明细。
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
-                    log.error("自动生成报关单睡眠异常: {}", e.getMessage());
+                    log.error("自动生成报关明细中间表等待异常：{}", e.getMessage());
                 }
                 FirstMileDeliveryServiceImpl bean = ApplicationContextUtils.getBean(FirstMileDeliveryServiceImpl.class);
-                bean.autoGenerateByPacked(firstMileDeliveryEntity,BillGenerateTimingEnum.AFTER_PACKING);
+                bean.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_ADD);
             }
         });
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
     }
 
+    /**
+     * 按装箱状态自动生成报关明细中间表
+     *
+     * @param entity 头程发货单
+     * @param billGenerateTimingEnum 单据生成时机
+     * @throws ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
     @Override
     public void autoGenerateByPacked( FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
-        //已装箱才能生成报关单逻辑
+        // 已装箱才能生成报关明细中间表。
         if (CollectionUtils.isNotEmpty(taskEntityList)) {
             boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
             if(packed){
-                //走TMS生成报关单单逻辑
+                // 走TMS生成报关明细中间表逻辑。
                 AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
                         .id(entity.getId())
                         .billGenerateTimingEnum(billGenerateTimingEnum)
@@ -280,25 +292,23 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 try {
                     if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
                         Boolean autoGenerateResult;
-                        //自动生成功能系统标识
+                        // 跨服务自动生成报关明细中间表时临时切换系统标识，避免使用前台用户上下文。
                         Boolean originalValue = UserContext.getIsUserSystem();
                         UserContext.setIsUserSystem(Boolean.TRUE);
                         try {
-                            autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                            autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(autoGenerateBillDTO);
                         } finally {
                             //恢复系统标识
                             UserContext.setIsUserSystem(originalValue);
                         }
                         if(autoGenerateResult){
-                            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                            updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                            this.updateStatus(updateStatusDTO);
+                            log.info("头程发货单{}自动生成报关明细中间表成功", entity.getCode());
                         }
                     }
                 }catch (Exception e){
-                    log.error("头程发货单{} 自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                    throw new ServiceException(CharSequenceUtil.format("头程发货单{} 自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                    log.error("头程发货单{}自动生成报关明细中间表失败：{}", entity.getCode(), e.getMessage(), e);
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED,
+                            "头程发货单", entity.getCode(), e.getMessage());
                 }
             }
         }
@@ -1164,8 +1174,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                         try {
                             if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
                                 BatchResultDTO autoGenerateResult;
-                                //自动生成功能系统标识
-                                Boolean originalValue = UserContext.getIsUserSystem();
                                 autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
                                 if(autoGenerateResult.getSuccess()){
                                     FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
@@ -1182,19 +1190,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                         try {
                             if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
                                 Boolean autoGenerateResult;
-                                //自动生成功能系统标识
+                                // 跨服务自动生成报关明细中间表时临时切换系统标识，避免使用前台用户上下文。
                                 Boolean originalValue = UserContext.getIsUserSystem();
-                                autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                                UserContext.setIsUserSystem(Boolean.TRUE);
+                                try {
+                                    autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(autoGenerateBillDTO);
+                                } finally {
+                                    UserContext.setIsUserSystem(originalValue);
+                                }
                                 if(autoGenerateResult){
-                                    FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                                    this.updateStatus(updateStatusDTO);
+                                    log.info("头程发货单{}审核后自动生成报关明细中间表成功", entity.getCode());
                                 }
                             }
                         }catch (Exception e){
-                            log.error("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                            throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                            log.error("头程发货单{}审核后自动生成报关明细中间表失败：{}", entity.getCode(), e.getMessage(), e);
+                            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED,
+                                    "头程发货单", entity.getCode(), e.getMessage());
                         }
                     }
                 }
@@ -2271,6 +2282,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, packingStatus)
                 .eq(FirstMileDeliveryEntity::getId, id)
                 .update();
+        if (CharSequenceUtil.equals(packingStatus, PackingTaskStatusEnum.PACKED.getCode())) {
+            FirstMileDeliveryEntity entity = this.getById(id);
+            if (Objects.nonNull(entity)) {
+                autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_ADD);
+                if (CharSequenceUtil.equals(entity.getApproveStatus(), com.common.business.enums.ApproveStatusEnum.APPROVE.getCode())) {
+                    autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_APPROVE);
+                }
+            }
+        }
     }
 
     @Override
@@ -2647,6 +2667,23 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return result;
     }
 
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 头程发货单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @Override
+    public List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeclarePackingDetail(ids);
+    }
+
     @Override
     public int countNotVoided(String id) {
         return count(Wrappers.<FirstMileDeliveryEntity>lambdaQuery()
@@ -2958,6 +2995,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             firstMildDetailDTO.setDeclareQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setDeliveryQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setSourceDetailId(awdOutstockDetailEntity.getId());
+            firstMildDetailDTO.setFbaShipmentCode(awdOutstockEntity.getFbaShipmentCode());
             for (SkuVO skuVO : skuVOList) {
                 firstMildDetailDTO.setNetWeight(skuVO.getNetWeight());
                 firstMildDetailDTO.setProductSizeLength(skuVO.getProductLength());
