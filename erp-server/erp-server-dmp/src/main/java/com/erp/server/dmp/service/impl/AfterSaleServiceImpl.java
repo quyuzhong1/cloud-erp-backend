@@ -8,6 +8,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -1906,12 +1907,14 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Override
     public List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
+        log.info("getLogisticsOrderLabel开始：{}", JSON.toJSONString(logisticsLabelDTOS));
         List<String> afterSaleIdList = logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getAfterSaleId).collect(Collectors.toList());
         List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
                 .in(DmpAttachmentEntity::getBusinessId, afterSaleIdList)
                 .eq(DmpAttachmentEntity::getType, "after_sale_label"));
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, v -> v));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchGetLabel(logisticsLabelDTOS);
+        log.info("调用TMS获取顺丰面单结束：{}", JSON.toJSONString(resultDTOList));
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
         Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, v -> v));
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
