@@ -1,13 +1,13 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -15,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -28,7 +29,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -159,39 +163,33 @@ public class TmsFmDeclareBillController extends BaseController {
     }
 
     /**
-     * 更新状态为已报关
+     * 报关状态详情
      * @author lrp
      * @date:  2024-03-19
-     * @return ApiResult<String>
+     * @param id
+     * @return ApiResult<TmsDeclareBillDTO.DeclareStatusDetailDTO>
      */
-    @PostMapping("/updateToDeclare")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单更新状态为已报关")
+    @GetMapping("/declareStatusDetail")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:tmsFmDeclareBill:updateToDeclare",
+            menuCode = "tms:tmsFmDeclareBill:confirmDeclareStatus",
             serviceClass = TmsDeclareBillService.class,
-            keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> updateToDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.updateToDeclare(dto,SourceTypeEnum.FM_DECLARE_BILL);
-        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
+            keyIdName = "id")
+    public ApiResult<TmsDeclareBillDTO.DeclareStatusDetailDTO> declareStatusDetail(@RequestParam("id") String id) {
+        return success(tmsDeclareBillService.declareStatusDetail(id, SourceTypeEnum.FM_DECLARE_BILL));
     }
 
     /**
-     * 取消报关
+     * 报关状态更新
      * @author lrp
      * @date:  2024-03-19
-     * @return ApiResult<String>
+     * @param dto
+     * @return ApiResult<Boolean>
      */
-    @PostMapping("/cancelDeclare")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单更新状态为取消报关")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsFmDeclareBill:cancelDeclare",
-            serviceClass = TmsDeclareBillService.class,
-            keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> cancelDeclare(@RequestBody @Validated TmsDeclareBillDTO.UpdateDeclareStatusDTO dto) {
-        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelDeclare(dto);
-        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
+    @PostMapping("/confirmDeclareStatus")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "头程报关单报关状态更新")
+    public ApiResult<Boolean> confirmDeclareStatus(@RequestBody @Validated TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
+        return success(tmsDeclareBillService.confirmDeclareStatus(dto, SourceTypeEnum.FM_DECLARE_BILL));
     }
 
     /**
@@ -204,19 +202,6 @@ public class TmsFmDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单合并报关")
     public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
         return success(tmsDeclareBillService.mergeDeclare(dto));
-    }
-
-    /**
-     * 取消合并
-     * @author lrp
-     * @date:  2024-03-19
-     * @return ApiResult<String>
-     */
-    @PostMapping("/cancelMerge")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单取消合并")
-    public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        List<BatchResultDTO> resultDTOList = tmsDeclareBillService.cancelMerge(dto);
-        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -266,4 +251,120 @@ public class TmsFmDeclareBillController extends BaseController {
         tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
         return success();
     }
+
+
+    /**
+     * 批量更新备注
+     * @author will
+     * @date 2026/4/21 14:42
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
+     */
+    @PostMapping("/batchUpdateRemark")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "更新报关单备注")
+    public ApiResult<List<BatchResultDTO>> batchUpdateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<TmsDeclareBillEntity> list = tmsDeclareBillService.lambdaQuery().in(TmsDeclareBillEntity::getId, ids).list();
+        Map<String, TmsDeclareBillEntity> idEntityMap = list.stream().collect(Collectors.toMap(TmsDeclareBillEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = tmsDeclareBillService.updateRemark(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("报关单信息 更新备注失败",e);
+                TmsDeclareBillEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "报关单主单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 添加产品明细（查询未生成的头程发货明细信息）
+     * @author will
+     * @date 2026/4/21 19:09
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listNotGenerateFmDetailPaging")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加产品明细")
+    public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateFmDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
+        PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = tmsDeclareBillService.listNotGenerateFmDetailPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 拆分报关明细
+     * @author will
+     * @date 2026/4/23 15:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>>
+     */
+    @PostMapping("/listSplitFmDetail")
+    public ApiResult<List<TmsDeclareBillDTO.SplitDeclareDTO>> listSplitFmDetail(@RequestBody @Valid BaseIdDTO dto)  {
+        List<TmsDeclareBillDTO.SplitDeclareDTO> list = tmsDeclareBillService.listSplitFmDetail(dto.getId());
+        return success(list);
+    }
+
+
+    /**
+     * 批量添加拆分的报关明细
+     * @author will
+     * @date 2026/4/23 16:11
+     * @param declareDTO
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/batchAddSplitFmDetail")
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存拆分数据")
+    public ApiResult<Object> batchAddSplitFmDetail(@RequestBody @Valid TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO)  {
+        tmsDeclareBillService.batchAddSplitFmDetail(declareDTO);
+        return success();
+    }
+
+
+    /**
+     * 查询合并前报关明细信息
+     * @author will
+     * @date 2026/4/23 17:56
+     * @param dto
+     * @return ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
+     */
+    @PostMapping("/listBeforeMergeDetail")
+    public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforeMergeDetail(@RequestBody @Valid BaseIdsDTO.IdsDTO dto)  {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = tmsDeclareBillService.listBeforeMergeDetail(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 查询合并后报关明细信息
+     * @author will
+     * @date 2026/4/23 17:56
+     * @param dto
+     * @return ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
+     */
+    @PostMapping("/listAfterMergeDetail")
+    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterMergeDetail(@RequestBody @Valid BaseIdsDTO.IdsDTO dto)  {
+        return success(tmsDeclareBillService.listAfterMergeDetail(dto.getIds()));
+    }
+
+
+    /**
+     * 批量添加合并的报关明细
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/batchAddMergeDetail")
+    public ApiResult<Object> batchAddMergeDetail(@RequestBody @Valid ValidList<TmsDeclareBillDTO.MergeDeclareBillDTO> list)  {
+        return success(tmsDeclareBillService.batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(),list.getList()));
+    }
+
 }

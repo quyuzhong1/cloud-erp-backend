@@ -2,6 +2,8 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
@@ -116,4 +118,23 @@ public interface SoDeliveryNoticeFeign {
      */
     @PostMapping("/getNoticeDetailByIdList")
     public List<SoDeliveryNoticeDetailEntity> getNoticeDetailByIdList(@RequestParam(value = "id") List<String> idList);
+    
+    /**
+     * 根据id查询装箱明细信息
+     * @author will
+     * @date 2026/4/21 15:07
+     * @param querySourceDTO 
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SoOutDTO>
+     */
+    @PostMapping("feign/soDeliveryNotice/listPackingDetailByIdList")
+    List<TmsDeclareBillDTO.SoOutDTO> listPackingDetailByIdList(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    /**
+     * 更新报关状态
+     * @author will
+     * @date 2026/4/30 11:46
+     * @param dto
+     */
+    @PostMapping("feign/soDeliveryNotice/updateDeclareStatus")
+    Boolean updateDeclareStatus(@RequestBody SoDeliveryNoticeDTO.DeclareStatusDTO dto);
 }

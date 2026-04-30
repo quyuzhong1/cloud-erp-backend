@@ -17,6 +17,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -614,6 +616,67 @@ public class SoDeliveryNoticeController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 报关状态更新
+     * @author will
+     * @date 2026/4/24 14:44
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "报关状态更新")
+    @PostMapping(value = "/updateDeclareStatus")
+    public ApiResult<List<BatchResultDTO>> updateDeclareStatus(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = soDeliveryNoticeService.updateNotNeedDeclare(id);
+            }catch (Exception e){
+                log.error("报关状态更新",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货通知单不存在, 报关状态更新失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 下推b2b报关单（合并前）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listBeforePushB2bDeclare")
+    public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(soDeliveryNoticeService.listBeforePushB2bDeclare(dto));
+    }
+
+
+    /**
+     * 下推头程报关单（合并后）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
+     */
+    @PostMapping("/listAfterPushB2bDeclare")
+    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(soDeliveryNoticeService.listAfterPushB2bDeclare(dto));
     }
 }
 

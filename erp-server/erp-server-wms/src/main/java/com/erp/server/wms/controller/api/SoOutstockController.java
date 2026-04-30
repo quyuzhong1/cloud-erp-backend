@@ -529,54 +529,6 @@ public class SoOutstockController extends BaseController {
     }
 
     /**
-     * 下推B2B报关单(不校验系统配置)
-     * @author jack
-     * @date: 2025-07-18
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @PostMapping("/generateB2bDeclar")
-    public ApiResult<List<BatchResultDTO>> generateB2bDeclar(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = soOutstockService.generateB2bDeclar(id);
-            }catch (Exception e){
-                log.error("下推B2B报关单失败",e);
-                SoOutstockEntity entity = soOutstockService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "下推B2B报关单失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-
-    /**
-     * 批量更新报关类型
-     * @param dto
-     * @return
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新报关类型")
-    @PostMapping("/batchUpdateDeclarationType")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id,seller_id",
-            menuCode = "wms:so:outstock:update",
-            serviceClass = SoOutstockService.class,
-            keyIdName = "id"
-    )
-    public ApiResult<List<BatchResultDTO>> batchUpdateDeclarationType(@RequestBody @Validated List<SoOutstockDTO.BatchUpdateDeclarationTypeDTO> dto) {
-        List<BatchResultDTO> batchResultDTOList = soOutstockService.batchUpdateDeclarationType(dto);
-        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
-    }
-
-    /**
      * 导出物流交接单
      */
     @PostMapping("/exportLogisticsHandover")

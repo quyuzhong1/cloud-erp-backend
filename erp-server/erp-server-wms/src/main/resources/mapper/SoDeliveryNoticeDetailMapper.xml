@@ -95,4 +95,30 @@
             #{sourceDetailId}
         </foreach>
     </select>
+
+    <!-- 根据soDeliveryNoticeIdList查询对应的包装信息 -->
+    <select id="listPackingDetailByIdList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PackingDTO">
+        SELECT
+            sdn.id as sourceId
+            sdn.code as sourceCode,
+            so.id as soOutstockId,
+            so.code as soOutstockCode,
+            wc.box_no as boxNo,
+            concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
+            box_length*box_width*box_height as multiplySize,
+            wcs.package_weight as packageWeight,
+            (select string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as boxDesc,
+            (select string_agg(wcd.sku_no , ',') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
+        FROM so_delivery_notice sdn
+        inner join packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
+        INNER JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted = FALSE
+        INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
+        left join so_outstock  so on sdn.id = so.source_id and so.is_deleted = false
+        WHERE sdn.is_deleted = FALSE
+        AND sdn.id in
+        <foreach collection="soDeliveryNoticeIdList" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        ORDER BY CAST(wc.box_no AS INTEGER)
+    </select>
 </mapper>

@@ -37,11 +37,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField("code")
     private String code;
     /**
-    * 来源类型：头程,B2B
-    */
-    @TableField("source_type")
-    private String sourceType;
-    /**
     * 报关状态
     */
     @TableField("declare_status")
@@ -51,17 +46,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("business_type")
     private String businessType;
-
-    /**
-     * 来源id
-     */
-    @TableField("source_id")
-    private String sourceId;
-    /**
-     * 来源编码
-     */
-    @TableField("source_code")
-    private String sourceCode;
 
     /**
      * 提运单号，头程的话这个值是空的，B2B的话是页面手动输入
@@ -94,6 +78,21 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField(value = "declare_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate declareDate;
+    /**
+    * 报关确认日期
+    */
+    @TableField(value = "declar_confirm_date", updateStrategy = FieldStrategy.IGNORED)
+    private LocalDate declarConfirmDate;
+    /**
+    * 报关确认人id
+    */
+    @TableField(value = "declar_user_id", updateStrategy = FieldStrategy.IGNORED)
+    private String declarUserId;
+    /**
+    * 报关确认人
+    */
+    @TableField(value = "declar_user_name", updateStrategy = FieldStrategy.IGNORED)
+    private String declarUserName;
     /**
     * 报关类型
     */
@@ -200,11 +199,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("box_qty")
     private Integer boxQty;
-    /**
-    * 合并来源Id
-    */
-    @TableField("merge_source_id")
-    private String mergeSourceId;
 
 
     public static final String FIELD_CODE = "code";
@@ -224,6 +218,12 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     public static final String GROSS_WEIGHT = "gross_weight";
 
     public static final String DECLARE_DATE = "declare_date";
+
+    public static final String DECLAR_CONFIRM_DATE = "declar_confirm_date";
+
+    public static final String DECLAR_USER_ID = "declar_user_id";
+
+    public static final String DECLAR_USER_NAME = "declar_user_name";
 
     public static final String DECLARE_TYPE = "declare_type";
 

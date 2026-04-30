@@ -44,4 +44,21 @@ public interface TmsDeclareBillFeign {
      **/
     @PostMapping("/feign/tmsDeclareBill/autoGenerateB2bDeclare")
     Boolean autoGenerateB2bDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
+
+    /**
+     * 删除tms发货明细
+     * @author will
+     * @date 2026/4/24 14:55
+     * @param sourceIdList 
+     * @return java.lang.Boolean
+     */
+    @PostMapping("/feign/tmsDeclareBill/deleteDeliveryDeclareDetailMid")
+    Boolean deleteDeliveryDeclareDetailMid(@RequestBody List<String> sourceIdList);
+
+
+    /**
+     * 合并报关单预览
+     **/
+    @PostMapping("/feign/tmsDeclareBill/autoMergeDeclareBillView")
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(@RequestBody TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO);
 }

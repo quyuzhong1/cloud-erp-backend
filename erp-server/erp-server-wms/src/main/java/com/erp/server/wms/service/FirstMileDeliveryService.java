@@ -430,4 +430,21 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return BatchResultDTO
      */
     BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO);
+
+    /**
+     * 下推头程报关单（合并前）
+     * @author will
+     * @date 2026/4/24 11:19
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+    /**
+     * 下推头程报关单（合并后）
+     * @author will
+     * @date 2026/4/24 11:45
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
 }

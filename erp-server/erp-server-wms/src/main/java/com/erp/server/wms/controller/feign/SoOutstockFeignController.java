@@ -180,14 +180,6 @@ public class SoOutstockFeignController {
     Boolean addB2bPushDownNo(@RequestBody List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateB2cDTO) {
         return soOutstockService.addB2bPushDownNo(generateB2cDTO);
     }
-    /**
-     * 查询封装报关信息
-     * @return
-     */
-    @PostMapping("/getCanGenerateDeclare")
-    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
-        return soOutstockService.getCanGenerateDeclare(querySourceDTO);
-    }
 
     /**
      * 统计状态
@@ -201,16 +193,6 @@ public class SoOutstockFeignController {
     )
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
         return soOutstockService.logisticStatistics(deliveryStaticsReq);
-    }
-
-
-    /**
-     * 更新状态
-     * @return
-     */
-    @PostMapping("/updateStatus")
-    Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto) {
-        return soOutstockService.updateStatus(dto);
     }
 
     /**
