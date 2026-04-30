@@ -142,6 +142,8 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
 
+        log.warn(resultData.getData().toString());
+
         if ("3001008".equalsIgnoreCase(resultData.getCode())) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细触发限流停止当前:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
             log.warn(errorMsg);
