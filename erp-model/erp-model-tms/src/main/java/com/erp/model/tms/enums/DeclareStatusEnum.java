@@ -3,6 +3,7 @@ package com.erp.model.tms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 public enum DeclareStatusEnum implements EnumMessage {
     WAIT("wait","待确认"),
@@ -37,5 +38,17 @@ public enum DeclareStatusEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (DeclareStatusEnum statusEnum : DeclareStatusEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
     }
 }

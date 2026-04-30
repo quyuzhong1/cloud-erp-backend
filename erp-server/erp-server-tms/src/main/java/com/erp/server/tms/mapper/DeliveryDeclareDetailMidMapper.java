@@ -30,12 +30,6 @@ public interface DeliveryDeclareDetailMidMapper extends BaseMapper<DeliveryDecla
     */
     IPage<DeliveryDeclareDetailMidDTO.ListDTO> paging(Page query, @Param("params") DeliveryDeclareDetailMidDTO.PagingParamDTO params);
 
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") DeliveryDeclareDetailMidDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询

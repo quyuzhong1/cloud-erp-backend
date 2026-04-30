@@ -910,7 +910,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             if(isExhibition){
                 //走TMS自动生成报关单逻辑
-                autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
+                log.info("skip soOutstock auto declare generation, use soDeliveryNotice mid flow instead, outstockCode={}", entity.getCode());
             }
 
             //B2B发送金蝶
@@ -946,7 +946,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     .build();
             try {
                 Boolean autoGenerateResult;
-                //自动生成功能系统标识
+                // 跨服务自动生成报关单时临时切换系统标识，避免使用前台用户上下文。
                 Boolean originalValue = UserContext.getIsUserSystem();
                 UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
@@ -962,8 +962,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     this.updateStatus(updateStatusDTO);
                 }
             }catch (Exception e){
-                log.error("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                throw new ServiceException(CharSequenceUtil.format("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                log.error("销售出库单{}审核后自动生成报关单失败：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_AUTO_GENERATE_FAILED,
+                        "销售出库单", entity.getCode(), e.getMessage());
             }
         }
     }

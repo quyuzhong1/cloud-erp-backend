@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -63,6 +64,42 @@ public interface SoDeliveryNoticeFeign {
      */
     @PostMapping("feign/soDeliveryNotice/getNoticeDetailById")
     SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id);
+
+    /**
+     * 批量查询发货通知单
+     *
+     * @param ids 发货通知单id集合
+     * @return 发货通知单集合
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("feign/soDeliveryNotice/listByIds")
+    List<SoDeliveryNoticeEntity> listByIds(@RequestBody List<String> ids);
+
+    /**
+     * 按主表批量查询发货通知明细
+     *
+     * @param mainIds 发货通知单id集合
+     * @return 发货通知明细集合
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("feign/soDeliveryNotice/listDetailByMainIds")
+    List<SoDeliveryNoticeDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货通知单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("feign/soDeliveryNotice/listDeclarePackingDetail")
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids);
 
     /**
      * 更新销售信息

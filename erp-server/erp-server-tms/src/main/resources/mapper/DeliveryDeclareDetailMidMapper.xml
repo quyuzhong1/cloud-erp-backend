@@ -14,6 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="remark" property="remark" />
        <result column="declare_status" property="declareStatus" />
+       <result column="generate_status" property="generateStatus" />
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
        <result column="source_type" property="sourceType" />
@@ -24,6 +25,7 @@
        <result column="contract_no" property="contractNo" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
+       <result column="combo_sku_no" property="comboSkuNo" />
        <result column="currency" property="currency" />
        <result column="currency_symbol" property="currencySymbol" />
        <result column="declare_id" property="declareId" />
@@ -47,39 +49,98 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        remark, declare_status, source_id, source_code, source_type, source_detail_id, business_id, business_code, business_type, contract_no, sku_id, sku_no, currency, currency_symbol, declare_id, declare_code, declare_detail_id, box_no, hs_code, product_name_cn, declare_element, unit, unit_price, qty, from_warehouse_id, from_warehouse_name, dest_warehouse_id, dest_warehouse_name, transfer_warehouse_ids, sales_org_id, sales_org_name
+        dddm.id AS id,
+        dddm.create_user_id AS createUserId,
+        dddm.create_user_name AS createUserName,
+        dddm.create_time AS createTime,
+        dddm.update_user_id AS updateUserId,
+        dddm.update_user_name AS updateUserName,
+        dddm.update_time AS updateTime,
+        dddm.version AS version,
+        dddm.is_deleted AS isDeleted,
+        dddm.remark AS remark,
+        dddm.declare_status AS declareStatus,
+        dddm.generate_status AS generateStatus,
+        dddm.source_id AS sourceId,
+        dddm.source_code AS sourceCode,
+        dddm.source_type AS sourceType,
+        dddm.source_detail_id AS sourceDetailId,
+        dddm.business_id AS businessId,
+        dddm.business_code AS businessCode,
+        dddm.business_type AS businessType,
+        dddm.contract_no AS contractNo,
+        dddm.sku_id AS skuId,
+        dddm.sku_no AS skuNo,
+        dddm.combo_sku_no AS comboSkuNo,
+        dddm.currency AS currency,
+        dddm.currency_symbol AS currencySymbol,
+        dddm.declare_id AS declareId,
+        dddm.declare_code AS declareCode,
+        dddm.declare_detail_id AS declareDetailId,
+        dddm.box_no AS boxNo,
+        dddm.hs_code AS hsCode,
+        dddm.product_name_cn AS productNameCn,
+        dddm.declare_element AS declareElement,
+        dddm.unit AS unit,
+        dddm.unit_price AS unitPrice,
+        dddm.qty AS qty,
+        dddm.from_warehouse_id AS fromWarehouseId,
+        dddm.from_warehouse_name AS fromWarehouseName,
+        dddm.dest_warehouse_id AS destWarehouseId,
+        dddm.dest_warehouse_name AS destWarehouseName,
+        dddm.transfer_warehouse_ids AS transferWarehouseIds,
+        dddm.sales_org_id AS salesOrgId,
+        dddm.sales_org_name AS salesOrgName
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">
-
-    </select>
-
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from delivery_declare_detail_mid where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">
-
-    </select>
-    <select id="tabList" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  delivery_declare_detail_mid
-        WHERE is_deleted=FALSE
+        <include refid="Base_Column_List"/>
+        FROM delivery_declare_detail_mid dddm
+        WHERE
+        ${params.sqlMap.default}
+        AND dddm.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dddm.create_time DESC
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM delivery_declare_detail_mid dddm
+        WHERE
+            ${params.sqlMap.default}
+        AND dddm.is_deleted=FALSE
+        <if test="params != null and params.ids != null and params.ids.size > 0">
+            AND dddm.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY dddm.create_time DESC
+    </select>
+    <select id="tabList" resultType="com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO$TabListDTO">
+        SELECT
+        dddm.generate_status AS tabFlag,
+        count(dddm.id)  AS count
+        FROM  delivery_declare_detail_mid dddm
+        WHERE ${params.sqlMap.default}
+            AND dddm.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY dddm.generate_status
     </select>
 
 </mapper>

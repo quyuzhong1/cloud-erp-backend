@@ -7,6 +7,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -90,6 +91,20 @@ public class WmsFirstMileDeliveryController {
     @PostMapping("/getCanGenerateDeclare")
     public List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO dto) {
         return firstMileDeliveryService.getCanGenerateDeclare(dto);
+    }
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 头程发货单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/listDeclarePackingDetail")
+    public List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids) {
+        return firstMileDeliveryService.listDeclarePackingDetail(ids);
     }
     /**
      * 查询可以生成报关单的发货单

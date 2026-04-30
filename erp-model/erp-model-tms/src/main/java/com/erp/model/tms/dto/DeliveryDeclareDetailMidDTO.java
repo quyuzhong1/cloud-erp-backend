@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 import javax.validation.constraints.Digits;
@@ -95,6 +94,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String declareStatus;
 
         /**
+        * 生成状态
+        */
+        private String generateStatus;
+
+        /**
         * 来源单据id
         */
         private String sourceId;
@@ -143,6 +147,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 商品SKU
         */
         private String skuNo;
+
+        /**
+        * 组合品SKU
+        */
+        private String comboSkuNo;
 
         /**
         * 币种
@@ -200,32 +209,57 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private BigDecimal unitPrice;
 
         /**
+        * 最新中国海关编码
+        */
+        private String latestHsCode;
+
+        /**
+        * 最新报关中文名称
+        */
+        private String latestProductNameCn;
+
+        /**
+        * 最新申报要素
+        */
+        private String latestDeclareElement;
+
+        /**
+        * 最新单位
+        */
+        private String latestUnit;
+
+        /**
+        * 最新出口申报单价
+        */
+        private BigDecimal latestUnitPrice;
+
+        /**
         * 数量
         */
         private Integer qty;
 
         /**
-        * 仓库ID
+        * 发货仓ID
         */
         private String fromWarehouseId;
 
         /**
-        * 仓库名称
+        * 发货仓名称
         */
         private String fromWarehouseName;
 
         /**
-        * 目的仓库ID
+        * 目的仓ID
         */
         private String destWarehouseId;
 
         /**
-        * 目的仓库名称
+        * 目的仓名称
         */
         private String destWarehouseName;
 
         /**
-        * 中转仓库IDS
+        * 中转仓IDs(逗号分隔)
         */
         private String transferWarehouseIds;
 
@@ -239,11 +273,15 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         */
         private String salesOrgName;
 
+        /**
+        * 报关状态名称
+        */
+        private String declareStatusName;
 
         /**
-        * 审核状态名称
+        * 生成状态名称
         */
-        private String approveStatusName;
+        private String generateStatusName;
 
 
         /**
@@ -272,6 +310,94 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
     }
 
     /**
+     * 合并前预览列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergePreviewDTO implements Serializable {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 来源单据id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 单据分类
+         */
+        private String sourceType;
+
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+
+        /**
+         * 箱号
+         */
+        private String boxNo;
+
+        /**
+         * 商品SKU
+         */
+        private String skuNo;
+
+        /**
+         * 中国海关编码
+         */
+        private String hsCode;
+
+        /**
+         * 报关中文名称
+         */
+        private String productNameCn;
+
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 出口申报单价
+         */
+        private BigDecimal unitPrice;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 国家编码
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+    }
+
+    /**
     * 详情
     */
     @Data
@@ -292,6 +418,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 报关状态：
         */
         private String declareStatus;
+
+        /**
+        * 生成状态
+        */
+        private String generateStatus;
 
         /**
         * 来源单据id
@@ -342,6 +473,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 商品SKU
         */
         private String skuNo;
+
+        /**
+        * 组合品SKU
+        */
+        private String comboSkuNo;
 
         /**
         * 币种
@@ -404,27 +540,27 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private Integer qty;
 
         /**
-        * 仓库ID
+        * 发货仓ID
         */
         private String fromWarehouseId;
 
         /**
-        * 仓库名称
+        * 发货仓名称
         */
         private String fromWarehouseName;
 
         /**
-        * 目的仓库ID
+        * 目的仓ID
         */
         private String destWarehouseId;
 
         /**
-        * 目的仓库名称
+        * 目的仓名称
         */
         private String destWarehouseName;
 
         /**
-        * 中转仓库IDS
+        * 中转仓IDs(逗号分隔)
         */
         private String transferWarehouseIds;
 
@@ -483,6 +619,12 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         @NotBlank(message = "报关状态：不能为空")
         @Size(max = 50,message = "报关状态：最大长度不能超过50位")
         private String declareStatus;
+
+        /**
+        * 生成状态
+        */
+        @Size(max = 50,message = "生成状态最大长度不能超过50位")
+        private String generateStatus;
 
         /**
         * 来源单据id
@@ -546,6 +688,18 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         @NotBlank(message = "商品id不能为空")
         @Size(max = 19,message = "商品id最大长度不能超过19位")
         private String skuId;
+
+        /**
+        * 商品SKU
+        */
+        @Size(max = 64,message = "商品SKU最大长度不能超过64位")
+        private String skuNo;
+
+        /**
+        * 组合品SKU
+        */
+        @Size(max = 64,message = "组合品SKU最大长度不能超过64位")
+        private String comboSkuNo;
 
         /**
         * 币种
@@ -630,27 +784,27 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private Integer qty;
 
         /**
-        * 仓库ID
+        * 发货仓ID
         */
         private String fromWarehouseId;
 
         /**
-        * 仓库名称
+        * 发货仓名称
         */
         private String fromWarehouseName;
 
         /**
-        * 目的仓库ID
+        * 目的仓ID
         */
         private String destWarehouseId;
 
         /**
-        * 目的仓库名称
+        * 目的仓名称
         */
         private String destWarehouseName;
 
         /**
-        * 中转仓库IDS
+        * 中转仓IDs(逗号分隔)
         */
         private String transferWarehouseIds;
 
@@ -667,5 +821,47 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
 
     }
 
+    /**
+     * 自动生成中间表数据DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AutoGenerateMidDTO implements Serializable {
+        /**
+         * 来源单据id
+         */
+        private String sourceId;
+
+        /**
+         * 单据分类: firstMileDelivery | soDeliveryNotice
+         */
+        private String sourceType;
+
+        /**
+         * 生成时机: afterAdd | afterApprove
+         */
+        private String billGenerateTiming;
+
+        /**
+         * 是否检查自动生成配置
+         */
+        private Boolean checkCfg = true;
+    }
+
+    /**
+     * 合并预览国家信息
+     *
+     * @author jack
+     * @date 2026-04-29
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PreviewCountryDTO {
+
+        private String countryId;
+
+        private String countryName;
+    }
 
 }
