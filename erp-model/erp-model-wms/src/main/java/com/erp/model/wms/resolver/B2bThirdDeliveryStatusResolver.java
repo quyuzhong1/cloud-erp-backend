@@ -13,11 +13,11 @@ public final class B2bThirdDeliveryStatusResolver {
     }
 
     public static String resolveErpStatus(String providerCode, String rawStatus) {
-        if (StringUtils.isBlank(providerCode) || StringUtils.isBlank(rawStatus)) {
-            return null;
-        }
         if (PlatformDictEnum.JI_TU_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)) {
             return ThirdDeliveryStatusEnum.SHIPPED.getCode();
+        }
+        if (StringUtils.isBlank(providerCode) || StringUtils.isBlank(rawStatus)) {
+            return null;
         }
         if (PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)) {
             return resolveZhongBaoStatus(rawStatus);
