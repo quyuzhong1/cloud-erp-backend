@@ -2,20 +2,13 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.*;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
-
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-
 import org.apache.commons.lang3.StringUtils;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -103,7 +96,7 @@ public class SoDeliveryNoticeDTO {
          * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
-        
+
         //dynamicDataSource需要重新此方法
         public String getDynamicDataSource(){
         	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
@@ -825,5 +818,22 @@ public class SoDeliveryNoticeDTO {
     public static class PickStatus{
         private String noticeId;
         private String generationPickStatus;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeclareStatusDTO {
+        /**
+         * 主键id
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+        /**
+         * 报关状态
+         */
+        @NotBlank(message = "报关状态不能为空")
+        private String declareStatus;
     }
 }

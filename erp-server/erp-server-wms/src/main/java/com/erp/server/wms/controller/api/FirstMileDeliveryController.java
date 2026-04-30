@@ -18,6 +18,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
@@ -765,4 +766,30 @@ public class FirstMileDeliveryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+
+    /**
+     * 下推头程报关单（合并前）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listBeforePushFmDeclare")
+    public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(firstMileDeliveryService.listBeforePushFmDeclare(dto));
+    }
+
+
+    /**
+     * 下推头程报关单（合并后）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
+     */
+    @PostMapping("/listAfterPushFmDeclare")
+    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(firstMileDeliveryService.listAfterPushFmDeclare(dto));
+    }
 }

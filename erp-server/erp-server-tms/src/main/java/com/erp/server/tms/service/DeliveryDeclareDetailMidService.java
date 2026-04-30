@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -76,7 +77,41 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> mergePreview(List<String> ids);
 
-    
+
+    /**
+    * 导出Excel
+    * @author jack
+    * @date: 2026-04-27
+    * @param dto
+    * @param response
+    * @return
+    */
+    void exportList(DeliveryDeclareDetailMidDTO.ExportDTO dto, HttpServletResponse response);
+    /**
+     * 根据报关单id查询
+     * @author will
+     * @date 2026/4/23 15:27
+     * @param declareBillIdList
+     * @return java.util.List<com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity>
+     */
+    List<DeliveryDeclareDetailMidEntity> listByDeclareBillIdList(List<String> declareBillIdList);
+    /**
+     * 根据报关单ids查询来源信息，包含申报要素
+     * @author will
+     * @date 2026/4/23 18:32
+     * @param declareBillIdList
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceByDeclareIdList(List<String> declareBillIdList);
+    /**
+     * 删除tms发货明细
+     * @author will
+     * @date 2026/4/24 14:57
+     * @param sourceIds
+     * @return java.lang.Boolean
+     */
+    Boolean deleteDeliveryDeclareDetailMid(List<String> sourceIds);
+
     /**
      * 自动生成报关明细中间表
      *

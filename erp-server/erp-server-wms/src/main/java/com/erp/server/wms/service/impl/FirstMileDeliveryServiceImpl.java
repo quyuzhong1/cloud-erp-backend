@@ -45,6 +45,8 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
@@ -52,6 +54,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
@@ -2630,7 +2633,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
             if(CollectionUtils.isNotEmpty(list)){
                 List<TmsDeclareBillDTO.PackingDTO> packingDTOList = BeanUtil.copyToList(list,TmsDeclareBillDTO.PackingDTO.class);
-                packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));
+                packingDTOList.forEach(t->t.setSourceCode(deliveryDTO.getSourceCode()));
                 deliveryDTO.setPackingDTOList(packingDTOList);
             }
             deliveryDTO.setBoxQty(list.size());
@@ -3073,6 +3076,62 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //添加日志
         addLogCancelDelivery(cancelDeliveryDTO, old, wmsCartonDetailEntity, cartonSpecEntity);
         return BatchResultDTO.success(wmsCartonDetailEntity.getId(), wmsCartonDetailEntity.getSkuNo(), "操作成功");
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushFmDeclare(dto.getIds());
+        handleDeclareData(list);
+        return list;
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushFmDeclare(dto.getIds());
+        return tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMerge(),list));
+    }
+
+
+    /**
+     * 处理报关信息
+     * @author will
+     * @date 2026/4/27 17:32
+     * @param list
+     */
+    private void handleDeclareData (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //产品物流信息
+        List<String> skuIdList = list.stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductLogisticsEntity> productLogisticsList = FeignQuery.create(ProductLogisticsEntity.class).in(ProductLogisticsEntity::getSkuId, skuIdList).list();
+        Map<String, ProductLogisticsEntity> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId,item -> item));
+
+        //查询单位名称
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+
+        //币别明细
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+        Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId,item -> item.getName()));
+
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO deliveryDetailDTO : list) {
+            ProductLogisticsEntity productLogisticsEntity = logisticsMap.get(deliveryDetailDTO.getSkuId());
+            if (Objects.nonNull(productLogisticsEntity)) {
+                deliveryDetailDTO.setCustomsCode(productLogisticsEntity.getCustomsCode());
+                deliveryDetailDTO.setDeclareChineseName(productLogisticsEntity.getDeclareChineseName());
+                deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
+                deliveryDetailDTO.setDeclareUnit(productLogisticsEntity.getDeclareUnit());
+                //报关单位名称
+                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getDeclareUnit())).findFirst().orElse(null);
+                if (Objects.nonNull(unitEntity)) {
+                    deliveryDetailDTO.setDeclareUnitName(unitEntity.getName());
+                }
+                deliveryDetailDTO.setPrice(productLogisticsEntity.getDeclarePrice());
+                deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
+                deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
+                deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));
+            }
+        }
     }
 
 

@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
@@ -11,6 +12,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -75,6 +77,14 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 
     List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(@Param("detailIds") List<String> detailIds);
+    /**
+     * 查询需要下推的报关数据
+     * @author will
+     * @date 2026/4/24 16:29
+     * @param ids
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@Param("ids") List<String> ids);
 
     /**
      * 查询用于报关中间表生成的装箱明细

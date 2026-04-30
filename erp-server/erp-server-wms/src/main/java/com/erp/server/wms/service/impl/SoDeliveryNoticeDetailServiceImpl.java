@@ -20,8 +20,10 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -41,10 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -336,6 +335,28 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         }
         //更新销售订单冻结数量
         soInfoFeign.updateFrozenQty(updateList);
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.SoOutDTO> listPackingDetailByIdList(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        List<TmsDeclareBillDTO.PackingDTO> packingDetailList =  baseMapper.listPackingDetailByIdList(querySourceDTO.getIds());
+        if (CollUtil.isEmpty(packingDetailList)) {
+            return Collections.emptyList();
+        }
+        Map<String,List<TmsDeclareBillDTO.PackingDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(TmsDeclareBillDTO.PackingDTO::getSourceId));
+        List<TmsDeclareBillDTO.SoOutDTO> soOutDTOList = new ArrayList<>();
+        for (Map.Entry<String,List<TmsDeclareBillDTO.PackingDTO>> dto : packingDetailMap.entrySet()) {
+            List<TmsDeclareBillDTO.PackingDTO> value = dto.getValue();
+            TmsDeclareBillDTO.PackingDTO packingDTO = value.get(0);
+            TmsDeclareBillDTO.SoOutDTO SoOutDTO = new TmsDeclareBillDTO.SoOutDTO();
+            SoOutDTO.setSourceId(dto.getKey());
+            SoOutDTO.setSourceCode(packingDTO.getSourceCode());
+            SoOutDTO.setSoOutstockId(packingDTO.getSoOutstockId());
+            SoOutDTO.setSoOutstockCode(packingDTO.getSoOutstockCode());
+            SoOutDTO.setPackingDTOList(value);
+            soOutDTOList.add(SoOutDTO);
+        }
+        return soOutDTOList;
     }
 
     /**

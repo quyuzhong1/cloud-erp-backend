@@ -723,4 +723,28 @@
         </if>
         flb.business_code asc,wc.box_no asc
     </select>
+
+    <!-- 查询合并前头程报关单 -->
+    <select id="listBeforePushFmDeclare"
+            resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
+        select
+            fmd.id as sourceId,
+            fmd.code as sourceCode,
+            fmdd.id as sourceDetailId,
+            fmd.source_id as businessId,
+            fmd.source_code as businessCode,
+            fmdd.sku_id as skuId,
+            fmdd.sku_no as skuNo,
+            fmdd.delivery_qty as qty,
+            wc.box_no
+        from first_mile_delivery fmd
+        left join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        left join packing_task_detail ptd on fmdd.id = ptd.source_detail_id and ptd.is_deleted = false
+        left join packing_task pt on ptd.main_id = pt.id and pt.is_deleted = false
+        left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
+        where fmd.is_deleted = false and fmd.declare_status = 'wait' and wc.box_no is not null and fmd.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

@@ -9,11 +9,12 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -293,6 +294,8 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      */
     void updatePackingStatus(String id, String packingStatus);
 
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids);
+
     BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity);
 
     SoDeliveryNoticeEntity getByCode(String key);
@@ -341,17 +344,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(List<String> soIds);
 
-    /**
-     * 查询用于报关中间表生成的装箱明细
-     *
-     * @param ids 发货通知单id
-     * @return List<WmsCartonDetailDTO.ListPackingDetailDTO>
-     * @throws RuntimeException 查询异常时抛出
-     * @author jack
-     * @date 2026-04-29
-     */
-    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids);
-
     void updateSalesInfo(SoInfoEntity soInfoEntity);
 
     WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
@@ -375,4 +367,37 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return Boolean
      */
     Boolean approveEnd(ApproveOneDTO dto, SoDeliveryNoticeEntity entity);
+    /**
+     * 报关状态更新
+     * @author will
+     * @date 2025/10/22 16:00
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateNotNeedDeclare(String id);
+
+    /**
+     *
+     * @author will
+     * @date 2026/4/24 14:24
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+    /**
+     * 下推b2b报关单（合并后）
+     * @author will
+     * @date 2026/4/24 11:45
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+    /**
+     * 更新报关状态
+     * @author will
+     * @date 2026/4/30 11:54
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateDeclareStatus(SoDeliveryNoticeDTO.DeclareStatusDTO dto);
 }

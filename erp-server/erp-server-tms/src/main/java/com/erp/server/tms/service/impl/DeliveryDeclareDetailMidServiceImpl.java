@@ -1,6 +1,15 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.LoginUser;
+
+import cn.hutool.core.util.StrUtil;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import io.seata.spring.annotation.GlobalTransactional;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -53,18 +62,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -161,6 +161,46 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             }
         }
         return result;
+    }
+
+    @Override
+    public void exportList(DeliveryDeclareDetailMidDTO.ExportDTO param, HttpServletResponse response) {
+        List<DeliveryDeclareDetailMidDTO.ListDTO> list = this.baseMapper.listExport(param);
+        if(CollUtil.isEmpty(list)) {
+           return;
+        }
+        // 数据处理
+        fillList(list);
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/deliveryDeclareDetailMid.xlsx";
+        String name = "报关明细中间单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+    }
+
+    @Override
+    public List<DeliveryDeclareDetailMidEntity> listByDeclareBillIdList(List<String> declareBillIdList) {
+        return baseMapper.listByDeclareBillIdList(declareBillIdList);
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceByDeclareIdList(List<String> declareBillIdList) {
+        return baseMapper.listSourceByDeclareIdList(declareBillIdList);
+    }
+
+    @Override
+    public Boolean deleteDeliveryDeclareDetailMid(List<String> sourceIds) {
+        if (CollUtil.isEmpty(sourceIds)) {
+            return  Boolean.TRUE;
+        }
+        return lambdaUpdate().in(DeliveryDeclareDetailMidEntity::getSourceId,sourceIds).remove();
     }
 
     /**

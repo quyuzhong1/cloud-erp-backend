@@ -1,7 +1,6 @@
 package com.erp.server.tms.service;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TmsDeclareBillDetailDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
@@ -35,5 +34,11 @@ public interface TmsDeclareBillDetailService extends SuperService<TmsDeclareBill
     Boolean update(TmsDeclareBillDetailDTO.UpdateDTO dto);
 
     List<TmsDeclareBillDetailEntity> listByMainIds(List<String> mainId);
-
+    /**
+     * 根据主表id删除详情
+     * @author will
+     * @date 2026/4/30 10:57
+     * @param mainIdList
+     */
+    Boolean deleteDetailByMainIdList(List<String> mainIdList);
 }

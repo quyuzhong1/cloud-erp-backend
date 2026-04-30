@@ -1,4 +1,5 @@
 package com.erp.server.tms.mapper;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -45,4 +46,20 @@ public interface DeliveryDeclareDetailMidMapper extends BaseMapper<DeliveryDecla
     * @return
     */
     List<DeliveryDeclareDetailMidDTO.TabListDTO> tabList(@Param("params") DeliveryDeclareDetailMidDTO.PagingParamDTO searchParam);
+    /**
+     * 根据报关单id查询
+     * @author will
+     * @date 2026/4/23 15:28
+     * @param declareBillIdList
+     * @return java.util.List<com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity>
+     */
+    List<DeliveryDeclareDetailMidEntity> listByDeclareBillIdList(@Param("declareBillIdList") List<String> declareBillIdList);
+    /**
+     * 根据报关单ids查询来源信息，包含申报要素
+     * @author will
+     * @date 2026/4/23 18:33
+     * @param declareBillIdList
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceByDeclareIdList(@Param("declareBillIdList") List<String> declareBillIdList);
 }
