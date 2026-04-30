@@ -9,6 +9,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.ConditionElement;
@@ -29,7 +30,6 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.DeliveryDeclareDetailMidGenerateStatusEnum;
-import com.erp.model.tms.enums.DeliveryDeclareDetailMidSourceTypeEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
@@ -66,8 +66,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
-
-import com.common.business.enums.SourceTypeEnum;
 
 /**
  * 报关明细中间表服务实现类
@@ -342,7 +340,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList()));
-        Set<String> existingKeys = getExistingKeys(header.getId(), DeliveryDeclareDetailMidSourceTypeEnum.FIRSTMILEDELIVERY.getCode());
+        Set<String> existingKeys = getExistingKeys(header.getId(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         Map<String, DeliveryDeclareDetailMidEntity> pendingMap = new HashMap<String, DeliveryDeclareDetailMidEntity>();
         for (WmsCartonDetailDTO.ListPackingDetailDTO packingDetail : packingDetailList) {
             FirstMileDeliveryDetailEntity detail = matchFirstMileDetail(detailMap.get(packingDetail.getSkuId()), packingDetail);
@@ -357,7 +355,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             validateProductLogistic(productLogisticDTO, detail.getSkuNo());
             FirstMileDeliveryDTO.BusinessDTO businessDTO = businessMap.get(detail.getId());
             buildRows(pendingMap, existingKeys,
-                    DeliveryDeclareDetailMidSourceTypeEnum.FIRSTMILEDELIVERY.getCode(),
+                    SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(),
                     header.getId(),
                     header.getCode(),
                     detail.getId(),
@@ -424,7 +422,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList()));
-        Set<String> existingKeys = getExistingKeys(header.getId(), DeliveryDeclareDetailMidSourceTypeEnum.SODELIVERYNOTICE.getCode());
+        Set<String> existingKeys = getExistingKeys(header.getId(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         Map<String, DeliveryDeclareDetailMidEntity> pendingMap = new HashMap<String, DeliveryDeclareDetailMidEntity>();
         for (WmsCartonDetailDTO.ListPackingDetailDTO packingDetail : packingDetailList) {
             SoDeliveryNoticeDetailEntity detail = matchSoDeliveryNoticeDetail(detailMap.get(packingDetail.getSkuId()), packingDetail);
@@ -438,7 +436,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             }
             validateProductLogistic(productLogisticDTO, detail.getSkuNo());
             buildRows(pendingMap, existingKeys,
-                    DeliveryDeclareDetailMidSourceTypeEnum.SODELIVERYNOTICE.getCode(),
+                    SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(),
                     header.getId(),
                     header.getCode(),
                     detail.getId(),
@@ -828,10 +826,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      */
     private Map<String, DeliveryDeclareDetailMidDTO.PreviewCountryDTO> getPreviewCountryMap(List<DeliveryDeclareDetailMidEntity> entityList,
                                                                 String sourceType) {
-        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.FIRSTMILEDELIVERY.getCode())) {
+        if (CharSequenceUtil.equals(sourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())) {
             return getFirstMilePreviewCountryMap(entityList);
         }
-        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.SODELIVERYNOTICE.getCode())) {
+        if (CharSequenceUtil.equals(sourceType, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
             return getSoDeliveryNoticePreviewCountryMap(entityList);
         }
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
@@ -1063,10 +1061,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * @date 2026-04-29
      */
     private String getDeclareRuleType(String sourceType) {
-        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.FIRSTMILEDELIVERY.getCode())) {
+        if (CharSequenceUtil.equals(sourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())) {
             return RULE_TYPE_FIRST_MILE_DECLARE;
         }
-        if (CharSequenceUtil.equals(sourceType, DeliveryDeclareDetailMidSourceTypeEnum.SODELIVERYNOTICE.getCode())) {
+        if (CharSequenceUtil.equals(sourceType, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
             return RULE_TYPE_B2B_DECLARE;
         }
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
