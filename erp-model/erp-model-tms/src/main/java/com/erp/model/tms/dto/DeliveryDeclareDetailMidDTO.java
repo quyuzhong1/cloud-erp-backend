@@ -42,6 +42,10 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         /**
+         * 类型
+         */
+         private String tabFlagName;
 
          /**
          * 数量

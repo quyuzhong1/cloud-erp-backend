@@ -150,21 +150,19 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         DeliveryDeclareDetailMidDTO.PagingParamDTO searchParam = new DeliveryDeclareDetailMidDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<DeliveryDeclareDetailMidDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        List<String> statusList = Arrays.asList(
-                DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode(),
-                DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode()
-        );
-        List<String> existStatusList = list.stream()
-                .map(DeliveryDeclareDetailMidDTO.TabListDTO::getTabFlag)
-                .collect(Collectors.toList());
-        for (String status : statusList) {
-            if (!existStatusList.contains(status)) {
-                list.add(new DeliveryDeclareDetailMidDTO.TabListDTO(status, 0));
+        List<DeliveryDeclareDetailMidDTO.TabListDTO> result = new ArrayList<>();
+        result.add(new DeliveryDeclareDetailMidDTO.TabListDTO("all","全部",0));
+
+        DeliveryDeclareDetailMidGenerateStatusEnum[] statusList = DeliveryDeclareDetailMidGenerateStatusEnum.values();
+        for (DeliveryDeclareDetailMidGenerateStatusEnum statusEnum : statusList) {
+            DeliveryDeclareDetailMidDTO.TabListDTO tabListDTO = list.stream().filter(e -> Objects.equals(statusEnum.getCode(), e.getTabFlag())).findFirst().orElse(null);
+            if(Objects.isNull(tabListDTO)){
+                result.add(tabListDTO);
+            }else {
+                list.add(new DeliveryDeclareDetailMidDTO.TabListDTO(statusEnum.getCode(),statusEnum.getName(), 0));
             }
         }
-        list.add(new DeliveryDeclareDetailMidDTO.TabListDTO("all",
-                list.stream().mapToInt(DeliveryDeclareDetailMidDTO.TabListDTO::getCount).sum()));
-        return list;
+        return result;
     }
 
     /**
