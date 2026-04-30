@@ -52,7 +52,7 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("source_code")
     private String sourceCode;
     /**
-    * 单据分类: firstMileDelivery=头程发货单, soDeliveryNotice=B2B发货通知单  枚举：DeliveryDeclareDetailMidSourceTypeEnum
+    * 单据分类: firstMileDelivery=头程发货单, soDeliveryNotice=B2B发货通知单  枚举：SourceTypeEnum
     */
     @TableField("source_type")
     private String sourceType;
