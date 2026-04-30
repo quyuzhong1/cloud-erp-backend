@@ -97,6 +97,9 @@ public interface LogisticsFeign {
     @PostMapping("/feign/logistics/listChannelInfoById")
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(@RequestBody List<String> channelIds);
 
+    @PostMapping("/feign/logistics/listChannelInfoByName")
+    List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(@RequestBody List<String> channelNames);
+
     @GetMapping("/feign/logistics/getLogisticsChannelConstraint")
     LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId,@RequestParam(value = "country")String country);
     /**

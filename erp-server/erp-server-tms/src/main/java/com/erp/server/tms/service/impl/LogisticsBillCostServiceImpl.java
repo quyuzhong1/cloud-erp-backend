@@ -229,7 +229,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             old = super.getById(updateDTO.getId());
         }
         String reconciliationStatus = old.getReconciliationStatus();
-        if(old.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode()) 
+        if(old.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())
         		|| old.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())) {
         	if(reconciliationStatus.equals(ReconciliationStatusEnum.CONFIRMED.getCode())) {
         		throw new ServiceException("对账状态为账单确认，不能编辑");
@@ -277,18 +277,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					if(dbUpdateDto != null && dbUpdateDto.getCostValue() != null) {
 						costValue = dbUpdateDto.getCostValue();
 					}
-					
+
 					if(throwFlag && dbCostValue.compareTo(costValue) != 0) {
 						throw new ServiceException("核算状态为暂估确认，不能修改预估金额");
 					}
 					cfgIdDtoMap.remove(tmsCostDetailEntity.getCfgCostId());
 				}
-				if(throwFlag && !cfgIdDtoMap.isEmpty() && cfgIdDtoMap.values().stream().anyMatch(c -> c.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode()) 
+				if(throwFlag && !cfgIdDtoMap.isEmpty() && cfgIdDtoMap.values().stream().anyMatch(c -> c.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode())
 						&& c.getCostValue() != null && c.getCostValue().compareTo(BigDecimal.ZERO) != 0)) {
 					throw new ServiceException("核算状态为暂估确认，不能新增预估金额");
 				}
 			}
-    	
+
         }
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
         //赋值
@@ -334,6 +334,289 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillCostEntity.getId(), "尾程费用(自发货)");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillCostEntity, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), msg);
         return new BaseResultDTO.UpdateDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
+    }
+
+    @Override
+    public List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList,
+                                                        List<LogisticsBillCostDTO.AddDTO> dtoList,String processingType) {
+        if (CollUtil.isEmpty(dtoList)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsBillCostEntity> logisticsBillCostList = BeanUtil.copyToList(dtoList, LogisticsBillCostEntity.class);
+        //导入数据批量处理
+        handleImportData(logisticsBillList,logisticsBillDetailList,logisticsBillCostList);
+        log.info("开始新增尾程费用(自发货)");
+        boolean save = super.saveOrUpdateBatch(logisticsBillCostList);
+        if(!save) {
+            throw new ServiceException("尾程费用(自发货)保存失败");
+        }
+        return logisticsBillCostList;
+    }
+
+    @Override
+    public List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList,
+                                                           List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType) {
+        if (CollUtil.isEmpty(dtoList)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsBillCostEntity> logisticsBillCostList = BeanUtil.copyToList(dtoList, LogisticsBillCostEntity.class);
+        List<String> costIdList = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+        List<LogisticsBillCostEntity> oldLogisticsBillCostList = super.listByIds(costIdList);
+        Map<String, LogisticsBillCostEntity> oldCostMap = CollUtil.isEmpty(oldLogisticsBillCostList) ? new HashMap<>() : oldLogisticsBillCostList.stream().collect(Collectors.toMap(LogisticsBillCostEntity::getId, obj -> obj));
+
+        for (LogisticsBillCostEntity costEntity : logisticsBillCostList) {
+            LogisticsBillCostEntity old = oldCostMap.get(costEntity.getId());
+            String reconciliationStatus = old.getReconciliationStatus();
+            if(old.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())
+                    || old.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())) {
+                if(reconciliationStatus.equals(ReconciliationStatusEnum.CONFIRMED.getCode())) {
+                    throw new ServiceException("对账状态为账单确认，不能编辑");
+                }
+                boolean throwFlag = false;
+                if(reconciliationStatus.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode())) {
+                    throwFlag = true;
+                }
+
+                BigDecimal billingWeight = old.getBillingWeight();
+                if(billingWeight == null) {
+                    billingWeight = BigDecimal.ZERO;
+                }
+                BigDecimal updateBillingWeight = costEntity.getBillingWeight();
+                if(updateBillingWeight == null) {
+                    updateBillingWeight = billingWeight;
+                }
+                if(throwFlag && billingWeight.compareTo(updateBillingWeight) != 0) {
+                    throw new ServiceException("核算状态为暂估确认，不能修改计费重[预估]");
+                }
+            }
+            Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
+            //赋值
+            LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
+            logisticsBillCostEntity.setBillingWeight(costEntity.getBillingWeight());
+            logisticsBillCostEntity.setBillingWeightLogistics(costEntity.getBillingWeightLogistics());
+            logisticsBillCostEntity.setRemark(costEntity.getRemark());
+            logisticsBillCostEntity.setCurrency(costEntity.getCurrency());
+            logisticsBillCostEntity.setPayType(CharSequenceUtil.blankToDefault(costEntity.getPayType(), old.getPayType()));
+
+            Optional.ofNullable(costEntity.getActualWeight()).ifPresent(logisticsBillCostEntity::setActualWeight);
+            Optional.ofNullable(costEntity.getVolumeWeight()).ifPresent(logisticsBillCostEntity::setVolumeWeight);
+            Optional.ofNullable(costEntity.getVolumeWeightLogistics()).ifPresent(logisticsBillCostEntity::setVolumeWeightLogistics);
+            Optional.ofNullable(costEntity.getWeightLogistics()).ifPresent(logisticsBillCostEntity::setWeightLogistics);
+            Optional.ofNullable(costEntity.getLogisticsBillDetailId()).ifPresent(logisticsBillCostEntity::setLogisticsBillDetailId);
+
+            Optional.ofNullable(costEntity.getReconciliationMonth()).ifPresent(logisticsBillCostEntity::setReconciliationMonth);
+            Optional.ofNullable(costEntity.getThirdLength()).ifPresent(logisticsBillCostEntity::setThirdLength);
+            Optional.ofNullable(costEntity.getThirdWidth()).ifPresent(logisticsBillCostEntity::setThirdWidth);
+            Optional.ofNullable(costEntity.getThirdHeight()).ifPresent(logisticsBillCostEntity::setThirdHeight);
+            Optional.ofNullable(costEntity.getThirdActualWeight()).ifPresent(logisticsBillCostEntity::setThirdActualWeight);
+
+        }
+        //导入数据批量处理
+        handleImportData(logisticsBillList,logisticsBillDetailList,logisticsBillCostList);
+
+        //导入确认
+        if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),processingType)) {
+            //批量修改对账状态为已确认
+            dtoList.forEach(obj -> obj.setImportConfirmDTO(new ImportHistoryRecordDTO.ImportConfirmDTO(obj.getId(),obj.getConfirmTime())));
+        } else {
+            logisticsBillCostList.forEach(obj -> obj.setConfirmTime(null));
+        }
+
+        log.info("编辑 开始修改尾程费用(自发货)数据");
+        boolean save = super.updateBatchById(logisticsBillCostList);
+        if(!save) {
+            throw new ServiceException("尾程费用(自发货)保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostList));
+        }
+        //导入确认
+        if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),processingType)) {
+            return logisticsBillCostList;
+        }
+        //批量修改对账状态为已确认
+        logisticsBillCostList.forEach(obj -> updateReconciliationStatus(obj.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getConfirmTime()));
+        return logisticsBillCostList;
+    }
+
+    /**
+     * 处理导入成功的数据
+     * @author will
+     * @date 2026/3/24 17:00
+     * @param logisticsBillList 物流单数据列表
+     * @param logisticsBillDetailList 物流单明细数据列表
+     * @param logisticsBillCostList 导入的物流单费用数据列表
+     */
+    private void handleImportData(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList,List<LogisticsBillCostEntity> logisticsBillCostList) {
+        // 数据处理
+        if (CollUtil.isEmpty(logisticsBillList) || CollUtil.isEmpty(logisticsBillDetailList) || CollUtil.isEmpty(logisticsBillCostList)) {
+            return;
+        }
+        // 物流单转MAP
+        Map<String, LogisticsBillEntity> logisticsBillMap = logisticsBillList.stream().collect(Collectors.toMap(LogisticsBillEntity::getId, e -> e));
+        //物流明细转MAP
+        Map<String, List<LogisticsBillDetailEntity>> logisticsBillDetailMap = logisticsBillDetailList.stream().collect(Collectors.groupingBy(LogisticsBillDetailEntity::getMainId));
+        // b2b销售订单id列表
+        List<String> soIdList = logisticsBillList.stream().filter(obj -> CharSequenceUtil.equals(OrderTypeEnum.B2B.getCode(), obj.getOrderType())).map(LogisticsBillEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = FeignQuery.getByIds(SoInfoEntity.class, soIdList);
+        Map<String, SoInfoEntity> soMap = CollUtil.isEmpty(soInfoEntityList) ? new HashMap<>() : soInfoEntityList.stream().collect(Collectors.toMap(SoInfoEntity::getId, e -> e));
+
+        //b2c销售订单id列表
+        List<String> soB2cIdList = logisticsBillList.stream().filter(obj -> CharSequenceUtil.equals(OrderTypeEnum.B2C.getCode(), obj.getOrderType())).map(LogisticsBillEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<SoB2cReceiverEntity> b2cReceiverList = FeignQuery.create(SoB2cReceiverEntity.class).in(SoB2cReceiverEntity::getMainId, soB2cIdList).list();
+        Map<String, SoB2cReceiverEntity> soB2cReceiverMap = CollUtil.isEmpty(b2cReceiverList) ? new HashMap<>() : b2cReceiverList.stream().collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, e -> e));
+
+
+        List<SoB2cLogisticsEntity> soB2cLogisticsList = FeignQuery.create(SoB2cLogisticsEntity.class).in(SoB2cReceiverEntity::getMainId, soB2cIdList).list();
+        Map<String, SoB2cLogisticsEntity> soB2cLogisticsMap = CollUtil.isEmpty(soB2cLogisticsList) ? new HashMap<>() : soB2cLogisticsList.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, e -> e));
+
+
+        //销售出库单id列表
+        List<String> outstockIdList = logisticsBillList.stream()
+                .map(LogisticsBillEntity::getOutstockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntityList = FeignQuery.getByIds(SoOutstockEntity.class,outstockIdList);
+        Map<String, SoOutstockEntity> soOutstockMap = CollUtil.isEmpty(soOutstockEntityList) ? new HashMap<>() : soOutstockEntityList.stream().collect(Collectors.toMap(SoOutstockEntity::getId, e -> e));
+
+        //店铺id列表
+        List<String> shopIdList = logisticsBillList.stream().map(LogisticsBillEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+        Map<String, ShopInfoEntity> shopMap = CollUtil.isEmpty(shopInfoEntityList) ? new HashMap<>() : shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, e -> e));
+
+        //国家信息
+        List<DictCountryEntity> countryList = FeignQuery.list(DictCountryEntity.class);
+        Map<String, DictCountryEntity> countryMap = CollUtil.isEmpty(countryList) ? new HashMap<>() : countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, e -> e));
+
+        //渠道id列表
+        List<String> channelIdList = logisticsBillList.stream().map(LogisticsBillEntity::getChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<LogisticsChannelEntity> channelList = FeignQuery.getByIds(LogisticsChannelEntity.class, channelIdList);
+        Map<String, LogisticsChannelEntity> channelMap = CollUtil.isEmpty(channelList) ? new HashMap<>() : channelList.stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, e -> e));
+
+        //批量查询汇率
+        List<String> currencyList = logisticsBillCostList.stream().map(LogisticsBillCostEntity::getCurrency).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, BigDecimal> exchangeRateMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(currencyList)) {
+            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            for (String currency : currencyList) {
+                if (CurrencyEnum.CNY.getCurrencyCode().equals(currency)) {
+                    exchangeRateMap.put(currency, BigDecimal.ONE);
+                } else {
+                    BigDecimal rate = dmpTaskFeign.getRate(currentDate, currency);
+                    if (Objects.isNull(rate)) {
+                        throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
+                    }
+                    exchangeRateMap.put(currency, rate);
+                }
+            }
+        }
+
+        for  (LogisticsBillCostEntity entity : logisticsBillCostList) {
+            //物流单号
+            LogisticsBillEntity logisticsBillEntity = logisticsBillMap.get(entity.getLogisticsBillId());
+            if (ObjectUtil.isEmpty(logisticsBillEntity)) {
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"物流订单");
+            }
+            entity.setTransportNo(logisticsBillEntity.getTransportNo());
+            entity.setChannelId(logisticsBillEntity.getChannelId());
+
+            //查询销售订单
+            if (CharSequenceUtil.equals(OrderTypeEnum.B2B.getCode(),logisticsBillEntity.getOrderType())) {
+                SoInfoEntity soInfoEntity = soMap.get(logisticsBillEntity.getSourceId());
+                if (ObjectUtil.isNotEmpty(soInfoEntity)) {
+                    if (CharSequenceUtil.isNotBlank(soInfoEntity.getCountryId())) {
+                        // 查询国家区域
+                        DictCountryEntity dictCountryEntity = countryMap.get( soInfoEntity.getCountryId());
+                        entity.setSubregionCode(ObjectUtil.isEmpty(dictCountryEntity) ? "" : dictCountryEntity.getRegionCode());
+                    }
+                    entity.setDeptId(soInfoEntity.getSalesDeptId());
+                    entity.setPartitionId(soInfoEntity.getPartitionId());
+                }
+            } else if (CharSequenceUtil.equals(OrderTypeEnum.B2C.getCode(),logisticsBillEntity.getOrderType())) {
+                SoB2cReceiverEntity receiverEntity = soB2cReceiverMap.get(logisticsBillEntity.getSourceId()) ;
+                if (ObjectUtil.isNotEmpty(receiverEntity)) {
+                    if (CharSequenceUtil.isNotBlank(receiverEntity.getCountry())) {
+                        // 查询国家区域
+                        DictCountryEntity dictCountryEntity =  countryMap.get( receiverEntity.getCountry());
+                        entity.setSubregionCode(ObjectUtil.isEmpty(dictCountryEntity) ? "" : dictCountryEntity.getRegionCode());
+                    }
+                    entity.setPartitionId(receiverEntity.getPartitionId());
+                }
+                //查询销售出库单
+                if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())) {
+                    SoOutstockEntity soOutstockEntity = soOutstockMap.get(logisticsBillEntity.getOutstockId()) ;
+                    if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+                        entity.setDeptId(soOutstockEntity.getSalesDeptId());
+                    }
+                }
+            }
+
+            BigDecimal billingWeight = entity.getBillingWeight();
+            if(StringUtils.isBlank(entity.getId()) && billingWeight == null) {
+                billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
+                        ? entity.getActualWeight() : entity.getVolumeWeight();
+            }
+            //计费重
+            entity.setBillingWeight(billingWeight);
+
+            //默认kg
+            entity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
+
+            //店铺负责人
+            ShopInfoEntity shopInfoEntity = shopMap.get(logisticsBillEntity.getShopId()) ;
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                entity.setShopChargeId(shopInfoEntity.getChargeId());
+                entity.setShopChargeName(shopInfoEntity.getChargeName());
+            }
+
+            //判断物流费用类型
+            String type;
+            if (CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.FIRST_MILE.getCode())) {
+                type = DictCostAttributionEnum.FIRST_MILE.getCode();
+            } else {
+                type = CharSequenceUtil.equals(logisticsBillEntity.getShipmentType(), ShipmentTypeEnum.SELF_DELIVER.getCode())
+                        ? DictCostAttributionEnum.SELF_DELIVER.getCode() : DictCostAttributionEnum.LAST_MILE.getCode();
+            }
+            entity.setType(type);
+            if (Objects.equals(DictCostAttributionEnum.SELF_DELIVER.getCode(), entity.getType()) || Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), entity.getType())){
+                //根据渠道设置计费规则
+                if (CharSequenceUtil.isNotBlank(entity.getChannelId())){
+                    LogisticsChannelEntity channelEntity = channelMap.get(entity.getChannelId());
+                    entity.setFeeRule(Objects.nonNull(channelEntity)? channelEntity.getFeeRule() : "");
+                }
+            }else if (Objects.equals(DictCostAttributionEnum.LAST_MILE.getCode(), entity.getType())){
+                entity.setFeeRule(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode());
+            }
+            if (CharSequenceUtil.isBlank(entity.getLogisticsBillDetailId())){
+                List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailMap.get(logisticsBillEntity.getId());
+                if (CollectionUtils.isNotEmpty(logisticsBillDetailEntityList)){
+                    //现在正常情况下物流主表和物流明细是1：1关系
+                    entity.setLogisticsBillDetailId(logisticsBillDetailEntityList.get(0).getId());
+                }
+            }
+            //币别汇率
+            if (CharSequenceUtil.isNotBlank(entity.getCurrency())){
+                BigDecimal rate = exchangeRateMap.get(entity.getCurrency());
+                if (Objects.isNull(rate)){
+                    throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), entity.getCurrency());
+                }
+                entity.setExchangeRate(rate);
+            }
+            String sourceId = logisticsBillEntity.getSourceId();
+            if(StringUtils.isNotBlank(sourceId)) {
+                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsMap.get(sourceId);
+                if(ObjectUtil.isNotEmpty(soB2cLogisticsEntity)) {
+                    BigDecimal length = soB2cLogisticsEntity.getLength();
+                    if(length != null) {
+                        length = length.setScale(1, RoundingMode.HALF_UP);
+                    }
+                    BigDecimal width = soB2cLogisticsEntity.getWidth();
+                    if(width != null) {
+                        width = width.setScale(1, RoundingMode.HALF_UP);
+                    }
+                    BigDecimal height = soB2cLogisticsEntity.getHeight();
+                    if(height != null) {
+                        height = height.setScale(1, RoundingMode.HALF_UP);
+                    }
+                    entity.setVolume(length + "*" + width + "*" + height);
+                }
+            }
+        }
     }
 
     @Override
@@ -399,8 +682,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	throw new ServiceException("修改后对账状态不能和当前对账状态一样");
         }
         if(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(beforeReconciliationStatus)) {
-        	if(!ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
-        			&& !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus) 
+        	if(!ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+        			&& !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
         			&& !ReconciliationStatusEnum.INVALID.getCode().equals(reconciliationStatus)) {
         		throw new ServiceException("当前对账状态为待确认，只能修改为暂估确认/账单确认/作废");
         	}
@@ -414,24 +697,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         			throw new ServiceException("当前对账状态为暂估确认，核算状态为已生成不能修改为账单确认");
         		}
         	}else {
-        		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+        		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
             			&& "payment".equals(entity.getPayStatus()))) {
             		String p = entity.getPayType().equals("pay") ? "付" : "退";
             		throw new ServiceException("当前对账状态为暂估确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为非账单确认状态");
             	}
         	}
         }else if(ReconciliationStatusEnum.CONFIRMED.getCode().equals(beforeReconciliationStatus)) {
-        	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+        	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
         			&& "payment".equals(entity.getPayStatus()))) {
         		String p = entity.getPayType().equals("pay") ? "付" : "退";
         		throw new ServiceException("当前对账状态为账单确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为其他状态");
         	}
         }
-        
+
         if("refund".equals(entity.getPayType()) && ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)) {
         	throw new ServiceException("退款费用类型不能修改为暂估确认");
         }
-        
+
         //状态变更
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
         		.set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)

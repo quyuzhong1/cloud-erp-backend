@@ -163,6 +163,10 @@ public class LogisticsFeignController {
     public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(@RequestBody List<String> channelIds){
         return logisticsChannelService.listChannelInfoById(channelIds);
     }
+    @PostMapping("/listChannelInfoByName")
+    public List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(@RequestBody List<String> channelNames){
+        return logisticsChannelService.listChannelInfoByName(channelNames);
+    }
 
     @GetMapping("/getLogisticsChannelConstraint")
     public LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId, @RequestParam(value = "country")String country) {
