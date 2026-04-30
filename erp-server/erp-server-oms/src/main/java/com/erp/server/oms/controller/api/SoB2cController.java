@@ -405,13 +405,7 @@ public class SoB2cController extends BaseController {
                 soB2cService.checkProductRegistrationAndUpdate(id, "");
             }
 
-            Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-            Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-            Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
-            if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                    || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
-            }
+            soB2cRuleService.handleAutoLogisticsAction(id, logisticsRuleResult);
         }
 
         //清除预报异常

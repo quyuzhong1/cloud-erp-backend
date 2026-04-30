@@ -6,6 +6,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -70,6 +71,52 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Override
+    public boolean handleAutoLogisticsAction(String soId, SoB2cDTO.RuleResultDTO logisticsRuleResult) {
+        if (Objects.isNull(logisticsRuleResult)) {
+            return false;
+        }
+        SoB2cEntity entity = this.getByIdOpt(soId).orElseThrow(() -> new ServiceException("销售订单不存在，soId: " + soId));
+        Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
+        if (shouldAutoSubmitDelivery(logisticsRuleResult, isOutOfRangeDelivery)) {
+            return handleAutoSubmitDelivery(soId, logisticsRuleResult.getName());
+        }
+        if (shouldAutoGetTrackNo(logisticsRuleResult, isOutOfRangeDelivery)) {
+            return handleAutoGetTrackNo(entity, logisticsRuleResult.getName());
+        }
+        return false;
+    }
+
+    private boolean shouldAutoSubmitDelivery(SoB2cDTO.RuleResultDTO logisticsRuleResult, Boolean isOutOfRangeDelivery) {
+        return Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo())
+                || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()));
+    }
+
+    private boolean shouldAutoGetTrackNo(SoB2cDTO.RuleResultDTO logisticsRuleResult, Boolean isOutOfRangeDelivery) {
+        return Boolean.TRUE.equals(logisticsRuleResult.getAutoTrackNoOnly())
+                || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Boolean.TRUE.equals(logisticsRuleResult.getAutoTrackNoInRange()));
+    }
+
+    private boolean handleAutoGetTrackNo(SoB2cEntity entity, String name) {
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        if (soB2cLogisticsEntity == null || StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+            log.warn("销售订单物流信息为空，soId: {}", entity.getId());
+            return false;
+        }
+        LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        String logisticsPlatform = authDTO.getLogisticsPlatform();
+        if (OmsPlatformEnum.isThirdWarehouse(logisticsPlatform)) {
+            log.info("订单【{}】为海外仓物流，暂不支持仅获取跟踪号不提交发货", entity.getCode());
+            return false;
+        }
+        BatchResultDTO batchResultDTO = soB2cService.getLogisticsCode(entity.getId(), Boolean.FALSE);
+        if (!batchResultDTO.getSuccess()) {
+            return false;
+        }
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("订单自动获取跟踪号，物流规则【{}】", name), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "自动获取跟踪号");
+        return true;
+    }
 
     @Override
     public boolean handleAutoSubmitDelivery(String soId, String name) {

@@ -1477,12 +1477,22 @@ public class SoB2cDTO implements Serializable {
         private List<SoB2cDetailEntity> soB2cDetailList;
 
         /**
-         * 是否自动获取跟踪单号
+         * 是否自动获取跟踪号并提交发货
          */
         private Boolean autoGetTrackNo;
 
         /**
-         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         * 是否自动获取跟踪号并不提交发货
+         */
+        private Boolean autoTrackNoOnly;
+
+        /**
+         * 是否自动获取跟踪号并不提交发货（非超范围派送订单）
+         */
+        private Boolean autoTrackNoInRange;
+
+        /**
+         * 是否自动获取跟踪号并提交发货（非超范围派送订单）
          */
         private Boolean autoGetTrackNotOfRangeDelivery;
     }

@@ -1309,7 +1309,7 @@ public enum ApiError implements Serializable {
     SO_B2B_SALESMAN_CHANGE(10695,"b2b客户销售员变更单" ),
     SO_REFUND_ORDER_DETAIL(10696,"退款订单明细"),
     SO_PLATFORM_ORDER_MERGE_TOO_LONG(10697,"合并后的平台订单号长度过长"),
-    SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT(10698,"仅允许选择一个自动提交发货选项"),
+    SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT(10698,"仅允许选择一个物流匹配自动处理选项"),
     SO_OUTBOUND_ALREADY_GENERATED_TERMINATE_FORBIDDEN(10699,"【{0}】已生成销售出库单，不支持终止"),
     SO_PICKLIST_NOT_PROCESSED_FORBIDDEN(10700,"拣货单未处理，无法生成"),
     SO_RETURN_NOTICE_SKU_NOT_FOUND(10701,"sku【{0}】在退货通知单中不存在"),
