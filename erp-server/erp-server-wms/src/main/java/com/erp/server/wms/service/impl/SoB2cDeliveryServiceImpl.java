@@ -513,7 +513,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
         List<PickingDetailEntity> pickingDetails = pickingDetailService.listByMainIdList(pickingIds);
         List<String> skuIds = pickingDetails.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<SkuVO> skuVOList = CollUtil.isNotEmpty(skuIds) ? plmTaskFeign.listSkuProductByIds(skuIds) : new ArrayList<>();
         List<PrintWayBillPdfDetailDTO> allDetailDTOList = new ArrayList<>();
         for (PickingDetailEntity pickingDetail : pickingDetails) {
             PickingListsEntity pickingLists = list.stream()

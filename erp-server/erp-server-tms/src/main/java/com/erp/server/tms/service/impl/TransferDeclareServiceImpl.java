@@ -513,9 +513,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .build();
         try {
             //下单
-            log.info("入库预报参数请求：{}", JSONObject.toJSON(request));
+            log.warn("入库预报参数请求：{}", JSONObject.toJSON(request));
             ApiResult<String> result = service.createInbound(request, authEntity.getId());
-            log.info("入库预报参数响应：{}", JSONObject.toJSON(result));
+            log.warn("入库预报参数响应：{}", JSONObject.toJSON(result));
             transferDeclareEntity.setInstockRefCode(referenceCode);
             transferDeclareEntity.setInstockForecastAsnCode(result.getData());
             transferDeclareEntity.setTotalQty(qtyDTO.getQty());
