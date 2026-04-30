@@ -14,7 +14,9 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.server.tms.service.DeliveryDeclareDetailMidService;
+import com.erp.server.tms.query.DeliveryDeclareDetailMidQueryHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -70,6 +72,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
             menuCode = "tms:deliveryDeclareDetailMid:paging",
             tableAlias = "dddm"
     )
+    @WebAdvanceQuery(handler = DeliveryDeclareDetailMidQueryHandler.class)
     public ApiResult<PagingVO<DeliveryDeclareDetailMidDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryDeclareDetailMidDTO.PagingParamDTO> dto) {
         return success(deliveryDeclareDetailMidService.paging(dto));
     }
