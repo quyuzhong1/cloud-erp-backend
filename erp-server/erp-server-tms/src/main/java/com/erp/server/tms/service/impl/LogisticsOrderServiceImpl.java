@@ -330,7 +330,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     public List<AfterSaleDTO.LogisticsOrderResultDTO> addBatch(List<LogisticsOrderEntity> entityList) {
         // 筛选出所有来源单号
         List<String> sourceCodeList = entityList.stream().map(LogisticsOrderEntity::getSourceCode).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList());
-        log.info("批量新增物流下单开始，来源单号：{}", StringUtils.join(sourceCodeList,  ","));
+        log.info("批量新增物流下单开始，来源单号：{}", StringUtils.join(sourceCodeList, ","));
         List<LogisticsOrderEntity> logisticsOrderEntityList = this.baseMapper.selectList(new QueryWrapper<LogisticsOrderEntity>().lambda().in(LogisticsOrderEntity::getSourceCode, sourceCodeList));
         Map<String, LogisticsOrderEntity> logisticsOrderEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getSourceCode, w -> w));
         // 筛选出所有不为空的寄修申请id
@@ -438,6 +438,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             resultDTOList.add(resultDTO);
         }
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, w -> w));
+        List<LogisticsOrderDTO.LogisticsLabelDTO> successLabelList = new ArrayList<>();
         entityList.forEach(e -> {
             if (resultDTOMap.get(e.getAfterSaleId()) != null) {
                 e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
@@ -450,13 +451,17 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
                 redisUtil.set(labelRedisKey, true, 86400);
                 LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
-                mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC, RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), labelDTO, IdUtil.simpleUUID());
+                successLabelList.add(labelDTO);
             } else {
                 e.setStatus(LogisticsStatusEnum.FAILED.getCode());
                 e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
                 e.setExceptionReason(resultDTOMap.get(e.getAfterSaleId()).getErrorMsg());
             }
         });
+        if (CollUtil.isNotEmpty(successLabelList)) {
+            mqProducerService.sendBachMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC,
+                    RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), successLabelList);
+        }
         super.saveOrUpdateBatch(entityList);
         return resultDTOList;
     }
