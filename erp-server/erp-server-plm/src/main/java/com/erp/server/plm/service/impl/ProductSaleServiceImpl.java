@@ -4,9 +4,16 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.UserStateConstants;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
@@ -14,6 +21,7 @@ import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -22,6 +30,8 @@ import com.erp.server.plm.mapper.ProductSaleMapper;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
+import com.erp.server.plm.service.OperateLogService;
+import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductSaleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +65,19 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
 
     @Resource
     private SysDictFeign sysDictFeign;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private InventoryFeign inventoryFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    private static final int AUTO_LOWER_SHELF_BATCH_SIZE = 500;
+    private static final String SYSTEM_OPERATOR_NAME = "System";
+    private static final String SKU_CLASS_PATH = String.valueOf(ProductDetailEntity.class);
 
 
     /**
@@ -418,6 +441,144 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
             this.updateBatchById(updateList);
         }
         return true;
+    }
+
+    /**
+     * 自动将库存为0的卖完下架SKU更新为已下架
+     *
+     * @return 更新SKU数量
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Integer autoLowerShelfSoldOutSku() {
+        LoginUser originalUser = UserContext.getLoginUser();
+        Boolean originalIsUserSystem = UserContext.getIsUserSystem();
+        setSystemOperator();
+        try {
+            int updateCount = 0;
+            String lastId = null;
+            while (true) {
+                List<ProductSaleEntity> saleList = this.lambdaQuery()
+                        .select(ProductSaleEntity::getId, ProductSaleEntity::getSkuId, ProductSaleEntity::getSaleState)
+                        .eq(ProductSaleEntity::getSaleState, SaleStateEnum.SOLD_OUT.getCode())
+                        .gt(StringUtils.isNotBlank(lastId), ProductSaleEntity::getId, lastId)
+                        .orderByAsc(ProductSaleEntity::getId)
+                        .last("limit " + AUTO_LOWER_SHELF_BATCH_SIZE)
+                        .list();
+                if (CollectionUtils.isEmpty(saleList)) {
+                    break;
+                }
+                lastId = saleList.get(saleList.size() - 1).getId();
+                updateCount += autoLowerShelfSoldOutSkuByBatch(saleList);
+            }
+            return updateCount;
+        } finally {
+            restoreOperator(originalUser, originalIsUserSystem);
+        }
+    }
+
+    private Integer autoLowerShelfSoldOutSkuByBatch(List<ProductSaleEntity> saleList) {
+        List<String> skuIds = saleList.stream()
+                .map(ProductSaleEntity::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return 0;
+        }
+        List<ProductDetailEntity> skuList = productDetailService.lambdaQuery()
+                .select(ProductDetailEntity::getId, ProductDetailEntity::getSkuNo, ProductDetailEntity::getProductId, ProductDetailEntity::getStatus)
+                .in(ProductDetailEntity::getId, skuIds)
+                .eq(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode())
+                .list();
+        if (CollectionUtils.isEmpty(skuList)) {
+            return 0;
+        }
+        Map<String, ProductSaleEntity> saleMap = saleList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getSkuId()))
+                .collect(Collectors.toMap(ProductSaleEntity::getSkuId, item -> item, (a, b) -> a));
+        List<InventoryEntity> inventoryList = listInventoryBySkuIds(skuList);
+        Map<String, List<InventoryEntity>> inventoryMap = inventoryList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getSkuId()))
+                .collect(Collectors.groupingBy(InventoryEntity::getSkuId));
+
+        List<ProductSaleEntity> updateList = new ArrayList<>();
+        List<OperateLogEntity> logList = new ArrayList<>();
+        for (ProductDetailEntity sku : skuList) {
+            if (!isZeroInventory(inventoryMap.get(sku.getId()))) {
+                continue;
+            }
+            ProductSaleEntity saleEntity = saleMap.get(sku.getId());
+            if (Objects.isNull(saleEntity)) {
+                continue;
+            }
+            ProductSaleEntity update = new ProductSaleEntity();
+            update.setId(saleEntity.getId());
+            update.setSaleState(SaleStateEnum.LOWER_SHELF.getCode());
+            updateList.add(update);
+            logList.add(buildAutoLowerShelfLog(sku));
+        }
+        if (CollectionUtils.isEmpty(updateList)) {
+            return 0;
+        }
+        this.updateBatchById(updateList);
+        operateLogService.addSysLogByBatchSave(logList);
+        return updateList.size();
+    }
+
+    private List<InventoryEntity> listInventoryBySkuIds(List<ProductDetailEntity> skuList) {
+        List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        InventoryQtyDTO.InventoryBySkuDTO dto = new InventoryQtyDTO.InventoryBySkuDTO();
+        dto.setSkuIdList(skuIds);
+        List<InventoryEntity> inventoryList = inventoryFeign.listInventoryBySkuIds(dto);
+        return CollectionUtils.isEmpty(inventoryList) ? Collections.emptyList() : inventoryList;
+    }
+
+    private boolean isZeroInventory(List<InventoryEntity> inventoryList) {
+        if (CollectionUtils.isEmpty(inventoryList)) {
+            return true;
+        }
+        int realQty = sumInventoryQty(inventoryList, InventoryStatusEnum.USABLE.getCode())
+                + sumInventoryQty(inventoryList, InventoryStatusEnum.FROZEN.getCode());
+        int inTransitQty = sumInventoryQty(inventoryList, InventoryStatusEnum.IN_TRANSIT.getCode());
+        int waitQcQty = sumInventoryQty(inventoryList, InventoryStatusEnum.WAIT_QC.getCode());
+        return realQty == 0 && inTransitQty == 0 && waitQcQty == 0;
+    }
+
+    private int sumInventoryQty(List<InventoryEntity> inventoryList, String inventoryStatus) {
+        return inventoryList.stream()
+                .filter(item -> Objects.equals(item.getDictInventoryStatus(), inventoryStatus))
+                .map(InventoryEntity::getQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    private OperateLogEntity buildAutoLowerShelfLog(ProductDetailEntity sku) {
+        return new OperateLogEntity()
+                .setClassPath(SKU_CLASS_PATH)
+                .setBusinessId(sku.getId())
+                .setPid(sku.getProductId())
+                .setOperation("修改信息")
+                .setContent(String.format("SKU【%s】库存为0自动从“卖完下架”更新为“已下架”", sku.getSkuNo()));
+    }
+
+    private void setSystemOperator() {
+        LoginUser systemUser = new LoginUser();
+        systemUser.setUid(UserStateConstants.USER_SYSTEM_ID);
+        systemUser.setUserName(SYSTEM_OPERATOR_NAME);
+        systemUser.setUserAccount("");
+        UserContext.setIsUserSystem(Boolean.FALSE);
+        UserContext.setLoginUser(systemUser);
+    }
+
+    private void restoreOperator(LoginUser originalUser, Boolean originalIsUserSystem) {
+        if (Objects.nonNull(originalUser)) {
+            UserContext.setLoginUser(originalUser);
+        } else {
+            UserContext.clear();
+        }
+        UserContext.setIsUserSystem(originalIsUserSystem);
     }
 }
 

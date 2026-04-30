@@ -111,4 +111,11 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
 
     List<ProductSaleEntity> listBySkuIdList(List<String> skuIdList);
     List<String> getInsurancePropertyList(String insurancePropertyValue, Map<String, BasicDictEntity> mapById);
+
+    /**
+     * 自动将库存为0的卖完下架SKU更新为已下架
+     *
+     * @return 更新SKU数量
+     */
+    Integer autoLowerShelfSoldOutSku();
 }
