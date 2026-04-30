@@ -14,7 +14,9 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.server.tms.service.DeliveryDeclareDetailMidService;
+import com.erp.server.tms.query.DeliveryDeclareDetailMidQueryHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -44,39 +46,6 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     private DeliveryDeclareDetailMidService deliveryDeclareDetailMidService;
 
     /**
-    * 新增
-    * @author jack
-    * @date:  2026-04-27
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "报关明细中间表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DeliveryDeclareDetailMidDTO.AddDTO dto) {
-        return success(deliveryDeclareDetailMidService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2026-04-27
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "报关明细中间表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:deliveryDeclareDetailMid:update",
-        serviceClass = DeliveryDeclareDetailMidService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated DeliveryDeclareDetailMidDTO.UpdateDTO dto) {
-        deliveryDeclareDetailMidService.update(dto);
-        return success();
-    }
-
-
-    /**
     * 获取状态统计
     * @return
     */
@@ -84,7 +53,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:deliveryDeclareDetailMid:paging",
-            tableAlias = ""
+            tableAlias = "dddm"
     )
     public ApiResult<List<DeliveryDeclareDetailMidDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(deliveryDeclareDetailMidService.tabList(dto));
@@ -101,8 +70,9 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:deliveryDeclareDetailMid:paging",
-            tableAlias = ""
+            tableAlias = "dddm"
     )
+    @WebAdvanceQuery(handler = DeliveryDeclareDetailMidQueryHandler.class)
     public ApiResult<PagingVO<DeliveryDeclareDetailMidDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryDeclareDetailMidDTO.PagingParamDTO> dto) {
         return success(deliveryDeclareDetailMidService.paging(dto));
     }
@@ -135,6 +105,11 @@ public class DeliveryDeclareDetailMidController extends BaseController {
      * @date 2026-04-29
      */
     @PostMapping("/mergePreview")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:deliveryDeclareDetailMid:mergePreview",
+            serviceClass = DeliveryDeclareDetailMidService.class,
+            keyIdName = "id")
     public ApiResult<List<DeliveryDeclareDetailMidDTO.MergePreviewDTO>> mergePreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
         return success(deliveryDeclareDetailMidService.mergePreview(dto.getIds()));
     }

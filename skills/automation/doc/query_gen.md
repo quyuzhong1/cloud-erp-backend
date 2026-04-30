@@ -34,7 +34,7 @@ description: 根据提供的 **DDL 语句** 或 **Java 实体类**，全自动�
 
 ## 3. ID 生成逻辑 (Identity Strategy)
 * **优先规则**：若用户显式给定起始 ID（如：“从 ID 200.. 开始”），则直接以此起始值手动递增。
-* **兜底规则 (执行脚本)**：若用户**未给定** ID，AI **必须**执行项目路径下的脚本：`antigravity-skills\scripts\snow_id_gen.py` 以获取当前毫秒级起始 ID，严禁凭空模拟。
+* **兜底规则 (执行脚本)**：若用户**未给定** ID，AI **必须**执行项目路径下的脚本：`skills\scripts\snow_id_gen.py` 以获取当前毫秒级起始 ID，严禁凭空模拟。
 * **异常处理**：若脚本执行失败或未找到该脚本，**必须立即向用户报告错误原因**（如 Python 环境缺失、路径无效等），并请用户手动指定起始 ID。
 * **计算原理**: 基于 `our_epoch = 1288834974657` 和 `shard_id = 5` 的 Snowflake 算法。
 
@@ -51,13 +51,13 @@ description: 根据提供的 **DDL 语句** 或 **Java 实体类**，全自动�
 * **日期 (date)** $\rightarrow$ `controls: date`, `data_type: date`, `date_type: date`
 
 ### 4.2 动态检索逻辑 (Dynamic Lookup)
-**仅当 `controls: select` 时**，必须实时检索 `.agents/skills/references/query_option.json` 文件，根据字段含义动态获取 `query_option_id`。
+**仅当 `controls: select` 时**，必须实时检索 `skills/data/query_option_lite.md` 文件，根据字段含义动态获取 `query_option_id`。
 
 | 业务场景 / 字段特征 | 匹配逻辑 | 优先级 ID |
 | :--- | :--- | :--- |
 | **审核状态** | 字段为 `approve_status` | `1742864822164201473` |
 | **人员/用户相关** | 包含 `person`, `user`, `create_user`, `_by` 等 | `1742885076630179841` |
-| **其他业务字典** | 根据注释中的 `type=` 或 `key=` 匹配 `url` 参数，或模糊匹配 `name` | 从 `query_option.json` 检索 |
+| **其他业务字典** | 根据注释中的 `type=` 或 `key=` 匹配 `url` 参数，或模糊匹配 `name` | 从 `skills/data/query_option_lite.md` 检索 |
 | **显式指定** | 若注释中已存在 `query_option_id = xxx` | 直接填充该值 |
 
 **🚨 核心映射准则**：若匹配到 `query_option_id`，`value` 必须优先映射表中的 `xx_id` 字段（而非 `xx_name`），以保证查询精确性。
@@ -65,7 +65,7 @@ description: 根据提供的 **DDL 语句** 或 **Java 实体类**，全自动�
 **🚨 强制注释**：若匹配并使用了 `query_option_id`，生成的 `INSERT` 脚本上方必须添加一行注释以描述该 option，格式：`-- option: {id}, {api_url}, {api_name}`。
 
 ### 4.3 静态字典与特殊字段逻辑
-* **跳过检索逻辑 (Skip Dynamic Lookup)**：以下场景**不执行** `query_option.json` 检索，直接填充 `option_list`：
+* **跳过检索逻辑 (Skip Dynamic Lookup)**：以下场景**不执行** `skills/data/query_option_lite.md` 检索，直接填充 `option_list`：
     * **布尔类型 (boolean)** 且注释包含“是否” $\rightarrow$ `[{"label":"是","value":true},{"label":"否","value":false}]`。
     * **特定字段名 `disabled`** $\rightarrow$ `[{"label":"启用","value":true},{"label":"停用","value":false}]`。
     * **特定字段名 `invalid_status`** $\rightarrow$ `[{"label":"已作废","value":true},{"label":"未作废","value":false}]`。
@@ -119,8 +119,8 @@ INSERT INTO "public"."cfg_query_condition" ("id", "create_user_id", "create_user
 
 ---
 
-## 7. query_option.json 自动化维护
-AI 必须主动维护并增量更新 `.agents/skills/references/query_option.json` 引用库。
+## 7. skills/data/query_option_lite.md 自动化维护
+AI 必须主动维护并增量更新 `skills/data/query_option_lite.md` 引用库。
 
 ### 7.1 提取逻辑
 当监听到 `INSERT INTO "public"."cfg_query_option"` 时，提取：
@@ -130,6 +130,6 @@ AI 必须主动维护并增量更新 `.agents/skills/references/query_option.jso
 * **module**: 提取 `api_url` 首个路径段。
 
 ### 7.2 查重逻辑
-检查 `query_option.json` 是否已存在相同 `id` 或 **标准化 `url`**（去除首斜杠）。
+检查 `skills/data/query_option_lite.md` 是否已存在相同 `id` 或 **标准化 `url`**（去除首斜杠）。
 * **若存在**：不处理。
 * **若不存在**：追加至 JSON 数组末尾。
