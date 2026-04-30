@@ -459,8 +459,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             }
         });
         if (CollUtil.isNotEmpty(successLabelList)) {
-            mqProducerService.sendBachMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC,
-                    RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), successLabelList);
+            mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC,
+                    RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), successLabelList, IdUtil.simpleUUID());
         }
         super.saveOrUpdateBatch(entityList);
         return resultDTOList;
