@@ -961,7 +961,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         poReconciliationEntity.setInvoiceStatus(true);
         updateById(poReconciliationEntity);
         // 操作日志
-        String msg =  CharSequenceUtil.format("用户【{}】上传【{}】单据单号为【{}】的发票", UserContext.getDefaultLoginUser().getUserName(), "采购对账单", poReconciliationEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】上传【{}】单据单号为【{}】的发票", UserContext.getDefaultLoginUser().getUserName(), "采购对账单", poReconciliationEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), poReconciliationEntity.getId(), "上传发票");
     }
 
