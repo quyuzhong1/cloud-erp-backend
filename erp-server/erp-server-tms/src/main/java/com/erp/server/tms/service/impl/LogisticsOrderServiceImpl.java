@@ -830,7 +830,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
 
     @Override
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
-        log.info("批量获取物流面单开始，单据编号：{}", org.thymeleaf.util.StringUtils.join(logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getCode).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList()), ","));
+        log.info("批量获取物流面单开始，单据编号：{}", StringUtils.join(logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getCode).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList()), ","));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : logisticsLabelDTOS) {
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
