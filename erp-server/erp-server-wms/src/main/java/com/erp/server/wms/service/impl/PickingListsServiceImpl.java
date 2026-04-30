@@ -1363,7 +1363,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         pickingQtyMap.forEach((skuNo, qty) -> {
             Integer packingQty = packingQtyMap.get(skuNo);
             Integer otherPickingQty = otherPickingQtyMap.getOrDefault(skuNo, 0);
-            if (Objects.nonNull(packingQty) && qty < packingQty + otherPickingQty) {
+            if (Objects.nonNull(packingQty) && qty  + otherPickingQty < packingQty) {
                 throw new ServiceException(CharSequenceUtil.format("sku【{}】编辑数量校验不可小于装箱数量{}", skuNo, packingQty));
             }
         });

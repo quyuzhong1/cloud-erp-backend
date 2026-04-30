@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -109,7 +108,6 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         String sid = mappingEntity.getThirdPlatformShopId();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate today = LocalDate.now();
-        System.out.println("当前日期: " + today.format(formatter));
 
         // 获取10年前的日期
         LocalDate dateBefore10Years = today.minusYears(10);
@@ -125,7 +123,7 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         }
         // 请求参数
         FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate,endDate,shipmentId);
-        Result<List<Object>> resultData = requestData(fbaShipmentReqDTO, false);
+        Result<Object> resultData = requestData(fbaShipmentReqDTO, false);
         if (null == resultData) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
             log.error(errorMsg);
@@ -137,7 +135,7 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             initDmpResponse.setDoNextStatus(false);
             dmpInputTaskService.lambdaUpdate()
                     .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(10))
-                    .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getId())
+                    .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId())
                     .update();
             return Collections.emptyList();
         }
@@ -153,45 +151,7 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
 
-        Object data = resultData.getData();
-        List<JSONObject> allResultList = new ArrayList<>();
-
-        if (data != null) {
-            // 无论 data 是 List、JSONArray 还是单个对象，都先转成 JSON 字符串再解析
-            String jsonStr = JSON.toJSONString(data);
-            // 解析 JSON 字符串
-            JSONObject jsonObject = JSON.parseObject(jsonStr);
-
-            // 获取 list 数组
-            JSONArray jsonArray = jsonObject.getJSONArray("list");
-
-            // 遍历 JSONArray，将每个元素添加到结果列表中
-            for (int i = 0; i < jsonArray.size(); i++) {
-                JSONObject item = jsonArray.getJSONObject(i);
-                allResultList.add(item);
-            }
-        }
-
-
-        if (resultData.getTotal() < 1000) {
-            allResultList.forEach(e -> e.put("shopId", shopId));
-            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allResultList)));
-        }
-        int totalCount = resultData.getTotal() / 1000;
-
-        for (int offset = 1; offset < totalCount; offset++) {
-            Result<List<Object>> curResultData = requestList(sid, startDate, endDate , offset);
-            if (null == curResultData) {
-                String errorMsg = StrUtil.format("请求领星FBA货件明细列表分页失败:,sid={}, offset={}, result={}", sid, offset, JSONUtil.toJsonStr(resultData));
-                log.error(errorMsg);
-                throw new ServiceException(errorMsg);
-            }
-            List<JSONObject> curList = curResultData.getData().stream()
-                    .map(e -> (JSONObject) JSONObject.toJSON(e))
-                    .collect(Collectors.toList());
-            allResultList.addAll(curList);
-        }
-
+        List<JSONObject> allResultList = extractShipmentList(resultData.getData());
         allResultList.forEach(e -> e.put("shopId", shopId));
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allResultList)));
     }
@@ -199,39 +159,9 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
     /**
      * 请求领星接口
      */
-    private Result<List<Object>> requestList(String sid, String startDate,String endDate, int offset) {
-        FbaShipmentReqDTO currentReceivedDTO = new FbaShipmentReqDTO(sid, startDate, endDate, offset);
-        Result<List<Object>> resultData = null;
-        long sleepTime = 1000;
-        // 一页最多请求10次
-        for (int count = 1; count <= 10; count++) {
-            resultData = this.requestData(currentReceivedDTO, true);
-            if (resultData == null) {
-                if (10 == count) {
-                    throw new ServiceException("调用领星FBA记录接口重试" + count + "失败");
-                }
-                try {
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    log.error("拉取领星货件明细数据睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
-                    Thread.currentThread().interrupt();
-                }
-                sleepTime = sleepTime + 1000;
-                count = count + 1;
-            } else {
-                break;
-            }
-        }
-        return resultData;
-    }
-
-
-    /**
-     * 请求领星接口
-     */
-    private Result<List<Object>> requestData(FbaShipmentReqDTO fbaShipmentReqDTO, Boolean returnNullLimit) {
+    private Result<Object> requestData(FbaShipmentReqDTO fbaShipmentReqDTO, Boolean returnNullLimit) {
         Map<String, Object> requestObjectMap = BeanUtil.beanToMap(fbaShipmentReqDTO);
-        Result<List<Object>> currentResult = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_LIST_RUI, requestObjectMap);
+        Result<Object> currentResult = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_LIST_RUI, requestObjectMap);
         if (!"0".equalsIgnoreCase(currentResult.getCode()) && !"3001008".equalsIgnoreCase(currentResult.getCode())) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败:,sid={}, result={}", fbaShipmentReqDTO.getSid(), JSONUtil.toJsonStr(currentResult));
             log.error(errorMsg);
@@ -245,20 +175,35 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         return currentResult;
     }
 
-    private boolean isEmptyShipmentData(Result<List<Object>> resultData) {
+    private boolean isEmptyShipmentData(Result<Object> resultData) {
         if (resultData == null || resultData.getData() == null) {
             return true;
         }
-        Object data = resultData.getData();
+        return extractShipmentList(resultData.getData()).isEmpty();
+    }
+
+    private List<JSONObject> extractShipmentList(Object data) {
+        if (data == null) {
+            return Collections.emptyList();
+        }
         if (data instanceof List) {
-            return ((List<?>) data).isEmpty();
+            return ((List<?>) data).stream()
+                    .map(e -> (JSONObject) JSONObject.toJSON(e))
+                    .collect(Collectors.toList());
         }
         JSONObject dataObject = JSON.parseObject(JSON.toJSONString(data));
         if (dataObject == null) {
-            return true;
+            return Collections.emptyList();
         }
         JSONArray jsonArray = dataObject.getJSONArray("list");
-        return jsonArray == null || jsonArray.isEmpty();
+        if (jsonArray == null || jsonArray.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<JSONObject> resultList = new ArrayList<>(jsonArray.size());
+        for (int i = 0; i < jsonArray.size(); i++) {
+            resultList.add((JSONObject) JSONObject.toJSON(jsonArray.get(i)));
+        }
+        return resultList;
     }
 
     protected List<Map<String, Object>> getParentStorageMongoData() {
