@@ -11,7 +11,7 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * DMP异步请求存储物流下单面单
@@ -21,15 +21,15 @@ import java.util.Collections;
         selectorExpression = RocketMqNewTag.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG,
         consumerGroup = RocketMqConsumerGroup.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_CONSUMER)
 @Slf4j
-public class DmpLogisticsOrderLabelConsumerService implements RocketMQListener<LogisticsOrderDTO.LogisticsLabelDTO> {
+public class DmpLogisticsOrderLabelConsumerService implements RocketMQListener<List<LogisticsOrderDTO.LogisticsLabelDTO>> {
 
     @Resource
     private AfterSaleService afterSaleService;
 
     @Override
-    public void onMessage(LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO) {
-        log.warn("接收到异步请求打印物流下单面单消息：{}", logisticsLabelDTO);
-        logisticsLabelDTO.setIsFromMq(true);
-        afterSaleService.getLogisticsOrderLabel(Collections.singletonList(logisticsLabelDTO));
+    public void onMessage(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
+        log.warn("接收到批量异步请求打印物流下单面单消息，数量：{}", logisticsLabelDTOS.size());
+        logisticsLabelDTOS.forEach(dto -> dto.setIsFromMq(true));
+        afterSaleService.getLogisticsOrderLabel(logisticsLabelDTOS);
     }
 }
