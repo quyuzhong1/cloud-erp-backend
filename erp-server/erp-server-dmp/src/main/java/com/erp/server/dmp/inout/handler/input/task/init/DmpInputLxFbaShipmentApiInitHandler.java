@@ -142,26 +142,6 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
 
-        if (resultData.getData() instanceof List) {
-            List<?> list = (List<?>) resultData.getData();
-            log.warn("Data is a List: {}", list);
-        } else if (resultData.getData() instanceof Map) {
-            // 处理Map情况（如提取某个字段）
-            Map<?, ?> map = (Map<?, ?>) resultData.getData();
-            log.warn("Data is a Map: {}", map);
-            Object value = map.get("expectedKey");
-            if (value instanceof List) {
-                List<?> list = (List<?>) value;
-                log.warn("Extracted List from Map: {}", list);
-            } else {
-                log.warn("Value for key 'expectedKey' is not a List: {}", value);
-            }
-        } else {
-            log.warn("Data is neither List nor Map: {}", resultData.getData());
-        }
-
-
-
         if ("3001008".equalsIgnoreCase(resultData.getCode())) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细触发限流停止当前:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
             log.warn(errorMsg);
