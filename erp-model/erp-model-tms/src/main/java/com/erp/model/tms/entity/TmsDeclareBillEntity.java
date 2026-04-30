@@ -37,11 +37,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField("code")
     private String code;
     /**
-    * 来源类型：头程,B2B
-    */
-    @TableField("source_type")
-    private String sourceType;
-    /**
     * 报关状态
     */
     @TableField("declare_status")
@@ -51,17 +46,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("business_type")
     private String businessType;
-
-    /**
-     * 来源id
-     */
-    @TableField("source_id")
-    private String sourceId;
-    /**
-     * 来源编码
-     */
-    @TableField("source_code")
-    private String sourceCode;
 
     /**
      * 提运单号，头程的话这个值是空的，B2B的话是页面手动输入
@@ -200,11 +184,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("box_qty")
     private Integer boxQty;
-    /**
-    * 合并来源Id
-    */
-    @TableField("merge_source_id")
-    private String mergeSourceId;
 
 
     public static final String FIELD_CODE = "code";

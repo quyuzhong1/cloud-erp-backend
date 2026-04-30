@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -110,20 +111,30 @@ public class TmsDeclareBillDTO implements Serializable {
     }
 
     /**
-     * 销售出库单信息
+     * 发货单信息
      */
     @Data
     @NoArgsConstructor
     public static class SoOutDTO {
         /**
-         * 业务id（发货单id或销售出库单id）
+         * 业务id（发货单id或发货通知单id）
          */
         private String sourceId;
 
         /**
-         * 业务code（发货单code或销售出库单code）
+         * 业务code（发货单code或发货通知库单code）
          */
         private String sourceCode;
+
+        /**
+         *  销售出库单id
+         */
+        private String soOutstockId;
+        /**
+         *  销售出库单编码
+         */
+        private String soOutstockCode;
+
         /**
          * 业务类型
          */
@@ -158,25 +169,6 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String logisticsSupplierName;
 
-        /**
-         * 总箱数
-         */
-        private Integer boxQty;
-
-        /**
-         * 毛重
-         */
-        private BigDecimal grossWeight;
-
-        /**
-         * 净重
-         */
-        private BigDecimal netWeight;
-
-        /**
-         * 产品明细
-         */
-        private List<ProductDetail> productDetailList;
         /**
          * 装箱信息
          */
@@ -274,15 +266,26 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     public static class PackingDTO {
 
-        private String id;
+        /**
+         *  来源id
+         */
+        private String sourceId;
+        /**
+         * 关联单号
+         */
+        private String sourceCode;
+        /**
+         *  销售出库单id
+         */
+        private String soOutstockId;
+        /**
+         *  销售出库单编码
+         */
+        private String soOutstockCode;
         /**
          * sku
          */
         private String sku;
-        /**
-         * 关联单号
-         */
-        private String code;
 
         /**
          * 装箱SKU
@@ -717,13 +720,20 @@ public class TmsDeclareBillDTO implements Serializable {
         private String code;
 
         /**
-         * 合并来源Id
+         * 业务单号【可排序】
          */
-        @ExcelIgnore
-        private String mergeSourceId;
+        private String businessCode;
+        /**
+         * 报关确认日期【可排序】
+         */
+        private LocalDate declareConfirmDate;
+        /**
+         * 报关员名称【可排序】
+         */
+        private String declareUserName;
 
         /**
-         * 来源编号
+         * 来源编号【可排序】
          */
         @ExcelIgnore
         private String sourceCode;
@@ -766,14 +776,6 @@ public class TmsDeclareBillDTO implements Serializable {
         @ExcelProperty(value = "类型名称")
         @ColumnWidth(10)
         private String businessTypeName;
-
-        /**
-         * 关联单号List
-         */
-        @ExcelProperty(value = "关联单号")
-        @ColumnWidth(20)
-        private String sourceCodeList;
-
 
         /**
          * 目的国家(可排序)
@@ -854,10 +856,28 @@ public class TmsDeclareBillDTO implements Serializable {
         private Boolean isMerged = Boolean.FALSE;
 
         /**
-         * 是否作废
+         * 发货仓名称【可排序】
          */
-        @ExcelIgnore
-        private Boolean isInvalid= Boolean.FALSE;
+        private String fromWarehouseName;
+
+        /**
+         * 目的仓名称【仅头程报关单存在】【可排序】
+         */
+        private String destWarehouseName;
+
+        /**
+         * 中转仓名称【可排序】
+         */
+        private String transferWarehouseName;
+
+        /**
+         * 销售组织名称【仅B2B报关单存在】【可排序】
+         */
+        private String salesOrgName;
+        /**
+         * 备注【可排序】
+         */
+        private String remark;
     }
 
     /**
@@ -1361,6 +1381,455 @@ public class TmsDeclareBillDTO implements Serializable {
          * 杂费
          */
         private BigDecimal otherFee;
+
+    }
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class BillSourceDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         *  来源编码
+         */
+        private String sourceCode;
+        /**
+         *  来源类型
+         */
+        private String sourceType;
+        /**
+         * 业务id
+         */
+        private String businessId;
+        /**
+         *  业务编码
+         */
+        private String businessCode;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListBillSourceDTO {
+
+        /**
+         *  来源id集合
+         */
+        private List<String> sourceIdList;
+        /**
+         * 来源编码集合
+         */
+        private List<String> sourceCodeList;
+        /**
+         * 业务id集合
+         */
+        private List<String> businessIdList;
+        /**
+         * 业务编码集合
+         */
+        private List<String> businessCodeList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class NotGenerateParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NotGenerateDetailDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         *  来源编码
+         */
+        private String sourceCode;
+        /**
+         *  来源类型
+         */
+        private String sourceType;
+        /**
+         *  来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         *  skuId
+         */
+        private String skuId;
+        /**
+         *  sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String customsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String declareChineseName;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 总价
+         */
+        private BigDecimal totalPrice;
+
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+        /**
+         * 原产国
+         */
+        private String sourceCountry;
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 最终目的国（地区）
+         */
+        private String toCountry;
+
+        /**
+         * 最终目的国（地区）名称
+         */
+        private String toCountryName;
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+        /**
+         * 征免
+         */
+        private String exemption;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddSplitDeclareDTO {
+        /**
+         *  拆分数据不能为空
+         */
+        @NotEmpty(message = "拆分数据不能为空")
+        private List<SplitDeclareDTO> splitDeclareDTOList;
+    }
+
+    /**
+     *  拆分信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitDeclareDTO {
+        /**
+         *  主表报关id
+         */
+        private String id;
+        /**
+         *  来源id
+         */
+        private String sourceId;
+        /**
+         *  箱号
+         */
+        private String boxNo;
+        /**
+         *  sku信息
+         */
+        private String skuDesc;
+        /**
+         * sku信息
+         */
+        private List<SplitDetailDTO> skuDetailList;
+    }
+
+    /**
+     * 拆分明细信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitDetailDTO {
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         *  skuId
+         */
+        private String skuId;
+        /**
+         *  SKU编码
+         */
+        private String skuNo;
+        /**
+         *  数量
+         */
+        private Integer qty;
+    }
+    
+    /**
+     * 合并报关信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MergeDeclareBillDTO {
+        /**
+         *  报关单明细集合
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
+    }
+
+    /**
+     *  合并报关明细信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MergeDeclareBillDetailDTO {
+
+        /**
+         *  业务单号+箱号
+         */
+        private String businessDesc;
+
+        /**
+         *  sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String customsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String declareChineseName;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+
+        /**
+         * 合并规则说明
+         */
+        private String mergeRemark;
+
+        /**
+         * 原发货明细数据
+         */
+        private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
+    }
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SourceDeliveryDetailDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         *  来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         *  业务id
+         */
+        private String businessId;
+        /**
+         *  业务但还要
+         */
+        private String businessCode;
+        /**
+         *  箱号
+         */
+        private String boxNo;
+        /**
+         *  skuId
+         */
+        private String skuId;
+        /**
+         *  sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String customsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String declareChineseName;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 报关单位名称
+         */
+        private String declareUnitName;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+    }
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PushDeclareBeforeParamDTO {
+        /**
+         *  是否合并,true是，false否
+         */
+        private Boolean isMerge = false;
+        /**
+         *  下推的主表ids
+         */
+        @NotEmpty(message = "选择ids不能为空")
+        private List<String> ids;
+    }
+
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AutoMergeDeclareBillViewDTO {
+        /**
+         *  是否合并,true是，false否
+         */
+        private Boolean isMerge = false;
+        /**
+         * 需要报关信息
+         */
+        private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
 
     }
 }

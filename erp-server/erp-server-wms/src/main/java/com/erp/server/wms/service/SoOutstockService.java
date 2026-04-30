@@ -489,11 +489,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     Boolean defaultHandleRetry(SoB2cEntity soB2c, List<SoB2cEntity> instantList);
 
-    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
-
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
-
-    Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto);
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
 
@@ -591,15 +587,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return Map<String, SoOutstockEntity>
      */
     Map<String, SoOutstockEntity> mapByIds(List<String> ids);
-    /**
-     * 下推B2B报关单
-     * @author jack
-     * @date: 2025-07-18
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    BatchResultDTO generateB2bDeclar(String id);
-
     /**
      * 根据来源单号查询销售出库单
      * @param sourceCode 来源单号

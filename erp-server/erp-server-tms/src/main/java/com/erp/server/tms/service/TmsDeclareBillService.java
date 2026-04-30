@@ -1,20 +1,18 @@
 package com.erp.server.tms.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 
@@ -48,14 +46,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     TmsDeclareBillDTO.ViewDTO view(String id);
 
-    List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto,SourceTypeEnum sourceTypeEnum);
-
-    List<BatchResultDTO> cancelDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto);
-
     Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
-
-    List<BatchResultDTO> cancelMerge(TmsDeclareBillDTO.MergeDeclareDTO dto);
-
 
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
@@ -84,4 +75,99 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     PagingVO<TmsDeclareBillDTO.PagingVO> export(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 
     void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
+    /**
+     * 更新备注
+     * @author will
+     * @date 2026/4/21 14:43
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO updateRemark(String id,String remark);
+
+    /**
+     * 删除报关单
+     * @author will
+     * @date 2026/4/30 10:59
+     * @param id
+     */
+    void deleteDeclareBillById (String id);
+
+    /**
+     * 头程添加产品明细
+     * @author will
+     * @date 2026/4/22 10:21
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateFmDetailPaging(PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto);
+    /**
+     * b2b添加产品明细
+     * @author will
+     * @date 2026/4/22 10:21
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(@Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto);
+    /**
+     * 查询拆分报关明细
+     * @author will
+     * @date 2026/4/23 15:21
+     * @param id
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>
+     */
+    List<TmsDeclareBillDTO.SplitDeclareDTO> listSplitB2bDetail(String id);
+    /**
+     * 批量保存拆分报关明细
+     * @author will
+     * @date 2026/4/24 12:30
+     * @param declareDTO
+     * @return java.lang.Boolean
+     */
+    Boolean batchAddSplitB2bDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO);
+    /**
+     * 查询拆分报关明细
+     * @author will
+     * @date 2026/4/23 15:21
+     * @param id 
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>
+     */
+    List<TmsDeclareBillDTO.SplitDeclareDTO> listSplitFmDetail(String id);
+    /**
+     * 批量保存拆分报关明细
+     * @author will
+     * @date 2026/4/23 16:39
+     * @param declareDTO
+     */
+    Boolean batchAddSplitFmDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO);
+    /**
+     * 查询合并前的报关明细
+     * @author will
+     * @date 2026/4/24 10:21
+     * @param ids
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBeforeDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforeMergeDetail( List<String> ids);
+    /**
+     * 查询合并后的报关明细
+     * @author will
+     * @date 2026/4/23 19:09
+     * @param ids
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterMergeDetail( List<String> ids);
+    /**
+     * 批量保存合并后的报关明细
+     * @author will
+     * @date 2026/4/24 10:22
+     * @param list
+     * @return Boolean
+     */
+    Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) ;
+
+    /**
+     * 合并报关单数据
+     * @author will
+     * @date 2026/4/29 15:07
+     * @param viewDTO
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO) ;
 }

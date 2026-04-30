@@ -359,7 +359,7 @@ public enum ApiError implements Serializable {
     BILL_FINANCE_RECONCILIATION_DUPLICATE(3053,"单据【{0}】在月份【{1}】、对账类型【{2}】、物流商【{3}】下已生成对账单，不可重复生成"),
     BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED(3054,"仅退货确认状态为【待确认】时才允许操作"),
     BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE(3055,"请至少保留一条明细，或选择整单删除"),
-    BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE(3056,"单据【{0}】报关状态已生成，不允许修改为【无需生成】"),
+    BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE(3056,"单据【{0}】报关状态非未生成，不允许修改为【无需生成】"),
     BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS(3057,"单据【{0}】物流状态已生成，不允许修改为【无需生成】"),
     BILL_DETAIL_IS_ZERO(3058, "单据【{0}】的明细条数为0，不允许提交"),
     BILL_IN_USE_DELETE_FORBIDDEN(3059,"销售订单已被引用，无法删除"),
@@ -1758,6 +1758,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
     LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND(13628,"导入未匹配到表头字段，请检查费用配置"),
     LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED(13629,"【{0}】不能作为识别单号字段"),
+    LOGISTICS_DECLARE_BILL_EXISTS_NOT_SOURCE(13630,"报关单未找到来源信息"),
+
     LOGISTICS_DECLARE_DETAIL_MID_DETAIL_MATCH_FAILED(13630,"{0}明细匹配失败，商品编码：{1}"),
     LOGISTICS_PRODUCT_LOGISTIC_NOT_FOUND(13631,"未找到商品物流信息，商品编码：{0}"),
     LOGISTICS_PRODUCT_LOGISTIC_DECLARE_INFO_INCOMPLETE(13632,"商品物流申报信息不完整，商品编码：{0}"),

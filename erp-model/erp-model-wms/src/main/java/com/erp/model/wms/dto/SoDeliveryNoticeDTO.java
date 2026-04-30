@@ -2,10 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -812,5 +809,22 @@ public class SoDeliveryNoticeDTO {
     public static class PickStatus{
         private String noticeId;
         private String generationPickStatus;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeclareStatusDTO {
+        /**
+         * 主键id
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+        /**
+         * 报关状态
+         */
+        @NotBlank(message = "报关状态不能为空")
+        private String declareStatus;
     }
 }

@@ -47,15 +47,22 @@ import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.LabelSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
@@ -76,7 +83,9 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -216,6 +225,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private OmsListingInfoFeign omsListingInfoFeign;
     @Autowired
     private SoDeliveryNoticeService soDeliveryNoticeService;
+    @Resource
+    private TmsDeclareBillFeign tmsDeclareBillFeign;
+
+
     @Resource
     @Qualifier("wmsTaskExecutorPool")
     private ExecutorService wmsTaskExecutorPool;
@@ -940,6 +953,96 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public BatchResultDTO updateNotNeedDeclare(String id) {
+        SoDeliveryNoticeEntity deliveryNoticeEntity = super.getById(id);
+        if (ObjectUtil.isEmpty(deliveryNoticeEntity)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"发货通知单");
+        }
+        if (CharSequenceUtil.equals(deliveryNoticeEntity.getDeclareStatus(), WmsDeclareStatusEnum.WAIT.getCode())) {
+            throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE);
+        }
+        deliveryNoticeEntity.setDeclareStatus(WmsDeclareStatusEnum.NONE.getCode());
+        super.updateById(deliveryNoticeEntity);
+
+        //删除tms发货明细数据
+        tmsDeclareBillFeign.deleteDeliveryDeclareDetailMid(Collections.singletonList(id));
+
+        //操作日志
+        operateLogService.addModuleOperateLog("发货单设置无需推送", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), deliveryNoticeEntity.getId(), "更新报关状态");
+        return BatchResultDTO.success(deliveryNoticeEntity.getId(), deliveryNoticeEntity.getCode(), "操作成功");
+    }
+
+
+    @Override
+    public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = baseMapper.listBeforePushB2bDeclare(dto.getIds());
+        handleBeforeDeclareData(sourceDeliveryDetailList);
+        return sourceDeliveryDetailList;
+    }
+
+    /**
+     * 处理合并前报关信息
+     * @author will
+     * @date 2026/4/27 17:32
+     * @param list
+     */
+    private void handleBeforeDeclareData (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //产品物流信息
+        List<String> skuIdList = list.stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductLogisticsEntity> productLogisticsList = FeignQuery.create(ProductLogisticsEntity.class).in(ProductLogisticsEntity::getSkuId, skuIdList).list();
+        Map<String, ProductLogisticsEntity> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId,item -> item));
+
+        //查询单位名称
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+
+        //币别明细
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+        Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId,item -> item.getName()));
+
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO deliveryDetailDTO : list) {
+            ProductLogisticsEntity productLogisticsEntity = logisticsMap.get(deliveryDetailDTO.getSkuId());
+            if (Objects.nonNull(productLogisticsEntity)) {
+                deliveryDetailDTO.setCustomsCode(productLogisticsEntity.getCustomsCode());
+                deliveryDetailDTO.setDeclareChineseName(productLogisticsEntity.getDeclareChineseName());
+                deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
+                deliveryDetailDTO.setDeclareUnit(productLogisticsEntity.getDeclareUnit());
+                //报关单位名称
+                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getDeclareUnit())).findFirst().orElse(null);
+                if (Objects.nonNull(unitEntity)) {
+                    deliveryDetailDTO.setDeclareUnitName(unitEntity.getName());
+                }
+                deliveryDetailDTO.setPrice(productLogisticsEntity.getDeclarePrice());
+                deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
+                deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
+                deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));
+            }
+        }
+    }
+
+
+    @Override
+    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushB2bDeclare(dto.getIds());
+        return tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMerge(),list));
+    }
+
+    @Override
+    public Boolean updateDeclareStatus(SoDeliveryNoticeDTO.DeclareStatusDTO dto) {
+        if (CollUtil.isEmpty(dto.getIds())) {
+            return Boolean.TRUE;
+        }
+        return  lambdaUpdate().in(SoDeliveryNoticeEntity::getId, dto.getIds())
+                .set(SoDeliveryNoticeEntity::getDeclareStatus, dto.getDeclareStatus())
+                .update();
+    }
+
+
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(SoDeliveryNoticeEntity entity) {
@@ -1107,7 +1210,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO deleteEntity(SoDeliveryNoticeEntity entity) {
         List<String> ids = Collections.singletonList(entity.getId());
-        
+
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
         if (CollectionUtils.isEmpty(soDeliveryNoticeDetailList)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"发货通知单明细");
@@ -1135,7 +1238,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         //释放冻结库存
         handleUnLockVirtualInventory(Collections.singletonList(entity), soDeliveryNoticeDetailList);
-        
+
         if (result) {
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
         } else {

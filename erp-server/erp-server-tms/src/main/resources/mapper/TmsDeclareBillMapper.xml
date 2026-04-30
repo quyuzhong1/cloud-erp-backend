@@ -13,7 +13,6 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
-       <result column="source_type" property="sourceType" />
        <result column="declare_status" property="declareStatus" />
        <result column="delivery_type" property="businessType" />
        <result column="country" property="country" />
@@ -41,10 +40,7 @@
        <result column="insurance_fee" property="insuranceFee" />
        <result column="other_fee" property="otherFee" />
        <result column="box_qty" property="boxQty" />
-       <result column="merge_source_id" property="mergeSourceId" />
         <result column="country_name" property="countryName" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_code" property="sourceCode" />
         <result column="transport_no" property="transportNo" />
         <result column="type" property="type" />
     </resultMap>
@@ -182,5 +178,217 @@
         db.create_time DESC
     </select>
 
+    <!-- B2B申报分页查询 -->
+    <select id="b2bDeclarePaging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
+        WITH delivery_notice as (
+        select
+            declare_id,
+            array_to_string(array_agg(DISTINCT business_code),',') as bussinessCode,
+            array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
+            array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
+            array_to_string(array_agg(DISTINCT transfer_warehouse_name),',') as transferWarehouseName,
+            array_to_string(array_agg(DISTINCT sales_org_name),',') as salesOrgname
+        from delivery_declare_detail_mid
+        where is_deleted = false and source_type = 'soDeliveryNotice'
+        group by declare_id
+        )
+        SELECT
+            db.id,
+            db.declar_confirm_date as declarConfirmDate,
+            db.code,
+            (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
+            db.declare_status as declareStatus,
+            db.business_type as businessType,
+            db.country,
+            db.country_name as  countryName,
+            db.box_qty as  boxQty,
+            db.net_weight as  netWeight,
+            db.gross_weight as  grossWeight,
+            db.declare_date as   declareDate,
+            db.declare_type as   declareType,
+            db.create_user_name as   createUserName,
+            db.create_time as   createTime,
+            dn.bussinessCode,
+            dn.sourceCode as ,
+            dn.fromWarehouseName,
+            dn.transferWarehouseName,
+            dn.salesOrgname
+        from  tms_declare_bill db
+        inner join delivery_notice dn on db.id = dn.declare_id
+        where
+        ${params.sqlMap.default}
+        and db.is_deleted = false
+        and db.type = #{params.type}
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
+    </select>
 
+    <!-- 程申报分页查询 -->
+    <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
+        WITH delivery_notice as (
+        select
+            declare_id,
+            array_to_string(array_agg(DISTINCT business_code),',') as bussinessCode,
+            array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
+            array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
+            array_to_string(array_agg(DISTINCT dest_warehouse_name),',') as destWarehouseName,
+            array_to_string(array_agg(DISTINCT transfer_warehouse_name),',') as transferWarehouseName
+        from delivery_declare_detail_mid
+        where is_deleted = false and source_type = 'firstMileDelivery'
+        group by declare_id
+        )
+        SELECT
+            db.id,
+            db.declar_confirm_date as declarConfirmDate,
+            db.code,
+            (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
+            db.declare_status as declareStatus,
+            db.business_type as businessType,
+            db.country,
+            db.country_name as  countryName,
+            db.box_qty as  boxQty,
+            db.net_weight as  netWeight,
+            db.gross_weight as  grossWeight,
+            db.declare_date as   declareDate,
+            db.declare_type as   declareType,
+            db.create_user_name as   createUserName,
+            db.create_time as   createTime,
+            dn.bussinessCode,
+            dn.sourceCode,
+            dn.fromWarehouseName,
+            dn.destWarehouseName,
+            dn.transferWarehouseName
+        from  tms_declare_bill db
+        inner join delivery_notice dn on db.id = dn.declare_id
+        where
+        ${params.sqlMap.default}
+        and db.is_deleted = false
+        and db.type = #{params.type}
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        db.create_time DESC
+    </select>
+
+    <!-- 根据申报单id查询来源单信息 -->
+    <select id="listSourceByDeclareBillId" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$BillSourceDTO">
+        select
+            dddm.source_id,
+            dddm.source_type,
+            dddm.source_code,
+            dddm.business_id,
+            dddm.business_code
+        from tms_declare_bill tdb
+        inner join delivery_declare_detail_mid dddm on tdb.id = dddm.declare_id and dddm.is_deleted = false
+        <where>
+            tdb.is_deleted = false
+            and tdb.id = #{declareBillId}
+        </where>
+    </select>
+
+    <!-- 查询未生成报关单的明细列表 -->
+    <select id="listNotGenerateDeclareFmDetail"
+            resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$NotGenerateDetailDTO">
+        select
+        fmd.id as sourceId,
+        fmd.code as sourceCode,
+        fmdd.id as sourceDetailId,
+        fmdd.sku_id as skuId,
+        fmdd.sku_no as skuNo,
+        fpl.customs_code as customsCode,
+        fpl.declare_chinese_name as declareChineseName,
+        fpl.declare_element as declareElement,
+        fpl.declare_unit as declareUnit,
+        fpl.declare_price as price,
+        fmdd.plan_qty as qty,
+        (fmdd.plan_qty * fpl.declare_price) as totalPrice,
+        fpl.declare_currency as declareCurrency,
+        fpl.declare_currency_symbol as declareCurrencySymbol,
+        fpl.source_country as sourceCountry,
+        fpl.source_cargo as sourceCargo,
+        fpl.exemption
+        from wms_first_mile_delivery fmd
+        inner join wms_first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        inner join foreign_product_logistics fpl on fmdd.sku_id = fpl.sku_id and fpl.is_deleted = false
+        where  ${params.sqlMap.default}
+        and fmd.is_deleted = false
+        and not exists (
+        select 1 from delivery_declare_detail_mid dddm
+        where dddm.source_id = fmd.id
+        and dddm.source_type = 'firstMileDelivery'
+        and dddm.is_deleted = false
+        )
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fmdd.id DESC
+    </select>
+
+    <!-- 查询未生成报关单的B2B明细列表 -->
+    <select id="listNotGenerateB2bDetailPaging"
+            resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$NotGenerateDetailDTO">
+        select
+            sdn.id as sourceId,
+            sdn.code as sourceCode,
+            sdnd.id as sourceDetailId,
+            sdnd.sku_id as skuId,
+            sdnd.sku_no as skuNo,
+            fpl.customs_code as customsCode,
+            fpl.declare_chinese_name as declareChineseName,
+            fpl.declare_element as declareElement,
+            fpl.declare_unit as declareUnit,
+            fpl.declare_price as price,
+            sdnd.delivery_qty as qty,
+            (sdnd.delivery_qty * fpl.declare_price) as totalPrice,
+            fpl.declare_currency as declareCurrency,
+            fpl.declare_currency_symbol as declareCurrencySymbol,
+            fpl.source_country as sourceCountry,
+            fpl.source_cargo as sourceCargo,
+            fpl.exemption
+        from foreign_so_delivery_notice sdn
+        inner join foreign_so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
+        inner join foreign_product_logistics fpl on sdnd.sku_id = fpl.sku_id and fpl.is_deleted = false
+        where  ${params.sqlMap.default}
+        and sdn.is_deleted = false
+        and not exists (
+        select 1 from delivery_declare_detail_mid dddm
+        where dddm.source_id = sdnd.id
+        and dddm.source_type = 'soDeliveryNotice'
+        and dddm.is_deleted = false
+        )
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sdnd.id DESC
+    </select>
 </mapper>

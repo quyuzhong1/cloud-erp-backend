@@ -463,9 +463,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setCountry(soCustomer.getCountryId());
         soOutstock.setRemark(soCustomer.getSoRemark());
         soOutstock.setCustomerRemark(soCustomer.getCustomerRemark());
-        if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
-            soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
-        }
         if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType()) && CharSequenceUtil.isNotBlank(soOutstock.getSoId())){
             SoB2cEntity soB2c = soB2cFeign.getById(soOutstock.getSoId());
             if (Objects.nonNull(soB2c)){
@@ -888,22 +885,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // 销售出库单推送数帝云
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
 
-            Boolean isExhibition = Boolean.TRUE;
-            if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
-                List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getId, entity.getSoId()).list();
-                if(CollUtil.isNotEmpty(list)){
-                    String sourceType = list.get(0).getSourceType();
-                    if(Objects.equals(SourceTypeEnum.EXHIBITION_ORDER.getCode(),sourceType)){
-                        isExhibition = Boolean.FALSE;
-                    }
-                }
-            }
-
-            if(isExhibition){
-                //走TMS自动生成报关单逻辑
-                log.info("skip soOutstock auto declare generation, use soDeliveryNotice mid flow instead, outstockCode={}", entity.getCode());
-            }
-
             //B2B发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通
@@ -916,7 +897,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return Boolean.TRUE;
     }
 
-    /**
+/*    *//**
      * 自动生成B2B报关单
      *
      * 根据销售出库单信息，在满足条件时自动调用TMS服务生成B2B报关单
@@ -924,7 +905,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      *
      * @param entity 销售出库单实体对象，包含出库单详细信息
      * @throws ServiceException 当自动生成报关单失败时抛出异常
-     */
+     *//*
     private void autoGenerateB2bDeclare(SoOutstockEntity entity, BillGenerateTimingEnum billGenerateTiming) {
         if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
             //走TMS自动生成逻辑
@@ -937,7 +918,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     .build();
             try {
                 Boolean autoGenerateResult;
-                // 跨服务自动生成报关单时临时切换系统标识，避免使用前台用户上下文。
+                //自动生成功能系统标识
                 Boolean originalValue = UserContext.getIsUserSystem();
                 UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
@@ -953,12 +934,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     this.updateStatus(updateStatusDTO);
                 }
             }catch (Exception e){
-                log.error("销售出库单{}审核后自动生成报关单失败：{}", entity.getCode(), e.getMessage(), e);
-                throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_AUTO_GENERATE_FAILED,
-                        "销售出库单", entity.getCode(), e.getMessage());
+                log.error("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                throw new ServiceException(CharSequenceUtil.format("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
             }
         }
-    }
+    }*/
 
     private void syncToSdy(SoOutstockEntity entity,List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate) {
         // 配货单推送数帝云
@@ -1409,11 +1389,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public BatchResultDTO disApprove(SoOutstockEntity entity, Boolean isPushKingDee) {
-        //下游单据【报关单】生成后不可操作反审核：报关单[单号]已生成不可操作反审核
-        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
-        if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(), CharSequenceUtil.format(ApiError.LOGISTICS_DECLARE_BILL_EXISTS_REVERSE_FORBIDDEN.getMsg(),tmsDeclareBillEntities.get(0).getCode()));
-        }
 
         //审核通过
         // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
@@ -3770,7 +3745,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
     }
-    @Override
+   /* @Override
     public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
         List<TmsDeclareBillDTO.SoOutDTO> result = baseMapper.getCanGenerateDeclare(querySourceDTO);
         if(CollectionUtils.isEmpty(result)){
@@ -3868,26 +3843,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         return result;
-    }
+    }*/
 
     @Override
     public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
         return baseMapper.logisticStatistics(deliveryStaticsReq);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
-        if(CharSequenceUtil.isBlank(dto.getDeclareStatus()) && CharSequenceUtil.isBlank(dto.getLogisticsStatus())){
-            return false;
-        }
-        return this.lambdaUpdate()
-                .in(SoOutstockEntity :: getId,dto.getIds())
-                .set(CharSequenceUtil.isNotBlank(dto.getDeclareStatus()),SoOutstockEntity::getDeclareStatus,dto.getDeclareStatus())
-                .update();
-
-    }
 
     /**
      * 根据单号查询出库单
@@ -4468,7 +4430,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soMultiChannelFeign.updateSoMultiOutstockQty(outstockQtyDTOList);
     }
 
-    @Override
+   /* @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO generateB2bDeclar(String id) {
@@ -4509,7 +4471,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException("仅限B2B类型的且报关状态为待确认的出库单可生成报关单");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
-    }
+    }*/
 
     @Override
     public SoOutstockEntity getBySourceCode(String sourceCode) {
