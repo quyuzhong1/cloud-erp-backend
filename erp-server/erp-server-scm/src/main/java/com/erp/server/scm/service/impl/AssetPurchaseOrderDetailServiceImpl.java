@@ -130,7 +130,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         List<AssetPurchaseOrderDetailEntity> oldList = this.listByIds(idList);
         if (CollectionUtils.isEmpty(oldList)) {
-            throw new ServiceException(ApiError.MOULD_NOTICE_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"模具采购明细");
         }
         //只有已审核的采购单才可以结束验收
         List<String> purchaseOrderIdList = oldList.stream().map(obj -> obj.getMainId()).collect(Collectors.toList());
