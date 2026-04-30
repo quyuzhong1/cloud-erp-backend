@@ -9,6 +9,7 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.JituOutboundReturnDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
@@ -76,6 +77,9 @@ public class JituOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         dto.setPlatform(sourcePlatform);
         dto.setProvider(sourcePlatform);
         dto.setOutBoundTime(dmpThirdOutboundEntity.getDateShipping());
+        dto.setUniqueId(dmpThirdOutboundEntity.getUniqueEncrypt());
+        dto.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
+        dto.setOrderStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         List<JituOutboundReturnDTO.Item> boxListDTOS = JSON.parseArray(dmpThirdOutboundEntity.getDetailListJson(), JituOutboundReturnDTO.Item.class);
 
         List<PlatformOutboundDTO.Receiving> receivingList = new ArrayList<>();
@@ -127,6 +131,6 @@ public class JituOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("receivingCode");
+        return Arrays.asList("referenceNo");
     }
 }
