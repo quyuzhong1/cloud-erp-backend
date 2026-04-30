@@ -330,6 +330,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     public List<AfterSaleDTO.LogisticsOrderResultDTO> addBatch(List<LogisticsOrderEntity> entityList) {
         // 筛选出所有来源单号
         List<String> sourceCodeList = entityList.stream().map(LogisticsOrderEntity::getSourceCode).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList());
+        log.info("批量新增物流下单开始，来源单号：{}", StringUtils.join(sourceCodeList,  ","));
         List<LogisticsOrderEntity> logisticsOrderEntityList = this.baseMapper.selectList(new QueryWrapper<LogisticsOrderEntity>().lambda().in(LogisticsOrderEntity::getSourceCode, sourceCodeList));
         Map<String, LogisticsOrderEntity> logisticsOrderEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getSourceCode, w -> w));
         // 筛选出所有不为空的寄修申请id
@@ -553,6 +554,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (CollectionUtils.isEmpty(trackNoList)) {
             return Collections.emptyList();
         }
+        log.info("开始查询物流单号：【{}】的物流单信息", StringUtils.join(trackNoList, ","));
         List<LogisticsOrderEntity> entityList = this.list(new QueryWrapper<LogisticsOrderEntity>().lambda()
                 .in(LogisticsOrderEntity::getTrackNo, trackNoList)
                 .eq(LogisticsOrderEntity::getStatus, LogisticsStatusEnum.SUCCESS.getCode()));
@@ -588,6 +590,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
+        log.info("开始批量取消物流单号：【{}】的物流单信息", StringUtils.join(codeList, ","));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultList = new ArrayList<>(list.size());
         for (LogisticsOrderEntity entity : list) {
             AfterSaleDTO.LogisticsOrderResultDTO result = new AfterSaleDTO.LogisticsOrderResultDTO();
@@ -822,6 +825,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
 
     @Override
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
+        log.info("批量获取物流面单开始，单据编号：{}", org.thymeleaf.util.StringUtils.join(logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getCode).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList()), ","));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : logisticsLabelDTOS) {
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
