@@ -736,8 +736,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),importDTO.getProcessingType())) {
             return;
         }
-        confirmPairList.forEach(obj -> logisticsBillCostService.confirmImport(obj.getLogisticsCostId(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getConfirmDateTime()));
-    }
+        logisticsBillCostService.batchConfirmImport(confirmPairList, ReconciliationStatusEnum.CONFIRMED.getCode());    }
 
     /**
      * 更新匹配结果

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.erp.model.tms.dto.AsyncTaskRecordDTO;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -108,4 +109,18 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
     List<LogisticsBillCostDTO.ListDTO> listTotalCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
 
     List<String> listByCanPushAllocation(@Param("params") AsyncTaskRecordDTO.TaskDTO params);
+
+    /**
+     * 批量确认导入数据
+     *
+     * @param confirmList 导入确认数据
+     * @param reconciliationStatus 对账状态
+     * @param confirmUserId 确认人ID
+     * @param confirmUserName 确认人名称
+     * @return 更新条数
+     */
+    int batchConfirmImport(@Param("confirmList") List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList,
+                           @Param("reconciliationStatus") String reconciliationStatus,
+                           @Param("confirmUserId") String confirmUserId,
+                           @Param("confirmUserName") String confirmUserName);
 }
