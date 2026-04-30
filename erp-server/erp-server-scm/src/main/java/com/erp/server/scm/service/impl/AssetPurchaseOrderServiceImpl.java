@@ -1684,6 +1684,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 iterator.remove();
             }
         }
+        validateMoldRefSkuForGenerateAssetAccept(dtoList);
 
         //按单分组下推
         List<List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO>> groupList = dtoList.stream()
@@ -1717,6 +1718,29 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             log.info("生成资产验收单失败", e);
             throw e;
         }
+    }
+
+    private void validateMoldRefSkuForGenerateAssetAccept(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        if (CollUtil.isEmpty(dtoList)) {
+            return;
+        }
+        List<String> moldCodes = dtoList.stream()
+                .map(AssetPurchaseOrderDTO.GenerateAssetAcceptDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(moldCodes)) {
+            return;
+        }
+        List<String> invalidMoldCodes = plmTaskFeign.listInvalidMoldCodesForRefSku(moldCodes);
+        if (CollUtil.isEmpty(invalidMoldCodes)) {
+            return;
+        }
+        String errorMsg = invalidMoldCodes.stream()
+                .distinct()
+                .map(moldCode -> "模具【" + moldCode + "】未关联SKU或关联SKU数据未审核通过，无法下推")
+                .collect(Collectors.joining("；"));
+        throw new ServiceException(errorMsg);
     }
 
     @Override
