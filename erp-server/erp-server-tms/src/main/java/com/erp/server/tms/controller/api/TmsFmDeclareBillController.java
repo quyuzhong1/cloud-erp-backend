@@ -162,6 +162,35 @@ public class TmsFmDeclareBillController extends BaseController {
         return success(tmsDeclareBillService.view(id));
     }
 
+    /**
+     * 报关状态详情
+     * @author lrp
+     * @date:  2024-03-19
+     * @param id
+     * @return ApiResult<TmsDeclareBillDTO.DeclareStatusDetailDTO>
+     */
+    @GetMapping("/declareStatusDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:confirmDeclareStatus",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "id")
+    public ApiResult<TmsDeclareBillDTO.DeclareStatusDetailDTO> declareStatusDetail(@RequestParam("id") String id) {
+        return success(tmsDeclareBillService.declareStatusDetail(id, SourceTypeEnum.FM_DECLARE_BILL));
+    }
+
+    /**
+     * 报关状态更新
+     * @author lrp
+     * @date:  2024-03-19
+     * @param dto
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/confirmDeclareStatus")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "头程报关单报关状态更新")
+    public ApiResult<Boolean> confirmDeclareStatus(@RequestBody @Validated TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
+        return success(tmsDeclareBillService.confirmDeclareStatus(dto, SourceTypeEnum.FM_DECLARE_BILL));
+    }
 
     /**
      * 合并报关

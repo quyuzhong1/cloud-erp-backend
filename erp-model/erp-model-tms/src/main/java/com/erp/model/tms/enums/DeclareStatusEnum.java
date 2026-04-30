@@ -51,4 +51,13 @@ public enum DeclareStatusEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static DeclareStatusEnum getEnum(String code) {
+        for (DeclareStatusEnum declareStatusEnum : DeclareStatusEnum.values()) {
+            if (code.equals(declareStatusEnum.getCode())) {
+                return declareStatusEnum;
+            }
+        }
+        return null;
+    }
 }

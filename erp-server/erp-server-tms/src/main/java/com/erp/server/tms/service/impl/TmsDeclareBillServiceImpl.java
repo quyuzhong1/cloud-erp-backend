@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
@@ -16,6 +17,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
@@ -500,6 +502,120 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
+    @Override
+    public TmsDeclareBillDTO.DeclareStatusDetailDTO declareStatusDetail(String id, SourceTypeEnum sourceTypeEnum) {
+        TmsDeclareBillEntity entity = getDeclareBillByIdAndType(id, sourceTypeEnum);
+        TmsDeclareBillDTO.DeclareStatusDetailDTO detailDTO = new TmsDeclareBillDTO.DeclareStatusDetailDTO();
+        detailDTO.setId(entity.getId());
+        detailDTO.setDeclareStatus(entity.getDeclareStatus());
+        detailDTO.setDeclareStatusName(DeclareStatusEnum.getName(entity.getDeclareStatus()));
+        if (Objects.nonNull(entity.getDeclarConfirmDate())) {
+            detailDTO.setDeclarConfirmDate(entity.getDeclarConfirmDate());
+        }
+        detailDTO.setDeclarUserId(entity.getDeclarUserId());
+        detailDTO.setDeclarUserName(entity.getDeclarUserName());
+        if (DeclareStatusEnum.WAIT.getCode().equals(entity.getDeclareStatus())) {
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
+            detailDTO.setDeclarConfirmDate(LocalDate.now());
+            detailDTO.setDeclarUserId(loginUser.getUid());
+            detailDTO.setDeclarUserName(loginUser.getUserName());
+        }
+        return detailDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum) {
+        TmsDeclareBillEntity entity = getDeclareBillByIdAndType(dto.getId(), sourceTypeEnum);
+        DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
+        String currentStatus = entity.getDeclareStatus();
+        if (DeclareStatusEnum.WAIT.getCode().equals(currentStatus) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
+            validateDeclareConfirm(entity);
+            fillDeclareConfirmUser(dto);
+            updateDeclareStatus(entity, targetStatus.getCode(), dto.getDeclarConfirmDate(), dto.getDeclarUserId(), dto.getDeclarUserName());
+            return Boolean.TRUE;
+        }
+        if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.WAIT.equals(targetStatus)) {
+            updateDeclareStatus(entity, targetStatus.getCode(), null, null, null);
+            return Boolean.TRUE;
+        }
+        if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.DECLARED.equals(targetStatus)) {
+            updateDeclareStatus(entity, targetStatus.getCode(), entity.getDeclarConfirmDate(), entity.getDeclarUserId(), entity.getDeclarUserName());
+            return Boolean.TRUE;
+        }
+        if (DeclareStatusEnum.DECLARED.getCode().equals(currentStatus) && DeclareStatusEnum.WAIT.equals(targetStatus)) {
+            updateDeclareStatus(entity, targetStatus.getCode(), null, null, null);
+            return Boolean.TRUE;
+        }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_UPDATE_FORBIDDEN, DeclareStatusEnum.getName(currentStatus), targetStatus.getName());
+    }
+
+    private TmsDeclareBillEntity getDeclareBillByIdAndType(String id, SourceTypeEnum sourceTypeEnum) {
+        TmsDeclareBillEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "报关单"));
+        if (!sourceTypeEnum.getCode().equals(entity.getType())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+        }
+        return entity;
+    }
+    private void validateDeclareConfirm(TmsDeclareBillEntity entity) {
+        if (StringUtils.isBlank(entity.getDeclareType())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED, "报关类型");
+        }
+        List<TmsDeclareBillDetailEntity> detailEntityList = detailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED, "产品明细");
+        }
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getDeclareCurrency, "币制");
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getSourceCountry, "原产国(地区)");
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getToCountry, "最终目的国(地区)");
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getSourceCargo, "境内货源地");
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getExemption, "征免");
+    }
+
+    private void validateDeclareDetailField(List<TmsDeclareBillDetailEntity> detailEntityList, Function<TmsDeclareBillDetailEntity, String> getter, String fieldName) {
+        for (TmsDeclareBillDetailEntity detailEntity : detailEntityList) {
+            if (StringUtils.isBlank(getter.apply(detailEntity))) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED, fieldName);
+            }
+        }
+        Set<String> valueSet = detailEntityList.stream().map(getter).collect(Collectors.toSet());
+        if (valueSet.size() > 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_INCONSISTENT, fieldName);
+        }
+    }
+
+    private void fillDeclareConfirmUser(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
+        if (Objects.isNull(dto.getDeclarConfirmDate())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_CONFIRM_DATE_REQUIRED);
+        }
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if (StringUtils.isBlank(dto.getDeclarUserId())) {
+            dto.setDeclarUserId(loginUser.getUid());
+        }
+        if (StringUtils.isBlank(dto.getDeclarUserName()) && dto.getDeclarUserId().equals(loginUser.getUid())) {
+            dto.setDeclarUserName(loginUser.getUserName());
+        }
+        if (StringUtils.isBlank(dto.getDeclarUserName())) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getDeclarUserId());
+            if (Objects.nonNull(userDTO)) {
+                dto.setDeclarUserName(userDTO.getUserName());
+            }
+        }
+        if (StringUtils.isBlank(dto.getDeclarUserName())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_CONFIRM_USER_REQUIRED);
+        }
+    }
+
+    private void updateDeclareStatus(TmsDeclareBillEntity entity, String declareStatus, LocalDate declarConfirmDate, String declarUserId, String declarUserName) {
+        this.lambdaUpdate()
+                .eq(TmsDeclareBillEntity::getId, entity.getId())
+                .set(TmsDeclareBillEntity::getDeclareStatus, declareStatus)
+                .set(TmsDeclareBillEntity::getDeclarConfirmDate, Objects.isNull(declarConfirmDate) ? LocalDate.now() : declarConfirmDate)
+                .set(TmsDeclareBillEntity::getDeclarUserId, Objects.isNull(declarUserId) ? "" : declarUserId)
+                .set(TmsDeclareBillEntity::getDeclarUserName, Objects.isNull(declarUserName) ? "" : declarUserName)
+                .update(new TmsDeclareBillEntity());
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

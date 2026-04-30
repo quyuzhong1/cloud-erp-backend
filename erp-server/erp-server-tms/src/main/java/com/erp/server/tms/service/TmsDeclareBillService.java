@@ -46,8 +46,11 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     TmsDeclareBillDTO.ViewDTO view(String id);
 
-    Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
+    TmsDeclareBillDTO.DeclareStatusDetailDTO declareStatusDetail(String id, SourceTypeEnum sourceTypeEnum);
 
+    Boolean confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum);
+
+    Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 
@@ -126,7 +129,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * 查询拆分报关明细
      * @author will
      * @date 2026/4/23 15:21
-     * @param id 
+     * @param id
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>
      */
     List<TmsDeclareBillDTO.SplitDeclareDTO> listSplitFmDetail(String id);
