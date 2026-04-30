@@ -85,6 +85,77 @@ public class TmsDeclareBillDTO implements Serializable {
     }
 
     /**
+     * 报关状态详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeclareStatusDetailDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 报关状态
+         */
+        private String declareStatus;
+
+        /**
+         * 报关状态名称
+         */
+        private String declareStatusName;
+
+        /**
+         * 报关确认日期
+         */
+        private LocalDate declarConfirmDate;
+
+        /**
+         * 报关确认人id
+         */
+        private String declarUserId;
+
+        /**
+         * 报关确认人
+         */
+        private String declarUserName;
+    }
+
+    /**
+     * 确认报关状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmDeclareStatusDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 报关状态
+         */
+        @NotBlank(message = "报关状态不能为空")
+        private String declareStatus;
+
+        /**
+         * 报关确认日期
+         */
+        private LocalDate declarConfirmDate;
+
+        /**
+         * 报关确认人id
+         */
+        private String declarUserId;
+
+        /**
+         * 报关确认人
+         */
+        private String declarUserName;
+    }
+
+    /**
      * 查询可以生成报关单的DTO
      */
     @Data

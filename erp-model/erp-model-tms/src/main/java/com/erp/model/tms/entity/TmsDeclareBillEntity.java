@@ -95,6 +95,21 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField(value = "declare_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate declareDate;
     /**
+    * 报关确认日期
+    */
+    @TableField(value = "declar_confirm_date", updateStrategy = FieldStrategy.IGNORED)
+    private LocalDate declarConfirmDate;
+    /**
+    * 报关确认人id
+    */
+    @TableField(value = "declar_user_id", updateStrategy = FieldStrategy.IGNORED)
+    private String declarUserId;
+    /**
+    * 报关确认人
+    */
+    @TableField(value = "declar_user_name", updateStrategy = FieldStrategy.IGNORED)
+    private String declarUserName;
+    /**
     * 报关类型
     */
     @TableField("declare_type")
@@ -224,6 +239,12 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     public static final String GROSS_WEIGHT = "gross_weight";
 
     public static final String DECLARE_DATE = "declare_date";
+
+    public static final String DECLAR_CONFIRM_DATE = "declar_confirm_date";
+
+    public static final String DECLAR_USER_ID = "declar_user_id";
+
+    public static final String DECLAR_USER_NAME = "declar_user_name";
 
     public static final String DECLARE_TYPE = "declare_type";
 
