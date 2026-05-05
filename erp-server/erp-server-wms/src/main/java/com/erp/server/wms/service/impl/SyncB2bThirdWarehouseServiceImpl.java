@@ -165,10 +165,14 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
         req.setOwnerCode(overseasProviderEntity.getOwnerCode());
-        LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(entity.getLogisticsChannelId());
-        if(Objects.nonNull(logisticsChannelEntity)){
-            req.setIsInsurance(logisticsChannelEntity.getIsApiInsurance());
-            req.setIsSignature(logisticsChannelEntity.getIsApiSign());
+        req.setIsInsurance(false);
+        req.setIsSignature(false);
+        if (StrUtil.isNotBlank(entity.getLogisticsChannelId())) {
+            LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(entity.getLogisticsChannelId());
+            if (Objects.nonNull(logisticsChannelEntity)) {
+                req.setIsInsurance(Boolean.TRUE.equals(logisticsChannelEntity.getIsApiInsurance()));
+                req.setIsSignature(Boolean.TRUE.equals(logisticsChannelEntity.getIsApiSign()));
+            }
         }
         fillAttachmentInfo(req, attachmentList);
         return BeanUtil.beanToMap(req);
