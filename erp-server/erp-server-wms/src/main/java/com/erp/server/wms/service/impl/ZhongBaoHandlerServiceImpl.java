@@ -430,11 +430,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         Set<String> skuIds = new HashSet<>();
         B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
         if (Objects.nonNull(b2bThirdDelivery)) {
-            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
             overseasOutboundCreateRequest.setShippingMethodCode(b2bThirdDelivery.getLogisticsChannelCode());
-            if (Objects.nonNull(logisticsChannel)) {
-                overseasOutboundCreateRequest.setIsSign(logisticsChannel.getIsApiSign() ? 1 : -1);
-                overseasOutboundCreateRequest.setIsInsure(logisticsChannel.getIsApiInsurance() ? 1 : -1);
+            overseasOutboundCreateRequest.setIsSign(-1);
+            overseasOutboundCreateRequest.setIsInsure(-1);
+            if (StringUtils.isNotBlank(b2bThirdDelivery.getLogisticsChannelId())) {
+                LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
+                if (Objects.nonNull(logisticsChannel)) {
+                    overseasOutboundCreateRequest.setIsSign(Boolean.TRUE.equals(logisticsChannel.getIsApiSign()) ? 1 : -1);
+                    overseasOutboundCreateRequest.setIsInsure(Boolean.TRUE.equals(logisticsChannel.getIsApiInsurance()) ? 1 : -1);
+                }
             }
 
             //取订单金额和汇率（明细行取第一行汇率）换算成人民币金额，在取系统最新美元汇率换算成美元
