@@ -9,7 +9,7 @@ description: 项目接口（Controller & Service & Mapper & DTO）开发规范�
 在进行开发或重构项目的单端接口时，必须严格遵循以下独立规范约束。任何省略操作都将被视为 BUG。主要覆盖四大核心操作体系及配套的复杂脱水拦截处理。
 
 ## 0. 核心公共规范 (Core Common)
-- **署名标准化**: 所有新创建或大幅重构的 Java 类（Controller, Service, Mapper, DTO, Entity, Handler 等），其 Javadoc 中的 `@author` 必须统一锁定为 **`jack`**。
+- **署名标准化**: 所有新创建或大幅重构的 Java 类（Controller, Service, Mapper, DTO, Entity, Handler 等），其 Javadoc 中的 `@author` 必须统一锁定为 **`jack`**；已有类的小范围修改不强制改历史署名，避免产生无关 diff。
 - **文档元数据**: DTO 中的**每一个**业务字段必须配有清晰的 Javadoc/Swagger 注释，禁止出现意义不明的“脱水”属性。
 - **注释强制化**: **每一个**公开接口（Controller 方法）及核心业务方法（Service 接口及其实现类）必须配备标准的 Javadoc 注释，明确描述功能、入参含义及返回结果（严禁出现无意义的空注释）。
 - **别名命名法**: SQL 中的主表别名要求使用“表名单词首字母组合”。例如：`qc_standard` 别名为 `qs`，`qc_standard_detail` 别名为 `qsd`。

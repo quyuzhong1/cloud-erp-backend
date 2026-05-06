@@ -63,6 +63,7 @@
 | 1747893210916749314 | 获取组织         | sys | `/sys/company/list`                                |
 | 1753953984822906881 | 获取部门（下拉框）    | sys | `/sys/department/drop/down`                        |
 | 1865304737355427841 | 获取国家名称       | sys | `/sys/dict/country/list`                           |
+| 1742885076630179841 | 获取系统用户       | sys | `/sys/user/listBySearchKeyword`                    |
 | 1783701677866487809 | 中转渠道级联       | tms | `/tms/transferLogisticsSupplier/tree`              |
 | 1769982169465229313 | 查询中转物流商      | tms | `/tms/transferLogisticsSupplier/listAll`           |
 | 1788739005089583106 | 物流单运输状态      | tms | `/tms/drop/down/dict/list?key=logisticTrackStatus` |

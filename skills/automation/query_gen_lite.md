@@ -11,7 +11,7 @@
 | 字段特征 | controls | data_type | 动态检索 / 逻辑 |
 | :--- | :--- | :--- | :--- |
 | **boolean 类型** | select | boolean | 直接填充 [是否] 静态 JSON |
-| **名称含 id/type/status** | select | string | 检索 `skills/data/query_option_lite.md` 匹配 ID |
+| **名称含 id/type/status** | select | string | 检索 `skills/data/query_option_lite.md` Markdown 表格匹配 ID |
 | **名称含 person/user/_by** | select | string | 固定 ID `1742885076630179841` |
 | **字段名为 disabled** | select | string | 填充 [启用/停用] 静态 JSON |
 | **字段名为 invalid_status**| select | string | 填充 [已作废/未作废] 静态 JSON |
@@ -19,7 +19,7 @@
 | **日期类型** | date | date | `date_type` 设为 `date` |
 
 ## 3. 特殊逻辑红线 🚨
-- **动态维护**: 生成 `cfg_query_option` 脚本后，自动将其 ID/URL/Name 追加至 `skills/data/query_option_lite.md` 引用库。
+- **动态维护**: 生成 `cfg_query_option` 脚本后，自动将其 ID/URL/Name 按 Markdown 表格行追加至 `skills/data/query_option_lite.md` 引用库。
 - **枚举优先**: 若注释含 `Enum`，无论是否有映射 ID，均执行“枚举处理”逻辑。
 - **强制注释**: 使用 `query_option_id` 时，脚本上方必须带 `-- option: {id}, {url}, {name}`。
 
