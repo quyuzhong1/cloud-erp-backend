@@ -541,12 +541,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), msg));
             }
         }catch (Exception e){
+            log.warn("调用物流服务入库预报接口异常，异常信息：{}", ExceptionUtil.stacktraceToString(e));
             transferDeclareEntity.setInstockRefCode(referenceCode);
             transferDeclareEntity.setInstockForecastAsnCode("");
             transferDeclareEntity.setTotalQty(qtyDTO.getQty());
-            String msg = String.format("入库预报失败：%s", e.getMessage());
+            String msg = String.format("入库预报失败：%s", Objects.nonNull(e.getMessage()) && e.getMessage().length() < 200 ? e.getMessage() : e.getMessage().substring(0, 200));
             //上传失败
-            transferDeclareEntity.setInstockForecastRemark(e.getMessage());
+            transferDeclareEntity.setInstockForecastRemark(msg);
             transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
             baseMapper.updateById(transferDeclareEntity);
 
