@@ -50,8 +50,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     Boolean confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum);
 
-    Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
-
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 
     Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO dto);

@@ -198,22 +198,6 @@ public class TmsB2BDeclareBillController extends BaseController {
         return success(tmsDeclareBillService.confirmDeclareStatus(dto, SourceTypeEnum.B2B_DECLARE_BILL));
     }
 
-    /**
-     * 合并报关
-     * @author lrp
-     * @date:  2024-03-19
-     * @return ApiResult<String>
-     */
-    @PostMapping("/mergeDeclare")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsB2BDeclareBill:mergeDeclare",
-            serviceClass = TmsDeclareBillService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单合并报关")
-    public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return success(tmsDeclareBillService.mergeDeclare(dto));
-    }
 
     /**
      * 删除报关单
