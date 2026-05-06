@@ -1012,12 +1012,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDetailEntity> detailList = afterSaleDetailService.listByMainIds(Collections.singletonList(id));
         data.setDetailList(detailList);
         //查询附件
-        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
+        List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().eq(DmpAttachmentEntity::getBusinessId, id).eq(DmpAttachmentEntity::getType, "after_sale").list();
         if (CollUtil.isNotEmpty(attachmentList)) {
             List<String> attachNameList = new ArrayList<>();
             List<String> attachUrlList = new ArrayList<>();
 
-            for (AttachmentDTO.UpdateDTO dto : attachmentList) {
+            for (DmpAttachmentEntity dto : attachmentList) {
                 attachNameList.add(dto.getAttachName());
                 attachUrlList.add(dto.getAttachUrl());
             }
@@ -1206,6 +1206,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 data.setLabelStatus(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatus());
                 data.setLabelStatusName(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatusName());
             }
+            data.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+            data.setLabelStatusName(LogisticsLabelStatusEnum.NOT_OBTAINED.getName());
         }
     }
 
@@ -1762,12 +1764,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         // 筛选出单据类型是API的
         List<AfterSaleEntity> apiList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
+        Map<String, AfterSaleEntity> apiMap = apiList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, w -> w));
         if (CollectionUtils.isNotEmpty(apiList)) {
             List<String> codeList = apiList.stream().map(AfterSaleEntity::getCode).collect(Collectors.toList());
             List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchCancel(codeList);
             for (AfterSaleDTO.LogisticsOrderResultDTO resultDTO : resultDTOList) {
                 BatchResultDTO cancelResult;
                 if (resultDTO.getStatus()) {
+                    AfterSaleEntity afterSaleEntity = apiMap.get(resultDTO.getAfterSaleId());
+                    afterSaleEntity.setType("");
+                    afterSaleEntity.setLogisticsChannelId("");
                     // 取消成功清空商家寄出快递单号和面单信息
                     AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(resultDTO.getAfterSaleId());
                     if (afterSaleProgressEntity != null) {
@@ -1783,6 +1789,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
                 resultList.add(cancelResult);
             }
+            this.updateBatchById(apiList);
         }
         return resultList;
     }
@@ -1792,6 +1799,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         AfterSaleEntity entity = getById(dto.getId());
         if (Objects.isNull(entity)) {
             throw new ServiceException("寄修申请单不存在");
+        }
+        // 校验是不是pdf文件
+        if (!StringUtils.endsWithIgnoreCase(dto.getAttachName(), ".pdf")) {
+            throw new ServiceException("仅支持上传PDF格式的文件");
         }
         DmpAttachmentEntity attachmentEntity = attachmentService.lambdaQuery().eq(DmpAttachmentEntity::getBusinessId, dto.getId()).eq(DmpAttachmentEntity::getType, "after_sale_label").one();
         if (Objects.nonNull(attachmentEntity)) {
@@ -1945,8 +1956,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     public List<BatchResultDTO> manualBatchGetLabel(BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(dto.getIds());
-        // 筛选出单据类型是MANUAL的
-        List<AfterSaleEntity> manualList = afterSaleEntityList.stream().filter(e -> OutboundTrackNoTypeEnum.MANUAL.getCode().equals(e.getType())).collect(Collectors.toList());
+        // 筛选出单据类型不是API的
+        List<AfterSaleEntity> manualList = afterSaleEntityList.stream().filter(e -> !OutboundTrackNoTypeEnum.API.getCode().equals(e.getType())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(manualList)) {
             for (AfterSaleEntity afterSaleEntity : manualList) {
                 BatchResultDTO batchResultDTO = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), "手动添加类型的单据不能获取面单");
@@ -1955,14 +1966,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         // 筛选出单据类型是API的
         List<AfterSaleEntity> apiList = afterSaleEntityList.stream().filter(e -> OutboundTrackNoTypeEnum.API.getCode().equals(e.getType())).collect(Collectors.toList());
-        List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS = new ArrayList<>();
-        apiList.forEach(e -> {
-            LogisticsOrderDTO.LogisticsLabelDTO labelDTO = new LogisticsOrderDTO.LogisticsLabelDTO();
-            labelDTO.setAfterSaleId(e.getId());
-            logisticsLabelDTOS.add(labelDTO);
-        });
-        List<BatchResultDTO> batchResultDTOS = getLogisticsOrderLabel(logisticsLabelDTOS);
-        batchResultDTOList.addAll(batchResultDTOS);
+        if (CollectionUtils.isNotEmpty(apiList)) {
+            List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS = new ArrayList<>();
+            apiList.forEach(e -> {
+                LogisticsOrderDTO.LogisticsLabelDTO labelDTO = new LogisticsOrderDTO.LogisticsLabelDTO();
+                labelDTO.setAfterSaleId(e.getId());
+                logisticsLabelDTOS.add(labelDTO);
+            });
+            List<BatchResultDTO> batchResultDTOS = getLogisticsOrderLabel(logisticsLabelDTOS);
+            batchResultDTOList.addAll(batchResultDTOS);
+        }
         return batchResultDTOList;
     }
 

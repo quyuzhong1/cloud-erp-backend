@@ -641,6 +641,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             resultList.add(result);
             if (success) {
                 entity.setStatus(LogisticsStatusEnum.CANCEL.getCode());
+                entity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
                 entity.setTrackNo("");
                 pushCancelOperateLog(entity, RequestStatusEnums.SUCCESS.getCode(), orderUpdateRequest, baseResult);
             } else {
@@ -702,6 +703,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         LogisticsOrderEntity entity = getById(dto.getId());
         if (Objects.isNull(entity)) {
             throw new ServiceException("物流单不存在");
+        }
+        // 校验是不是pdf文件
+        if (!StringUtils.endsWithIgnoreCase(dto.getAttachName(), ".pdf")) {
+            throw new ServiceException("仅支持上传PDF格式的文件");
         }
         TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .eq(TmsAttachmentEntity::getBusinessId, entity.getId())
