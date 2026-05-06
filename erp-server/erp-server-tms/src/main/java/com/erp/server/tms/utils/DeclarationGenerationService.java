@@ -26,8 +26,7 @@ public class DeclarationGenerationService {
 
         // Step 2: 国家维度绝对物理隔离
         Map<String, List<DeclarationGenerationDTO.InputDetailDTO>> byCountry = inputs.stream()
-                .filter(item -> item.getDestinationCountry() != null)
-                .collect(Collectors.groupingBy(DeclarationGenerationDTO.InputDetailDTO::getDestinationCountry));
+                .collect(Collectors.groupingBy(item -> item.getDestinationCountry() == null ? "" : item.getDestinationCountry()));
 
         List<DeclarationGenerationDTO.OutputDeclarationDTO> finalDeclarations = new ArrayList<>();
 
