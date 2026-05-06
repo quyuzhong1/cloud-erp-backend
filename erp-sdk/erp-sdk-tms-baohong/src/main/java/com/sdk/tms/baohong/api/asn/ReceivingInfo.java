@@ -49,6 +49,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "ReceivingInfo", propOrder = {
     "warehouseCode",
     "refCode",
+    "concatNo",
     "isDelivery",
     "iePort",
     "formType",
