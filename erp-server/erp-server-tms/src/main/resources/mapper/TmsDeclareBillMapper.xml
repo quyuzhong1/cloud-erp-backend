@@ -189,7 +189,7 @@
             array_to_string(array_agg(DISTINCT business_code),',') as bussinessCode,
             array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
             array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
-            array_to_string(array_agg(DISTINCT transfer_warehouse_name),',') as transferWarehouseName,
+            array_to_string(array_agg(DISTINCT transfer_warehouse_names),',') as transferWarehouseName,
             array_to_string(array_agg(DISTINCT sales_org_name),',') as salesOrgname
         from delivery_declare_detail_mid
         where is_deleted = false and source_type = 'soDeliveryNotice'
@@ -212,7 +212,7 @@
             db.create_user_name as   createUserName,
             db.create_time as   createTime,
             dn.bussinessCode,
-            dn.sourceCode as ,
+            dn.sourceCode,
             dn.fromWarehouseName,
             dn.transferWarehouseName,
             dn.salesOrgname
@@ -244,7 +244,7 @@
             array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
             array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
             array_to_string(array_agg(DISTINCT dest_warehouse_name),',') as destWarehouseName,
-            array_to_string(array_agg(DISTINCT transfer_warehouse_name),',') as transferWarehouseName
+            array_to_string(array_agg(DISTINCT transfer_warehouse_names),',') as transferWarehouseName
         from delivery_declare_detail_mid
         where is_deleted = false and source_type = 'firstMileDelivery'
         group by declare_id
