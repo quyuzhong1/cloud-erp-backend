@@ -96,16 +96,15 @@ public class DeclarationGenerationService {
             DeclarationGenerationDTO.InputDetailDTO input = new DeclarationGenerationDTO.InputDetailDTO();
             input.setId(sourceKeyMap.get(source));
             input.setShipmentOrderId(resolveShipmentKey(source));
-            // 现有来源数据未提供目的国，先统一常量，后续可在 SQL 补充 toCountry 后替换。
-            input.setDestinationCountry("DEFAULT");
-            input.setHsCode(source.getCustomsCode());
-            input.setCustomsName(source.getDeclareChineseName());
+            input.setDestinationCountry(source.getCountryId());
+            input.setHsCode(source.getHsCode());
+            input.setCustomsName(source.getProductNameCn());
             input.setDeclarationElements(source.getDeclareElement());
-            input.setDeclarationUnit(source.getDeclareUnit());
+            input.setDeclarationUnit(source.getUnit());
             input.setDeclarationCurrency(source.getDeclareCurrency());
             input.setModel(source.getSkuNo());
             input.setSku(source.getSkuNo());
-            input.setPrice(source.getPrice());
+            input.setPrice(source.getUnitPrice());
             input.setQuantity(source.getQty());
             inputs.add(input);
         }
@@ -144,12 +143,12 @@ public class DeclarationGenerationService {
                 TmsDeclareBillDTO.MergeDeclareBillDetailDTO mergeDetail = TmsDeclareBillDTO.MergeDeclareBillDetailDTO.builder()
                         .businessDesc(businessDesc)
                         .skuNo(skuNo)
-                        .customsCode(first.getCustomsCode())
-                        .declareChineseName(first.getDeclareChineseName())
+                        .hsCode(first.getHsCode())
+                        .productNameCn(first.getProductNameCn())
                         .declareElement(first.getDeclareElement())
-                        .declareUnit(first.getDeclareUnit())
-                        .declareUnitName(first.getDeclareUnitName())
-                        .price(detail.getUnitPrice())
+                        .unit(first.getUnit())
+                        .unitName(first.getUnitName())
+                        .unitPrice(detail.getUnitPrice())
                         .qty(detail.getTotalQuantity())
                         .declareCurrency(first.getDeclareCurrency())
                         .declareCurrencyName(first.getDeclareCurrencyName())

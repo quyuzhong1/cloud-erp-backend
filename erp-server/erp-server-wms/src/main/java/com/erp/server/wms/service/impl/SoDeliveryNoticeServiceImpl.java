@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -47,12 +46,10 @@ import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.LabelSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -62,7 +59,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
@@ -83,7 +79,6 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
@@ -119,7 +114,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1007,16 +1001,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO deliveryDetailDTO : list) {
             ProductLogisticsEntity productLogisticsEntity = logisticsMap.get(deliveryDetailDTO.getSkuId());
             if (Objects.nonNull(productLogisticsEntity)) {
-                deliveryDetailDTO.setCustomsCode(productLogisticsEntity.getCustomsCode());
-                deliveryDetailDTO.setDeclareChineseName(productLogisticsEntity.getDeclareChineseName());
+                deliveryDetailDTO.setHsCode(productLogisticsEntity.getCustomsCode());
+                deliveryDetailDTO.setProductNameCn(productLogisticsEntity.getDeclareChineseName());
                 deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
-                deliveryDetailDTO.setDeclareUnit(productLogisticsEntity.getDeclareUnit());
+                deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
                 //报关单位名称
-                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getDeclareUnit())).findFirst().orElse(null);
+                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getUnit())).findFirst().orElse(null);
                 if (Objects.nonNull(unitEntity)) {
-                    deliveryDetailDTO.setDeclareUnitName(unitEntity.getName());
+                    deliveryDetailDTO.setUnitName(unitEntity.getName());
                 }
-                deliveryDetailDTO.setPrice(productLogisticsEntity.getDeclarePrice());
+                deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
                 deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
                 deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
                 deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));
