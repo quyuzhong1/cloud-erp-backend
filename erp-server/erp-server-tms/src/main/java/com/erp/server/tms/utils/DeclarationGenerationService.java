@@ -2,8 +2,10 @@ package com.erp.server.tms.utils;
 
 import com.erp.model.tms.dto.DeclarationGenerationDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -137,10 +139,27 @@ public class DeclarationGenerationService {
                         .map(this::buildBusinessDesc)
                         .distinct()
                         .collect(Collectors.joining("、"));
+                String businessOrderNos = linkedSourceList.stream()
+                        .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessCode)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .sorted()
+                        .collect(Collectors.joining(","));
                 String skuNo = detail.getSkus() == null ? "" : detail.getSkus().stream().sorted().collect(Collectors.joining(","));
+
+                BigDecimal unitPriceVal = detail.getUnitPrice() != null ? detail.getUnitPrice() : BigDecimal.ZERO;
+                int qtyVal = detail.getTotalQuantity() != null ? detail.getTotalQuantity() : 0;
+                BigDecimal totalAmount = unitPriceVal.multiply(BigDecimal.valueOf(qtyVal)).setScale(4, RoundingMode.HALF_UP);
+
+                String sourceCargoEff = StringUtils.isNotBlank(first.getSourceCargo())
+                        ? first.getSourceCargo() : DeclareMergeDefaults.DEFAULT_SOURCE_CARGO;
+                String exemptionEff = StringUtils.isNotBlank(first.getExemption())
+                        ? first.getExemption() : DeclareMergeDefaults.DEFAULT_EXEMPTION;
 
                 TmsDeclareBillDTO.MergeDeclareBillDetailDTO mergeDetail = TmsDeclareBillDTO.MergeDeclareBillDetailDTO.builder()
                         .businessDesc(businessDesc)
+                        .businessOrderNos(businessOrderNos)
+                        .leadSkuId(first.getSkuId())
                         .skuNo(skuNo)
                         .hsCode(first.getHsCode())
                         .productNameCn(first.getProductNameCn())
@@ -149,6 +168,13 @@ public class DeclarationGenerationService {
                         .unitName(first.getUnitName())
                         .unitPrice(detail.getUnitPrice())
                         .qty(detail.getTotalQuantity())
+                        .totalAmount(totalAmount)
+                        .sourceCountry(first.getSourceCountry())
+                        .sourceCountryName(first.getSourceCountryName())
+                        .toCountry(first.getCountryId())
+                        .toCountryName(first.getCountryName())
+                        .sourceCargo(sourceCargoEff)
+                        .exemption(exemptionEff)
                         .declareCurrency(first.getDeclareCurrency())
                         .declareCurrencyName(first.getDeclareCurrencyName())
                         .declareCurrencySymbol(first.getDeclareCurrencySymbol())

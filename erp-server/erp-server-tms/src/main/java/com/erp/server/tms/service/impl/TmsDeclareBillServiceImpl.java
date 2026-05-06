@@ -55,6 +55,7 @@ import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.utils.DeclareMergeDefaults;
 import com.erp.server.tms.utils.DeclarationGenerationService;
 import com.google.common.collect.Lists;
 import freemarker.template.utility.StringUtil;
@@ -309,9 +310,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,List<TmsDeclareBillDetailEntity> detailEntityList,SourceTypeEnum sourceTypeEnum,boolean isMerged) {
 
-        //合并的话不生成合同号
-        if(!isMerged){
-            //生成合同号
+        //合并的话不生成合同号；若调用方已预设合同号（如拆分保存 base_1、base_2）则不再覆盖
+        if (!isMerged && StringUtils.isBlank(tmsDeclareBillEntity.getCode())) {
             String code = this.generateContractCode(sourceTypeEnum);
             tmsDeclareBillEntity.setCode(code);
         }
@@ -420,15 +420,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
             TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
             detailEntity.setMainId(old.getId());
-            detailEntity.setSkuNo(detailDTO.getSkuNo());
-            detailEntity.setCustomsCode(detailDTO.getHsCode());
-            detailEntity.setDeclareChineseName(detailDTO.getProductNameCn());
-            detailEntity.setDeclareElement(detailDTO.getDeclareElement());
-            detailEntity.setDeclareUnit(detailDTO.getUnit());
-            detailEntity.setPrice(Objects.isNull(detailDTO.getUnitPrice()) ? BigDecimal.ZERO : detailDTO.getUnitPrice());
-            detailEntity.setQty(Objects.isNull(detailDTO.getQty()) ? 0 : detailDTO.getQty());
-            detailEntity.setDeclareCurrency(detailDTO.getDeclareCurrency());
-            detailEntity.setDeclareCurrencySymbol(detailDTO.getDeclareCurrencySymbol());
+            mapMergeDeclareDetailToEntity(detailDTO, detailEntity);
             detailEntityList.add(detailEntity);
         }
         if (CollUtil.isEmpty(detailEntityList)) {
@@ -638,6 +630,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = detailEntityList.stream().map(detailEntity -> {
             TmsDeclareBillDTO.MergeDeclareBillDetailDTO mergeDetailDTO = new TmsDeclareBillDTO.MergeDeclareBillDetailDTO();
             mergeDetailDTO.setId(detailEntity.getId());
+            mergeDetailDTO.setLeadSkuId(detailEntity.getSkuId());
             mergeDetailDTO.setSkuNo(detailEntity.getSkuNo());
             mergeDetailDTO.setHsCode(detailEntity.getCustomsCode());
             mergeDetailDTO.setProductNameCn(detailEntity.getDeclareChineseName());
@@ -645,11 +638,26 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             mergeDetailDTO.setUnit(detailEntity.getDeclareUnit());
             mergeDetailDTO.setUnitPrice(Objects.isNull(detailEntity.getPrice()) ? BigDecimal.ZERO : detailEntity.getPrice());
             mergeDetailDTO.setQty(Objects.isNull(detailEntity.getQty()) ? 0 : detailEntity.getQty());
+            if (Objects.nonNull(detailEntity.getPrice()) && Objects.nonNull(detailEntity.getQty())) {
+                mergeDetailDTO.setTotalAmount(detailEntity.getPrice().multiply(BigDecimal.valueOf(detailEntity.getQty())).setScale(4, RoundingMode.HALF_UP));
+            }
             mergeDetailDTO.setDeclareCurrency(detailEntity.getDeclareCurrency());
             mergeDetailDTO.setDeclareCurrencySymbol(detailEntity.getDeclareCurrencySymbol());
-            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = midGroupMap
-                    .getOrDefault(detailEntity.getId(), Collections.emptyList())
-                    .stream()
+            mergeDetailDTO.setSourceCountry(detailEntity.getSourceCountry());
+            mergeDetailDTO.setSourceCountryName(detailEntity.getSourceCountryName());
+            mergeDetailDTO.setToCountry(detailEntity.getToCountry());
+            mergeDetailDTO.setToCountryName(detailEntity.getToCountryName());
+            mergeDetailDTO.setSourceCargo(detailEntity.getSourceCargo());
+            mergeDetailDTO.setExemption(detailEntity.getExemption());
+            List<DeliveryDeclareDetailMidEntity> curMids = midGroupMap.getOrDefault(detailEntity.getId(), Collections.emptyList());
+            String businessOrderNos = curMids.stream()
+                    .map(DeliveryDeclareDetailMidEntity::getBusinessCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.joining(","));
+            mergeDetailDTO.setBusinessOrderNos(businessOrderNos);
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = curMids.stream()
                     .map(this::buildSourceDeliveryDetailDTO)
                     .collect(Collectors.toList());
             mergeDetailDTO.setSourceDeliveryDetailList(sourceDetailList);
@@ -1467,6 +1475,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException("仅待确认报关单可以拆分明细");
         }
 
+        String splitBaseCode = declareBillEntity.getCode();
+        TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence = StringUtils.isNotBlank(splitBaseCode)
+                ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
+                : null;
+
         //删除原本的报关单
         deleteDeclareBillById(declareBillEntity.getId());
 
@@ -1483,8 +1496,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = sourceDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()) && CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo())).collect(Collectors.toList());
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList));
 
-            //保存合并数据
-            batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(),mergeDeclareBillDTOS);
+            //保存合并数据（合同号：原单号_1、_2…）
+            batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence);
         }
         return Boolean.TRUE;
     }
@@ -1523,6 +1536,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException("仅待确认报关单可以拆分明细");
         }
 
+        String splitBaseCode = declareBillEntity.getCode();
+        TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence = StringUtils.isNotBlank(splitBaseCode)
+                ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
+                : null;
+
         List<String> ids = declareDTO.getSplitDeclareDTOList().stream()
                 .filter(Objects::nonNull)
                 .map(TmsDeclareBillDTO.SplitDeclareDTO::getSourceId)
@@ -1536,8 +1554,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = sourceDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()) && CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo())).collect(Collectors.toList());
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList));
 
-            //保存合并数据
-            batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(),mergeDeclareBillDTOS);
+            //保存合并数据（合同号：原单号_1、_2…）
+            batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence);
         }
         return Boolean.TRUE;
     }
@@ -1564,6 +1582,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(tmsDeclareBillList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
+        //境外收货人类型需要一致
+        long count = tmsDeclareBillList.stream().distinct().map(TmsDeclareBillEntity::getReceiverType).count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_RECEIVER_TYPE_DIFF);
+        }
+
         //仅待确认报关单支持操作合并
         tmsDeclareBillList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode()))
                 .findFirst()
@@ -1587,32 +1611,43 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollectionUtils.isEmpty(viewDTO.getSourceDeliveryDetailList())) {
             return Collections.emptyList();
         }
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = prepareSourceDetailsForDeclarationGeneration(viewDTO.getSourceDeliveryDetailList());
+        if (CollUtil.isEmpty(result)) {
+            return Collections.emptyList();
+        }
+        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
+        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMerge());
+    }
+
+    /**
+     * 按产品物流补全报关要素、组合品拆行，并写入境内货源地/征免默认值。
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareSourceDetailsForDeclarationGeneration(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+        if (CollectionUtils.isEmpty(sourceDeliveryDetailList)) {
+            return Collections.emptyList();
+        }
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = new ArrayList<>();
 
-        //产品物流信息
-        List<String> skuIdList = viewDTO.getSourceDeliveryDetailList().stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = sourceDeliveryDetailList.stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailDTO.ProductLogisticDTO> productLogisticsList = plmTaskFeign.listProductLogisticsByIds(skuIdList);
-        Map<String, ProductDetailDTO.ProductLogisticDTO> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductDetailDTO.ProductLogisticDTO::getSkuId,item -> item));
+        Map<String, ProductDetailDTO.ProductLogisticDTO> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductDetailDTO.ProductLogisticDTO::getSkuId, item -> item));
 
-        //查询单位名称
         List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
         Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList) ? new HashMap<>() : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));
 
-        //币别明细
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName));
 
-        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : viewDTO.getSourceDeliveryDetailList()) {
-            //产品物流信息赋值
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : sourceDeliveryDetailList) {
             ProductDetailDTO.ProductLogisticDTO productLogisticsDTO = logisticsMap.get(detailDTO.getSkuId());
             if (Objects.nonNull(productLogisticsDTO)) {
                 fillDeclareInfo(detailDTO, productLogisticsDTO, declareUnitNameMap, currencyMap);
             }
-            if(Objects.nonNull(productLogisticsDTO)
+            applyDeclareLineDefaults(detailDTO);
+            if (Objects.nonNull(productLogisticsDTO)
                     && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
                     && Boolean.TRUE.equals(productLogisticsDTO.getIsCombination())
-                    && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())){
-                //拆分申报的组合品，拆成子SKU
+                    && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())) {
                 for (ProductDetailDTO.ProductLogisticDTO logisticDTO : productLogisticsDTO.getChildList()) {
                     TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDeliveryDetailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
                     BeanUtil.copyProperties(detailDTO, sourceDeliveryDetailDTO);
@@ -1620,14 +1655,45 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     sourceDeliveryDetailDTO.setSkuNo(logisticDTO.getSkuNo());
                     sourceDeliveryDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (logisticDTO.getChildQty() == null ? 1 : logisticDTO.getChildQty()));
                     fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap);
+                    applyDeclareLineDefaults(sourceDeliveryDetailDTO);
                     result.add(sourceDeliveryDetailDTO);
                 }
-            }else {
+            } else {
                 result.add(detailDTO);
             }
         }
-        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
-        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMerge());
+        return result;
+    }
+
+    private void applyDeclareLineDefaults(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        if (Objects.isNull(detailDTO)) {
+            return;
+        }
+        if (StringUtils.isBlank(detailDTO.getSourceCargo())) {
+            detailDTO.setSourceCargo(DeclareMergeDefaults.DEFAULT_SOURCE_CARGO);
+        }
+        if (StringUtils.isBlank(detailDTO.getExemption())) {
+            detailDTO.setExemption(DeclareMergeDefaults.DEFAULT_EXEMPTION);
+        }
+    }
+
+    private void mapMergeDeclareDetailToEntity(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO, TmsDeclareBillDetailEntity detailEntity) {
+        detailEntity.setSkuId(StringUtils.isNotBlank(detailDTO.getLeadSkuId()) ? detailDTO.getLeadSkuId() : null);
+        detailEntity.setSkuNo(detailDTO.getSkuNo());
+        detailEntity.setCustomsCode(detailDTO.getHsCode());
+        detailEntity.setDeclareChineseName(detailDTO.getProductNameCn());
+        detailEntity.setDeclareElement(detailDTO.getDeclareElement());
+        detailEntity.setDeclareUnit(detailDTO.getUnit());
+        detailEntity.setPrice(Objects.isNull(detailDTO.getUnitPrice()) ? BigDecimal.ZERO : detailDTO.getUnitPrice());
+        detailEntity.setQty(Objects.isNull(detailDTO.getQty()) ? 0 : detailDTO.getQty());
+        detailEntity.setDeclareCurrency(detailDTO.getDeclareCurrency());
+        detailEntity.setDeclareCurrencySymbol(detailDTO.getDeclareCurrencySymbol());
+        detailEntity.setSourceCountry(detailDTO.getSourceCountry());
+        detailEntity.setSourceCountryName(detailDTO.getSourceCountryName());
+        detailEntity.setToCountry(detailDTO.getToCountry());
+        detailEntity.setToCountryName(detailDTO.getToCountryName());
+        detailEntity.setSourceCargo(detailDTO.getSourceCargo());
+        detailEntity.setExemption(detailDTO.getExemption());
     }
 
     /**
@@ -1652,6 +1718,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
         detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
         detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
+        detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
+        detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
+        if (StringUtils.isNotBlank(productLogisticsDTO.getSourceCargo())) {
+            detailDTO.setSourceCargo(productLogisticsDTO.getSourceCargo());
+        }
+        if (StringUtils.isNotBlank(productLogisticsDTO.getExemption())) {
+            detailDTO.setExemption(productLogisticsDTO.getExemption());
+        }
     }
 
     /**
@@ -1683,6 +1757,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = midList.stream()
                 .map(this::buildSourceDeliveryDetailDTO)
                 .collect(Collectors.toList());
+        sourceDetailList = prepareSourceDetailsForDeclarationGeneration(sourceDetailList);
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
         List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeList = declarationGenerationService.generateMergeBillDetails(sourceDetailList, Boolean.FALSE);
         return batchAddMergeMidDetail(declareBillType, mergeList, midList);
@@ -1758,15 +1833,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(declareBillList.size());
             for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : declareBillList) {
                 TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
-                detailEntity.setSkuNo(detailDTO.getSkuNo());
-                detailEntity.setCustomsCode(detailDTO.getHsCode());
-                detailEntity.setDeclareChineseName(detailDTO.getProductNameCn());
-                detailEntity.setDeclareElement(detailDTO.getDeclareElement());
-                detailEntity.setDeclareUnit(detailDTO.getUnit());
-                detailEntity.setPrice(Objects.isNull(detailDTO.getUnitPrice()) ? BigDecimal.ZERO : detailDTO.getUnitPrice());
-                detailEntity.setQty(Objects.isNull(detailDTO.getQty()) ? 0 : detailDTO.getQty());
-                detailEntity.setDeclareCurrency(detailDTO.getDeclareCurrency());
-                detailEntity.setDeclareCurrencySymbol(detailDTO.getDeclareCurrencySymbol());
+                mapMergeDeclareDetailToEntity(detailDTO, detailEntity);
                 detailEntityList.add(detailEntity);
             }
             if (CollUtil.isEmpty(detailEntityList)) {
@@ -1857,6 +1924,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
+        return batchAddMergeDetail(type, list, null);
+    }
+
+    /**
+     * 批量保存合并报关明细。
+     *
+     * @param splitCodeSequence 非空时表示拆分保存：合同号为「原报关单合同号_1、_2…」递增，贯穿多次调用（多箱/多票拆分）
+     */
+    private Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
@@ -1887,6 +1963,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, type)
                 .in(DeliveryDeclareDetailMidEntity::getSourceDetailId, sourceDetailIdSet)
                 .list();
+
         List<DeliveryDeclareDetailMidEntity> generatedMidList = existsMidList.stream()
                 .filter(item -> StringUtils.isNotBlank(item.getDeclareId())
                         || DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode().equals(item.getGenerateStatus()))
@@ -1910,15 +1987,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(declareBillList.size());
             for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : declareBillList) {
                 TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
-                detailEntity.setSkuNo(detailDTO.getSkuNo());
-                detailEntity.setCustomsCode(detailDTO.getHsCode());
-                detailEntity.setDeclareChineseName(detailDTO.getProductNameCn());
-                detailEntity.setDeclareElement(detailDTO.getDeclareElement());
-                detailEntity.setDeclareUnit(detailDTO.getUnit());
-                detailEntity.setPrice(Objects.isNull(detailDTO.getUnitPrice()) ? BigDecimal.ZERO : detailDTO.getUnitPrice());
-                detailEntity.setQty(Objects.isNull(detailDTO.getQty()) ? 0 : detailDTO.getQty());
-                detailEntity.setDeclareCurrency(detailDTO.getDeclareCurrency());
-                detailEntity.setDeclareCurrencySymbol(detailDTO.getDeclareCurrencySymbol());
+                mapMergeDeclareDetailToEntity(detailDTO, detailEntity);
                 detailEntityList.add(detailEntity);
             }
             if (CollUtil.isEmpty(detailEntityList)) {
@@ -1944,6 +2013,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     .collect(Collectors.toSet());
             declareBillEntity.setBoxQty(boxNoSet.size());
 
+            if (splitCodeSequence != null) {
+                declareBillEntity.setCode(splitCodeSequence.nextCode());
+            }
             BaseResultDTO.AddDTO addResult = add(declareBillEntity, detailEntityList, SourceTypeEnum.getEnum(type), false);
 
             for (int i = 0; i < declareBillList.size(); i++) {
@@ -2050,43 +2122,5 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return splitDeclareDTOList;
     }
 
-    /**
-     * 产品添加数据处理
-     * @author will
-     * @date 2026/4/22 17:56
-     * @param list
-     */
-    private void handleNotGenerateData(List<TmsDeclareBillDTO.NotGenerateDetailDTO> list) {
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        //查询币别名称
-        List<String> currencyList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getDeclareCurrency).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        List<DictCurrencyEntity> currencyEntityList = FeignQuery.create(DictCurrencyEntity.class).in(DictCurrencyEntity::getId, currencyList).list();
 
-        //查询单位名称
-        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
-
-        //查询原产国名称
-        List<String> sourceCountryIdList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getSourceCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
-
-        for (TmsDeclareBillDTO.NotGenerateDetailDTO dto : list) {
-            //币别名称
-            DictCurrencyEntity currencyEntity = currencyEntityList.stream().filter(v -> v.getId().equals(dto.getDeclareCurrency())).findFirst().orElse(null);
-            if (Objects.nonNull(currencyEntity)) {
-                dto.setDeclareCurrencyName(currencyEntity.getName());
-            }
-            //报关单位名称
-            BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(dto.getDeclareUnit())).findFirst().orElse(null);
-            if (Objects.nonNull(unitEntity)) {
-                dto.setDeclareUnitName(unitEntity.getName());
-            }
-            //国家名称
-            DictCountryEntity countryEntity = sourceCountryList.stream().filter(v -> v.getId().equals(dto.getSourceCountry())).findFirst().orElse(null);
-            if (Objects.nonNull(countryEntity)) {
-                dto.setSourceCountryName(countryEntity.getNameCn());
-            }
-        }
-    }
 }

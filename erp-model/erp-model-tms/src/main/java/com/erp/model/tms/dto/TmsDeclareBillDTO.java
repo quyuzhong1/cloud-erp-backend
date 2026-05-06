@@ -1770,6 +1770,16 @@ public class TmsDeclareBillDTO implements Serializable {
         private String businessDesc;
 
         /**
+         * 合并来源业务单号（英文逗号拼接，不含箱号）
+         */
+        private String businessOrderNos;
+
+        /**
+         * 合并代表 SKU id（取合并集合第一条来源明细）
+         */
+        private String leadSkuId;
+
+        /**
          *  sku编码
          */
         private String skuNo;
@@ -1803,6 +1813,42 @@ public class TmsDeclareBillDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+
+        /**
+         * 总价（单价 × 合并后数量）
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 原产国（合并集合第一条 SKU）
+         */
+        private String sourceCountry;
+
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 最终目的国/运抵国
+         */
+        private String toCountry;
+
+        /**
+         * 最终目的国名称
+         */
+        private String toCountryName;
+
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+
+        /**
+         * 征免
+         */
+        private String exemption;
+
         /**
          * 报关币别
          */
@@ -1914,14 +1960,34 @@ public class TmsDeclareBillDTO implements Serializable {
         private String declareCurrencySymbol;
 
         /**
-         * 国家编码
+         * 运抵国/最终目的国编码（国家维度）
          */
         private String countryId;
 
         /**
-         * 国家名称
+         * 运抵国/最终目的国名称
          */
         private String countryName;
+
+        /**
+         * 原产国（产品物流）
+         */
+        private String sourceCountry;
+
+        /**
+         * 原产国名称（产品物流）
+         */
+        private String sourceCountryName;
+
+        /**
+         * 境内货源地（产品物流）
+         */
+        private String sourceCargo;
+
+        /**
+         * 征免（产品物流）
+         */
+        private String exemption;
     }
 
 
@@ -1961,5 +2027,26 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
 
+    }
+
+
+    /**
+     * 拆分保存时按原报关单合同号递增后缀：{@code 原号_1}、{@code 原号_2}…（再次拆分时原号若已为 {@code xxx_1} 则得到 {@code xxx_1_1}）。
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    public static class SplitDeclareCodeSequence {
+        private final String baseCode;
+        private int sequence;
+
+        public SplitDeclareCodeSequence(String baseCode) {
+            this.baseCode = baseCode;
+        }
+
+        public String nextCode() {
+            sequence++;
+            return baseCode + "_" + sequence;
+        }
     }
 }
