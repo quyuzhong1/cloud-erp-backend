@@ -225,6 +225,6 @@ public class PoReconciliationController extends BaseController {
     @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载发票")
     public ApiResult<Object> downloadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = poReconciliationService.downloadInvoice(dto.getIds());
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return success(resultDTOS);
     }
 }
