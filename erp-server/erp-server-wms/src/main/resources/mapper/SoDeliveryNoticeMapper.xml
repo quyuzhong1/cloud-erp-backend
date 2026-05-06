@@ -456,6 +456,7 @@
         select
             sdn.id as sourceId,
             sdn.code as sourceCode,
+            'soDeliveryNotice' as sourceType,
             sdnd.id as sourceDetailId,
             sdn.source_id as businessId,
             sdn.source_code as businessCode,
