@@ -77,6 +77,15 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 
     List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(@Param("detailIds") List<String> detailIds);
+
+    /**
+     * 查询未生成报关单的b2b发货通知单明细信息
+     * @author will
+     * @date 2026/4/22 10:26
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(Page query,@Param("params") TmsDeclareBillDTO.NotGenerateParamDTO params);
+
     /**
      * 查询需要下推的报关数据
      * @author will

@@ -94,21 +94,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @param id
      */
     void deleteDeclareBillById (String id);
-
-    /**
-     * 头程添加产品明细
-     * @author will
-     * @date 2026/4/22 10:21
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
-     */
-    PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateFmDetailPaging(PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto);
-    /**
-     * b2b添加产品明细
-     * @author will
-     * @date 2026/4/22 10:21
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
-     */
-    PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(@Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto);
     /**
      * 查询拆分报关明细
      * @author will

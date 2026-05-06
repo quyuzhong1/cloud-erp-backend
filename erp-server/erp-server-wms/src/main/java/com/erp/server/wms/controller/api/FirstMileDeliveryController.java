@@ -765,7 +765,19 @@ public class FirstMileDeliveryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
+    /**
+     * 添加产品明细（查询未生成的头程发货明细信息）
+     * @author will
+     * @date 2026/4/21 19:09
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listNotGenerateFmDetailPaging")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加产品明细")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateFmDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
+        PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = firstMileDeliveryService.listNotGenerateFmDetailPaging(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 下推头程报关单（合并前）

@@ -1040,26 +1040,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public  PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateFmDetailPaging(PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto) {
-        TmsDeclareBillDTO.NotGenerateParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> pageData =  baseMapper.listNotGenerateDeclareFmDetail(query,params);
-        handleNotGenerateData(pageData.getRecords());
-        return new PagingVO<>(pageData);
-    }
-
-    @Override
-    public PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto) {
-        TmsDeclareBillDTO.NotGenerateParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> pageData =  baseMapper.listNotGenerateB2bDetailPaging(query,params);
-        handleNotGenerateData(pageData.getRecords());
-        return new PagingVO<>(pageData);
-    }
-
-    @Override
     public List<TmsDeclareBillDTO.SplitDeclareDTO> listSplitFmDetail(String id) {
         TmsDeclareBillEntity declareBillEntity = super.getById(id);
         if(Objects.isNull(declareBillEntity)){

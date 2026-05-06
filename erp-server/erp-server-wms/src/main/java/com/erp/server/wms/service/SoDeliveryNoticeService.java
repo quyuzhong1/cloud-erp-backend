@@ -17,6 +17,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -371,6 +372,14 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return BatchResultDTO
      */
     BatchResultDTO updateNotNeedDeclare(String id);
+
+    /**
+     * b2b添加产品明细
+     * @author will
+     * @date 2026/4/22 10:21
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(@Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto);
 
     /**
      *下推b2b报关单-前置数据（未合并）

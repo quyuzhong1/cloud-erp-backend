@@ -724,6 +724,50 @@
         flb.business_code asc,wc.box_no asc
     </select>
 
+    <!-- 查询未生成报关单的明细列表 -->
+    <select id="listNotGenerateDeclareFmDetail"
+            resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$NotGenerateDetailDTO">
+        select
+            fmd.id as sourceId,
+            fmd.code as sourceCode,
+            'firstMileDelivery' as sourceType,
+            fmdd.id as sourceDetailId,
+            fmdd.sku_id as skuId,
+            fmdd.sku_no as skuNo,
+            fpl.customs_code as customsCode,
+            fpl.declare_chinese_name as declareChineseName,
+            fpl.declare_element as declareElement,
+            fpl.declare_unit as declareUnit,
+            fpl.declare_price as price,
+            fmdd.plan_qty as qty,
+            (fmdd.plan_qty * fpl.declare_price) as totalPrice,
+            fpl.declare_currency as declareCurrency,
+            fpl.declare_currency_symbol as declareCurrencySymbol,
+            fpl.source_country as sourceCountry,
+            fpl.source_cargo as sourceCargo,
+            fpl.exemption
+        from wms_first_mile_delivery fmd
+        inner join wms_first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        inner join foreign_product_logistics fpl on fmdd.sku_id = fpl.sku_id and fpl.is_deleted = false
+        left join packing_task_detail ptd on sdnd.id = ptd.source_detail_id and ptd.is_deleted = false
+        left join packing_task pt on ptd.main_id = pt.id and pt.is_deleted = false
+        left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
+        where  ${params.sqlMap.default}
+        and fmd.is_deleted = false and fmd.declare_status = 'wait' and wc.box_no is not null
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fmdd.id DESC
+    </select>
+
+
     <!-- 查询合并前头程报关单 -->
     <select id="listBeforePushFmDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
