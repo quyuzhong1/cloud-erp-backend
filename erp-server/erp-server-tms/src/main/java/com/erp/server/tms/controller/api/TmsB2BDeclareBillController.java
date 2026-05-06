@@ -291,20 +291,6 @@ public class TmsB2BDeclareBillController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
-    /**
-     * 添加产品明细（查询未生成的B2B发货通知单明细信息）
-     * @author will
-     * @date 2026/4/21 19:09
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
-     */
-    @PostMapping("/listNotGenerateB2bDetailPaging")
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加产品明细")
-    public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateB2bDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
-        PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = tmsDeclareBillService.listNotGenerateB2bDetailPaging(dto);
-        return success(pagingVO);
-    }
-
     /**
      * 拆分报关明细
      * @author will

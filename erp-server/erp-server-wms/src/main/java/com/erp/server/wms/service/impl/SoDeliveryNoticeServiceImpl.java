@@ -57,6 +57,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -80,6 +81,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
@@ -229,6 +231,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private ExecutorService wmsTaskExecutorPool;
     @Resource
     private DeliveryDeclareDetailMidFeign deliveryDeclareDetailMidFeign;
+    @Resource
+    private SysDictFeign sysDictFeign;
+
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) throws ExecutionException, InterruptedException {
@@ -971,10 +976,60 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
 
     @Override
+    public PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto) {
+        TmsDeclareBillDTO.NotGenerateParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> pageData =  baseMapper.listNotGenerateB2bDetailPaging(query,params);
+        handleNotGenerateData(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
     public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = baseMapper.listBeforePushB2bDeclare(dto.getIds());
         handleBeforeDeclareData(sourceDeliveryDetailList);
         return sourceDeliveryDetailList;
+    }
+
+    /**
+     * 产品添加数据处理
+     * @author will
+     * @date 2026/4/22 17:56
+     * @param list
+     */
+    private void handleNotGenerateData(List<TmsDeclareBillDTO.NotGenerateDetailDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        //查询币别名称
+        List<String> currencyList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getDeclareCurrency).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<DictCurrencyEntity> currencyEntityList = FeignQuery.create(DictCurrencyEntity.class).in(DictCurrencyEntity::getId, currencyList).list();
+
+        //查询单位名称
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+
+        //查询原产国名称
+        List<String> sourceCountryIdList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getSourceCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
+
+        for (TmsDeclareBillDTO.NotGenerateDetailDTO dto : list) {
+            //币别名称
+            DictCurrencyEntity currencyEntity = currencyEntityList.stream().filter(v -> v.getId().equals(dto.getDeclareCurrency())).findFirst().orElse(null);
+            if (Objects.nonNull(currencyEntity)) {
+                dto.setDeclareCurrencyName(currencyEntity.getName());
+            }
+            //报关单位名称
+            BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(dto.getDeclareUnit())).findFirst().orElse(null);
+            if (Objects.nonNull(unitEntity)) {
+                dto.setDeclareUnitName(unitEntity.getName());
+            }
+            //国家名称
+            DictCountryEntity countryEntity = sourceCountryList.stream().filter(v -> v.getId().equals(dto.getSourceCountry())).findFirst().orElse(null);
+            if (Objects.nonNull(countryEntity)) {
+                dto.setSourceCountryName(countryEntity.getNameCn());
+            }
+        }
     }
 
     /**

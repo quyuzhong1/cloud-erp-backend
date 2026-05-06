@@ -139,6 +139,15 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(@Param("approveStatus") String approveStatus, @Param("sourceType") String sourceType, @Param("reportMonth") LocalDate reportMonth, @Param("shipmentCode") String shipmentCode, @Param("asin") String asin, @Param("msku") String msku);
 
     List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(@Param("deliveryIds") List<String> deliveryIds);
+
+    /**
+     * 查询未生成报关单的头程发货明细信息
+     * @author will
+     * @date 2026/4/22 10:26
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateDeclareFmDetail(Page query,@Param("params") TmsDeclareBillDTO.NotGenerateParamDTO params);
+
     /**
      * 取消分货分页查询
      * @author will

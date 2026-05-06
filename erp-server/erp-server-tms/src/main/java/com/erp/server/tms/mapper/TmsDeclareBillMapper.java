@@ -55,18 +55,4 @@ public interface TmsDeclareBillMapper extends BaseMapper<TmsDeclareBillEntity> {
      * @return com.erp.model.tms.dto.TmsDeclareBillDTO.BillSourceDTO
      */
     List<TmsDeclareBillDTO.BillSourceDTO> listSourceByDeclareBillId(String declareBillId);
-    /**
-     * 查询未生成报关单的头程发货明细信息
-     * @author will
-     * @date 2026/4/22 10:26
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
-     */
-    IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateDeclareFmDetail(Page query,@Param("params") TmsDeclareBillDTO.NotGenerateParamDTO params);
-    /**
-     * 查询未生成报关单的b2b发货通知单明细信息
-     * @author will
-     * @date 2026/4/22 10:26
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
-     */
-    IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(Page query,@Param("params") TmsDeclareBillDTO.NotGenerateParamDTO params);
 }

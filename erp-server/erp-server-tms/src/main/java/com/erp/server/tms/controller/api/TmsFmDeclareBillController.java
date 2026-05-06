@@ -286,20 +286,6 @@ public class TmsFmDeclareBillController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
-    /**
-     * 添加产品明细（查询未生成的头程发货明细信息）
-     * @author will
-     * @date 2026/4/21 19:09
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
-     */
-    @PostMapping("/listNotGenerateFmDetailPaging")
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加产品明细")
-    public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateFmDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
-        PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = tmsDeclareBillService.listNotGenerateFmDetailPaging(dto);
-        return success(pagingVO);
-    }
-
     /**
      * 拆分报关明细
      * @author will
