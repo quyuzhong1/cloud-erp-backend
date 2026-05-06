@@ -949,7 +949,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return false;
         }
         return this.lambdaUpdate().in(TmsDeclareBillEntity::getId,ids)
-                .set(TmsDeclareBillEntity::getDeclareStatus, com.erp.model.tms.enums.DeclareStatusEnum.INVALID.getCode())
+                .set(TmsDeclareBillEntity::getIsDeleted, Boolean.TRUE)
+//                .set(TmsDeclareBillEntity::getDeclareStatus, com.erp.model.tms.enums.DeclareStatusEnum.INVALID.getCode())
                 .update();
     }
 
