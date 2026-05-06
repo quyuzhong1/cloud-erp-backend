@@ -3804,7 +3804,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
                 //如果是审核中，撤销审核
                 if(BillApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
-                    this.cancelProcess(Arrays.asList(exist.getId()));
+                    this.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(exist.getId())));
                 }
                 //如果是已审核，反审核
                 if(BillApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
