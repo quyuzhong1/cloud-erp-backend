@@ -86,6 +86,14 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     BatchResultDTO updateRemark(String id,String remark);
 
     /**
+     * 批量更新报关单主表字段
+     * @param dto dto
+     * @param sourceTypeEnum 报关单类型
+     * @return Boolean
+     */
+    Boolean updateBatchFiled(TmsDeclareBillDTO.BatchUpdateFieldDTO dto, SourceTypeEnum sourceTypeEnum);
+
+    /**
      * 删除报关单
      * @author will
      * @date 2026/4/30 10:59
