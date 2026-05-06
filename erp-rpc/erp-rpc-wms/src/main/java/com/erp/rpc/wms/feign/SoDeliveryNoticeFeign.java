@@ -104,6 +104,12 @@ public interface SoDeliveryNoticeFeign {
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids);
 
     /**
+     * 下推B2B报关单合并前明细
+     */
+    @PostMapping("feign/soDeliveryNotice/listBeforePushB2bDeclare")
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@RequestBody TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+
+    /**
      * 更新销售信息
      * @param soInfoEntity
      */

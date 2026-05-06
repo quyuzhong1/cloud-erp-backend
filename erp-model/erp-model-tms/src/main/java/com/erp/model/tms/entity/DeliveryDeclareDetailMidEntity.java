@@ -92,11 +92,6 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 组合品SKU
-    */
-    @TableField("combo_sku_no")
-    private String comboSkuNo;
-    /**
     * 币种
     */
     @TableField("currency")
@@ -182,6 +177,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("transfer_warehouse_ids")
     private String transferWarehouseIds;
     /**
+    * 中转仓名称
+    */
+    @TableField("transfer_warehouse_names")
+    private String transferWarehouseNames;
+    /**
     * 销售组织ID
     */
     @TableField("sales_org_id")
@@ -219,8 +219,6 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String COMBO_SKU_NO = "combo_sku_no";
-
     public static final String CURRENCY = "currency";
 
     public static final String CURRENCY_SYMBOL = "currency_symbol";
@@ -254,6 +252,8 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
     public static final String TRANSFER_WAREHOUSE_IDS = "transfer_warehouse_ids";
+
+    public static final String TRANSFER_WAREHOUSE_NAMES = "transfer_warehouse_names";
 
     public static final String SALES_ORG_ID = "sales_org_id";
 

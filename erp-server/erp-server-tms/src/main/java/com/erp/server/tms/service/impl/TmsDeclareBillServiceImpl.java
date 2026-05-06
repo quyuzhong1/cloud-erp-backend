@@ -1621,7 +1621,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     BeanUtil.copyProperties(detailDTO, sourceDeliveryDetailDTO);
                     sourceDeliveryDetailDTO.setSkuId(logisticDTO.getSkuId());
                     sourceDeliveryDetailDTO.setSkuNo(logisticDTO.getSkuNo());
-                    sourceDeliveryDetailDTO.setComboSkuNo(productLogisticsDTO.getSkuNo());
                     sourceDeliveryDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (logisticDTO.getChildQty() == null ? 1 : logisticDTO.getChildQty()));
                     fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap);
                     result.add(sourceDeliveryDetailDTO);
@@ -1969,7 +1968,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     midEntity.setContractNo(addResult.getCode());
                     midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
                     midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                    midEntity.setComboSkuNo(StringUtils.defaultString(sourceDetail.getComboSkuNo()));
                     midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
                     midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
                     midEntity.setDeclareId(addResult.getId());
