@@ -1,25 +1,21 @@
 package com.erp.model.sys.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * @Classname SysDepartmentUserEntity
-
  * @Date 2022-07-13 18:51
  * @Created by yl
  */
+@EqualsAndHashCode(callSuper = true)
 @TableName("sys_department_user")
 @NoArgsConstructor
 @Data
-public class SysDepartmentUserEntity {
-
-    @TableId(value = "id",type = IdType.ASSIGN_ID )
-    private String id;
-
+public class SysDepartmentUserEntity extends BaseEntity<SysDepartmentUserEntity> {
 
     private String departmentId;
 
@@ -27,16 +23,4 @@ public class SysDepartmentUserEntity {
 
     private Integer leadState;
 
-    @TableField(fill= FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    @TableField(fill= FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 用户删除状态 false:正常 true：已删除
-     */
-    @TableField(value = "is_deleted")
-    @TableLogic
-    private Boolean isDeleted;
 }
