@@ -331,7 +331,7 @@ public enum SourceTypeEnum {
 
 
     //售后申请
-    AFTER_SALE("afterSale", "售后申请","after_sale"),
+    AFTER_SALE("afterSale", "寄修申请","after_sale"),
     ;
 
     /**
