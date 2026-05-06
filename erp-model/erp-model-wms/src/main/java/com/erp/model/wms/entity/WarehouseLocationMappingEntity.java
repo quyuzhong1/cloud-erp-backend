@@ -8,15 +8,21 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 /**
- * 旺店通仓位映射
+ * 第三方平台仓位映射
  * @date 2024-08-14
  * @author tanmujin
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("wdt_warehouse_location_mapping")
-public class WdtWarehouseLocationMappingEntity extends BaseEntity<WdtWarehouseLocationMappingEntity> {
+@TableName("warehouse_location_mapping")
+public class WarehouseLocationMappingEntity extends BaseEntity<WarehouseLocationMappingEntity> {
+
+    /**
+     * 所属平台编码
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
 
     /**
      * ERP仓库ID
