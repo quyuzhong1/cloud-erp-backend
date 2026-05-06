@@ -1825,10 +1825,6 @@ public class TmsDeclareBillDTO implements Serializable {
          *  sku编码
          */
         private String skuNo;
-        /**
-         *  组合品sku
-         */
-        private String comboSkuNo;
 
         /**
          * 中国海关编码(商品编号)
@@ -1898,6 +1894,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotEmpty(message = "选择ids不能为空")
         private List<String> ids;
+        /**
+         *  下推的明细ids
+         */
+        private List<String> detailIds;
     }
 
 

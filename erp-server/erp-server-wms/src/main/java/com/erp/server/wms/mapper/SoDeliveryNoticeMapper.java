@@ -81,10 +81,11 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * 查询需要下推的报关数据
      * @author will
      * @date 2026/4/24 16:29
-     * @param ids
+     * @param ids 发货通知单id集合
+     * @param detailIds 发货通知单明细id集合
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
      */
-    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@Param("ids") List<String> ids);
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@Param("ids") List<String> ids, @Param("detailIds") List<String> detailIds);
 
     /**
      * 查询用于报关中间表生成的装箱明细

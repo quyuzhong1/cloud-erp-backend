@@ -428,5 +428,11 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
+        <if test="detailIds != null and detailIds.size > 0">
+            and sdnd.id in
+            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

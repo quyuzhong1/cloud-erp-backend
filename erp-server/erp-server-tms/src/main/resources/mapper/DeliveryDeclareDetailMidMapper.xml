@@ -25,7 +25,6 @@
        <result column="contract_no" property="contractNo" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="combo_sku_no" property="comboSkuNo" />
        <result column="currency" property="currency" />
        <result column="currency_symbol" property="currencySymbol" />
        <result column="declare_id" property="declareId" />
@@ -43,6 +42,7 @@
        <result column="dest_warehouse_id" property="destWarehouseId" />
        <result column="dest_warehouse_name" property="destWarehouseName" />
        <result column="transfer_warehouse_ids" property="transferWarehouseIds" />
+       <result column="transfer_warehouse_names" property="transferWarehouseNames" />
        <result column="sales_org_id" property="salesOrgId" />
        <result column="sales_org_name" property="salesOrgName" />
     </resultMap>
@@ -71,7 +71,6 @@
         dddm.contract_no AS contractNo,
         dddm.sku_id AS skuId,
         dddm.sku_no AS skuNo,
-        dddm.combo_sku_no AS comboSkuNo,
         dddm.currency AS currency,
         dddm.currency_symbol AS currencySymbol,
         dddm.declare_id AS declareId,
@@ -89,6 +88,7 @@
         dddm.dest_warehouse_id AS destWarehouseId,
         dddm.dest_warehouse_name AS destWarehouseName,
         dddm.transfer_warehouse_ids AS transferWarehouseIds,
+        dddm.transfer_warehouse_names AS transferWarehouseNames,
         dddm.sales_org_id AS salesOrgId,
         dddm.sales_org_name AS salesOrgName
     </sql>
