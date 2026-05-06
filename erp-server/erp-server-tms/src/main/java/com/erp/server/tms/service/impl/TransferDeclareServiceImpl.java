@@ -498,10 +498,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
             return resultDTOList;
         }
-        //计算入库预报客户单号
-        String referenceCode = getReferenceCode();
         //合同协议号
         String concatNo = getConcatNo();
+        //计算入库预报客户单号
+        String referenceCode = getReferenceCode(concatNo);
         TransferLogisticsCreateInboundReq request = TransferLogisticsCreateInboundReq.builder()
                 .referenceCode(referenceCode)
                 .concatNo(concatNo)
@@ -562,7 +562,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     //例如：VJ202604170002
     @Idempotent
     private String getConcatNo() {
-        return docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_VJ);
+        return docNoGenHelper.generateBusinessCode(BusinessNoTypeEnum.CODE_VJ);
     }
 
     /**
@@ -589,25 +589,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     @Idempotent
-    private String getReferenceCode() {
+    private String getReferenceCode(String concatNo) {
+        String orderCode = concatNo.replace(BusinessNoTypeEnum.CODE_VJ.getName(), "");
         StringBuilder stringBuffer = new StringBuilder();
-        LocalDateTime localDateTime = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String format = localDateTime.format(formatter);
         CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
         if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("name"))){
             String name = declareSetting.getDataJson().get("name").toString();
-            stringBuffer.append(name).append("+").append(format);
+            stringBuffer.append(name).append("+");
         }else{
             throw new ServiceException("报关主体配置信息为空");
         }
-        Integer count = this.lambdaQuery().likeRight(TransferDeclareEntity::getInstockRefCode,stringBuffer.toString()).count();
-        if (Objects.isNull(count)){
-            stringBuffer.append(StringUtils.leftPad("1",4, "0"));
-        }else {
-            count = count + 1;
-            stringBuffer.append(StringUtils.leftPad(count.toString(),4, "0"));
-        }
+        stringBuffer.append(orderCode);
         return stringBuffer.toString();
     }
 
